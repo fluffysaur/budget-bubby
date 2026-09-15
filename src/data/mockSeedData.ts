@@ -1,0 +1,828 @@
+/**
+ * Public Mock Seed Data for Budget Buddy
+ * Fully typed with domain entities from src/types/finance.ts.
+ * Uses realistic anonymized figures for public safety and demo mode.
+ */
+
+import type {
+  Household,
+  HouseholdMember,
+  Account,
+  AccountSnapshot,
+  BaseBudgetProfile,
+  Category,
+  BaseProfileAllocation,
+  MonthlyBudget,
+  MonthlyBudgetCategory,
+  Expense,
+  Loan,
+  LoanPayment,
+  SavingsGoal,
+  RecurringPolicy,
+} from '../types/finance';
+
+export const mockHousehold: Household = {
+  id: 'hh-00000000-0001',
+  name: 'Yi Jia & Rachel',
+  currency: 'SGD',
+  created_at: '2026-01-01T00:00:00.000Z',
+};
+
+export const mockMembers: HouseholdMember[] = [
+  {
+    id: 'mem-00000000-0011',
+    household_id: 'hh-00000000-0001',
+    user_id: null,
+    display_name: 'Yi Jia',
+    email: 'yijia@example.com',
+    role: 'owner',
+    avatar_url: '👨',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'mem-00000000-0012',
+    household_id: 'hh-00000000-0001',
+    user_id: null,
+    display_name: 'Rachel',
+    email: 'rachel@example.com',
+    role: 'member',
+    avatar_url: '👩',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+export const mockCategories: Category[] = [
+  {
+    id: 'cat-00000000-0101',
+    household_id: 'hh-00000000-0001',
+    name: 'Food',
+    color: '#F59E0B',
+    icon: 'utensils',
+    is_system: true,
+  },
+  {
+    id: 'cat-00000000-0102',
+    household_id: 'hh-00000000-0001',
+    name: 'Lifestyle',
+    color: '#EC4899',
+    icon: 'sparkles',
+    is_system: true,
+  },
+  {
+    id: 'cat-00000000-0103',
+    household_id: 'hh-00000000-0001',
+    name: 'Transport',
+    color: '#3B82F6',
+    icon: 'car',
+    is_system: true,
+  },
+  {
+    id: 'cat-00000000-0104',
+    household_id: 'hh-00000000-0001',
+    name: 'Investments',
+    color: '#10B981',
+    icon: 'trending-up',
+    is_system: true,
+  },
+  {
+    id: 'cat-00000000-0105',
+    household_id: 'hh-00000000-0001',
+    name: 'Savings',
+    color: '#6366F1',
+    icon: 'piggy-bank',
+    is_system: true,
+  },
+  {
+    id: 'cat-00000000-0106',
+    household_id: 'hh-00000000-0001',
+    name: 'Tithing',
+    color: '#8B5CF6',
+    icon: 'heart',
+    is_system: true,
+  },
+  {
+    id: 'cat-00000000-0107',
+    household_id: 'hh-00000000-0001',
+    name: 'Buffer',
+    color: '#64748B',
+    icon: 'shield',
+    is_system: true,
+  },
+];
+
+export const mockBaseProfiles: BaseBudgetProfile[] = [
+  {
+    id: 'prof-00000000-0201',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    gross_salary: 6000.0,
+    cpf_employee_rate: 0.2,
+    tithing_enabled: true,
+    updated_at: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'prof-00000000-0202',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    gross_salary: 5200.0,
+    cpf_employee_rate: 0.2,
+    tithing_enabled: true,
+    updated_at: '2026-09-01T00:00:00.000Z',
+  },
+];
+
+export const mockBaseAllocations: BaseProfileAllocation[] = [
+  // Yi Jia Allocations (Food 15%, Lifestyle 15%, Transport 5%, Investments 35%, Savings 15%, Tithing 10%, Buffer 5%)
+  { id: 'alloc-yj-01', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0101', target_percentage: 0.15 },
+  { id: 'alloc-yj-02', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0102', target_percentage: 0.15 },
+  { id: 'alloc-yj-03', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0103', target_percentage: 0.05 },
+  { id: 'alloc-yj-04', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0104', target_percentage: 0.35 },
+  { id: 'alloc-yj-05', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0105', target_percentage: 0.15 },
+  { id: 'alloc-yj-06', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0106', target_percentage: 0.1 },
+  { id: 'alloc-yj-07', profile_id: 'prof-00000000-0201', category_id: 'cat-00000000-0107', target_percentage: 0.05 },
+
+  // Rachel Allocations (Food 20%, Lifestyle 20%, Transport 5%, Investments 0%, Savings 40%, Tithing 10%, Buffer 5%)
+  { id: 'alloc-rc-01', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0101', target_percentage: 0.2 },
+  { id: 'alloc-rc-02', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0102', target_percentage: 0.2 },
+  { id: 'alloc-rc-03', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0103', target_percentage: 0.05 },
+  { id: 'alloc-rc-04', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0104', target_percentage: 0.0 },
+  { id: 'alloc-rc-05', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0105', target_percentage: 0.4 },
+  { id: 'alloc-rc-06', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0106', target_percentage: 0.1 },
+  { id: 'alloc-rc-07', profile_id: 'prof-00000000-0202', category_id: 'cat-00000000-0107', target_percentage: 0.05 },
+];
+
+export const mockAccounts: Account[] = [
+  // Yi Jia Accounts (13 accounts)
+  {
+    id: 'acc-yj-01',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: "UOB Lady's",
+    type: 'Cash',
+    balance: 10000.0,
+    currency: 'SGD',
+    institution: 'UOB',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-02',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'SGX CDP',
+    type: 'Investment',
+    balance: 24000.0,
+    currency: 'SGD',
+    institution: 'SGX CDP',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-03',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'OCBC Invest',
+    type: 'Investment',
+    balance: 1500.0,
+    currency: 'SGD',
+    institution: 'OCBC',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-04',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'CPF OA',
+    type: 'CPF',
+    balance: 50000.0,
+    currency: 'SGD',
+    institution: 'CPF',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-05',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'CPF SA',
+    type: 'CPF',
+    balance: 14000.0,
+    currency: 'SGD',
+    institution: 'CPF',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-06',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'CPF MA',
+    type: 'CPF',
+    balance: 20000.0,
+    currency: 'SGD',
+    institution: 'CPF',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-07',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'Webull',
+    type: 'Investment',
+    balance: 19500.0,
+    currency: 'SGD',
+    institution: 'Webull',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-08',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'Moomoo',
+    type: 'Investment',
+    balance: 3800.0,
+    currency: 'SGD',
+    institution: 'Moomoo',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-09',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'IBKR',
+    type: 'Investment',
+    balance: 20000.0,
+    currency: 'SGD',
+    institution: 'IBKR',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-10',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'POSB Savings',
+    type: 'Cash',
+    balance: 600.0,
+    currency: 'SGD',
+    institution: 'POSB',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-11',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'UOB One',
+    type: 'Cash',
+    balance: 1100.0,
+    currency: 'SGD',
+    institution: 'UOB',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-12',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'ESPP 2025',
+    type: 'Cash',
+    balance: 6200.0,
+    currency: 'SGD',
+    institution: 'ESPP',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-yj-13',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    name: 'OCBC 360',
+    type: 'Cash',
+    balance: 36000.0,
+    currency: 'SGD',
+    institution: 'OCBC',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+
+  // Rachel Accounts (5 accounts)
+  {
+    id: 'acc-rc-01',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    name: 'OCBC 360',
+    type: 'Cash',
+    balance: 190000.0,
+    currency: 'SGD',
+    institution: 'OCBC',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-rc-02',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    name: 'POSB Savings',
+    type: 'Cash',
+    balance: 50000.0,
+    currency: 'SGD',
+    institution: 'POSB',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-rc-03',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    name: 'CPF OA',
+    type: 'CPF',
+    balance: 60000.0,
+    currency: 'SGD',
+    institution: 'CPF',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-rc-04',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    name: 'CPF SA',
+    type: 'CPF',
+    balance: 17000.0,
+    currency: 'SGD',
+    institution: 'CPF',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+  {
+    id: 'acc-rc-05',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    name: 'CPF MA',
+    type: 'CPF',
+    balance: 20500.0,
+    currency: 'SGD',
+    institution: 'CPF',
+    is_joint: false,
+    updated_at: '2026-09-15T00:00:00.000Z',
+  },
+];
+
+export const mockAccountSnapshots: AccountSnapshot[] = mockAccounts.map((acc, index) => ({
+  id: `snap-${acc.id}-${index}`,
+  account_id: acc.id,
+  household_id: acc.household_id,
+  balance: acc.balance,
+  snapshot_date: '2026-09-15',
+}));
+
+export const mockLoans: Loan[] = [
+  {
+    id: 'loan-00000000-0401',
+    household_id: 'hh-00000000-0001',
+    borrower_id: null,
+    name: 'HDB Loan',
+    principal: 500000.0,
+    interest_rate: 0.026,
+    monthly_payment: 2665.0,
+    amount_paid: 50000.0,
+    start_date: '2026-05-01',
+    term_months: 242,
+    loan_type: 'amortized',
+    status: 'active',
+    created_at: '2026-05-01T00:00:00.000Z',
+  },
+];
+
+export const mockLoanPayments: LoanPayment[] = [
+  {
+    id: 'loan-pmt-01',
+    loan_id: 'loan-00000000-0401',
+    payment_date: '2026-06-01',
+    payment_amount: 2665.0,
+    principal_portion: 1581.67,
+    interest_portion: 1083.33,
+    is_extra_payment: false,
+  },
+  {
+    id: 'loan-pmt-02',
+    loan_id: 'loan-00000000-0401',
+    payment_date: '2026-07-01',
+    payment_amount: 2665.0,
+    principal_portion: 1585.1,
+    interest_portion: 1079.9,
+    is_extra_payment: false,
+  },
+  {
+    id: 'loan-pmt-03',
+    loan_id: 'loan-00000000-0401',
+    payment_date: '2026-08-01',
+    payment_amount: 2665.0,
+    principal_portion: 1588.53,
+    interest_portion: 1076.47,
+    is_extra_payment: false,
+  },
+  {
+    id: 'loan-pmt-04',
+    loan_id: 'loan-00000000-0401',
+    payment_date: '2026-09-01',
+    payment_amount: 2665.0,
+    principal_portion: 1591.97,
+    interest_portion: 1073.03,
+    is_extra_payment: false,
+  },
+];
+
+export const mockSavingsGoals: SavingsGoal[] = [
+  {
+    id: 'goal-00000000-0501',
+    household_id: 'hh-00000000-0001',
+    owner_id: null,
+    title: 'Wedding',
+    target_amount: 55000.0,
+    saved_so_far: 55000.0,
+    target_date: '2027-05-01',
+    monthly_contribution: 0.0,
+    emoji: '💍',
+    status: 'achieved',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'goal-00000000-0502',
+    household_id: 'hh-00000000-0001',
+    owner_id: null,
+    title: 'Honeymoon',
+    target_amount: 10000.0,
+    saved_so_far: 10000.0,
+    target_date: '2027-06-21',
+    monthly_contribution: 500.0,
+    emoji: '✈️',
+    status: 'achieved',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'goal-00000000-0503',
+    household_id: 'hh-00000000-0001',
+    owner_id: null,
+    title: 'HDB Down Payment',
+    target_amount: 190000.0,
+    saved_so_far: 100000.0,
+    target_date: '2027-07-01',
+    monthly_contribution: 10000.0,
+    emoji: '🏠',
+    status: 'on_track',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'goal-00000000-0504',
+    household_id: 'hh-00000000-0001',
+    owner_id: null,
+    title: 'Renovation',
+    target_amount: 90000.0,
+    saved_so_far: 0.0,
+    target_date: '2027-09-01',
+    monthly_contribution: 3000.0,
+    emoji: '🔨',
+    status: 'on_track',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'goal-00000000-0505',
+    household_id: 'hh-00000000-0001',
+    owner_id: null,
+    title: 'Baby Fund',
+    target_amount: 30000.0,
+    saved_so_far: 0.0,
+    target_date: '2029-12-31',
+    monthly_contribution: 600.0,
+    emoji: '👶',
+    status: 'on_track',
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+export const mockRecurringPolicies: RecurringPolicy[] = [
+  {
+    id: 'pol-00000000-0601',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'insurance',
+    name: 'Manulife - Lifeready 25 Plus',
+    amount: 3200.0,
+    frequency: 'annually',
+    payment_month: 9,
+    start_date: null,
+    end_date: '2044-09-18',
+    notes: 'Annual premium renewed in September',
+    monthly_amortized_amount: 266.67,
+  },
+  {
+    id: 'pol-00000000-0602',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'insurance',
+    name: 'Income Enhanced Incomeshield Preferred',
+    amount: 1600.0,
+    frequency: 'annually',
+    payment_month: 10,
+    start_date: null,
+    end_date: null,
+    notes: 'Annual premium renewed in October',
+    monthly_amortized_amount: 133.33,
+  },
+  {
+    id: 'pol-00000000-0603',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'tax',
+    name: 'Income Tax (2026)',
+    amount: 1100.0,
+    frequency: 'annually',
+    payment_month: 5,
+    start_date: '2026-05-05',
+    end_date: '2027-04-05',
+    notes: 'IRAS GIRO 12-month schedule',
+    monthly_amortized_amount: 91.67,
+  },
+  {
+    id: 'pol-00000000-0604',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    type: 'tax',
+    name: 'Income Tax (2026)',
+    amount: 1800.0,
+    frequency: 'annually',
+    payment_month: 5,
+    start_date: '2026-05-05',
+    end_date: '2027-04-05',
+    notes: 'IRAS GIRO 12-month schedule',
+    monthly_amortized_amount: 150.0,
+  },
+];
+
+export const mockMonthlyBudgets: MonthlyBudget[] = [
+  // Yi Jia - Sep 2026: gross 6000, bonus 0, cpf 1200 (20%), taxes 91.67, insurance 400.00, after deductions = 4308.33
+  {
+    id: 'mb-00000000-0701',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    month: '2026-09',
+    gross_salary: 6000.0,
+    bonus: 0.0,
+    cpf_deduction: 1200.0,
+    taxes_deduction: 91.67,
+    insurance_deduction: 400.0,
+    after_deductions: 4308.33,
+    notes: 'September standard budget',
+    is_locked: false,
+    created_at: '2026-09-01T00:00:00.000Z',
+  },
+  // Rachel - Sep 2026: gross 5200, bonus 0, cpf 1040 (20%), taxes 150.00, insurance 0.00, after deductions = 4010.00
+  {
+    id: 'mb-00000000-0702',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012',
+    month: '2026-09',
+    gross_salary: 5200.0,
+    bonus: 0.0,
+    cpf_deduction: 1040.0,
+    taxes_deduction: 150.0,
+    insurance_deduction: 0.0,
+    after_deductions: 4010.0,
+    notes: 'September standard budget',
+    is_locked: false,
+    created_at: '2026-09-01T00:00:00.000Z',
+  },
+];
+
+export const mockMonthlyBudgetCategories: MonthlyBudgetCategory[] = [
+  // Yi Jia Categories (Sep 2026, pool: 4308.33)
+  {
+    id: 'mbc-yj-01',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0101', // Food 15%
+    percentage: 0.15,
+    allocated_amount: 646.25,
+  },
+  {
+    id: 'mbc-yj-02',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0102', // Lifestyle 15%
+    percentage: 0.15,
+    allocated_amount: 646.25,
+  },
+  {
+    id: 'mbc-yj-03',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0103', // Transport 5%
+    percentage: 0.05,
+    allocated_amount: 215.42,
+  },
+  {
+    id: 'mbc-yj-04',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0104', // Investments 35%
+    percentage: 0.35,
+    allocated_amount: 1507.92,
+  },
+  {
+    id: 'mbc-yj-05',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0105', // Savings 15%
+    percentage: 0.15,
+    allocated_amount: 646.25,
+  },
+  {
+    id: 'mbc-yj-06',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0106', // Tithing 10%
+    percentage: 0.1,
+    allocated_amount: 430.83,
+  },
+  {
+    id: 'mbc-yj-07',
+    monthly_budget_id: 'mb-00000000-0701',
+    category_id: 'cat-00000000-0107', // Buffer 5%
+    percentage: 0.05,
+    allocated_amount: 215.41,
+  },
+
+  // Rachel Categories (Sep 2026, pool: 4010.00)
+  {
+    id: 'mbc-rc-01',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0101', // Food 20%
+    percentage: 0.2,
+    allocated_amount: 802.0,
+  },
+  {
+    id: 'mbc-rc-02',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0102', // Lifestyle 20%
+    percentage: 0.2,
+    allocated_amount: 802.0,
+  },
+  {
+    id: 'mbc-rc-03',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0103', // Transport 5%
+    percentage: 0.05,
+    allocated_amount: 200.5,
+  },
+  {
+    id: 'mbc-rc-04',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0104', // Investments 0%
+    percentage: 0.0,
+    allocated_amount: 0.0,
+  },
+  {
+    id: 'mbc-rc-05',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0105', // Savings 40%
+    percentage: 0.4,
+    allocated_amount: 1604.0,
+  },
+  {
+    id: 'mbc-rc-06',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0106', // Tithing 10%
+    percentage: 0.1,
+    allocated_amount: 401.0,
+  },
+  {
+    id: 'mbc-rc-07',
+    monthly_budget_id: 'mb-00000000-0702',
+    category_id: 'cat-00000000-0107', // Buffer 5%
+    percentage: 0.05,
+    allocated_amount: 200.5,
+  },
+];
+
+export const mockExpenses: Expense[] = [
+  {
+    id: 'exp-00000000-0801',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-09-02',
+    item: 'FairPrice Finest Groceries',
+    amount: 128.45,
+    remarks: 'Weekly groceries for meal prep',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: false,
+    created_at: '2026-09-02T10:30:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0802',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0012',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-09-05',
+    item: 'Dinner at Din Tai Fung',
+    amount: 86.5,
+    remarks: 'Weekend couple dinner',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: false,
+    created_at: '2026-09-05T19:45:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0803',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0103', // Transport
+    date: '2026-09-07',
+    item: 'Grab Ride to Changi',
+    amount: 34.2,
+    remarks: 'Airport drop-off',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: false,
+    created_at: '2026-09-07T08:15:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0804',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-09-09',
+    item: 'Tech Gadgets & Cables',
+    amount: 45.0,
+    remarks: 'Personal desk setup',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-09-09T14:20:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0805',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0012',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-09-11',
+    item: 'Books & Stationery',
+    amount: 32.0,
+    remarks: 'Personal reading books',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-09-11T16:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0806',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-09-14',
+    item: 'Coffee & Kaya Toast',
+    amount: 14.8,
+    remarks: 'Sunday breakfast',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: false,
+    created_at: '2026-09-14T09:10:00.000Z',
+  },
+];
+
+export interface MockSeedDataset {
+  household: Household;
+  members: HouseholdMember[];
+  categories: Category[];
+  baseProfiles: BaseBudgetProfile[];
+  baseAllocations: BaseProfileAllocation[];
+  accounts: Account[];
+  accountSnapshots: AccountSnapshot[];
+  loans: Loan[];
+  loanPayments: LoanPayment[];
+  savingsGoals: SavingsGoal[];
+  recurringPolicies: RecurringPolicy[];
+  monthlyBudgets: MonthlyBudget[];
+  monthlyBudgetCategories: MonthlyBudgetCategory[];
+  expenses: Expense[];
+}
+
+export const mockSeedData: MockSeedDataset = {
+  household: mockHousehold,
+  members: mockMembers,
+  categories: mockCategories,
+  baseProfiles: mockBaseProfiles,
+  baseAllocations: mockBaseAllocations,
+  accounts: mockAccounts,
+  accountSnapshots: mockAccountSnapshots,
+  loans: mockLoans,
+  loanPayments: mockLoanPayments,
+  savingsGoals: mockSavingsGoals,
+  recurringPolicies: mockRecurringPolicies,
+  monthlyBudgets: mockMonthlyBudgets,
+  monthlyBudgetCategories: mockMonthlyBudgetCategories,
+  expenses: mockExpenses,
+};
+
+export default mockSeedData;
