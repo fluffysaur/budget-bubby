@@ -28,7 +28,7 @@ import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
 } from '../lib/financialFormulas';
-import { getTodayDateString } from '../lib/dateUtils';
+import { getTodayDateString, addMonths } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 
 function getClient() {
@@ -39,6 +39,13 @@ function getClient() {
 }
 
 export class SupabaseFinanceServiceImpl implements FinanceService {
+  private async getHouseholdId(): Promise<string> {
+    const client = getClient();
+    const { data, error } = await client.from('households').select('id').limit(1).single();
+    if (error) throw error;
+    return data.id;
+  }
+
   public async getHouseholdOverview(): Promise<HouseholdOverview> {
     const client = getClient();
 
@@ -261,13 +268,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .eq('monthly_budget_id', budget.id);
     if (catAllocError) throw catAllocError;
 
-    // Fetch monthly expenses for this owner
+    const nextMonth = addMonths(month, 1);
     const { data: expensesData, error: expError } = await client
       .from('expenses')
       .select('*')
       .eq('payer_id', budget.owner_id)
       .gte('date', `${month}-01`)
-      .lte('date', `${month}-31`);
+      .lt('date', `${nextMonth}-01`);
     if (expError) throw expError;
 
     const expenses = (expensesData || []) as Expense[];
@@ -326,7 +333,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     let query = client.from('expenses').select('*').order('date', { ascending: false });
 
     if (filter?.month) {
-      query = query.gte('date', `${filter.month}-01`).lte('date', `${filter.month}-31`);
+      const nextMonth = addMonths(filter.month, 1);
+      query = query.gte('date', `${filter.month}-01`).lt('date', `${nextMonth}-01`);
     }
     if (filter?.categoryId) {
       query = query.eq('category_id', filter.categoryId);
@@ -351,11 +359,12 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async addExpense(input: CreateExpenseInput): Promise<Expense> {
     const client = getClient();
+    const householdId = input.household_id || (await this.getHouseholdId());
     const { data, error } = await client
       .from('expenses')
       .insert({
         payer_id: input.payer_id,
-        household_id: input.household_id,
+        household_id: householdId,
         category_id: input.category_id || null,
         date: input.date,
         item: input.item,
@@ -413,10 +422,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       monthlyContribution
     );
 
+    const householdId = input.household_id || (await this.getHouseholdId());
     const { data, error } = await client
       .from('savings_goals')
       .insert({
-        household_id: input.household_id,
+        household_id: householdId,
         owner_id: input.owner_id || null,
         title: input.title,
         target_amount: input.target_amount,
