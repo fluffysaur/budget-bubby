@@ -79,6 +79,18 @@ export function formatDisplayMonth(monthStr: string): string {
  * Formats 'YYYY-MM-DD' into human readable string e.g. '15 Sep 2026'.
  */
 export function formatDisplayDate(dateStr: string): string {
+  const parts = dateStr.split('-');
+  if (parts.length >= 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2].slice(0, 2), 10);
+    const date = new Date(year, month, day);
+    return date.toLocaleDateString('en-SG', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
   return date.toLocaleDateString('en-SG', {

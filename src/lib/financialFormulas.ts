@@ -21,6 +21,7 @@ import type {
   GoalStatus,
 } from '../types/finance';
 import { addMonths, monthsBetween, getTodayDateString } from './dateUtils';
+import { formatSGD } from './currency';
 
 /**
  * 1. Calculates Singapore CPF deduction (default 20% employee rate) and net take-home pay.
@@ -201,7 +202,7 @@ export function calculateSharedExpenseSettlement(
       creditorId: member1Id,
       debtorName: m2Display,
       creditorName: m1Display,
-      settlementText: `${m2Display} owes ${m1Display} S$${netDiff.toFixed(2)}`,
+      settlementText: `${m2Display} owes ${m1Display} ${formatSGD(netDiff)}`,
       member1OwesMember2,
       member2OwesMember1,
     };
@@ -214,7 +215,7 @@ export function calculateSharedExpenseSettlement(
       creditorId: member2Id,
       debtorName: m1Display,
       creditorName: m2Display,
-      settlementText: `${m1Display} owes ${m2Display} S$${absNet.toFixed(2)}`,
+      settlementText: `${m1Display} owes ${m2Display} ${formatSGD(absNet)}`,
       member1OwesMember2,
       member2OwesMember1,
     };
