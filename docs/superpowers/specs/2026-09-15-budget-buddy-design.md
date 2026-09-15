@@ -3,7 +3,7 @@
 **Date**: 2026-09-15  
 **Status**: Approved (Brainstorming Complete)  
 **Authors**: Antigravity & Yi Jia  
-**Target Stack**: React 19, Vite, Tailwind CSS, Supabase (PostgreSQL, Auth, RLS), Vercel Hosting (Public GitHub Repository)
+**Target Stack**: React 19, Vite, Tailwind CSS, Supabase (PostgreSQL, Auth, RLS), Vitest, Playwright, Vercel Hosting (Public GitHub Repository)
 
 ---
 

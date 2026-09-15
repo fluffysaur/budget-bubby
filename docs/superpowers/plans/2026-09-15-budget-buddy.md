@@ -6,7 +6,7 @@
 
 **Architecture:** A fast Single-Page Application with a decoupled service layer. When Supabase credentials exist, it runs authenticated PostgreSQL queries with Row-Level Security. Without credentials, it falls back seamlessly to a local storage mock store with pre-seeded demo data for immediate testing. Public GitHub repository safe: no real financial figures are committed to Git.
 
-**Tech Stack:** React 19, Vite 6, TypeScript, Tailwind CSS, Lucide React, Recharts, TanStack Query, Vitest, Supabase JS, Vercel.
+**Tech Stack:** React 19, Vite 6, TypeScript, Tailwind CSS, Lucide React, Recharts, TanStack Query, Vitest, Playwright, Supabase JS, Vercel.
 
 **Spec:** `docs/superpowers/specs/2026-09-15-budget-buddy-design.md`
 
@@ -17,6 +17,7 @@
 - **True Net Worth Formula**: `True Net Worth = Total Assets - Outstanding Loans`.
 - **Shared Expense Split**: Default 50/50 split ratio with running "Who Owes Whom" settlement balance.
 - **Vercel Routing**: SPA rewrites configured in `vercel.json` so direct URL visits don't 404.
+- **UI & E2E Testing**: Vitest for unit & component logic; Playwright for end-to-end and responsive mobile viewport UI testing.
 
 ---
 
@@ -34,16 +35,17 @@
 - Create: `src/index.css`
 - Create: `vercel.json`
 - Create: `vitest.config.ts`
+- Create: `playwright.config.ts`
 - Create: `tests/setup.ts`
 
 **Interfaces:**
-- Produces: Working React 19 + Vite + TypeScript + Tailwind CSS project with Vitest test runner.
+- Produces: Working React 19 + Vite + TypeScript + Tailwind CSS project with Vitest test runner and Playwright config.
 
 - [ ] **Step 1: Create package.json and project configs**
-Create `package.json` with dependencies (`react`, `react-dom`, `@supabase/supabase-js`, `@tanstack/react-query`, `lucide-react`, `recharts`, `clsx`, `tailwind-merge`) and devDependencies (`vite`, `typescript`, `tailwindcss`, `@tailwindcss/vite` or postcss, `vitest`, `@testing-library/react`, `jsdom`).
+Create `package.json` with dependencies (`react`, `react-dom`, `@supabase/supabase-js`, `@tanstack/react-query`, `lucide-react`, `recharts`, `clsx`, `tailwind-merge`) and devDependencies (`vite`, `typescript`, `tailwindcss`, `@tailwindcss/vite` or postcss, `vitest`, `@testing-library/react`, `jsdom`, `@playwright/test`).
 
-- [ ] **Step 2: Create Vite and TypeScript configurations**
-Setup `vite.config.ts`, `vitest.config.ts`, and `tsconfig.json` with path aliases and DOM testing environment.
+- [ ] **Step 2: Create Vite, TypeScript, and Playwright configurations**
+Setup `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`, and `tsconfig.json` with path aliases and DOM testing environment.
 
 - [ ] **Step 3: Setup index.html, index.css, and vercel.json**
 Setup standard HTML5 entry, Tailwind CSS imports, and `vercel.json` rewrite:
@@ -520,8 +522,66 @@ Execute:
 `npm run test` -> ALL PASS
 `npm run build` -> Clean Vite build in `dist/` with zero TypeScript or bundling errors.
 
-- [ ] **Step 5: Final Commit**
+- [ ] **Step 5: Commit**
 ```bash
-git add .
+git add public/ src/ App.tsx README.md
 git commit -m "feat: complete budget buddy couple finance app with PWA and Vercel setup"
 ```
+
+---
+
+### Task 14: Playwright End-to-End & Responsive Mobile UI Testing
+
+**Files:**
+- Create: `playwright.config.ts`
+- Create: `e2e/navigation.spec.ts`
+- Create: `e2e/quick-add-expense.spec.ts`
+- Create: `e2e/mobile-viewport.spec.ts`
+- Create: `e2e/loans-simulator.spec.ts`
+
+**Interfaces:**
+- Produces:
+  - Playwright test suite validating desktop & mobile viewports, perspective switching, modal flows, and live formula updates.
+  - Test command: `npm run test:e2e` (runs Playwright against local Vite preview server).
+
+- [ ] **Step 1: Setup playwright.config.ts**
+Configure test runner:
+```ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  webServer: {
+    command: 'npm run dev',
+    port: 5173,
+    reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:5173',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
+    { name: 'Mobile Safari', use: { ...devices['iPhone 14'] } },
+  ],
+});
+```
+
+- [ ] **Step 2: Write navigation.spec.ts & quick-add-expense.spec.ts**
+- `navigation.spec.ts`: Asserts loading the dashboard, clicking "Yi Jia" perspective pill, verifying active perspective updates, navigating to `/budget` and `/accounts`.
+- `quick-add-expense.spec.ts`: Clicks the "+ Quick Add" button, fills in `$88.50`, selects "Food", selects payer "Yi Jia", toggles "Shared 50/50", submits, and verifies the expense appears in the table and updates the settlement balance on the dashboard.
+
+- [ ] **Step 3: Write mobile-viewport.spec.ts & loans-simulator.spec.ts**
+- `mobile-viewport.spec.ts`: Emulates iPhone 14 viewport, verifies bottom navigation bar renders with floating "+" Quick Add button, verifies sidebar is hidden.
+- `loans-simulator.spec.ts`: Navigates to `/loans`, adjusts prepayment slider, asserts updated payoff date and interest saved calculations update dynamically.
+
+- [ ] **Step 4: Run Playwright tests and verify passes**
+Run `npm run test:e2e` and confirm all tests pass cleanly.
+
+- [ ] **Step 5: Final Commit**
+```bash
+git add playwright.config.ts e2e/ package.json
+git commit -m "test: add playwright end-to-end and mobile responsive UI tests"
+```
+
