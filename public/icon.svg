@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <!-- Background squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  
+  <!-- Content Group -->
+  <g transform="translate(64, 64)" filter="url(#shadow)">
+    <!-- Wallet Card Shape -->
+    <rect x="32" y="74" width="320" height="236" rx="36" fill="#ffffff" fill-opacity="0.95"/>
+    <rect x="32" y="74" width="320" height="70" rx="36" fill="#f8fafc"/>
+    <line x1="32" y1="144" x2="352" y2="144" stroke="#e2e8f0" stroke-width="4"/>
+    
+    <!-- Wallet Flap & Clasp -->
+    <path d="M 230 144 H 352 V 240 H 230 C 206 240 188 218 188 192 C 188 166 206 144 230 144 Z" fill="#059669"/>
+    <circle cx="236" cy="192" r="16" fill="#facc15"/>
+    
+    <!-- Heart Accent -->
+    <g transform="translate(100, 170) scale(1.6)">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#f43f5e"/>
+    </g>
+  </g>
+</svg>
