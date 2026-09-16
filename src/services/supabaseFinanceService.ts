@@ -188,7 +188,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
     const updates: Record<string, any> = { balance: rounded, updated_at: new Date().toISOString() };
     if (notes !== undefined) {
-      updates.notes = notes;
+      updates.notes = notes || null;
     }
 
     // Update account balance
@@ -203,12 +203,15 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const updatedAccount = data as Account;
 
     // Create snapshot
-    await client.from('account_snapshots').insert({
+    const { error: snapError } = await client.from('account_snapshots').insert({
       account_id: accountId,
       household_id: updatedAccount.household_id,
       balance: rounded,
       snapshot_date: date || getTodayDateString(),
     });
+    if (snapError) {
+      console.warn('Failed to insert account snapshot:', snapError);
+    }
 
     return updatedAccount;
   }

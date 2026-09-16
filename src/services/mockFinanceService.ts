@@ -162,7 +162,7 @@ class MockFinanceServiceImpl implements FinanceService {
     const rounded = Math.round(newBalance * 100) / 100;
     account.balance = rounded;
     if (notes !== undefined) {
-      account.notes = notes;
+      account.notes = notes || null;
     }
     account.updated_at = new Date().toISOString();
 

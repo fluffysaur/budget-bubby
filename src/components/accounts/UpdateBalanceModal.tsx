@@ -51,6 +51,16 @@ export function UpdateBalanceModal({
     }
   }, [account, isOpen]);
 
+  // Handle escape key dismiss
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !account) {
     return null;
   }
@@ -72,7 +82,7 @@ export function UpdateBalanceModal({
       const updatedAccount = await financeService.updateAccountBalance(
         account.id,
         parsedBalance,
-        trimmedNotes || undefined,
+        trimmedNotes,
         date || getTodayDateString()
       );
 
@@ -90,6 +100,7 @@ export function UpdateBalanceModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
     >
       <div

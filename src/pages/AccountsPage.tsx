@@ -94,13 +94,23 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
   }, [accounts]);
 
   const activeLoans = useMemo(() => {
-    return loans.filter((l) => l.status === 'active');
-  }, [loans]);
+    return loans.filter((l) => {
+      if (l.status !== 'active') return false;
+      if (perspective === 'household') return true;
+      return !l.borrower_id || l.borrower_id === activeMember?.id;
+    });
+  }, [loans, perspective, activeMember]);
 
   const totalLiabilities = useMemo(() => {
-    const sum = activeLoans.reduce((acc, l) => acc + (l.principal - l.amount_paid), 0);
+    const sum = activeLoans.reduce((acc, l) => {
+      const remaining = l.principal - l.amount_paid;
+      if (perspective !== 'household' && !l.borrower_id) {
+        return acc + remaining * 0.5; // 50% split for joint household loans
+      }
+      return acc + remaining;
+    }, 0);
     return Math.round(sum * 100) / 100;
-  }, [activeLoans]);
+  }, [activeLoans, perspective]);
 
   const trueNetWorth = useMemo(() => {
     return Math.round((totalAssets - totalLiabilities) * 100) / 100;

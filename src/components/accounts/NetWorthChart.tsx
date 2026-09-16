@@ -20,6 +20,7 @@ import {
 import { TrendingUp } from 'lucide-react';
 import type { Account, Loan } from '../../types/finance';
 import { formatSGD } from '../../lib/currency';
+import { getCurrentMonth, addMonths, formatDisplayMonth } from '../../lib/dateUtils';
 
 export interface NetWorthDataPoint {
   date: string;
@@ -86,10 +87,14 @@ export function NetWorthChart({
         .reduce((sum, l) => sum + (l.principal - l.amount_paid), 0) * 100
     ) / 100;
 
-    // Generate a 5-month historical progression leading up to current month (Sep 2026)
-    const months = ['May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026', 'Sep 2026'];
+    // Generate a 5-month historical progression leading up to current month
+    const currentM = getCurrentMonth();
+    const months = [-4, -3, -2, -1, 0].map((offset) =>
+      formatDisplayMonth(addMonths(currentM, offset))
+    );
     const assetMultipliers = [0.93, 0.95, 0.97, 0.985, 1.0];
-    const liabilityIncrements = [10660, 7995, 5330, 2665, 0];
+    const liabilityIncrements =
+      currentLiabilities > 0 ? [10660, 7995, 5330, 2665, 0] : [0, 0, 0, 0, 0];
 
     return months.map((month, idx) => {
       const isCurrent = idx === months.length - 1;
