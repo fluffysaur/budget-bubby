@@ -81,8 +81,7 @@ export function PrepaymentSimulator({
   };
 
   const basePrincipal = useMemo(() => {
-    const remaining = loan.principal - (loan.amount_paid || 0);
-    return remaining > 0 ? remaining : loan.principal;
+    return Math.max(0, loan.principal - (loan.amount_paid || 0));
   }, [loan.principal, loan.amount_paid]);
 
   // Calculate baseline amortization

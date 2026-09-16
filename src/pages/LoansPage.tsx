@@ -91,11 +91,15 @@ export function LoansPage({ className = '' }: LoansPageProps) {
     setLumpSum(0);
   };
 
-  // Base Principal for amortization
+  useEffect(() => {
+    setExtraMonthly(0);
+    setLumpSum(0);
+  }, [activeLoan?.id]);
+
+  // Base Principal for amortization (remaining balance)
   const basePrincipal = useMemo(() => {
     if (!activeLoan) return 0;
-    const remaining = activeLoan.principal - (activeLoan.amount_paid || 0);
-    return remaining > 0 ? remaining : activeLoan.principal;
+    return Math.max(0, activeLoan.principal - (activeLoan.amount_paid || 0));
   }, [activeLoan]);
 
   // Baseline Amortization
