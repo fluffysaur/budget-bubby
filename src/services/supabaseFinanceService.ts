@@ -177,14 +177,24 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     return (data || []) as Account[];
   }
 
-  public async updateAccountBalance(accountId: string, newBalance: number): Promise<Account> {
+  public async updateAccountBalance(
+    accountId: string,
+    newBalance: number,
+    notes?: string,
+    date?: string
+  ): Promise<Account> {
     const client = getClient();
     const rounded = Math.round(newBalance * 100) / 100;
+
+    const updates: Record<string, any> = { balance: rounded, updated_at: new Date().toISOString() };
+    if (notes !== undefined) {
+      updates.notes = notes;
+    }
 
     // Update account balance
     const { data, error } = await client
       .from('accounts')
-      .update({ balance: rounded, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', accountId)
       .select()
       .single();
@@ -197,7 +207,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       account_id: accountId,
       household_id: updatedAccount.household_id,
       balance: rounded,
-      snapshot_date: getTodayDateString(),
+      snapshot_date: date || getTodayDateString(),
     });
 
     return updatedAccount;

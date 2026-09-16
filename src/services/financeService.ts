@@ -28,7 +28,12 @@ import { supabaseFinanceService } from './supabaseFinanceService';
 export interface FinanceService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
   getAccounts(perspective: Perspective): Promise<Account[]>;
-  updateAccountBalance(accountId: string, newBalance: number): Promise<Account>;
+  updateAccountBalance(
+    accountId: string,
+    newBalance: number,
+    notes?: string,
+    date?: string
+  ): Promise<Account>;
   getAccountSnapshots(accountId: string): Promise<AccountSnapshot[]>;
   getBaseProfiles(): Promise<BaseBudgetProfile[]>;
   getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]>;
@@ -57,8 +62,8 @@ function getActiveService(): FinanceService {
 export const financeService: FinanceService = {
   getHouseholdOverview: () => getActiveService().getHouseholdOverview(),
   getAccounts: (perspective) => getActiveService().getAccounts(perspective),
-  updateAccountBalance: (accountId, newBalance) =>
-    getActiveService().updateAccountBalance(accountId, newBalance),
+  updateAccountBalance: (accountId, newBalance, notes, date) =>
+    getActiveService().updateAccountBalance(accountId, newBalance, notes, date),
   getAccountSnapshots: (accountId) => getActiveService().getAccountSnapshots(accountId),
   getBaseProfiles: () => getActiveService().getBaseProfiles(),
   getBaseAllocations: (profileId) => getActiveService().getBaseAllocations(profileId),

@@ -148,7 +148,12 @@ class MockFinanceServiceImpl implements FinanceService {
     return cloneDeep(filtered);
   }
 
-  public async updateAccountBalance(accountId: string, newBalance: number): Promise<Account> {
+  public async updateAccountBalance(
+    accountId: string,
+    newBalance: number,
+    notes?: string,
+    date?: string
+  ): Promise<Account> {
     const account = this.state.accounts.find((a) => a.id === accountId);
     if (!account) {
       throw new Error(`Account with id "${accountId}" not found`);
@@ -156,6 +161,9 @@ class MockFinanceServiceImpl implements FinanceService {
 
     const rounded = Math.round(newBalance * 100) / 100;
     account.balance = rounded;
+    if (notes !== undefined) {
+      account.notes = notes;
+    }
     account.updated_at = new Date().toISOString();
 
     const snapshot: AccountSnapshot = {
@@ -163,7 +171,7 @@ class MockFinanceServiceImpl implements FinanceService {
       account_id: accountId,
       household_id: account.household_id,
       balance: rounded,
-      snapshot_date: getTodayDateString(),
+      snapshot_date: date || getTodayDateString(),
     };
     this.state.accountSnapshots.push(snapshot);
 
