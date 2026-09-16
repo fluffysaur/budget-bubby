@@ -13,6 +13,7 @@ import type {
   Category,
   CreateExpenseInput,
   CreateGoalInput,
+  CreatePolicyInput,
   Expense,
   ExpenseFilter,
   HouseholdOverview,
@@ -75,6 +76,10 @@ class MockFinanceServiceImpl implements FinanceService {
   public resetData(): void {
     this.state = cloneDeep(mockSeedData);
     this.persist();
+  }
+
+  public resetState(): void {
+    this.resetData();
   }
 
   public async getHouseholdOverview(): Promise<HouseholdOverview> {
@@ -456,6 +461,60 @@ class MockFinanceServiceImpl implements FinanceService {
 
   public async getPolicies(): Promise<RecurringPolicy[]> {
     return cloneDeep(this.state.recurringPolicies);
+  }
+
+  public async addPolicy(input: CreatePolicyInput): Promise<RecurringPolicy> {
+    const monthlyAmortized =
+      input.frequency === 'annually'
+        ? Math.round((input.amount / 12) * 100) / 100
+        : Math.round(input.amount * 100) / 100;
+
+    const newPolicy: RecurringPolicy = {
+      id: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      household_id: input.household_id || this.state.household.id,
+      owner_id: input.owner_id,
+      type: input.type,
+      name: input.name,
+      amount: Math.round(input.amount * 100) / 100,
+      frequency: input.frequency,
+      payment_month: input.payment_month ?? null,
+      start_date: input.start_date || null,
+      end_date: input.end_date || null,
+      notes: input.notes || null,
+      monthly_amortized_amount: monthlyAmortized,
+    };
+
+    this.state.recurringPolicies.push(newPolicy);
+    this.persist();
+    return cloneDeep(newPolicy);
+  }
+
+  public async updatePolicy(
+    id: string,
+    updates: Partial<RecurringPolicy>
+  ): Promise<RecurringPolicy> {
+    const policy = this.state.recurringPolicies.find((p) => p.id === id);
+    if (!policy) {
+      throw new Error(`Recurring policy with id "${id}" not found`);
+    }
+
+    Object.assign(policy, updates);
+
+    // Recompute monthly_amortized_amount if amount or frequency changed
+    if (updates.amount !== undefined || updates.frequency !== undefined) {
+      policy.monthly_amortized_amount =
+        policy.frequency === 'annually'
+          ? Math.round((policy.amount / 12) * 100) / 100
+          : Math.round(policy.amount * 100) / 100;
+    }
+
+    this.persist();
+    return cloneDeep(policy);
+  }
+
+  public async deletePolicy(id: string): Promise<void> {
+    this.state.recurringPolicies = this.state.recurringPolicies.filter((p) => p.id !== id);
+    this.persist();
   }
 }
 

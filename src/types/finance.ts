@@ -218,6 +218,19 @@ export interface RecurringPolicy {
   monthly_amortized_amount: number;
 }
 
+export interface CreatePolicyInput {
+  household_id?: string;
+  owner_id: string;
+  type: RecurringPolicyType;
+  name: string;
+  amount: number;
+  frequency: RecurringFrequency;
+  payment_month?: number | null; // 1 - 12
+  start_date?: string | null;
+  end_date?: string | null;
+  notes?: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Mathematical Calculation Engine Types
 // ---------------------------------------------------------------------------

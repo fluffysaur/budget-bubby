@@ -11,6 +11,7 @@ import type {
   Category,
   CreateExpenseInput,
   CreateGoalInput,
+  CreatePolicyInput,
   Expense,
   ExpenseFilter,
   HouseholdOverview,
@@ -53,6 +54,9 @@ export interface FinanceService {
   addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
   updateGoal(id: string, updates: Partial<SavingsGoal>): Promise<SavingsGoal>;
   getPolicies(): Promise<RecurringPolicy[]>;
+  addPolicy(policy: CreatePolicyInput): Promise<RecurringPolicy>;
+  updatePolicy(id: string, updates: Partial<RecurringPolicy>): Promise<RecurringPolicy>;
+  deletePolicy(id: string): Promise<void>;
 }
 
 function getActiveService(): FinanceService {
@@ -80,8 +84,13 @@ export const financeService: FinanceService = {
   getLoans: () => getActiveService().getLoans(),
   getGoals: () => getActiveService().getGoals(),
   addGoal: (goal) => getActiveService().addGoal(goal),
-  updateGoal: (id, updates) => getActiveService().updateGoal(id, updates),
+  updateGoal(id, updates) {
+    return getActiveService().updateGoal(id, updates);
+  },
   getPolicies: () => getActiveService().getPolicies(),
+  addPolicy: (policy) => getActiveService().addPolicy(policy),
+  updatePolicy: (id, updates) => getActiveService().updatePolicy(id, updates),
+  deletePolicy: (id) => getActiveService().deletePolicy(id),
 };
 
 export default financeService;

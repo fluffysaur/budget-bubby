@@ -11,6 +11,7 @@ import type {
   Category,
   CreateExpenseInput,
   CreateGoalInput,
+  CreatePolicyInput,
   Expense,
   ExpenseFilter,
   Household,
@@ -507,6 +508,77 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const { data, error } = await client.from('recurring_policies').select('*');
     if (error) throw error;
     return (data || []) as RecurringPolicy[];
+  }
+
+  public async addPolicy(input: CreatePolicyInput): Promise<RecurringPolicy> {
+    const client = getClient();
+    const householdId = input.household_id || (await this.getHouseholdId());
+    const monthlyAmortized =
+      input.frequency === 'annually'
+        ? Math.round((input.amount / 12) * 100) / 100
+        : Math.round(input.amount * 100) / 100;
+
+    const { data, error } = await client
+      .from('recurring_policies')
+      .insert({
+        household_id: householdId,
+        owner_id: input.owner_id,
+        type: input.type,
+        name: input.name,
+        amount: input.amount,
+        frequency: input.frequency,
+        payment_month: input.payment_month ?? null,
+        start_date: input.start_date || null,
+        end_date: input.end_date || null,
+        notes: input.notes || null,
+        monthly_amortized_amount: monthlyAmortized,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as RecurringPolicy;
+  }
+
+  public async updatePolicy(
+    id: string,
+    updates: Partial<RecurringPolicy>
+  ): Promise<RecurringPolicy> {
+    const client = getClient();
+
+    let finalUpdates: Partial<RecurringPolicy> = { ...updates };
+    if (updates.amount !== undefined || updates.frequency !== undefined) {
+      const { data: existing, error: fetchErr } = await client
+        .from('recurring_policies')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const newAmount = updates.amount !== undefined ? updates.amount : existing.amount;
+      const newFrequency =
+        updates.frequency !== undefined ? updates.frequency : existing.frequency;
+      const monthlyAmortized =
+        newFrequency === 'annually'
+          ? Math.round((newAmount / 12) * 100) / 100
+          : Math.round(newAmount * 100) / 100;
+
+      finalUpdates.monthly_amortized_amount = monthlyAmortized;
+    }
+
+    const { data, error } = await client
+      .from('recurring_policies')
+      .update(finalUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as RecurringPolicy;
+  }
+
+  public async deletePolicy(id: string): Promise<void> {
+    const client = getClient();
+    const { error } = await client.from('recurring_policies').delete().eq('id', id);
+    if (error) throw error;
   }
 }
 
