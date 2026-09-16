@@ -11,7 +11,8 @@
  * - Responsive table for desktop + cards for mobile viewports
  */
 
-import { Trash2, Receipt, ArrowRightLeft } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, Receipt, ArrowRightLeft, Check, X } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { formatDisplayDate } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
@@ -32,6 +33,7 @@ export function ExpenseListTable({
   onDeleteExpense,
   isLoading = false,
 }: ExpenseListTableProps) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const getCategory = (catId?: string | null): Category | undefined => {
     if (!catId) return undefined;
     return categories.find((c) => c.id === catId);
@@ -152,15 +154,43 @@ export function ExpenseListTable({
 
                   {/* Delete Action */}
                   <td className="py-4 pl-3 pr-6 text-center whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => onDeleteExpense?.(expense.id)}
-                      aria-label={`Delete ${expense.item}`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors"
-                      title="Delete expense"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {confirmDeleteId === expense.id ? (
+                      <div className="inline-flex items-center gap-1.5 animate-in fade-in">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onDeleteExpense?.(expense.id);
+                            setConfirmDeleteId(null);
+                          }}
+                          aria-label={`Confirm delete ${expense.item}`}
+                          className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white shadow-xs hover:bg-rose-700 active:scale-95 transition-all cursor-pointer"
+                          title="Confirm deletion"
+                        >
+                          <Check className="h-3 w-3" />
+                          <span>Confirm</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          aria-label={`Cancel delete ${expense.item}`}
+                          className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                          title="Cancel deletion"
+                        >
+                          <X className="h-3 w-3" />
+                          <span>Cancel</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(expense.id)}
+                        aria-label={`Delete ${expense.item}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                        title="Delete expense"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

@@ -416,7 +416,7 @@ describe('ExpenseListTable', () => {
     expect(screen.getByText('Personal')).toBeInTheDocument();
   });
 
-  it('calls onDeleteExpense when delete button on an expense is clicked', async () => {
+  it('requires inline confirmation before calling onDeleteExpense', async () => {
     const onDelete = vi.fn();
 
     render(
@@ -428,13 +428,48 @@ describe('ExpenseListTable', () => {
       />
     );
 
-    // Click delete on first item
+    // Initial state: 3 trash delete buttons
     const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     expect(deleteButtons.length).toBe(sampleExpenses.length);
 
+    // Click delete on first item -> triggers confirmation state
+    fireEvent.click(deleteButtons[0]);
+    expect(onDelete).not.toHaveBeenCalled();
+
+    // Confirm and Cancel buttons should now be visible for this row
+    const confirmBtn = screen.getByRole('button', { name: /confirm delete/i });
+    const cancelBtn = screen.getByRole('button', { name: /cancel delete/i });
+    expect(confirmBtn).toBeInTheDocument();
+    expect(cancelBtn).toBeInTheDocument();
+
+    // Clicking Confirm executes onDeleteExpense
+    fireEvent.click(confirmBtn);
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledWith('exp-test-1');
+  });
+
+  it('allows canceling delete without calling onDeleteExpense', async () => {
+    const onDelete = vi.fn();
+
+    render(
+      <ExpenseListTable
+        expenses={sampleExpenses}
+        categories={mockCategories}
+        members={mockMembers}
+        onDeleteExpense={onDelete}
+      />
+    );
+
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
 
-    expect(onDelete).toHaveBeenCalledWith('exp-test-1');
+    // Click Cancel
+    const cancelBtn = screen.getByRole('button', { name: /cancel delete/i });
+    fireEvent.click(cancelBtn);
+
+    expect(onDelete).not.toHaveBeenCalled();
+    // Reverts back to initial delete button
+    expect(screen.getAllByRole('button', { name: /delete/i }).length).toBe(sampleExpenses.length);
   });
 
   it('displays empty state when no expenses match', () => {
@@ -508,5 +543,41 @@ describe('ExpensesPage Integration', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+  });
+
+  it('displays global settlement summary independent of filtered transaction ledger', async () => {
+    // Only 1 personal expense in filtered ledger
+    vi.spyOn(financeService, 'getExpenses').mockResolvedValue([sampleExpenses[2]]);
+    vi.spyOn(financeService, 'getHouseholdOverview').mockResolvedValue({
+      household: { id: 'hh-1', name: 'Yi Jia & Rachel', currency: 'SGD' },
+      members: mockMembers,
+      totalAssets: 100000,
+      totalLiabilities: 0,
+      trueNetWorth: 100000,
+      settlementSummary: {
+        netBalance: 52.40,
+        debtorId: mockMembers[0].id,
+        creditorId: mockMembers[1].id,
+        debtorName: 'Yi Jia',
+        creditorName: 'Rachel',
+        settlementText: 'Yi Jia owes Rachel S$52.40',
+        member1OwesMember2: 52.40,
+        member2OwesMember1: 0,
+      },
+      activeGoals: [],
+      upcomingBills: [],
+    });
+
+    await act(async () => {
+      render(
+        <HouseholdProvider>
+          <ExpensesPage />
+        </HouseholdProvider>
+      );
+    });
+
+    // The settlement card displays the global balance even though the ledger is filtered
+    expect(screen.getByText('S$52.40')).toBeInTheDocument();
+    expect(screen.getByText('Yi Jia owes Rachel S$52.40')).toBeInTheDocument();
   });
 });

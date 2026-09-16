@@ -32,7 +32,7 @@ export interface ExpensesPageProps {
 }
 
 export function ExpensesPage({ className = '' }: ExpensesPageProps) {
-  const { activeMember, members: ctxMembers, refreshData: refreshHousehold } = useHousehold();
+  const { overview, activeMember, members: ctxMembers, refreshData: refreshHousehold } = useHousehold();
 
   const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
   const categories = mockCategories;
@@ -118,7 +118,13 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   }, [expenses]);
 
   // Unsettled Settlement Calculation
+  // Uses global household overview settlementSummary so that filtering by
+  // category, payer, search, etc. in the ledger table does not distort the true balance.
   const settlement = useMemo(() => {
+    if (overview?.settlementSummary) {
+      return overview.settlementSummary;
+    }
+
     const m1 = members[0];
     const m2 = members[1];
     if (!m1 || !m2) {
@@ -139,7 +145,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
       m1.display_name,
       m2.display_name
     );
-  }, [expenses, members]);
+  }, [overview, expenses, members]);
 
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
