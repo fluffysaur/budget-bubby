@@ -30,6 +30,7 @@ import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModa
 import { UpdateBalanceModal } from '../components/accounts/UpdateBalanceModal';
 import type {
   Account,
+  Category,
   Expense,
   Loan,
   MonthlyBudgetDetail,
@@ -61,6 +62,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
   const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudgetDetail | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Modal States
@@ -92,6 +94,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
         policiesData,
         expensesData,
         budgetData,
+        categoriesData,
       ] = await Promise.all([
         financeService.getAccounts(perspective),
         financeService.getLoans(),
@@ -99,6 +102,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
         financeService.getPolicies(),
         financeService.getExpenses(),
         financeService.getMonthlyBudget(currentMonth, targetMemberId),
+        financeService.getCategories(),
       ]);
 
       setAccounts(accountsData || []);
@@ -107,6 +111,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
       setPolicies(policiesData || []);
       setExpenses(expensesData || []);
       setMonthlyBudget(budgetData || null);
+      setCategories(categoriesData || []);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -522,7 +527,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
         onClose={() => setIsQuickAddOpen(false)}
         onExpenseAdded={handleExpenseAdded}
         defaultPayerId={activeMember?.id}
-        categories={mockCategories}
+        categories={categories.length > 0 ? categories : mockCategories}
         members={members}
       />
 
