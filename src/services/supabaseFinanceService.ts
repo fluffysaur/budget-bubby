@@ -8,6 +8,7 @@ import type {
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
+  Category,
   CreateExpenseInput,
   CreateGoalInput,
   Expense,
@@ -218,6 +219,24 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const { data, error } = await client.from('base_budget_profiles').select('*');
     if (error) throw error;
     return (data || []) as BaseBudgetProfile[];
+  }
+
+  public async getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]> {
+    const client = getClient();
+    let query = client.from('base_profile_allocations').select('*');
+    if (profileId) {
+      query = query.eq('profile_id', profileId);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []) as BaseProfileAllocation[];
+  }
+
+  public async getCategories(): Promise<Category[]> {
+    const client = getClient();
+    const { data, error } = await client.from('categories').select('*');
+    if (error) throw error;
+    return (data || []) as Category[];
   }
 
   public async updateBaseProfile(

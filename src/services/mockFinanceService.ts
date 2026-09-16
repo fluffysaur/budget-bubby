@@ -10,6 +10,7 @@ import type {
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
+  Category,
   CreateExpenseInput,
   CreateGoalInput,
   Expense,
@@ -177,6 +178,17 @@ class MockFinanceServiceImpl implements FinanceService {
 
   public async getBaseProfiles(): Promise<BaseBudgetProfile[]> {
     return cloneDeep(this.state.baseProfiles);
+  }
+
+  public async getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]> {
+    if (profileId) {
+      return cloneDeep(this.state.baseAllocations.filter((a) => a.profile_id === profileId));
+    }
+    return cloneDeep(this.state.baseAllocations);
+  }
+
+  public async getCategories(): Promise<Category[]> {
+    return cloneDeep(this.state.categories);
   }
 
   public async updateBaseProfile(

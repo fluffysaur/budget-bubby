@@ -8,6 +8,7 @@ import type {
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
+  Category,
   CreateExpenseInput,
   CreateGoalInput,
   Expense,
@@ -30,6 +31,8 @@ export interface FinanceService {
   updateAccountBalance(accountId: string, newBalance: number): Promise<Account>;
   getAccountSnapshots(accountId: string): Promise<AccountSnapshot[]>;
   getBaseProfiles(): Promise<BaseBudgetProfile[]>;
+  getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]>;
+  getCategories(): Promise<Category[]>;
   updateBaseProfile(
     profile: BaseBudgetProfile,
     allocations: BaseProfileAllocation[]
@@ -58,6 +61,8 @@ export const financeService: FinanceService = {
     getActiveService().updateAccountBalance(accountId, newBalance),
   getAccountSnapshots: (accountId) => getActiveService().getAccountSnapshots(accountId),
   getBaseProfiles: () => getActiveService().getBaseProfiles(),
+  getBaseAllocations: (profileId) => getActiveService().getBaseAllocations(profileId),
+  getCategories: () => getActiveService().getCategories(),
   updateBaseProfile: (profile, allocations) =>
     getActiveService().updateBaseProfile(profile, allocations),
   getMonthlyBudget: (month, memberId) =>
