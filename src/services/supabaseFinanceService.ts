@@ -522,7 +522,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .from('recurring_policies')
       .insert({
         household_id: householdId,
-        owner_id: input.owner_id,
+        owner_id: input.owner_id === 'joint' || !input.owner_id ? null : input.owner_id,
         type: input.type,
         name: input.name,
         amount: input.amount,

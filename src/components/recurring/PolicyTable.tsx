@@ -191,14 +191,14 @@ export function PolicyTable({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/50 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-              <th className="py-3.5 px-4">Policy Name</th>
-              <th className="py-3.5 px-4">Type</th>
-              <th className="py-3.5 px-4">Owner</th>
-              <th className="py-3.5 px-4">Frequency</th>
-              <th className="py-3.5 px-4 text-right">Premium</th>
-              <th className="py-3.5 px-4 text-right">Monthly Amortized</th>
-              <th className="py-3.5 px-4">Renewal</th>
-              <th className="py-3.5 px-4 text-right">Actions</th>
+              <th scope="col" className="py-3.5 px-4">Policy Name</th>
+              <th scope="col" className="py-3.5 px-4">Type</th>
+              <th scope="col" className="py-3.5 px-4">Owner</th>
+              <th scope="col" className="py-3.5 px-4">Frequency</th>
+              <th scope="col" className="py-3.5 px-4 text-right">Premium</th>
+              <th scope="col" className="py-3.5 px-4 text-right">Monthly Amortized</th>
+              <th scope="col" className="py-3.5 px-4">Renewal</th>
+              <th scope="col" className="py-3.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
@@ -210,6 +210,18 @@ export function PolicyTable({
                   <p className="text-xs text-slate-400 mt-1">
                     Try adjusting your search query or filter selection.
                   </p>
+                  {(searchTerm || selectedType !== 'all') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedType('all');
+                      }}
+                      className="mt-3 inline-flex items-center text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
+                    >
+                      Clear active filters
+                    </button>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -220,6 +232,8 @@ export function PolicyTable({
                   : policy.payment_month && policy.payment_month >= 1 && policy.payment_month <= 12
                   ? `${MONTH_NAMES[policy.payment_month - 1]} (M${policy.payment_month})`
                   : 'N/A';
+                const owner = getOwnerLabel(policy.owner_id);
+                const ownerIcon = owner === 'Yi Jia' ? '👨' : owner === 'Rachel' ? '👩' : '👥';
 
                 return (
                   <tr
@@ -246,10 +260,8 @@ export function PolicyTable({
                     {/* Owner / Insured */}
                     <td className="py-3.5 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                       <span className="inline-flex items-center gap-1.5 font-medium">
-                        <span className="text-xs">
-                          {getOwnerLabel(policy.owner_id) === 'Yi Jia' ? '👨' : '👩'}
-                        </span>
-                        {getOwnerLabel(policy.owner_id)}
+                        <span className="text-xs">{ownerIcon}</span>
+                        {owner}
                       </span>
                     </td>
 

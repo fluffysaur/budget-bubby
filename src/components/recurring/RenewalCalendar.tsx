@@ -109,8 +109,10 @@ export function RenewalCalendar({
     const breakdown: MonthData[] = monthlyTotals.map((outlay, idx) => {
       const monthNum = idx + 1;
       const isMax = max > 0 && outlay === max;
-      // Flag as heavy if it's the max month or significantly higher than average
-      const isHeavy = max > 0 && (isMax || (outlay > avg * 1.3 && outlay >= 500));
+      // Flag as heavy if outlay is substantial (>= $500) and represents peak demand
+      const isHeavy =
+        outlay >= 500 &&
+        ((isMax && max > Math.min(...monthlyTotals)) || (avg > 0 && outlay > avg * 1.3));
 
       return {
         monthNumber: monthNum,

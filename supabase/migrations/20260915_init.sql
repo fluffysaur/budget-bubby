@@ -173,7 +173,7 @@ create table if not exists savings_goals (
 create table if not exists recurring_policies (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null references households(id) on delete cascade,
-  owner_id uuid not null references household_members(id) on delete cascade,
+  owner_id uuid references household_members(id) on delete cascade,
   type text not null check (type in ('insurance', 'tax', 'subscription')),
   name text not null,
   amount numeric(12, 2) not null,
