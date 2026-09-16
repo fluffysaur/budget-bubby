@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { mockCategories } from '../../data/mockSeedData';
+import { calculateCPFAndNetPay } from '../../lib/financialFormulas';
 import type {
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -37,6 +38,7 @@ export interface BaseProfileEditorModalProps {
   initialTaxes?: number;
   initialInsurance?: number;
   monthlyBudgetId?: string;
+  selectedMonth?: string;
   onSaveSuccess?: () => void;
   className?: string;
 }
@@ -47,9 +49,11 @@ export function BaseProfileEditorModal({
   profile,
   allocations,
   categories = mockCategories,
+  members = [],
   initialTaxes = 0,
   initialInsurance = 0,
   monthlyBudgetId,
+  selectedMonth,
   onSaveSuccess,
   className = '',
 }: BaseProfileEditorModalProps) {
@@ -163,8 +167,12 @@ export function BaseProfileEditorModal({
       const updatedAllocations: BaseProfileAllocation[] = categories.map((cat) => {
         const existing = allocations.find((a) => a.category_id === cat.id);
         const targetPct = (categoryPercentages[cat.id] || 0) / 100;
+        const fallbackId =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `alloc-${profile.id}-${cat.id}`;
         return {
-          id: existing ? existing.id : `alloc-${profile.id}-${cat.id}`,
+          id: existing ? existing.id : fallbackId,
           profile_id: profile.id,
           category_id: cat.id,
           target_percentage: targetPct,
@@ -175,8 +183,8 @@ export function BaseProfileEditorModal({
       await financeService.updateBaseProfile(updatedProfile, updatedAllocations);
 
       // If a current monthly budget id is present, update current month figures as well
+      const cpfDeduction = calculateCPFAndNetPay(parsedGross, parsedCpf).cpfDeduction;
       if (monthlyBudgetId) {
-        const cpfDeduction = Math.round(parsedGross * parsedCpf * 100) / 100;
         await financeService.updateMonthlyBudget({
           id: monthlyBudgetId,
           gross_salary: parsedGross,
@@ -184,6 +192,21 @@ export function BaseProfileEditorModal({
           taxes_deduction: parsedTaxes,
           insurance_deduction: parsedInsurance,
         });
+      } else if (selectedMonth) {
+        try {
+          const monthDetail = await financeService.getMonthlyBudget(selectedMonth, profile.owner_id);
+          if (monthDetail?.budget?.id) {
+            await financeService.updateMonthlyBudget({
+              id: monthDetail.budget.id,
+              gross_salary: parsedGross,
+              cpf_deduction: cpfDeduction,
+              taxes_deduction: parsedTaxes,
+              insurance_deduction: parsedInsurance,
+            });
+          }
+        } catch {
+          // ignore if lookup fails
+        }
       }
 
       onSaveSuccess?.();
@@ -197,6 +220,8 @@ export function BaseProfileEditorModal({
   };
 
   if (!isOpen) return null;
+
+  const profileMember = members?.find((m) => m.id === profile.owner_id);
 
   return (
     <div
@@ -212,9 +237,16 @@ export function BaseProfileEditorModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h2 id={titleId} className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-              Edit Base Profile
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 id={titleId} className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                Edit Base Profile
+              </h2>
+              {profileMember && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                  {profileMember.display_name}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Configure baseline salary, deductions, and 100% allocation splits
             </p>
@@ -398,7 +430,7 @@ export function BaseProfileEditorModal({
                         <input
                           id={`cat-alloc-${cat.id}`}
                           type="number"
-                          step="1"
+                          step="any"
                           min="0"
                           max="100"
                           aria-label={`${cat.name} Allocation`}

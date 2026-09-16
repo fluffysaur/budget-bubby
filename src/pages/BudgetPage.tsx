@@ -262,14 +262,30 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
         <div className="flex items-center flex-wrap gap-2.5">
           <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
 
-          <button
-            type="button"
-            onClick={() => handleOpenEditor()}
-            className="flex items-center gap-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
-          >
-            <Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />
-            <span>Edit Base Profile</span>
-          </button>
+          {perspective === 'household' && members.length > 1 ? (
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+              {members.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => handleOpenEditor(m.id)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Settings className="h-3 w-3 text-slate-400" />
+                  <span>Edit {m.display_name}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleOpenEditor()}
+              className="flex items-center gap-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
+            >
+              <Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />
+              <span>Edit Base Profile</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -416,6 +432,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           monthlyBudgetId={
             perspective !== 'household' ? budgetDetail?.budget.id : undefined
           }
+          selectedMonth={selectedMonth}
           onSaveSuccess={handleProfileSaved}
         />
       )}

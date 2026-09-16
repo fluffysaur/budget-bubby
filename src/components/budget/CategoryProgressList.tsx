@@ -103,10 +103,11 @@ export function CategoryProgressList({
           const remaining =
             catDetail.remaining !== undefined ? catDetail.remaining : allocated - actual;
 
-          const spentPercentage = allocated > 0 ? (actual / allocated) * 100 : 0;
+          const spentPercentage =
+            allocated > 0 ? (actual / allocated) * 100 : actual > 0 ? 100 : 0;
           const roundedPercentage = Math.round(spentPercentage);
-          const isOverBudget = spentPercentage > 100;
-          const isNearLimit = spentPercentage > 80 && spentPercentage <= 100;
+          const isOverBudget = actual > allocated;
+          const isNearLimit = !isOverBudget && spentPercentage > 80;
 
           // Status Badge details
           let statusLabel = 'On Track';
@@ -129,7 +130,7 @@ export function CategoryProgressList({
             StatusIcon = AlertTriangle;
           }
 
-          const fillWidth = Math.min(spentPercentage, 100);
+          const fillWidth = Math.max(0, Math.min(spentPercentage, 100));
 
           return (
             <div
