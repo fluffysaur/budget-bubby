@@ -241,6 +241,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
           <button
             role="tab"
             aria-selected={activeTab === 'all'}
+            aria-controls="goals-tabpanel"
             onClick={() => setActiveTab('all')}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
               activeTab === 'all'
@@ -257,6 +258,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
           <button
             role="tab"
             aria-selected={activeTab === 'in_progress'}
+            aria-controls="goals-tabpanel"
             onClick={() => setActiveTab('in_progress')}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
               activeTab === 'in_progress'
@@ -273,6 +275,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
           <button
             role="tab"
             aria-selected={activeTab === 'achieved'}
+            aria-controls="goals-tabpanel"
             onClick={() => setActiveTab('achieved')}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
               activeTab === 'achieved'
@@ -297,14 +300,20 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
           </div>
         </div>
       ) : displayedGoals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center dark:border-slate-800">
+        <div
+          id="goals-tabpanel"
+          role="tabpanel"
+          className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center dark:border-slate-800"
+        >
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl dark:bg-slate-800">
             🎯
           </div>
           <h3 className="mt-4 text-base font-bold text-slate-800 dark:text-white">
             {activeTab === 'all'
               ? 'No savings goals found'
-              : `No ${activeTab === 'in_progress' ? 'in-progress' : 'achieved'} goals found`}
+              : activeTab === 'in_progress'
+              ? 'No goals currently in progress'
+              : 'No goals achieved yet'}
           </h3>
           <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
             {activeTab === 'all'
@@ -321,7 +330,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="goals-tabpanel" role="tabpanel" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedGoals.map((goal) => (
             <GoalCard
               key={goal.id}

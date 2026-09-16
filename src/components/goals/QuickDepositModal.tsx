@@ -41,9 +41,10 @@ export function QuickDepositModal({
       setErrorMessage(null);
       setIsSubmitting(false);
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         depositInputRef.current?.focus();
       }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, goal]);
 

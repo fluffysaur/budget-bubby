@@ -14,6 +14,7 @@ import { X, Target, AlertCircle, TrendingUp } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { calculateGoalPacing } from '../../lib/financialFormulas';
 import { formatSGD } from '../../lib/currency';
+import { formatISODate } from '../../lib/dateUtils';
 import type { SavingsGoal, CreateGoalInput } from '../../types/finance';
 
 export interface AddEditGoalModalProps {
@@ -75,15 +76,16 @@ export function AddEditGoalModal({
         // Default target date to 1 year ahead
         const oneYearAhead = new Date();
         oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1);
-        setTargetDate(oneYearAhead.toISOString().slice(0, 10));
+        setTargetDate(formatISODate(oneYearAhead));
         setMonthlyContribution('0');
       }
       setErrorMessage(null);
       setIsSubmitting(false);
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         titleInputRef.current?.focus();
       }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, goal]);
 
