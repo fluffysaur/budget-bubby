@@ -158,3 +158,9 @@ export function useHousehold(): HouseholdContextValue {
   }
   return context;
 }
+
+export function useOptionalHousehold(): HouseholdContextValue | null {
+  const context = useContext(HouseholdContext);
+  return context || null;
+}
+

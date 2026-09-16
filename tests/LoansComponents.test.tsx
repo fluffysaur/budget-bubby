@@ -318,8 +318,10 @@ describe('Task 9: Loans & Debt Freedom Engine', () => {
       const input = screen.getByTestId('extra-monthly-input');
       fireEvent.change(input, { target: { value: '500' } });
 
-      const interestSaved = screen.getByTestId('interest-saved');
-      expect(interestSaved.textContent).not.toBe('S$0.00');
+      await waitFor(() => {
+        const interestSaved = screen.getByTestId('interest-saved');
+        expect(interestSaved.textContent).not.toBe('S$0.00');
+      });
     });
 
     it('handles empty loans state gracefully', async () => {
