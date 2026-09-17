@@ -144,7 +144,7 @@ export function CategoryProgressList({
             >
               {/* Card Header: Icon, Name, Target % & Status Badge */}
               <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                     style={{ backgroundColor: categoryColor }}
@@ -152,7 +152,7 @@ export function CategoryProgressList({
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="truncate">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
                         {categoryName}
                       </span>

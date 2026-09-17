@@ -113,7 +113,7 @@ export function ExpenseListTable({
                   {/* Category Badge */}
                   <td className="px-3 py-4 whitespace-nowrap">
                     {category ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                      <span className="inline-flex items-center gap-2 rounded-lg px-3 py-1 text-[11px] font-semibold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
                         <span
                           className="h-2 w-2 rounded-full shrink-0"
                           style={{ backgroundColor: category.color || '#10B981' }}
@@ -127,7 +127,7 @@ export function ExpenseListTable({
 
                   {/* Payer Avatar / Name */}
                   <td className="px-3 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
+                    <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-200">
                       <span>{payer?.avatar_url || '👤'}</span>
                       <span>{payer?.display_name || 'Unknown'}</span>
                     </span>
@@ -136,12 +136,12 @@ export function ExpenseListTable({
                   {/* Split Status Badge */}
                   <td className="px-3 py-4 whitespace-nowrap">
                     {expense.is_shared ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
                         <ArrowRightLeft className="h-3 w-3" />
                         <span>Shared 50/50</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                         <span>Personal</span>
                       </span>
                     )}
@@ -155,7 +155,7 @@ export function ExpenseListTable({
                   {/* Delete Action */}
                   <td className="py-4 pl-3 pr-6 text-center whitespace-nowrap">
                     {confirmDeleteId === expense.id ? (
-                      <div className="inline-flex items-center gap-1.5 animate-in fade-in">
+                      <div className="inline-flex items-center gap-2 animate-in fade-in">
                         <button
                           type="button"
                           onClick={() => {

@@ -231,7 +231,7 @@ describe('Layout Components', () => {
       });
 
       // Default is household
-      expect(screen.getByText(/Combined Household/i)).toBeInTheDocument();
+      expect(screen.getByText('Combined')).toBeInTheDocument();
       expect(screen.getByText(/Yi Jia & Rachel/i)).toBeInTheDocument();
 
       // Switch to Yi Jia via header/context

@@ -15,8 +15,11 @@ import {
   ArrowRightLeft,
   Scale,
   CheckCircle2,
+  Users,
+  User,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
+import { PageHeader, Button, StatCard, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
@@ -32,7 +35,13 @@ export interface ExpensesPageProps {
 }
 
 export function ExpensesPage({ className = '' }: ExpensesPageProps) {
-  const { overview, activeMember, members: ctxMembers, refreshData: refreshHousehold } = useHousehold();
+  const {
+    perspective,
+    overview,
+    activeMember,
+    members: ctxMembers,
+    refreshData: refreshHousehold,
+  } = useHousehold();
 
   const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
   const categories = mockCategories;
@@ -150,97 +159,61 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-            Expenses
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Daily expense ledger and couple splits
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-600 active:scale-95 transition-all cursor-pointer"
-        >
-          <Plus className="h-4 w-4 stroke-[2.5]" />
-          <span>+ Add Expense</span>
-        </button>
-      </div>
+      <PageHeader
+        title="Expenses"
+        badge={
+          <Badge
+            variant={perspective === 'household' ? 'emerald' : 'blue'}
+            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
+          >
+            {perspective === 'household' ? 'Combined' : activeMember?.display_name || perspective}
+          </Badge>
+        }
+        subtitle="Daily expense ledger and couple splits"
+        actions={
+          <Button
+            variant="primary"
+            aria-label="+ Add Expense"
+            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add Expense
+          </Button>
+        }
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Total Spent */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Spent
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <Receipt className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {formatSGD(totalSpent)}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-            {expenses.length} transaction{expenses.length === 1 ? '' : 's'} in view
-          </p>
-        </div>
+        <StatCard
+          title="Total Spent"
+          value={formatSGD(totalSpent)}
+          subtitle={`${expenses.length} transaction${expenses.length === 1 ? '' : 's'} in view`}
+          icon={<Receipt className="h-4 w-4" />}
+          iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+        />
 
         {/* Card 2: Shared Spending */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Shared Spending
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-              <ArrowRightLeft className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {formatSGD(totalShared)}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-            Default 50/50 couple split
-          </p>
-        </div>
+        <StatCard
+          title="Shared Spending"
+          value={formatSGD(totalShared)}
+          subtitle="Default 50/50 couple split"
+          icon={<ArrowRightLeft className="h-4 w-4" />}
+          iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+        />
 
         {/* Card 3: Unsettled Balance (Who Owes Whom) */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Unsettled / Who Owes Whom
-            </span>
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-                settlement.netBalance === 0
-                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-                  : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
-              }`}
-            >
-              {settlement.netBalance === 0 ? (
-                <CheckCircle2 className="h-4 w-4" />
-              ) : (
-                <Scale className="h-4 w-4" />
-              )}
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {formatSGD(settlement.netBalance)}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 truncate">
-            {settlement.settlementText}
-          </p>
-        </div>
+        <StatCard
+          title="Unsettled / Who Owes Whom"
+          value={formatSGD(settlement.netBalance)}
+          subtitle={settlement.settlementText}
+          icon={settlement.netBalance === 0 ? <CheckCircle2 className="h-4 w-4" /> : <Scale className="h-4 w-4" />}
+          iconBg={
+            settlement.netBalance === 0
+              ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+              : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+          }
+        />
       </div>
 
       {/* Filter Bar */}

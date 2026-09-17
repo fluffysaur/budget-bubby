@@ -101,7 +101,7 @@ function AppLayoutInner() {
         <PerspectiveBanner />
 
         {/* Scrollable Viewport / Route Container */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-8">
+        <main className="flex-1 overflow-y-auto px-4 py-6 pb-24 md:pb-10">
           <Routes>
             <Route path="/" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
             <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />

@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs p-3 shadow-lg text-xs space-y-1.5 min-w-[170px]">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs p-3 shadow-lg text-xs space-y-2 min-w-[170px]">
       <div className="font-bold text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-100 dark:border-slate-800">
         {label}
       </div>
@@ -141,7 +141,7 @@ export function NetWorthChart({
 
         {/* Legend Pills */}
         <div className="flex items-center flex-wrap gap-2 text-xs font-semibold">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
             <span className="h-2 w-2 rounded-full bg-indigo-600" />
             <span>True Net Worth</span>
             {latestPoint && (
@@ -149,7 +149,7 @@ export function NetWorthChart({
             )}
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
             <span className="h-2 w-2 rounded-full bg-emerald-600" />
             <span>Total Assets</span>
             {latestPoint && (
@@ -157,7 +157,7 @@ export function NetWorthChart({
             )}
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60">
             <span className="h-2 w-2 rounded-full bg-rose-600" />
             <span>Liabilities</span>
             {latestPoint && (

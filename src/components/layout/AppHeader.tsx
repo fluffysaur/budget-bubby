@@ -1,14 +1,17 @@
 /**
  * Responsive Application Header
  * Features:
- * - Perspective pills: Combined Household / Yi Jia / Rachel
+ * - Mobile dropdown perspective switcher: Combined / Yi Jia / Rachel
+ * - Desktop pill perspective switcher: Combined / Yi Jia / Rachel
+ * - Flush-to-sides top navigation (16px spacing)
  * - Currency indicator: SGD S$
  * - Connection status: Demo Mock vs Live Supabase
  * - Theme toggle: Light / Dark mode
  */
 
-import { Sun, Moon, Users, User, Coins, Plus } from 'lucide-react';
-import { useHousehold } from '../../context/HouseholdContext';
+import { useState, useRef, useEffect } from 'react';
+import { Sun, Moon, Users, User, Coins, Plus, ChevronDown, Check } from 'lucide-react';
+import { useHousehold, type PerspectiveType } from '../../context/HouseholdContext';
 
 export interface AppHeaderProps {
   className?: string;
@@ -25,6 +28,24 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
     isMockMode,
   } = useHousehold();
 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
   // Find partner display names from members or fallbacks
   const yiJiaMember = members.find((m) =>
     m.display_name.toLowerCase().includes('yi jia')
@@ -36,30 +57,153 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
   const yiJiaName = yiJiaMember ? yiJiaMember.display_name : 'Yi Jia';
   const rachelName = rachelMember ? rachelMember.display_name : 'Rachel';
 
+  const perspectiveConfig: Record<
+    PerspectiveType,
+    { label: string; icon: typeof Users; color: string; badgeBg: string }
+  > = {
+    household: {
+      label: 'Combined',
+      icon: Users,
+      color: 'text-emerald-700 dark:text-emerald-400',
+      badgeBg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400',
+    },
+    yijia: {
+      label: yiJiaName,
+      icon: User,
+      color: 'text-blue-700 dark:text-blue-400',
+      badgeBg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400',
+    },
+    rachel: {
+      label: rachelName,
+      icon: User,
+      color: 'text-rose-700 dark:text-rose-400',
+      badgeBg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400',
+    },
+  };
+
+  const currentConfig = perspectiveConfig[perspective] || perspectiveConfig.household;
+  const CurrentIcon = currentConfig.icon;
+
+  const handleSelectPerspective = (p: PerspectiveType) => {
+    setPerspective(p);
+    setIsDropdownOpen(false);
+  };
+
   return (
     <header
       className={`sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/95 ${className}`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left / Center: Perspective Pills */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
+      <div className="flex h-16 w-full items-center justify-between px-4">
+        {/* Left / Center: Perspective Switcher */}
+        <div className="flex items-center">
+          {/* Mobile Perspective Dropdown */}
+          <div className="relative sm:hidden" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              aria-haspopup="listbox"
+              aria-expanded={isDropdownOpen}
+              aria-label="Select Financial Perspective"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            >
+              <CurrentIcon className={`h-4 w-4 ${currentConfig.color}`} />
+              <span>{currentConfig.label}</span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-150 ${
+                  isDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {isDropdownOpen && (
+              <div
+                role="listbox"
+                aria-label="Financial Perspectives"
+                className="absolute left-0 mt-1.5 w-44 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl transition-all dark:border-slate-700 dark:bg-slate-800 z-50 animate-in fade-in zoom-in-95 duration-100"
+              >
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={perspective === 'household'}
+                  onClick={() => handleSelectPerspective('household')}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                    perspective === 'household'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Combined</span>
+                  </div>
+                  {perspective === 'household' && (
+                    <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={perspective === 'yijia'}
+                  onClick={() => handleSelectPerspective('yijia')}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                    perspective === 'yijia'
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span>{yiJiaName}</span>
+                  </div>
+                  {perspective === 'yijia' && (
+                    <Check className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={perspective === 'rachel'}
+                  onClick={() => handleSelectPerspective('rachel')}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                    perspective === 'rachel'
+                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                    <span>{rachelName}</span>
+                  </div>
+                  {perspective === 'rachel' && (
+                    <Check className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Perspective Switcher Pills */}
           <nav
             aria-label="Perspective Switcher"
-            className="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+            className="hidden sm:flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
           >
-            {/* Combined Household */}
+            {/* Combined */}
             <button
               type="button"
               onClick={() => setPerspective('household')}
               aria-pressed={perspective === 'household'}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm ${
+              aria-label="Combined Household"
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                 perspective === 'household'
                   ? 'bg-white text-emerald-700 shadow-sm dark:bg-slate-700 dark:text-emerald-400'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span>Combined Household</span>
+              <Users className="h-4 w-4" />
+              <span>Combined</span>
+              <span className="sr-only">Household</span>
             </button>
 
             {/* Yi Jia */}
@@ -67,13 +211,14 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
               type="button"
               onClick={() => setPerspective('yijia')}
               aria-pressed={perspective === 'yijia'}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm ${
+              aria-label={yiJiaName}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                 perspective === 'yijia'
                   ? 'bg-white text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-400'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <User className="h-4 w-4" />
               <span>{yiJiaName}</span>
             </button>
 
@@ -82,13 +227,14 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
               type="button"
               onClick={() => setPerspective('rachel')}
               aria-pressed={perspective === 'rachel'}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm ${
+              aria-label={rachelName}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                 perspective === 'rachel'
                   ? 'bg-white text-rose-700 shadow-sm dark:bg-slate-700 dark:text-rose-400'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <User className="h-4 w-4" />
               <span>{rachelName}</span>
             </button>
           </nav>
@@ -102,9 +248,9 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
               type="button"
               onClick={onOpenQuickAdd}
               aria-label="Quick Add"
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors"
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
               <span>Add Expense</span>
             </button>
           )}
@@ -112,9 +258,9 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
           {/* Currency Badge */}
           <div
             title="Household Currency: Singapore Dollar"
-            className="hidden items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            className="hidden items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
           >
-            <Coins className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            <Coins className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>SGD S$</span>
           </div>
 
@@ -125,7 +271,7 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
                 ? 'Running with local mock seed data'
                 : 'Connected to live Supabase backend'
             }
-            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium ${
+            className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium ${
               isMockMode
                 ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300'
                 : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-300'
@@ -147,7 +293,7 @@ export function AppHeader({ className = '', onOpenQuickAdd }: AppHeaderProps) {
             type="button"
             onClick={toggleTheme}
             aria-label={`Toggle theme (currently ${theme})`}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
           >
             {theme === 'dark' ? (
               <Sun className="h-4 w-4 text-amber-400" />

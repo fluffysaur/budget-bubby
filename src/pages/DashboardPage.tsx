@@ -18,6 +18,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
+import { PageHeader, Button, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth, formatDisplayDate } from '../lib/dateUtils';
@@ -185,49 +186,41 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
       {/* Top Header & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              Dashboard
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-              {isHousehold ? (
-                <Users className="h-3 w-3" />
-              ) : (
-                <User className="h-3 w-3" />
-              )}
-              <span>{perspectiveDisplayName}</span>
-            </span>
-          </div>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {isHousehold
-              ? 'Combined household hub, running settlements, and couple milestones'
-              : `${perspectiveDisplayName}'s personal take-home, allocations, and individual assets`}
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setIsQuickAddOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-600 active:scale-95 transition-all cursor-pointer"
+      <PageHeader
+        title="Dashboard"
+        badge={
+          <Badge
+            variant={isHousehold ? 'emerald' : 'blue'}
+            icon={isHousehold ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
           >
-            <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span>+ Add Expense</span>
-          </button>
+            {perspectiveDisplayName}
+          </Badge>
+        }
+        subtitle={
+          isHousehold
+            ? 'Combined household hub, running settlements, and couple milestones'
+            : `${perspectiveDisplayName}'s personal take-home, allocations, and individual assets`
+        }
+        actions={
+          <>
+            <Button
+              variant="primary"
+              leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+              onClick={() => setIsQuickAddOpen(true)}
+            >
+              Add Expense
+            </Button>
 
-          <button
-            type="button"
-            onClick={() => handleOpenUpdateBalance()}
-            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
-          >
-            <Landmark className="h-4 w-4 text-slate-500" />
-            <span>Update Balance</span>
-          </button>
-        </div>
-      </div>
+            <Button
+              variant="secondary"
+              leftIcon={<Landmark className="h-4 w-4 text-slate-500" />}
+              onClick={() => handleOpenUpdateBalance()}
+            >
+              Update Balance
+            </Button>
+          </>
+        }
+      />
 
       {/* Loading Indicator */}
       {isLoading ? (
@@ -282,7 +275,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
                 className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs transition-colors"
               >
                 <div className="flex items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
                       <PieChart className="h-5 w-5" />
                     </div>
@@ -410,7 +403,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
                       accounts.map((acc) => (
                         <div
                           key={acc.id}
-                          className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-3.5"
+                          className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-4"
                         >
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-2xs text-xs font-bold text-slate-700 dark:text-slate-200">
@@ -422,7 +415,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
                                   {acc.name}
                                 </span>
                                 {acc.is_joint && (
-                                  <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.2 text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                                  <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300">
                                     Joint
                                   </span>
                                 )}
@@ -458,7 +451,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
                   className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs transition-colors"
                 >
                   <div className="flex items-center justify-between pb-5 border-b border-slate-100 dark:border-slate-800/80">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400">
                         <Receipt className="h-5 w-5" />
                       </div>
@@ -491,7 +484,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
                       personalExpenses.map((exp) => (
                         <div
                           key={exp.id}
-                          className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-3.5"
+                          className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-4"
                         >
                           <div>
                             <span className="text-sm font-bold text-slate-900 dark:text-white">
@@ -500,7 +493,7 @@ export function DashboardPage({ className = '', onNavigateTab }: DashboardPagePr
                             <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                               <span>{formatDisplayDate(exp.date)}</span>
                               {exp.is_shared && (
-                                <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.2 text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300">
                                   Shared (50%)
                                 </span>
                               )}

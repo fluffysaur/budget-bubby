@@ -18,8 +18,11 @@ import {
   Calendar,
   Loader2,
   AlertCircle,
+  Users,
+  User,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
+import { PageHeader, Button, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { GoalCard } from '../components/goals/GoalCard';
@@ -132,30 +135,28 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <Target className="h-5 w-5" />
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              Savings Goals &amp; Milestones
-            </h1>
-          </div>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Track joint wedding, HDB down payment, renovation, and couple aspirations with real-time monthly pacing
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer"
-        >
-          <Plus className="h-4 w-4 stroke-[2.5]" />
-          <span>+ New Goal</span>
-        </button>
-      </div>
+      <PageHeader
+        title="Savings Goals & Milestones"
+        subtitle="Track joint wedding, HDB down payment, renovation, and couple aspirations with real-time monthly pacing"
+        badge={
+          <Badge
+            variant={perspective === 'household' ? 'emerald' : 'blue'}
+            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
+          >
+            {perspective === 'household' ? 'Combined' : perspective === 'yijia' ? 'Yi Jia' : 'Rachel'}
+          </Badge>
+        }
+        actions={
+          <Button
+            variant="primary"
+            aria-label="+ New Goal"
+            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+            onClick={handleOpenCreateModal}
+          >
+            New Goal
+          </Button>
+        }
+      />
 
       {/* Error Alert */}
       {errorMessage && (

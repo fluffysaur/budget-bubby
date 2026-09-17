@@ -185,7 +185,7 @@ export function RenewalCalendar({
           return (
             <div
               key={m.monthNumber}
-              className={`relative flex flex-col rounded-2xl p-3.5 transition-all border ${
+              className={`relative flex flex-col rounded-2xl p-4 transition-all border ${
                 m.isCurrent
                   ? 'bg-gradient-to-b from-emerald-50/80 to-white dark:from-emerald-950/30 dark:to-slate-900 border-emerald-400 dark:border-emerald-600 shadow-sm ring-2 ring-emerald-500/20'
                   : m.isHeavy
@@ -239,7 +239,7 @@ export function RenewalCalendar({
               </div>
 
               {/* Policy Chips in this Month */}
-              <div className="flex-1 flex flex-col gap-1.5 min-h-[68px]">
+              <div className="flex-1 flex flex-col gap-2 min-h-[68px]">
                 {m.policies.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center text-[11px] text-slate-400 italic">
                     No renewals
@@ -248,7 +248,7 @@ export function RenewalCalendar({
                   m.policies.map((p) => (
                     <div
                       key={`${m.monthNumber}-${p.id}`}
-                      className="flex items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-800 text-xs"
+                      className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-800 text-xs"
                     >
                       <div className="flex items-center gap-1 min-w-0">
                         {renderPolicyIcon(p.type)}

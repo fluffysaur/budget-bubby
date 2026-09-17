@@ -19,6 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
+import { PageHeader, Button, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getSingaporeDate } from '../lib/dateUtils';
@@ -203,42 +204,34 @@ export function RecurringPage({ className = '' }: RecurringPageProps) {
   };
 
   return (
-    <div className={`space-y-8 pb-16 ${className}`}>
+    <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
       {/* Page Title & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Recurring Policies &amp; Taxes
-            </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              Annual Calendar
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Track insurance coverage, IRAS tax schedules, and recurring household obligations
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={loadPolicies}
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-            title="Refresh policies"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenAddModal}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-md shadow-emerald-600/20 transition-all active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Policy</span>
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Recurring Policies & Taxes"
+        badge={
+          <Badge variant="emerald" size="sm">
+            Annual Calendar
+          </Badge>
+        }
+        subtitle="Track insurance coverage, IRAS tax schedules, and recurring household obligations"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={loadPolicies}
+              title="Refresh policies"
+              leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
+            />
+            <Button
+              variant="primary"
+              leftIcon={<Plus className="w-4 h-4 stroke-[2.5]" />}
+              onClick={handleOpenAddModal}
+            >
+              Add Policy
+            </Button>
+          </>
+        }
+      />
 
       {/* Error Banner */}
       {errorMessage && (

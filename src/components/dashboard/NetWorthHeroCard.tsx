@@ -82,7 +82,7 @@ export function NetWorthHeroCard({
         {/* Trend Indicator Pill */}
         <div
           data-testid="trend-indicator"
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${
             isPositive
               ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/70'
               : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800/70'
@@ -118,7 +118,7 @@ export function NetWorthHeroCard({
             {formatSGD(netWorth)}
           </h2>
         </div>
-        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
           Total Assets minus Total Outstanding Loans &amp; Liabilities
         </p>
       </div>
@@ -126,7 +126,7 @@ export function NetWorthHeroCard({
       {/* Sub-Metrics Pills: Assets and Liabilities */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 border-t border-slate-200/80 dark:border-slate-800">
         {/* Total Assets Pill */}
-        <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-3.5 sm:p-4">
+        <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
               <Wallet className="h-5 w-5" />
@@ -152,7 +152,7 @@ export function NetWorthHeroCard({
         </div>
 
         {/* Total Liabilities Pill */}
-        <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-3.5 sm:p-4">
+        <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
               <CreditCard className="h-5 w-5" />

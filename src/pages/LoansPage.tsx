@@ -18,6 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
+import { PageHeader, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { calculateLoanAmortization } from '../lib/financialFormulas';
 import { LoanSummaryCard } from '../components/loans/LoanSummaryCard';
@@ -190,58 +191,48 @@ export function LoansPage({ className = '' }: LoansPageProps) {
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              Loans &amp; Debt Freedom
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-              {perspective === 'household' ? (
-                <Users className="h-3 w-3" />
-              ) : (
-                <User className="h-3 w-3" />
-              )}
-              <span>
-                {perspective === 'household'
-                  ? 'Combined Household'
-                  : activeMember?.display_name || perspective}
-              </span>
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Track mortgage amortization schedules, simulate early prepayment strategies, and plan your path to zero debt.
-          </p>
-        </div>
-
-        {/* Loan Selector Tabs */}
-        {displayedLoans.length > 1 && (
-          <div
-            role="tablist"
-            className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto self-start sm:self-auto"
+      <PageHeader
+        title="Loans & Debt Freedom"
+        badge={
+          <Badge
+            variant={perspective === 'household' ? 'emerald' : 'blue'}
+            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
           >
-            {displayedLoans.map((loan) => {
-              const isActive = (activeLoan?.id || selectedLoanId) === loan.id;
-              return (
-                <button
-                  key={loan.id}
-                  role="tab"
-                  aria-selected={isActive}
-                  type="button"
-                  onClick={() => handleSelectLoan(loan.id)}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {loan.name}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+            {perspective === 'household'
+              ? 'Combined'
+              : activeMember?.display_name || perspective}
+          </Badge>
+        }
+        subtitle="Track mortgage amortization schedules, simulate early prepayment strategies, and plan your path to zero debt."
+        actions={
+          displayedLoans.length > 1 ? (
+            <div
+              role="tablist"
+              className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto self-start sm:self-auto"
+            >
+              {displayedLoans.map((loan) => {
+                const isActive = (activeLoan?.id || selectedLoanId) === loan.id;
+                return (
+                  <button
+                    key={loan.id}
+                    role="tab"
+                    aria-selected={isActive}
+                    type="button"
+                    onClick={() => handleSelectLoan(loan.id)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {loan.name}
+                  </button>
+                );
+              })}
+            </div>
+          ) : undefined
+        }
+      />
 
       {/* 1. Loan Overview Card */}
       <LoanSummaryCard

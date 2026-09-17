@@ -55,7 +55,7 @@ export function SharedGoalsOverview({
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
             <Target className="h-5 w-5" />
           </div>
@@ -111,7 +111,7 @@ export function SharedGoalsOverview({
                   className="rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/70"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-lg shadow-2xs">
                         {goal.emoji || '🎯'}
                       </span>

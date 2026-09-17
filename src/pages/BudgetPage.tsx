@@ -22,6 +22,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
+import { PageHeader, Button, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
@@ -238,56 +239,47 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
       {/* Top Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              Monthly Budget
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-              {perspective === 'household' ? (
-                <Users className="h-3 w-3" />
-              ) : (
-                <User className="h-3 w-3" />
-              )}
-              <span>{perspectiveDisplayName}</span>
-            </span>
+      <PageHeader
+        title="Monthly Budget"
+        badge={
+          <Badge
+            variant={perspective === 'household' ? 'emerald' : 'blue'}
+            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
+          >
+            {perspectiveDisplayName}
+          </Badge>
+        }
+        subtitle="Monthly allocations, CPF deduction waterfall, and category meters"
+        actions={
+          <div className="flex items-center flex-wrap gap-3">
+            <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+
+            {perspective === 'household' && members.length > 1 ? (
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                {members.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => handleOpenEditor(m.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer"
+                  >
+                    <Settings className="h-3 w-3 text-slate-400" />
+                    <span>Edit {m.display_name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Button
+                variant="secondary"
+                leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
+                onClick={() => handleOpenEditor()}
+              >
+                Edit Base Profile
+              </Button>
+            )}
           </div>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Monthly allocations, CPF deduction waterfall, and category meters
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center flex-wrap gap-2.5">
-          <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
-
-          {perspective === 'household' && members.length > 1 ? (
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-              {members.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => handleOpenEditor(m.id)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer"
-                >
-                  <Settings className="h-3 w-3 text-slate-400" />
-                  <span>Edit {m.display_name}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => handleOpenEditor()}
-              className="flex items-center gap-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all cursor-pointer"
-            >
-              <Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />
-              <span>Edit Base Profile</span>
-            </button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* High-Level Financial Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

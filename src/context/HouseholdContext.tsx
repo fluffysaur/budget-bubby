@@ -13,6 +13,7 @@ import React, {
   useCallback,
 } from 'react';
 import type { HouseholdMember, HouseholdOverview, Perspective } from '../types/finance';
+export type { Perspective, Perspective as PerspectiveType };
 import { mockMembers } from '../data/mockSeedData';
 import { financeService } from '../services/financeService';
 import { isSupabaseConfigured } from '../services/supabaseClient';

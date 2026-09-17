@@ -109,7 +109,7 @@ export function ExpenseFilterBar({
             Search
           </label>
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <input
               id="filter-search"
               type="text"
@@ -215,7 +215,7 @@ export function ExpenseFilterBar({
             type="button"
             onClick={handleResetClick}
             title="Reset Filters"
-            className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all shrink-0 ${
+            className={`flex h-9 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all shrink-0 cursor-pointer ${
               hasActiveFilters
                 ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300'
                 : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'

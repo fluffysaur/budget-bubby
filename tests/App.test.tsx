@@ -108,11 +108,11 @@ describe('App Integration & Routing', () => {
       expect(within(banner).getByText(/Yi Jia's Personal Perspective/i)).toBeInTheDocument();
     });
 
-    const householdBtn = within(perspectiveNav).getByRole('button', { name: /Combined Household/i });
+    const householdBtn = within(perspectiveNav).getByRole('button', { name: /Combined/i });
     fireEvent.click(householdBtn);
 
     await waitFor(() => {
-      expect(within(banner).getByText(/Combined Household/i)).toBeInTheDocument();
+      expect(within(banner).getByText('Combined')).toBeInTheDocument();
     });
   });
 

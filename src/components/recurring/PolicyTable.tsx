@@ -253,36 +253,36 @@ export function PolicyTable({
                     </td>
 
                     {/* Type Badge */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-3 px-4 whitespace-nowrap">
                       {renderTypeBadge(policy.type)}
                     </td>
 
                     {/* Owner / Insured */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                      <span className="inline-flex items-center gap-1.5 font-medium">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                      <span className="inline-flex items-center gap-2 font-medium">
                         <span className="text-xs">{ownerIcon}</span>
                         {owner}
                       </span>
                     </td>
 
                     {/* Frequency */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 capitalize">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 capitalize">
                       {policy.frequency}
                     </td>
 
                     {/* Premium Amount */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-right font-semibold text-slate-900 dark:text-white">
+                    <td className="py-3 px-4 whitespace-nowrap text-right font-semibold text-slate-900 dark:text-white">
                       {formatSGD(policy.amount)}
                     </td>
 
                     {/* Monthly Amortized Outflow */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-medium">
+                    <td className="py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-medium">
                       {formatSGD(policy.monthly_amortized_amount)}
                       <span className="text-xs text-slate-400 font-normal">/mo</span>
                     </td>
 
                     {/* Renewal Month */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                           isMonthly
@@ -295,14 +295,14 @@ export function PolicyTable({
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                    <td className="py-3 px-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1">
                         {onEdit && (
                           <button
                             type="button"
                             aria-label={`Edit ${policy.name}`}
                             onClick={() => onEdit(policy)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Edit policy"
                           >
                             <Pencil className="w-4 h-4" />
@@ -313,7 +313,7 @@ export function PolicyTable({
                             type="button"
                             aria-label={`Delete ${policy.name}`}
                             onClick={() => onDelete(policy.id)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 transition-colors"
+                            className="p-2 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                             title="Delete policy"
                           >
                             <Trash2 className="w-4 h-4" />

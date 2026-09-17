@@ -102,7 +102,7 @@ export function BudgetWaterfall({
               {formatSGD(totalGross)}
             </span>
           </div>
-          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
             <div className="flex justify-between">
               <span>Salary:</span>
               <span className="font-semibold text-slate-700 dark:text-slate-300">{formatSGD(grossSalary)}</span>
@@ -154,7 +154,7 @@ export function BudgetWaterfall({
               -{formatSGD(fixedDeductions)}
             </span>
           </div>
-          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
+          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
             <div className="flex justify-between">
               <span>Taxes:</span>
               <span className="font-semibold text-slate-700 dark:text-slate-300">-{formatSGD(taxesDeduction)}</span>
@@ -200,7 +200,7 @@ export function BudgetWaterfall({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
             {categories.map((catDetail) => {
               const name = catDetail.category?.name || 'Category';
               const color = catDetail.category?.color || '#10B981';

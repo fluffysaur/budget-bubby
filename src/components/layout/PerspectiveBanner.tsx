@@ -1,6 +1,6 @@
 /**
  * Perspective Banner Component
- * Visually confirms the active financial perspective (Combined Household vs Yi Jia vs Rachel).
+ * Visually confirms the active financial perspective (Combined vs Yi Jia vs Rachel).
  * Informs the user which assets, budgets, and personal deductions are currently in scope.
  */
 
@@ -32,17 +32,17 @@ export function PerspectiveBanner({ className = '' }: PerspectiveBannerProps) {
       <div
         role="region"
         aria-label="Active Perspective Banner"
-        className={`w-full bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 border-b border-emerald-200/60 dark:border-emerald-800/40 px-4 py-2.5 sm:px-6 transition-colors ${className}`}
+        className={`w-full bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 border-b border-emerald-200/60 dark:border-emerald-800/40 px-4 py-3 transition-colors ${className}`}
       >
-        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+        <div className="w-full flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
               <Users className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                  Combined Household
+                  Combined
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   ({yiJiaName} &amp; {rachelName})
@@ -54,8 +54,8 @@ export function PerspectiveBanner({ className = '' }: PerspectiveBannerProps) {
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-1.5 text-xs font-medium text-emerald-800 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full">
-            <ShieldCheck className="h-3.5 w-3.5" />
+          <div className="hidden lg:flex items-center gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/50 px-3 py-1 rounded-full">
+            <ShieldCheck className="h-4 w-4" />
             <span>Joint &amp; Personal Scope</span>
           </div>
         </div>
@@ -72,16 +72,16 @@ export function PerspectiveBanner({ className = '' }: PerspectiveBannerProps) {
     <div
       role="region"
       aria-label="Active Perspective Banner"
-      className={`w-full border-b px-4 py-2.5 sm:px-6 transition-colors ${
+      className={`w-full border-b px-4 py-3 transition-colors ${
         isYiJia
           ? 'bg-gradient-to-r from-blue-500/10 via-sky-500/10 to-blue-500/5 border-blue-200/60 dark:border-blue-800/40'
           : 'bg-gradient-to-r from-rose-500/10 via-pink-500/10 to-rose-500/5 border-rose-200/60 dark:border-rose-800/40'
       } ${className}`}
     >
-      <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+      <div className="w-full flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-xs ${
+            className={`flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-xs ${
               isYiJia ? 'bg-blue-600' : 'bg-rose-600'
             }`}
           >
@@ -109,13 +109,13 @@ export function PerspectiveBanner({ className = '' }: PerspectiveBannerProps) {
         </div>
 
         <div
-          className={`hidden lg:flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+          className={`hidden lg:flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full ${
             isYiJia
               ? 'bg-blue-100/70 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300'
               : 'bg-rose-100/70 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
           }`}
         >
-          <User className="h-3.5 w-3.5" />
+          <User className="h-4 w-4" />
           <span>Personal Scope</span>
         </div>
       </div>
