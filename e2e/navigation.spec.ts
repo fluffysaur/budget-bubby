@@ -1,23 +1,38 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Navigation and Perspective Switching', () => {
-  test('should switch perspectives between household, Yi Jia, and Rachel', async ({ page }) => {
+  test('should switch perspectives between household, Yi Jia, and Rachel', async ({ page, isMobile }) => {
     await page.goto('/');
 
     // Initially in Combined Household perspective
-    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText('Combined Household');
+    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText('Combined');
 
     // Switch to Yi Jia
-    await page.getByRole('button', { name: /Yi Jia/i }).first().click();
-    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText("Yi Jia's Personal Perspective");
+    if (isMobile) {
+      await page.getByRole('button', { name: 'Select Financial Perspective' }).click();
+      await page.getByRole('option', { name: /Yi Jia/i }).click();
+    } else {
+      await page.getByRole('button', { name: /Yi Jia/i }).first().click();
+    }
+    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText("Yi Jia");
 
     // Switch to Rachel
-    await page.getByRole('button', { name: /Rachel/i }).first().click();
-    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText("Rachel's Personal Perspective");
+    if (isMobile) {
+      await page.getByRole('button', { name: 'Select Financial Perspective' }).click();
+      await page.getByRole('option', { name: /Rachel/i }).click();
+    } else {
+      await page.getByRole('button', { name: /Rachel/i }).first().click();
+    }
+    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText("Rachel");
 
     // Switch back to Combined Household
-    await page.getByRole('button', { name: /Combined Household/i }).first().click();
-    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText('Combined Household');
+    if (isMobile) {
+      await page.getByRole('button', { name: 'Select Financial Perspective' }).click();
+      await page.getByRole('option', { name: /Combined/i }).click();
+    } else {
+      await page.getByRole('button', { name: /Combined/i }).first().click();
+    }
+    await expect(page.getByRole('region', { name: 'Active Perspective Banner' })).toContainText('Combined');
   });
 
   test('should navigate across all views via desktop sidebar', async ({ page, isMobile }) => {

@@ -149,6 +149,8 @@ export function AuthProvider({
       const { yiJiaEmail, rachelEmail } = getPartnerEmails();
 
       try {
+        console.log(`[Auth] Attempting sign in with emails: Yi Jia (${yiJiaEmail}), Rachel (${rachelEmail})`);
+
         // 1. Try Yi Jia's account with the entered PIN
         const res1 = await supabase.auth.signInWithPassword({
           email: yiJiaEmail,
@@ -162,6 +164,10 @@ export function AuthProvider({
           await linkMemberProfile(yiJiaEmail);
           setAuthLoading(false);
           return true;
+        }
+
+        if (res1.error && res1.error.message !== 'Invalid login credentials') {
+          console.warn('[Auth] Yi Jia sign-in notice:', res1.error.message);
         }
 
         // 2. If Yi Jia's didn't match, try Rachel's account
@@ -179,7 +185,19 @@ export function AuthProvider({
           return true;
         }
 
-        setAuthError('Invalid PIN code. Please try again.');
+        if (res2.error && res2.error.message !== 'Invalid login credentials') {
+          console.warn('[Auth] Rachel sign-in notice:', res2.error.message);
+        }
+
+        // Check if there was an email confirmation error or config mismatch
+        const specificError =
+          (res1.error?.message?.includes('Email not confirmed') || res2.error?.message?.includes('Email not confirmed'))
+            ? 'Email address not confirmed in Supabase. Please auto-confirm it in Supabase Auth.'
+            : (res1.error?.message && res1.error.message !== 'Invalid login credentials')
+            ? res1.error.message
+            : 'Invalid PIN code. Please check that your email in .env matches Supabase.';
+
+        setAuthError(specificError);
         setAuthLoading(false);
         return false;
       } catch (err: any) {

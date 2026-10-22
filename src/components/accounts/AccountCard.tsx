@@ -19,6 +19,8 @@ import {
   Users,
   Pencil,
   Clock,
+  Trash2,
+  Settings,
 } from 'lucide-react';
 import type { Account, AccountType } from '../../types/finance';
 import { formatSGD } from '../../lib/currency';
@@ -27,6 +29,8 @@ import { formatDisplayDate } from '../../lib/dateUtils';
 export interface AccountCardProps {
   account: Account;
   onUpdateBalance?: (account: Account) => void;
+  onEditAccount?: (account: Account) => void;
+  onDeleteAccount?: (account: Account) => void;
   className?: string;
 }
 
@@ -60,7 +64,13 @@ function getTypeBadgeStyles(type: AccountType) {
   }
 }
 
-export function AccountCard({ account, onUpdateBalance, className = '' }: AccountCardProps) {
+export function AccountCard({
+  account,
+  onUpdateBalance,
+  onEditAccount,
+  onDeleteAccount,
+  className = '',
+}: AccountCardProps) {
   const typeStyle = getTypeBadgeStyles(account.type);
   const TypeIcon = typeStyle.icon;
 
@@ -98,6 +108,32 @@ export function AccountCard({ account, onUpdateBalance, className = '' }: Accoun
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Quick Edit & Delete Actions */}
+          <div className="flex items-center gap-1 shrink-0">
+            {onEditAccount && (
+              <button
+                type="button"
+                onClick={() => onEditAccount(account)}
+                aria-label={`Edit ${account.name}`}
+                title="Edit account details"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {onDeleteAccount && (
+              <button
+                type="button"
+                onClick={() => onDeleteAccount(account)}
+                aria-label={`Delete ${account.name}`}
+                title="Delete account"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 

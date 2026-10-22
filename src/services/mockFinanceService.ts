@@ -7,6 +7,8 @@
 
 import type {
   Account,
+  CreateAccountInput,
+  UpdateAccountInput,
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -176,6 +178,71 @@ class MockFinanceServiceImpl implements FinanceService {
       (a) => a.owner_id === targetMember.id || a.is_joint
     );
     return cloneDeep(filtered);
+  }
+
+  public async createAccount(input: CreateAccountInput): Promise<Account> {
+    const householdId = input.household_id || this.state.household.id || 'hh-00000000-0001';
+    const newAccount: Account = {
+      id: `acc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      household_id: householdId,
+      owner_id: input.owner_id,
+      name: input.name,
+      type: input.type,
+      balance: Math.round(input.balance * 100) / 100,
+      currency: input.currency || 'SGD',
+      institution: input.institution || null,
+      is_joint: input.is_joint || false,
+      notes: input.notes || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    this.state.accounts.push(newAccount);
+
+    // Create initial snapshot for the new account
+    const snapshot: AccountSnapshot = {
+      id: `snap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      account_id: newAccount.id,
+      household_id: householdId,
+      balance: newAccount.balance,
+      snapshot_date: getTodayDateString(),
+    };
+    this.state.accountSnapshots.push(snapshot);
+
+    this.persist();
+    return cloneDeep(newAccount);
+  }
+
+  public async updateAccount(id: string, updates: UpdateAccountInput): Promise<Account> {
+    const account = this.state.accounts.find((a) => a.id === id);
+    if (!account) {
+      throw new Error(`Account with id "${id}" not found`);
+    }
+
+    if (updates.name !== undefined) account.name = updates.name;
+    if (updates.type !== undefined) account.type = updates.type;
+    if (updates.institution !== undefined) account.institution = updates.institution;
+    if (updates.owner_id !== undefined) account.owner_id = updates.owner_id;
+    if (updates.is_joint !== undefined) account.is_joint = updates.is_joint;
+    if (updates.notes !== undefined) account.notes = updates.notes;
+    account.updated_at = new Date().toISOString();
+
+    this.persist();
+    return cloneDeep(account);
+  }
+
+  public async deleteAccount(id: string): Promise<void> {
+    const idx = this.state.accounts.findIndex((a) => a.id === id);
+    if (idx === -1) {
+      throw new Error(`Account with id "${id}" not found`);
+    }
+
+    this.state.accounts.splice(idx, 1);
+    // Cascade delete snapshots
+    this.state.accountSnapshots = this.state.accountSnapshots.filter(
+      (s) => s.account_id !== id
+    );
+
+    this.persist();
   }
 
   public async updateAccountBalance(
