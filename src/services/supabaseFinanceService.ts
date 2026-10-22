@@ -37,6 +37,7 @@ import {
   isSpendableCategory,
 } from '../lib/financialFormulas';
 import { getTodayDateString, addMonths } from '../lib/dateUtils';
+import { isValidUuid } from '../lib/uuid';
 import type { FinanceService } from './financeService';
 
 function getClient() {
@@ -223,7 +224,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async createAccount(input: CreateAccountInput): Promise<Account> {
     const client = getClient();
-    const householdId = input.household_id || (await this.getHouseholdId());
+    const householdId = isValidUuid(input.household_id)
+      ? input.household_id
+      : await this.getHouseholdId();
     const balance = Math.round(input.balance * 100) / 100;
 
     const { data, error } = await client
@@ -399,23 +402,115 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     allocations: BaseProfileAllocation[]
   ): Promise<void> {
     const client = getClient();
-    const { error: profError } = await client
+
+    // 1. Resolve household_id safely (prevent invalid syntax for type uuid like "hh-00000000-0001")
+    let householdId = profile.household_id;
+    if (!isValidUuid(householdId)) {
+      householdId = await this.getHouseholdId();
+    }
+
+    // 2. Resolve owner_id safely
+    let ownerId = profile.owner_id;
+    if (!isValidUuid(ownerId)) {
+      const { data: members } = await client
+        .from('household_members')
+        .select('id, display_name')
+        .eq('household_id', householdId);
+
+      const matched = (members || []).find(
+        (m) =>
+          m.id === ownerId ||
+          (ownerId.toLowerCase().includes('yijia') && m.display_name.toLowerCase().includes('yi jia')) ||
+          (ownerId.toLowerCase().includes('rachel') && m.display_name.toLowerCase().includes('rachel'))
+      );
+      if (matched) {
+        ownerId = matched.id;
+      } else if (members && members.length > 0) {
+        ownerId = members[0].id;
+      } else {
+        throw new Error('No valid household member found to associate with base profile');
+      }
+    }
+
+    // 3. Resolve profile.id: reuse existing row ID for (household_id, owner_id) if one exists
+    const { data: existingProf } = await client
       .from('base_budget_profiles')
-      .upsert({ ...profile, updated_at: new Date().toISOString() });
+      .select('id')
+      .eq('household_id', householdId)
+      .eq('owner_id', ownerId)
+      .maybeSingle();
+
+    let profileId: string | undefined;
+    if (existingProf?.id) {
+      profileId = existingProf.id;
+    } else if (isValidUuid(profile.id)) {
+      profileId = profile.id;
+    } else if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      profileId = crypto.randomUUID();
+    }
+
+    const profileUpsertPayload: any = {
+      household_id: householdId,
+      owner_id: ownerId,
+      gross_salary: Number(profile.gross_salary) || 0,
+      cpf_employee_rate: Number(profile.cpf_employee_rate) || 0.20,
+      tithing_enabled: profile.tithing_enabled ?? true,
+      updated_at: new Date().toISOString(),
+    };
+    if (profileId) {
+      profileUpsertPayload.id = profileId;
+    }
+
+    const { data: savedProfile, error: profError } = await client
+      .from('base_budget_profiles')
+      .upsert(profileUpsertPayload, { onConflict: 'household_id,owner_id' })
+      .select('id')
+      .single();
     if (profError) throw profError;
 
-    // Delete existing allocations for this profile
+    const finalProfileId = savedProfile?.id || profileId;
+    if (!finalProfileId) {
+      throw new Error('Failed to resolve base budget profile ID');
+    }
+
+    // 4. Delete existing allocations for this profile
     const { error: delError } = await client
       .from('base_profile_allocations')
       .delete()
-      .eq('profile_id', profile.id);
+      .eq('profile_id', finalProfileId);
     if (delError) throw delError;
 
-    // Insert new allocations
+    // 5. Insert new allocations with sanitized UUIDs
     if (allocations.length > 0) {
+      const categories = await this.getCategories();
+
+      const sanitizedAllocations = allocations.map((alloc) => {
+        let catId = alloc.category_id;
+        if (!isValidUuid(catId)) {
+          const matched = categories.find(
+            (c) => c.id === catId || c.name.toLowerCase() === catId.toLowerCase()
+          );
+          catId = matched?.id || categories[0]?.id || catId;
+        }
+
+        const allocRow: any = {
+          profile_id: finalProfileId,
+          category_id: catId,
+          target_percentage: Number(alloc.target_percentage) || 0,
+        };
+
+        if (isValidUuid(alloc.id)) {
+          allocRow.id = alloc.id;
+        } else if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          allocRow.id = crypto.randomUUID();
+        }
+
+        return allocRow;
+      });
+
       const { error: insError } = await client
         .from('base_profile_allocations')
-        .insert(allocations);
+        .insert(sanitizedAllocations);
       if (insError) throw insError;
     }
   }
@@ -594,6 +689,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (!budgetUpdates.id) {
       throw new Error('Monthly budget ID is required for update');
     }
+    // Dynamic synthetic budget IDs (e.g. mb-dyn-*) are not yet persisted in monthly_budgets
+    if (!isValidUuid(budgetUpdates.id)) {
+      return;
+    }
 
     const { error } = await client
       .from('monthly_budgets')
@@ -747,7 +846,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       monthlyContribution
     );
 
-    const householdId = input.household_id || (await this.getHouseholdId());
+    const householdId = isValidUuid(input.household_id)
+      ? input.household_id
+      : await this.getHouseholdId();
     const { data, error } = await client
       .from('savings_goals')
       .insert({
@@ -804,7 +905,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async addPolicy(input: CreatePolicyInput): Promise<RecurringPolicy> {
     const client = getClient();
-    const householdId = input.household_id || (await this.getHouseholdId());
+    const householdId = isValidUuid(input.household_id)
+      ? input.household_id
+      : await this.getHouseholdId();
     const monthlyAmortized =
       input.frequency === 'annually'
         ? Math.round((input.amount / 12) * 100) / 100

@@ -28,6 +28,7 @@ import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
+import { isValidUuid } from '../lib/uuid';
 import { isSpendableCategory } from '../lib/financialFormulas';
 import { mockBaseProfiles, mockBaseAllocations, mockCategories } from '../data/mockSeedData';
 import { MonthPicker } from '../components/budget/MonthPicker';
@@ -49,14 +50,14 @@ export interface BudgetPageProps {
 }
 
 export function BudgetPage({ className = '' }: BudgetPageProps) {
-  const { perspective, activeMember, members, refreshData: refreshHousehold } = useHousehold();
+  const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
 
   // State
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
   const [budgetDetail, setBudgetDetail] = useState<MonthlyBudgetDetail | null>(null);
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
-  const [baseProfiles, setBaseProfiles] = useState<BaseBudgetProfile[]>(mockBaseProfiles);
-  const [baseAllocations, setBaseAllocations] = useState<BaseProfileAllocation[]>(mockBaseAllocations);
+  const [categories, setCategories] = useState<Category[]>(() => isMockMode ? mockCategories : []);
+  const [baseProfiles, setBaseProfiles] = useState<BaseBudgetProfile[]>(() => isMockMode ? mockBaseProfiles : []);
+  const [baseAllocations, setBaseAllocations] = useState<BaseProfileAllocation[]>(() => isMockMode ? mockBaseAllocations : []);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Modal State
@@ -82,15 +83,19 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           financeService.getBaseProfiles(),
           financeService.getBaseAllocations(),
         ]);
-        if (cats && cats.length > 0) setCategories(cats);
-        if (profs && profs.length > 0) setBaseProfiles(profs);
-        if (allocs && allocs.length > 0) setBaseAllocations(allocs);
+        if (cats && cats.length > 0) {
+          setCategories(cats);
+        } else if (isMockMode) {
+          setCategories(mockCategories);
+        }
+        if (profs) setBaseProfiles(profs);
+        if (allocs) setBaseAllocations(allocs);
       } catch (err) {
         console.error('Failed to load budget metadata:', err);
       }
     }
     loadMeta();
-  }, []);
+  }, [isMockMode]);
 
   // Fetch Monthly Budget Detail based on selected month & active perspective
   const loadBudget = useCallback(async () => {
@@ -206,18 +211,60 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
   };
 
   // Find profile to edit
-  const activeProfile = useMemo(() => {
-    const targetId = editingProfileMemberId || (activeMember ? activeMember.id : members[0]?.id);
-    return (
-      baseProfiles.find((p) => p.owner_id === targetId) ||
-      baseProfiles[0] ||
-      mockBaseProfiles[0]
-    );
-  }, [baseProfiles, editingProfileMemberId, activeMember, members]);
+  const activeProfile = useMemo((): BaseBudgetProfile => {
+    const targetMember = (editingProfileMemberId
+      ? members.find((m) => m.id === editingProfileMemberId)
+      : activeMember) || members[0];
+    const targetId = targetMember?.id || '';
+    const targetHouseholdId = targetMember?.household_id || overview?.household?.id || '';
+
+    const found = baseProfiles.find((p) => p.owner_id === targetId);
+    if (found) return found;
+
+    if (isMockMode) {
+      const mockFound = mockBaseProfiles.find((p) => p.owner_id === targetId) || mockBaseProfiles[0];
+      if (mockFound) return mockFound;
+    }
+
+    // Default clean profile for this real member and household (no mock IDs in live mode)
+    return {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '',
+      household_id: targetHouseholdId,
+      owner_id: targetId,
+      gross_salary: 5000,
+      cpf_employee_rate: 0.20,
+      tithing_enabled: true,
+      updated_at: new Date().toISOString(),
+    };
+  }, [baseProfiles, editingProfileMemberId, activeMember, members, overview, isMockMode]);
 
   const activeAllocations = useMemo(() => {
-    return baseAllocations.filter((a) => a.profile_id === activeProfile?.id);
-  }, [baseAllocations, activeProfile]);
+    if (!activeProfile?.id) return [];
+    const existing = baseAllocations.filter((a) => a.profile_id === activeProfile.id);
+    if (existing.length > 0) return existing;
+
+    // If new profile with no allocations yet, provide standard default percentage split
+    const defaultPcts: Record<string, number> = {
+      food: 0.15,
+      lifestyle: 0.15,
+      transport: 0.05,
+      investments: 0.35,
+      savings: 0.15,
+      tithing: 0.10,
+      buffer: 0.05,
+    };
+
+    return categories.map((cat) => {
+      const key = cat.name.toLowerCase();
+      const pct = defaultPcts[key] ?? 0;
+      return {
+        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `alloc-${cat.id}`,
+        profile_id: activeProfile.id,
+        category_id: cat.id,
+        target_percentage: pct,
+      };
+    });
+  }, [baseAllocations, activeProfile, categories]);
 
   const handleProfileSaved = async () => {
     try {
@@ -464,7 +511,9 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           initialTaxes={budgetDetail?.budget.taxes_deduction}
           initialInsurance={budgetDetail?.budget.insurance_deduction}
           monthlyBudgetId={
-            perspective !== 'household' ? budgetDetail?.budget.id : undefined
+            perspective !== 'household' && budgetDetail?.budget.id && isValidUuid(budgetDetail.budget.id)
+              ? budgetDetail.budget.id
+              : undefined
           }
           selectedMonth={selectedMonth}
           onSaveSuccess={handleProfileSaved}

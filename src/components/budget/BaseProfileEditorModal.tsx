@@ -21,6 +21,7 @@ import {
 import { financeService } from '../../services/financeService';
 import { mockCategories } from '../../data/mockSeedData';
 import { calculateCPFAndNetPay } from '../../lib/financialFormulas';
+import { isValidUuid } from '../../lib/uuid';
 import type {
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -167,12 +168,16 @@ export function BaseProfileEditorModal({
       const updatedAllocations: BaseProfileAllocation[] = categories.map((cat) => {
         const existing = allocations.find((a) => a.category_id === cat.id);
         const targetPct = (categoryPercentages[cat.id] || 0) / 100;
-        const fallbackId =
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `alloc-${profile.id}-${cat.id}`;
+        let allocId: string;
+        if (existing?.id && isValidUuid(existing.id)) {
+          allocId = existing.id;
+        } else if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          allocId = crypto.randomUUID();
+        } else {
+          allocId = existing ? existing.id : `alloc-${profile.id}-${cat.id}`;
+        }
         return {
-          id: existing ? existing.id : fallbackId,
+          id: allocId,
           profile_id: profile.id,
           category_id: cat.id,
           target_percentage: targetPct,
@@ -184,7 +189,7 @@ export function BaseProfileEditorModal({
 
       // If a current monthly budget id is present, update current month figures as well
       const cpfDeduction = calculateCPFAndNetPay(parsedGross, parsedCpf).cpfDeduction;
-      if (monthlyBudgetId) {
+      if (monthlyBudgetId && isValidUuid(monthlyBudgetId)) {
         await financeService.updateMonthlyBudget({
           id: monthlyBudgetId,
           gross_salary: parsedGross,
@@ -195,7 +200,7 @@ export function BaseProfileEditorModal({
       } else if (selectedMonth) {
         try {
           const monthDetail = await financeService.getMonthlyBudget(selectedMonth, profile.owner_id);
-          if (monthDetail?.budget?.id) {
+          if (monthDetail?.budget?.id && isValidUuid(monthDetail.budget.id)) {
             await financeService.updateMonthlyBudget({
               id: monthDetail.budget.id,
               gross_salary: parsedGross,

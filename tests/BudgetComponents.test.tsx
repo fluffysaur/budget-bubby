@@ -18,6 +18,7 @@ import { BudgetPage } from '../src/pages/BudgetPage';
 import { financeService } from '../src/services/financeService';
 import { mockCategories, mockBaseProfiles, mockBaseAllocations } from '../src/data/mockSeedData';
 import { getCurrentMonth } from '../src/lib/dateUtils';
+import * as supabaseClientModule from '../src/services/supabaseClient';
 import type { MonthlyBudget, MonthlyBudgetCategoryDetail } from '../src/types/finance';
 
 const sampleBudget: MonthlyBudget = {
@@ -364,5 +365,84 @@ describe('BudgetPage', () => {
     fireEvent.click(editBtn);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('does not send "hh-00000000-0001" to updateBaseProfile when saving a new member profile', async () => {
+    vi.spyOn(supabaseClientModule, 'isSupabaseConfigured').mockReturnValue(true);
+    const updateSpy = vi.spyOn(financeService, 'updateBaseProfile').mockResolvedValueOnce();
+    vi.spyOn(financeService, 'getBaseProfiles').mockResolvedValue([]);
+    vi.spyOn(financeService, 'getBaseAllocations').mockResolvedValue([]);
+    vi.spyOn(financeService, 'getCategories').mockResolvedValue(mockCategories);
+    vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue({
+      budget: sampleBudget,
+      categories: sampleCategories,
+      disposablePool: 4308.33,
+      totalSpent: 1000,
+      totalRemaining: 3308.33,
+    });
+    vi.spyOn(financeService, 'getHouseholdOverview').mockResolvedValue({
+      household: {
+        id: '00000000-0000-0000-0000-000000000001',
+        name: 'Yi Jia & Rachel',
+        currency: 'SGD',
+      },
+      members: [
+        {
+          id: '00000000-0000-0000-0000-000000000011',
+          household_id: '00000000-0000-0000-0000-000000000001',
+          display_name: 'Yi Jia',
+          role: 'owner',
+          avatar_url: '👨',
+        },
+      ],
+      totalAssets: 10000,
+      totalLiabilities: 0,
+      trueNetWorth: 10000,
+      settlementSummary: {
+        netBalance: 0,
+        settlementText: 'All settled up',
+        debtorName: '',
+        creditorName: '',
+        debtorId: '',
+        creditorId: '',
+        member1OwesMember2: 0,
+        member2OwesMember1: 0,
+      },
+      activeGoals: [],
+      upcomingBills: [],
+    });
+
+    await act(async () => {
+      render(
+        <HouseholdProvider initialPerspective="yijia">
+          <BudgetPage />
+        </HouseholdProvider>
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole('button', { name: /edit base profile|edit profile/i }).length
+      ).toBeGreaterThan(0);
+    });
+
+    const editBtn = screen.getAllByRole('button', { name: /edit base profile|edit profile/i })[0];
+    fireEvent.click(editBtn);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    const saveBtn = screen.getByRole('button', { name: /save profile|save changes/i });
+    expect(saveBtn).not.toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(saveBtn);
+    });
+
+    await waitFor(() => {
+      expect(updateSpy).toHaveBeenCalled();
+    });
+
+    const [savedProfile] = updateSpy.mock.calls[0];
+    expect(savedProfile.household_id).not.toBe('hh-00000000-0001');
   });
 });
