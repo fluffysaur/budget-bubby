@@ -21,7 +21,8 @@
         - [1. Create Supabase Project](#1-create-supabase-project)
         - [2. Apply Database Migrations](#2-apply-database-migrations)
         - [3. Apply Private Seed (Optional)](#3-apply-private-seed-optional)
-        - [4. Configure Environment Variables](#4-configure-environment-variables)
+        - [4. Configure Environment Variables \& Authentication](#4-configure-environment-variables--authentication)
+        - [5. Private PIN Access Setup (Only Yi Jia \& Rachel)](#5-private-pin-access-setup-only-yi-jia--rachel)
     - [Testing \& Quality Assurance](#testing--quality-assurance)
         - [Test Coverage Highlights](#test-coverage-highlights)
     - [PWA Mobile Installation](#pwa-mobile-installation)
@@ -48,7 +49,7 @@
     - Tracks Cash, Investments, and CPF accounts (OA, SA, MA).
     - Formula:
         $$
-        \text{True Net Worth} = \text{Total Assets} - \text{Outstanding Liabilities}
+        ext{True Net Worth} = \text{Total Assets} - \text{Outstanding Liabilities}
         $$
     - Historical progression chart and modal balance updating.
 - **Milestone Savings Goals**:
@@ -195,14 +196,28 @@ If you maintain private household seed data, run:
 supabase/seed.private.sql
 ```
 
-### 4. Configure Environment Variables
+### 4. Configure Environment Variables & Authentication
 
 Create a `.env` file in the project root:
 
 ```env
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-actual-anon-key-here
+VITE_YIJIA_EMAIL=yijia@example.com
+VITE_RACHEL_EMAIL=rachel@example.com
 ```
+
+### 5. Private PIN Access Setup (Only Yi Jia & Rachel)
+
+1. Apply the strict authentication and RLS migration in the Supabase SQL Editor:
+    ```sql
+    supabase/migrations/20261022_strict_auth_rls.sql
+    ```
+2. In **Supabase Dashboard → Authentication → Users**, manually create the two partner user accounts:
+    - User 1: Yi Jia's email with Yi Jia's chosen unique 6-digit PIN as the password.
+    - User 2: Rachel's email with Rachel's chosen unique 6-digit PIN as the password.
+3. In **Authentication → Providers → Email**, turn off **"Allow new users to sign up"** so unauthorized visitors cannot create accounts.
+4. When accessing Budget Buddy, simply enter your unique 6-digit PIN on the lock screen. The app will immediately authenticate and open directly to your personal financial perspective!
 
 Restart the development server (`npm run dev`) to switch into **Live Supabase** mode.
 

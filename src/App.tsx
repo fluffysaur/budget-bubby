@@ -23,6 +23,9 @@ import {
   useHousehold,
   useOptionalHousehold,
 } from './context/HouseholdContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { PinLoginScreen } from './components/auth/PinLoginScreen';
+import { isSupabaseConfigured } from './services/supabaseClient';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
 import { PerspectiveBanner } from './components/layout/PerspectiveBanner';
@@ -137,12 +140,34 @@ function AppLayoutInner() {
 
 /**
  * AppShell provides layout content, wrapping with HouseholdProvider if not already present.
+ * Shows PinLoginScreen if Supabase is configured and user is not authenticated.
  */
 export function AppShell() {
+  const { isAuthenticated, authLoading, loggedInPartner } = useAuth();
   const optionalContext = useOptionalHousehold();
+
+  // If live Supabase is configured and we are still verifying the session
+  if (isSupabaseConfigured() && authLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-emerald-400">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">Loading Budget Buddy...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If live Supabase is configured and user is not authenticated, show PIN Lock Screen
+  if (isSupabaseConfigured() && !isAuthenticated) {
+    return <PinLoginScreen />;
+  }
+
+  const defaultPerspective = loggedInPartner || 'household';
+
   if (!optionalContext) {
     return (
-      <HouseholdProvider>
+      <HouseholdProvider defaultPerspective={defaultPerspective}>
         <AppLayoutInner />
       </HouseholdProvider>
     );
@@ -152,6 +177,7 @@ export function AppShell() {
 
 export interface AppProps {
   initialEntries?: string[];
+  initialAuthenticated?: boolean;
 }
 
 /**
@@ -159,14 +185,16 @@ export interface AppProps {
  * Uses MemoryRouter when initialEntries is provided (ideal for testing),
  * otherwise defaults to BrowserRouter for production web apps.
  */
-export function App({ initialEntries }: AppProps = {}) {
+export function App({ initialEntries, initialAuthenticated }: AppProps = {}) {
   const RouterComponent = initialEntries ? MemoryRouter : BrowserRouter;
   const routerProps = initialEntries ? { initialEntries } : {};
 
   return (
-    <RouterComponent {...routerProps}>
-      <AppShell />
-    </RouterComponent>
+    <AuthProvider initialAuthenticated={initialAuthenticated}>
+      <RouterComponent {...routerProps}>
+        <AppShell />
+      </RouterComponent>
+    </AuthProvider>
   );
 }
 

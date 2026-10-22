@@ -37,6 +37,7 @@ export interface HouseholdProviderProps {
   children: React.ReactNode;
   initialPerspective?: Perspective;
   initialTheme?: 'light' | 'dark';
+  defaultPerspective?: Perspective;
 }
 
 const THEME_STORAGE_KEY = 'budget_buddy_theme';
@@ -45,17 +46,22 @@ export function HouseholdProvider({
   children,
   initialPerspective = 'household',
   initialTheme,
+  defaultPerspective,
 }: HouseholdProviderProps) {
-  const [perspective, setPerspective] = useState<Perspective>(initialPerspective);
+  const [perspective, setPerspective] = useState<Perspective>(
+    defaultPerspective || initialPerspective
+  );
   const [members, setMembers] = useState<HouseholdMember[]>(mockMembers);
   const [overview, setOverview] = useState<HouseholdOverview | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (initialPerspective) {
+    if (defaultPerspective) {
+      setPerspective(defaultPerspective);
+    } else if (initialPerspective) {
       setPerspective(initialPerspective);
     }
-  }, [initialPerspective]);
+  }, [defaultPerspective, initialPerspective]);
 
   // Initialize theme from prop, localStorage, or fallback to 'light'
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
