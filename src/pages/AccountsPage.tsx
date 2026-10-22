@@ -18,6 +18,7 @@ import {
   Users,
   Loader2,
   CalendarCheck,
+  Plus,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, Badge } from '../components/ui';
@@ -26,6 +27,9 @@ import { formatSGD } from '../lib/currency';
 import { AccountGroupList } from '../components/accounts/AccountGroupList';
 import { UpdateBalanceModal } from '../components/accounts/UpdateBalanceModal';
 import { BulkBalanceUpdateModal } from '../components/accounts/BulkBalanceUpdateModal';
+import { AddAccountModal } from '../components/accounts/AddAccountModal';
+import { EditAccountModal } from '../components/accounts/EditAccountModal';
+import { DeleteAccountModal } from '../components/accounts/DeleteAccountModal';
 import { NetWorthChart } from '../components/accounts/NetWorthChart';
 import type { Account, Loan } from '../types/finance';
 
@@ -34,7 +38,7 @@ export interface AccountsPageProps {
 }
 
 export function AccountsPage({ className = '' }: AccountsPageProps) {
-  const { perspective, activeMember, refreshData: refreshHousehold } = useHousehold();
+  const { perspective, activeMember, members, refreshData: refreshHousehold } = useHousehold();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -44,6 +48,11 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState<boolean>(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
 
   // Perspective display label
   const perspectiveDisplayName = useMemo(() => {
@@ -147,14 +156,24 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
         }
         subtitle="Cash, CPF, and investment portfolio growth center"
         actions={
-          <Button
-            variant="primary"
-            aria-label="Month-End Check-In"
-            leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
-            onClick={() => setIsBulkModalOpen(true)}
-          >
-            Month-End Check-In
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              aria-label="Add Account"
+              leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              Add Account
+            </Button>
+            <Button
+              variant="primary"
+              aria-label="Month-End Check-In"
+              leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
+              onClick={() => setIsBulkModalOpen(true)}
+            >
+              Month-End Check-In
+            </Button>
+          </div>
         }
       />
 
@@ -207,6 +226,15 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
             accounts={accounts}
             onUpdateBalance={handleOpenUpdateModal}
             onQuickSaveBalance={handleInlineUpdateBalance}
+            onEditAccount={(acc) => {
+              setAccountToEdit(acc);
+              setIsEditModalOpen(true);
+            }}
+            onDeleteAccount={(acc) => {
+              setAccountToDelete(acc);
+              setIsDeleteModalOpen(true);
+            }}
+            onAddAccount={() => setIsAddModalOpen(true)}
           />
         </>
       )}
@@ -223,8 +251,53 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
       <UpdateBalanceModal
         isOpen={isUpdateModalOpen}
         account={selectedAccount}
+        accounts={accounts}
         onClose={handleCloseModal}
         onBalanceUpdated={handleBalanceUpdated}
+        onBalancesUpdated={handleBalanceUpdated}
+        onOpenAddAccount={() => setIsAddModalOpen(true)}
+      />
+
+      {/* Add Account Modal */}
+      <AddAccountModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        members={members}
+        defaultOwnerId={activeMember?.id}
+        isInitialSetup={accounts.length === 0}
+        onAccountCreated={async () => {
+          await loadData();
+          await refreshHousehold();
+        }}
+      />
+
+      {/* Edit Account Modal */}
+      <EditAccountModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setAccountToEdit(null);
+        }}
+        account={accountToEdit}
+        members={members}
+        onAccountUpdated={async () => {
+          await loadData();
+          await refreshHousehold();
+        }}
+      />
+
+      {/* Delete Account Confirmation Modal */}
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setAccountToDelete(null);
+        }}
+        account={accountToDelete}
+        onAccountDeleted={async () => {
+          await loadData();
+          await refreshHousehold();
+        }}
       />
     </div>
   );

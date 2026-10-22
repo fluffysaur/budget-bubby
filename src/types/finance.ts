@@ -39,6 +39,27 @@ export interface Account {
   updated_at?: string;
 }
 
+export interface CreateAccountInput {
+  household_id?: string;
+  owner_id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  currency?: string;
+  institution?: string | null;
+  is_joint?: boolean;
+  notes?: string | null;
+}
+
+export interface UpdateAccountInput {
+  name?: string;
+  type?: AccountType;
+  institution?: string | null;
+  owner_id?: string;
+  is_joint?: boolean;
+  notes?: string | null;
+}
+
 export interface AccountSnapshot {
   id: string;
   account_id: string;

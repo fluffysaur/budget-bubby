@@ -5,6 +5,8 @@
 
 import type {
   Account,
+  CreateAccountInput,
+  UpdateAccountInput,
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -30,6 +32,9 @@ import { supabaseFinanceService } from './supabaseFinanceService';
 export interface FinanceService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
   getAccounts(perspective: Perspective): Promise<Account[]>;
+  createAccount(input: CreateAccountInput): Promise<Account>;
+  updateAccount(id: string, updates: UpdateAccountInput): Promise<Account>;
+  deleteAccount(id: string): Promise<void>;
   updateAccountBalance(
     accountId: string,
     newBalance: number,
@@ -72,6 +77,9 @@ function getActiveService(): FinanceService {
 export const financeService: FinanceService = {
   getHouseholdOverview: () => getActiveService().getHouseholdOverview(),
   getAccounts: (perspective) => getActiveService().getAccounts(perspective),
+  createAccount: (input) => getActiveService().createAccount(input),
+  updateAccount: (id, updates) => getActiveService().updateAccount(id, updates),
+  deleteAccount: (id) => getActiveService().deleteAccount(id),
   updateAccountBalance: (accountId, newBalance, notes, date) =>
     getActiveService().updateAccountBalance(accountId, newBalance, notes, date),
   bulkUpdateAccountBalances: (updates, snapshotDate) =>

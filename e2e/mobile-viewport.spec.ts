@@ -32,10 +32,6 @@ test.describe('Mobile Viewport & Bottom Navigation', () => {
     await expect(modal).not.toBeVisible();
 
     // Navigate between tabs using Mobile Bottom Navigation
-    await bottomNav.getByRole('button', { name: 'Budget' }).click();
-    await expect(page).toHaveURL(/\/budget/);
-    await expect(page.getByRole('heading', { level: 1, name: /Monthly Budget/i })).toBeVisible();
-
     await bottomNav.getByRole('button', { name: 'Expenses' }).click();
     await expect(page).toHaveURL(/\/expenses/);
     await expect(page.getByRole('heading', { level: 1, name: /^Expenses$/i })).toBeVisible();

@@ -13,6 +13,9 @@ import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { AccountCard } from '../src/components/accounts/AccountCard';
 import { AccountGroupList } from '../src/components/accounts/AccountGroupList';
 import { UpdateBalanceModal } from '../src/components/accounts/UpdateBalanceModal';
+import { AddAccountModal } from '../src/components/accounts/AddAccountModal';
+import { EditAccountModal } from '../src/components/accounts/EditAccountModal';
+import { DeleteAccountModal } from '../src/components/accounts/DeleteAccountModal';
 import { NetWorthChart, type NetWorthDataPoint } from '../src/components/accounts/NetWorthChart';
 import { AccountsPage } from '../src/pages/AccountsPage';
 import { financeService } from '../src/services/financeService';
@@ -378,6 +381,205 @@ describe('AccountsPage', () => {
 
     await waitFor(() => {
       expect(getAccountsSpy).toHaveBeenCalledWith('yijia');
+    });
+  });
+
+  describe('AddAccountModal', () => {
+    it('renders Singapore presets and populates inputs upon clicking a preset', () => {
+      render(
+        <AddAccountModal
+          isOpen={true}
+          onClose={vi.fn()}
+          members={[{ id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' }]}
+        />
+      );
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText(/Add New Account/i)).toBeInTheDocument();
+      expect(screen.getByText('DBS Multiplier')).toBeInTheDocument();
+      expect(screen.getByText('OCBC 360')).toBeInTheDocument();
+
+      // Click preset
+      fireEvent.click(screen.getByText('DBS Multiplier'));
+      expect((screen.getByLabelText(/account name/i) as HTMLInputElement).value).toBe('DBS Multiplier');
+      expect((screen.getByLabelText(/bank \/ institution/i) as HTMLInputElement).value).toBe('DBS');
+    });
+
+    it('displays the 0-accounts welcome banner when isInitialSetup is true', () => {
+      render(
+        <AddAccountModal
+          isOpen={true}
+          onClose={vi.fn()}
+          isInitialSetup={true}
+          members={[{ id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' }]}
+        />
+      );
+
+      expect(screen.getByText(/No accounts found yet/i)).toBeInTheDocument();
+    });
+
+    it('submits and invokes financeService.createAccount with form data', async () => {
+      const onAccountCreated = vi.fn();
+      const onClose = vi.fn();
+      const createSpy = vi.spyOn(financeService, 'createAccount').mockResolvedValueOnce({
+        id: 'acc-new-1',
+        household_id: 'hh-1',
+        owner_id: 'mem-1',
+        name: 'DBS Multiplier',
+        institution: 'DBS',
+        type: 'Cash',
+        balance: 5000,
+        currency: 'SGD',
+        is_joint: false,
+      });
+
+      render(
+        <AddAccountModal
+          isOpen={true}
+          onClose={onClose}
+          onAccountCreated={onAccountCreated}
+          members={[{ id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' }]}
+        />
+      );
+
+      fireEvent.change(screen.getByLabelText(/account name/i), { target: { value: 'DBS Multiplier' } });
+      fireEvent.change(screen.getByLabelText(/bank \/ institution/i), { target: { value: 'DBS' } });
+      fireEvent.change(screen.getByLabelText(/starting balance/i), { target: { value: '5000' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+      await waitFor(() => {
+        expect(createSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'DBS Multiplier',
+            institution: 'DBS',
+            balance: 5000,
+            type: 'Cash',
+            owner_id: 'mem-1',
+          })
+        );
+      });
+
+      expect(onAccountCreated).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('EditAccountModal', () => {
+    it('pre-populates existing account fields and updates via financeService.updateAccount', async () => {
+      const onAccountUpdated = vi.fn();
+      const onClose = vi.fn();
+      const updateSpy = vi.spyOn(financeService, 'updateAccount').mockResolvedValueOnce({
+        ...sampleAccounts[0],
+        name: "UOB Lady's High Yield",
+      });
+
+      render(
+        <EditAccountModal
+          isOpen={true}
+          account={sampleAccounts[0]}
+          onClose={onClose}
+          onAccountUpdated={onAccountUpdated}
+          members={[{ id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' }]}
+        />
+      );
+
+      const nameInput = screen.getByLabelText(/account name/i) as HTMLInputElement;
+      expect(nameInput.value).toBe("UOB Lady's Savings");
+
+      fireEvent.change(nameInput, { target: { value: "UOB Lady's High Yield" } });
+      fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+      await waitFor(() => {
+        expect(updateSpy).toHaveBeenCalledWith(
+          sampleAccounts[0].id,
+          expect.objectContaining({
+            name: "UOB Lady's High Yield",
+          })
+        );
+      });
+
+      expect(onAccountUpdated).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('DeleteAccountModal', () => {
+    it('warns about snapshot deletion and deletes account on confirmation', async () => {
+      const onAccountDeleted = vi.fn();
+      const onClose = vi.fn();
+      const deleteSpy = vi.spyOn(financeService, 'deleteAccount').mockResolvedValueOnce();
+
+      render(
+        <DeleteAccountModal
+          isOpen={true}
+          account={sampleAccounts[0]}
+          onClose={onClose}
+          onAccountDeleted={onAccountDeleted}
+        />
+      );
+
+      expect(screen.getByText(/Delete Account\?/i)).toBeInTheDocument();
+      expect(screen.getByText(/permanently remove all historical balance snapshots/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /delete account/i }));
+
+      await waitFor(() => {
+        expect(deleteSpy).toHaveBeenCalledWith(sampleAccounts[0].id);
+      });
+
+      expect(onAccountDeleted).toHaveBeenCalledWith(sampleAccounts[0].id);
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('Multi-Account UpdateBalanceModal', () => {
+    it('allows selecting multiple accounts and saving balances in batch', async () => {
+      const onBalancesUpdated = vi.fn();
+      const onClose = vi.fn();
+      const bulkSpy = vi.spyOn(financeService, 'bulkUpdateAccountBalances').mockResolvedValueOnce(sampleAccounts);
+
+      render(
+        <UpdateBalanceModal
+          isOpen={true}
+          accounts={sampleAccounts}
+          onClose={onClose}
+          onBalancesUpdated={onBalancesUpdated}
+        />
+      );
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText(/Update Account Balances/i)).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(screen.getByText(/4 of 4 accounts selected/i)).toBeInTheDocument();
+      });
+
+      // Deselect all
+      fireEvent.click(screen.getByText(/deselect all/i));
+      expect(screen.getByText(/0 of 4 accounts selected/i)).toBeInTheDocument();
+
+      // Select first account only
+      const chk = screen.getByRole('checkbox', { name: new RegExp(sampleAccounts[0].name, 'i') });
+      fireEvent.click(chk);
+      expect(screen.getByText(/1 of 4 accounts selected/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /save 1 balance/i }));
+
+      await waitFor(() => {
+        expect(bulkSpy).toHaveBeenCalledWith(
+          [
+            expect.objectContaining({
+              accountId: sampleAccounts[0].id,
+              balance: sampleAccounts[0].balance,
+            }),
+          ],
+          expect.any(String)
+        );
+      });
+
+      expect(onBalancesUpdated).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
     });
   });
 });

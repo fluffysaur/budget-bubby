@@ -641,4 +641,34 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/update account balance/i)).toBeInTheDocument();
   });
+
+  it('opens AddAccountModal with setup banner when Update Balance button is clicked and 0 accounts exist', async () => {
+    const getAccountsSpy = vi.spyOn(financeService, 'getAccounts').mockResolvedValue([]);
+
+    try {
+      await act(async () => {
+        render(
+          <HouseholdProvider initialPerspective="household">
+            <DashboardPage />
+          </HouseholdProvider>
+        );
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /update balance/i })).toBeInTheDocument();
+      });
+
+      const updateBtn = screen.getByRole('button', { name: /update balance/i });
+      fireEvent.click(updateBtn);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/add new account/i)).toBeInTheDocument();
+      expect(screen.getByText(/no accounts found yet/i)).toBeInTheDocument();
+    } finally {
+      getAccountsSpy.mockRestore();
+    }
+  });
 });

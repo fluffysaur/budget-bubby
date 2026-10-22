@@ -34,6 +34,7 @@ import { SharedGoalsOverview } from "../components/dashboard/SharedGoalsOverview
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
 import { QuickAddExpenseModal } from "../components/expenses/QuickAddExpenseModal";
 import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
+import { AddAccountModal } from "../components/accounts/AddAccountModal";
 import type {
     Account,
     Category,
@@ -68,6 +69,7 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
     // Modal States
     const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
     const [isUpdateBalanceOpen, setIsUpdateBalanceOpen] = useState<boolean>(false);
+    const [isAddAccountOpen, setIsAddAccountOpen] = useState<boolean>(false);
     const [selectedAccountForUpdate, setSelectedAccountForUpdate] = useState<Account | null>(null);
 
     // Perspective Display Name
@@ -186,9 +188,21 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
 
     // Modal Handlers
     const handleOpenUpdateBalance = (account?: Account) => {
-        const target = account || accounts[0] || null;
-        setSelectedAccountForUpdate(target);
-        setIsUpdateBalanceOpen(true);
+        if (account) {
+            setSelectedAccountForUpdate(account);
+            setIsUpdateBalanceOpen(true);
+            return;
+        }
+
+        // Tapped without specific account (e.g. from top Dashboard header)
+        if (accounts.length === 0) {
+            // Gracefully handle 0 accounts by opening AddAccountModal with welcome banner
+            setIsAddAccountOpen(true);
+        } else {
+            // Open multi-account selection update modal
+            setSelectedAccountForUpdate(null);
+            setIsUpdateBalanceOpen(true);
+        }
     };
 
     const handleExpenseAdded = async () => {
@@ -515,9 +529,19 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
 
                                     <div className="mt-5 space-y-3">
                                         {accounts.length === 0 ? (
-                                            <p className="text-xs text-slate-400 py-6 text-center">
-                                                No accounts found for this perspective.
-                                            </p>
+                                            <div className="py-6 text-center">
+                                                <p className="text-xs text-slate-400 mb-3">
+                                                    No accounts found for this perspective.
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsAddAccountOpen(true)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer"
+                                                >
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                    <span>Add First Account</span>
+                                                </button>
+                                            </div>
                                         ) : (
                                             accounts.map((acc) => (
                                                 <div
@@ -643,15 +667,31 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                 members={members}
             />
 
-            {/* Update Balance Modal */}
+            {/* Update Balance Modal (Supports both single target and multi-account batch update) */}
             <UpdateBalanceModal
                 isOpen={isUpdateBalanceOpen}
                 account={selectedAccountForUpdate}
+                accounts={accounts}
                 onClose={() => {
                     setIsUpdateBalanceOpen(false);
                     setSelectedAccountForUpdate(null);
                 }}
                 onBalanceUpdated={handleBalanceUpdated}
+                onBalancesUpdated={handleBalanceUpdated}
+                onOpenAddAccount={() => setIsAddAccountOpen(true)}
+            />
+
+            {/* Add Account Modal */}
+            <AddAccountModal
+                isOpen={isAddAccountOpen}
+                onClose={() => setIsAddAccountOpen(false)}
+                members={members}
+                defaultOwnerId={activeMember?.id}
+                isInitialSetup={accounts.length === 0}
+                onAccountCreated={async () => {
+                    await loadDashboardData();
+                    await refreshHousehold();
+                }}
             />
         </div>
     );

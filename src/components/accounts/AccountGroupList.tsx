@@ -23,6 +23,9 @@ import {
   X,
   LayoutGrid,
   List,
+  Trash2,
+  Settings,
+  Plus,
 } from 'lucide-react';
 import type { Account, AccountType } from '../../types/finance';
 import { formatSGD } from '../../lib/currency';
@@ -32,6 +35,9 @@ export interface AccountGroupListProps {
   accounts: Account[];
   onUpdateBalance?: (account: Account) => void;
   onQuickSaveBalance?: (accountId: string, newBalance: number) => Promise<void>;
+  onEditAccount?: (account: Account) => void;
+  onDeleteAccount?: (account: Account) => void;
+  onAddAccount?: () => void;
   className?: string;
 }
 
@@ -78,6 +84,9 @@ export function AccountGroupList({
   accounts,
   onUpdateBalance,
   onQuickSaveBalance,
+  onEditAccount,
+  onDeleteAccount,
+  onAddAccount,
   className = '',
 }: AccountGroupListProps) {
   const [scopeFilter, setScopeFilter] = useState<'all' | 'non-cpf'>('all');
@@ -225,7 +234,30 @@ export function AccountGroupList({
       </div>
 
       {/* Grouped Account Sections */}
-      {groupedData.map((group) => {
+      {accounts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 mb-3">
+            <Landmark className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+            No Accounts Added Yet
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-5 leading-relaxed">
+            Track your Singapore bank accounts, investments, and CPF balances in one centralized dashboard.
+          </p>
+          {onAddAccount && (
+            <button
+              type="button"
+              onClick={onAddAccount}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4 stroke-[2.5]" />
+              <span>Add Your First Account</span>
+            </button>
+          )}
+        </div>
+      ) : (
+        groupedData.map((group) => {
         const Icon = group.icon;
         return (
           <section key={group.type} className="space-y-3">
@@ -268,6 +300,8 @@ export function AccountGroupList({
                     key={account.id}
                     account={account}
                     onUpdateBalance={onUpdateBalance}
+                    onEditAccount={onEditAccount}
+                    onDeleteAccount={onDeleteAccount}
                   />
                 ))}
               </div>
@@ -361,6 +395,28 @@ export function AccountGroupList({
                               <Pencil className="h-3 w-3" />
                               <span className="hidden sm:inline">Update Balance</span>
                             </button>
+                            {onEditAccount && (
+                              <button
+                                type="button"
+                                onClick={() => onEditAccount(account)}
+                                aria-label={`Edit ${account.name}`}
+                                title="Edit account details"
+                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer transition-colors"
+                              >
+                                <Settings className="h-3 w-3" />
+                              </button>
+                            )}
+                            {onDeleteAccount && (
+                              <button
+                                type="button"
+                                onClick={() => onDeleteAccount(account)}
+                                aria-label={`Delete ${account.name}`}
+                                title="Delete account"
+                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 dark:text-slate-400 dark:hover:text-rose-400 cursor-pointer transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
@@ -371,7 +427,7 @@ export function AccountGroupList({
             )}
           </section>
         );
-      })}
+      }))}
     </div>
   );
 }

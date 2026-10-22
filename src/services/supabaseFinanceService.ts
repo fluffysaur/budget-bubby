@@ -5,6 +5,8 @@
 
 import type {
   Account,
+  CreateAccountInput,
+  UpdateAccountInput,
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -180,6 +182,68 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const { data, error } = await query;
     if (error) throw error;
     return (data || []) as Account[];
+  }
+
+  public async createAccount(input: CreateAccountInput): Promise<Account> {
+    const client = getClient();
+    const householdId = input.household_id || (await this.getHouseholdId());
+    const balance = Math.round(input.balance * 100) / 100;
+
+    const { data, error } = await client
+      .from('accounts')
+      .insert({
+        household_id: householdId,
+        owner_id: input.owner_id,
+        name: input.name,
+        type: input.type,
+        balance,
+        currency: input.currency || 'SGD',
+        institution: input.institution || null,
+        is_joint: input.is_joint || false,
+        notes: input.notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    const createdAccount = data as Account;
+
+    // Record initial snapshot
+    await client.from('account_snapshots').insert({
+      account_id: createdAccount.id,
+      household_id: householdId,
+      balance,
+      snapshot_date: getTodayDateString(),
+    });
+
+    return createdAccount;
+  }
+
+  public async updateAccount(id: string, updates: UpdateAccountInput): Promise<Account> {
+    const client = getClient();
+    const payload: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.type !== undefined) payload.type = updates.type;
+    if (updates.institution !== undefined) payload.institution = updates.institution;
+    if (updates.owner_id !== undefined) payload.owner_id = updates.owner_id;
+    if (updates.is_joint !== undefined) payload.is_joint = updates.is_joint;
+    if (updates.notes !== undefined) payload.notes = updates.notes;
+
+    const { data, error } = await client
+      .from('accounts')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Account;
+  }
+
+  public async deleteAccount(id: string): Promise<void> {
+    const client = getClient();
+    const { error } = await client.from('accounts').delete().eq('id', id);
+    if (error) throw error;
   }
 
   public async updateAccountBalance(
