@@ -10,6 +10,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Sun, Moon, Users, User, Plus, ChevronDown, Check, LogOut, AlertTriangle } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
@@ -41,6 +42,18 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [isDropdownOpen]);
+
+    // Close confirmation modal on ESC
+    useEffect(() => {
+        if (!isLogoutConfirmOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setIsLogoutConfirmOpen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isLogoutConfirmOpen]);
 
     // Find partner display names from members or fallbacks
     const yiJiaMember = members.find((m) => m.display_name.toLowerCase().includes("yi jia"));
@@ -291,54 +304,60 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
             </div>
 
             {/* Logout Confirmation Modal */}
-            {isLogoutConfirmOpen && (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="logout-title"
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
-                    onClick={() => setIsLogoutConfirmOpen(false)}
-                >
+            {isLogoutConfirmOpen &&
+                typeof document !== "undefined" &&
+                createPortal(
                     <div
-                        className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
-                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="logout-title"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
+                        onClick={() => setIsLogoutConfirmOpen(false)}
                     >
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
-                                <AlertTriangle className="h-5 w-5" />
+                        <div
+                            className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                                    <AlertTriangle className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3
+                                        id="logout-title"
+                                        className="text-sm font-bold text-slate-900 dark:text-white"
+                                    >
+                                        Lock &amp; Sign Out?
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        You will need your 6-digit PIN to unlock again.
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 id="logout-title" className="text-sm font-bold text-slate-900 dark:text-white">
-                                    Lock &amp; Sign Out?
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    You will need your 6-digit PIN to unlock again.
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="flex items-center justify-end gap-2.5 mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                            <button
-                                type="button"
-                                onClick={() => setIsLogoutConfirmOpen(false)}
-                                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsLogoutConfirmOpen(false);
-                                    signOut();
-                                }}
-                                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-600/20 cursor-pointer"
-                            >
-                                Sign Out
-                            </button>
+                            <div className="flex items-center justify-end gap-2.5 mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLogoutConfirmOpen(false)}
+                                    className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsLogoutConfirmOpen(false);
+                                        signOut();
+                                    }}
+                                    className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-600/20 cursor-pointer"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    </div>,
+                    document.body,
+                )}
         </header>
     );
 }
