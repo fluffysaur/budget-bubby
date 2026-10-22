@@ -1,14 +1,19 @@
 /**
  * Mobile Bottom Navigation Bar
- * Fixed navigation bar for mobile viewports with centered Quick Add floating action button (FAB).
+ * Fixed 4-tab navigation bar for mobile viewports with centered Quick Add floating action button (FAB):
+ * 1. Home (Dashboard)
+ * 2. Spend (Expenses & Budget)
+ * +  Quick Add Expense (FAB)
+ * 3. Balances (Accounts & Net Worth)
+ * 4. Plan (Goals, Loans & Policies)
  */
 
 import {
   LayoutDashboard,
-  PieChart,
   Plus,
   Receipt,
   Landmark,
+  Compass,
 } from 'lucide-react';
 
 export interface MobileBottomNavProps {
@@ -24,13 +29,16 @@ export function MobileBottomNav({
   onQuickAdd,
   className = '',
 }: MobileBottomNavProps) {
+  const isSpendActive = activeTab === 'expenses' || activeTab === 'budget';
+  const isPlanActive = ['plan', 'goals', 'loans', 'recurring'].includes(activeTab);
+
   return (
     <nav
       aria-label="Mobile Navigation"
       className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 transition-colors duration-200 ${className}`}
     >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2 relative">
-        {/* Tab 1: Dashboard */}
+        {/* Tab 1: Home / Dashboard */}
         <button
           type="button"
           onClick={() => onSelectTab?.('dashboard')}
@@ -42,22 +50,22 @@ export function MobileBottomNav({
           }`}
         >
           <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Dashboard</span>
+          <span className="text-[11px] mt-1">Home</span>
         </button>
 
-        {/* Tab 2: Budget */}
+        {/* Tab 2: Spend & Budget */}
         <button
           type="button"
-          onClick={() => onSelectTab?.('budget')}
-          aria-label="Budget"
+          onClick={() => onSelectTab?.('expenses')}
+          aria-label="Expenses"
           className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'budget'
+            isSpendActive
               ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
               : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
-          <PieChart className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Budget</span>
+          <Receipt className="h-5 w-5" />
+          <span className="text-[11px] mt-1">Spend</span>
         </button>
 
         {/* Center Floating Quick Add Action (FAB) */}
@@ -75,22 +83,7 @@ export function MobileBottomNav({
           </span>
         </div>
 
-        {/* Tab 3: Expenses */}
-        <button
-          type="button"
-          onClick={() => onSelectTab?.('expenses')}
-          aria-label="Expenses"
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'expenses'
-              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-          }`}
-        >
-          <Receipt className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Expenses</span>
-        </button>
-
-        {/* Tab 4: Accounts */}
+        {/* Tab 3: Balances & Net Worth */}
         <button
           type="button"
           onClick={() => onSelectTab?.('accounts')}
@@ -102,7 +95,22 @@ export function MobileBottomNav({
           }`}
         >
           <Landmark className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Accounts</span>
+          <span className="text-[11px] mt-1">Balances</span>
+        </button>
+
+        {/* Tab 4: Plan (Goals, Loans, Recurring) */}
+        <button
+          type="button"
+          onClick={() => onSelectTab?.('plan')}
+          aria-label="Plan"
+          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
+            isPlanActive
+              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+          }`}
+        >
+          <Compass className="h-5 w-5" />
+          <span className="text-[11px] mt-1">Plan</span>
         </button>
       </div>
     </nav>

@@ -59,6 +59,7 @@ export const mockCategories: Category[] = [
     color: '#F59E0B',
     icon: 'utensils',
     is_system: true,
+    group: 'spendable',
   },
   {
     id: 'cat-00000000-0102',
@@ -67,6 +68,7 @@ export const mockCategories: Category[] = [
     color: '#EC4899',
     icon: 'sparkles',
     is_system: true,
+    group: 'spendable',
   },
   {
     id: 'cat-00000000-0103',
@@ -75,6 +77,7 @@ export const mockCategories: Category[] = [
     color: '#3B82F6',
     icon: 'car',
     is_system: true,
+    group: 'spendable',
   },
   {
     id: 'cat-00000000-0104',
@@ -83,6 +86,7 @@ export const mockCategories: Category[] = [
     color: '#10B981',
     icon: 'trending-up',
     is_system: true,
+    group: 'allocation',
   },
   {
     id: 'cat-00000000-0105',
@@ -91,6 +95,7 @@ export const mockCategories: Category[] = [
     color: '#6366F1',
     icon: 'piggy-bank',
     is_system: true,
+    group: 'allocation',
   },
   {
     id: 'cat-00000000-0106',
@@ -99,6 +104,7 @@ export const mockCategories: Category[] = [
     color: '#8B5CF6',
     icon: 'heart',
     is_system: true,
+    group: 'allocation',
   },
   {
     id: 'cat-00000000-0107',
@@ -107,6 +113,7 @@ export const mockCategories: Category[] = [
     color: '#64748B',
     icon: 'shield',
     is_system: true,
+    group: 'spendable',
   },
 ];
 
@@ -373,13 +380,33 @@ export const mockAccounts: Account[] = [
   },
 ];
 
-export const mockAccountSnapshots: AccountSnapshot[] = mockAccounts.map((acc, index) => ({
-  id: `snap-${acc.id}-${index}`,
+const SNAPSHOT_MONTH_SCALES: Array<{ date: string; factor: number }> = [
+  { date: '2026-05-31', factor: 0.92 },
+  { date: '2026-06-30', factor: 0.94 },
+  { date: '2026-07-31', factor: 0.96 },
+  { date: '2026-08-31', factor: 0.98 },
+  { date: '2026-09-30', factor: 0.992 },
+  { date: '2026-10-15', factor: 1.0 },
+];
+
+export const mockAccountSnapshots: AccountSnapshot[] = mockAccounts.map((acc, aIdx) => ({
+  id: `snap-${acc.id}-${aIdx}`,
   account_id: acc.id,
   household_id: acc.household_id,
   balance: acc.balance,
-  snapshot_date: '2026-09-15',
+  snapshot_date: '2026-10-15',
 }));
+
+export const mockHistoricalAccountSnapshots: AccountSnapshot[] = SNAPSHOT_MONTH_SCALES.flatMap(
+  ({ date, factor }, mIdx) =>
+    mockAccounts.map((acc, aIdx) => ({
+      id: `snap-${acc.id}-${mIdx}-${aIdx}`,
+      account_id: acc.id,
+      household_id: acc.household_id,
+      balance: Math.round(acc.balance * factor * 100) / 100,
+      snapshot_date: date,
+    }))
+);
 
 export const mockLoans: Loan[] = [
   {
@@ -562,6 +589,79 @@ export const mockRecurringPolicies: RecurringPolicy[] = [
     end_date: '2027-04-05',
     notes: 'IRAS GIRO 12-month schedule',
     monthly_amortized_amount: 150.0,
+  },
+];
+
+export const mockSubscriptionPolicies: RecurringPolicy[] = [
+  {
+    id: 'pol-00000000-0605',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'subscription',
+    name: 'Spotify (Family)',
+    amount: 3.5,
+    frequency: 'monthly',
+    payment_month: null,
+    start_date: '2026-01-01',
+    end_date: null,
+    notes: 'Monthly Lifestyle subscription',
+    monthly_amortized_amount: 3.5,
+  },
+  {
+    id: 'pol-00000000-0606',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'subscription',
+    name: 'Amazon Prime',
+    amount: 4.99,
+    frequency: 'monthly',
+    payment_month: null,
+    start_date: '2026-01-01',
+    end_date: null,
+    notes: 'Monthly Lifestyle subscription',
+    monthly_amortized_amount: 4.99,
+  },
+  {
+    id: 'pol-00000000-0607',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'subscription',
+    name: 'HBO Max',
+    amount: 9.65,
+    frequency: 'monthly',
+    payment_month: null,
+    start_date: '2026-01-01',
+    end_date: null,
+    notes: 'Monthly Lifestyle subscription',
+    monthly_amortized_amount: 9.65,
+  },
+  {
+    id: 'pol-00000000-0608',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'subscription',
+    name: 'Google AI Pro',
+    amount: 28.99,
+    frequency: 'monthly',
+    payment_month: null,
+    start_date: '2026-01-01',
+    end_date: null,
+    notes: 'Monthly Lifestyle subscription',
+    monthly_amortized_amount: 28.99,
+  },
+  {
+    id: 'pol-00000000-0609',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011',
+    type: 'subscription',
+    name: 'Simba Mobile',
+    amount: 0.0,
+    frequency: 'monthly',
+    payment_month: null,
+    start_date: '2026-01-01',
+    end_date: null,
+    notes: 'Monthly mobile plan',
+    monthly_amortized_amount: 0.0,
   },
 ];
 
@@ -788,6 +888,133 @@ export const mockExpenses: Expense[] = [
     split_ratio: 0.5,
     settled: false,
     created_at: '2026-09-14T09:10:00.000Z',
+  },
+  // Historical & Oct 2026 expenses for multi-month trend & average calculations
+  {
+    id: 'exp-00000000-0807',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-10-05',
+    item: 'FairPrice Groceries & Produce',
+    amount: 142.6,
+    remarks: 'October weekly groceries',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-10-05T11:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0808',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0103', // Transport
+    date: '2026-10-08',
+    item: 'SimplyGo MRT & Bus',
+    amount: 68.4,
+    remarks: 'Monthly commute card',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-10-08T09:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0809',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0012',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-10-12',
+    item: 'Weekend Brunch & Movie',
+    amount: 94.0,
+    remarks: 'Date night',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-10-12T20:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0810',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-08-18',
+    item: 'August Groceries & Hawker',
+    amount: 420.0,
+    remarks: 'Monthly food spend',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-08-18T12:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0811',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-08-22',
+    item: 'Uniqlo & Weekend Outing',
+    amount: 210.0,
+    remarks: 'August lifestyle',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-08-22T15:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0812',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0103', // Transport
+    date: '2026-08-25',
+    item: 'MRT & Grab Rides',
+    amount: 115.0,
+    remarks: 'August transport',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-08-25T18:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0813',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-07-20',
+    item: 'July Groceries & Dining',
+    amount: 460.0,
+    remarks: 'July food spend',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-07-20T12:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0814',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-07-24',
+    item: 'Birthday Gift & Concert',
+    amount: 280.0,
+    remarks: 'July lifestyle',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-07-24T19:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0815',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-06-19',
+    item: 'June Groceries & Meals',
+    amount: 395.0,
+    remarks: 'June food spend',
+    is_shared: false,
+    split_ratio: 0.5,
+    settled: true,
+    created_at: '2026-06-19T12:00:00.000Z',
   },
 ];
 

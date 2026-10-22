@@ -8,6 +8,7 @@ import type {
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
+  BulkBalanceUpdateItem,
   Category,
   CreateExpenseInput,
   CreateGoalInput,
@@ -29,6 +30,9 @@ import { supabase } from './supabaseClient';
 import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
+  calculateCPFAndNetPay,
+  getMemberExpenseShare,
+  isSpendableCategory,
 } from '../lib/financialFormulas';
 import { getTodayDateString, addMonths } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
@@ -217,6 +221,24 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     return updatedAccount;
   }
 
+  public async bulkUpdateAccountBalances(
+    updates: BulkBalanceUpdateItem[],
+    snapshotDate: string
+  ): Promise<Account[]> {
+    const snapDate = snapshotDate || getTodayDateString();
+    const results: Account[] = [];
+    for (const item of updates) {
+      const updated = await this.updateAccountBalance(
+        item.accountId,
+        item.balance,
+        item.notes ?? undefined,
+        snapDate
+      );
+      results.push(updated);
+    }
+    return results;
+  }
+
   public async getAccountSnapshots(accountId: string): Promise<AccountSnapshot[]> {
     const client = getClient();
     const { data, error } = await client
@@ -226,6 +248,24 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .order('snapshot_date', { ascending: true });
     if (error) throw error;
     return (data || []) as AccountSnapshot[];
+  }
+
+  public async getAllAccountSnapshots(perspective?: Perspective): Promise<AccountSnapshot[]> {
+    const client = getClient();
+    const { data, error } = await client
+      .from('account_snapshots')
+      .select('*')
+      .order('snapshot_date', { ascending: true });
+    if (error) throw error;
+    const allSnaps = (data || []) as AccountSnapshot[];
+
+    if (!perspective || perspective === 'household') {
+      return allSnaps;
+    }
+
+    const visibleAccounts = await this.getAccounts(perspective);
+    const visibleIds = new Set(visibleAccounts.map((a) => a.id));
+    return allSnaps.filter((s) => visibleIds.has(s.account_id));
   }
 
   public async getBaseProfiles(): Promise<BaseBudgetProfile[]> {
@@ -289,34 +329,114 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const { data: budgetData, error: budgetError } = await query.limit(1).maybeSingle();
     if (budgetError) throw budgetError;
 
-    if (!budgetData) {
-      throw new Error(`Monthly budget not found for month ${month}`);
-    }
-    const budget = budgetData as MonthlyBudget;
+    let budget: MonthlyBudget;
+    let catAllocData: any[] = [];
 
-    // Fetch budget category allocations
-    const { data: catAllocData, error: catAllocError } = await client
-      .from('monthly_budget_categories')
-      .select('*, categories(*)')
-      .eq('monthly_budget_id', budget.id);
-    if (catAllocError) throw catAllocError;
+    if (budgetData) {
+      budget = budgetData as MonthlyBudget;
+      const { data: allocRows, error: catAllocError } = await client
+        .from('monthly_budget_categories')
+        .select('*, categories(*)')
+        .eq('monthly_budget_id', budget.id);
+      if (catAllocError) throw catAllocError;
+      catAllocData = allocRows || [];
+    } else {
+      // Synthesize budget from base_budget_profiles + base_profile_allocations for new months
+      const [profs, allCats, policies] = await Promise.all([
+        this.getBaseProfiles(),
+        this.getCategories(),
+        this.getPolicies(),
+      ]);
+      const baseProfile =
+        profs.find((p) => !memberId || p.owner_id === memberId) || profs[0];
+      const ownerId = memberId || baseProfile?.owner_id || '';
+      const gross = baseProfile ? Number(baseProfile.gross_salary) : 5000;
+      const rate = baseProfile ? Number(baseProfile.cpf_employee_rate) : 0.2;
+      const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
+
+      const memberPolicies = policies.filter((p) => p.owner_id === ownerId);
+      const taxesDeduction = Math.round(
+        memberPolicies
+          .filter((p) => p.type === 'tax')
+          .reduce((s, p) => s + Number(p.monthly_amortized_amount || 0), 0) * 100
+      ) / 100;
+      const insuranceDeduction = Math.round(
+        memberPolicies
+          .filter((p) => p.type === 'insurance')
+          .reduce((s, p) => s + Number(p.monthly_amortized_amount || 0), 0) * 100
+      ) / 100;
+      const afterDeductions = Math.round(
+        (gross - cpf - taxesDeduction - insuranceDeduction) * 100
+      ) / 100;
+
+      budget = {
+        id: `mb-dyn-${month}-${ownerId}`,
+        household_id: baseProfile?.household_id || '',
+        owner_id: ownerId,
+        month,
+        gross_salary: gross,
+        bonus: 0,
+        cpf_deduction: cpf,
+        taxes_deduction: taxesDeduction,
+        insurance_deduction: insuranceDeduction,
+        after_deductions: afterDeductions,
+        notes: 'Generated monthly budget',
+        is_locked: false,
+      };
+
+      const baseAllocs = baseProfile
+        ? await this.getBaseAllocations(baseProfile.id)
+        : [];
+      catAllocData = baseAllocs.map((alloc, idx) => ({
+        id: `mbc-${budget.id}-${idx}`,
+        monthly_budget_id: budget.id,
+        category_id: alloc.category_id,
+        percentage: Number(alloc.target_percentage),
+        allocated_amount:
+          Math.round(afterDeductions * Number(alloc.target_percentage) * 100) / 100,
+        categories: allCats.find((c) => c.id === alloc.category_id),
+      }));
+    }
 
     const nextMonth = addMonths(month, 1);
-    const { data: expensesData, error: expError } = await client
-      .from('expenses')
-      .select('*')
-      .eq('payer_id', budget.owner_id)
-      .gte('date', `${month}-01`)
-      .lt('date', `${nextMonth}-01`);
+    const [{ data: expensesData, error: expError }, policies] = await Promise.all([
+      client
+        .from('expenses')
+        .select('*')
+        .gte('date', `${month}-01`)
+        .lt('date', `${nextMonth}-01`),
+      this.getPolicies(),
+    ]);
     if (expError) throw expError;
 
     const expenses = (expensesData || []) as Expense[];
+    const subscriptionItems = (policies || []).filter(
+      (p) =>
+        p.type === 'subscription' &&
+        (p.owner_id === budget.owner_id || p.owner_id === 'joint')
+    );
+    const totalSubscriptionMonthly = Math.round(
+      subscriptionItems.reduce(
+        (sum, p) => sum + Number(p.monthly_amortized_amount ?? p.amount ?? 0),
+        0
+      ) * 100
+    ) / 100;
 
     const categories: MonthlyBudgetCategoryDetail[] = (catAllocData || []).map((row: any) => {
-      const actualSpent = expenses
+      const catObj: Category | undefined = row.categories;
+      const isLifestyle = Boolean(
+        catObj && catObj.name.toLowerCase().includes('lifestyle')
+      );
+
+      const expenseShareSum = expenses
         .filter((e) => e.category_id === row.category_id)
-        .reduce((sum, e) => sum + Number(e.amount), 0);
-      const roundedSpent = Math.round(actualSpent * 100) / 100;
+        .reduce(
+          (sum, e) => sum + getMemberExpenseShare(e, budget.owner_id, 'personal'),
+          0
+        );
+
+      const subSpent = isLifestyle ? totalSubscriptionMonthly : 0;
+      const roundedSpent = Math.round((expenseShareSum + subSpent) * 100) / 100;
       const remaining = Math.round((Number(row.allocated_amount) - roundedSpent) * 100) / 100;
 
       return {
@@ -325,9 +445,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         category_id: row.category_id,
         percentage: Number(row.percentage),
         allocated_amount: Number(row.allocated_amount),
-        category: row.categories,
+        category: catObj,
         actualSpent: roundedSpent,
         remaining,
+        subscriptionSpent: subSpent,
+        subscriptionItems: isLifestyle ? subscriptionItems : undefined,
       };
     });
 
@@ -337,12 +459,30 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const disposablePool = Number(budget.after_deductions);
     const totalRemaining = Math.round((disposablePool - totalSpent) * 100) / 100;
 
+    const spendableCats = categories.filter((c) => isSpendableCategory(c.category));
+    const allocationCats = categories.filter((c) => !isSpendableCategory(c.category));
+
+    const spendableAllocated = Math.round(
+      spendableCats.reduce((sum, c) => sum + c.allocated_amount, 0) * 100
+    ) / 100;
+    const spendableSpent = Math.round(
+      spendableCats.reduce((sum, c) => sum + (c.actualSpent || 0), 0) * 100
+    ) / 100;
+    const spendableRemaining = Math.round((spendableAllocated - spendableSpent) * 100) / 100;
+    const allocationTotal = Math.round(
+      allocationCats.reduce((sum, c) => sum + c.allocated_amount, 0) * 100
+    ) / 100;
+
     return {
       budget,
       categories,
       disposablePool,
       totalSpent,
       totalRemaining,
+      spendableAllocated,
+      spendableSpent,
+      spendableRemaining,
+      allocationTotal,
     };
   }
 

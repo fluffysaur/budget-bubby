@@ -4,8 +4,9 @@
  * - Active perspective (Combined Household vs Yi Jia vs Rachel)
  * - Summary metric cards: True Net Worth, Total Assets, Total Liabilities / Loans
  * - Net Worth progression chart (NetWorthChart)
- * - Grouped account listings (AccountGroupList)
- * - Quick balance update modal (UpdateBalanceModal)
+ * - Grouped account listings with Notion-style table/card view (AccountGroupList)
+ * - 1-Click Month-End Check-In Bulk Update Modal (BulkBalanceUpdateModal)
+ * - Quick individual balance update modal (UpdateBalanceModal)
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -16,13 +17,15 @@ import {
   User,
   Users,
   Loader2,
+  CalendarCheck,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, StatCard, Badge } from '../components/ui';
+import { PageHeader, Button, StatCard, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { AccountGroupList } from '../components/accounts/AccountGroupList';
 import { UpdateBalanceModal } from '../components/accounts/UpdateBalanceModal';
+import { BulkBalanceUpdateModal } from '../components/accounts/BulkBalanceUpdateModal';
 import { NetWorthChart } from '../components/accounts/NetWorthChart';
 import type { Account, Loan } from '../types/finance';
 
@@ -37,9 +40,10 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Modal State
+  // Modal States
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState<boolean>(false);
 
   // Perspective display label
   const perspectiveDisplayName = useMemo(() => {
@@ -72,7 +76,7 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
     loadData();
   }, [loadData]);
 
-  // Handlers for balance update modal
+  // Handlers for individual balance update modal
   const handleOpenUpdateModal = (account: Account) => {
     setSelectedAccount(account);
     setIsUpdateModalOpen(true);
@@ -86,6 +90,17 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
   const handleBalanceUpdated = async () => {
     await loadData();
     await refreshHousehold();
+  };
+
+  // Handler for inline balance edit from AccountGroupList
+  const handleInlineUpdateBalance = async (accountId: string, newBalance: number) => {
+    try {
+      await financeService.updateAccountBalance(accountId, newBalance);
+      await loadData();
+      await refreshHousehold();
+    } catch (err) {
+      console.error('Failed to update inline balance:', err);
+    }
   };
 
   // Metrics Calculations
@@ -131,6 +146,16 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
           </Badge>
         }
         subtitle="Cash, CPF, and investment portfolio growth center"
+        actions={
+          <Button
+            variant="primary"
+            aria-label="Month-End Check-In"
+            leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
+            onClick={() => setIsBulkModalOpen(true)}
+          >
+            Month-End Check-In
+          </Button>
+        }
       />
 
       {/* High-Level Metric Cards */}
@@ -177,15 +202,24 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
           {/* Net Worth Progression Area Chart */}
           <NetWorthChart accounts={accounts} loans={loans} />
 
-          {/* Grouped Accounts Listing */}
+          {/* Grouped Accounts Listing with Table / Card view */}
           <AccountGroupList
             accounts={accounts}
             onUpdateBalance={handleOpenUpdateModal}
+            onQuickSaveBalance={handleInlineUpdateBalance}
           />
         </>
       )}
 
-      {/* Update Balance Fast Modal */}
+      {/* Month-End Check-In 1-Click Fast Bulk Modal */}
+      <BulkBalanceUpdateModal
+        isOpen={isBulkModalOpen}
+        accounts={accounts}
+        onClose={() => setIsBulkModalOpen(false)}
+        onBalancesUpdated={handleBalanceUpdated}
+      />
+
+      {/* Individual Account Balance Modal */}
       <UpdateBalanceModal
         isOpen={isUpdateModalOpen}
         account={selectedAccount}

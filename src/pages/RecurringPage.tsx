@@ -101,20 +101,23 @@ export function RecurringPage({ className = '' }: RecurringPageProps) {
     });
   }, [policies, perspective, activeMember, members]);
 
-  // Metric 1: Total Annual Outflow
-  // For annual: amount; For monthly: amount * 12
+  // Metric 1: Total Annual Outflow (Insurance & Tax policies)
   const totalAnnualOutflow = useMemo(() => {
-    return inScopePolicies.reduce((sum, p) => {
-      if (p.frequency === 'monthly') {
-        return sum + p.amount * 12;
-      }
-      return sum + p.amount;
-    }, 0);
+    return inScopePolicies
+      .filter((p) => p.type !== 'subscription')
+      .reduce((sum, p) => {
+        if (p.frequency === 'monthly') {
+          return sum + p.amount * 12;
+        }
+        return sum + p.amount;
+      }, 0);
   }, [inScopePolicies]);
 
   // Metric 2: Monthly Amortized Outflow
   const monthlyAmortizedOutflow = useMemo(() => {
-    return inScopePolicies.reduce((sum, p) => sum + p.monthly_amortized_amount, 0);
+    return inScopePolicies
+      .filter((p) => p.type !== 'subscription')
+      .reduce((sum, p) => sum + p.monthly_amortized_amount, 0);
   }, [inScopePolicies]);
 
   // Metric 3 & 4: Monthly Outlay Map, Heaviest Month & Upcoming Renewal

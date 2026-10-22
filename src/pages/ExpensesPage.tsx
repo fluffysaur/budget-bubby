@@ -1,9 +1,10 @@
 /**
  * Expenses Page
  * Top-level page combining:
+ * - ExpenseTrendsCard: 6-month historical monthly spend, 3-mo/6-mo averages & category benchmarks
  * - Summary metric cards: Total Spent, Shared Spending, and Unsettled / Who Owes Whom
- * - Quick Add Expense modal trigger
- * - Filter bar (search, category, payer, split, month)
+ * - Quick Add Expense modal trigger (mobile bottom-sheet optimized)
+ * - Mobile-friendly collapsible filter bar
  * - Responsive transaction ledger table & mobile cards
  * - Reactive to Household Context perspective
  */
@@ -17,18 +18,25 @@ import {
   CheckCircle2,
   Users,
   User,
+  Filter,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, Badge } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
-import { calculateSharedExpenseSettlement } from '../lib/financialFormulas';
+import {
+  calculateSharedExpenseSettlement,
+  calculateExpenseTrendsSummary,
+} from '../lib/financialFormulas';
 import { mockCategories, mockMembers } from '../data/mockSeedData';
 import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
-import type { Expense, ExpenseFilter } from '../types/finance';
+import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
+import type { Expense, ExpenseFilter, RecurringPolicy } from '../types/finance';
 
 export interface ExpensesPageProps {
   className?: string;
@@ -56,8 +64,11 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   });
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
   // Synchronize perspective filter if active member changes
   useEffect(() => {
@@ -68,12 +79,18 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     }
   }, [activeMember]);
 
-  // Load expenses matching current filter
+  // Load expenses matching current filter and policies for trends
   const loadExpenses = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await financeService.getExpenses(filter);
-      setExpenses(data);
+      const [data, fullData, policiesData] = await Promise.all([
+        financeService.getExpenses(filter),
+        financeService.getExpenses(),
+        financeService.getPolicies(),
+      ]);
+      setExpenses(data || []);
+      setAllExpenses(fullData || data || []);
+      setPolicies(policiesData || []);
     } catch (err) {
       console.error('Failed to load expenses:', err);
     } finally {
@@ -127,8 +144,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   }, [expenses]);
 
   // Unsettled Settlement Calculation
-  // Uses global household overview settlementSummary so that filtering by
-  // category, payer, search, etc. in the ledger table does not distort the true balance.
   const settlement = useMemo(() => {
     if (overview?.settlementSummary) {
       return overview.settlementSummary;
@@ -156,6 +171,31 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     );
   }, [overview, expenses, members]);
 
+  // Historical Expense Trends Calculation (6-month rolling averages & category benchmarks)
+  const trendsSummary = useMemo(() => {
+    const trendsSource = allExpenses && allExpenses.length > 0 ? allExpenses : expenses;
+    return calculateExpenseTrendsSummary(
+      trendsSource,
+      categories,
+      policies,
+      perspective,
+      activeMember?.id,
+      filter.month || getCurrentMonth(),
+      6
+    );
+  }, [allExpenses, expenses, categories, policies, perspective, activeMember, filter.month]);
+
+  // Active filter count for mobile indicator
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filter.search) count++;
+    if (filter.categoryId) count++;
+    if (filter.payerId && perspective === 'household') count++;
+    if (filter.isShared !== undefined) count++;
+    if (filter.month !== getCurrentMonth()) count++;
+    return count;
+  }, [filter, perspective]);
+
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
       {/* Header Section */}
@@ -179,6 +219,16 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           >
             Add Expense
           </Button>
+        }
+      />
+
+      {/* Monthly Expense Trends & Benchmarks Card */}
+      <ExpenseTrendsCard
+        trends={trendsSummary}
+        perspectiveLabel={
+          perspective === 'household'
+            ? 'Household'
+            : activeMember?.display_name || 'Personal'
         }
       />
 
@@ -216,14 +266,48 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         />
       </div>
 
-      {/* Filter Bar */}
-      <ExpenseFilterBar
-        filter={filter}
-        onFilterChange={setFilter}
-        onReset={handleResetFilters}
-        categories={categories}
-        members={members}
-      />
+      {/* Mobile Filter Toggle Button */}
+      <div className="sm:hidden flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setIsMobileFilterOpen((prev) => !prev)}
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs active:bg-slate-50 cursor-pointer"
+        >
+          <Filter className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Filter &amp; Search Ledger</span>
+          {activeFilterCount > 0 && (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+              {activeFilterCount}
+            </span>
+          )}
+          {isMobileFilterOpen ? (
+            <ChevronUp className="h-3.5 w-3.5 text-slate-400 ml-1" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400 ml-1" />
+          )}
+        </button>
+
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Filter Bar (Collapsible on mobile, always visible on tablet/desktop) */}
+      <div className={`${isMobileFilterOpen ? 'block' : 'hidden sm:block'}`}>
+        <ExpenseFilterBar
+          filter={filter}
+          onFilterChange={setFilter}
+          onReset={handleResetFilters}
+          categories={categories}
+          members={members}
+        />
+      </div>
 
       {/* Expense List Table */}
       <ExpenseListTable

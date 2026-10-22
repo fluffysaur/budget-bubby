@@ -57,6 +57,8 @@ export interface BaseBudgetProfile {
   updated_at?: string;
 }
 
+export type CategoryGroup = 'spendable' | 'allocation';
+
 export interface Category {
   id: string;
   household_id: string;
@@ -64,6 +66,7 @@ export interface Category {
   color: string;
   icon: string;
   is_system: boolean;
+  group?: CategoryGroup;
 }
 
 export interface BaseProfileAllocation {
@@ -101,6 +104,8 @@ export interface MonthlyBudgetCategoryDetail extends MonthlyBudgetCategory {
   category?: Category;
   actualSpent?: number;
   remaining?: number;
+  subscriptionSpent?: number;
+  subscriptionItems?: RecurringPolicy[];
 }
 
 export interface MonthlyBudgetDetail {
@@ -109,6 +114,10 @@ export interface MonthlyBudgetDetail {
   disposablePool: number;
   totalSpent: number;
   totalRemaining: number;
+  spendableAllocated?: number;
+  spendableSpent?: number;
+  spendableRemaining?: number;
+  allocationTotal?: number;
 }
 
 export interface Expense {
@@ -295,4 +304,65 @@ export interface HouseholdOverview {
   settlementSummary: SettlementSummary;
   activeGoals: SavingsGoal[];
   upcomingBills: RecurringPolicy[];
+}
+
+export interface BulkBalanceUpdateItem {
+  accountId: string;
+  balance: number;
+  newBalance?: number;
+  notes?: string | null;
+}
+
+export interface MonthlyBalancePoint {
+  month: string; // 'YYYY-MM'
+  label: string; // 'Sep 2026'
+  cash: number;
+  investments: number;
+  cpf: number;
+  other: number;
+  totalAssets: number;
+  nonCpfAssets: number;
+  liabilities: number;
+  netWorth: number;
+  nonCpfNetWorth: number;
+  momChange: number;
+  momChangePct: number;
+}
+
+export interface MonthlyExpenseTrendPoint {
+  month: string; // 'YYYY-MM'
+  label: string; // 'Sep 2026'
+  totalSpent: number;
+  subscriptionsSpent: number;
+  byCategory: Record<string, number>;
+}
+
+export interface CategoryAverageMetric {
+  categoryId: string;
+  categoryName: string;
+  color: string;
+  averageMonthly: number;
+  currentMonth: number;
+}
+
+export interface ExpenseTrendsSummary {
+  monthlySeries: MonthlyExpenseTrendPoint[];
+  averageMonthlyTotal: number;
+  rolling3MonthAvg: number;
+  rolling6MonthAvg: number;
+  currentMonthTotal: number;
+  vsAverageDelta: number;
+  categoryAverages: CategoryAverageMetric[];
+}
+
+export interface BonusAllocationResult {
+  grossBonus: number;
+  cpfDeduction: number;
+  afterCpf: number;
+  allocations: Array<{
+    name: string;
+    percentage: number;
+    amount: number;
+    color: string;
+  }>;
 }

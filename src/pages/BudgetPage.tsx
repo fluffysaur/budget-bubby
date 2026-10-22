@@ -5,8 +5,10 @@
  * - Selected month navigation ('YYYY-MM')
  * - Active perspective (Combined Household vs Yi Jia vs Rachel)
  * - High-level financial metric cards
- * - Visual budget waterfall flow
- * - Category progress meters with over-budget alerts
+ * - Spendable Category spending meters (Food, Lifestyle, Transport, Buffer) with Lifestyle subscription tooltip
+ * - Collapsible Wealth & Fixed Allocations (Investments, Savings, Tithing)
+ * - Visual Budget Waterfall breakdown
+ * - Notion-style Bonus Allocation helper (AWS/Performance bonus calculator)
  * - Base profile editor modal
  */
 
@@ -20,17 +22,21 @@ import {
   User,
   Users,
   Loader2,
+  PiggyBank,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, Badge } from '../components/ui';
+import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
+import { isSpendableCategory } from '../lib/financialFormulas';
 import { mockBaseProfiles, mockBaseAllocations, mockCategories } from '../data/mockSeedData';
 import { MonthPicker } from '../components/budget/MonthPicker';
 import { BudgetWaterfall } from '../components/budget/BudgetWaterfall';
 import { CategoryProgressList } from '../components/budget/CategoryProgressList';
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
+import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
 import type {
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -137,6 +143,8 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                 const spent = Math.round(((existing.actualSpent || 0) + (item.actualSpent || 0)) * 100) / 100;
                 const remaining = Math.round((allocated - spent) * 100) / 100;
                 const pct = combinedAfter > 0 ? allocated / combinedAfter : 0;
+                const subSpent = (existing.subscriptionSpent || 0) + (item.subscriptionSpent || 0);
+                const subItems = [...(existing.subscriptionItems || []), ...(item.subscriptionItems || [])];
 
                 categoryMap.set(item.category_id, {
                   ...existing,
@@ -144,6 +152,8 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                   actualSpent: spent,
                   remaining,
                   percentage: pct,
+                  subscriptionSpent: subSpent,
+                  subscriptionItems: subItems,
                 });
               } else {
                 const pct = combinedAfter > 0 ? item.allocated_amount / combinedAfter : item.percentage;
@@ -226,6 +236,14 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
     await refreshHousehold();
   };
 
+  // Split categories into Spendable (Food, Lifestyle, Transport, Buffer) vs Wealth/Fixed Allocations (Investments, Savings, Tithing)
+  const { spendableCats, allocationCats } = useMemo(() => {
+    const all = budgetDetail?.categories || [];
+    const spendable = all.filter((c) => isSpendableCategory(c.category));
+    const allocations = all.filter((c) => !isSpendableCategory(c.category));
+    return { spendableCats: spendable, allocationCats: allocations };
+  }, [budgetDetail]);
+
   // Calculations for summary metrics
   const totalGross = (budgetDetail?.budget.gross_salary || 0) + (budgetDetail?.budget.bonus || 0);
   const totalDeductions =
@@ -235,6 +253,10 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
   const disposablePool = budgetDetail?.disposablePool || 0;
   const totalSpent = budgetDetail?.totalSpent || 0;
   const totalRemaining = budgetDetail?.totalRemaining || 0;
+
+  const spendableAllocated = spendableCats.reduce((s, c) => s + c.allocated_amount, 0);
+  const spendableSpent = spendableCats.reduce((s, c) => s + (c.actualSpent || 0), 0);
+  const spendableRemaining = spendableAllocated - spendableSpent;
 
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
@@ -384,15 +406,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
         </div>
       ) : (
         <>
-          {/* Section: Budget Waterfall Breakdown */}
-          <BudgetWaterfall
-            budget={budgetDetail?.budget}
-            categories={budgetDetail?.categories}
-            perspectiveName={perspectiveDisplayName}
-            onEditProfile={() => handleOpenEditor()}
-          />
-
-          {/* Section: Category Progress Meters */}
+          {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -400,13 +414,51 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                   Category Spending Meters
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Track actual monthly spending against your target budget limits
+                  Daily spendable categories ({formatSGD(spendableRemaining)} remaining of {formatSGD(spendableAllocated)} cap)
                 </p>
               </div>
             </div>
 
-            <CategoryProgressList categories={budgetDetail?.categories || []} />
+            <CategoryProgressList
+              categories={spendableCats.length > 0 ? spendableCats : budgetDetail?.categories || []}
+            />
           </div>
+
+          {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
+          {allocationCats.length > 0 && (
+            <CollapsibleSection
+              title="Wealth & Fixed Allocations"
+              subtitle="Investments, Long-Term Savings & Tithing safely ring-fenced from daily spending"
+              badge={`${formatSGD(allocationCats.reduce((s, c) => s + c.allocated_amount, 0))}/mo`}
+              icon={<PiggyBank className="h-4 w-4" />}
+              defaultOpen={false}
+            >
+              <CategoryProgressList categories={allocationCats} compact />
+            </CollapsibleSection>
+          )}
+
+          {/* Collapsible: Budget Waterfall Breakdown */}
+          <CollapsibleSection
+            title="Monthly CPF & Take-Home Flow"
+            subtitle="From gross salary down to disposable category allocations"
+            badge={perspectiveDisplayName}
+            icon={<DollarSign className="h-4 w-4" />}
+            defaultOpen={true}
+          >
+            <BudgetWaterfall
+              budget={budgetDetail?.budget}
+              categories={budgetDetail?.categories}
+              perspectiveName={perspectiveDisplayName}
+              onEditProfile={() => handleOpenEditor()}
+            />
+          </CollapsibleSection>
+
+          {/* Collapsible: Bonus Allocation Helper */}
+          <BonusAllocationCollapsible
+            initialGrossBonus={2000}
+            cpfRate={0.2}
+            defaultOpen={false}
+          />
         </>
       )}
 

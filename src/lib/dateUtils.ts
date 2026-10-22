@@ -76,6 +76,18 @@ export function formatDisplayMonth(monthStr: string): string {
 }
 
 /**
+ * Formats 'YYYY-MM' into compact string e.g. 'Sep 2026'.
+ */
+export function formatShortMonth(monthStr: string): string {
+  const parts = monthStr.split('-');
+  if (parts.length < 2) return monthStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const date = new Date(year, month, 1);
+  return date.toLocaleDateString('en-SG', { month: 'short', year: 'numeric' });
+}
+
+/**
  * Formats 'YYYY-MM-DD' into human readable string e.g. '15 Sep 2026'.
  */
 export function formatDisplayDate(dateStr: string): string {

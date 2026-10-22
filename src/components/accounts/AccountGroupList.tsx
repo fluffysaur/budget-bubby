@@ -5,16 +5,24 @@
  * - Investment Portfolio
  * - CPF (OA, SA, MA)
  * - Other Assets
- * Displays group subtotals and asset share percentages.
+ * Supports:
+ * - All vs Non-CPF (Liquid) filter toggle
+ * - Compact Notion-inspired row view (default) or Card view
+ * - Inline quick balance editing + modal Update Balance trigger
  */
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Wallet,
   TrendingUp,
   Landmark,
   Layers,
   PiggyBank,
+  Pencil,
+  Check,
+  X,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import type { Account, AccountType } from '../../types/finance';
 import { formatSGD } from '../../lib/currency';
@@ -23,6 +31,7 @@ import { AccountCard } from './AccountCard';
 export interface AccountGroupListProps {
   accounts: Account[];
   onUpdateBalance?: (account: Account) => void;
+  onQuickSaveBalance?: (accountId: string, newBalance: number) => Promise<void>;
   className?: string;
 }
 
@@ -68,17 +77,41 @@ const GROUP_CONFIGS: GroupConfig[] = [
 export function AccountGroupList({
   accounts,
   onUpdateBalance,
+  onQuickSaveBalance,
   className = '',
 }: AccountGroupListProps) {
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'non-cpf'>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [inlineValue, setInlineValue] = useState<string>('');
+  const [isSavingInline, setIsSavingInline] = useState<boolean>(false);
+
+  const filteredAccounts = useMemo(() => {
+    if (scopeFilter === 'non-cpf') {
+      return accounts.filter((a) => a.type !== 'CPF');
+    }
+    return accounts;
+  }, [accounts, scopeFilter]);
+
   // Total assets across all visible accounts
   const totalAssets = useMemo(() => {
-    return Math.round(accounts.reduce((sum, a) => sum + a.balance, 0) * 100) / 100;
+    return Math.round(filteredAccounts.reduce((sum, a) => sum + a.balance, 0) * 100) / 100;
+  }, [filteredAccounts]);
+
+  const nonCpfTotal = useMemo(() => {
+    return (
+      Math.round(
+        accounts
+          .filter((a) => a.type !== 'CPF')
+          .reduce((sum, a) => sum + a.balance, 0) * 100
+      ) / 100
+    );
   }, [accounts]);
 
   // Group accounts by type
   const groupedData = useMemo(() => {
     return GROUP_CONFIGS.map((config) => {
-      const groupAccounts = accounts.filter((a) => a.type === config.type);
+      const groupAccounts = filteredAccounts.filter((a) => a.type === config.type);
       const subtotal = Math.round(
         groupAccounts.reduce((sum, a) => sum + a.balance, 0) * 100
       ) / 100;
@@ -91,7 +124,29 @@ export function AccountGroupList({
         sharePercentage,
       };
     }).filter((g) => g.accounts.length > 0);
-  }, [accounts, totalAssets]);
+  }, [filteredAccounts, totalAssets]);
+
+  const handleStartInlineEdit = (account: Account) => {
+    setInlineEditingId(account.id);
+    setInlineValue(String(account.balance));
+  };
+
+  const handleCommitInlineEdit = async (account: Account) => {
+    const parsed = parseFloat(inlineValue);
+    if (isNaN(parsed) || parsed < 0) {
+      setInlineEditingId(null);
+      return;
+    }
+    if (onQuickSaveBalance && Math.abs(parsed - account.balance) >= 0.01) {
+      try {
+        setIsSavingInline(true);
+        await onQuickSaveBalance(account.id, parsed);
+      } finally {
+        setIsSavingInline(false);
+      }
+    }
+    setInlineEditingId(null);
+  };
 
   // Empty state if no accounts
   if (accounts.length === 0) {
@@ -111,14 +166,72 @@ export function AccountGroupList({
   }
 
   return (
-    <div className={`space-y-8 ${className}`}>
+    <div className={`space-y-5 ${className}`}>
+      {/* Filter & View Mode Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 shadow-2xs">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setScopeFilter('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              scopeFilter === 'all'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+            }`}
+          >
+            All Accounts ({accounts.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setScopeFilter('non-cpf')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              scopeFilter === 'non-cpf'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+            }`}
+          >
+            Non-CPF Liquid ({formatSGD(nonCpfTotal)})
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            aria-label="Compact Table View"
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              viewMode === 'table'
+                ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-700 dark:text-white'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            <List className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Compact</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('cards')}
+            aria-label="Cards View"
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              viewMode === 'cards'
+                ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-700 dark:text-white'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Cards</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Grouped Account Sections */}
       {groupedData.map((group) => {
         const Icon = group.icon;
         return (
-          <section key={group.type} className="space-y-4">
+          <section key={group.type} className="space-y-3">
             {/* Group Header & Subtotals */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800 gap-2">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 ${group.headerColor}`}>
                   <Icon className="h-4 w-4" />
                 </div>
@@ -148,16 +261,114 @@ export function AccountGroupList({
               </div>
             </div>
 
-            {/* Grid of Account Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {group.accounts.map((account) => (
-                <AccountCard
-                  key={account.id}
-                  account={account}
-                  onUpdateBalance={onUpdateBalance}
-                />
-              ))}
-            </div>
+            {viewMode === 'cards' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {group.accounts.map((account) => (
+                  <AccountCard
+                    key={account.id}
+                    account={account}
+                    onUpdateBalance={onUpdateBalance}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Notion-Style Compact Table List */
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-2xs">
+                {group.accounts.map((account) => {
+                  const isEditing = inlineEditingId === account.id;
+                  return (
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                            {account.name}
+                          </span>
+                          {account.institution && (
+                            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                              {account.institution}
+                            </span>
+                          )}
+                          {account.is_joint && (
+                            <span className="rounded-md bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
+                              Joint
+                            </span>
+                          )}
+                        </div>
+                        {account.notes && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            {account.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isEditing ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={inlineValue}
+                              onChange={(e) => setInlineValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleCommitInlineEdit(account);
+                                if (e.key === 'Escape') setInlineEditingId(null);
+                              }}
+                              autoFocus
+                              className="w-28 rounded-lg border border-emerald-500 bg-white dark:bg-slate-800 px-2 py-1 text-right text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              disabled={isSavingInline}
+                              onClick={() => handleCommitInlineEdit(account)}
+                              aria-label="Save inline balance"
+                              className="p-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setInlineEditingId(null)}
+                              aria-label="Cancel inline edit"
+                              className="p-1 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 cursor-pointer"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onQuickSaveBalance
+                                  ? handleStartInlineEdit(account)
+                                  : onUpdateBalance?.(account)
+                              }
+                              title="Click to edit balance"
+                              className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                            >
+                              {formatSGD(account.balance)}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateBalance?.(account)}
+                              aria-label="Update Balance"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300 transition-colors cursor-pointer"
+                            >
+                              <Pencil className="h-3 w-3" />
+                              <span className="hidden sm:inline">Update Balance</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         );
       })}

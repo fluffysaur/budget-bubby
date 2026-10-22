@@ -8,6 +8,7 @@ import type {
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
+  BulkBalanceUpdateItem,
   Category,
   CreateExpenseInput,
   CreateGoalInput,
@@ -35,7 +36,12 @@ export interface FinanceService {
     notes?: string,
     date?: string
   ): Promise<Account>;
+  bulkUpdateAccountBalances(
+    updates: BulkBalanceUpdateItem[],
+    snapshotDate: string
+  ): Promise<Account[]>;
   getAccountSnapshots(accountId: string): Promise<AccountSnapshot[]>;
+  getAllAccountSnapshots(perspective?: Perspective): Promise<AccountSnapshot[]>;
   getBaseProfiles(): Promise<BaseBudgetProfile[]>;
   getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]>;
   getCategories(): Promise<Category[]>;
@@ -68,7 +74,11 @@ export const financeService: FinanceService = {
   getAccounts: (perspective) => getActiveService().getAccounts(perspective),
   updateAccountBalance: (accountId, newBalance, notes, date) =>
     getActiveService().updateAccountBalance(accountId, newBalance, notes, date),
+  bulkUpdateAccountBalances: (updates, snapshotDate) =>
+    getActiveService().bulkUpdateAccountBalances(updates, snapshotDate),
   getAccountSnapshots: (accountId) => getActiveService().getAccountSnapshots(accountId),
+  getAllAccountSnapshots: (perspective) =>
+    getActiveService().getAllAccountSnapshots(perspective),
   getBaseProfiles: () => getActiveService().getBaseProfiles(),
   getBaseAllocations: (profileId) => getActiveService().getBaseAllocations(profileId),
   getCategories: () => getActiveService().getCategories(),

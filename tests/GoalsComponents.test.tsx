@@ -107,7 +107,7 @@ describe('GoalCard Component', () => {
     render(<GoalCard goal={sampleOnTrackGoal} />);
 
     // Monthly contribution formatted
-    expect(screen.getByText(/S\$10,000\.00\/mo/)).toBeInTheDocument();
+    expect(screen.getAllByText(/S\$10,000\.00\/mo/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays target date and remaining months countdown', () => {

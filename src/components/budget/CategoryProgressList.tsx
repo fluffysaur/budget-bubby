@@ -3,6 +3,7 @@
  * Visual category meters with:
  * - Progress bar indicator
  * - Budgeted vs actual spent vs remaining
+ * - Auto-deducted monthly subscription breakdown tooltip (for Lifestyle)
  * - Color-coded status:
  *   - Green: <= 80% (On Track)
  *   - Amber: 81-100% (Near Limit)
@@ -23,13 +24,16 @@ import {
   Heart,
   Shield,
   Layers,
+  Repeat,
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
+import { TooltipPopover } from '../ui/TooltipPopover';
 import type { MonthlyBudgetCategoryDetail } from '../../types/finance';
 
 export interface CategoryProgressListProps {
   categories: MonthlyBudgetCategoryDetail[];
   onCategoryClick?: (categoryId: string) => void;
+  compact?: boolean;
   className?: string;
 }
 
@@ -48,6 +52,7 @@ function getCategoryIcon(name?: string) {
 export function CategoryProgressList({
   categories = [],
   onCategoryClick,
+  compact = false,
   className = '',
 }: CategoryProgressListProps) {
   if (categories.length === 0) {
@@ -78,7 +83,7 @@ export function CategoryProgressList({
     <div className={`space-y-4 ${className}`}>
       {/* Over Budget Alert Banner */}
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200">
+        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200">
           <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
           <div className="text-xs sm:text-sm">
             <span className="font-bold">
@@ -92,7 +97,7 @@ export function CategoryProgressList({
       )}
 
       {/* Category Progress Meters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
         {categories.map((catDetail) => {
           const categoryName = catDetail.category?.name || 'Category';
           const categoryColor = catDetail.category?.color || '#3B82F6';
@@ -102,6 +107,8 @@ export function CategoryProgressList({
           const actual = catDetail.actualSpent || 0;
           const remaining =
             catDetail.remaining !== undefined ? catDetail.remaining : allocated - actual;
+          const subSpent = catDetail.subscriptionSpent || 0;
+          const subItems = catDetail.subscriptionItems || [];
 
           const spentPercentage =
             allocated > 0 ? (actual / allocated) * 100 : actual > 0 ? 100 : 0;
@@ -136,36 +143,65 @@ export function CategoryProgressList({
             <div
               key={catDetail.id || catDetail.category_id}
               onClick={() => onCategoryClick?.(catDetail.category_id)}
-              className={`rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-xs transition-all ${
+              className={`rounded-2xl border bg-white dark:bg-slate-900 ${
+                compact ? 'p-3.5 sm:p-4' : 'p-4 sm:p-5'
+              } shadow-xs transition-all ${
                 isOverBudget
                   ? 'border-rose-200 dark:border-rose-900/60'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
               } ${onCategoryClick ? 'cursor-pointer' : ''}`}
             >
               {/* Card Header: Icon, Name, Target % & Status Badge */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
+                    className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                     style={{ backgroundColor: categoryColor }}
                   >
                     <Icon className="h-4 w-4" />
                   </div>
-                  <div className="truncate">
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
                         {categoryName}
                       </span>
                       <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
                         ({Math.round(catDetail.percentage * 100)}%)
                       </span>
+                      {subSpent > 0 && (
+                        <TooltipPopover
+                          label={`${categoryName} Subscriptions Breakdown`}
+                          title="Auto-Deducted Monthly Subscriptions"
+                        >
+                          <div className="space-y-1">
+                            <p>
+                              Includes <strong>{formatSGD(subSpent)}/mo</strong> from active subscriptions:
+                            </p>
+                            {subItems.length > 0 && (
+                              <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
+                                {subItems.map((s) => (
+                                  <li key={s.name}>
+                                    {s.name}: {formatSGD(s.amount)}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </TooltipPopover>
+                      )}
                     </div>
+                    {subSpent > 0 && (
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                        <Repeat className="h-2.5 w-2.5 text-emerald-500" />
+                        <span>Includes {formatSGD(subSpent)} recurring subs</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Status Indicator Badge */}
                 <div
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusBadgeClass}`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${statusBadgeClass}`}
                 >
                   <StatusIcon className="h-3 w-3" />
                   <span>{statusLabel} ({roundedPercentage}%)</span>
@@ -173,7 +209,7 @@ export function CategoryProgressList({
               </div>
 
               {/* Amounts Grid: Spent vs Budgeted vs Remaining */}
-              <div className="grid grid-cols-3 gap-2 my-3 text-left">
+              <div className="grid grid-cols-3 gap-2 my-2.5 text-left">
                 <div>
                   <span className="block text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500">
                     Spent
@@ -207,7 +243,7 @@ export function CategoryProgressList({
               </div>
 
               {/* Progress Bar Meter */}
-              <div className="space-y-1 mt-3">
+              <div className="space-y-1 mt-2.5">
                 <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${progressBarColor}`}

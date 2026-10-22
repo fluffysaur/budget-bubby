@@ -256,7 +256,7 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
         title: 'Kyoto Holiday Fund',
         target_amount: 6000.0,
         saved_so_far: 1500.0,
-        target_date: '2027-06-01',
+        target_date: '2027-07-01',
         monthly_contribution: 500.0,
         emoji: '⛩️',
       });

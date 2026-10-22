@@ -10,6 +10,7 @@ import type {
   AccountSnapshot,
   BaseBudgetProfile,
   BaseProfileAllocation,
+  BulkBalanceUpdateItem,
   Category,
   CreateExpenseInput,
   CreateGoalInput,
@@ -27,12 +28,16 @@ import type {
 } from '../types/finance';
 import {
   mockSeedData,
+  mockHistoricalAccountSnapshots,
+  mockSubscriptionPolicies,
   type MockSeedDataset,
 } from '../data/mockSeedData';
 import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateCPFAndNetPay,
+  getMemberExpenseShare,
+  isSpendableCategory,
 } from '../lib/financialFormulas';
 import { getTodayDateString } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
@@ -44,17 +49,34 @@ function cloneDeep<T>(data: T): T {
 }
 
 function loadInitialData(): MockSeedDataset {
+  let dataset: MockSeedDataset;
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        dataset = JSON.parse(stored);
+      } else {
+        dataset = cloneDeep(mockSeedData);
       }
     } catch {
-      // Fallback to mock seed data if localStorage read fails
+      dataset = cloneDeep(mockSeedData);
     }
+  } else {
+    dataset = cloneDeep(mockSeedData);
   }
-  return cloneDeep(mockSeedData);
+
+  // Ensure multi-month historical snapshots and subscription policies are available
+  if (!dataset.accountSnapshots || dataset.accountSnapshots.length <= 18) {
+    dataset.accountSnapshots = cloneDeep(mockHistoricalAccountSnapshots);
+  }
+  if (!dataset.recurringPolicies.some((p) => p.type === 'subscription')) {
+    dataset.recurringPolicies = [
+      ...dataset.recurringPolicies,
+      ...cloneDeep(mockSubscriptionPolicies),
+    ];
+  }
+
+  return dataset;
 }
 
 class MockFinanceServiceImpl implements FinanceService {
@@ -74,7 +96,10 @@ class MockFinanceServiceImpl implements FinanceService {
    * Resets mock data back to pure initial seed data and updates localStorage.
    */
   public resetData(): void {
-    this.state = cloneDeep(mockSeedData);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+    this.state = loadInitialData();
     this.persist();
   }
 
@@ -171,22 +196,100 @@ class MockFinanceServiceImpl implements FinanceService {
     }
     account.updated_at = new Date().toISOString();
 
+    const snapDate = date || getTodayDateString();
+    const snapMonth = snapDate.slice(0, 7);
+
+    // Upsert snapshot if one already exists on the exact same date, or push new
+    const existingIdx = this.state.accountSnapshots.findIndex(
+      (s) => s.account_id === accountId && s.snapshot_date === snapDate
+    );
     const snapshot: AccountSnapshot = {
-      id: `snap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id:
+        existingIdx >= 0
+          ? this.state.accountSnapshots[existingIdx].id
+          : `snap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       account_id: accountId,
       household_id: account.household_id,
       balance: rounded,
-      snapshot_date: date || getTodayDateString(),
+      snapshot_date: snapDate,
     };
-    this.state.accountSnapshots.push(snapshot);
+
+    if (existingIdx >= 0) {
+      this.state.accountSnapshots[existingIdx] = snapshot;
+    } else {
+      // Remove any same-month synthetic snapshot if user is recording an explicit snapshot in that month
+      this.state.accountSnapshots = this.state.accountSnapshots.filter(
+        (s) => !(s.account_id === accountId && s.snapshot_date.startsWith(snapMonth) && s.id.startsWith('snap-acc-'))
+      );
+      this.state.accountSnapshots.push(snapshot);
+    }
 
     this.persist();
     return cloneDeep(account);
   }
 
+  public async bulkUpdateAccountBalances(
+    updates: BulkBalanceUpdateItem[],
+    snapshotDate: string
+  ): Promise<Account[]> {
+    const snapDate = snapshotDate || getTodayDateString();
+    const snapMonth = snapDate.slice(0, 7);
+    const updatedAccounts: Account[] = [];
+
+    for (const item of updates) {
+      const account = this.state.accounts.find((a) => a.id === item.accountId);
+      if (!account) continue;
+
+      const rounded = Math.round(Number(item.balance) * 100) / 100;
+      account.balance = rounded;
+      if (item.notes !== undefined) {
+        account.notes = item.notes || null;
+      }
+      account.updated_at = new Date().toISOString();
+
+      // Remove existing snapshots for this account in the same month so end-of-month snapshot is clean
+      this.state.accountSnapshots = this.state.accountSnapshots.filter(
+        (s) => !(s.account_id === account.id && s.snapshot_date.startsWith(snapMonth))
+      );
+
+      this.state.accountSnapshots.push({
+        id: `snap-${Date.now()}-${account.id}-${Math.random().toString(36).slice(2, 6)}`,
+        account_id: account.id,
+        household_id: account.household_id,
+        balance: rounded,
+        snapshot_date: snapDate,
+      });
+
+      updatedAccounts.push(cloneDeep(account));
+    }
+
+    this.persist();
+    return updatedAccounts;
+  }
+
   public async getAccountSnapshots(accountId: string): Promise<AccountSnapshot[]> {
-    const snapshots = this.state.accountSnapshots.filter((s) => s.account_id === accountId);
+    const snapshots = this.state.accountSnapshots
+      .filter((s) => s.account_id === accountId)
+      .sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
     return cloneDeep(snapshots);
+  }
+
+  public async getAllAccountSnapshots(perspective?: Perspective): Promise<AccountSnapshot[]> {
+    if (!perspective || perspective === 'household') {
+      return cloneDeep(
+        [...this.state.accountSnapshots].sort((a, b) =>
+          a.snapshot_date.localeCompare(b.snapshot_date)
+        )
+      );
+    }
+
+    const visibleAccounts = await this.getAccounts(perspective);
+    const visibleIds = new Set(visibleAccounts.map((a) => a.id));
+    return cloneDeep(
+      this.state.accountSnapshots
+        .filter((s) => visibleIds.has(s.account_id))
+        .sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date))
+    );
   }
 
   public async getBaseProfiles(): Promise<BaseBudgetProfile[]> {
@@ -234,27 +337,45 @@ class MockFinanceServiceImpl implements FinanceService {
       (b) => b.month === month && (!targetOwnerId || b.owner_id === targetOwnerId)
     );
 
-    // If budget does not exist for this month, dynamically generate from base profile
-    if (!budget) {
-      const baseProfile = this.state.baseProfiles.find(
-        (p) => !targetOwnerId || p.owner_id === targetOwnerId
-      ) || this.state.baseProfiles[0];
+    const baseProfile =
+      this.state.baseProfiles.find((p) => !targetOwnerId || p.owner_id === targetOwnerId) ||
+      this.state.baseProfiles[0];
 
+    // If budget does not exist for this month, dynamically generate from base profile & recurring policies
+    if (!budget) {
+      const ownerId = targetOwnerId || this.state.members[0].id;
       const gross = baseProfile ? baseProfile.gross_salary : 5000;
       const rate = baseProfile ? baseProfile.cpf_employee_rate : 0.20;
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
-      const afterDeductions = Math.round((gross - cpf) * 100) / 100;
+
+      const memberPolicies = this.state.recurringPolicies.filter(
+        (p) => p.owner_id === ownerId
+      );
+      const taxesDeduction = Math.round(
+        memberPolicies
+          .filter((p) => p.type === 'tax')
+          .reduce((s, p) => s + (p.monthly_amortized_amount || 0), 0) * 100
+      ) / 100;
+      const insuranceDeduction = Math.round(
+        memberPolicies
+          .filter((p) => p.type === 'insurance')
+          .reduce((s, p) => s + (p.monthly_amortized_amount || 0), 0) * 100
+      ) / 100;
+
+      const afterDeductions = Math.round(
+        (gross - cpf - taxesDeduction - insuranceDeduction) * 100
+      ) / 100;
 
       budget = {
-        id: `mb-dyn-${month}-${targetOwnerId || 'gen'}`,
+        id: `mb-dyn-${month}-${ownerId}`,
         household_id: this.state.household.id,
-        owner_id: targetOwnerId || this.state.members[0].id,
+        owner_id: ownerId,
         month,
         gross_salary: gross,
         bonus: 0,
         cpf_deduction: cpf,
-        taxes_deduction: 0,
-        insurance_deduction: 0,
+        taxes_deduction: taxesDeduction,
+        insurance_deduction: insuranceDeduction,
         after_deductions: afterDeductions,
         notes: 'Generated monthly budget',
         is_locked: false,
@@ -263,23 +384,55 @@ class MockFinanceServiceImpl implements FinanceService {
       this.state.monthlyBudgets.push(budget);
     }
 
-    const budgetCategories = this.state.monthlyBudgetCategories.filter(
+    let budgetCategories = this.state.monthlyBudgetCategories.filter(
       (c) => c.monthly_budget_id === budget!.id
     );
 
-    // Calculate actual spent per category for this owner and month
+    // Ensure categories are populated from baseAllocations if missing for dynamically generated month
+    if (budgetCategories.length === 0 && baseProfile) {
+      const profAllocs = this.state.baseAllocations.filter(
+        (a) => a.profile_id === baseProfile.id
+      );
+      const generated = profAllocs.map((alloc, idx) => ({
+        id: `mbc-${budget!.id}-${idx}`,
+        monthly_budget_id: budget!.id,
+        category_id: alloc.category_id,
+        percentage: alloc.target_percentage,
+        allocated_amount: Math.round(budget!.after_deductions * alloc.target_percentage * 100) / 100,
+      }));
+      this.state.monthlyBudgetCategories.push(...generated);
+      budgetCategories = generated;
+    }
+
+    // Active monthly subscriptions for this member
+    const subscriptionItems = this.state.recurringPolicies.filter(
+      (p) =>
+        p.type === 'subscription' &&
+        (p.owner_id === budget!.owner_id || p.owner_id === 'joint')
+    );
+    const totalSubscriptionMonthly = Math.round(
+      subscriptionItems.reduce(
+        (sum, p) => sum + (p.monthly_amortized_amount ?? p.amount ?? 0),
+        0
+      ) * 100
+    ) / 100;
+
+    // Calculate actual spent per category for this owner and month (including 50% share of shared expenses)
     const categoryDetails: MonthlyBudgetCategoryDetail[] = budgetCategories.map((bc) => {
       const category = this.state.categories.find((cat) => cat.id === bc.category_id);
-      const spent = this.state.expenses
-        .filter(
-          (e) =>
-            e.category_id === bc.category_id &&
-            e.date.startsWith(month) &&
-            e.payer_id === budget!.owner_id
-        )
-        .reduce((sum, e) => sum + e.amount, 0);
+      const isLifestyle = Boolean(
+        category && category.name.toLowerCase().includes('lifestyle')
+      );
 
-      const actualSpent = Math.round(spent * 100) / 100;
+      const expenseShareSum = this.state.expenses
+        .filter((e) => e.category_id === bc.category_id && e.date.startsWith(month))
+        .reduce(
+          (sum, e) => sum + getMemberExpenseShare(e, budget!.owner_id, 'personal'),
+          0
+        );
+
+      const subSpent = isLifestyle ? totalSubscriptionMonthly : 0;
+      const actualSpent = Math.round((expenseShareSum + subSpent) * 100) / 100;
       const remaining = Math.round((bc.allocated_amount - actualSpent) * 100) / 100;
 
       return {
@@ -287,6 +440,8 @@ class MockFinanceServiceImpl implements FinanceService {
         category: category ? cloneDeep(category) : undefined,
         actualSpent,
         remaining,
+        subscriptionSpent: subSpent,
+        subscriptionItems: isLifestyle ? cloneDeep(subscriptionItems) : undefined,
       };
     });
 
@@ -297,12 +452,31 @@ class MockFinanceServiceImpl implements FinanceService {
     const disposablePool = budget.after_deductions;
     const totalRemaining = Math.round((disposablePool - totalSpent) * 100) / 100;
 
+    // Spendable vs Allocation breakdown
+    const spendableCats = categoryDetails.filter((c) => isSpendableCategory(c.category));
+    const allocationCats = categoryDetails.filter((c) => !isSpendableCategory(c.category));
+
+    const spendableAllocated = Math.round(
+      spendableCats.reduce((sum, c) => sum + c.allocated_amount, 0) * 100
+    ) / 100;
+    const spendableSpent = Math.round(
+      spendableCats.reduce((sum, c) => sum + (c.actualSpent || 0), 0) * 100
+    ) / 100;
+    const spendableRemaining = Math.round((spendableAllocated - spendableSpent) * 100) / 100;
+    const allocationTotal = Math.round(
+      allocationCats.reduce((sum, c) => sum + c.allocated_amount, 0) * 100
+    ) / 100;
+
     return {
       budget: cloneDeep(budget),
       categories: categoryDetails,
       disposablePool,
       totalSpent,
       totalRemaining,
+      spendableAllocated,
+      spendableSpent,
+      spendableRemaining,
+      allocationTotal,
     };
   }
 

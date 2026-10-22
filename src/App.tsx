@@ -35,6 +35,7 @@ import { AccountsPage } from './pages/AccountsPage';
 import { GoalsPage } from './pages/GoalsPage';
 import { LoansPage } from './pages/LoansPage';
 import { RecurringPage } from './pages/RecurringPage';
+import { PlanPage } from './pages/PlanPage';
 import type { Expense } from './types/finance';
 
 function AppLayoutInner() {
@@ -111,6 +112,7 @@ function AppLayoutInner() {
             <Route path="/goals" element={<GoalsPage />} />
             <Route path="/loans" element={<LoansPage />} />
             <Route path="/recurring" element={<RecurringPage />} />
+            <Route path="/plan" element={<PlanPage onNavigateTab={handleSelectTab} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
