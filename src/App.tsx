@@ -32,6 +32,8 @@ import { AppHeader } from './components/layout/AppHeader';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { QuickAddExpenseModal } from './components/expenses/QuickAddExpenseModal';
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
+import { OfflineBanner } from './components/pwa/OfflineBanner';
+import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
 import { DashboardPage } from './pages/DashboardPage';
 import { BudgetPage } from './pages/BudgetPage';
 import { ExpensesPage } from './pages/ExpensesPage';
@@ -104,6 +106,9 @@ function AppLayoutInner() {
 
       {/* Main Application Column */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Offline Status Connectivity Banner */}
+        <OfflineBanner />
+
         {/* Responsive Header */}
         <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
 
@@ -144,6 +149,9 @@ function AppLayoutInner() {
 
       {/* Fun Celebratory Feedback on adding expense */}
       <ExpenseSuccessCelebration />
+
+      {/* PWA Update & Offline Ready Toast */}
+      <PWAUpdateToast />
     </div>
   );
 }

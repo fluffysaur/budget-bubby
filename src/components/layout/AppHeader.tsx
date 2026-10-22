@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import { Sun, Moon, Users, User, Plus, ChevronDown, Check, LogOut, AlertTriangle } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
+import { PWAInstallButton } from "../pwa/PWAInstallButton";
 
 export interface AppHeaderProps {
     className?: string;
@@ -273,6 +274,9 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
                             <span>Demo Mode</span>
                         </div>
                     )}
+
+                    {/* PWA Install Button */}
+                    <PWAInstallButton />
 
                     {/* Theme Toggle Button */}
                     <button
