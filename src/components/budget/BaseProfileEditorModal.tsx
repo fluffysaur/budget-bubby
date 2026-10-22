@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Save,
   RotateCcw,
+  Plus,
 } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { mockCategories } from '../../data/mockSeedData';
@@ -41,6 +42,7 @@ export interface BaseProfileEditorModalProps {
   monthlyBudgetId?: string;
   selectedMonth?: string;
   onSaveSuccess?: () => void;
+  onManageCategories?: () => void;
   className?: string;
 }
 
@@ -56,6 +58,7 @@ export function BaseProfileEditorModal({
   monthlyBudgetId,
   selectedMonth,
   onSaveSuccess,
+  onManageCategories,
   className = '',
 }: BaseProfileEditorModalProps) {
   const titleId = useId();
@@ -244,7 +247,7 @@ export function BaseProfileEditorModal({
           <div>
             <div className="flex items-center gap-2">
               <h2 id={titleId} className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                Edit Base Profile
+                Edit Budget
               </h2>
               {profileMember && (
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
@@ -253,7 +256,7 @@ export function BaseProfileEditorModal({
               )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Configure baseline salary, deductions, and 100% allocation splits
+              Configure salary, deductions, and category percentage allocations
             </p>
           </div>
           <button
@@ -386,11 +389,23 @@ export function BaseProfileEditorModal({
 
           {/* Section 3: Category Percentage Allocations */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
-                <Percent className="h-3.5 w-3.5" />
-                Category Allocations (Must Sum to 100%)
-              </h3>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
+                  <Percent className="h-3.5 w-3.5" />
+                  Category Allocations (Must Sum to 100%)
+                </h3>
+                {onManageCategories && (
+                  <button
+                    type="button"
+                    onClick={onManageCategories}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Manage Categories</span>
+                  </button>
+                )}
+              </div>
 
               {/* Total Percentage Indicator */}
               <div
@@ -410,45 +425,61 @@ export function BaseProfileEditorModal({
             </div>
 
             <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-4">
-              {categories.map((cat) => {
-                const currentPct = categoryPercentages[cat.id] ?? 0;
-                return (
-                  <div
-                    key={cat.id}
-                    className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 dark:border-slate-800/60 last:border-none"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <label
-                        htmlFor={`cat-alloc-${cat.id}`}
-                        className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate cursor-pointer"
-                      >
-                        {cat.name}
-                      </label>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="relative w-24">
-                        <input
-                          id={`cat-alloc-${cat.id}`}
-                          type="number"
-                          step="any"
-                          min="0"
-                          max="100"
-                          aria-label={`${cat.name} Allocation`}
-                          value={currentPct}
-                          onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
-                          className="w-full pr-6 pl-2.5 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
+              {categories.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-xs text-slate-500 mb-2">No categories configured yet.</p>
+                  {onManageCategories && (
+                    <button
+                      type="button"
+                      onClick={onManageCategories}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Add Categories</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                categories.map((cat) => {
+                  const currentPct = categoryPercentages[cat.id] ?? 0;
+                  return (
+                    <div
+                      key={cat.id}
+                      className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 dark:border-slate-800/60 last:border-none"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
                         />
-                        <span className="absolute right-2 top-2 text-xs text-slate-400">%</span>
+                        <label
+                          htmlFor={`cat-alloc-${cat.id}`}
+                          className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate cursor-pointer"
+                        >
+                          {cat.name}
+                        </label>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="relative w-24">
+                          <input
+                            id={`cat-alloc-${cat.id}`}
+                            type="number"
+                            step="any"
+                            min="0"
+                            max="100"
+                            aria-label={`${cat.name} Allocation`}
+                            value={currentPct}
+                            onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
+                            className="w-full pr-6 pl-2.5 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
+                          />
+                          <span className="absolute right-2 top-2 text-xs text-slate-400">%</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -477,7 +508,7 @@ export function BaseProfileEditorModal({
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
               >
                 <Save className="h-3.5 w-3.5" />
-                <span>{isSubmitting ? 'Saving...' : 'Save Profile'}</span>
+                <span>{isSubmitting ? 'Saving...' : 'Save Budget'}</span>
               </button>
             </div>
           </div>

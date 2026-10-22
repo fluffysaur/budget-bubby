@@ -12,6 +12,8 @@ import type {
   BaseProfileAllocation,
   BulkBalanceUpdateItem,
   Category,
+  CreateCategoryInput,
+  UpdateCategoryInput,
   CreateExpenseInput,
   CreateGoalInput,
   CreatePolicyInput,
@@ -39,6 +41,16 @@ import {
 import { getTodayDateString, addMonths } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import type { FinanceService } from './financeService';
+
+export const PRESET_DEFAULT_CATEGORIES = [
+  { name: 'Food', color: '#F59E0B', icon: 'utensils', group: 'spendable' as const },
+  { name: 'Lifestyle', color: '#EC4899', icon: 'sparkles', group: 'spendable' as const },
+  { name: 'Transport', color: '#3B82F6', icon: 'car', group: 'spendable' as const },
+  { name: 'Investments', color: '#10B981', icon: 'trending-up', group: 'allocation' as const },
+  { name: 'Savings', color: '#6366F1', icon: 'piggy-bank', group: 'allocation' as const },
+  { name: 'Tithing', color: '#8B5CF6', icon: 'heart', group: 'allocation' as const },
+  { name: 'Buffer', color: '#64748B', icon: 'shield', group: 'spendable' as const },
+];
 
 function getClient() {
   if (!supabase) {
@@ -394,7 +406,106 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const client = getClient();
     const { data, error } = await client.from('categories').select('*');
     if (error) throw error;
-    return (data || []) as Category[];
+    const cats = (data || []) as Category[];
+    if (cats.length > 0) {
+      return cats.map((row) => ({
+        ...row,
+        group: row.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+      }));
+    }
+
+    // Auto-seed recommended default categories if household has no categories in Supabase
+    try {
+      const householdId = await this.getHouseholdId();
+      return await this.seedDefaultCategories(householdId);
+    } catch (seedErr) {
+      console.warn('Auto-seed default categories encountered:', seedErr);
+      return [];
+    }
+  }
+
+  public async seedDefaultCategories(explicitHouseholdId?: string): Promise<Category[]> {
+    const client = getClient();
+    const householdId = explicitHouseholdId || (await this.getHouseholdId());
+
+    const rowsToInsert = PRESET_DEFAULT_CATEGORIES.map((preset) => ({
+      household_id: householdId,
+      name: preset.name,
+      color: preset.color,
+      icon: preset.icon,
+      is_system: false,
+    }));
+
+    const { data, error } = await client
+      .from('categories')
+      .upsert(rowsToInsert, { onConflict: 'household_id,name' })
+      .select();
+
+    if (error) throw error;
+    return ((data || []) as Category[]).map((row) => ({
+      ...row,
+      group: row.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+    }));
+  }
+
+  public async addCategory(input: CreateCategoryInput): Promise<Category> {
+    const client = getClient();
+    const householdId = isValidUuid(input.household_id)
+      ? input.household_id
+      : await this.getHouseholdId();
+
+    const insertPayload: any = {
+      household_id: householdId,
+      name: input.name.trim(),
+      color: input.color || '#64748B',
+      icon: input.icon || 'tag',
+      is_system: input.is_system || false,
+    };
+
+    const { data, error } = await client
+      .from('categories')
+      .insert(insertPayload)
+      .select()
+      .single();
+
+    if (error) throw error;
+    const row = data as Category;
+    return {
+      ...row,
+      group: input.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+    };
+  }
+
+  public async updateCategory(id: string, updates: UpdateCategoryInput): Promise<Category> {
+    const client = getClient();
+    const payload: any = {};
+    if (updates.name !== undefined) payload.name = updates.name.trim();
+    if (updates.color !== undefined) payload.color = updates.color;
+    if (updates.icon !== undefined) payload.icon = updates.icon;
+
+    const { data, error } = await client
+      .from('categories')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    const row = data as Category;
+    return {
+      ...row,
+      group: updates.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+    };
+  }
+
+  public async deleteCategory(id: string): Promise<void> {
+    const client = getClient();
+    const { error } = await client
+      .from('categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   }
 
   public async updateBaseProfile(

@@ -12,6 +12,8 @@ import type {
   BaseProfileAllocation,
   BulkBalanceUpdateItem,
   Category,
+  CreateCategoryInput,
+  UpdateCategoryInput,
   CreateExpenseInput,
   CreateGoalInput,
   CreatePolicyInput,
@@ -50,6 +52,10 @@ export interface FinanceService {
   getBaseProfiles(): Promise<BaseBudgetProfile[]>;
   getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]>;
   getCategories(): Promise<Category[]>;
+  addCategory(input: CreateCategoryInput): Promise<Category>;
+  updateCategory(id: string, updates: UpdateCategoryInput): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
+  seedDefaultCategories(): Promise<Category[]>;
   updateBaseProfile(
     profile: BaseBudgetProfile,
     allocations: BaseProfileAllocation[]
@@ -100,6 +106,10 @@ export const financeService: FinanceService = {
   getBaseProfiles: () => getActiveService().getBaseProfiles(),
   getBaseAllocations: (profileId) => getActiveService().getBaseAllocations(profileId),
   getCategories: () => getActiveService().getCategories(),
+  addCategory: (input) => getActiveService().addCategory(input),
+  updateCategory: (id, updates) => getActiveService().updateCategory(id, updates),
+  deleteCategory: (id) => getActiveService().deleteCategory(id),
+  seedDefaultCategories: () => getActiveService().seedDefaultCategories(),
   updateBaseProfile: (profile, allocations) =>
     getActiveService().updateBaseProfile(profile, allocations),
   getMonthlyBudget: (month, memberId) =>

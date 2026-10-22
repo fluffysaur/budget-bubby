@@ -90,6 +90,22 @@ export interface Category {
   group?: CategoryGroup;
 }
 
+export interface CreateCategoryInput {
+  household_id?: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  is_system?: boolean;
+  group?: CategoryGroup;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  color?: string;
+  icon?: string;
+  group?: CategoryGroup;
+}
+
 export interface BaseProfileAllocation {
   id: string;
   profile_id: string;

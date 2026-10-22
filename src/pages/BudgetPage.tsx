@@ -21,6 +21,7 @@ import {
   Receipt,
   Loader2,
   PiggyBank,
+  Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button } from '../components/ui';
@@ -35,6 +36,7 @@ import { MonthPicker } from '../components/budget/MonthPicker';
 import { BudgetWaterfall } from '../components/budget/BudgetWaterfall';
 import { CategoryProgressList } from '../components/budget/CategoryProgressList';
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
+import { ManageCategoriesModal } from '../components/categories/ManageCategoriesModal';
 import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
 import type {
   BaseBudgetProfile,
@@ -62,6 +64,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
 
   // Modal State
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState<boolean>(false);
   const [editingProfileMemberId, setEditingProfileMemberId] = useState<string | null>(null);
 
   // Determine perspective display name
@@ -281,6 +284,23 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
     await refreshHousehold();
   };
 
+  const handleCategoriesChanged = async () => {
+    try {
+      const [cats, profs, allocs] = await Promise.all([
+        financeService.getCategories(),
+        financeService.getBaseProfiles(),
+        financeService.getBaseAllocations(),
+      ]);
+      setCategories(cats || []);
+      if (profs) setBaseProfiles(profs);
+      if (allocs) setBaseAllocations(allocs);
+    } catch (err) {
+      console.error('Failed to reload metadata after category changes:', err);
+    }
+    await loadBudget();
+    await refreshHousehold();
+  };
+
   // Split categories into Spendable (Food, Lifestyle, Transport, Buffer) vs Wealth/Fixed Allocations (Investments, Savings, Tithing)
   const { spendableCats, allocationCats } = useMemo(() => {
     const all = budgetDetail?.categories || [];
@@ -313,6 +333,14 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           <div className="flex items-center flex-wrap gap-3">
             <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
 
+            <Button
+              variant="outline"
+              leftIcon={<Tag className="h-4 w-4 stroke-[2.2] text-slate-500" />}
+              onClick={() => setIsManageCategoriesOpen(true)}
+            >
+              Manage Categories
+            </Button>
+
             {perspective === 'household' && members.length > 1 ? (
               <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
                 {members.map((m) => (
@@ -323,7 +351,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer"
                   >
                     <Settings className="h-3 w-3 text-slate-400" />
-                    <span>Edit {m.display_name}</span>
+                    <span>Edit {m.display_name}&apos;s Budget</span>
                   </button>
                 ))}
               </div>
@@ -333,7 +361,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                 leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
                 onClick={() => handleOpenEditor()}
               >
-                Edit Base Profile
+                Edit Budget
               </Button>
             )}
           </div>
@@ -445,7 +473,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
         <>
           {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                   Category Spending Meters
@@ -454,11 +482,51 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                   Daily spendable categories ({formatSGD(spendableRemaining)} remaining of {formatSGD(spendableAllocated)} cap)
                 </p>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setIsManageCategoriesOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-colors cursor-pointer"
+              >
+                <Tag className="h-3.5 w-3.5 text-slate-400" />
+                <span>Manage Categories</span>
+              </button>
             </div>
 
-            <CategoryProgressList
-              categories={spendableCats.length > 0 ? spendableCats : budgetDetail?.categories || []}
-            />
+            {categories.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                  <Tag className="h-6 w-6" />
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
+                  No Categories Configured
+                </h3>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                  Your budget has no categories configured yet. You can restore the recommended preset categories or create custom categories.
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={async () => {
+                      await financeService.seedDefaultCategories();
+                      await handleCategoriesChanged();
+                    }}
+                  >
+                    Restore Presets
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => setIsManageCategoriesOpen(true)}
+                  >
+                    + Add Category
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <CategoryProgressList
+                categories={spendableCats.length > 0 ? spendableCats : budgetDetail?.categories || []}
+              />
+            )}
           </div>
 
           {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
@@ -517,8 +585,16 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           }
           selectedMonth={selectedMonth}
           onSaveSuccess={handleProfileSaved}
+          onManageCategories={() => setIsManageCategoriesOpen(true)}
         />
       )}
+
+      {/* Manage Categories Modal */}
+      <ManageCategoriesModal
+        isOpen={isManageCategoriesOpen}
+        onClose={() => setIsManageCategoriesOpen(false)}
+        onCategoriesChanged={handleCategoriesChanged}
+      />
     </div>
   );
 }

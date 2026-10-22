@@ -19,6 +19,7 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
+  Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard } from '../components/ui';
@@ -31,6 +32,7 @@ import {
 } from '../lib/financialFormulas';
 import { mockCategories, mockMembers } from '../data/mockSeedData';
 import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
+import { ManageCategoriesModal } from '../components/categories/ManageCategoriesModal';
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
@@ -51,6 +53,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
 
   const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
   const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState<boolean>(false);
 
   // Filter State
   const [filter, setFilter] = useState<ExpenseFilter>({
@@ -205,14 +208,23 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         title="Expenses"
         subtitle="Daily expense ledger and couple splits"
         actions={
-          <Button
-            variant="primary"
-            aria-label="+ Add Expense"
-            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
-            onClick={() => setIsModalOpen(true)}
-          >
-            Add Expense
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              leftIcon={<Tag className="h-4 w-4 stroke-[2.2] text-slate-500" />}
+              onClick={() => setIsManageCategoriesOpen(true)}
+            >
+              Manage Categories
+            </Button>
+            <Button
+              variant="primary"
+              aria-label="+ Add Expense"
+              leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Add Expense
+            </Button>
+          </div>
         }
       />
 
@@ -320,6 +332,19 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         defaultPayerId={filter.payerId}
         categories={categories}
         members={members}
+      />
+
+      {/* Manage Categories Modal */}
+      <ManageCategoriesModal
+        isOpen={isManageCategoriesOpen}
+        onClose={() => setIsManageCategoriesOpen(false)}
+        onCategoriesChanged={async () => {
+          try {
+            const cats = await financeService.getCategories();
+            if (cats && cats.length > 0) setCategories(cats);
+          } catch {}
+          await loadExpenses();
+        }}
       />
     </div>
   );

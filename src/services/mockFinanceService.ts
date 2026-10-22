@@ -14,6 +14,8 @@ import type {
   BaseProfileAllocation,
   BulkBalanceUpdateItem,
   Category,
+  CreateCategoryInput,
+  UpdateCategoryInput,
   CreateExpenseInput,
   CreateGoalInput,
   CreatePolicyInput,
@@ -30,6 +32,7 @@ import type {
 } from '../types/finance';
 import {
   mockSeedData,
+  mockCategories,
   mockHistoricalAccountSnapshots,
   mockSubscriptionPolicies,
   type MockSeedDataset,
@@ -371,6 +374,53 @@ class MockFinanceServiceImpl implements FinanceService {
   }
 
   public async getCategories(): Promise<Category[]> {
+    return cloneDeep(this.state.categories);
+  }
+
+  public async addCategory(input: CreateCategoryInput): Promise<Category> {
+    const householdId = input.household_id || this.state.household.id || 'hh-00000000-0001';
+    const newCategory: Category = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cat-${Date.now()}`,
+      household_id: householdId,
+      name: input.name.trim(),
+      color: input.color || '#64748B',
+      icon: input.icon || 'tag',
+      is_system: input.is_system || false,
+      group: input.group || 'spendable',
+    };
+    this.state.categories.push(newCategory);
+    this.persist();
+    return cloneDeep(newCategory);
+  }
+
+  public async updateCategory(id: string, updates: UpdateCategoryInput): Promise<Category> {
+    const idx = this.state.categories.findIndex((c) => c.id === id);
+    if (idx === -1) {
+      throw new Error(`Category not found: ${id}`);
+    }
+    const current = this.state.categories[idx];
+    const updated: Category = {
+      ...current,
+      name: updates.name !== undefined ? updates.name.trim() : current.name,
+      color: updates.color !== undefined ? updates.color : current.color,
+      icon: updates.icon !== undefined ? updates.icon : current.icon,
+      group: updates.group !== undefined ? updates.group : current.group,
+    };
+    this.state.categories[idx] = updated;
+    this.persist();
+    return cloneDeep(updated);
+  }
+
+  public async deleteCategory(id: string): Promise<void> {
+    this.state.categories = this.state.categories.filter((c) => c.id !== id);
+    // Remove from allocations
+    this.state.baseAllocations = this.state.baseAllocations.filter((a) => a.category_id !== id);
+    this.persist();
+  }
+
+  public async seedDefaultCategories(): Promise<Category[]> {
+    this.state.categories = cloneDeep(mockCategories);
+    this.persist();
     return cloneDeep(this.state.categories);
   }
 

@@ -159,7 +159,7 @@ describe('BudgetWaterfall', () => {
       />
     );
 
-    const editBtn = screen.getByRole('button', { name: /edit base profile|edit profile/i });
+    const editBtn = screen.getByRole('button', { name: /edit base profile|edit profile|edit budget/i });
     fireEvent.click(editBtn);
 
     expect(onEdit).toHaveBeenCalled();
@@ -261,7 +261,7 @@ describe('BaseProfileEditorModal', () => {
     // Should indicate invalid total percentage (e.g. 135%)
     expect(screen.getByText(/135%/)).toBeInTheDocument();
 
-    const saveBtn = screen.getByRole('button', { name: /save profile|save changes/i });
+    const saveBtn = screen.getByRole('button', { name: /save profile|save budget|save changes/i });
     // Should be disabled or error indicated
     expect(saveBtn).toBeDisabled();
   });
@@ -285,7 +285,7 @@ describe('BaseProfileEditorModal', () => {
     const salaryInput = screen.getByLabelText(/gross salary/i);
     fireEvent.change(salaryInput, { target: { value: '6500' } });
 
-    const saveBtn = screen.getByRole('button', { name: /save profile|save changes/i });
+    const saveBtn = screen.getByRole('button', { name: /save profile|save budget|save changes/i });
     expect(saveBtn).not.toBeDisabled();
 
     fireEvent.click(saveBtn);
@@ -357,11 +357,11 @@ describe('BudgetPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getAllByRole('button', { name: /edit base profile|edit profile/i }).length
+        screen.getAllByRole('button', { name: /edit base profile|edit profile|edit budget/i }).length
       ).toBeGreaterThan(0);
     });
 
-    const editBtn = screen.getAllByRole('button', { name: /edit base profile|edit profile/i })[0];
+    const editBtn = screen.getAllByRole('button', { name: /edit base profile|edit profile|edit budget/i })[0];
     fireEvent.click(editBtn);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -422,16 +422,16 @@ describe('BudgetPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getAllByRole('button', { name: /edit base profile|edit profile/i }).length
+        screen.getAllByRole('button', { name: /edit base profile|edit profile|edit budget/i }).length
       ).toBeGreaterThan(0);
     });
 
-    const editBtn = screen.getAllByRole('button', { name: /edit base profile|edit profile/i })[0];
+    const editBtn = screen.getAllByRole('button', { name: /edit base profile|edit profile|edit budget/i })[0];
     fireEvent.click(editBtn);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
-    const saveBtn = screen.getByRole('button', { name: /save profile|save changes/i });
+    const saveBtn = screen.getByRole('button', { name: /save profile|save budget|save changes/i });
     expect(saveBtn).not.toBeDisabled();
 
     await act(async () => {
