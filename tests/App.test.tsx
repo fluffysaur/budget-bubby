@@ -22,24 +22,21 @@ describe('App Integration & Routing', () => {
     localStorage.clear();
   });
 
-  it('renders header, sidebar, perspective banner, and default Dashboard page', async () => {
+  it('renders header, sidebar, and default Dashboard page', async () => {
     render(<App initialEntries={['/']} />);
 
     // Header perspective buttons and badges
     const perspectiveNav = screen.getByRole('navigation', { name: /Perspective Switcher/i });
     expect(within(perspectiveNav).getByRole('button', { name: /Combined Household/i })).toBeInTheDocument();
-    expect(screen.getByText('SGD S$')).toBeInTheDocument();
 
     // Desktop sidebar navigation
     const sidebarNav = screen.getByRole('navigation', { name: 'Sidebar' });
     expect(sidebarNav).toBeInTheDocument();
-    expect(within(sidebarNav).getByRole('button', { name: /Dashboard/i })).toBeInTheDocument();
+    expect(within(sidebarNav).getByRole('button', { name: /Home/i })).toBeInTheDocument();
     expect(within(sidebarNav).getByRole('button', { name: /Budget/i })).toBeInTheDocument();
     expect(within(sidebarNav).getByRole('button', { name: /Expenses/i })).toBeInTheDocument();
-    expect(within(sidebarNav).getByRole('button', { name: /Accounts & Net Worth/i })).toBeInTheDocument();
-
-    // Perspective banner
-    expect(screen.getByRole('region', { name: /Active Perspective Banner/i })).toBeInTheDocument();
+    expect(within(sidebarNav).getByRole('button', { name: /Accounts/i })).toBeInTheDocument();
+    expect(within(sidebarNav).getByRole('button', { name: /Plan/i })).toBeInTheDocument();
 
     // Default Dashboard page renders Net Worth card
     await waitFor(() => {
@@ -102,17 +99,15 @@ describe('App Integration & Routing', () => {
     const yijiaBtn = within(perspectiveNav).getByRole('button', { name: /Yi Jia/i });
     fireEvent.click(yijiaBtn);
 
-    const banner = screen.getByRole('region', { name: /Active Perspective Banner/i });
-
     await waitFor(() => {
-      expect(within(banner).getByText(/Yi Jia's Personal Perspective/i)).toBeInTheDocument();
+      expect(yijiaBtn).toHaveAttribute('aria-pressed', 'true');
     });
 
     const householdBtn = within(perspectiveNav).getByRole('button', { name: /Combined/i });
     fireEvent.click(householdBtn);
 
     await waitFor(() => {
-      expect(within(banner).getByText('Combined')).toBeInTheDocument();
+      expect(householdBtn).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

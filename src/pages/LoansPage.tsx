@@ -14,11 +14,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   CreditCard,
   Loader2,
-  User,
-  Users,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Badge } from '../components/ui';
+import { PageHeader } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { calculateLoanAmortization } from '../lib/financialFormulas';
 import { LoanSummaryCard } from '../components/loans/LoanSummaryCard';
@@ -29,9 +27,10 @@ import type { Loan, AmortizationResult } from '../types/finance';
 
 export interface LoansPageProps {
   className?: string;
+  embedded?: boolean;
 }
 
-export function LoansPage({ className = '' }: LoansPageProps) {
+export function LoansPage({ className = '', embedded = false }: LoansPageProps) {
   const { perspective, activeMember } = useHousehold();
 
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -190,49 +189,67 @@ export function LoansPage({ className = '' }: LoansPageProps) {
 
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
-      {/* Page Header */}
-      <PageHeader
-        title="Loans & Debt Freedom"
-        badge={
-          <Badge
-            variant={perspective === 'household' ? 'emerald' : 'blue'}
-            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-          >
-            {perspective === 'household'
-              ? 'Combined'
-              : activeMember?.display_name || perspective}
-          </Badge>
-        }
-        subtitle="Track mortgage amortization schedules, simulate early prepayment strategies, and plan your path to zero debt."
-        actions={
-          displayedLoans.length > 1 ? (
-            <div
-              role="tablist"
-              className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto self-start sm:self-auto"
-            >
-              {displayedLoans.map((loan) => {
-                const isActive = (activeLoan?.id || selectedLoanId) === loan.id;
-                return (
-                  <button
-                    key={loan.id}
-                    role="tab"
-                    aria-selected={isActive}
-                    type="button"
-                    onClick={() => handleSelectLoan(loan.id)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                      isActive
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {loan.name}
-                  </button>
-                );
-              })}
-            </div>
-          ) : undefined
-        }
-      />
+      {/* Page Header (Hidden if embedded in Plan Hub) */}
+      {!embedded && (
+        <PageHeader
+          title="Loans & Debt Freedom"
+          subtitle="Track mortgage amortization schedules, simulate early prepayment strategies, and plan your path to zero debt."
+          actions={
+            displayedLoans.length > 1 ? (
+              <div
+                role="tablist"
+                className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto self-start sm:self-auto"
+              >
+                {displayedLoans.map((loan) => {
+                  const isActive = (activeLoan?.id || selectedLoanId) === loan.id;
+                  return (
+                    <button
+                      key={loan.id}
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => handleSelectLoan(loan.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {loan.name}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : undefined
+          }
+        />
+      )}
+
+      {/* Embedded loan selector */}
+      {embedded && displayedLoans.length > 1 && (
+        <div
+          role="tablist"
+          className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto self-start"
+        >
+          {displayedLoans.map((loan) => {
+            const isActive = (activeLoan?.id || selectedLoanId) === loan.id;
+            return (
+              <button
+                key={loan.id}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleSelectLoan(loan.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {loan.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* 1. Loan Overview Card */}
       <LoanSummaryCard

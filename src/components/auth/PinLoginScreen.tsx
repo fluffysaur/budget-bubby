@@ -97,7 +97,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
           Budget Buddy
         </h1>
         <p className="text-xs font-medium text-slate-400 mb-8">
-          Enter your 6-digit PIN to unlock
+          Enter your 6-digit PIN to unlock <span className="text-slate-600 dark:text-slate-500">•</span> <button type="button" onClick={() => signInWithPin('000000').then((ok) => ok && onSuccess?.())} className="text-emerald-400/90 hover:underline cursor-pointer">Demo PIN: 000000</button>
         </p>
 
         {/* 6 PIN Indicator Dots */}

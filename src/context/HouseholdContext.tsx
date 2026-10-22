@@ -15,7 +15,7 @@ import React, {
 import type { HouseholdMember, HouseholdOverview, Perspective } from '../types/finance';
 export type { Perspective, Perspective as PerspectiveType };
 import { mockMembers } from '../data/mockSeedData';
-import { financeService } from '../services/financeService';
+import { financeService, isDemoModeActive } from '../services/financeService';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 
 export interface HouseholdContextValue {
@@ -93,7 +93,7 @@ export function HouseholdProvider({
   }, [theme]);
 
   // Determine whether running in mock demo mode
-  const isMockMode = useMemo(() => !isSupabaseConfigured(), []);
+  const isMockMode = useMemo(() => !isSupabaseConfigured() || isDemoModeActive(), []);
 
   // Fetch household overview and members
   const refreshData = useCallback(async () => {

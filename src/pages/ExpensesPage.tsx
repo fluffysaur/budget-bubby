@@ -16,14 +16,12 @@ import {
   ArrowRightLeft,
   Scale,
   CheckCircle2,
-  Users,
-  User,
   Filter,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, Badge } from '../components/ui';
+import { PageHeader, Button, StatCard } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
@@ -36,7 +34,7 @@ import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModa
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
-import type { Expense, ExpenseFilter, RecurringPolicy } from '../types/finance';
+import type { Expense, ExpenseFilter, RecurringPolicy, Category } from '../types/finance';
 
 export interface ExpensesPageProps {
   className?: string;
@@ -52,7 +50,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   } = useHousehold();
 
   const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
-  const categories = mockCategories;
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
 
   // Filter State
   const [filter, setFilter] = useState<ExpenseFilter>({
@@ -83,14 +81,18 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const loadExpenses = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [data, fullData, policiesData] = await Promise.all([
+      const [data, fullData, policiesData, categoriesData] = await Promise.all([
         financeService.getExpenses(filter),
         financeService.getExpenses(),
         financeService.getPolicies(),
+        financeService.getCategories(),
       ]);
       setExpenses(data || []);
       setAllExpenses(fullData || data || []);
       setPolicies(policiesData || []);
+      if (categoriesData && categoriesData.length > 0) {
+        setCategories(categoriesData);
+      }
     } catch (err) {
       console.error('Failed to load expenses:', err);
     } finally {
@@ -201,14 +203,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
       {/* Header Section */}
       <PageHeader
         title="Expenses"
-        badge={
-          <Badge
-            variant={perspective === 'household' ? 'emerald' : 'blue'}
-            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-          >
-            {perspective === 'household' ? 'Combined' : activeMember?.display_name || perspective}
-          </Badge>
-        }
         subtitle="Daily expense ledger and couple splits"
         actions={
           <Button

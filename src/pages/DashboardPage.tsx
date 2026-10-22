@@ -11,8 +11,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
     Plus,
-    Users,
-    User,
     PieChart,
     Landmark,
     Receipt,
@@ -22,7 +20,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, Button, Badge } from "../components/ui";
+import { PageHeader, Button } from "../components/ui";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
@@ -224,15 +222,7 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
         <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
             {/* Top Header & Quick Actions */}
             <PageHeader
-                title="Dashboard"
-                badge={
-                    <Badge
-                        variant={isHousehold ? "emerald" : "blue"}
-                        icon={isHousehold ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                    >
-                        {perspectiveDisplayName}
-                    </Badge>
-                }
+                title="Home"
                 subtitle={
                     isHousehold
                         ? "Combined household hub, running settlements, and couple milestones"

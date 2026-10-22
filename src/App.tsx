@@ -26,32 +26,38 @@ import {
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PinLoginScreen } from './components/auth/PinLoginScreen';
 import { isSupabaseConfigured } from './services/supabaseClient';
+import { financeService } from './services/financeService';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
-import { PerspectiveBanner } from './components/layout/PerspectiveBanner';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { QuickAddExpenseModal } from './components/expenses/QuickAddExpenseModal';
+import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { DashboardPage } from './pages/DashboardPage';
 import { BudgetPage } from './pages/BudgetPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { AccountsPage } from './pages/AccountsPage';
-import { GoalsPage } from './pages/GoalsPage';
-import { LoansPage } from './pages/LoansPage';
-import { RecurringPage } from './pages/RecurringPage';
 import { PlanPage } from './pages/PlanPage';
-import type { Expense } from './types/finance';
+import type { Expense, Category } from './types/finance';
 
 function AppLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshData } = useHousehold();
+  const { refreshData, members } = useHousehold();
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    financeService.getCategories().then((cats) => {
+      if (cats && cats.length > 0) setCategories(cats);
+    }).catch(() => {});
+  }, []);
 
   // Extract active tab id from route path
   const activeTab = useMemo(() => {
     const segment = location.pathname.replace(/^\//, '').split('/')[0];
     if (!segment || segment === 'dashboard') return 'dashboard';
+    if (['goals', 'loans', 'recurring'].includes(segment)) return 'plan';
     return segment;
   }, [location.pathname]);
 
@@ -92,7 +98,7 @@ function AppLayoutInner() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
       {/* Desktop Navigation Sidebar */}
       <DesktopSidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
 
@@ -101,23 +107,22 @@ function AppLayoutInner() {
         {/* Responsive Header */}
         <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
 
-        {/* Financial Perspective Context Banner */}
-        <PerspectiveBanner />
-
-        {/* Scrollable Viewport / Route Container */}
-        <main className="flex-1 overflow-y-auto px-4 py-6 pb-24 md:pb-10">
-          <Routes>
-            <Route path="/" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
-            <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
-            <Route path="/budget" element={<BudgetPage />} />
-            <Route path="/expenses" element={<ExpensesPage />} />
-            <Route path="/accounts" element={<AccountsPage />} />
-            <Route path="/goals" element={<GoalsPage />} />
-            <Route path="/loans" element={<LoansPage />} />
-            <Route path="/recurring" element={<RecurringPage />} />
-            <Route path="/plan" element={<PlanPage onNavigateTab={handleSelectTab} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+        {/* Scrollable Viewport / Route Container (Constrained width on desktop) */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-24 md:pb-10">
+          <div className="mx-auto w-full max-w-5xl">
+            <Routes>
+              <Route path="/" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
+              <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
+              <Route path="/budget" element={<BudgetPage />} />
+              <Route path="/expenses" element={<ExpensesPage />} />
+              <Route path="/accounts" element={<AccountsPage />} />
+              <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
+              <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
+              <Route path="/recurring" element={<PlanPage initialTab="recurring" onNavigateTab={handleSelectTab} />} />
+              <Route path="/plan" element={<PlanPage onNavigateTab={handleSelectTab} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
         </main>
       </div>
 
@@ -133,7 +138,12 @@ function AppLayoutInner() {
         isOpen={isQuickAddOpen}
         onClose={handleCloseQuickAdd}
         onExpenseAdded={handleExpenseAdded}
+        categories={categories}
+        members={members}
       />
+
+      {/* Fun Celebratory Feedback on adding expense */}
+      <ExpenseSuccessCelebration />
     </div>
   );
 }

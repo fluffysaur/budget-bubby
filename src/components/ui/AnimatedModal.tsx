@@ -1,0 +1,104 @@
+/**
+ * AnimatedModal Component
+ * Reusable modal/drawer container with smooth entry and exit transitions:
+ * - On mobile: Slides up from bottom on open, slides down on close
+ * - On desktop: Fades and scales in on open, fades and scales out on close
+ * - Handles backdrop blur, ESC key dismiss, and outside clicks
+ */
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+export interface AnimatedModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  maxWidth?: string; // e.g. 'max-w-md', 'max-w-lg', 'max-w-2xl'
+  className?: string;
+  isDrawerOnMobile?: boolean;
+}
+
+export function AnimatedModal({
+  isOpen,
+  onClose,
+  children,
+  maxWidth = 'max-w-lg',
+  className = '',
+  isDrawerOnMobile = true,
+}: AnimatedModalProps) {
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const [isClosing, setIsClosing] = useState(false);
+  const closingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (closingTimerRef.current) {
+        clearTimeout(closingTimerRef.current);
+        closingTimerRef.current = null;
+      }
+      setShouldRender(true);
+      setIsClosing(false);
+    } else if (shouldRender && !isClosing) {
+      setIsClosing(true);
+      closingTimerRef.current = setTimeout(() => {
+        setShouldRender(false);
+        setIsClosing(false);
+        closingTimerRef.current = null;
+      }, 190);
+    }
+  }, [isOpen, shouldRender, isClosing]);
+
+  const handleRequestClose = useCallback(() => {
+    if (isClosing) return;
+    onClose();
+  }, [isClosing, onClose]);
+
+  // Handle ESC key
+  useEffect(() => {
+    if (!shouldRender || isClosing) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleRequestClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shouldRender, isClosing, handleRequestClose]);
+
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleRequestClose();
+        }
+      }}
+      className={`fixed inset-0 z-50 flex ${
+        isDrawerOnMobile ? 'items-end sm:items-center' : 'items-center'
+      } justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200 ${
+        isClosing ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
+    >
+      <div
+        className={`w-full ${maxWidth} ${
+          isDrawerOnMobile
+            ? `rounded-t-3xl sm:rounded-2xl ${isClosing ? 'animate-drawer-out sm:animate-modal-out' : 'animate-drawer-in sm:animate-modal-in'}`
+            : `rounded-2xl ${isClosing ? 'animate-modal-out' : 'animate-modal-in'}`
+        } bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all ${className}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isDrawerOnMobile && (
+          <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+            <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default AnimatedModal;
+

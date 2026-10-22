@@ -10,8 +10,6 @@ import {
   TrendingDown,
   Wallet,
   CreditCard,
-  Users,
-  User,
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import type { Perspective } from '../../types/finance';
@@ -36,15 +34,7 @@ export function NetWorthHeroCard({
   onUpdateBalance,
 }: NetWorthHeroCardProps) {
   const isHousehold = perspective === 'household';
-
-  const displayName = useMemo(() => {
-    if (perspectiveName) return perspectiveName;
-    if (isHousehold) return 'Combined Household';
-    const clean = perspective.toLowerCase();
-    if (clean.includes('yijia')) return 'Yi Jia';
-    if (clean.includes('rachel')) return 'Rachel';
-    return perspective;
-  }, [perspectiveName, isHousehold, perspective]);
+  const displayName = perspectiveName || (isHousehold ? 'Combined Household' : perspective);
 
   const isPositive = netWorth >= 0;
 
@@ -67,17 +57,17 @@ export function NetWorthHeroCard({
         }`}
       />
 
-      {/* Top row: Perspective Badge & Trend Pill */}
+      {/* Top row: Status & Trend Pill */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Perspective Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800/90 dark:text-slate-200">
-          {isHousehold ? (
-            <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-          ) : (
-            <User className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-          )}
-          <span>{displayName}</span>
-        </div>
+        {displayName ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800/90 dark:text-slate-200">
+            {displayName}
+          </span>
+        ) : (
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Household Balance Sheet
+          </span>
+        )}
 
         {/* Trend Indicator Pill */}
         <div

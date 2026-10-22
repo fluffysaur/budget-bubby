@@ -1,30 +1,30 @@
 /**
  * UpdateBalanceModal Component
- * Supports both:
- * 1. Fast single-account balance update (when `account` is provided)
- * 2. Multi-account selection and batch balance update (when `accounts` list is provided)
- * 3. Empty state with "+ Add Account" action when 0 accounts exist
+ * Streamlined, search-enabled balance update modal:
+ * - Supports single-account quick edit (when `account` is passed)
+ * - Supports multi-account batch update with instant change-detection (no checkboxes required)
+ * - Instant search filter + Category filter pills
+ * - Only modified accounts are saved
+ * - Smooth entry/exit animations via AnimatedModal
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
+  Search,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Calendar,
-  FileText,
   Landmark,
   Plus,
-  Check,
   ArrowUpRight,
   ArrowDownRight,
-  Minus,
 } from 'lucide-react';
 import type { Account, BulkBalanceUpdateItem } from '../../types/finance';
 import { financeService } from '../../services/financeService';
 import { formatSGD } from '../../lib/currency';
 import { getTodayDateString } from '../../lib/dateUtils';
+import { AnimatedModal } from '../ui/AnimatedModal';
 
 export interface UpdateBalanceModalProps {
   isOpen: boolean;
@@ -57,7 +57,7 @@ export function UpdateBalanceModal({
   const [singleNotes, setSingleNotes] = useState<string>('');
 
   // Multi-account states
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [balancesMap, setBalancesMap] = useState<Record<string, string>>({});
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [typeFilter, setTypeFilter] = useState<'All' | 'Cash' | 'Investment' | 'CPF'>('All');
@@ -71,16 +71,12 @@ export function UpdateBalanceModal({
     setDate(getTodayDateString());
     setError(null);
     setIsSubmitting(false);
+    setSearchQuery('');
 
     if (account) {
-      // Single-account setup
       setSingleBalance(account.balance.toString());
       setSingleNotes(account.notes || '');
     } else if (accountsList.length > 0) {
-      // Multi-account setup: default select all
-      const allIds = new Set(accountsList.map((a) => a.id));
-      setSelectedIds(allIds);
-
       const bMap: Record<string, string> = {};
       const nMap: Record<string, string> = {};
       accountsList.forEach((a) => {
@@ -92,72 +88,33 @@ export function UpdateBalanceModal({
     }
   }, [isOpen, account?.id, account?.balance, accountsList.length]);
 
-  // Handle escape key dismiss
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Filtered accounts for multi-mode
+  // Filtered accounts for multi-mode (Search + Type Filter)
   const filteredAccounts = useMemo(() => {
-    if (typeFilter === 'All') return accountsList;
-    return accountsList.filter((a) => a.type === typeFilter);
-  }, [accountsList, typeFilter]);
+    return accountsList.filter((a) => {
+      const matchesType = typeFilter === 'All' || a.type === typeFilter;
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        a.name.toLowerCase().includes(q) ||
+        (a.institution && a.institution.toLowerCase().includes(q)) ||
+        a.type.toLowerCase().includes(q);
+      return matchesType && matchesSearch;
+    });
+  }, [accountsList, typeFilter, searchQuery]);
 
-  if (!isOpen) return null;
-
-  // Handle 0 accounts empty state in multi-mode
-  if (isMultiMode && accountsList.length === 0) {
-    if (!onOpenAddAccount) return null;
-    return (
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="empty-balance-title"
-        onClick={onClose}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
-      >
-        <div
-          className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-6 text-center animate-in zoom-in-95 duration-150"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 mb-4">
-            <Landmark className="h-7 w-7" />
-          </div>
-          <h2 id="empty-balance-title" className="text-lg font-bold text-slate-900 dark:text-white mb-1">
-            No Accounts Found
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 max-w-xs mx-auto leading-relaxed">
-            There are no accounts configured in this perspective yet. Create your first Singapore bank, CPF, or investment account to track balances.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenAddAccount?.();
-              }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 active:scale-95 transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
-            >
-              <Plus className="h-4 w-4 stroke-[2.5]" />
-              <span>Add First Account</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Identify modified accounts across all accounts
+  const modifiedAccounts = useMemo(() => {
+    return accountsList.filter((a) => {
+      const currentVal = a.balance;
+      const rawEntered = balancesMap[a.id];
+      if (rawEntered === undefined) return false;
+      const parsed = parseFloat(rawEntered);
+      if (isNaN(parsed)) return false;
+      const balanceChanged = Math.abs(parsed - currentVal) >= 0.01;
+      const notesChanged = (notesMap[a.id] || '').trim() !== (a.notes || '').trim();
+      return balanceChanged || notesChanged;
+    });
+  }, [accountsList, balancesMap, notesMap]);
 
   // --- Handlers for Single Mode ---
   const handleSingleSubmit = async (e: React.FormEvent) => {
@@ -192,35 +149,16 @@ export function UpdateBalanceModal({
   };
 
   // --- Handlers for Multi Mode ---
-  const handleToggleSelectAll = () => {
-    if (selectedIds.size === filteredAccounts.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredAccounts.map((a) => a.id)));
-    }
-  };
-
-  const handleToggleAccount = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
   const handleMultiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedIds.size === 0) {
-      setError('Please select at least one account to update');
+    if (modifiedAccounts.length === 0) {
+      setError('No balance changes detected to save.');
       return;
     }
 
     const updates: BulkBalanceUpdateItem[] = [];
-    for (const acc of accountsList) {
-      if (!selectedIds.has(acc.id)) continue;
-
+    for (const acc of modifiedAccounts) {
       const rawVal = balancesMap[acc.id];
       const parsed = parseFloat(rawVal);
       if (isNaN(parsed)) {
@@ -255,146 +193,134 @@ export function UpdateBalanceModal({
     }
   };
 
+  // Empty state when 0 accounts exist
+  if (isMultiMode && accountsList.length === 0) {
+    if (!onOpenAddAccount) return null;
+    return (
+      <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+        <div className="p-6 text-center space-y-4">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500">
+            <Landmark className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">No Accounts Found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Add your first bank account or CPF to start tracking balances.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenAddAccount();
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 shadow-md shadow-emerald-500/20 cursor-pointer"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>Add First Account</span>
+          </button>
+        </div>
+      </AnimatedModal>
+    );
+  }
+
   // RENDER: Single Account Mode
   if (account) {
     return (
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="single-modal-title"
-        onClick={onClose}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
-      >
-        <div
-          className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in zoom-in-95 duration-150"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Modal Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+      <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+        <div className="p-5 sm:p-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <h2 id="single-modal-title" className="text-lg font-bold text-slate-900 dark:text-white">
+              <h2 id="single-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
                 Update Account Balance
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {account.name} {account.institution ? `(${account.institution})` : ''}
               </p>
             </div>
-
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Form Body */}
-          <form onSubmit={handleSingleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSingleSubmit} className="mt-4 space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-3 text-xs text-rose-700 dark:text-rose-300 font-medium">
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
                 <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Current Balance Reference */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                Current Balance
-              </span>
-              <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                {formatSGD(account.balance)}
-              </span>
-            </div>
-
-            {/* New Balance Input */}
             <div>
-              <label
-                htmlFor="new-balance"
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2"
-              >
-                New Balance (SGD) *
+              <label htmlFor="single-balance-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                New Balance (S$)
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-semibold text-sm">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
                   S$
-                </div>
+                </span>
                 <input
-                  id="new-balance"
+                  id="single-balance-input"
                   type="number"
                   step="0.01"
-                  autoFocus
-                  required
                   value={singleBalance}
                   onChange={(e) => setSingleBalance(e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  required
+                  autoFocus
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 />
               </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Previous: <span className="font-semibold text-slate-600 dark:text-slate-300">{formatSGD(account.balance)}</span>
+              </p>
             </div>
 
-            {/* Snapshot Date Input */}
-            <div>
-              <label
-                htmlFor="snapshot-date"
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Snapshot Date (Singapore Time)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Calendar className="h-4 w-4" />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="single-date-input" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                  Snapshot Date
+                </label>
                 <input
-                  id="snapshot-date"
+                  id="single-date-input"
                   type="date"
-                  required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
               </div>
-            </div>
-
-            {/* Optional Notes Input */}
-            <div>
-              <label
-                htmlFor="account-notes"
-                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Notes / Remarks (Optional)
-              </label>
-              <div className="relative">
-                <div className="absolute top-3 left-3 pointer-events-none text-slate-400">
-                  <FileText className="h-4 w-4" />
-                </div>
-                <textarea
-                  id="account-notes"
-                  rows={2}
+              <div>
+                <label htmlFor="single-notes-input" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                  Notes (Optional)
+                </label>
+                <input
+                  id="single-notes-input"
+                  type="text"
                   value={singleNotes}
                   onChange={(e) => setSingleNotes(e.target.value)}
-                  placeholder="e.g. Monthly salary credited, interest credited"
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 resize-none"
+                  placeholder="e.g. Salary credited"
+                  className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
               </div>
             </div>
 
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={onClose}
-                disabled={isSubmitting}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 active:scale-95 disabled:opacity-50 transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -411,35 +337,26 @@ export function UpdateBalanceModal({
             </div>
           </form>
         </div>
-      </div>
+      </AnimatedModal>
     );
   }
 
-  // RENDER: Multi-Account Selection Mode
+  // RENDER: Multi-Account Batch Update Mode
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="multi-modal-title"
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto"
-    >
-      <div
-        className="w-full max-w-2xl my-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-2xl">
+      <div className="flex flex-col max-h-[88vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <Landmark className="h-5 w-5" />
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+              <Landmark className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 id="multi-modal-title" className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              <h2 id="multi-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
                 Update Account Balances
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Select accounts to update and record balance snapshots
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Type directly into any balance. Only modified accounts will be saved.
               </p>
             </div>
           </div>
@@ -447,22 +364,35 @@ export function UpdateBalanceModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Toolbar: Category Filters & Snapshot Date */}
-        <div className="px-6 py-3 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Search, Filter Pills & Date */}
+        <div className="px-5 py-2.5 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+          {/* Search bar */}
+          <div className="relative flex-1 min-w-[160px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search accounts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+
+          {/* Type Filters */}
+          <div className="flex items-center gap-1">
             {(['All', 'Cash', 'Investment', 'CPF'] as const).map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setTypeFilter(cat)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                   typeFilter === cat
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -473,96 +403,110 @@ export function UpdateBalanceModal({
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="multi-snapshot-date" className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Date:
-            </label>
+          {/* Date Picker */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-[11px] font-medium text-slate-400">Date:</span>
             <input
-              id="multi-snapshot-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white"
+              className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white"
             />
           </div>
         </div>
 
-        {/* Selection summary & Select All */}
-        <div className="px-6 py-2.5 bg-slate-100/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs shrink-0">
-          <span className="font-semibold text-slate-600 dark:text-slate-300">
-            {selectedIds.size} of {filteredAccounts.length} account{filteredAccounts.length === 1 ? '' : 's'} selected
+        {/* Change Counter Banner */}
+        <div className="px-5 py-1.5 bg-slate-100/60 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs shrink-0">
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            Showing {filteredAccounts.length} of {accountsList.length} accounts
           </span>
-          <button
-            type="button"
-            onClick={handleToggleSelectAll}
-            className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-          >
-            {selectedIds.size === filteredAccounts.length ? 'Deselect All' : 'Select All'}
-          </button>
+          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+            {modifiedAccounts.length} modified
+          </span>
         </div>
 
-        {/* Form Body: Account Selection List */}
-        <form onSubmit={handleMultiSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
+        {/* Accounts List */}
+        <form onSubmit={handleMultiSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-3 text-xs text-rose-700 dark:text-rose-300 font-medium">
+            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
-          {filteredAccounts.map((acc) => {
-            const isChecked = selectedIds.has(acc.id);
-            const currentVal = acc.balance;
-            const enteredVal = parseFloat(balancesMap[acc.id] || '0');
-            const diff = !isNaN(enteredVal) ? Math.round((enteredVal - currentVal) * 100) / 100 : 0;
+          {filteredAccounts.length === 0 ? (
+            <div className="text-center py-8 text-xs text-slate-400">
+              No accounts match "{searchQuery}"
+            </div>
+          ) : (
+            filteredAccounts.map((acc) => {
+              const currentVal = acc.balance;
+              const enteredVal = parseFloat(balancesMap[acc.id] || '0');
+              const isModified =
+                !isNaN(enteredVal) && Math.abs(enteredVal - currentVal) >= 0.01;
+              const diff = !isNaN(enteredVal) ? enteredVal - currentVal : 0;
 
-            return (
-              <div
-                key={acc.id}
-                className={`p-3.5 rounded-xl border transition-all ${
-                  isChecked
-                    ? 'border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/20 dark:bg-emerald-950/20'
-                    : 'border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 opacity-70'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <input
-                      type="checkbox"
-                      id={`chk-${acc.id}`}
-                      checked={isChecked}
-                      onChange={() => handleToggleAccount(acc.id)}
-                      className="h-4 w-4 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                    />
-                    <label htmlFor={`chk-${acc.id}`} className="min-w-0 cursor-pointer select-none">
-                      <div className="flex items-center gap-2">
+              return (
+                <div
+                  key={acc.id}
+                  className={`p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
+                    isModified
+                      ? 'border-emerald-400/80 bg-emerald-50/30 dark:border-emerald-700/60 dark:bg-emerald-950/20'
+                      : 'border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900/40'
+                  }`}
+                >
+                  {/* Account Name & Info */}
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs shrink-0">
+                      {acc.type === 'Cash' ? '💵' : acc.type === 'Investment' ? '📈' : '🏛️'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                           {acc.name}
                         </span>
                         {acc.is_joint && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                             Joint
                           </span>
                         )}
-                        <span className="text-[10px] font-medium text-slate-400">
-                          {acc.institution || acc.type}
-                        </span>
                       </div>
-                    </label>
+                      <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                        <span>{acc.institution || acc.type}</span>
+                        <span>•</span>
+                        <span>Prev: {formatSGD(currentVal)}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="text-[11px] text-slate-400 block">Current:</span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {formatSGD(acc.balance)}
-                    </span>
-                  </div>
-                </div>
+                  {/* Input & Delta Indicator */}
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    {/* Delta Pill */}
+                    {isModified ? (
+                      <span
+                        className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                          diff > 0
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                        }`}
+                      >
+                        {diff > 0 ? (
+                          <ArrowUpRight className="h-3 w-3" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3" />
+                        )}
+                        {diff > 0 ? '+' : ''}
+                        {formatSGD(diff)}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-300 dark:text-slate-600 hidden sm:inline">
+                        —
+                      </span>
+                    )}
 
-                {isChecked && (
-                  <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                    <div className="sm:col-span-5 relative">
-                      <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
+                    {/* Numeric Input */}
+                    <div className="relative w-32 sm:w-36">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">
                         S$
                       </span>
                       <input
@@ -570,57 +514,32 @@ export function UpdateBalanceModal({
                         step="0.01"
                         value={balancesMap[acc.id] ?? ''}
                         onChange={(e) =>
-                          setBalancesMap((prev) => ({ ...prev, [acc.id]: e.target.value }))
+                          setBalancesMap((prev) => ({
+                            ...prev,
+                            [acc.id]: e.target.value,
+                          }))
                         }
                         placeholder="0.00"
-                        className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-bold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-3 flex items-center text-xs">
-                      {diff > 0 ? (
-                        <span className="inline-flex items-center gap-0.5 font-bold text-emerald-600 dark:text-emerald-400">
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                          +{formatSGD(diff)}
-                        </span>
-                      ) : diff < 0 ? (
-                        <span className="inline-flex items-center gap-0.5 font-bold text-rose-600 dark:text-rose-400">
-                          <ArrowDownRight className="h-3.5 w-3.5" />
-                          {formatSGD(diff)}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5 text-slate-400">
-                          <Minus className="h-3.5 w-3.5" />
-                          Unchanged
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="sm:col-span-4">
-                      <input
-                        type="text"
-                        value={notesMap[acc.id] ?? ''}
-                        onChange={(e) =>
-                          setNotesMap((prev) => ({ ...prev, [acc.id]: e.target.value }))
-                        }
-                        placeholder="Notes (optional)"
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                        className={`w-full pl-8 pr-2.5 py-1.5 rounded-lg border text-right text-xs font-bold transition-all focus:outline-none focus:ring-1 ${
+                          isModified
+                            ? 'border-emerald-500 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white'
+                        }`}
                       />
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })
+          )}
         </form>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between gap-3 shrink-0">
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -628,24 +547,28 @@ export function UpdateBalanceModal({
           <button
             type="button"
             onClick={handleMultiSubmit}
-            disabled={isSubmitting || selectedIds.size === 0}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 active:scale-95 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
+            disabled={isSubmitting || modifiedAccounts.length === 0}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Saving Balances...</span>
+                <span>Saving...</span>
               </>
             ) : (
               <>
-                <Check className="h-4 w-4 stroke-[2.5]" />
-                <span>Save {selectedIds.size} Balance{selectedIds.size === 1 ? '' : 's'}</span>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>
+                  {modifiedAccounts.length > 0
+                    ? `Save ${modifiedAccounts.length} Modified Account${modifiedAccounts.length === 1 ? '' : 's'}`
+                    : 'No Changes to Save'}
+                </span>
               </>
             )}
           </button>
         </div>
       </div>
-    </div>
+    </AnimatedModal>
   );
 }
 

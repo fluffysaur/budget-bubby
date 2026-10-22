@@ -16,11 +16,14 @@ import { supabase, isSupabaseConfigured, getPartnerEmails } from '../services/su
 
 export type PartnerId = 'yijia' | 'rachel';
 
+const DEMO_MODE_STORAGE_KEY = 'budget_buddy_demo_pin';
+
 export interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loggedInPartner: PartnerId | null;
   isAuthenticated: boolean;
+  isDemoMode: boolean;
   authLoading: boolean;
   authError: string | null;
   signInWithPin: (pin: string) => Promise<boolean>;
@@ -46,6 +49,12 @@ export function AuthProvider({
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loggedInPartner, setLoggedInPartner] = useState<PartnerId | null>(initialPartner);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      return window.sessionStorage.getItem(DEMO_MODE_STORAGE_KEY) === 'true';
+    }
+    return false;
+  });
   const [authLoading, setAuthLoading] = useState<boolean>(!isLive ? false : true);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -133,6 +142,17 @@ export function AuthProvider({
     async (pin: string): Promise<boolean> => {
       setAuthError(null);
 
+      // Support PIN 000000 to enter Demo Mode
+      if (pin === '000000') {
+        setIsDemoMode(true);
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem(DEMO_MODE_STORAGE_KEY, 'true');
+        }
+        setLoggedInPartner('yijia');
+        setAuthLoading(false);
+        return true;
+      }
+
       // In mock mode (no Supabase configured), simulate authentication
       if (!isLive || !supabase) {
         if (pin === '123456' || pin.length === 6) {
@@ -161,6 +181,10 @@ export function AuthProvider({
           setSession(res1.data.session);
           setUser(res1.data.user);
           setLoggedInPartner('yijia');
+          setIsDemoMode(false);
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
+          }
           await linkMemberProfile(yiJiaEmail);
           setAuthLoading(false);
           return true;
@@ -180,6 +204,10 @@ export function AuthProvider({
           setSession(res2.data.session);
           setUser(res2.data.user);
           setLoggedInPartner('rachel');
+          setIsDemoMode(false);
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
+          }
           await linkMemberProfile(rachelEmail);
           setAuthLoading(false);
           return true;
@@ -195,7 +223,7 @@ export function AuthProvider({
             ? 'Email address not confirmed in Supabase. Please auto-confirm it in Supabase Auth.'
             : (res1.error?.message && res1.error.message !== 'Invalid login credentials')
             ? res1.error.message
-            : 'Invalid PIN code. Please check that your email in .env matches Supabase.';
+            : 'Invalid PIN code. Enter 000000 to enter Demo Mode.';
 
         setAuthError(specificError);
         setAuthLoading(false);
@@ -212,6 +240,10 @@ export function AuthProvider({
 
   const signOut = useCallback(async () => {
     setAuthLoading(true);
+    setIsDemoMode(false);
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
+    }
     if (supabase) {
       try {
         await supabase.auth.signOut();
@@ -231,15 +263,17 @@ export function AuthProvider({
 
   const isAuthenticated = useMemo(() => {
     if (initialAuthenticated !== undefined) return initialAuthenticated;
+    if (isDemoMode) return true;
     if (!isLive) return true; // mock mode is accessible by default unless testing
     return Boolean(session && user);
-  }, [initialAuthenticated, isLive, session, user]);
+  }, [initialAuthenticated, isDemoMode, isLive, session, user]);
 
   const value: AuthContextValue = {
     user,
     session,
     loggedInPartner,
     isAuthenticated,
+    isDemoMode,
     authLoading,
     authError,
     signInWithPin,
@@ -255,6 +289,7 @@ const defaultAuthContextValue: AuthContextValue = {
   session: null,
   loggedInPartner: null,
   isAuthenticated: true,
+  isDemoMode: false,
   authLoading: false,
   authError: null,
   signInWithPin: async () => true,

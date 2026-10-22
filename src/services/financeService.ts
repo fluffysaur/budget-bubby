@@ -70,7 +70,17 @@ export interface FinanceService {
   deletePolicy(id: string): Promise<void>;
 }
 
+export function isDemoModeActive(): boolean {
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    return window.sessionStorage.getItem('budget_buddy_demo_pin') === 'true';
+  }
+  return false;
+}
+
 function getActiveService(): FinanceService {
+  if (isDemoModeActive()) {
+    return mockFinanceService;
+  }
   return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
 }
 
