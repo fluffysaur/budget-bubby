@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface AnimatedModalProps {
   isOpen: boolean;
@@ -64,9 +65,20 @@ export function AnimatedModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [shouldRender, isClosing, handleRequestClose]);
 
+  // Prevent background scrolling when modal/drawer is open
+  useEffect(() => {
+    if (shouldRender && !isClosing) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [shouldRender, isClosing]);
+
   if (!shouldRender) return null;
 
-  return (
+  const modalNode = (
     <div
       role="dialog"
       aria-modal="true"
@@ -84,13 +96,15 @@ export function AnimatedModal({
       <div
         className={`w-full ${maxWidth} ${
           isDrawerOnMobile
-            ? `rounded-t-3xl sm:rounded-2xl ${isClosing ? 'animate-drawer-out sm:animate-modal-out' : 'animate-drawer-in sm:animate-modal-in'}`
-            : `rounded-2xl ${isClosing ? 'animate-modal-out' : 'animate-modal-in'}`
-        } bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all ${className}`}
+            ? `max-h-[92dvh] sm:max-h-[90dvh] rounded-t-3xl sm:rounded-2xl ${
+                isClosing ? 'animate-drawer-out sm:animate-modal-out' : 'animate-drawer-in sm:animate-modal-in'
+              }`
+            : `max-h-[90dvh] rounded-2xl ${isClosing ? 'animate-modal-out' : 'animate-modal-in'}`
+        } bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden transition-all ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {isDrawerOnMobile && (
-          <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+          <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
             <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
           </div>
         )}
@@ -98,6 +112,8 @@ export function AnimatedModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalNode, document.body) : modalNode;
 }
 
 export default AnimatedModal;

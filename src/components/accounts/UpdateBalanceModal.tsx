@@ -228,8 +228,8 @@ export function UpdateBalanceModal({
   if (account) {
     return (
       <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-        <div className="p-5 sm:p-6">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="flex items-center justify-between p-5 sm:p-6 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
             <div>
               <h2 id="single-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
                 Update Account Balance
@@ -248,68 +248,70 @@ export function UpdateBalanceModal({
             </button>
           </div>
 
-          <form onSubmit={handleSingleSubmit} className="mt-4 space-y-4">
-            {error && (
-              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                <span>{error}</span>
-              </div>
-            )}
+          <form onSubmit={handleSingleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+              {error && (
+                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-            <div>
-              <label htmlFor="single-balance-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                New Balance (S$)
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                  S$
-                </span>
-                <input
-                  id="single-balance-input"
-                  type="number"
-                  step="0.01"
-                  value={singleBalance}
-                  onChange={(e) => setSingleBalance(e.target.value)}
-                  placeholder="0.00"
-                  required
-                  autoFocus
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                />
+              <div>
+                <label htmlFor="single-balance-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  New Balance (S$)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    S$
+                  </span>
+                  <input
+                    id="single-balance-input"
+                    type="number"
+                    step="0.01"
+                    value={singleBalance}
+                    onChange={(e) => setSingleBalance(e.target.value)}
+                    placeholder="0.00"
+                    required
+                    autoFocus
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Previous: <span className="font-semibold text-slate-600 dark:text-slate-300">{formatSGD(account.balance)}</span>
+                </p>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Previous: <span className="font-semibold text-slate-600 dark:text-slate-300">{formatSGD(account.balance)}</span>
-              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="single-date-input" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    Snapshot Date
+                  </label>
+                  <input
+                    id="single-date-input"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="single-notes-input" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    Notes (Optional)
+                  </label>
+                  <input
+                    id="single-notes-input"
+                    type="text"
+                    value={singleNotes}
+                    onChange={(e) => setSingleNotes(e.target.value)}
+                    placeholder="e.g. Salary credited"
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="single-date-input" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                  Snapshot Date
-                </label>
-                <input
-                  id="single-date-input"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label htmlFor="single-notes-input" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                  Notes (Optional)
-                </label>
-                <input
-                  id="single-notes-input"
-                  type="text"
-                  value={singleNotes}
-                  onChange={(e) => setSingleNotes(e.target.value)}
-                  placeholder="e.g. Salary credited"
-                  className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
               <button
                 type="button"
                 onClick={onClose}
@@ -344,7 +346,7 @@ export function UpdateBalanceModal({
   // RENDER: Multi-Account Batch Update Mode
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-2xl">
-      <div className="flex flex-col max-h-[88vh]">
+      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -535,7 +537,7 @@ export function UpdateBalanceModal({
         </form>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <button
             type="button"
             onClick={onClose}

@@ -166,9 +166,9 @@ export function QuickAddExpenseModal({
 
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-      <div className="p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="p-5 sm:p-6 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
               <Plus className="h-4.5 w-4.5 stroke-[2.5]" />
@@ -187,15 +187,17 @@ export function QuickAddExpenseModal({
           </button>
         </div>
 
-        {/* Error Alert */}
-        {errorMessage && (
-          <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-            {errorMessage}
-          </div>
-        )}
+        {/* Form wrapping scrollable content and pinned footer */}
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+            {/* Error Alert */}
+            {errorMessage && (
+              <div className="rounded-xl bg-rose-50 p-2.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                {errorMessage}
+              </div>
+            )}
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          {/* Large Amount Input */}
+            {/* Large Amount Input */}
           <div>
             <label
               htmlFor="expense-amount"
@@ -435,9 +437,10 @@ export function QuickAddExpenseModal({
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Submit Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+        {/* Submit Actions Footer */}
+          <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
             <button
               type="button"
               onClick={onClose}

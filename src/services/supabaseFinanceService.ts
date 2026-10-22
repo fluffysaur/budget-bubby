@@ -53,11 +53,32 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (error) throw error;
     if (data?.id) return data.id;
 
-    // Fallback: Check household_members to find household_id
+    // Fallback 1: Check household_members to find household_id
     const { data: memberData } = await client.from('household_members').select('household_id').limit(1).maybeSingle();
     if (memberData?.household_id) return memberData.household_id;
 
-    throw new Error('No accessible household found. Please ensure you are logged into Supabase with an authorized account.');
+    // Fallback 2: Check if authenticated user needs their profile claimed
+    let currentUserEmail = 'unknown';
+    try {
+      const { data: authData } = await client.auth.getUser();
+      if (authData?.user?.email) {
+        currentUserEmail = authData.user.email;
+        await client.rpc('claim_household_member_profile', { user_email: authData.user.email });
+
+        // Retry after claiming
+        const { data: retryHh } = await client.from('households').select('id').limit(1).maybeSingle();
+        if (retryHh?.id) return retryHh.id;
+
+        const { data: retryMem } = await client.from('household_members').select('household_id').limit(1).maybeSingle();
+        if (retryMem?.household_id) return retryMem.household_id;
+      }
+    } catch (claimErr) {
+      console.warn('Auto-claim fallback in getHouseholdId encountered:', claimErr);
+    }
+
+    throw new Error(
+      `No accessible household found for authenticated user (${currentUserEmail}). Please ensure your user account is linked to a household member profile in the 'household_members' table.`
+    );
   }
 
   public async getHouseholdOverview(): Promise<HouseholdOverview> {

@@ -120,7 +120,10 @@ export function AddAccountModal({
       setIsSubmitting(true);
       setError(null);
 
+      const targetMember = members.find((m) => m.id === resolvedOwnerId);
+
       const created = await financeService.createAccount({
+        household_id: targetMember?.household_id,
         owner_id: resolvedOwnerId,
         name: name.trim(),
         institution: institution.trim() || null,
@@ -142,9 +145,9 @@ export function AddAccountModal({
 
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-      <div className="p-5 sm:p-6 max-h-[88vh] overflow-y-auto">
+      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="p-5 sm:p-6 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
               <Landmark className="h-4.5 w-4.5" />
@@ -164,227 +167,230 @@ export function AddAccountModal({
           </button>
         </div>
 
-        {/* Empty State Banner (if 0 accounts exist) */}
-        {isInitialSetup && (
-          <div className="my-3 p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 flex items-start gap-2.5">
-            <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            <div className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-              <span className="font-bold">No accounts found yet.</span> Add your bank, CPF, or investment account to track balances.
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
-          {error && (
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Quick Presets */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Quick Preset
-              </span>
-              <select
-                aria-label="More presets"
-                onChange={(e) => {
-                  const found = ALL_PRESETS.find((p) => p.name === e.target.value);
-                  if (found) handleSelectPreset(found);
-                }}
-                defaultValue=""
-                className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-transparent border-none cursor-pointer focus:outline-none"
-              >
-                <option value="" disabled>
-                  More presets...
-                </option>
-                {ALL_PRESETS.map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.name} ({p.type})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {POPULAR_PRESETS.map((preset) => {
-                const isSelected = name === preset.name;
-                return (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => handleSelectPreset(preset)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {preset.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Account Name & Bank / Institution */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="account-name" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Account Name *
-              </label>
-              <input
-                id="account-name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. DBS Multiplier"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="account-institution" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Bank / Institution
-              </label>
-              <input
-                id="account-institution"
-                type="text"
-                value={institution}
-                onChange={(e) => setInstitution(e.target.value)}
-                placeholder="e.g. DBS, OCBC, UOB"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
-            </div>
-          </div>
-
-          {/* Account Type & Starting Balance */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="account-type" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Type *
-              </label>
-              <select
-                id="account-type"
-                value={type}
-                onChange={(e) => setType(e.target.value as AccountType)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              >
-                <option value="Cash">Cash / Savings</option>
-                <option value="Investment">Investment / Brokerage</option>
-                <option value="CPF">CPF (OA/SA/MA)</option>
-                <option value="Other">Other Asset</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="initial-balance" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Starting Balance (SGD) *
-              </label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">
-                  S$
-                </span>
-                <input
-                  id="initial-balance"
-                  type="number"
-                  step="0.01"
-                  required
-                  value={balance}
-                  onChange={(e) => setBalance(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full pl-8 pr-2.5 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Owner & Joint Status */}
-          <div className="grid grid-cols-2 gap-3 items-center">
-            <div>
-              <label htmlFor="account-owner" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Owner *
-              </label>
-              <select
-                id="account-owner"
-                value={ownerId}
-                onChange={(e) => setOwnerId(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              >
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.display_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center pt-5">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isJoint}
-                  onChange={(e) => setIsJoint(e.target.checked)}
-                  disabled={type === 'CPF'}
-                  className="h-4 w-4 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-40"
-                />
-                <span className={`text-xs font-semibold ${type === 'CPF' ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                  Joint Account
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {/* Collapsible More Details (Institution + Notes) */}
-          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 p-2.5">
-            <button
-              type="button"
-              onClick={() => setShowMoreDetails((prev) => !prev)}
-              className="w-full flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer"
-            >
-              <span>{showMoreDetails ? 'Hide extra details' : '+ More details (Bank, Notes)'}</span>
-              {showMoreDetails ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
-            </button>
-
-            {showMoreDetails && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800">
-                <div>
-                  <label htmlFor="account-institution" className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                    Institution
-                  </label>
-                  <input
-                    id="account-institution"
-                    type="text"
-                    value={institution}
-                    onChange={(e) => setInstitution(e.target.value)}
-                    placeholder="e.g. DBS, OCBC"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="account-notes" className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                    Notes
-                  </label>
-                  <input
-                    id="account-notes"
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Salary account"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+        {/* Form wrapping scrollable content and pinned footer */}
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-3.5">
+            {/* Empty State Banner (if 0 accounts exist) */}
+            {isInitialSetup && (
+              <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 flex items-start gap-2.5">
+                <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                  <span className="font-bold">No accounts found yet.</span> Add your bank, CPF, or investment account to track balances.
                 </div>
               </div>
             )}
+
+            {error && (
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Quick Presets */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Quick Preset
+                </span>
+                <select
+                  aria-label="More presets"
+                  onChange={(e) => {
+                    const found = ALL_PRESETS.find((p) => p.name === e.target.value);
+                    if (found) handleSelectPreset(found);
+                  }}
+                  defaultValue=""
+                  className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-transparent border-none cursor-pointer focus:outline-none"
+                >
+                  <option value="" disabled>
+                    More presets...
+                  </option>
+                  {ALL_PRESETS.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name} ({p.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {POPULAR_PRESETS.map((preset) => {
+                  const isSelected = name === preset.name;
+                  return (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleSelectPreset(preset)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {preset.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Account Name & Bank / Institution */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="account-name" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                  Account Name *
+                </label>
+                <input
+                  id="account-name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. DBS Multiplier"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="account-institution" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                  Bank / Institution
+                </label>
+                <input
+                  id="account-institution"
+                  type="text"
+                  value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
+                  placeholder="e.g. DBS, OCBC, UOB"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Account Type & Starting Balance */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="account-type" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                  Type *
+                </label>
+                <select
+                  id="account-type"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as AccountType)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                >
+                  <option value="Cash">Cash / Savings</option>
+                  <option value="Investment">Investment / Brokerage</option>
+                  <option value="CPF">CPF (OA/SA/MA)</option>
+                  <option value="Other">Other Asset</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="initial-balance" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                  Starting Balance (SGD) *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">
+                    S$
+                  </span>
+                  <input
+                    id="initial-balance"
+                    type="number"
+                    step="0.01"
+                    required
+                    value={balance}
+                    onChange={(e) => setBalance(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-8 pr-2.5 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Owner & Joint Status */}
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <div>
+                <label htmlFor="account-owner" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                  Owner *
+                </label>
+                <select
+                  id="account-owner"
+                  value={ownerId}
+                  onChange={(e) => setOwnerId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                >
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.display_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center pt-5">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isJoint}
+                    onChange={(e) => setIsJoint(e.target.checked)}
+                    disabled={type === 'CPF'}
+                    className="h-4 w-4 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-40"
+                  />
+                  <span className={`text-xs font-semibold ${type === 'CPF' ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                    Joint Account
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Collapsible More Details (Institution + Notes) */}
+            <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 p-2.5">
+              <button
+                type="button"
+                onClick={() => setShowMoreDetails((prev) => !prev)}
+                className="w-full flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer"
+              >
+                <span>{showMoreDetails ? 'Hide extra details' : '+ More details (Bank, Notes)'}</span>
+                {showMoreDetails ? (
+                  <ChevronUp className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                )}
+              </button>
+
+              {showMoreDetails && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800">
+                  <div>
+                    <label htmlFor="account-institution" className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                      Institution
+                    </label>
+                    <input
+                      id="account-institution"
+                      type="text"
+                      value={institution}
+                      onChange={(e) => setInstitution(e.target.value)}
+                      placeholder="e.g. DBS, OCBC"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="account-notes" className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                      Notes
+                    </label>
+                    <input
+                      id="account-notes"
+                      type="text"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="e.g. Salary account"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+          {/* Action Buttons Footer */}
+          <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
             <button
               type="button"
               onClick={onClose}
