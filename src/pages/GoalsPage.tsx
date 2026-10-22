@@ -18,11 +18,9 @@ import {
   Calendar,
   Loader2,
   AlertCircle,
-  Users,
-  User,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, Badge } from '../components/ui';
+import { PageHeader, Button } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { GoalCard } from '../components/goals/GoalCard';
@@ -32,11 +30,12 @@ import type { SavingsGoal } from '../types/finance';
 
 export interface GoalsPageProps {
   className?: string;
+  embedded?: boolean;
 }
 
 type GoalFilterTab = 'all' | 'in_progress' | 'achieved';
 
-export function GoalsPage({ className = '' }: GoalsPageProps) {
+export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) {
   const { perspective, activeMember, overview } = useHousehold();
 
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
@@ -134,29 +133,38 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Page Header */}
-      <PageHeader
-        title="Savings Goals & Milestones"
-        subtitle="Track joint wedding, HDB down payment, renovation, and couple aspirations with real-time monthly pacing"
-        badge={
-          <Badge
-            variant={perspective === 'household' ? 'emerald' : 'blue'}
-            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-          >
-            {perspective === 'household' ? 'Combined' : perspective === 'yijia' ? 'Yi Jia' : 'Rachel'}
-          </Badge>
-        }
-        actions={
+      {/* Page Header (Compact if embedded) */}
+      {!embedded ? (
+        <PageHeader
+          title="Savings Goals & Milestones"
+          subtitle="Track joint wedding, HDB down payment, renovation, and couple aspirations with real-time monthly pacing"
+          actions={
+            <Button
+              variant="primary"
+              aria-label="+ New Goal"
+              leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+              onClick={handleOpenCreateModal}
+            >
+              New Goal
+            </Button>
+          }
+        />
+      ) : (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Savings Goals &amp; Milestones — track wedding, HDB down payment, and pacing
+          </p>
           <Button
             variant="primary"
+            size="sm"
             aria-label="+ New Goal"
-            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+            leftIcon={<Plus className="h-3.5 w-3.5 stroke-[2.5]" />}
             onClick={handleOpenCreateModal}
           >
             New Goal
           </Button>
-        }
-      />
+        </div>
+      )}
 
       {/* Error Alert */}
       {errorMessage && (
@@ -176,7 +184,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
               <Target className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+          <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {formatSGD(totalTarget)}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -192,7 +200,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
               <PiggyBank className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-black text-emerald-600 dark:text-emerald-400">
+          <div className="mt-3 text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
             {formatSGD(totalSaved)}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -208,7 +216,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
               <Sparkles className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+          <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {overallProgress}%
           </div>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -227,7 +235,7 @@ export function GoalsPage({ className = '' }: GoalsPageProps) {
               <Calendar className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
+          <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {formatSGD(totalMonthlyContributions)}/mo
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">

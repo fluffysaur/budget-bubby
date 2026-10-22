@@ -10,7 +10,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
-import { Sun, Moon, Users, User, Coins, Plus, ChevronDown, Check, LogOut } from "lucide-react";
+import { Sun, Moon, Users, User, Plus, ChevronDown, Check, LogOut, AlertTriangle } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 
@@ -24,6 +24,7 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
     const { signOut, isAuthenticated } = useAuth();
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close mobile dropdown when clicking outside
@@ -249,32 +250,16 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
                         </button>
                     )}
 
-                    {/* Currency Badge */}
-                    <div
-                        title="Household Currency: Singapore Dollar"
-                        className="hidden items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    >
-                        <Coins className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        <span>SGD S$</span>
-                    </div>
-
-                    {/* Connection Status Badge */}
-                    <div
-                        title={isMockMode ? "Running with local mock seed data" : "Connected to live Supabase backend"}
-                        className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium ${
-                            isMockMode
-                                ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300"
-                                : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-300"
-                        }`}
-                    >
-                        <span
-                            className={`h-2 w-2 rounded-full ${
-                                isMockMode ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
-                            }`}
-                        />
-                        <span className="hidden sm:inline">{isMockMode ? "Demo Mock" : "Live Supabase"}</span>
-                        <span className="sm:hidden">{isMockMode ? "Mock" : "Live"}</span>
-                    </div>
+                    {/* Connection Status Badge (Only shown in Demo Mode) */}
+                    {isMockMode && (
+                        <div
+                            title="Running in local Demo Mode with sample seed data"
+                            className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300"
+                        >
+                            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                            <span>Demo Mode</span>
+                        </div>
+                    )}
 
                     {/* Theme Toggle Button */}
                     <button
@@ -294,16 +279,66 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
                     {(!isMockMode || isAuthenticated) && (
                         <button
                             type="button"
-                            onClick={signOut}
+                            onClick={() => setIsLogoutConfirmOpen(true)}
                             aria-label="Lock Budget Buddy"
                             title="Lock / Sign Out"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition-all hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800/40"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition-all hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800/40 cursor-pointer"
                         >
                             <LogOut className="h-4 w-4" />
                         </button>
                     )}
                 </div>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {isLogoutConfirmOpen && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="logout-title"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
+                    onClick={() => setIsLogoutConfirmOpen(false)}
+                >
+                    <div
+                        className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 id="logout-title" className="text-sm font-bold text-slate-900 dark:text-white">
+                                    Lock &amp; Sign Out?
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    You will need your 6-digit PIN to unlock again.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2.5 mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <button
+                                type="button"
+                                onClick={() => setIsLogoutConfirmOpen(false)}
+                                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsLogoutConfirmOpen(false);
+                                    signOut();
+                                }}
+                                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-600/20 cursor-pointer"
+                            >
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </header>
     );
 }

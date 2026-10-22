@@ -1,12 +1,13 @@
 /**
  * Quick Add Expense Modal
- * Fast, mobile-optimized bottom-sheet modal with:
- * - Large numeric amount input (auto-focused)
- * - 4 Spendable Category chips by default (+ More toggle for allocation categories)
- * - Contextual 1-tap Quick Tags (e.g. Lunch, Dinner, Coffee, Groceries, MRT/Bus, Grab)
- * - Payer toggle (Yi Jia / Rachel) & Personal vs Shared (50/50) split toggle
- * - Compact Date & Note row
- * - Dual-mode financeService persistence
+ * Fast, mobile-optimized modal with:
+ * - AnimatedModal wrapper (drawer slide on mobile, scale on desktop)
+ * - Ultra-minimal layout without verbose copy
+ * - Large numeric amount input
+ * - Category chips
+ * - Contextual 1-tap quick tags
+ * - Inline Payer & Shared 50/50 toggle
+ * - Compact Date & Note toggle
  */
 
 import { useState, useEffect, useRef, type FormEvent } from 'react';
@@ -17,6 +18,7 @@ import { getTodayDateString } from '../../lib/dateUtils';
 import { isSpendableCategory } from '../../lib/financialFormulas';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import type { Category, HouseholdMember, Expense, CreateExpenseInput } from '../../types/finance';
+import { AnimatedModal } from '../ui/AnimatedModal';
 
 export interface QuickAddExpenseModalProps {
   isOpen: boolean;
@@ -113,19 +115,6 @@ export function QuickAddExpenseModal({
     }
   }, [isOpen, defaultPayerId, defaultShared, activeMember, perspective, categories, members]);
 
-  // Handle ESC key to dismiss modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const quickTags = getQuickTagsForCategory(selectedCategory?.name);
   const visibleCategories = showMoreCategories
@@ -176,41 +165,23 @@ export function QuickAddExpenseModal({
   const isToday = date === getTodayDateString();
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div className="relative w-full max-w-lg rounded-t-3xl sm:rounded-2xl bg-white p-5 sm:p-6 shadow-2xl transition-all dark:bg-slate-900 dark:border dark:border-slate-800 max-h-[92vh] overflow-y-auto">
-        {/* Mobile grab handle */}
-        <div className="sm:hidden mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700" />
-
+    <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+      <div className="p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
               <Plus className="h-4.5 w-4.5 stroke-[2.5]" />
             </div>
-            <div>
-              <h2 id="modal-title" className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                Quick Add Expense
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Fast logging with 1-tap tags &amp; automatic budget attribution
-              </p>
-            </div>
+            <h2 id="modal-title" className="text-base font-bold text-slate-900 dark:text-white">
+              Quick Add Expense
+            </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -218,12 +189,12 @@ export function QuickAddExpenseModal({
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mt-3 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+          <div className="mt-3 rounded-xl bg-rose-50 p-2.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
             {errorMessage}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-3.5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           {/* Large Amount Input */}
           <div>
             <label
@@ -233,7 +204,7 @@ export function QuickAddExpenseModal({
               Amount (S$)
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-4 text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 select-none">
+              <span className="absolute left-4 text-2xl font-bold text-emerald-600 dark:text-emerald-400 select-none">
                 S$
               </span>
               <input
@@ -252,7 +223,7 @@ export function QuickAddExpenseModal({
             </div>
           </div>
 
-          {/* Spendable Category Chips */}
+          {/* Category Chips */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -264,7 +235,7 @@ export function QuickAddExpenseModal({
                   onClick={() => setShowMoreCategories((prev) => !prev)}
                   className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
                 >
-                  {showMoreCategories ? 'Show spendable only' : `+ More (${allocationCategories.length})`}
+                  {showMoreCategories ? 'Spendable only' : `+ More (${allocationCategories.length})`}
                 </button>
               )}
             </div>
@@ -277,10 +248,10 @@ export function QuickAddExpenseModal({
                     type="button"
                     aria-pressed={isSelected}
                     onClick={() => setCategoryId(cat.id)}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500 font-semibold ring-2 ring-emerald-600/30'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 font-medium'
                     }`}
                   >
                     <span
@@ -294,7 +265,7 @@ export function QuickAddExpenseModal({
             </div>
           </div>
 
-          {/* 1-Tap Quick Tags + Item / Description */}
+          {/* Quick Tags + Description */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label
@@ -305,11 +276,10 @@ export function QuickAddExpenseModal({
               </label>
               <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
                 <Sparkles className="h-3 w-3 text-emerald-500" />
-                Tap a quick tag or type below
+                Tap tag or type
               </span>
             </div>
 
-            {/* Quick Tag Pills */}
             <div className="flex flex-wrap gap-1.5 mb-2" aria-label="Quick Tags">
               {quickTags.map((tag) => {
                 const isActiveTag = item.toLowerCase() === tag.toLowerCase();
@@ -333,7 +303,7 @@ export function QuickAddExpenseModal({
             <input
               id="expense-item"
               type="text"
-              placeholder="e.g., FairPrice Groceries, Din Tai Fung, Grab"
+              placeholder="e.g., FairPrice Groceries, Grab, Lunch"
               value={item}
               onChange={(e) => setItem(e.target.value)}
               required
@@ -341,14 +311,14 @@ export function QuickAddExpenseModal({
             />
           </div>
 
-          {/* Payer & Shared Split Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Minimal Inline Payer & Shared Toggle */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-800/40">
             {/* Payer Toggle */}
-            <div>
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                Paid By
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">
+                Payer:
               </span>
-              <div className="grid grid-cols-2 gap-1.5" aria-label="Payer Selection">
+              <div className="flex gap-1" aria-label="Payer Selection">
                 {members.map((member) => {
                   const isSelected = payerId === member.id;
                   return (
@@ -357,13 +327,13 @@ export function QuickAddExpenseModal({
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => setPayerId(member.id)}
-                      className={`flex items-center justify-center gap-1.5 rounded-xl border py-2 px-2.5 text-xs font-semibold transition-all cursor-pointer ${
+                      className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-all cursor-pointer ${
                         isSelected
-                          ? 'border-emerald-600 bg-emerald-50/80 text-emerald-800 shadow-xs dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-300'
-                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/50'
+                          ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                       }`}
                     >
-                      <span className="text-sm">{member.avatar_url || '👤'}</span>
+                      <span>{member.avatar_url || '👤'}</span>
                       <span>{member.display_name}</span>
                     </button>
                   );
@@ -371,37 +341,41 @@ export function QuickAddExpenseModal({
               </div>
             </div>
 
-            {/* Shared 50/50 Toggle */}
-            <div className="flex flex-col justify-end">
-              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-slate-800 dark:bg-slate-800/40">
-                <div className="flex flex-col pr-2">
-                  <label
-                    htmlFor="expense-shared-toggle"
-                    className="text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer"
-                  >
-                    Shared (50/50) Expense
-                  </label>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                    {isShared
-                      ? '50% each + tracks settlement'
-                      : '100% personal expense'}
-                  </span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                  <input
-                    id="expense-shared-toggle"
-                    type="checkbox"
-                    checked={isShared}
-                    onChange={(e) => setIsShared(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-10 h-5.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all dark:border-slate-600 dark:bg-slate-700 peer-checked:bg-emerald-600"></div>
-                </label>
-              </div>
+            {/* Split Toggle */}
+            <div className="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200/60 dark:border-slate-700/60">
+              <label
+                htmlFor="expense-shared-toggle"
+                className="text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer"
+              >
+                {isShared ? 'Shared (50/50)' : 'Personal'}
+              </label>
+              <input
+                id="expense-shared-toggle"
+                type="checkbox"
+                aria-label="Shared"
+                checked={isShared}
+                onChange={(e) => setIsShared(e.target.checked)}
+                className="sr-only"
+              />
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isShared}
+                onClick={() => setIsShared((prev) => !prev)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isShared ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    isShared ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
           </div>
 
-          {/* Compact Date & Notes Toggle Pill */}
+          {/* Compact Date & Notes Toggle */}
           <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20 p-2.5">
             <button
               type="button"
@@ -414,9 +388,9 @@ export function QuickAddExpenseModal({
                   {isToday ? 'Today' : date}
                 </span>
                 <span className="text-slate-300 dark:text-slate-600">•</span>
-                <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                  <MessageSquarePlus className="h-3.5 w-3.5" />
-                  {remarks ? remarks : 'Add note or change date'}
+                <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate max-w-[180px]">
+                  <MessageSquarePlus className="h-3.5 w-3.5 shrink-0" />
+                  {remarks ? remarks : 'Add note / date'}
                 </span>
               </span>
               {showDateAndNotes ? (
@@ -430,7 +404,7 @@ export function QuickAddExpenseModal({
               <div>
                 <label
                   htmlFor="expense-date"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                 >
                   Date
                 </label>
@@ -446,14 +420,14 @@ export function QuickAddExpenseModal({
               <div>
                 <label
                   htmlFor="expense-remarks"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                 >
                   Remarks / Notes
                 </label>
                 <input
                   id="expense-remarks"
                   type="text"
-                  placeholder="Optional notes..."
+                  placeholder="Optional..."
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
@@ -488,7 +462,7 @@ export function QuickAddExpenseModal({
           </div>
         </form>
       </div>
-    </div>
+    </AnimatedModal>
   );
 }
 

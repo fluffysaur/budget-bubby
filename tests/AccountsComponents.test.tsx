@@ -534,7 +534,7 @@ describe('AccountsPage', () => {
   });
 
   describe('Multi-Account UpdateBalanceModal', () => {
-    it('allows selecting multiple accounts and saving balances in batch', async () => {
+    it('allows searching accounts and saving modified balances in batch without checkboxes', async () => {
       const onBalancesUpdated = vi.fn();
       const onClose = vi.fn();
       const bulkSpy = vi.spyOn(financeService, 'bulkUpdateAccountBalances').mockResolvedValueOnce(sampleAccounts);
@@ -552,26 +552,28 @@ describe('AccountsPage', () => {
       expect(screen.getByText(/Update Account Balances/i)).toBeInTheDocument();
 
       await waitFor(() => {
-        expect(screen.getByText(/4 of 4 accounts selected/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/search accounts/i)).toBeInTheDocument();
       });
 
-      // Deselect all
-      fireEvent.click(screen.getByText(/deselect all/i));
-      expect(screen.getByText(/0 of 4 accounts selected/i)).toBeInTheDocument();
+      // Filter by search
+      const searchInput = screen.getByPlaceholderText(/search accounts/i);
+      fireEvent.change(searchInput, { target: { value: 'Lady' } });
+      expect(screen.getByText("UOB Lady's Savings")).toBeInTheDocument();
 
-      // Select first account only
-      const chk = screen.getByRole('checkbox', { name: new RegExp(sampleAccounts[0].name, 'i') });
-      fireEvent.click(chk);
-      expect(screen.getByText(/1 of 4 accounts selected/i)).toBeInTheDocument();
+      // Edit balance directly in the input
+      const balanceInputs = screen.getAllByPlaceholderText('0.00');
+      fireEvent.change(balanceInputs[0], { target: { value: '15000' } });
 
-      fireEvent.click(screen.getByRole('button', { name: /save 1 balance/i }));
+      expect(screen.getAllByText(/1 modified/i).length).toBeGreaterThan(0);
+
+      fireEvent.click(screen.getByRole('button', { name: /save 1 modified account/i }));
 
       await waitFor(() => {
         expect(bulkSpy).toHaveBeenCalledWith(
           [
             expect.objectContaining({
               accountId: sampleAccounts[0].id,
-              balance: sampleAccounts[0].balance,
+              balance: 15000,
             }),
           ],
           expect.any(String)

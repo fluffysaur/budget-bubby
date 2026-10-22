@@ -19,13 +19,11 @@ import {
   TrendingDown,
   Wallet,
   Receipt,
-  User,
-  Users,
   Loader2,
   PiggyBank,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, Badge } from '../components/ui';
+import { PageHeader, Button } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -263,14 +261,6 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
       {/* Top Header Section */}
       <PageHeader
         title="Monthly Budget"
-        badge={
-          <Badge
-            variant={perspective === 'household' ? 'emerald' : 'blue'}
-            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-          >
-            {perspectiveDisplayName}
-          </Badge>
-        }
         subtitle="Monthly allocations, CPF deduction waterfall, and category meters"
         actions={
           <div className="flex items-center flex-wrap gap-3">
@@ -316,7 +306,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {formatSGD(totalGross)}
             </span>
           </div>
@@ -336,7 +326,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+            <span className="text-2xl font-extrabold tracking-tight text-rose-600 dark:text-rose-400">
               -{formatSGD(totalDeductions)}
             </span>
           </div>
@@ -376,7 +366,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {formatSGD(totalSpent)}
             </span>
             <span

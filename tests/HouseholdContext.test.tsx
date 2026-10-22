@@ -144,9 +144,8 @@ describe('Layout Components', () => {
       expect(screen.getByRole('button', { name: /yi jia/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /rachel/i })).toBeInTheDocument();
 
-      // Currency and status badges exist
-      expect(screen.getByText(/SGD S\$/i)).toBeInTheDocument();
-      expect(screen.getByText('Demo Mock')).toBeInTheDocument();
+      // Demo status badge exists
+      expect(screen.getByText('Demo Mode')).toBeInTheDocument();
 
       // Clicking perspective switches it
       const rachelButton = screen.getByRole('button', { name: /rachel/i });
@@ -180,13 +179,11 @@ describe('Layout Components', () => {
       });
 
       expect(screen.getByText('Budget Buddy')).toBeInTheDocument();
-      expect(screen.getByText('Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Home')).toBeInTheDocument();
       expect(screen.getByText('Budget')).toBeInTheDocument();
       expect(screen.getByText('Expenses')).toBeInTheDocument();
-      expect(screen.getByText('Accounts & Net Worth')).toBeInTheDocument();
-      expect(screen.getByText('Goals')).toBeInTheDocument();
-      expect(screen.getByText('Loans')).toBeInTheDocument();
-      expect(screen.getByText('Recurring & Policies')).toBeInTheDocument();
+      expect(screen.getByText('Accounts')).toBeInTheDocument();
+      expect(screen.getByText('Plan')).toBeInTheDocument();
 
       await act(async () => {
         fireEvent.click(screen.getByText('Expenses'));

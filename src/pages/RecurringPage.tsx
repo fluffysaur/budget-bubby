@@ -19,7 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, Badge } from '../components/ui';
+import { PageHeader, Button } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getSingaporeDate } from '../lib/dateUtils';
@@ -30,6 +30,7 @@ import type { RecurringPolicy, CreatePolicyInput } from '../types/finance';
 
 export interface RecurringPageProps {
   className?: string;
+  embedded?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -47,7 +48,7 @@ const MONTH_NAMES = [
   'December',
 ];
 
-export function RecurringPage({ className = '' }: RecurringPageProps) {
+export function RecurringPage({ className = '', embedded = false }: RecurringPageProps) {
   const { perspective, activeMember, members } = useHousehold();
 
   const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
@@ -208,33 +209,53 @@ export function RecurringPage({ className = '' }: RecurringPageProps) {
 
   return (
     <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
-      {/* Page Title & Actions */}
-      <PageHeader
-        title="Recurring Policies & Taxes"
-        badge={
-          <Badge variant="emerald" size="sm">
-            Annual Calendar
-          </Badge>
-        }
-        subtitle="Track insurance coverage, IRAS tax schedules, and recurring household obligations"
-        actions={
-          <>
+      {/* Page Title & Actions (Compact if embedded) */}
+      {!embedded ? (
+        <PageHeader
+          title="Recurring Policies & Taxes"
+          subtitle="Track insurance coverage, IRAS tax schedules, and recurring household obligations"
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                onClick={loadPolicies}
+                title="Refresh policies"
+                leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
+              />
+              <Button
+                variant="primary"
+                leftIcon={<Plus className="w-4 h-4 stroke-[2.5]" />}
+                onClick={handleOpenAddModal}
+              >
+                Add Policy
+              </Button>
+            </>
+          }
+        />
+      ) : (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Recurring Policies &amp; Taxes — insurance coverage, IRAS tax schedules, and obligations
+          </p>
+          <div className="flex items-center gap-2">
             <Button
               variant="secondary"
+              size="sm"
               onClick={loadPolicies}
               title="Refresh policies"
-              leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
+              leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
             />
             <Button
               variant="primary"
-              leftIcon={<Plus className="w-4 h-4 stroke-[2.5]" />}
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5 stroke-[2.5]" />}
               onClick={handleOpenAddModal}
             >
               Add Policy
             </Button>
-          </>
-        }
-      />
+          </div>
+        </div>
+      )}
 
       {/* Error Banner */}
       {errorMessage && (

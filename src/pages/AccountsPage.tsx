@@ -14,19 +14,16 @@ import {
   Wallet,
   CreditCard,
   TrendingUp,
-  User,
-  Users,
   Loader2,
   CalendarCheck,
   Plus,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, Badge } from '../components/ui';
+import { PageHeader, Button, StatCard } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { AccountGroupList } from '../components/accounts/AccountGroupList';
 import { UpdateBalanceModal } from '../components/accounts/UpdateBalanceModal';
-import { BulkBalanceUpdateModal } from '../components/accounts/BulkBalanceUpdateModal';
 import { AddAccountModal } from '../components/accounts/AddAccountModal';
 import { EditAccountModal } from '../components/accounts/EditAccountModal';
 import { DeleteAccountModal } from '../components/accounts/DeleteAccountModal';
@@ -47,22 +44,11 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
   // Modal States
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [isBulkModalOpen, setIsBulkModalOpen] = useState<boolean>(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
-
-  // Perspective display label
-  const perspectiveDisplayName = useMemo(() => {
-    if (perspective === 'household') return 'Combined Household';
-    if (activeMember) return activeMember.display_name;
-    const clean = perspective.toLowerCase();
-    if (clean.includes('yijia')) return 'Yi Jia';
-    if (clean.includes('rachel')) return 'Rachel';
-    return perspective;
-  }, [perspective, activeMember]);
 
   // Load accounts and loans for current perspective
   const loadData = useCallback(async () => {
@@ -146,14 +132,6 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
       {/* Page Header */}
       <PageHeader
         title="Accounts & Net Worth"
-        badge={
-          <Badge
-            variant={perspective === 'household' ? 'emerald' : 'blue'}
-            icon={perspective === 'household' ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-          >
-            {perspective === 'household' ? 'Combined' : perspectiveDisplayName}
-          </Badge>
-        }
         subtitle="Cash, CPF, and investment portfolio growth center"
         actions={
           <div className="flex items-center gap-2">
@@ -167,11 +145,14 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
             </Button>
             <Button
               variant="primary"
-              aria-label="Month-End Check-In"
+              aria-label="Update Balances"
               leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
-              onClick={() => setIsBulkModalOpen(true)}
+              onClick={() => {
+                setSelectedAccount(null);
+                setIsUpdateModalOpen(true);
+              }}
             >
-              Month-End Check-In
+              Update Balances
             </Button>
           </div>
         }
@@ -239,15 +220,7 @@ export function AccountsPage({ className = '' }: AccountsPageProps) {
         </>
       )}
 
-      {/* Month-End Check-In 1-Click Fast Bulk Modal */}
-      <BulkBalanceUpdateModal
-        isOpen={isBulkModalOpen}
-        accounts={accounts}
-        onClose={() => setIsBulkModalOpen(false)}
-        onBalancesUpdated={handleBalanceUpdated}
-      />
-
-      {/* Individual Account Balance Modal */}
+      {/* Individual & Multi Account Balance Modal */}
       <UpdateBalanceModal
         isOpen={isUpdateModalOpen}
         account={selectedAccount}
