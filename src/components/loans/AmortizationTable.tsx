@@ -238,7 +238,7 @@ export function AmortizationTable({
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
                       {group.rows.map((row) => {
-                        let monthLabel = `M${row.month}`;
+                        let monthLabel: string;
                         try {
                           monthLabel = formatDisplayMonth(row.paymentDate);
                         } catch {

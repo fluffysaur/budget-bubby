@@ -34,8 +34,8 @@ export function DeleteAccountModal({
       await financeService.deleteAccount(account.id);
       onAccountDeleted?.(account.id);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to delete account');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
       setIsDeleting(false);
     }
   };

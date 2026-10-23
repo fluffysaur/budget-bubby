@@ -80,8 +80,8 @@ export function EditAccountModal({
 
       onAccountUpdated?.(updated);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update account details');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update account details');
     } finally {
       setIsSubmitting(false);
     }

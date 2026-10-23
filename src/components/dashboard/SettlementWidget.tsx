@@ -113,9 +113,9 @@ export function SettlementWidget({
         await refreshHousehold();
       }
       setIsConfirmOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to settle shared expenses:', err);
-      setErrorMessage(err.message || 'Failed to settle expenses');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to settle expenses');
     } finally {
       setIsSettling(false);
     }

@@ -16,7 +16,7 @@ export interface NavItem {
     section?: "core" | "plan";
 }
 
-export const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
     {
         id: "dashboard",
         label: "Home",

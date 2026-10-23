@@ -39,7 +39,7 @@ export function formatSGDCompact(amount: number): string {
   const isNegative = amount < 0;
   const absAmount = Math.abs(amount);
 
-  let formatted = '';
+  let formatted: string;
   if (absAmount >= 1_000_000) {
     const val = absAmount / 1_000_000;
     formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}M`;

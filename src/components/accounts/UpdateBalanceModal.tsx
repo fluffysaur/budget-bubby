@@ -45,7 +45,7 @@ export function UpdateBalanceModal({
   onBalancesUpdated,
   onOpenAddAccount,
 }: UpdateBalanceModalProps) {
-  const accountsList = accounts || [];
+  const accountsList = useMemo(() => accounts || [], [accounts]);
 
   // Common states
   const [date, setDate] = useState<string>(getTodayDateString());
@@ -86,7 +86,7 @@ export function UpdateBalanceModal({
       setBalancesMap(bMap);
       setNotesMap(nMap);
     }
-  }, [isOpen, account?.id, account?.balance, accountsList.length]);
+  }, [isOpen, account, accountsList]);
 
   // Filtered accounts for multi-mode (Search + Type Filter)
   const filteredAccounts = useMemo(() => {
@@ -141,8 +141,8 @@ export function UpdateBalanceModal({
 
       onBalanceUpdated?.(updatedAccount);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update account balance');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update account balance');
     } finally {
       setIsSubmitting(false);
     }
@@ -186,8 +186,8 @@ export function UpdateBalanceModal({
         onBalanceUpdated?.(updatedAccounts[0]);
       }
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update balances');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update balances');
     } finally {
       setIsSubmitting(false);
     }

@@ -155,7 +155,7 @@ export function ExpenseTrendsCard({
               tickLine={false}
             />
             <Tooltip
-              formatter={(value: any) => [formatSGD(Number(value) || 0), 'Monthly Spend']}
+              formatter={(value) => [formatSGD(Number(value) || 0), 'Monthly Spend']}
               contentStyle={{
                 borderRadius: '12px',
                 border: '1px solid #e2e8f0',

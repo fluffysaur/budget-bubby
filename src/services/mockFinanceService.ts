@@ -148,7 +148,7 @@ class MockFinanceServiceImpl implements FinanceService {
     const activeGoals = this.state.savingsGoals.filter((g) => g.status !== 'achieved');
 
     return {
-      household: cloneDeep(this.state.household as any),
+      household: cloneDeep(this.state.household),
       members: cloneDeep(this.state.members),
       totalAssets,
       totalLiabilities,

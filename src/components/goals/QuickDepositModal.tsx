@@ -84,8 +84,8 @@ export function QuickDepositModal({
       });
       onDepositSaved?.(updated);
       onClose();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to process deposit');
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to process deposit');
     } finally {
       setIsSubmitting(false);
     }

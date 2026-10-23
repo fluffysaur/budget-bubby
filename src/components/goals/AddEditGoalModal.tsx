@@ -25,7 +25,7 @@ export interface AddEditGoalModalProps {
   householdId?: string;
 }
 
-export const EMOJI_PRESETS = [
+const EMOJI_PRESETS = [
   { emoji: '💍', label: 'Wedding' },
   { emoji: '🏖️', label: 'Honeymoon' },
   { emoji: '🏠', label: 'HDB Down Payment' },
@@ -174,8 +174,8 @@ export function AddEditGoalModal({
       }
 
       onClose();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to save savings goal');
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to save savings goal');
     } finally {
       setIsSubmitting(false);
     }

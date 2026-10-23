@@ -219,9 +219,9 @@ export function BaseProfileEditorModal({
 
       onSaveSuccess?.();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update base profile:', err);
-      setErrorMessage(err.message || 'Failed to update base profile.');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to update base profile.');
     } finally {
       setIsSubmitting(false);
     }

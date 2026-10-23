@@ -228,9 +228,9 @@ export function AuthProvider({
         setAuthError(specificError);
         setAuthLoading(false);
         return false;
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Sign in error:', err);
-        setAuthError(err?.message || 'Authentication failed. Please try again.');
+        setAuthError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
         setAuthLoading(false);
         return false;
       }

@@ -166,8 +166,8 @@ export function AddPolicyModal({
 
       await onSave(payload);
       onClose();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to save policy');
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to save policy');
     } finally {
       setIsSubmitting(false);
     }

@@ -43,12 +43,13 @@ test.describe('Mobile Drawer Scrolling & Viewport Layout', () => {
     // Scroll down inside the form container
     await scrollContainer.hover();
     await scrollContainer.evaluate((el) => {
-      el.scrollTop = 200;
-      el.dispatchEvent(new Event('scroll'));
+      const htmlEl = el as HTMLElement;
+      htmlEl.scrollTop = 200;
+      htmlEl.dispatchEvent(new Event('scroll'));
     });
     await page.waitForTimeout(200);
 
-    const scrollTop = await scrollContainer.evaluate((el) => el.scrollTop);
+    const scrollTop = await scrollContainer.evaluate((el) => (el as HTMLElement).scrollTop);
     expect(scrollTop).toBeGreaterThan(0);
 
     // Verify footer actions are STILL visible and anchored at the bottom
@@ -91,12 +92,13 @@ test.describe('Mobile Drawer Scrolling & Viewport Layout', () => {
     const scrollContainer = dialog.locator('form > div.overflow-y-auto');
     await scrollContainer.hover();
     await scrollContainer.evaluate((el) => {
-      el.scrollTop = 200;
-      el.dispatchEvent(new Event('scroll'));
+      const htmlEl = el as HTMLElement;
+      htmlEl.scrollTop = 200;
+      htmlEl.dispatchEvent(new Event('scroll'));
     });
     await page.waitForTimeout(200);
 
-    const scrollTop = await scrollContainer.evaluate((el) => el.scrollTop);
+    const scrollTop = await scrollContainer.evaluate((el) => (el as HTMLElement).scrollTop);
     expect(scrollTop).toBeGreaterThan(0);
 
     // Close modal

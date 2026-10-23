@@ -129,8 +129,8 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
             const updated = await financeService.bulkUpdateAccountBalances(updates, snapshotDate);
             onBalancesUpdated?.(updated);
             onClose();
-        } catch (err: any) {
-            setErrorMessage(err.message || "Failed to update balances");
+        } catch (err: unknown) {
+            setErrorMessage(err instanceof Error ? err.message : "Failed to update balances");
         } finally {
             setIsSubmitting(false);
         }

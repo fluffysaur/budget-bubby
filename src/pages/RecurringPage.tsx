@@ -66,9 +66,9 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
       setErrorMessage(null);
       const data = await financeService.getPolicies();
       setPolicies(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load recurring policies:', err);
-      setErrorMessage(err.message || 'Failed to load recurring policies');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to load recurring policies');
     } finally {
       setIsLoading(false);
     }
@@ -192,9 +192,9 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
     try {
       await financeService.deletePolicy(policyId);
       await loadPolicies();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete policy:', err);
-      setErrorMessage(err.message || 'Failed to delete policy');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to delete policy');
     }
   };
 

@@ -10,7 +10,7 @@
  * - Compact Date & Note toggle
  */
 
-import { useState, useEffect, useRef, type FormEvent } from 'react';
+import { useState, useEffect, useRef, useMemo, type FormEvent } from 'react';
 import { X, Plus, Calendar, MessageSquarePlus, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
@@ -65,8 +65,14 @@ export function QuickAddExpenseModal({
     ? propCategories
     : mockCategories;
 
-  const spendableCategories = categories.filter((c) => isSpendableCategory(c));
-  const allocationCategories = categories.filter((c) => !isSpendableCategory(c));
+  const spendableCategories = useMemo(
+    () => categories.filter((c) => isSpendableCategory(c)),
+    [categories]
+  );
+  const allocationCategories = useMemo(
+    () => categories.filter((c) => !isSpendableCategory(c)),
+    [categories]
+  );
 
   const amountInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +119,7 @@ export function QuickAddExpenseModal({
         amountInputRef.current?.focus();
       }, 50);
     }
-  }, [isOpen, defaultPayerId, defaultShared, activeMember, perspective, categories, members]);
+  }, [isOpen, defaultPayerId, defaultShared, activeMember, perspective, categories, spendableCategories, members]);
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const quickTags = getQuickTagsForCategory(selectedCategory?.name);
@@ -155,8 +161,8 @@ export function QuickAddExpenseModal({
       const created = await financeService.addExpense(input);
       onExpenseAdded?.(created);
       onClose();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to save expense');
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to save expense');
     } finally {
       setIsSubmitting(false);
     }

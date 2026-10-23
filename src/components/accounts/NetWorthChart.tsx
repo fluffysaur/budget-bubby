@@ -28,7 +28,20 @@ export interface NetWorthChartProps {
     className?: string;
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+interface NetWorthTooltipEntry {
+    dataKey: string;
+    name: string;
+    value: number;
+    color?: string;
+}
+
+interface NetWorthCustomTooltipProps {
+    active?: boolean;
+    payload?: NetWorthTooltipEntry[];
+    label?: string;
+}
+
+function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
     if (!active || !payload || !payload.length) return null;
 
     return (
@@ -36,7 +49,7 @@ function CustomTooltip({ active, payload, label }: any) {
             <div className="font-bold text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-100 dark:border-slate-800">
                 {label}
             </div>
-            {payload.map((entry: any) => {
+            {payload.map((entry) => {
                 const colorClass =
                     entry.dataKey === "assets"
                         ? "text-emerald-600 dark:text-emerald-400"

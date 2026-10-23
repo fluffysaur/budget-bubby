@@ -273,7 +273,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async updateAccount(id: string, updates: UpdateAccountInput): Promise<Account> {
     const client = getClient();
-    const payload: Record<string, any> = { updated_at: new Date().toISOString() };
+    const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.type !== undefined) payload.type = updates.type;
     if (updates.institution !== undefined) payload.institution = updates.institution;
@@ -307,7 +307,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const client = getClient();
     const rounded = Math.round(newBalance * 100) / 100;
 
-    const updates: Record<string, any> = { balance: rounded, updated_at: new Date().toISOString() };
+    const updates: Record<string, unknown> = { balance: rounded, updated_at: new Date().toISOString() };
     if (notes !== undefined) {
       updates.notes = notes || null;
     }
@@ -454,7 +454,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       ? input.household_id
       : await this.getHouseholdId();
 
-    const insertPayload: any = {
+    const insertPayload: Record<string, unknown> = {
       household_id: householdId,
       name: input.name.trim(),
       color: input.color || '#64748B',
@@ -478,7 +478,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async updateCategory(id: string, updates: UpdateCategoryInput): Promise<Category> {
     const client = getClient();
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (updates.name !== undefined) payload.name = updates.name.trim();
     if (updates.color !== undefined) payload.color = updates.color;
     if (updates.icon !== undefined) payload.icon = updates.icon;
@@ -560,7 +560,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       profileId = crypto.randomUUID();
     }
 
-    const profileUpsertPayload: any = {
+    const profileUpsertPayload: Record<string, unknown> = {
       household_id: householdId,
       owner_id: ownerId,
       gross_salary: Number(profile.gross_salary) || 0,
@@ -604,7 +604,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
           catId = matched?.id || categories[0]?.id || catId;
         }
 
-        const allocRow: any = {
+        const allocRow: Record<string, unknown> = {
           profile_id: finalProfileId,
           category_id: catId,
           target_percentage: Number(alloc.target_percentage) || 0,
@@ -636,8 +636,17 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const { data: budgetData, error: budgetError } = await query.limit(1).maybeSingle();
     if (budgetError) throw budgetError;
 
+    type CategoryAllocRow = {
+      id: string;
+      monthly_budget_id: string;
+      category_id: string;
+      percentage: number;
+      allocated_amount: number;
+      categories?: Category;
+    };
+
     let budget: MonthlyBudget;
-    let catAllocData: any[] = [];
+    let catAllocData: CategoryAllocRow[];
 
     if (budgetData) {
       budget = budgetData as MonthlyBudget;
@@ -646,7 +655,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         .select('*, categories(*)')
         .eq('monthly_budget_id', budget.id);
       if (catAllocError) throw catAllocError;
-      catAllocData = allocRows || [];
+      catAllocData = (allocRows as unknown as CategoryAllocRow[]) || [];
     } else {
       // Synthesize budget from base_budget_profiles + base_profile_allocations for new months
       const [profs, allCats, policies] = await Promise.all([
@@ -729,7 +738,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       ) * 100
     ) / 100;
 
-    const categories: MonthlyBudgetCategoryDetail[] = (catAllocData || []).map((row: any) => {
+    const categories: MonthlyBudgetCategoryDetail[] = (catAllocData || []).map((row) => {
       const catObj: Category | undefined = row.categories;
       const isLifestyle = Boolean(
         catObj && catObj.name.toLowerCase().includes('lifestyle')
@@ -1051,7 +1060,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   ): Promise<RecurringPolicy> {
     const client = getClient();
 
-    let finalUpdates: Partial<RecurringPolicy> = { ...updates };
+    const finalUpdates: Partial<RecurringPolicy> = { ...updates };
     if (updates.amount !== undefined || updates.frequency !== undefined) {
       const { data: existing, error: fetchErr } = await client
         .from('recurring_policies')

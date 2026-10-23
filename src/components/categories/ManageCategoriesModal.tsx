@@ -73,7 +73,7 @@ const PRESET_ICONS = [
     { id: "tag", label: "General Tag", Icon: Tag },
 ];
 
-export function getIconComponent(iconName?: string) {
+function getIconComponent(iconName?: string) {
     const found = PRESET_ICONS.find((i) => i.id === iconName);
     return found ? found.Icon : Tag;
 }
@@ -109,9 +109,9 @@ export function ManageCategoriesModal({
             setLoading(true);
             const data = await financeService.getCategories();
             setCategories(data);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to load categories:", err);
-            setErrorMessage(err.message || "Failed to load categories.");
+            setErrorMessage(err instanceof Error ? err.message : "Failed to load categories.");
         } finally {
             setLoading(false);
         }
@@ -194,9 +194,9 @@ export function ManageCategoriesModal({
             setEditingCategory(null);
             await loadCategories();
             onCategoriesChanged?.();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to save category:", err);
-            setErrorMessage(err.message || "Failed to save category.");
+            setErrorMessage(err instanceof Error ? err.message : "Failed to save category.");
         } finally {
             setIsSubmitting(false);
         }
@@ -210,9 +210,9 @@ export function ManageCategoriesModal({
             setDeletingCategory(null);
             await loadCategories();
             onCategoriesChanged?.();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to delete category:", err);
-            setErrorMessage(err.message || "Failed to delete category.");
+            setErrorMessage(err instanceof Error ? err.message : "Failed to delete category.");
         } finally {
             setIsSubmitting(false);
         }
@@ -224,9 +224,9 @@ export function ManageCategoriesModal({
             await financeService.seedDefaultCategories();
             await loadCategories();
             onCategoriesChanged?.();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to restore preset categories:", err);
-            setErrorMessage(err.message || "Failed to restore preset categories.");
+            setErrorMessage(err instanceof Error ? err.message : "Failed to restore preset categories.");
         } finally {
             setLoading(false);
         }

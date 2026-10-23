@@ -40,7 +40,21 @@ interface ChartDataPoint {
   cumulativeInterest: number;
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+interface TooltipEntry {
+  dataKey: string;
+  name: string;
+  value: number;
+  color?: string;
+  stroke?: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: string;
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) return null;
 
   return (
@@ -48,7 +62,7 @@ function CustomTooltip({ active, payload, label }: any) {
       <div className="font-bold text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-100 dark:border-slate-800">
         {label}
       </div>
-      {payload.map((entry: any) => {
+      {payload.map((entry) => {
         let colorClass = 'text-slate-700 dark:text-slate-300';
         if (entry.dataKey === 'baselineBalance') colorClass = 'text-slate-600 dark:text-slate-400 font-semibold';
         if (entry.dataKey === 'simulatedBalance') colorClass = 'text-emerald-600 dark:text-emerald-400 font-bold';
@@ -128,7 +142,7 @@ export function AmortizationChart({
       if (isSampled) {
         const monthNum = i + 1;
         const dateStr = baseRow ? baseRow.paymentDate : simRow ? simRow.paymentDate : `Month ${monthNum}`;
-        let displayDate = dateStr;
+        let displayDate: string;
         try {
           displayDate = formatDisplayMonth(dateStr);
         } catch {

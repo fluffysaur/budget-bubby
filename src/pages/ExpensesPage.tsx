@@ -342,7 +342,9 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           try {
             const cats = await financeService.getCategories();
             if (cats && cats.length > 0) setCategories(cats);
-          } catch {}
+          } catch (err) {
+            console.error('Failed to reload categories:', err);
+          }
           await loadExpenses();
         }}
       />

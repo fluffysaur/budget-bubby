@@ -56,9 +56,9 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
       setErrorMessage(null);
       const data = await financeService.getGoals();
       setGoals(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load savings goals:', err);
-      setErrorMessage(err.message || 'Failed to load savings goals');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to load savings goals');
     } finally {
       setIsLoading(false);
     }
