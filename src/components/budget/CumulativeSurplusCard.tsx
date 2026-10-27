@@ -171,16 +171,16 @@ export function CumulativeSurplusCard({
   return (
     <div
       data-testid="cumulative-surplus-card"
-      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors space-y-4 ${className}`}
+      className={`rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-cute transition-colors space-y-4 ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm">
             <PiggyBank className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-1.5">
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-sm sm:text-base text-(--text-ink)">
               Cumulative Spending Surplus
             </h3>
             <TooltipPopover
@@ -193,8 +193,8 @@ export function CumulativeSurplusCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-          <Calendar className="h-3.5 w-3.5 text-slate-400" />
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) shadow-cute-sm">
+          <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
           <span>{formatShortMonth(selectedMonth)}</span>
         </div>
       </div>
@@ -204,36 +204,36 @@ export function CumulativeSurplusCard({
         {/* Metric 1: Current Month Surplus/Deficit */}
         <div
           data-testid="current-month-surplus-badge"
-          className={`p-4 rounded-xl border flex items-center justify-between ${
+          className={`p-4 rounded-xl border-[1.5px] border-(--border-ink) shadow-cute-sm flex items-center justify-between ${
             isCurrentSurplusPositive
-              ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-100'
-              : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-100'
+              ? 'bg-(--pastel-mint-light) text-(--text-ink)'
+              : 'bg-(--pastel-coral-light) text-(--text-ink)'
           }`}
         >
           <div>
-            <span className="block text-[11px] font-bold uppercase tracking-wider opacity-75">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
               {formatShortMonth(selectedMonth)} Result
             </span>
-            <div className="text-xl font-black tracking-tight mt-0.5">
+            <div className="font-mono-num text-xl font-black tracking-tight mt-0.5">
               {isCurrentSurplusPositive ? '+' : '-'}
               {formatSGD(Math.abs(currentSurplus))}
             </div>
-            <span className="block text-xs font-semibold mt-0.5 opacity-90">
+            <span className="block text-xs font-bold mt-0.5 opacity-90">
               {isCurrentSurplusPositive ? 'Surplus this month' : 'Deficit this month'}
             </span>
           </div>
 
           <div
-            className={`p-2.5 rounded-xl ${
+            className={`p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm ${
               isCurrentSurplusPositive
-                ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300'
-                : 'bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-300'
+                ? 'bg-(--pastel-mint) text-emerald-900'
+                : 'bg-(--pastel-coral) text-white'
             }`}
           >
             {isCurrentSurplusPositive ? (
-              <TrendingUp className="h-5 w-5" />
+              <TrendingUp className="h-5 w-5 stroke-[2.5]" />
             ) : (
-              <TrendingDown className="h-5 w-5" />
+              <TrendingDown className="h-5 w-5 stroke-[2.5]" />
             )}
           </div>
         </div>
@@ -241,31 +241,23 @@ export function CumulativeSurplusCard({
         {/* Metric 2: Total Banked Surplus */}
         <div
           data-testid="total-banked-surplus-badge"
-          className={`p-4 rounded-xl border flex items-center justify-between ${
-            isBankedPositive
-              ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/60 text-blue-900 dark:text-blue-100'
-              : 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-100'
-          }`}
+          className="p-4 rounded-xl border-[1.5px] border-(--border-ink) shadow-cute-sm bg-(--pastel-butter-light) text-(--text-ink) flex items-center justify-between"
         >
           <div>
-            <span className="block text-[11px] font-bold uppercase tracking-wider opacity-75">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
               Historical Rollover
             </span>
-            <div className="text-xl font-black tracking-tight mt-0.5">
+            <div className="font-mono-num text-xl font-black tracking-tight mt-0.5">
               {isBankedPositive ? '+' : '-'}
               {formatSGD(Math.abs(totalBanked))}
             </div>
-            <span className="block text-xs font-semibold mt-0.5 opacity-90">
+            <span className="block text-xs font-bold mt-0.5 opacity-90">
               Total Banked Surplus: {isBankedPositive ? '+' : '-'}{formatSGD(Math.abs(totalBanked))}
             </span>
           </div>
 
           <div
-            className={`p-2.5 rounded-xl ${
-              isBankedPositive
-                ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
-                : 'bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300'
-            }`}
+            className="p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm bg-(--pastel-butter) text-(--text-ink)"
           >
             <Sparkles className="h-5 w-5" />
           </div>
@@ -275,10 +267,10 @@ export function CumulativeSurplusCard({
       {/* Visual Breakdown / Mini Rollover Bar for Recent 3-6 Months */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
             Recent {summary.monthlyHistory.length}-Month Rollover Breakdown
           </span>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] font-medium text-(--text-muted)">
             Spendable Cap vs Non-Goal Spend
           </span>
         </div>
@@ -292,19 +284,19 @@ export function CumulativeSurplusCard({
             return (
               <div
                 key={point.month}
-                className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                className={`p-3 rounded-xl border-[1.5px] flex flex-col justify-between transition-all ${
                   isSelected
-                    ? 'border-emerald-500 dark:border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 ring-2 ring-emerald-500/20'
-                    : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30'
+                    ? 'border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm'
+                    : 'border-(--border-subtle) bg-(--bg-canvas)'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <div className="flex items-center justify-between text-xs font-bold text-(--text-ink)">
                     <span>{formatShortMonth(point.month)}</span>
                     {point.goalSpent > 0 && (
                       <span
                         title={`Goal-funded spending of ${formatSGD(point.goalSpent)} safely excluded`}
-                        className="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-bold"
+                        className="text-[9px] px-1 py-0.2 rounded bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) font-bold"
                       >
                         Goal
                       </span>
@@ -312,9 +304,9 @@ export function CumulativeSurplusCard({
                   </div>
 
                   <div
-                    className={`text-sm font-extrabold tracking-tight mt-1 ${
+                    className={`font-mono-num text-sm font-black tracking-tight mt-1 ${
                       isPos
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'text-emerald-700 dark:text-emerald-400'
                         : 'text-rose-600 dark:text-rose-400'
                     }`}
                   >
@@ -322,14 +314,14 @@ export function CumulativeSurplusCard({
                     {formatSGD(Math.abs(point.delta))}
                   </div>
 
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <div className="font-mono-num text-[10px] text-(--text-muted) mt-0.5">
                     {formatSGD(point.spent)} / {formatSGD(point.cap)}
                   </div>
                 </div>
 
                 {/* Mini Visual Rollover Bar */}
                 <div className="mt-3">
-                  <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-(--bg-card) border border-(--border-ink) rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         isPos ? 'bg-emerald-500' : 'bg-rose-500'
@@ -337,7 +329,7 @@ export function CumulativeSurplusCard({
                       style={{ width: `${Math.max(12, barFill)}%` }}
                     />
                   </div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 text-right mt-1 font-medium">
+                  <div className="font-mono-num text-[9px] text-(--text-muted) text-right mt-1 font-semibold">
                     Cum: {point.cumulative >= 0 ? '+' : ''}{formatSGD(point.cumulative)}
                   </div>
                 </div>

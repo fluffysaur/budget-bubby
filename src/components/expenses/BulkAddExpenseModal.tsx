@@ -456,7 +456,7 @@ export function BulkAddExpenseModal({
                       <th className="px-2 py-2.5 w-24">Amount</th>
                       <th className="px-2 py-2.5 w-24">Currency</th>
                       <th className="px-2 py-2.5 w-36">Category</th>
-                      <th className="px-2 py-2.5 min-w-[140px]">Description</th>
+                      <th className="px-2 py-2.5 min-w-35">Description</th>
                       <th className="px-2 py-2.5 w-20 text-center">Shared</th>
                       <th className="px-2 py-2.5 w-32">Tags</th>
                       <th className="py-2.5 pl-2 pr-3 w-10 text-center"></th>

@@ -155,35 +155,35 @@ export function FastLogWidget({
 
   return (
     <div
-      className={`rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 transition-all ${className}`}
+      className={`rounded-3xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-cute transition-all ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink)">
             <Zap className="h-4 w-4 fill-current" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-sm text-(--text-ink)">
               Fast Log
             </h3>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="text-[11px] font-medium text-(--text-muted)">
               1-tap lightning expense entry
             </p>
           </div>
         </div>
 
         {/* Payer Toggle */}
-        <div className="flex items-center rounded-xl bg-slate-100 p-0.5 dark:bg-slate-800">
+        <div className="flex items-center rounded-xl bg-(--bg-canvas) p-1 border border-(--border-ink)">
           {members.slice(0, 2).map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => setPayerId(m.id)}
-              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                 payerId === m.id
-                  ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
+                  : 'text-(--text-muted) hover:text-(--text-ink)'
               }`}
             >
               <span>{m.avatar_url || '👤'}</span>
@@ -195,19 +195,19 @@ export function FastLogWidget({
 
       {/* Success Banner */}
       {justLoggedMessage && (
-        <div className="mb-4 flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-xs font-bold text-white shadow-md animate-in fade-in slide-in-from-top duration-200">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <div className="mb-4 flex items-center gap-2 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--pastel-mint) px-4 py-3 text-xs font-bold text-(--text-ink) shadow-cute-sm animate-in fade-in slide-in-from-top duration-200">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-800" />
           <span>{justLoggedMessage}</span>
         </div>
       )}
 
       {/* Prominent Amount Display */}
-      <div className="relative mb-3 flex flex-col items-center justify-center rounded-2xl border-2 border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+      <div className="relative mb-3 flex flex-col items-center justify-center rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-4 shadow-cute-sm">
         <div className="flex items-baseline justify-center">
-          <span className="text-2xl font-bold text-slate-400 dark:text-slate-500 mr-1.5 select-none">
+          <span className="font-mono-num text-2xl font-bold text-(--text-muted) mr-1.5 select-none">
             S$
           </span>
-          <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono">
+          <span className="text-4xl sm:text-5xl font-mono-num font-black tracking-tight text-(--text-ink)">
             {amount.toFixed(2)}
           </span>
         </div>
@@ -217,7 +217,7 @@ export function FastLogWidget({
             type="button"
             onClick={clearAmount}
             aria-label="Clear amount"
-            className="absolute right-3.5 top-3 rounded-full p-1 text-slate-400 hover:bg-slate-200 dark:text-slate-500 dark:hover:bg-slate-700 transition-colors"
+            className="absolute right-3.5 top-3 rounded-full p-1 text-(--text-muted) hover:bg-(--pastel-coral-light) hover:text-rose-600 transition-colors cursor-pointer"
           >
             <Delete className="h-4 w-4" />
           </button>
@@ -231,7 +231,7 @@ export function FastLogWidget({
             key={preset}
             type="button"
             onClick={() => addPresetAmount(preset)}
-            className="flex-1 rounded-xl bg-slate-100 py-1.5 text-center text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300 transition-all cursor-pointer"
+            className="flex-1 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) py-1.5 text-center text-xs font-mono-num font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
             +{preset}
           </button>
@@ -240,12 +240,12 @@ export function FastLogWidget({
 
       {/* 4 Spendable Category Pills */}
       <div className="mb-3 space-y-1.5">
-        <div className="flex justify-between items-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="flex justify-between items-center text-[11px] font-bold text-(--text-muted) uppercase tracking-wider">
           <span>Category</span>
           <button
             type="button"
             onClick={() => setIsShared(!isShared)}
-            className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer lowercase"
+            className="inline-flex items-center gap-1 text-purple-700 dark:text-purple-300 font-bold hover:underline cursor-pointer lowercase"
           >
             <ArrowRightLeft className="h-3 w-3" />
             <span>{isShared ? 'shared 50/50' : 'personal'}</span>
@@ -263,12 +263,12 @@ export function FastLogWidget({
                 onClick={() => handleSelectCategory(catKey)}
                 className={`flex flex-col items-center justify-center rounded-2xl py-2 px-1 text-xs font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600 ring-offset-2 dark:ring-offset-slate-900 scale-102'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                    ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm font-black'
+                    : 'bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink)'
                 }`}
               >
                 <span className="text-base mb-0.5">{info.icon}</span>
-                <span className="text-[11px]">{displayName}</span>
+                <span className="text-[11px] font-bold">{displayName}</span>
               </button>
             );
           })}
@@ -277,7 +277,7 @@ export function FastLogWidget({
 
       {/* Contextual 1-Tap Quick Tags */}
       <div className="mb-4 space-y-1.5">
-        <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <span className="block text-[11px] font-bold text-(--text-muted) uppercase tracking-wider">
           Quick Item Tag
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -291,10 +291,10 @@ export function FastLogWidget({
                   setSelectedTag(tag);
                   setCustomItem('');
                 }}
-                className={`rounded-xl px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                className={`rounded-xl px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-500 dark:bg-emerald-950/60 dark:text-emerald-300'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                    ? 'bg-(--pastel-butter) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                    : 'bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink)'
                 }`}
               >
                 {tag}
@@ -311,7 +311,7 @@ export function FastLogWidget({
             key={digit}
             type="button"
             onClick={() => pushDigit(digit)}
-            className="flex h-11 items-center justify-center rounded-xl bg-slate-50 text-lg font-bold text-slate-800 ring-1 ring-slate-200/80 active:scale-95 active:bg-slate-200 dark:bg-slate-800/80 dark:text-slate-100 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+            className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-lg font-mono-num font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
           >
             {digit}
           </button>
@@ -321,14 +321,14 @@ export function FastLogWidget({
           onClick={() => {
             if (cents > 0 && cents < 999999) setCents((prev) => prev * 100);
           }}
-          className="flex h-11 items-center justify-center rounded-xl bg-slate-50 text-sm font-bold text-slate-600 ring-1 ring-slate-200/80 active:scale-95 dark:bg-slate-800/80 dark:text-slate-300 dark:ring-slate-700 cursor-pointer transition-transform"
+          className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-sm font-mono-num font-bold text-(--text-muted) shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
         >
           00
         </button>
         <button
           type="button"
           onClick={() => pushDigit(0)}
-          className="flex h-11 items-center justify-center rounded-xl bg-slate-50 text-lg font-bold text-slate-800 ring-1 ring-slate-200/80 active:scale-95 dark:bg-slate-800/80 dark:text-slate-100 dark:ring-slate-700 cursor-pointer transition-transform"
+          className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-lg font-mono-num font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
         >
           0
         </button>
@@ -336,7 +336,7 @@ export function FastLogWidget({
           type="button"
           onClick={popDigit}
           aria-label="Backspace"
-          className="flex h-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 ring-1 ring-rose-200/80 active:scale-95 dark:bg-rose-950/40 dark:text-rose-400 dark:ring-rose-900/60 cursor-pointer transition-transform"
+          className="flex h-11 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-[1.5px] border-(--border-ink) text-rose-700 shadow-cute-sm hover:bg-(--pastel-coral) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
         >
           <Delete className="h-4 w-4" />
         </button>
@@ -348,7 +348,7 @@ export function FastLogWidget({
         onClick={handleLogExpense}
         disabled={amount <= 0 || isLogging}
         aria-label={`Log ${formatSGD(amount)}`}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 px-4 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-98 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) py-3.5 px-4 text-sm font-black shadow-cute hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
       >
         <Sparkles className="h-4 w-4" />
         <span>

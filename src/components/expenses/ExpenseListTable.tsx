@@ -30,6 +30,7 @@ import { formatDisplayDate } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import { EditExpenseModal } from './EditExpenseModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
+import { TruncatedText } from '../ui/TruncatedText';
 import type {
   Expense,
   Category,
@@ -198,19 +199,19 @@ export function ExpenseListTable({
       return <ChevronsUpDown className="h-3.5 w-3.5 text-slate-400 opacity-60 ml-1 inline" />;
     }
     return activeSortOrder === 'asc' ? (
-      <ChevronUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 ml-1 inline" />
+      <ChevronUp className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
     ) : (
-      <ChevronDown className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 ml-1 inline" />
+      <ChevronDown className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
     );
   };
 
   return (
     <div className="space-y-4">
       {/* Mobile Sort Bar */}
-      <div className="sm:hidden flex items-center justify-between gap-2 rounded-xl bg-white p-3 border border-slate-200 dark:border-slate-800 dark:bg-slate-900 text-xs">
-        <div className="flex items-center gap-1.5 text-slate-500">
+      <div className="sm:hidden flex items-center justify-between gap-2 rounded-xl bg-(--bg-card) p-3 border-[1.5px] border-(--border-ink) shadow-cute-sm text-xs">
+        <div className="flex items-center gap-1.5 text-(--text-muted)">
           <ArrowUpDown className="h-3.5 w-3.5" />
-          <span className="font-semibold">Sort by:</span>
+          <span className="font-bold">Sort by:</span>
         </div>
         <select
           aria-label="Sort ledger"
@@ -232,7 +233,7 @@ export function ExpenseListTable({
               setInternalSortOrder(order);
             }
           }}
-          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          className="rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer"
         >
           <option value="">Default order</option>
           <option value="date-desc">Date (Newest first)</option>
@@ -245,15 +246,15 @@ export function ExpenseListTable({
       </div>
 
       {/* Main Ledger Container */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-colors">
+      <div className="overflow-hidden rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) shadow-cute transition-colors">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300 block sm:table">
-            <thead className="hidden sm:table-header-group bg-slate-50 border-b border-slate-200 dark:bg-slate-800/60 dark:border-slate-800 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 select-none">
+          <table className="w-full text-left text-xs text-(--text-ink) block sm:table">
+            <thead className="hidden sm:table-header-group bg-(--bg-canvas) border-b-[1.5px] border-(--border-ink) text-[11px] uppercase tracking-wider font-extrabold text-(--text-muted) select-none">
               <tr>
                 <th
                   scope="col"
                   onClick={() => handleSort('date')}
-                  className="py-3.5 pl-6 pr-3 whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="py-3.5 pl-6 pr-3 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
                 >
                   <span className="inline-flex items-center">
                     Date {renderSortIcon('date')}
@@ -263,7 +264,7 @@ export function ExpenseListTable({
                 <th
                   scope="col"
                   onClick={() => handleSort('category')}
-                  className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
                 >
                   <span className="inline-flex items-center">
                     Category {renderSortIcon('category')}
@@ -272,7 +273,7 @@ export function ExpenseListTable({
                 <th
                   scope="col"
                   onClick={() => handleSort('payer')}
-                  className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
                 >
                   <span className="inline-flex items-center">
                     Payer {renderSortIcon('payer')}
@@ -282,7 +283,7 @@ export function ExpenseListTable({
                 <th
                   scope="col"
                   onClick={() => handleSort('amount')}
-                  className="px-3 py-3.5 text-right whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="px-3 py-3.5 text-right whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
                 >
                   <span className="inline-flex items-center justify-end">
                     Amount {renderSortIcon('amount')}
@@ -291,7 +292,7 @@ export function ExpenseListTable({
                 <th scope="col" className="py-3.5 pl-3 pr-6 text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 block sm:table-row-group">
+            <tbody className="divide-y divide-(--border-subtle) block sm:table-row-group">
               {paginatedExpenses.map((expense) => {
                 const category = getCategory(expense.category_id);
                 const payer = getMember(expense.payer_id);
@@ -303,25 +304,25 @@ export function ExpenseListTable({
                 return (
                   <tr
                     key={expense.id}
-                    className="block sm:table-row p-4 sm:p-0 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                    className="block sm:table-row p-4 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
                   >
                     {/* Date */}
-                    <td className="py-1 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 block sm:table-cell whitespace-nowrap font-medium text-slate-700 dark:text-slate-300">
+                    <td className="py-1 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 block sm:table-cell whitespace-nowrap font-mono-num font-semibold text-(--text-ink)">
                       <span>{formatDisplayDate(expense.date)}</span>
                     </td>
 
                     {/* Item Description & Remarks */}
                     <td className="py-1 sm:py-4 px-0 sm:px-3 block sm:table-cell max-w-xs">
-                      <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <span>{expense.item}</span>
+                      <div className="font-bold text-(--text-ink) flex items-center gap-1.5 min-w-0">
+                        <TruncatedText text={expense.item} />
                         {expense.tags && expense.tags.length > 0 && (
-                          <span className="text-[10px] font-normal text-emerald-600 dark:text-emerald-400">
+                          <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
                             #{expense.tags[0]}
                           </span>
                         )}
                       </div>
                       {expense.remarks && (
-                        <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        <div className="text-[11px] text-(--text-muted) truncate mt-0.5">
                           {expense.remarks}
                         </div>
                       )}
@@ -330,21 +331,21 @@ export function ExpenseListTable({
                     {/* Category Badge */}
                     <td className="py-1 sm:py-4 px-0 sm:px-3 inline-block sm:table-cell whitespace-nowrap mr-2 sm:mr-0">
                       {category ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] font-semibold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
                           <span
-                            className="h-2 w-2 rounded-full shrink-0"
-                            style={{ backgroundColor: category.color || '#10B981' }}
+                            className="h-2 w-2 rounded-full shrink-0 border border-black/20"
+                            style={{ backgroundColor: category.color || '#dfc2ff' }}
                           />
                           <span>{category.name}</span>
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">Uncategorized</span>
+                        <span className="text-(--text-muted) text-[11px]">Uncategorized</span>
                       )}
                     </td>
 
                     {/* Payer Avatar / Name */}
                     <td className="py-1 sm:py-4 px-0 sm:px-3 inline-block sm:table-cell whitespace-nowrap mr-2 sm:mr-0">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-200">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-(--text-ink)">
                         <span>{payer?.avatar_url || '👤'}</span>
                         <span>{payer?.display_name || 'Unknown'}</span>
                       </span>
@@ -353,7 +354,7 @@ export function ExpenseListTable({
                     {/* Split Status Badge */}
                     <td className="py-1 sm:py-4 px-0 sm:px-3 inline-block sm:table-cell whitespace-nowrap">
                       {expense.is_shared ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 sm:px-3 py-0.5 sm:py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2.5 sm:px-3 py-0.5 sm:py-0.8 text-[11px] font-bold text-(--text-ink)">
                           <ArrowRightLeft className="h-3 w-3" />
                           <span>
                             {expense.split_ratio && expense.split_ratio !== 0.5
@@ -362,17 +363,17 @@ export function ExpenseListTable({
                           </span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 sm:px-3 py-0.5 sm:py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[11px] font-medium text-(--text-muted)">
                           <span>Personal</span>
                         </span>
                       )}
                     </td>
 
                     {/* Formatted SGD Amount */}
-                    <td className="py-1 sm:py-4 px-0 sm:px-3 block sm:table-cell text-left sm:text-right font-bold text-slate-900 dark:text-white">
-                      <div>{formatSGD(expense.amount)}</div>
+                    <td className="py-1 sm:py-4 px-0 sm:px-3 block sm:table-cell text-left sm:text-right">
+                      <div className="font-mono-num font-black text-sm text-(--text-ink)">{formatSGD(expense.amount)}</div>
                       {hasForeignCurrency && (
-                        <div className="text-[10px] font-normal text-slate-400">
+                        <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
                           {formatForeignAmount(expense.original_amount!, expense.original_currency!)}
                         </div>
                       )}
@@ -380,7 +381,7 @@ export function ExpenseListTable({
 
                     {/* Edit & Delete Action Buttons */}
                     <td className="py-1.5 sm:py-4 pl-0 sm:pl-3 pr-0 sm:pr-6 block sm:table-cell text-right sm:text-center whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1">
+                      <div className="inline-flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => {
@@ -388,7 +389,7 @@ export function ExpenseListTable({
                             setEditingExpense(expense);
                           }}
                           aria-label={`Edit ${expense.item}`}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                           title="Edit expense"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -397,7 +398,7 @@ export function ExpenseListTable({
                           type="button"
                           onClick={() => setDeletingExpense(expense)}
                           aria-label={`Delete ${expense.item}`}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                           title="Delete expense"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -412,22 +413,22 @@ export function ExpenseListTable({
         </div>
 
         {/* Pagination & Counter Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-slate-50/60 px-4 sm:px-6 py-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-4 sm:px-6 py-3.5 text-xs">
           {/* Counter Text */}
-          <div className="text-slate-500 dark:text-slate-400 font-medium">
-            Showing <span className="font-bold text-slate-900 dark:text-white">{startIndex}–{endIndex}</span> of{' '}
-            <span className="font-bold text-slate-900 dark:text-white">{totalItems}</span>
+          <div className="text-(--text-muted) font-medium">
+            Showing <span className="font-mono-num font-black text-(--text-ink)">{startIndex}–{endIndex}</span> of{' '}
+            <span className="font-mono-num font-black text-(--text-ink)">{totalItems}</span>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Page Size Selector */}
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 hidden sm:inline">Per page:</span>
+              <span className="text-(--text-muted) font-medium hidden sm:inline">Per page:</span>
               <select
                 aria-label="Select page size"
                 value={activePageSize}
                 onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) px-2 py-1 text-xs font-bold text-(--text-ink) shadow-cute-sm cursor-pointer"
               >
                 <option value={20}>20</option>
                 <option value={50}>50</option>
@@ -436,13 +437,13 @@ export function ExpenseListTable({
             </div>
 
             {/* Prev / Next & Page Numbers */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => handlePageChange(validCurrentPage - 1)}
                 disabled={validCurrentPage <= 1}
                 aria-label="Previous page"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -461,14 +462,14 @@ export function ExpenseListTable({
 
                   return (
                     <React.Fragment key={p}>
-                      {hasGap && <span className="px-1 text-slate-400">…</span>}
+                      {hasGap && <span className="px-1 text-(--text-muted)">…</span>}
                       <button
                         type="button"
                         onClick={() => handlePageChange(p)}
-                        className={`h-8 w-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-all cursor-pointer ${
                           p === validCurrentPage
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                            ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm font-black'
+                            : 'border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5'
                         }`}
                       >
                         {p}
@@ -482,7 +483,7 @@ export function ExpenseListTable({
                 onClick={() => handlePageChange(validCurrentPage + 1)}
                 disabled={validCurrentPage >= totalPages}
                 aria-label="Next page"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

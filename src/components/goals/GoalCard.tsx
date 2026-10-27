@@ -105,23 +105,23 @@ export function GoalCard({
   return (
     <div
       data-testid={`goal-card-${goal.id}`}
-      className={`relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900 ${className}`}
+      className={`relative flex flex-col justify-between rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-5 shadow-cute transition-all ${className}`}
     >
       <div>
         {/* Header: Emoji, Title, Status Badge */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-2xl shadow-inner dark:bg-slate-800">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-(--border-ink) bg-(--pastel-butter-light) text-2xl shadow-cute-sm">
               <span role="img" aria-label={goal.title}>{goal.emoji || '🎯'}</span>
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 line-clamp-1 dark:text-white" title={goal.title}>
+              <h3 className="font-display font-black text-slate-900 line-clamp-1 dark:text-white" title={goal.title}>
                 {goal.title}
               </h3>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono-num text-(--text-muted) mt-0.5">
                 <Calendar className="h-3.5 w-3.5" />
                 <span>{formatDisplayMonth(goal.target_date)}</span>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
+                <span className="text-(--text-muted)">•</span>
                 <Clock className="h-3.5 w-3.5" />
                 <span>
                   {isAchieved
@@ -135,7 +135,7 @@ export function GoalCard({
           </div>
 
           <div
-            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border ${statusConfig.badgeClass}`}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border border-(--border-ink) shadow-cute-sm ${statusConfig.badgeClass}`}
           >
             <StatusIcon className="h-3.5 w-3.5 shrink-0" />
             <span>{statusConfig.label}</span>
@@ -143,36 +143,36 @@ export function GoalCard({
         </div>
 
         {/* Big-Ticket Financial Highlights (Target Amount, Total Saved, Goal-Funded Spend, Remaining Balance) */}
-        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/50">
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-3 text-center shadow-cute-sm">
           <div>
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
               Target Amount
             </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 block truncate" title={formatSGD(targetAmount)}>
+            <span className="text-xs font-mono-num font-black text-(--text-ink) mt-0.5 block truncate" title={formatSGD(targetAmount)}>
               {formatSGD(targetAmount)}
             </span>
           </div>
-          <div className="border-l sm:border-x border-slate-200/60 dark:border-slate-700/60">
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+          <div className="border-l sm:border-x border-(--border-subtle)">
+            <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
               Total Saved
             </span>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block truncate" title={formatSGD(totalSaved)}>
+            <span className="text-xs font-mono-num font-black text-emerald-700 dark:text-emerald-400 mt-0.5 block truncate" title={formatSGD(totalSaved)}>
               {formatSGD(totalSaved)}
             </span>
           </div>
-          <div className="border-t sm:border-t-0 sm:border-r border-slate-200/60 dark:border-slate-700/60 pt-2 sm:pt-0">
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+          <div className="border-t sm:border-t-0 sm:border-r border-(--border-subtle) pt-2 sm:pt-0">
+            <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
               Goal-Funded Spend
             </span>
-            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 mt-0.5 block truncate" title={formatSGD(goalFundedSpend)}>
+            <span className="text-xs font-mono-num font-black text-purple-700 dark:text-purple-300 mt-0.5 block truncate" title={formatSGD(goalFundedSpend)}>
               {formatSGD(goalFundedSpend)}
             </span>
           </div>
-          <div className="border-t sm:border-t-0 border-slate-200/60 dark:border-slate-700/60 pt-2 sm:pt-0">
-            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+          <div className="border-t sm:border-t-0 border-(--border-subtle) pt-2 sm:pt-0">
+            <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
               Remaining Balance
             </span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-0.5 block truncate" title={formatSGD(remainingBalance)}>
+            <span className="text-xs font-mono-num font-black text-(--text-muted) mt-0.5 block truncate" title={formatSGD(remainingBalance)}>
               {formatSGD(remainingBalance)}
             </span>
           </div>
@@ -180,9 +180,9 @@ export function GoalCard({
 
         {/* Progress Bar & Percentage */}
         <div className="mt-4">
-          <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
-            <span className="text-slate-600 dark:text-slate-400">Milestone Progress</span>
-            <span className={isAchieved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}>
+          <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+            <span className="text-(--text-muted)">Milestone Progress</span>
+            <span className={`font-mono-num font-black ${isAchieved ? 'text-emerald-700 dark:text-emerald-400' : 'text-(--text-ink)'}`}>
               {progressPercent}%
             </span>
           </div>
@@ -192,7 +192,7 @@ export function GoalCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label={`${goal.title} progress: ${progressPercent}%`}
-            className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+            className="h-3 w-full overflow-hidden rounded-full border border-(--border-ink) bg-(--bg-canvas)"
           >
             <div
               className={`h-full rounded-full transition-all duration-500 ${statusConfig.barClass}`}
@@ -274,15 +274,15 @@ export function GoalCard({
       </div>
 
       {/* Action Footer */}
-      <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+      <div className="mt-5 flex items-center justify-between gap-2 border-t border-(--border-subtle) pt-4">
         {/* + Spend from Goal Button */}
         <button
           type="button"
           onClick={() => onSpendFromGoal?.(goal)}
           aria-label={`+ Spend from ${goal.title}`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700 shadow-xs hover:bg-purple-100 hover:text-purple-800 focus:outline-hidden focus:ring-2 focus:ring-purple-500/20 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-1.5 text-xs font-black shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
         >
-          <ShoppingBag className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+          <ShoppingBag className="h-3.5 w-3.5" />
           <span>+ Spend from Goal</span>
         </button>
 
@@ -291,9 +291,9 @@ export function GoalCard({
             type="button"
             onClick={() => onQuickDeposit?.(goal)}
             aria-label={`Deposit to ${goal.title}`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-emerald-600 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-2.5 py-1.5 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
-            <Coins className="h-3.5 w-3.5 text-emerald-500" />
+            <Coins className="h-3.5 w-3.5 text-emerald-800" />
             <span>Deposit</span>
           </button>
 
@@ -301,9 +301,9 @@ export function GoalCard({
             type="button"
             onClick={() => onEdit?.(goal)}
             aria-label={`Edit ${goal.title}`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) px-2.5 py-1.5 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
-            <Pencil className="h-3.5 w-3.5 text-blue-500" />
+            <Pencil className="h-3.5 w-3.5" />
             <span>Edit</span>
           </button>
         </div>

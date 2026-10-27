@@ -211,9 +211,9 @@ export function CentsFirstAmountInput({
       {/* Display & Numeric Input Field */}
       <div
         onClick={() => internalInputRef.current?.focus()}
-        className="relative flex items-center justify-center rounded-2xl border-2 border-slate-200 bg-slate-50/70 p-4 transition-all focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800/60 dark:focus-within:border-emerald-400 dark:focus-within:bg-slate-800 cursor-text"
+        className="relative flex items-center justify-center rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-4 shadow-cute-sm transition-all focus-within:ring-2 focus-within:ring-(--pastel-lilac) focus-within:bg-(--bg-card) cursor-text"
       >
-        <span className="mr-2 text-2xl font-bold text-slate-400 dark:text-slate-500 select-none">
+        <span className="mr-2 text-2xl font-bold font-mono-num text-(--text-muted) select-none">
           {currencySymbol}
         </span>
         <input
@@ -229,7 +229,7 @@ export function CentsFirstAmountInput({
           onKeyDown={handleKeyDown}
           onChange={handleChange}
           onPaste={handlePaste}
-          className="w-full text-center text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white bg-transparent outline-hidden"
+          className="w-full text-center text-4xl sm:text-5xl font-mono-num font-black tracking-tight text-(--text-ink) bg-transparent outline-none"
           placeholder={isZeroDecimal ? '0' : '0.00'}
         />
         {internalUnits > 0 && !disabled && (
@@ -240,7 +240,7 @@ export function CentsFirstAmountInput({
               handleClear();
             }}
             aria-label="Clear amount"
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-(--text-muted) hover:bg-(--pastel-coral-light) hover:text-rose-600 transition-colors cursor-pointer"
           >
             <Delete className="h-5 w-5" />
           </button>
@@ -255,7 +255,7 @@ export function CentsFirstAmountInput({
               key={digit}
               type="button"
               onClick={() => pushDigit(digit)}
-              className="flex h-12 items-center justify-center rounded-xl bg-white text-xl font-semibold text-slate-800 shadow-xs ring-1 ring-slate-200 active:scale-95 active:bg-slate-100 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+              className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-xl font-bold font-mono-num text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
             >
               {digit}
             </button>
@@ -263,14 +263,14 @@ export function CentsFirstAmountInput({
           <button
             type="button"
             onClick={pushDoubleZero}
-            className="flex h-12 items-center justify-center rounded-xl bg-white text-lg font-semibold text-slate-600 shadow-xs ring-1 ring-slate-200 active:scale-95 active:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+            className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-lg font-bold font-mono-num text-(--text-muted) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
           >
             00
           </button>
           <button
             type="button"
             onClick={() => pushDigit(0)}
-            className="flex h-12 items-center justify-center rounded-xl bg-white text-xl font-semibold text-slate-800 shadow-xs ring-1 ring-slate-200 active:scale-95 active:bg-slate-100 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+            className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-xl font-bold font-mono-num text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
           >
             0
           </button>
@@ -278,7 +278,7 @@ export function CentsFirstAmountInput({
             type="button"
             onClick={popDigit}
             aria-label="Backspace"
-            className="flex h-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shadow-xs ring-1 ring-rose-200 active:scale-95 active:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:ring-rose-900/60 dark:active:bg-rose-900/60 cursor-pointer transition-transform"
+            className="flex h-12 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-[1.5px] border-(--border-ink) text-rose-700 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-coral) cursor-pointer transition-transform"
           >
             <Delete className="h-5 w-5" />
           </button>

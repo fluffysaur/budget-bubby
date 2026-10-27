@@ -94,9 +94,9 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-lilac-subtle) text-purple-900 dark:text-purple-200 border-[1.5px] border-(--border-ink)"
           >
-            <Shield className="w-3 h-3" />
+            <Shield className="w-3 h-3 text-purple-600 dark:text-purple-300" />
             Insurance
           </span>
         );
@@ -104,9 +104,9 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/40"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-butter-subtle) text-amber-900 dark:text-amber-200 border-[1.5px] border-(--border-ink)"
           >
-            <FileText className="w-3 h-3" />
+            <FileText className="w-3 h-3 text-amber-700 dark:text-amber-400" />
             Tax
           </span>
         );
@@ -114,9 +114,9 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-mint-subtle) text-emerald-900 dark:text-emerald-200 border-[1.5px] border-(--border-ink)"
           >
-            <Repeat className="w-3 h-3" />
+            <Repeat className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
             Subscription
           </span>
         );
@@ -124,7 +124,7 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-[1.5px] border-(--border-ink)"
           >
             <HelpCircle className="w-3 h-3" />
             {type}
@@ -139,19 +139,19 @@ export function PolicyTable({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Search input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--color-ink)/50" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search policies or notes..."
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border-[1.5px] border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-all"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-(--color-ink)/50 hover:text-(--color-ink) dark:hover:text-white"
             >
               Clear
             </button>
@@ -159,7 +159,7 @@ export function PolicyTable({
         </div>
 
         {/* Type pills */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {(['all', 'insurance', 'tax', 'subscription'] as const).map((type) => {
             const isActive = selectedType === type;
             const labels: Record<string, string> = {
@@ -173,10 +173,10 @@ export function PolicyTable({
                 key={type}
                 type="button"
                 onClick={() => setSelectedType(type)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border-[1.5px] border-(--border-ink) ${
                   isActive
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                    ? 'bg-(--pastel-butter) text-(--color-ink) shadow-cute-sm'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-(--canvas-cream)'
                 }`}
               >
                 {labels[type]}
@@ -187,10 +187,10 @@ export function PolicyTable({
       </div>
 
       {/* Table Container */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+      <div className="overflow-x-auto rounded-2xl border-[1.5px] border-(--border-ink) bg-white dark:bg-slate-900 shadow-cute">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/50 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+            <tr className="border-b-[1.5px] border-(--border-ink) bg-(--canvas-cream) dark:bg-slate-800/80 text-xs font-bold text-(--color-ink) dark:text-slate-300 uppercase tracking-wider font-display">
               <th scope="col" className="py-3.5 px-4">Policy Name</th>
               <th scope="col" className="py-3.5 px-4">Type</th>
               <th scope="col" className="py-3.5 px-4">Owner</th>
@@ -206,8 +206,8 @@ export function PolicyTable({
               <tr>
                 <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2 text-slate-400 opacity-60" />
-                  <p className="font-medium">No policies found</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="font-bold text-base text-(--color-ink) dark:text-white">No policies found</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Try adjusting your search query or filter selection.
                   </p>
                   {(searchTerm || selectedType !== 'all') && (
@@ -217,7 +217,7 @@ export function PolicyTable({
                         setSearchTerm('');
                         setSelectedType('all');
                       }}
-                      className="mt-3 inline-flex items-center text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
+                      className="mt-3 inline-flex items-center text-xs font-bold text-(--color-ink) underline cursor-pointer"
                     >
                       Clear active filters
                     </button>
@@ -238,12 +238,12 @@ export function PolicyTable({
                 return (
                   <tr
                     key={policy.id}
-                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                    className="hover:bg-(--canvas-cream)/50 dark:hover:bg-slate-800/40 transition-colors"
                   >
                     {/* Policy Name & Notes */}
-                    <td className="py-3.5 px-4 font-medium text-slate-900 dark:text-white">
+                    <td className="py-3.5 px-4 font-bold text-(--color-ink) dark:text-white">
                       <div>
-                        <span>{policy.name}</span>
+                        <span className="font-display">{policy.name}</span>
                         {policy.notes && (
                           <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 font-normal">
                             {policy.notes}
@@ -258,36 +258,36 @@ export function PolicyTable({
                     </td>
 
                     {/* Owner / Insured */}
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                      <span className="inline-flex items-center gap-2 font-medium">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-700 dark:text-slate-300">
+                      <span className="inline-flex items-center gap-2 font-bold">
                         <span className="text-xs">{ownerIcon}</span>
                         {owner}
                       </span>
                     </td>
 
                     {/* Frequency */}
-                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 capitalize">
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 font-medium capitalize">
                       {policy.frequency}
                     </td>
 
                     {/* Premium Amount */}
-                    <td className="py-3 px-4 whitespace-nowrap text-right font-semibold text-slate-900 dark:text-white">
+                    <td className="py-3 px-4 whitespace-nowrap text-right font-bold font-mono-num text-(--color-ink) dark:text-white">
                       {formatSGD(policy.amount)}
                     </td>
 
                     {/* Monthly Amortized Outflow */}
-                    <td className="py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-medium">
+                    <td className="py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-bold font-mono-num">
                       {formatSGD(policy.monthly_amortized_amount)}
-                      <span className="text-xs text-slate-400 font-normal">/mo</span>
+                      <span className="text-xs text-slate-400 font-normal ml-0.5">/mo</span>
                     </td>
 
                     {/* Renewal Month */}
                     <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border-[1.5px] border-(--border-ink) ${
                           isMonthly
-                            ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                            : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                            ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                            : 'bg-(--pastel-mint-subtle) text-emerald-900 dark:text-emerald-200'
                         }`}
                       >
                         {renewalMonthText}
@@ -296,13 +296,13 @@ export function PolicyTable({
 
                     {/* Actions */}
                     <td className="py-3 px-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
                         {onEdit && (
                           <button
                             type="button"
                             aria-label={`Edit ${policy.name}`}
                             onClick={() => onEdit(policy)}
-                            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border-[1.5px] border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) transition-all cursor-pointer"
                             title="Edit policy"
                           >
                             <Pencil className="w-4 h-4" />
@@ -313,7 +313,7 @@ export function PolicyTable({
                             type="button"
                             aria-label={`Delete ${policy.name}`}
                             onClick={() => onDelete(policy.id)}
-                            className="p-2 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border-[1.5px] border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 transition-all cursor-pointer"
                             title="Delete policy"
                           >
                             <Trash2 className="w-4 h-4" />

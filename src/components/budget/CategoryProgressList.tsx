@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { TooltipPopover } from '../ui/TooltipPopover';
+import { TruncatedText } from '../ui/TruncatedText';
 import type { MonthlyBudgetCategoryDetail } from '../../types/finance';
 
 export interface CategoryProgressListProps {
@@ -118,21 +119,15 @@ export function CategoryProgressList({
 
           // Status Badge details
           let statusLabel = 'On Track';
-          let statusBadgeClass =
-            'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
           let progressBarColor = 'bg-emerald-500';
           let StatusIcon = CheckCircle2;
 
           if (isOverBudget) {
             statusLabel = 'Over Budget';
-            statusBadgeClass =
-              'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800';
             progressBarColor = 'bg-rose-500';
             StatusIcon = AlertCircle;
           } else if (isNearLimit) {
             statusLabel = 'Near Limit';
-            statusBadgeClass =
-              'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800';
             progressBarColor = 'bg-amber-500';
             StatusIcon = AlertTriangle;
           }
@@ -143,29 +138,30 @@ export function CategoryProgressList({
             <div
               key={catDetail.id || catDetail.category_id}
               onClick={() => onCategoryClick?.(catDetail.category_id)}
-              className={`rounded-2xl border bg-white dark:bg-slate-900 ${
+              className={`rounded-2xl border-[1.5px] bg-(--bg-card) ${
                 compact ? 'p-3.5 sm:p-4' : 'p-4 sm:p-5'
-              } shadow-xs transition-all ${
+              } shadow-cute-sm transition-all ${
                 isOverBudget
-                  ? 'border-rose-200 dark:border-rose-900/60'
-                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'border-(--pastel-coral)'
+                  : 'border-(--border-ink) hover:bg-(--pastel-butter-light)/20'
               } ${onCategoryClick ? 'cursor-pointer' : ''}`}
             >
               {/* Card Header: Icon, Name, Target % & Status Badge */}
               <div className="flex items-center justify-between gap-2 mb-2.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
+                    className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-cute-sm border border-(--border-ink)"
                     style={{ backgroundColor: categoryColor }}
                   >
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                        {categoryName}
-                      </span>
-                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <TruncatedText
+                        text={categoryName}
+                        className="font-display font-black text-sm text-(--text-ink)"
+                      />
+                      <span className="text-[10px] font-mono-num font-bold text-(--text-muted) shrink-0">
                         ({Math.round(catDetail.percentage * 100)}%)
                       </span>
                       {subSpent > 0 && (
@@ -191,8 +187,8 @@ export function CategoryProgressList({
                       )}
                     </div>
                     {subSpent > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                        <Repeat className="h-2.5 w-2.5 text-emerald-500" />
+                      <div className="flex items-center gap-1 text-[10px] font-medium text-(--text-muted)">
+                        <Repeat className="h-2.5 w-2.5 text-purple-600 dark:text-purple-400" />
                         <span>Includes {formatSGD(subSpent)} recurring subs</span>
                       </div>
                     )}
@@ -201,7 +197,13 @@ export function CategoryProgressList({
 
                 {/* Status Indicator Badge */}
                 <div
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${statusBadgeClass}`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shrink-0 shadow-cute-sm ${
+                    isOverBudget
+                      ? 'bg-(--pastel-coral-light) text-(--text-ink)'
+                      : isNearLimit
+                      ? 'bg-(--pastel-butter) text-(--text-ink)'
+                      : 'bg-(--pastel-mint) text-(--text-ink)'
+                  }`}
                 >
                   <StatusIcon className="h-3 w-3" />
                   <span>{statusLabel} ({roundedPercentage}%)</span>
@@ -211,30 +213,30 @@ export function CategoryProgressList({
               {/* Amounts Grid: Spent vs Budgeted vs Remaining */}
               <div className="grid grid-cols-3 gap-2 my-2.5 text-left">
                 <div>
-                  <span className="block text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500">
+                  <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                     Spent
                   </span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-mono-num font-black text-(--text-ink)">
                     {formatSGD(actual)}
                   </span>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500">
+                  <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                     Budgeted
                   </span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-mono-num font-black text-(--text-ink)">
                     {formatSGD(allocated)}
                   </span>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500">
+                  <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                     Remaining
                   </span>
                   <span
-                    className={`text-sm font-bold ${
+                    className={`text-sm font-mono-num font-black ${
                       remaining < 0
                         ? 'text-rose-600 dark:text-rose-400'
-                        : 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-emerald-700 dark:text-emerald-400'
                     }`}
                   >
                     {formatSGD(remaining)}
@@ -244,7 +246,7 @@ export function CategoryProgressList({
 
               {/* Progress Bar Meter */}
               <div className="space-y-1.5 mt-2.5">
-                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="h-3 w-full rounded-full bg-(--bg-canvas) border border-(--border-ink) overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${progressBarColor}`}
                     style={{ width: `${fillWidth}%` }}
@@ -257,27 +259,27 @@ export function CategoryProgressList({
 
                 {/* Warning Badges (Amber for >= 80%, Rose for >= 100%) */}
                 {isOverBudget ? (
-                  <div className="flex items-center justify-between text-[11px] text-rose-600 dark:text-rose-400 font-semibold pt-0.5">
-                    <span className="flex items-center gap-1">
+                  <div className="flex items-center justify-between text-[11px] text-rose-600 dark:text-rose-400 font-bold pt-0.5">
+                    <span className="flex items-center gap-1 font-mono-num">
                       <AlertCircle className="h-3 w-3" />
                       Over by {formatSGD(Math.abs(remaining))}
                     </span>
                     <span
                       data-testid={`badge-rose-${catDetail.category_id}`}
-                      className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold text-[10px] border border-rose-300 dark:border-rose-800"
+                      className="px-2 py-0.5 rounded-full bg-(--pastel-coral-light) text-rose-800 font-bold text-[10px] border border-(--border-ink) shadow-cute-sm"
                     >
                       Rose Cap Exceeded
                     </span>
                   </div>
                 ) : isNearLimit ? (
-                  <div className="flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold pt-0.5">
-                    <span className="flex items-center gap-1">
+                  <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold pt-0.5">
+                    <span className="flex items-center gap-1 font-mono-num">
                       <AlertTriangle className="h-3 w-3" />
                       {formatSGD(remaining)} remaining
                     </span>
                     <span
                       data-testid={`badge-amber-${catDetail.category_id}`}
-                      className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-[10px] border border-amber-300 dark:border-amber-800"
+                      className="px-2 py-0.5 rounded-full bg-(--pastel-butter) text-amber-900 font-bold text-[10px] border border-(--border-ink) shadow-cute-sm"
                     >
                       Amber Guardrail
                     </span>

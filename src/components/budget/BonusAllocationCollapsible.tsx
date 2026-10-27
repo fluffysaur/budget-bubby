@@ -44,10 +44,10 @@ export function BonusAllocationCollapsible({
       <div className="space-y-4">
         {/* Top Row: Gross Bonus Input -> CPF -> After CPF */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3">
+          <div className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm">
             <label
               htmlFor="bonus-gross-input"
-              className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+              className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
             >
               Gross Bonus (S$)
             </label>
@@ -58,24 +58,24 @@ export function BonusAllocationCollapsible({
               min="0"
               value={grossInput}
               onChange={(e) => setGrossInput(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-base font-bold text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) px-3 py-1.5 font-mono-num text-base font-black text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
             />
           </div>
 
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 flex flex-col justify-center">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm flex flex-col justify-center">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
               Employee CPF ({Math.round(cpfRate * 100)}%)
             </span>
-            <span className="mt-1 text-lg font-bold text-rose-600 dark:text-rose-400">
+            <span className="mt-1 font-mono-num text-lg font-black text-rose-600 dark:text-rose-400">
               -{formatSGD(result.cpfDeduction)}
             </span>
           </div>
 
-          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 flex flex-col justify-center">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+          <div className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-cute-sm flex flex-col justify-center">
+            <span className="text-[11px] font-black uppercase tracking-wider text-(--text-ink)">
               After CPF Take-Home Bonus
             </span>
-            <span className="mt-1 text-lg font-extrabold text-emerald-900 dark:text-emerald-100">
+            <span className="mt-1 font-mono-num text-lg font-black text-emerald-950 dark:text-emerald-100">
               {formatSGD(result.afterCpf)}
             </span>
           </div>
@@ -86,20 +86,20 @@ export function BonusAllocationCollapsible({
           {result.allocations.map((bucket) => (
             <div
               key={bucket.name}
-              className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 flex flex-col justify-between"
+              className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-3 flex flex-col justify-between shadow-cute-sm"
             >
               <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span className="text-xs font-bold text-(--text-ink)">
                   {bucket.name}
                 </span>
                 <span
-                  className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white"
+                  className="rounded-md px-1.5 py-0.5 text-[10px] font-black text-white border border-black/20"
                   style={{ backgroundColor: bucket.color }}
                 >
                   {Math.round(bucket.percentage * 100)}%
                 </span>
               </div>
-              <span className="mt-2 text-sm font-bold text-slate-900 dark:text-white">
+              <span className="mt-2 font-mono-num text-sm font-black text-(--text-ink)">
                 {formatSGD(bucket.amount)}
               </span>
             </div>

@@ -360,12 +360,12 @@ export function QuickAddExpenseModal({
     <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
       <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 pb-3 border-b border-(--border-subtle) flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink)">
               <Plus className="h-4.5 w-4.5 stroke-[2.5]" />
             </div>
-            <h2 id="modal-title" className="text-base font-bold text-slate-900 dark:text-white">
+            <h2 id="modal-title" className="font-display font-bold text-base text-(--text-ink)">
               Quick Add Expense
             </h2>
           </div>
@@ -373,9 +373,9 @@ export function QuickAddExpenseModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) transition-colors cursor-pointer"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -460,14 +460,14 @@ export function QuickAddExpenseModal({
             {/* Category Chips */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                   Category
                 </span>
                 {allocationCategories.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setShowMoreCategories((prev) => !prev)}
-                    className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
+                    className="text-[11px] font-bold text-purple-700 dark:text-purple-300 hover:underline cursor-pointer"
                   >
                     {showMoreCategories ? 'Spendable only' : `+ More (${allocationCategories.length})`}
                   </button>
@@ -487,13 +487,13 @@ export function QuickAddExpenseModal({
                       }}
                       className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500 font-semibold ring-2 ring-emerald-600/30'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 font-medium'
+                          ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm font-bold'
+                          : 'bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium'
                       }`}
                     >
                       <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: isSelected ? '#ffffff' : cat.color || '#10B981' }}
+                        className="h-2 w-2 rounded-full border border-black/20"
+                        style={{ backgroundColor: cat.color || '#dfc2ff' }}
                       />
                       <span>{cat.name}</span>
                     </button>
@@ -507,12 +507,12 @@ export function QuickAddExpenseModal({
               <div className="flex items-center justify-between mb-1">
                 <label
                   htmlFor="expense-item"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)"
                 >
                   Item / Description
                 </label>
-                <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
-                  <Sparkles className="h-3 w-3 text-emerald-500" />
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-(--text-muted)">
+                  <Sparkles className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                   Tap tag or type
                 </span>
               </div>
@@ -525,10 +525,10 @@ export function QuickAddExpenseModal({
                       key={tag}
                       type="button"
                       onClick={() => handleSelectQuickTag(tag)}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
                         isActiveTag
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700 font-semibold'
-                          : 'bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700'
+                          ? 'bg-(--pastel-butter) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                          : 'bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink)'
                       }`}
                     >
                       {tag}
@@ -544,18 +544,18 @@ export function QuickAddExpenseModal({
                 value={item}
                 onChange={(e) => handleItemTextChange(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-emerald-400"
+                className="w-full rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
               />
             </div>
 
             {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
-            <div className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-800/40">
+            <div className="space-y-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-2.5 shadow-cute-sm">
               {/* Payer Toggle */}
               <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] font-bold text-(--text-muted)">
                   Payer:
                 </span>
-                <div className="flex gap-1" aria-label="Payer Selection">
+                <div className="flex gap-1.5" aria-label="Payer Selection">
                   {members.map((member) => {
                     const isSelected = payerId === member.id;
                     return (
@@ -564,10 +564,10 @@ export function QuickAddExpenseModal({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => setPayerId(member.id)}
-                        className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                            ? 'bg-(--pastel-butter) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                            : 'bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)'
                         }`}
                       >
                         <span>{member.avatar_url || '👤'}</span>
@@ -593,7 +593,7 @@ export function QuickAddExpenseModal({
                 <div
                   role="group"
                   aria-label="Expense Split Type"
-                  className="flex rounded-xl bg-slate-200/70 dark:bg-slate-900/60 p-1 border border-slate-200/80 dark:border-slate-700/80"
+                  className="flex rounded-xl bg-(--bg-canvas) p-1 border-[1.5px] border-(--border-ink)"
                 >
                   <button
                     type="button"
@@ -601,8 +601,8 @@ export function QuickAddExpenseModal({
                     onClick={() => setIsShared(false)}
                     className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       !isShared
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                        ? 'bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
+                        : 'text-(--text-muted) hover:text-(--text-ink)'
                     }`}
                   >
                     <span>👤</span>
@@ -614,8 +614,8 @@ export function QuickAddExpenseModal({
                     onClick={() => setIsShared(true)}
                     className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
                       isShared
-                        ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500'
-                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                        ? 'bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
+                        : 'text-(--text-muted) hover:text-(--text-ink)'
                     }`}
                   >
                     <span>👥</span>
@@ -629,7 +629,7 @@ export function QuickAddExpenseModal({
             <div>
               <label
                 htmlFor="expense-date"
-                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
+                className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
               >
                 Date
               </label>
@@ -638,10 +638,10 @@ export function QuickAddExpenseModal({
                   type="button"
                   aria-pressed={date === todayStr}
                   onClick={() => setDate(todayStr)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                     date === todayStr
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                      : 'bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)'
                   }`}
                 >
                   Today
@@ -650,10 +650,10 @@ export function QuickAddExpenseModal({
                   type="button"
                   aria-pressed={date === yesterdayStr}
                   onClick={() => setDate(yesterdayStr)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                     date === yesterdayStr
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                      : 'bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)'
                   }`}
                 >
                   Yesterday
@@ -662,10 +662,10 @@ export function QuickAddExpenseModal({
                   type="button"
                   aria-pressed={date === twoDaysAgoStr}
                   onClick={() => setDate(twoDaysAgoStr)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                     date === twoDaysAgoStr
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                      : 'bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)'
                   }`}
                 >
                   2d ago
@@ -678,7 +678,7 @@ export function QuickAddExpenseModal({
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     required
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    className="rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                   />
                 </div>
               </div>
@@ -688,7 +688,7 @@ export function QuickAddExpenseModal({
             <div>
               <label
                 htmlFor="expense-remarks"
-                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+                className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
               >
                 Remarks / Notes
               </label>
@@ -698,7 +698,7 @@ export function QuickAddExpenseModal({
                 placeholder="Optional notes or context..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                className="w-full rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
               />
             </div>
 
@@ -706,7 +706,7 @@ export function QuickAddExpenseModal({
             <div>
               <label
                 htmlFor="expense-tag-input"
-                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+                className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
               >
                 Tags
               </label>
@@ -714,14 +714,14 @@ export function QuickAddExpenseModal({
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-semibold"
+                    className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) px-2.5 py-0.5 text-[11px] font-bold"
                   >
                     <span>{tag}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
                       aria-label={`Remove tag ${tag}`}
-                      className="text-emerald-500 hover:text-emerald-800 dark:hover:text-emerald-100 cursor-pointer ml-0.5"
+                      className="text-(--text-muted) hover:text-rose-600 cursor-pointer ml-0.5"
                     >
                       ×
                     </button>
@@ -730,7 +730,7 @@ export function QuickAddExpenseModal({
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="relative flex-1">
-                  <Hash className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
+                  <Hash className="absolute left-2.5 top-2 h-3.5 w-3.5 text-(--text-muted)" />
                   <input
                     id="expense-tag-input"
                     type="text"
@@ -743,13 +743,13 @@ export function QuickAddExpenseModal({
                         handleAddTag(newTagInput);
                       }
                     }}
-                    className="w-full rounded-xl border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                    className="w-full rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) pl-8 pr-3 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => handleAddTag(newTagInput)}
-                  className="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 px-3 py-1.5 text-xs font-semibold cursor-pointer"
+                  className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) px-3 py-1.5 text-xs font-bold cursor-pointer"
                 >
                   + Tag
                 </button>
@@ -760,10 +760,10 @@ export function QuickAddExpenseModal({
             {activeGoals.length > 0 && (
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <Target className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                   <label
                     htmlFor="expense-goal"
-                    className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                    className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)"
                   >
                     Funded by Goal (Optional)
                   </label>
@@ -773,7 +773,7 @@ export function QuickAddExpenseModal({
                   aria-label="Funded by Goal"
                   value={selectedGoalId}
                   onChange={(e) => setSelectedGoalId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-xs font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                 >
                   <option value="">None (Standard Budget)</option>
                   {activeGoals.map((g) => (
@@ -787,18 +787,18 @@ export function QuickAddExpenseModal({
           </div>
 
           {/* Submit Actions Footer */}
-          <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-(--border-subtle) shrink-0 bg-(--bg-card) pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-600 active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-5 py-2.5 text-xs font-black shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
             >
               {isSubmitting ? (
                 <span>Saving...</span>

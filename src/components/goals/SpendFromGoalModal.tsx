@@ -161,7 +161,7 @@ export function SpendFromGoalModal({
 
             {/* Amount Input */}
             <div>
-              <label htmlFor="spend-amount" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+              <label htmlFor="spend-amount" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 <DollarSign className="h-3.5 w-3.5 text-slate-400" />
                 <span>Amount to Spend (SGD) *</span>
               </label>
@@ -201,7 +201,7 @@ export function SpendFromGoalModal({
             {/* Category & Payer */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="spend-category" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="spend-category" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <Layers className="h-3.5 w-3.5 text-slate-400" />
                   <span>Category</span>
                 </label>
@@ -220,7 +220,7 @@ export function SpendFromGoalModal({
               </div>
 
               <div>
-                <label htmlFor="spend-payer" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="spend-payer" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <User className="h-3.5 w-3.5 text-slate-400" />
                   <span>Payer</span>
                 </label>
@@ -242,7 +242,7 @@ export function SpendFromGoalModal({
             {/* Date & Shared Toggle */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="spend-date" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="spend-date" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <Calendar className="h-3.5 w-3.5 text-slate-400" />
                   <span>Date</span>
                 </label>
@@ -275,7 +275,7 @@ export function SpendFromGoalModal({
 
             {/* Tag Preview */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+              <label className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 <Tag className="h-3.5 w-3.5 text-slate-400" />
                 <span>Spend Tag</span>
               </label>

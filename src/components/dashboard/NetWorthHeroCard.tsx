@@ -49,23 +49,16 @@ export function NetWorthHeroCard({
     <div
       role="region"
       aria-label="True Net Worth Summary"
-      className={`relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-950 p-5 sm:p-6 shadow-xs transition-colors ${className}`}
+      className={`relative overflow-hidden rounded-2xl border-[1.5px] border-(--border-ink) bg-linear-to-br from-[#fbf7f1] via-white to-[#f5ecff] dark:from-[#262220] dark:via-[#2b2724] dark:to-[#342445] p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
     >
-      {/* Background ambient glow */}
-      <div
-        className={`pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl opacity-20 ${
-          isPositive ? 'bg-emerald-500' : 'bg-rose-500'
-        }`}
-      />
-
       {/* Top row: Status & Trend Pill */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {displayName ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800/90 dark:text-slate-200">
+          <span className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-(--border-ink) bg-(--bg-card) px-3 py-1 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm)">
             {displayName}
           </span>
         ) : (
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
             Household Balance Sheet
           </span>
         )}
@@ -73,20 +66,20 @@ export function NetWorthHeroCard({
         {/* Trend Indicator Pill */}
         <div
           data-testid="trend-indicator"
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) ${
             isPositive
-              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/70'
-              : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800/70'
+              ? 'bg-[#bbf7d0] text-[#14532d]'
+              : 'bg-[#fff1ee] text-[#9a1b1b]'
           }`}
         >
           {isPositive ? (
             <>
-              <TrendingUp className="h-3.5 w-3.5" />
+              <TrendingUp className="h-3.5 w-3.5 stroke-[2.5]" />
               <span>Positive Net Worth</span>
             </>
           ) : (
             <>
-              <TrendingDown className="h-3.5 w-3.5" />
+              <TrendingDown className="h-3.5 w-3.5 stroke-[2.5]" />
               <span>Debt Payoff Phase</span>
             </>
           )}
@@ -96,7 +89,7 @@ export function NetWorthHeroCard({
       {/* Hero Net Worth Amount */}
       <div className="mt-4">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-bold uppercase tracking-widest text-(--text-muted)">
             True Net Worth
           </span>
           <TooltipPopover
@@ -109,10 +102,10 @@ export function NetWorthHeroCard({
         </div>
         <div className="mt-1 flex items-baseline gap-3">
           <h2
-            className={`text-3xl sm:text-4xl font-black tracking-tight ${
+            className={`text-3xl sm:text-4xl font-black tracking-tight font-mono-num ${
               isPositive
-                ? 'text-slate-900 dark:text-white'
-                : 'text-rose-600 dark:text-rose-400'
+                ? 'text-(--text-ink)'
+                : 'text-[#9a1b1b] dark:text-rose-400'
             }`}
           >
             {formatSGD(netWorth)}
@@ -121,18 +114,18 @@ export function NetWorthHeroCard({
       </div>
 
       {/* Sub-Metrics Pills: Assets and Liabilities */}
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-200/80 dark:border-slate-800">
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t-[1.5px] border-(--border-ink)/20">
         {/* Total Assets Pill */}
-        <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-4">
+        <div className="flex items-center justify-between rounded-2xl bg-[#f0fdf4] dark:bg-[#13351d] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-              <Wallet className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-[#1e462b] border-[1.5px] border-(--border-ink) text-[#14532d] dark:text-[#86efac] shadow-(--shadow-cute-sm)">
+              <Wallet className="h-5 w-5 stroke-[2.5]" />
             </div>
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#166534] dark:text-[#86efac]">
                 Total Assets
               </span>
-              <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              <div className="text-base sm:text-lg font-black text-[#14532d] dark:text-white font-mono-num">
                 {formatSGD(totalAssets)}
               </div>
             </div>
@@ -141,7 +134,7 @@ export function NetWorthHeroCard({
             <button
               type="button"
               onClick={onUpdateBalance}
-              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer"
+              className="text-xs font-bold text-[#15803d] dark:text-[#86efac] underline underline-offset-2 hover:opacity-80 cursor-pointer"
             >
               Update
             </button>
@@ -149,22 +142,22 @@ export function NetWorthHeroCard({
         </div>
 
         {/* Total Liabilities Pill */}
-        <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-4">
+        <div className="flex items-center justify-between rounded-2xl bg-[#fff1ee] dark:bg-[#3d1c1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
-              <CreditCard className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-[#4a2220] border-[1.5px] border-(--border-ink) text-[#9a1b1b] dark:text-[#fca5a5] shadow-(--shadow-cute-sm)">
+              <CreditCard className="h-5 w-5 stroke-[2.5]" />
             </div>
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#991b1b] dark:text-[#fca5a5]">
                 Total Liabilities
               </span>
-              <div className="text-base sm:text-lg font-bold text-rose-600 dark:text-rose-400">
+              <div className="text-base sm:text-lg font-black text-[#9a1b1b] dark:text-rose-400 font-mono-num">
                 {formatSGD(totalLiabilities)}
               </div>
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] font-bold text-[#991b1b] dark:text-[#fca5a5]">
               {totalLiabilities > 0 ? `${coverageRatio}% Covered` : 'Debt Free'}
             </span>
           </div>

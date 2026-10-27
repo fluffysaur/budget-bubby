@@ -190,19 +190,19 @@ export function PrepaymentSimulator({
 
   return (
     <div
-      className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm ${className}`}
+      className={`bg-(--bg-card) rounded-2xl border-[1.5px] border-(--border-ink) p-6 shadow-cute ${className}`}
     >
       {/* Title */}
-      <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-(--border-subtle)">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+          <div className="p-2.5 rounded-xl border border-(--border-ink) bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h3 className="font-display font-black text-lg text-(--text-ink)">
               Prepayment Simulator
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-(--text-muted)">
               Accelerate debt freedom by simulating extra monthly payments or one-time lump-sum capital reduction.
             </p>
           </div>
@@ -215,7 +215,7 @@ export function PrepaymentSimulator({
               handleExtraMonthlyChange(0);
               handleLumpSumChange(0);
             }}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) rounded-xl shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
@@ -226,7 +226,7 @@ export function PrepaymentSimulator({
       {/* Simulator Inputs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Extra Monthly Payment Slider & Input */}
-        <div className="space-y-3 p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+        <div className="space-y-3 p-4 rounded-xl bg-(--bg-canvas) border border-(--border-ink) shadow-cute-sm">
           <div className="flex items-center justify-between">
             <label
               htmlFor="extra-monthly-slider"
@@ -336,64 +336,64 @@ export function PrepaymentSimulator({
       {/* Simulator Results Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Interest Saved */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30 border border-emerald-200/70 dark:border-emerald-800/60 shadow-xs">
+        <div className="p-4 rounded-xl bg-(--pastel-mint-light) border-[1.5px] border-(--border-ink) shadow-cute-sm">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+            <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">
               Interest Saved
             </span>
-            <div className="p-1 rounded-md bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300">
+            <div className="p-1 rounded-md border border-(--border-ink) bg-(--pastel-mint) text-(--text-ink)">
               <TrendingDown className="w-3.5 h-3.5" />
             </div>
           </div>
           <div
             data-testid="interest-saved"
-            className="text-2xl font-black text-emerald-700 dark:text-emerald-300 tracking-tight"
+            className="font-mono-num text-2xl font-black text-emerald-800 dark:text-emerald-300 tracking-tight"
           >
             {formatSGD(interestSaved)}
           </div>
-          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+          <div className="text-[11px] text-(--text-muted) mt-1 font-semibold">
             {hasPrepayment ? 'Immediate guaranteed interest savings' : 'Simulate prepayment to save on interest'}
           </div>
         </div>
 
         {/* Time Saved */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30 border border-blue-200/70 dark:border-blue-800/60 shadow-xs">
+        <div className="p-4 rounded-xl bg-(--pastel-butter-light) border-[1.5px] border-(--border-ink) shadow-cute-sm">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-blue-800 dark:text-blue-300">
+            <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">
               Time Shaved Off
             </span>
-            <div className="p-1 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+            <div className="p-1 rounded-md border border-(--border-ink) bg-(--pastel-butter) text-(--text-ink)">
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
           <div
             data-testid="time-saved"
-            className="text-2xl font-black text-blue-700 dark:text-blue-300 tracking-tight"
+            className="font-mono-num text-2xl font-black text-(--text-ink) tracking-tight"
           >
             {monthsSaved > 0 ? `${monthsSaved} mos` : '0 mos'}
           </div>
-          <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-1 font-medium truncate">
+          <div className="text-[11px] text-(--text-muted) mt-1 font-semibold truncate">
             {timeSavedFormatted}
           </div>
         </div>
 
         {/* New Debt-Free Date */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/40 dark:to-pink-950/30 border border-purple-200/70 dark:border-purple-800/60 shadow-xs">
+        <div className="p-4 rounded-xl bg-(--pastel-lilac-light) border-[1.5px] border-(--border-ink) shadow-cute-sm">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-purple-800 dark:text-purple-300">
+            <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">
               New Debt-Free Date
             </span>
-            <div className="p-1 rounded-md bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
+            <div className="p-1 rounded-md border border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink)">
               <Calendar className="w-3.5 h-3.5" />
             </div>
           </div>
           <div
             data-testid="new-debt-free-date"
-            className="text-2xl font-black text-purple-700 dark:text-purple-300 tracking-tight"
+            className="font-mono-num text-2xl font-black text-purple-900 dark:text-purple-300 tracking-tight"
           >
             {simulatedPayoffFormatted}
           </div>
-          <div className="text-[11px] text-purple-600 dark:text-purple-400 mt-1 font-medium">
+          <div className="font-mono-num text-[11px] text-(--text-muted) mt-1 font-semibold">
             Baseline: {baselinePayoffFormatted}
           </div>
         </div>

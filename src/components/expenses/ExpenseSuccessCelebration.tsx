@@ -86,7 +86,7 @@ export function ExpenseSuccessCelebration({
           <span className="text-emerald-400 dark:text-emerald-600 shrink-0">Cha-ching!</span>
           <span className="font-extrabold shrink-0">{formatSGD(activeExpense.amount)}</span>
           <span className="text-slate-300 dark:text-slate-600 shrink-0">•</span>
-          <span className="truncate max-w-[100px] sm:max-w-[180px] text-slate-200 dark:text-slate-700 font-medium">
+          <span className="truncate max-w-25 sm:max-w-[180px] text-slate-200 dark:text-slate-700 font-medium">
             {activeExpense.item}
           </span>
           <Sparkles className="h-3.5 w-3.5 text-amber-400 shrink-0 ml-0.5" />

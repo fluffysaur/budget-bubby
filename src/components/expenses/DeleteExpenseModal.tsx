@@ -74,14 +74,14 @@ export function DeleteExpenseModal({
         {/* Header Icon & Title */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-(--border-ink) bg-(--pastel-coral-light) text-rose-600 shadow-cute-sm">
               <Trash2 className="h-6 w-6 stroke-[2.2]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h2 className="font-display font-black text-lg text-(--text-ink)">
                 Delete Expense?
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-(--text-muted)">
                 This transaction will be permanently removed.
               </p>
             </div>
@@ -91,64 +91,64 @@ export function DeleteExpenseModal({
             onClick={onClose}
             disabled={isDeleting}
             aria-label="Close modal"
-            className="rounded-xl p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
+            className="rounded-xl border border-(--border-ink) p-1 text-(--text-ink) hover:bg-(--pastel-coral-light) transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {errorMessage && (
-          <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+          <div className="flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-coral-light) p-3 text-xs font-bold text-rose-700 shadow-cute-sm">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {/* Expense Summary Card */}
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-800/40 space-y-3">
+        <div className="rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-sm space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-base">
+              <h3 className="font-bold text-(--text-ink) text-base">
                 {expense.item}
               </h3>
               {expense.remarks && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-(--text-muted) mt-0.5">
                   {expense.remarks}
                 </p>
               )}
             </div>
             <div className="text-right">
-              <div className="text-lg font-black text-slate-900 dark:text-white">
+              <div className="text-lg font-mono-num font-black text-(--text-ink)">
                 {formatSGD(expense.amount)}
               </div>
               {hasForeignCurrency && (
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] font-mono-num font-semibold text-(--text-muted)">
                   {formatForeignAmount(expense.original_amount!, expense.original_currency!)}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-xs">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-(--border-subtle) text-xs">
             {/* Category */}
             {category && (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 font-bold text-(--text-ink)">
                 <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: category.color || '#10B981' }}
+                  className="h-2 w-2 rounded-full border border-black/20"
+                  style={{ backgroundColor: category.color || '#dfc2ff' }}
                 />
                 <span>{category.name}</span>
               </span>
             )}
 
             {/* Payer */}
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 font-semibold text-(--text-ink)">
               <span>{payer?.avatar_url || '👤'}</span>
               <span>{payer?.display_name || 'Unknown'}</span>
             </span>
 
             {/* Date */}
-            <span className="text-slate-500 dark:text-slate-400 font-medium">
+            <span className="text-(--text-muted) font-mono-num font-semibold">
               {formatDisplayDate(expense.date)}
             </span>
           </div>
@@ -157,18 +157,18 @@ export function DeleteExpenseModal({
         {/* Warning Alerts */}
         <div className="space-y-2">
           {expense.goal_id && (
-            <div className="flex items-start gap-2.5 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40">
-              <Target className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+            <div className="flex items-start gap-2.5 rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-butter-light) p-3 text-xs font-medium text-(--text-ink) shadow-cute-sm">
+              <Target className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
               <div>
                 <span className="font-bold">Savings Goal Balance Restored:</span> Deleting this expense will return{' '}
-                <span className="font-bold">{formatSGD(expense.amount)}</span> back to the linked savings goal balance.
+                <span className="font-mono-num font-bold">{formatSGD(expense.amount)}</span> back to the linked savings goal balance.
               </div>
             </div>
           )}
 
           {expense.is_shared && (
-            <div className="flex items-start gap-2.5 rounded-xl bg-blue-50 p-3 text-xs font-medium text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900/40">
-              <ArrowRightLeft className="h-4 w-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-start gap-2.5 rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-lilac-light) p-3 text-xs font-medium text-(--text-ink) shadow-cute-sm">
+              <ArrowRightLeft className="h-4 w-4 shrink-0 mt-0.5 text-purple-700" />
               <div>
                 <span className="font-bold">Couple Settlement Adjusted:</span> This was logged as a shared expense. Deleting it will recalculate who owes whom in the monthly summary.
               </div>
@@ -183,7 +183,7 @@ export function DeleteExpenseModal({
             onClick={onClose}
             disabled={isDeleting}
             aria-label={`Cancel delete ${expense.item}`}
-            className="rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
           >
             Cancel
           </button>
@@ -192,7 +192,7 @@ export function DeleteExpenseModal({
             onClick={handleDelete}
             disabled={isDeleting}
             aria-label={`Confirm delete ${expense.item}`}
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-coral) px-5 py-2.5 text-xs font-black text-white shadow-cute-sm hover:bg-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
             <span>{isDeleting ? 'Deleting...' : 'Delete Expense'}</span>

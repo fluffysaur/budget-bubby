@@ -220,7 +220,7 @@ export function AddEditCreditCardModal({
             {/* Bank & Last 4 Digits */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="card-bank" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="card-bank" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <Building className="h-3.5 w-3.5 text-slate-400" />
                   <span>Issuing Bank *</span>
                 </label>
@@ -248,7 +248,7 @@ export function AddEditCreditCardModal({
               </div>
 
               <div>
-                <label htmlFor="card-last4" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="card-last4" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <CreditCard className="h-3.5 w-3.5 text-slate-400" />
                   <span>Last 4 Digits</span>
                 </label>
@@ -267,7 +267,7 @@ export function AddEditCreditCardModal({
             {/* Statement Day & Due Day */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="card-billing-day" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="card-billing-day" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <Calendar className="h-3.5 w-3.5 text-slate-400" />
                   <span>Statement Day *</span>
                 </label>
@@ -287,7 +287,7 @@ export function AddEditCreditCardModal({
               </div>
 
               <div>
-                <label htmlFor="card-due-day" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="card-due-day" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <Calendar className="h-3.5 w-3.5 text-slate-400" />
                   <span>Payment Due Day *</span>
                 </label>
@@ -310,7 +310,7 @@ export function AddEditCreditCardModal({
             {/* Credit Limit & Owner */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="card-credit-limit" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="card-credit-limit" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <DollarSign className="h-3.5 w-3.5 text-slate-400" />
                   <span>Credit Limit (SGD)</span>
                 </label>
@@ -326,7 +326,7 @@ export function AddEditCreditCardModal({
               </div>
 
               <div>
-                <label htmlFor="card-owner" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                <label htmlFor="card-owner" className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   <User className="h-3.5 w-3.5 text-slate-400" />
                   <span>Card Holder *</span>
                 </label>
@@ -347,7 +347,7 @@ export function AddEditCreditCardModal({
 
             {/* Color Accent Picker */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1">
+              <label className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
                 <Palette className="h-3.5 w-3.5 text-slate-400" />
                 <span>Card Color Badge</span>
               </label>

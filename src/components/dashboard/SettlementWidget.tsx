@@ -113,53 +113,53 @@ export function SettlementWidget({
         <div
             role="region"
             aria-label="Shared Expense Settlement Center"
-            className={`rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors ${className}`}
+            className={`rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors ${className}`}
         >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="flex items-center justify-between gap-3 pb-4 border-b-[1.5px] border-(--border-subtle)">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-                        <Scale className="h-4 w-4" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
+                        <Scale className="h-4 w-4 stroke-[2.5]" />
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
                         Running Settlement
                     </h3>
                 </div>
 
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                    <ArrowRightLeft className="h-3 w-3" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-(--bg-cream) border-[1.5px] border-(--border-ink) px-3 py-1 text-[11px] font-bold text-(--text-ink) shadow-(--shadow-cute-sm)">
+                    <ArrowRightLeft className="h-3 w-3 stroke-[2.5]" />
                     <span>50 / 50 Split</span>
                 </span>
             </div>
 
             {/* Main Status Display */}
-            <div className="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-5 border border-slate-200/60 dark:border-slate-700/60">
+            <div className="mt-5 rounded-2xl bg-(--bg-cream) p-5 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                             Settlement Status
                         </span>
                         <div className="mt-1 flex items-baseline gap-2">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                            <span className="text-2xl sm:text-3xl font-black text-(--text-ink) font-mono-num">
                                 {formatSGD(summary.netBalance)}
                             </span>
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <span className="text-xs font-bold text-(--text-muted)">
                                 net balance
                             </span>
                         </div>
                         <p
-                            className={`mt-1 text-sm font-semibold flex items-center gap-1.5 ${
-                                isZero ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                            className={`mt-1 text-sm font-bold flex items-center gap-1.5 ${
+                                isZero ? "text-[#14532d] dark:text-[#86efac]" : "text-[#78350f] dark:text-[#fde68a]"
                             }`}
                         >
                             {isZero ? (
                                 <>
-                                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 stroke-[2.5]" />
                                     <span>All settled up</span>
                                 </>
                             ) : (
                                 <>
-                                    <Scale className="h-4 w-4 shrink-0" />
+                                    <Scale className="h-4 w-4 shrink-0 stroke-[2.5]" />
                                     <span>{summary.settlementText}</span>
                                 </>
                             )}
@@ -172,13 +172,13 @@ export function SettlementWidget({
                             type="button"
                             disabled={isZero}
                             onClick={() => setIsConfirmOpen(true)}
-                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition-all ${
+                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-black border-[1.5px] transition-all font-display ${
                                 isZero
-                                    ? "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed"
-                                    : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                                    ? "bg-(--bg-cream) border-(--border-subtle) text-(--text-muted) opacity-60 cursor-not-allowed"
+                                    : "bg-[#dfc2ff] text-[#1a1a1a] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                             }`}
                         >
-                            <CheckCheck className="h-4 w-4" />
+                            <CheckCheck className="h-4 w-4 stroke-[2.5]" />
                             <span>Settle Up</span>
                         </button>
                     </div>
@@ -188,39 +188,39 @@ export function SettlementWidget({
             {/* Partner Contributions Breakdown */}
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Member 1 Breakdown */}
-                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+                <div className="rounded-2xl border-[1.5px] border-(--border-ink) bg-[#fffbeb] dark:bg-[#382f18] p-4 shadow-(--shadow-cute-sm)">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-lg">{m1.avatar_url || "👨"}</span>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            <span className="text-xs font-black text-[#1a1a1a] dark:text-[#fde68a] font-display">
                                 {m1.display_name}
                             </span>
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-400">Paid Shared</span>
+                        <span className="text-[11px] font-bold text-(--text-muted)">Paid Shared</span>
                     </div>
-                    <div className="mt-2 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                    <div className="mt-2 text-base sm:text-lg font-black text-(--text-ink) font-mono-num">
                         {formatSGD(m1Paid)}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[11px] font-bold text-(--text-muted) font-mono-num">
                         {m2.display_name} owes {formatSGD(summary.member2OwesMember1)}
                     </p>
                 </div>
 
                 {/* Member 2 Breakdown */}
-                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+                <div className="rounded-2xl border-[1.5px] border-(--border-ink) bg-[#fff0fa] dark:bg-[#3d1f39] p-4 shadow-(--shadow-cute-sm)">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-lg">{m2.avatar_url || "👩"}</span>
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            <span className="text-xs font-black text-[#1a1a1a] dark:text-[#fbcfe8] font-display">
                                 {m2.display_name}
                             </span>
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-400">Paid Shared</span>
+                        <span className="text-[11px] font-bold text-(--text-muted)">Paid Shared</span>
                     </div>
-                    <div className="mt-2 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                    <div className="mt-2 text-base sm:text-lg font-black text-(--text-ink) font-mono-num">
                         {formatSGD(m2Paid)}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[11px] font-bold text-(--text-muted) font-mono-num">
                         {m1.display_name} owes {formatSGD(summary.member1OwesMember2)}
                     </p>
                 </div>
@@ -232,12 +232,12 @@ export function SettlementWidget({
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="settle-dialog-title"
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-hidden"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-hidden"
                 >
-                    <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="w-full max-w-md rounded-3xl bg-(--bg-card) p-6 shadow-(--shadow-cute-lg) border-2 border-(--border-ink) animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between pb-3 border-b-[1.5px] border-(--border-subtle)">
                             <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#bbf7d0] text-[#14532d] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
                                     <CheckCheck className="h-4 w-4" />
                                 </div>
                                 <h4
