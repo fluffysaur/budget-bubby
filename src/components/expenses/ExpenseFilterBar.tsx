@@ -92,7 +92,8 @@ export function ExpenseFilterBar({
     filter.search ||
     filter.categoryId ||
     filter.payerId ||
-    filter.isShared !== undefined
+    filter.isShared !== undefined ||
+    filter.tag
   );
 
   return (
@@ -226,6 +227,23 @@ export function ExpenseFilterBar({
           </button>
         </div>
       </div>
+
+      {filter.tag && (
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Filtered Tag:</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
+            <span>#{filter.tag}</span>
+            <button
+              type="button"
+              aria-label="Remove tag filter"
+              onClick={() => onFilterChange({ ...filter, tag: undefined })}
+              className="text-purple-500 hover:text-purple-800 dark:text-purple-300 text-sm font-bold cursor-pointer leading-none"
+            >
+              ×
+            </button>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

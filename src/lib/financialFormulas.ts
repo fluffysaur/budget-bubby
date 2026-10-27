@@ -504,7 +504,8 @@ export function calculateExpenseTrends(
       byCategory[cat.id] = 0;
     }
 
-    const monthExpenses = expenses.filter((e) => e.date.startsWith(m));
+    // Exclude goal-funded expenses from regular monthly trends
+    const monthExpenses = expenses.filter((e) => e.date.startsWith(m) && !e.goal_id);
     for (const exp of monthExpenses) {
       const cat = categories.find((c) => c.id === exp.category_id);
       if (cat && !isSpendableCategory(cat)) {

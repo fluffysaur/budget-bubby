@@ -36,6 +36,7 @@ import { ManageCategoriesModal } from '../components/categories/ManageCategories
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
+import { SpendTagsOverviewCard } from '../components/expenses/SpendTagsOverviewCard';
 import type { Expense, ExpenseFilter, RecurringPolicy, Category } from '../types/finance';
 
 export interface ExpensesPageProps {
@@ -132,6 +133,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
       categoryId: undefined,
       payerId: activeMember ? activeMember.id : undefined,
       isShared: undefined,
+      tag: undefined,
     });
   };
 
@@ -198,6 +200,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     if (filter.payerId && perspective === 'household') count++;
     if (filter.isShared !== undefined) count++;
     if (filter.month !== getCurrentMonth()) count++;
+    if (filter.tag) count++;
     return count;
   }, [filter, perspective]);
 
@@ -236,6 +239,15 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
             ? 'Household'
             : activeMember?.display_name || 'Personal'
         }
+      />
+
+      {/* Spend Tags Cross-Category Overview */}
+      <SpendTagsOverviewCard
+        expenses={allExpenses && allExpenses.length > 0 ? allExpenses : expenses}
+        categories={categories}
+        activeTag={filter.tag}
+        onSelectTag={(tag) => setFilter((prev) => ({ ...prev, tag: prev.tag === tag ? undefined : tag }))}
+        onClearTag={() => setFilter((prev) => ({ ...prev, tag: undefined }))}
       />
 
       {/* Summary Cards */}
