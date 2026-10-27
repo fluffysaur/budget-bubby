@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Delete, X } from 'lucide-react';
+import { Delete } from 'lucide-react';
 
 export interface CentsFirstAmountInputProps {
   value?: number;
@@ -160,14 +160,39 @@ export function CentsFirstAmountInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
-    const cleanDigits = e.target.value.replace(/\D/g, '');
-    if (cleanDigits.length === 0) {
+    const raw = e.target.value.trim();
+    if (!raw) {
       updateUnits(0);
       return;
     }
-    const nextUnits = parseInt(cleanDigits, 10);
-    if (!isNaN(nextUnits)) {
-      updateUnits(nextUnits);
+
+    const floatVal = parseFloat(raw.replace(/[^0-9.]/g, ''));
+    if (isNaN(floatVal)) {
+      updateUnits(0);
+      return;
+    }
+
+    if (isZeroDecimal) {
+      updateUnits(Math.round(floatVal));
+    } else {
+      if (raw.startsWith(formattedDisplay) || raw.endsWith(formattedDisplay)) {
+        const digitsOnly = raw.replace(/\D/g, '');
+        const parsed = parseInt(digitsOnly, 10);
+        updateUnits(parsed);
+      } else {
+        updateUnits(Math.round(floatVal * 100));
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (disabled) return;
+    const pasted = e.clipboardData.getData('text');
+    const floatVal = parseFloat(pasted.replace(/[^0-9.]/g, ''));
+    if (!isNaN(floatVal) && floatVal >= 0) {
+      const targetUnits = isZeroDecimal ? Math.round(floatVal) : Math.round(floatVal * 100);
+      updateUnits(targetUnits);
     }
   };
 
@@ -203,6 +228,7 @@ export function CentsFirstAmountInput({
           value={formattedDisplay}
           onKeyDown={handleKeyDown}
           onChange={handleChange}
+          onPaste={handlePaste}
           className="w-full text-center text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white bg-transparent outline-hidden"
           placeholder={isZeroDecimal ? '0' : '0.00'}
         />
