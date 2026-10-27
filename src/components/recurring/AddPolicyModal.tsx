@@ -181,7 +181,7 @@ export function AddPolicyModal({
       aria-modal="true"
       aria-labelledby="modal-headline"
       onClick={onClose}
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
     >
       <div
         onClick={(e) => e.stopPropagation()}

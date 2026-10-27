@@ -42,6 +42,10 @@ body,
   max-width: 100vw;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Safe area inset utilities */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -121,6 +125,41 @@ body,
   }
 }
 
+/* Responsive Modal Sheet: Drawer on mobile (<640px), Scale & Fade on desktop (>=640px) */
+@media (max-width: 639.98px) {
+  .modal-sheet-enter {
+    animation: drawerSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .modal-sheet-exit {
+    animation: drawerSlideDown 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+}
+
+@media (min-width: 640px) {
+  .modal-sheet-enter {
+    animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .modal-sheet-exit {
+    animation: modalScaleOut 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+}
+
+.animate-modal-in {
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-modal-out {
+  animation: modalScaleOut 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.animate-drawer-in {
+  animation: drawerSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-drawer-out {
+  animation: drawerSlideDown 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
 @keyframes chaChingPop {
   0% {
     transform: translate(-50%, 20px) scale(0.85);
@@ -155,20 +194,12 @@ body,
   }
 }
 
-.animate-drawer-in {
-  animation: drawerSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-cha-ching {
+  animation: chaChingPop 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-drawer-out {
-  animation: drawerSlideDown 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
-}
-
-.animate-modal-in {
-  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-modal-out {
-  animation: modalScaleOut 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+.animate-coin-float {
+  animation: coinFloat 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-cha-ching {

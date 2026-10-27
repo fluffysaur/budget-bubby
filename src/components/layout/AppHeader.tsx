@@ -296,7 +296,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="logout-title"
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-hidden"
                         onClick={() => setIsLogoutConfirmOpen(false)}
                     >
                         <div

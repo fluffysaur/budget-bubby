@@ -141,7 +141,7 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
             role="dialog"
             aria-modal="true"
             aria-labelledby="bulk-balance-modal-title"
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto bg-slate-900/60 backdrop-blur-xs"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden bg-slate-900/60 backdrop-blur-xs"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
