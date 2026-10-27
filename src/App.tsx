@@ -39,6 +39,7 @@ import { BudgetPage } from './pages/BudgetPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { AccountsPage } from './pages/AccountsPage';
 import { PlanPage } from './pages/PlanPage';
+import { FastLogPage } from './pages/FastLogPage';
 import type { Expense, Category } from './types/finance';
 
 function AppLayoutInner() {
@@ -120,6 +121,7 @@ function AppLayoutInner() {
               <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
               <Route path="/budget" element={<BudgetPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
+              <Route path="/fast-log" element={<FastLogPage onNavigateTab={handleSelectTab} />} />
               <Route path="/accounts" element={<AccountsPage />} />
               <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
               <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
