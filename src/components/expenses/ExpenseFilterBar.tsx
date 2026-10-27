@@ -98,19 +98,13 @@ export function ExpenseFilterBar({
 
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-colors ${className}`}
+      className={`w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 transition-colors ${className}`}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        {/* Search Input */}
-        <div className="lg:col-span-1">
-          <label
-            htmlFor="filter-search"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
-          >
-            Search
-          </label>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+      <div className="space-y-3">
+        {/* Top Row: Search Input & Reset Button */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               id="filter-search"
               type="text"
@@ -120,83 +114,98 @@ export function ExpenseFilterBar({
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-emerald-400 dark:focus:bg-slate-800"
             />
           </div>
+
+          <button
+            type="button"
+            onClick={handleResetClick}
+            title="Reset Filters"
+            className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+              hasActiveFilters
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300'
+                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+            }`}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Reset</span>
+          </button>
         </div>
 
-        {/* Category Select */}
-        <div>
-          <label
-            htmlFor="filter-category"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
-          >
-            Category
-          </label>
-          <select
-            id="filter-category"
-            value={filter.categoryId || ''}
-            onChange={handleCategoryChange}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Bottom Row: 4 Filter Selectors in Balanced Responsive Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Category Select */}
+          <div className="min-w-0">
+            <label
+              htmlFor="filter-category"
+              className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+            >
+              Category
+            </label>
+            <select
+              id="filter-category"
+              value={filter.categoryId || ''}
+              onChange={handleCategoryChange}
+              className="w-full truncate rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Payer Select */}
-        <div>
-          <label
-            htmlFor="filter-payer"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
-          >
-            Payer
-          </label>
-          <select
-            id="filter-payer"
-            value={filter.payerId || ''}
-            onChange={handlePayerChange}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
-          >
-            <option value="">All Payers</option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.display_name}
-              </option>
-            ))}
-          </select>
-        </div>
+          {/* Payer Select */}
+          <div className="min-w-0">
+            <label
+              htmlFor="filter-payer"
+              className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+            >
+              Payer
+            </label>
+            <select
+              id="filter-payer"
+              value={filter.payerId || ''}
+              onChange={handlePayerChange}
+              className="w-full truncate rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
+            >
+              <option value="">All Payers</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.display_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Shared Split Select */}
-        <div>
-          <label
-            htmlFor="filter-shared"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
-          >
-            Type / Split
-          </label>
-          <select
-            id="filter-shared"
-            value={
-              filter.isShared === undefined
-                ? 'all'
-                : filter.isShared
-                ? 'shared'
-                : 'personal'
-            }
-            onChange={handleSharedChange}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
-          >
-            <option value="all">All Expenses</option>
-            <option value="shared">Shared (50/50)</option>
-            <option value="personal">Personal Only</option>
-          </select>
-        </div>
+          {/* Shared Split Select */}
+          <div className="min-w-0">
+            <label
+              htmlFor="filter-shared"
+              className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+            >
+              Type / Split
+            </label>
+            <select
+              id="filter-shared"
+              value={
+                filter.isShared === undefined
+                  ? 'all'
+                  : filter.isShared
+                  ? 'shared'
+                  : 'personal'
+              }
+              onChange={handleSharedChange}
+              className="w-full truncate rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
+            >
+              <option value="all">All Expenses</option>
+              <option value="shared">Shared (50/50)</option>
+              <option value="personal">Personal Only</option>
+            </select>
+          </div>
 
-        {/* Month Selector & Clear Button */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
+          {/* Month Selector */}
+          <div className="min-w-0">
             <label
               htmlFor="filter-month"
               className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
@@ -211,20 +220,6 @@ export function ExpenseFilterBar({
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:focus:border-emerald-400 dark:focus:bg-slate-800"
             />
           </div>
-
-          <button
-            type="button"
-            onClick={handleResetClick}
-            title="Reset Filters"
-            className={`flex h-9 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-              hasActiveFilters
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300'
-                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-            }`}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
         </div>
       </div>
 

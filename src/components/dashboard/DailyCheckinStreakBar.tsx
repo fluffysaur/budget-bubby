@@ -115,8 +115,17 @@ export function DailyCheckinStreakBar({
         financeService.getStreakSummary(resolvedMemberId),
         financeService.getDailyCheckins(resolvedMemberId),
       ]);
-      setStreak(updatedStreak);
-      setCheckins(updatedCheckins);
+      if (updatedStreak && typeof updatedStreak === 'object') {
+        setStreak((prev) => ({
+          ...updatedStreak,
+          checkedInToday: true,
+          currentStreak: Math.max(prev.currentStreak, updatedStreak.currentStreak || 1),
+          coupleStreak: Math.max(prev.coupleStreak, updatedStreak.coupleStreak || 1),
+        }));
+      }
+      if (updatedCheckins && Array.isArray(updatedCheckins)) {
+        setCheckins(updatedCheckins);
+      }
 
       onCheckinSuccess?.();
     } catch (err) {

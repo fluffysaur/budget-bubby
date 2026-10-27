@@ -345,7 +345,7 @@ export function UpdateBalanceModal({
 
   // RENDER: Multi-Account Batch Update Mode
   return (
-    <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-2xl">
+    <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
       <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">

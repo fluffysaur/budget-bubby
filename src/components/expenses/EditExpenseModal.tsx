@@ -192,7 +192,7 @@ export function EditExpenseModal({
     <AnimatedModal
       isOpen={isOpen}
       onClose={onClose}
-      maxWidth="max-w-xl"
+      maxWidth="max-w-md"
       className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden"
     >
       <div className="flex flex-col max-h-[90vh]">

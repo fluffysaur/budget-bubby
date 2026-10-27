@@ -18,11 +18,19 @@ export interface AnimatedModalProps {
   isDrawerOnMobile?: boolean;
 }
 
+const SM_MAX_WIDTH_MAP: Record<string, string> = {
+  'max-w-sm': 'sm:max-w-sm',
+  'max-w-md': 'sm:max-w-md',
+  'max-w-lg': 'sm:max-w-lg',
+  'max-w-xl': 'sm:max-w-xl',
+  'max-w-2xl': 'sm:max-w-2xl',
+};
+
 export function AnimatedModal({
   isOpen,
   onClose,
   children,
-  maxWidth = 'max-w-lg',
+  maxWidth = 'max-w-md',
   className = '',
   isDrawerOnMobile = true,
 }: AnimatedModalProps) {
@@ -94,7 +102,7 @@ export function AnimatedModal({
       }`}
     >
       <div
-        className={`w-full max-w-full sm:${maxWidth} ${
+        className={`w-full max-w-full ${SM_MAX_WIDTH_MAP[maxWidth] || `sm:${maxWidth}`} ${
           isDrawerOnMobile
             ? `max-h-[92dvh] sm:max-h-[90dvh] rounded-t-3xl sm:rounded-2xl ${
                 isClosing ? 'animate-drawer-out sm:animate-modal-out' : 'animate-drawer-in sm:animate-modal-in'

@@ -146,7 +146,7 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="relative w-full max-w-2xl rounded-t-3xl sm:rounded-2xl bg-white p-5 sm:p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800 max-h-[92vh] flex flex-col">
+            <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-2xl bg-white p-5 sm:p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800 max-h-[92vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="flex items-center gap-2.5">

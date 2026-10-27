@@ -137,10 +137,11 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
             className={`sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/95 ${className}`}
         >
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
-                {/* Left: Unified Perspective Dropdown (Mobile & Desktop) */}
+                {/* Left: Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
                 <div className="flex items-center">
+                    {/* Mobile Perspective Dropdown */}
                     <div
-                        className="relative"
+                        className="relative sm:hidden"
                         ref={dropdownRef}
                     >
                         <button
@@ -149,7 +150,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 cursor-pointer"
+                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                         >
                             <CurrentIcon className={`h-4 w-4 ${currentOption.iconColor}`} />
                             <span>{currentOption.label}</span>
@@ -176,7 +177,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                             role="option"
                                             aria-selected={isSelected}
                                             onClick={() => handleSelectPerspective(opt.key)}
-                                            className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                                            className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                                                 isSelected
                                                     ? opt.activeBg
                                                     : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
@@ -195,6 +196,35 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             </div>
                         )}
                     </div>
+
+                    {/* Desktop Perspective Switcher Pills */}
+                    <nav
+                        aria-label="Perspective Switcher"
+                        className="hidden sm:flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+                    >
+                        {perspectiveOptions.map((opt) => {
+                            const Icon = opt.icon;
+                            const isSelected = perspective === opt.key;
+                            return (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => handleSelectPerspective(opt.key)}
+                                    aria-pressed={isSelected}
+                                    aria-label={opt.label === "Combined" ? "Combined Household" : opt.label}
+                                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm cursor-pointer ${
+                                        isSelected
+                                            ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white"
+                                            : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                                    }`}
+                                >
+                                    <Icon className={`h-4 w-4 ${opt.iconColor}`} />
+                                    <span>{opt.label}</span>
+                                    {opt.label === "Combined" && <span className="sr-only">Household</span>}
+                                </button>
+                            );
+                        })}
+                    </nav>
                 </div>
 
                 {/* Right: Badges, Quick Add & Theme Toggle */}

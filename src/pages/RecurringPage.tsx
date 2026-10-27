@@ -232,7 +232,10 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
           }
         />
       ) : (
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Recurring Policies &amp; Taxes — amortize annual commitments
+          </p>
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"

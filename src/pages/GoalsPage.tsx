@@ -184,7 +184,10 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
           }
         />
       ) : (
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Savings Goals &amp; Milestones — track wedding, HDB down payment, and pacing
+          </p>
           <Button
             variant="primary"
             size="sm"
