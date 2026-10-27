@@ -55,7 +55,7 @@ export const OfflineBanner: React.FC = () => {
       ) : (
         <>
           <WifiOff className="w-3.5 h-3.5" />
-          <span>You are offline. Showing cached Budget Buddy view.</span>
+          <span>You are offline. Showing cached Budget Bubby view.</span>
         </>
       )}
     </div>

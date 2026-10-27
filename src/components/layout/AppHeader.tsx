@@ -297,7 +297,7 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
                         <button
                             type="button"
                             onClick={() => setIsLogoutConfirmOpen(true)}
-                            aria-label="Lock Budget Buddy"
+                            aria-label="Lock Budget Bubby"
                             title="Lock / Sign Out"
                             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition-all hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800/40 cursor-pointer"
                         >

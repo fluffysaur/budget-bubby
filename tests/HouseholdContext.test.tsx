@@ -178,7 +178,7 @@ describe('Layout Components', () => {
         );
       });
 
-      expect(screen.getByText('Budget Buddy')).toBeInTheDocument();
+      expect(screen.getByText('Budget Bubby')).toBeInTheDocument();
       expect(screen.getByText('Home')).toBeInTheDocument();
       expect(screen.getByText('Budget')).toBeInTheDocument();
       expect(screen.getByText('Expenses')).toBeInTheDocument();

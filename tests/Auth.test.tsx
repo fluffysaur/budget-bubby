@@ -35,7 +35,7 @@ describe("PIN Authentication & Access Control", () => {
             </AuthProvider>,
         );
 
-        expect(screen.getByText("Budget Buddy")).toBeInTheDocument();
+        expect(screen.getByText("Budget Bubby")).toBeInTheDocument();
         expect(screen.getByText("Enter your 6-digit PIN to unlock")).toBeInTheDocument();
 
         for (let i = 0; i < 6; i++) {
@@ -124,7 +124,7 @@ describe("PIN Authentication & Access Control", () => {
             </AuthProvider>,
         );
 
-        const lockBtn = screen.getByRole("button", { name: /lock budget buddy/i });
+        const lockBtn = screen.getByRole("button", { name: /lock budget bubby/i });
         expect(lockBtn).toBeInTheDocument();
 
         // Click lock button to open confirmation modal

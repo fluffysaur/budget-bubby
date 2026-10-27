@@ -93,7 +93,7 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
                 </div>
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white tracking-tight text-sm">
-                        <span>Budget Buddy</span>
+                        <span>Budget Bubby</span>
                         <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500" />
                     </div>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400">Yi Jia &amp; Rachel</span>

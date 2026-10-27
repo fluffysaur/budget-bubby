@@ -26,7 +26,7 @@ export const IOSInstallModal: React.FC<IOSInstallModalProps> = ({ isOpen, onClos
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white text-base">
-              Install Budget Buddy
+              Install Budget Bubby
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Save to your iPhone or iPad home screen
@@ -35,7 +35,7 @@ export const IOSInstallModal: React.FC<IOSInstallModalProps> = ({ isOpen, onClos
         </div>
 
         <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
-          Install Budget Buddy as a standalone app on your home screen for full-screen mode and faster access:
+          Install Budget Bubby as a standalone app on your home screen for full-screen mode and faster access:
         </p>
 
         <div className="space-y-3 mb-5">

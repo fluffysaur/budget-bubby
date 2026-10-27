@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Budget Buddy App Smoke Test', () => {
+test.describe('Budget Bubby App Smoke Test', () => {
   test('should load homepage and display title, header, and dashboard', async ({ page, isMobile }) => {
     await page.goto('/');
     
     // Page Title
-    await expect(page).toHaveTitle(/Budget Buddy/i);
+    await expect(page).toHaveTitle(/Budget Bubby/i);
 
     // Header perspective switcher & branding
     if (isMobile) {

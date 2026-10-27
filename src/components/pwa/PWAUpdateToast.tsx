@@ -54,8 +54,8 @@ export const PWAUpdateToast: React.FC = () => {
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {needRefresh
-              ? 'An updated version of Budget Buddy is ready to reload.'
-              : 'App assets are cached. You can open Budget Buddy without network.'}
+              ? 'An updated version of Budget Bubby is ready to reload.'
+              : 'App assets are cached. You can open Budget Bubby without network.'}
           </p>
 
           {needRefresh && (
