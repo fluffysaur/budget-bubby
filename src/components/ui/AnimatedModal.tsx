@@ -28,7 +28,7 @@ export function AnimatedModal({
 }: AnimatedModalProps) {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isClosing, setIsClosing] = useState(false);
-  const closingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const closingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isOpen) {

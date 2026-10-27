@@ -1,5 +1,5 @@
 /**
- * Core Financial Domain Types & Data Models for Budget Buddy.
+ * Core Financial Domain Types & Data Models for Budget Bubby.
  * Matches Supabase PostgreSQL schema with full Row-Level Security partition support.
  */
 

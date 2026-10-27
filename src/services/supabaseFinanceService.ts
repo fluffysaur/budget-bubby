@@ -1,5 +1,5 @@
 /**
- * Supabase PostgreSQL Finance Service for Budget Buddy.
+ * Supabase PostgreSQL Finance Service for Budget Bubby.
  * Directly queries Supabase tables using row-level security and schema mappings.
  */
 

@@ -1,4 +1,4 @@
-# Budget Buddy 🇸ɢ 💍
+# Budget Bubby 🇸ɢ 💍
 
 > **Couple & Personal Finance Planner for Singapore Households**
 > Designed for **Yi Jia & Rachel** to manage joint and personal cash flows, CPF, 50/50 expense settlements, HDB mortgage amortization, and milestone savings goals.
@@ -7,7 +7,7 @@
 
 ## Table of Contents
 
-- [Budget Buddy 🇸ɢ 💍](#budget-buddy-ɢ-)
+- [Budget Bubby 🇸ɢ 💍](#budget-bubby-ɢ-)
     - [Table of Contents](#table-of-contents)
     - [Key Features](#key-features)
     - [Singapore-Specific Financial Engine](#singapore-specific-financial-engine)
@@ -84,7 +84,7 @@
 ## Architecture & Tech Stack
 
 ```
-budget-buddy/
+budget-bubby/
 ├── src/
 │   ├── components/
 │   │   ├── accounts/       # Account cards, groups, balance update modal, net worth chart
@@ -135,8 +135,8 @@ budget-buddy/
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/budget-buddy.git
-cd budget-buddy
+git clone https://github.com/your-username/budget-bubby.git
+cd budget-bubby
 
 # Install dependencies
 npm install
@@ -154,7 +154,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Dual-Mode Data Access
 
-Budget Buddy features a transparent **Dual-Mode Data Architecture** implemented in `src/services/financeService.ts`:
+Budget Bubby features a transparent **Dual-Mode Data Architecture** implemented in `src/services/financeService.ts`:
 
 | Mode                   | Trigger Condition                                      | Data Source                  | Persistence                                      |
 | :--------------------- | :----------------------------------------------------- | :--------------------------- | :----------------------------------------------- |
@@ -167,7 +167,7 @@ The active mode is indicated by the status badge in the top right header (**Demo
 
 ## Supabase Setup & Migrations
 
-If you wish to connect Budget Buddy to your own Supabase project:
+If you wish to connect Budget Bubby to your own Supabase project:
 
 ### 1. Create Supabase Project
 
@@ -217,7 +217,7 @@ VITE_RACHEL_EMAIL=rachel@example.com
     - User 1: Yi Jia's email with Yi Jia's chosen unique 6-digit PIN as the password.
     - User 2: Rachel's email with Rachel's chosen unique 6-digit PIN as the password.
 3. In **Authentication → Providers → Email**, turn off **"Allow new users to sign up"** so unauthorized visitors cannot create accounts.
-4. When accessing Budget Buddy, simply enter your unique 6-digit PIN on the lock screen. The app will immediately authenticate and open directly to your personal financial perspective!
+4. When accessing Budget Bubby, simply enter your unique 6-digit PIN on the lock screen. The app will immediately authenticate and open directly to your personal financial perspective!
 
 Restart the development server (`npm run dev`) to switch into **Live Supabase** mode.
 
@@ -225,7 +225,7 @@ Restart the development server (`npm run dev`) to switch into **Live Supabase** 
 
 ## Testing & Quality Assurance
 
-Budget Buddy includes a comprehensive test suite across calculations, services, contexts, component trees, and routing:
+Budget Bubby includes a comprehensive test suite across calculations, services, contexts, component trees, and routing:
 
 ```bash
 # Run all Vitest unit and integration tests
@@ -249,7 +249,7 @@ npm run test:e2e
 
 ## PWA Mobile Installation
 
-Budget Buddy is configured as an installable Progressive Web App:
+Budget Bubby is configured as an installable Progressive Web App:
 
 - **Manifest**: `public/manifest.json` configured for `standalone` display with `#059669` theme color.
 - **iOS Safari**: Tap **Share** → **Add to Home Screen**.
@@ -260,7 +260,7 @@ Budget Buddy is configured as an installable Progressive Web App:
 
 ## Vercel Deployment Guide
 
-Budget Buddy is pre-configured for one-click deployment on [Vercel](https://vercel.com):
+Budget Bubby is pre-configured for one-click deployment on [Vercel](https://vercel.com):
 
 1. Push your repository to GitHub / GitLab / Bitbucket.
 2. Import the project in Vercel:

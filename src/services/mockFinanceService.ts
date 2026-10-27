@@ -1,5 +1,5 @@
 /**
- * Mock Finance Service for Budget Buddy.
+ * Mock Finance Service for Budget Bubby.
  * In-memory state initialized from mockSeedData.ts with localStorage synchronization.
  * Supports full CRUD for accounts, balances, snapshots, monthly budgets, expenses,
  * shared settlements, loans, savings goals, and recurring policies.

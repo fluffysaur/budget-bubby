@@ -1,5 +1,5 @@
 /**
- * Public Mock Seed Data for Budget Buddy
+ * Public Mock Seed Data for Budget Bubby
  * Fully typed with domain entities from src/types/finance.ts.
  * Uses realistic anonymized figures for public safety and demo mode.
  */

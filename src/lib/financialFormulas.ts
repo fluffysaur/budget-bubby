@@ -1,5 +1,5 @@
 /**
- * Mathematical Calculation & Business Logic Engines for Budget Buddy.
+ * Mathematical Calculation & Business Logic Engines for Budget Bubby.
  * Covers:
  * 1. Singapore CPF (20%) & Net Take-Home Pay
  * 2. Disposable Budget Allocation Pool

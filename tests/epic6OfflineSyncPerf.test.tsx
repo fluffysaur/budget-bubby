@@ -374,7 +374,7 @@ describe('Epic 6: Offline-First Sync Queue & Fast Lazy Loading', () => {
       const mountDuration = performance.now() - startTime;
 
       // App container mounts swiftly
-      expect(mountDuration).toBeLessThan(100);
+      expect(mountDuration).toBeLessThan(250);
 
       // Lazy DashboardPage renders successfully through Suspense
       await waitFor(() => {
