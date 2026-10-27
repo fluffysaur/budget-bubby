@@ -1,17 +1,12 @@
 /**
- * Budget Buddy - Main Application Shell & Routing Hub
- * Coordinates:
- * - Desktop sidebar and mobile bottom navigation
- * - Top header with perspective switcher, currency badge & theme toggle
- * - Perspective context banner
- * - Central route matching for Dashboard, Budget, Expenses, Accounts, Goals, Loans, Recurring
- * - Global Quick Add Expense modal
+ * App.tsx
+ * Budget Bubby - Couples Finance & Daily Ledger
+ * Root layout and route configuration
  */
 
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import {
-  BrowserRouter,
-  MemoryRouter,
+  BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -19,17 +14,17 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import {
-  HouseholdProvider,
-  useHousehold,
-  useOptionalHousehold,
-} from './context/HouseholdContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { PinLoginScreen } from './components/auth/PinLoginScreen';
-import { isSupabaseConfigured } from './services/supabaseClient';
-import { financeService } from './services/financeService';
-import { DesktopSidebar } from './components/layout/DesktopSidebar';
-import { AppHeader } from './components/layout/AppHeader';
-import { MobileBottomNav } from './components/layout/MobileBottomNav';
+  Plus,
+  LayoutDashboard,
+  Wallet,
+  Receipt,
+  Landmark,
+  Compass,
+} from 'lucide-react';
+import { HouseholdProvider, useHousehold } from './context/HouseholdContext';
+import { DesktopSidebar } from './components/navigation/DesktopSidebar';
+import { MobileTabBar } from './components/navigation/MobileTabBar';
+import { AppHeader } from './components/navigation/AppHeader';
 import { QuickAddExpenseModal } from './components/expenses/QuickAddExpenseModal';
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
@@ -42,6 +37,7 @@ const BudgetPage = lazy(() => import('./pages/BudgetPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 const PlanPage = lazy(() => import('./pages/PlanPage'));
+const FastLogPage = lazy(() => import('./pages/FastLogPage'));
 
 /**
  * Branded Skeleton Loader displayed during route transition / lazy bundle resolution
@@ -73,7 +69,7 @@ export function RouteSkeletonLoader() {
         <div className="space-y-3">
           <div className="h-4 bg-slate-300 dark:bg-slate-700/60 rounded w-full" />
           <div className="h-4 bg-slate-300 dark:bg-slate-700/60 rounded w-5/6" />
-          <div className="h-4 bg-slate-300 dark:bg-slate-700/60 rounded w-4/6" />
+          <div className="h-4 bg-slate-300 dark:bg-slate-700/40 rounded w-4/6" />
         </div>
         <div className="h-4 bg-slate-300 dark:bg-slate-700/40 rounded w-1/3" />
       </div>
@@ -84,76 +80,106 @@ export function RouteSkeletonLoader() {
 function AppLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { refreshData, members } = useHousehold();
+  const { currentMember, members, categories } = useHousehold();
 
-  const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Quick-Add modal open state
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
+  // Success celebration state
+  const [loggedExpense, setLoggedExpense] = useState<Expense | null>(null);
+  const [loggedCategory, setLoggedCategory] = useState<Category | undefined>(undefined);
+
+  // Keyboard shortcut listener: 'c' opens Quick-Add
   useEffect(() => {
-    financeService.getCategories().then((cats) => {
-      if (cats && cats.length > 0) setCategories(cats);
-    }).catch(() => {});
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input, textarea, or contentEditable element
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        setIsQuickAddOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Extract active tab id from route path
-  const activeTab = useMemo(() => {
-    const segment = location.pathname.replace(/^\//, '').split('/')[0];
-    if (!segment || segment === 'dashboard') return 'dashboard';
-    if (['goals', 'loans', 'recurring'].includes(segment)) return 'plan';
-    return segment;
-  }, [location.pathname]);
+  // Determine active tab identifier from pathname
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/' || path.startsWith('/dashboard')) return 'dashboard';
+    if (path.startsWith('/budget')) return 'budget';
+    if (path.startsWith('/expenses') || path.startsWith('/fast-log')) return 'expenses';
+    if (path.startsWith('/accounts')) return 'accounts';
+    if (
+      path.startsWith('/plan') ||
+      path.startsWith('/goals') ||
+      path.startsWith('/loans') ||
+      path.startsWith('/recurring')
+    )
+      return 'plan';
+    return 'dashboard';
+  };
 
-  const handleSelectTab = useCallback(
-    (tabId: string) => {
-      if (tabId === 'dashboard') {
+  const handleSelectTab = (tabId: string) => {
+    switch (tabId) {
+      case 'dashboard':
+        navigate('/dashboard');
+        break;
+      case 'budget':
+        navigate('/budget');
+        break;
+      case 'expenses':
+        navigate('/expenses');
+        break;
+      case 'accounts':
+        navigate('/accounts');
+        break;
+      case 'plan':
+        navigate('/plan');
+        break;
+      default:
         navigate('/');
-      } else {
-        navigate(`/${tabId}`);
-      }
-    },
-    [navigate]
-  );
+    }
+  };
 
-  const handleOpenQuickAdd = useCallback(() => {
-    setIsQuickAddOpen(true);
-  }, []);
+  const handleExpenseAdded = (expense: Expense) => {
+    // Locate the matching category for celebration modal icon/name
+    const cat = categories.find((c) => c.id === expense.category_id);
+    setLoggedExpense(expense);
+    setLoggedCategory(cat);
 
-  const handleCloseQuickAdd = useCallback(() => {
-    setIsQuickAddOpen(false);
-  }, []);
-
-  const handleExpenseAdded = useCallback(
-    (expense: Expense) => {
-      refreshData();
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('expenseAdded', { detail: expense }));
-      }
-    },
-    [refreshData]
-  );
-
-  // Global custom event listener to open Quick Add modal from anywhere
-  useEffect(() => {
-    const handleGlobalOpen = () => setIsQuickAddOpen(true);
-    window.addEventListener('openQuickAdd', handleGlobalOpen);
-    return () => window.removeEventListener('openQuickAdd', handleGlobalOpen);
-  }, []);
+    // Dispatch global event so pages can auto-refresh
+    window.dispatchEvent(new CustomEvent('expenseAdded', { detail: expense }));
+  };
 
   return (
-    <div className="flex h-screen bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
-      {/* Desktop Navigation Sidebar */}
-      <DesktopSidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100">
+      {/* Offline sync status and offline indicator banner */}
+      <OfflineBanner />
 
-      {/* Main Application Column */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Offline Status Connectivity Banner */}
-        <OfflineBanner />
+      {/* PWA Update Ready Prompt Toast */}
+      <PWAUpdateToast />
 
-        {/* Responsive Header */}
-        <AppHeader
-          onOpenQuickAdd={handleOpenQuickAdd}
-          onNavigateTab={handleSelectTab}
-        />
+      {/* Desktop Fixed Sidebar */}
+      <DesktopSidebar
+        activeTab={getActiveTab()}
+        onSelectTab={handleSelectTab}
+        onQuickAdd={() => setIsQuickAddOpen(true)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Top App Header with Member Switcher & Biometrics */}
+        <AppHeader onQuickAdd={() => setIsQuickAddOpen(true)} />
 
         {/* Scrollable Viewport / Route Container (Constrained width on desktop) */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-24 md:pb-10">
@@ -164,6 +190,7 @@ function AppLayoutInner() {
                 <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
                 <Route path="/budget" element={<BudgetPage />} />
                 <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/fast-log" element={<FastLogPage onNavigateTab={handleSelectTab} />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
                 <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
@@ -176,90 +203,55 @@ function AppLayoutInner() {
         </main>
       </div>
 
-      {/* Mobile Fixed Bottom Navigation */}
-      <MobileBottomNav
-        activeTab={activeTab}
+      {/* Floating Action Button (FAB) on Mobile */}
+      <div className="fixed bottom-20 right-4 z-40 md:hidden">
+        <button
+          onClick={() => setIsQuickAddOpen(true)}
+          aria-label="Add expense"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xl hover:bg-emerald-700 active:scale-95 transition-transform focus:outline-none focus:ring-4 focus:ring-emerald-500/30"
+        >
+          <Plus className="h-7 w-7 stroke-[2.5]" />
+        </button>
+      </div>
+
+      {/* Mobile Bottom Tab Bar */}
+      <MobileTabBar
+        activeTab={getActiveTab()}
         onSelectTab={handleSelectTab}
-        onQuickAdd={handleOpenQuickAdd}
+        onQuickAdd={() => setIsQuickAddOpen(true)}
       />
 
-      {/* Global Quick Add Expense Modal */}
+      {/* Quick Add Expense Modal */}
       <QuickAddExpenseModal
         isOpen={isQuickAddOpen}
-        onClose={handleCloseQuickAdd}
+        onClose={() => setIsQuickAddOpen(false)}
         onExpenseAdded={handleExpenseAdded}
         categories={categories}
         members={members}
+        defaultPayerId={currentMember?.id}
       />
 
-      {/* Fun Celebratory Feedback on adding expense */}
-      <ExpenseSuccessCelebration />
-
-      {/* PWA Update & Offline Ready Toast */}
-      <PWAUpdateToast />
+      {/* Celebration animation modal */}
+      {loggedExpense && (
+        <ExpenseSuccessCelebration
+          isOpen={!!loggedExpense}
+          onClose={() => setLoggedExpense(null)}
+          expense={loggedExpense}
+          category={loggedCategory}
+        />
+      )}
     </div>
   );
 }
 
-/**
- * AppShell provides layout content, wrapping with HouseholdProvider if not already present.
- * Shows PinLoginScreen if Supabase is configured and user is not authenticated.
- */
-export function AppShell() {
-  const { isAuthenticated, authLoading, loggedInPartner } = useAuth();
-  const optionalContext = useOptionalHousehold();
-
-  // If live Supabase is configured and we are still verifying the session
-  if (isSupabaseConfigured() && authLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-emerald-400">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">Loading Budget Bubby...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // If live Supabase is configured and user is not authenticated, show PIN Lock Screen
-  if (isSupabaseConfigured() && !isAuthenticated) {
-    return <PinLoginScreen />;
-  }
-
-  const defaultPerspective = loggedInPartner || 'household';
-
-  if (!optionalContext) {
-    return (
-      <HouseholdProvider defaultPerspective={defaultPerspective}>
-        <AppLayoutInner />
-      </HouseholdProvider>
-    );
-  }
-  return <AppLayoutInner />;
-}
-
-export interface AppProps {
-  initialEntries?: string[];
-  initialAuthenticated?: boolean;
-}
-
-/**
- * Root App component.
- * Uses MemoryRouter when initialEntries is provided (ideal for testing),
- * otherwise defaults to BrowserRouter for production web apps.
- */
-export function App({ initialEntries, initialAuthenticated }: AppProps = {}) {
-  const RouterComponent = initialEntries ? MemoryRouter : BrowserRouter;
-  const routerProps = initialEntries ? { initialEntries } : {};
-
+export function App() {
   return (
-    <AuthProvider initialAuthenticated={initialAuthenticated}>
-      <RouterComponent {...routerProps}>
-        <AppShell />
-      </RouterComponent>
-    </AuthProvider>
+    <HouseholdProvider>
+      <Router>
+        <AppLayoutInner />
+      </Router>
+    </HouseholdProvider>
   );
 }
 
 export default App;
-

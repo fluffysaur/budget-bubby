@@ -20,6 +20,8 @@ import {
   ChevronDown,
   ChevronUp,
   Tag,
+  Zap,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard } from '../components/ui';
@@ -32,6 +34,8 @@ import {
 } from '../lib/financialFormulas';
 import { mockCategories, mockMembers } from '../data/mockSeedData';
 import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
+import { BulkAddExpenseModal } from '../components/expenses/BulkAddExpenseModal';
+import { FastLogWidget } from '../components/expenses/FastLogWidget';
 import { ManageCategoriesModal } from '../components/categories/ManageCategoriesModal';
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
@@ -70,6 +74,8 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
+  const [showFastLog, setShowFastLog] = useState<boolean>(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
   // Synchronize perspective filter if active member changes
@@ -106,6 +112,14 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
 
   useEffect(() => {
     loadExpenses();
+  }, [loadExpenses]);
+
+  useEffect(() => {
+    const handleExpenseAddedEvent = () => {
+      loadExpenses();
+    };
+    window.addEventListener('expenseAdded', handleExpenseAddedEvent);
+    return () => window.removeEventListener('expenseAdded', handleExpenseAddedEvent);
   }, [loadExpenses]);
 
   // Handle adding an expense
@@ -211,13 +225,29 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         title="Expenses"
         subtitle="Daily expense ledger and couple splits"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               leftIcon={<Tag className="h-4 w-4 stroke-[2.2] text-slate-500" />}
               onClick={() => setIsManageCategoriesOpen(true)}
             >
               Manage Categories
+            </Button>
+            <Button
+              variant="outline"
+              aria-label="Fast Log"
+              leftIcon={<Zap className="h-4 w-4 stroke-[2.2] text-amber-500 fill-amber-500" />}
+              onClick={() => setShowFastLog((prev) => !prev)}
+            >
+              {showFastLog ? 'Hide Fast Log' : 'Fast Log'}
+            </Button>
+            <Button
+              variant="outline"
+              aria-label="+ Bulk Log"
+              leftIcon={<FileSpreadsheet className="h-4 w-4 stroke-[2.2] text-emerald-600" />}
+              onClick={() => setIsBulkAddOpen(true)}
+            >
+              + Bulk Log
             </Button>
             <Button
               variant="primary"
@@ -230,6 +260,18 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           </div>
         }
       />
+
+      {/* Optional Inline Fast Log Widget */}
+      {showFastLog && (
+        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-top-2 duration-200">
+          <FastLogWidget
+            categories={categories}
+            members={members}
+            defaultPayerId={filter.payerId}
+            onExpenseLogged={handleExpenseAdded}
+          />
+        </div>
+      )}
 
       {/* Monthly Expense Trends & Benchmarks Card */}
       <ExpenseTrendsCard
@@ -333,7 +375,18 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         categories={categories}
         members={members}
         onDeleteExpense={handleDeleteExpense}
+        onExpenseSaved={handleExpenseAdded}
         isLoading={isLoading}
+      />
+
+      {/* Bulk Add Expense Modal */}
+      <BulkAddExpenseModal
+        isOpen={isBulkAddOpen}
+        onClose={() => setIsBulkAddOpen(false)}
+        onExpensesAdded={handleExpenseAdded}
+        categories={categories}
+        members={members}
+        defaultPayerId={filter.payerId}
       />
 
       {/* Quick Add Expense Modal */}

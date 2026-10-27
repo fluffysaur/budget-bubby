@@ -1,7 +1,9 @@
 /**
  * CentsFirstAmountInput Component
+ * Budget Bubby - Couples Finance & Daily Ledger
+ *
  * ATM / Cashier-style numeric amount input where typing digits shifts right-to-left:
- * - Initial: 0.00
+ * - Initial: 0.00 (or 0 for zero-decimal currencies)
  * - Typing 1 -> 0.01
  * - Typing 2 -> 0.12
  * - Typing 5 -> 1.25
@@ -10,10 +12,11 @@
  * - Clear button or Escape key resets to 0.00
  * - Uses inputMode="numeric" for digits-only keypad on mobile
  * - Supports zero-decimal currencies (VND, JPY, KRW, IDR)
+ * - Supports optional integrated virtual numeric keypad for fast mobile entry
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X } from 'lucide-react';
+import { Delete, X } from 'lucide-react';
 
 export interface CentsFirstAmountInputProps {
   value?: number;
@@ -26,7 +29,9 @@ export interface CentsFirstAmountInputProps {
   autoFocus?: boolean;
   disabled?: boolean;
   className?: string;
+  showKeypad?: boolean;
   inputRef?: React.Ref<HTMLInputElement>;
+  'aria-label'?: string;
 }
 
 const ZERO_DECIMAL_CURRENCIES = ['VND', 'JPY', 'KRW', 'IDR'];
@@ -35,13 +40,15 @@ export function CentsFirstAmountInput({
   value,
   onChange,
   currencySymbol = 'S$',
-  currencyCode = 'SGD',
+  currencyCode,
   id = 'expense-amount',
   name = 'amount',
   autoFocus = false,
   disabled = false,
   className = '',
+  showKeypad = false,
   inputRef,
+  'aria-label': ariaLabelProp,
 }: CentsFirstAmountInputProps) {
   const isZeroDecimal = ZERO_DECIMAL_CURRENCIES.includes((currencyCode || '').toUpperCase());
 
@@ -53,17 +60,38 @@ export function CentsFirstAmountInput({
     return 0;
   });
 
-  const internalInputRef = useRef<HTMLInputElement>(null);
+  const internalInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Sync from external value prop when it changes
+  // Sync state synchronously if value prop changed externally
+  const prevValueRef = useRef(value);
+  if (value !== undefined && value !== prevValueRef.current) {
+    prevValueRef.current = value;
+    const targetUnits = isZeroDecimal ? Math.round(value) : Math.round(value * 100);
+    if (targetUnits !== internalUnits) {
+      setInternalUnits(targetUnits);
+    }
+  }
+
+  // Also sync when isZeroDecimal changes
   useEffect(() => {
     if (value !== undefined) {
       const targetUnits = isZeroDecimal ? Math.round(value) : Math.round(value * 100);
-      if (targetUnits !== internalUnits) {
-        setInternalUnits(targetUnits);
-      }
+      setInternalUnits(targetUnits);
     }
   }, [value, isZeroDecimal]);
+
+  // Set ref helper
+  const setRef = useCallback(
+    (el: HTMLInputElement | null) => {
+      internalInputRef.current = el;
+      if (typeof inputRef === 'function') {
+        inputRef(el);
+      } else if (inputRef && 'current' in inputRef) {
+        (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+      }
+    },
+    [inputRef]
+  );
 
   // Format display string
   const formattedDisplay = React.useMemo(() => {
@@ -85,13 +113,34 @@ export function CentsFirstAmountInput({
     [isZeroDecimal, onChange]
   );
 
-  const handleClear = useCallback(() => {
-    updateUnits(0);
-    const el = internalInputRef.current;
-    if (el) {
-      el.focus();
+  const pushDigit = useCallback(
+    (digit: number) => {
+      if (disabled) return;
+      const nextUnits = internalUnits * 10 + digit;
+      updateUnits(nextUnits);
+    },
+    [disabled, internalUnits, updateUnits]
+  );
+
+  const popDigit = useCallback(() => {
+    if (disabled) return;
+    const nextUnits = Math.floor(internalUnits / 10);
+    updateUnits(nextUnits);
+  }, [disabled, internalUnits, updateUnits]);
+
+  const pushDoubleZero = useCallback(() => {
+    if (disabled) return;
+    if (internalUnits > 0 && internalUnits < 9999999) {
+      const nextUnits = internalUnits * 100;
+      updateUnits(nextUnits);
     }
-  }, [updateUnits]);
+  }, [disabled, internalUnits, updateUnits]);
+
+  const handleClear = useCallback(() => {
+    if (disabled) return;
+    updateUnits(0);
+    internalInputRef.current?.focus();
+  }, [disabled, updateUnits]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -99,12 +148,10 @@ export function CentsFirstAmountInput({
     if (e.key >= '0' && e.key <= '9') {
       e.preventDefault();
       const digit = parseInt(e.key, 10);
-      const nextUnits = internalUnits * 10 + digit;
-      updateUnits(nextUnits);
+      pushDigit(digit);
     } else if (e.key === 'Backspace') {
       e.preventDefault();
-      const nextUnits = Math.floor(internalUnits / 10);
-      updateUnits(nextUnits);
+      popDigit();
     } else if (e.key === 'Escape' || e.key === 'Delete') {
       e.preventDefault();
       handleClear();
@@ -113,97 +160,105 @@ export function CentsFirstAmountInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
-    const raw = e.target.value.trim();
-    if (!raw) {
+    const cleanDigits = e.target.value.replace(/\D/g, '');
+    if (cleanDigits.length === 0) {
       updateUnits(0);
       return;
     }
-
-    const floatVal = parseFloat(raw.replace(/[^0-9.]/g, ''));
-    if (isNaN(floatVal)) {
-      updateUnits(0);
-      return;
-    }
-
-    if (isZeroDecimal) {
-      updateUnits(Math.round(floatVal));
-    } else {
-      if (raw.startsWith(formattedDisplay) || raw.endsWith(formattedDisplay)) {
-        const digitsOnly = raw.replace(/\D/g, '');
-        const parsed = parseInt(digitsOnly, 10);
-        updateUnits(parsed);
-      } else {
-        updateUnits(Math.round(floatVal * 100));
-      }
+    const nextUnits = parseInt(cleanDigits, 10);
+    if (!isNaN(nextUnits)) {
+      updateUnits(nextUnits);
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    if (disabled) return;
-    const pasted = e.clipboardData.getData('text');
-    const floatVal = parseFloat(pasted.replace(/[^0-9.]/g, ''));
-    if (!isNaN(floatVal) && floatVal >= 0) {
-      const targetUnits = isZeroDecimal ? Math.round(floatVal) : Math.round(floatVal * 100);
-      updateUnits(targetUnits);
+  useEffect(() => {
+    if (autoFocus && internalInputRef.current) {
+      internalInputRef.current.focus();
     }
-  };
+  }, [autoFocus]);
 
-  const setRefs = useCallback(
-    (element: HTMLInputElement | null) => {
-      internalInputRef.current = element;
-      if (typeof inputRef === 'function') {
-        inputRef(element);
-      } else if (inputRef && 'current' in inputRef) {
-        (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = element;
-      }
-    },
-    [inputRef]
-  );
+  const computedAriaLabel =
+    ariaLabelProp ||
+    (currencyCode ? `Amount in ${currencyCode}` : 'Amount');
 
   return (
-    <div className={`relative flex items-center ${className}`}>
-      {/* Active Currency Symbol */}
-      <span
-        aria-hidden="true"
-        className="absolute left-4 text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 select-none pointer-events-none"
+    <div className={`space-y-3 ${className}`}>
+      {/* Display & Numeric Input Field */}
+      <div
+        onClick={() => internalInputRef.current?.focus()}
+        className="relative flex items-center justify-center rounded-2xl border-2 border-slate-200 bg-slate-50/70 p-4 transition-all focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800/60 dark:focus-within:border-emerald-400 dark:focus-within:bg-slate-800 cursor-text"
       >
-        {currencySymbol}
-      </span>
+        <span className="mr-2 text-2xl font-bold text-slate-400 dark:text-slate-500 select-none">
+          {currencySymbol}
+        </span>
+        <input
+          ref={setRef}
+          id={id}
+          name={name}
+          type="text"
+          inputMode="numeric"
+          autoFocus={autoFocus}
+          disabled={disabled}
+          aria-label={computedAriaLabel}
+          value={formattedDisplay}
+          onKeyDown={handleKeyDown}
+          onChange={handleChange}
+          className="w-full text-center text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white bg-transparent outline-hidden"
+          placeholder={isZeroDecimal ? '0' : '0.00'}
+        />
+        {internalUnits > 0 && !disabled && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClear();
+            }}
+            aria-label="Clear amount"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            <Delete className="h-5 w-5" />
+          </button>
+        )}
+      </div>
 
-      {/* ATM Shift-in Numeric Input */}
-      <input
-        ref={setRefs}
-        id={id}
-        name={name}
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck="false"
-        value={formattedDisplay}
-        onKeyDown={handleKeyDown}
-        onChange={handleChange}
-        onPaste={handlePaste}
-        autoFocus={autoFocus}
-        disabled={disabled}
-        aria-label={`Amount in ${currencyCode}`}
-        className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50/50 py-3 sm:py-3.5 pl-14 sm:pl-16 pr-12 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 transition-colors placeholder:text-slate-300 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-600 dark:focus:border-emerald-400 dark:focus:bg-slate-800"
-      />
-
-      {/* 1-tap Clear Button */}
-      {internalUnits > 0 && !disabled && (
-        <button
-          type="button"
-          onClick={handleClear}
-          aria-label="Clear amount"
-          className="absolute right-3.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-200/80 text-slate-500 hover:bg-slate-300 hover:text-slate-700 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors cursor-pointer"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      {/* Optional Integrated Virtual Keypad */}
+      {showKeypad && (
+        <div className="grid grid-cols-3 gap-2 select-none">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+            <button
+              key={digit}
+              type="button"
+              onClick={() => pushDigit(digit)}
+              className="flex h-12 items-center justify-center rounded-xl bg-white text-xl font-semibold text-slate-800 shadow-xs ring-1 ring-slate-200 active:scale-95 active:bg-slate-100 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+            >
+              {digit}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={pushDoubleZero}
+            className="flex h-12 items-center justify-center rounded-xl bg-white text-lg font-semibold text-slate-600 shadow-xs ring-1 ring-slate-200 active:scale-95 active:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+          >
+            00
+          </button>
+          <button
+            type="button"
+            onClick={() => pushDigit(0)}
+            className="flex h-12 items-center justify-center rounded-xl bg-white text-xl font-semibold text-slate-800 shadow-xs ring-1 ring-slate-200 active:scale-95 active:bg-slate-100 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:active:bg-slate-700 cursor-pointer transition-transform"
+          >
+            0
+          </button>
+          <button
+            type="button"
+            onClick={popDigit}
+            aria-label="Backspace"
+            className="flex h-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 shadow-xs ring-1 ring-rose-200 active:scale-95 active:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 dark:ring-rose-900/60 dark:active:bg-rose-900/60 cursor-pointer transition-transform"
+          >
+            <Delete className="h-5 w-5" />
+          </button>
+        </div>
       )}
     </div>
   );
 }
-
 export default CentsFirstAmountInput;
