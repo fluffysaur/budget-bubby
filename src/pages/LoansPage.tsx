@@ -164,7 +164,7 @@ export function LoansPage({ className = '', embedded = false }: LoansPageProps) 
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-3">
+      <div className="flex flex-col items-center justify-center min-h-100 space-y-3">
         <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
           Loading loan amortization details...

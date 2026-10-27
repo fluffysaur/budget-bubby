@@ -278,19 +278,19 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         <button
           type="button"
           onClick={() => setIsMobileFilterOpen((prev) => !prev)}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs active:bg-slate-50 cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) px-3.5 py-2 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
         >
-          <Filter className="h-3.5 w-3.5 text-emerald-600" />
+          <Filter className="h-3.5 w-3.5 text-purple-700 dark:text-purple-300" />
           <span>Filter &amp; Search</span>
           {activeFilterCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-(--pastel-lilac) border border-(--border-ink) text-[10px] font-black text-(--text-ink)">
               {activeFilterCount}
             </span>
           )}
           {isMobileFilterOpen ? (
-            <ChevronUp className="h-3.5 w-3.5 text-slate-400 ml-1" />
+            <ChevronUp className="h-3.5 w-3.5 text-(--text-muted) ml-1" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 ml-1" />
+            <ChevronDown className="h-3.5 w-3.5 text-(--text-muted) ml-1" />
           )}
         </button>
 
@@ -298,7 +298,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           <button
             type="button"
             onClick={handleResetFilters}
-            className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+            className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
           >
             Clear filters
           </button>

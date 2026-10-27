@@ -20,7 +20,7 @@ import {
   ReceiptText,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard } from '../components/ui';
+import { PageHeader, Button, StatCard, SegmentedTabs } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { AccountGroupList } from '../components/accounts/AccountGroupList';
@@ -166,37 +166,14 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
       />
 
       {/* Sub-Tab Navigation Bar */}
-      <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800/80 rounded-2xl w-fit">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'accounts'}
-          onClick={() => setActiveTab('accounts')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'accounts'
-              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <Wallet className={`h-4 w-4 ${activeTab === 'accounts' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-          <span>Accounts &amp; Assets</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'credit_cards'}
-          onClick={() => setActiveTab('credit_cards')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === 'credit_cards'
-              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <ReceiptText className={`h-4 w-4 ${activeTab === 'credit_cards' ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
-          <span>Credit Card Tracker</span>
-        </button>
-      </div>
+      <SegmentedTabs
+        tabs={[
+          { id: 'accounts', label: 'Accounts & Assets', icon: <Wallet className="h-4 w-4" /> },
+          { id: 'credit_cards', label: 'Credit Card Tracker', icon: <ReceiptText className="h-4 w-4" /> },
+        ]}
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as 'accounts' | 'credit_cards')}
+      />
 
       {activeTab === 'credit_cards' ? (
         <CreditCardTrackerSection
