@@ -1,22 +1,20 @@
-/**
- * AnimatedModal Component
- * Reusable modal/drawer container with smooth entry and exit transitions:
- * - On mobile: Slides up from bottom on open, slides down on close
- * - On desktop: Fades and scales in on open, fades and scales out on close
- * - Handles backdrop blur, ESC key dismiss, and outside clicks
- */
-
-import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
+import React, {
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useCallback,
+    useRef,
+} from "react";
 import { createPortal } from "react-dom";
 
-// Isomorphic layout effect for SSR/test safety
-const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+const useIsomorphicLayoutEffect =
+    typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export interface AnimatedModalProps {
     isOpen: boolean;
     onClose: () => void;
     children: React.ReactNode;
-    maxWidth?: string; // e.g. 'max-w-md', 'max-w-lg', 'max-w-2xl'
+    maxWidth?: string;
     className?: string;
     isDrawerOnMobile?: boolean;
 }
@@ -76,7 +74,7 @@ export function AnimatedModal({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [shouldRender, isClosing, handleRequestClose]);
 
-    // Prevent background scrolling synchronously before paint to avoid scrollbar flicker
+    // Prevent background scrolling
     useIsomorphicLayoutEffect(() => {
         if (shouldRender && !isClosing) {
             const originalOverflow = document.body.style.overflow;
@@ -100,7 +98,7 @@ export function AnimatedModal({
             }}
             className={`fixed inset-0 z-50 flex overflow-hidden ${
                 isDrawerOnMobile ? "items-end sm:items-center" : "items-center"
-            } justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200 ${
+            } justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-200 ${
                 isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
         >
@@ -108,15 +106,17 @@ export function AnimatedModal({
                 className={`w-full max-w-full ${SM_MAX_WIDTH_MAP[maxWidth] || `sm:${maxWidth}`} ${
                     isDrawerOnMobile
                         ? `max-h-[92dvh] sm:max-h-[90dvh] rounded-t-3xl sm:rounded-2xl ${
-                              isClosing ? "modal-sheet-exit" : "modal-sheet-enter"
+                              isClosing
+                                  ? "modal-sheet-exit"
+                                  : "modal-sheet-enter"
                           }`
                         : `max-h-[90dvh] rounded-2xl ${isClosing ? "animate-modal-out" : "animate-modal-in"}`
-                } bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom,0px)] ${className}`}
+                } bg-(--bg-card) border-t-2 sm:border-2 border-(--border-ink) shadow-(--shadow-cute-lg) flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom,0px)] ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {isDrawerOnMobile && (
                     <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
-                        <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+                        <div className="h-1.5 w-12 rounded-full bg-(--border-ink) opacity-30" />
                     </div>
                 )}
                 {children}
@@ -124,7 +124,9 @@ export function AnimatedModal({
         </div>
     );
 
-    return typeof document !== "undefined" ? createPortal(modalNode, document.body) : modalNode;
+    return typeof document !== "undefined"
+        ? createPortal(modalNode, document.body)
+        : modalNode;
 }
 
 export default AnimatedModal;
