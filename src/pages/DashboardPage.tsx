@@ -27,6 +27,7 @@ import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
 import { mockCategories, mockMembers } from "../data/mockSeedData";
 import { isSpendableCategory } from "../lib/financialFormulas";
 import { NetWorthHeroCard } from "../components/dashboard/NetWorthHeroCard";
+import { DailyCheckinStreakBar } from "../components/dashboard/DailyCheckinStreakBar";
 import { SettlementWidget } from "../components/dashboard/SettlementWidget";
 import { SharedGoalsOverview } from "../components/dashboard/SharedGoalsOverview";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
@@ -259,6 +260,12 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                 </div>
             ) : (
                 <>
+                    {/* GAMIFIED DAILY CHECK-IN STREAK BAR */}
+                    <DailyCheckinStreakBar
+                        memberId={activeMember?.id}
+                        onCheckinSuccess={refreshHousehold}
+                    />
+
                     {/* DAILY SPEND & CHECK-IN HERO STRIP (Optimized for Fast Mobile Checking) */}
                     <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-linear-to-br from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-900/60 p-4 sm:p-5 shadow-xs">
                         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
