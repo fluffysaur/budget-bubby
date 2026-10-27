@@ -46,7 +46,7 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
-import { getTodayDateString, addMonths } from '../lib/dateUtils';
+import { getTodayDateString, addMonths, formatISODate } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import type { FinanceService } from './financeService';
 
@@ -1342,13 +1342,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const checkedInToday = dateSet.has(today);
 
     let currentStreak = 0;
-    const cursor = new Date();
+    const cursor = new Date(today + 'T12:00:00');
     if (!checkedInToday) {
       cursor.setDate(cursor.getDate() - 1);
     }
 
     while (true) {
-      const iso = cursor.toISOString().slice(0, 10);
+      const iso = formatISODate(cursor);
       if (dateSet.has(iso)) {
         currentStreak++;
         cursor.setDate(cursor.getDate() - 1);

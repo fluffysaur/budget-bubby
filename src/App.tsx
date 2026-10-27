@@ -150,7 +150,10 @@ function AppLayoutInner() {
         <OfflineBanner />
 
         {/* Responsive Header */}
-        <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
+        <AppHeader
+          onOpenQuickAdd={handleOpenQuickAdd}
+          onNavigateTab={handleSelectTab}
+        />
 
         {/* Scrollable Viewport / Route Container (Constrained width on desktop) */}
         <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-24 md:pb-10">

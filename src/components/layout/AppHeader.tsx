@@ -15,13 +15,15 @@ import { Sun, Moon, Users, User, Plus, ChevronDown, Check, LogOut, AlertTriangle
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
+import { NotificationCenterPopover } from "./NotificationCenterPopover";
 
 export interface AppHeaderProps {
     className?: string;
     onOpenQuickAdd?: () => void;
+    onNavigateTab?: (tab: string) => void;
 }
 
-export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
+export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: AppHeaderProps) {
     const { perspective, setPerspective, members, theme, toggleTheme, isMockMode } = useHousehold();
     const { signOut, isAuthenticated } = useAuth();
 
@@ -274,6 +276,9 @@ export function AppHeader({ className = "", onOpenQuickAdd }: AppHeaderProps) {
                             <span>Demo Mode</span>
                         </div>
                     )}
+
+                    {/* Notification Center Popover */}
+                    <NotificationCenterPopover onNavigateTab={onNavigateTab} />
 
                     {/* PWA Install Button */}
                     <PWAInstallButton />

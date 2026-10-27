@@ -55,7 +55,7 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
-import { getTodayDateString } from '../lib/dateUtils';
+import { getTodayDateString, formatISODate } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 
 const STORAGE_KEY = 'budget_buddy_mock_dataset_v1';
@@ -1068,13 +1068,13 @@ class MockFinanceServiceImpl implements FinanceService {
 
     // Calculate current streak counting backward
     let currentStreak = 0;
-    const cursor = new Date();
+    const cursor = new Date(today + 'T12:00:00');
     if (!checkedInToday) {
       cursor.setDate(cursor.getDate() - 1);
     }
 
     while (true) {
-      const iso = cursor.toISOString().slice(0, 10);
+      const iso = formatISODate(cursor);
       if (dateSet.has(iso)) {
         currentStreak++;
         cursor.setDate(cursor.getDate() - 1);
@@ -1112,12 +1112,12 @@ class MockFinanceServiceImpl implements FinanceService {
     if (m1 && m2) {
       const m1Dates = new Set(this.state.dailyCheckins?.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
       const m2Dates = new Set(this.state.dailyCheckins?.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
-      const cCursor = new Date();
+      const cCursor = new Date(today + 'T12:00:00');
       if (!m1Dates.has(today) || !m2Dates.has(today)) {
         cCursor.setDate(cCursor.getDate() - 1);
       }
       while (true) {
-        const iso = cCursor.toISOString().slice(0, 10);
+        const iso = formatISODate(cCursor);
         if (m1Dates.has(iso) && m2Dates.has(iso)) {
           coupleStreak++;
           cCursor.setDate(cCursor.getDate() - 1);
