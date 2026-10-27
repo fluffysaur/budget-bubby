@@ -15,6 +15,7 @@ import { useAuth } from "../../context/AuthContext";
 import { mockMembers } from "../../data/mockSeedData";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
+import { Button } from "../ui/Button";
 
 export interface AppHeaderProps {
     className?: string;
@@ -24,24 +25,20 @@ export interface AppHeaderProps {
 
 const MEMBER_COLOR_PALETTE = [
     {
-        iconColor: "text-blue-600 dark:text-blue-400",
-        activeBg: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+        iconColor: "text-[#1a1a1a] dark:text-[#fde68a]",
+        activeBg: "bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        iconColor: "text-rose-600 dark:text-rose-400",
-        activeBg: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
+        iconColor: "text-[#1a1a1a] dark:text-[#fbcfe8]",
+        activeBg: "bg-[#fcbffa] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        iconColor: "text-purple-600 dark:text-purple-400",
-        activeBg: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+        iconColor: "text-[#1a1a1a] dark:text-[#dfc2ff]",
+        activeBg: "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        iconColor: "text-amber-600 dark:text-amber-400",
-        activeBg: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
-    },
-    {
-        iconColor: "text-teal-600 dark:text-teal-400",
-        activeBg: "bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300",
+        iconColor: "text-[#1a1a1a] dark:text-[#86efac]",
+        activeBg: "bg-[#bbf7d0] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
 ];
 
@@ -104,8 +101,8 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 memberId: null as string | null,
                 label: "Combined",
                 icon: Users,
-                iconColor: "text-emerald-600 dark:text-emerald-400",
-                activeBg: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+                iconColor: "text-[#1a1a1a]",
+                activeBg: "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
             },
         ];
 
@@ -142,7 +139,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
 
     return (
         <header
-            className={`sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/95 ${className}`}
+            className={`sticky top-0 z-40 w-full border-b-[1.5px] border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
         >
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
                 {/* Left: Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
@@ -158,12 +155,12 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 cursor-pointer"
+                            className="flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) transition-all cursor-pointer"
                         >
-                            <CurrentIcon className={`h-4 w-4 ${currentOption.iconColor}`} />
+                            <CurrentIcon className={`h-4 w-4 stroke-[2.5] ${currentOption.iconColor}`} />
                             <span>{currentOption.label}</span>
                             <ChevronDown
-                                className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-150 ${
+                                className={`h-3.5 w-3.5 stroke-[2.5] text-(--text-muted) transition-transform duration-150 ${
                                     isDropdownOpen ? "rotate-180" : ""
                                 }`}
                             />
@@ -173,7 +170,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             <div
                                 role="listbox"
                                 aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-1.5 w-48 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl transition-all dark:border-slate-700 dark:bg-slate-800 z-50 animate-in fade-in zoom-in-95 duration-100"
+                                className="absolute left-0 mt-2 w-48 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-lg) transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
                             >
                                 {perspectiveOptions.map((opt) => {
                                     const Icon = opt.icon;
@@ -185,18 +182,18 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                             role="option"
                                             aria-selected={isSelected}
                                             onClick={() => handleSelectPerspective(opt.key)}
-                                            className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                                            className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors cursor-pointer ${
                                                 isSelected
                                                     ? opt.activeBg
-                                                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                                                    : "text-(--text-ink) hover:bg-(--bg-cream)"
                                             }`}
                                         >
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <Icon className={`h-4 w-4 shrink-0 ${opt.iconColor}`} />
+                                                <Icon className={`h-4 w-4 shrink-0 stroke-[2.5] ${opt.iconColor}`} />
                                                 <span className="truncate">{opt.label}</span>
                                             </div>
                                             {isSelected && (
-                                                <Check className={`h-3.5 w-3.5 shrink-0 ${opt.iconColor}`} />
+                                                <Check className="h-3.5 w-3.5 shrink-0 stroke-3" />
                                             )}
                                         </button>
                                     );
@@ -208,7 +205,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     {/* Desktop Perspective Switcher Pills */}
                     <nav
                         aria-label="Perspective Switcher"
-                        className="hidden sm:flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+                        className="hidden sm:flex items-center rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-subtle) p-1"
                     >
                         {perspectiveOptions.map((opt) => {
                             const Icon = opt.icon;
@@ -220,13 +217,13 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                     onClick={() => handleSelectPerspective(opt.key)}
                                     aria-pressed={isSelected}
                                     aria-label={opt.label === "Combined" ? "Combined Household" : opt.label}
-                                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm cursor-pointer ${
+                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all sm:text-xs cursor-pointer ${
                                         isSelected
-                                            ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white"
-                                            : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                                            ? opt.activeBg
+                                            : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"
                                     }`}
                                 >
-                                    <Icon className={`h-4 w-4 ${opt.iconColor}`} />
+                                    <Icon className={`h-4 w-4 stroke-[2.5] ${opt.iconColor}`} />
                                     <span>{opt.label}</span>
                                     {opt.label === "Combined" && <span className="sr-only">Household</span>}
                                 </button>
@@ -237,26 +234,27 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
 
                 {/* Right: Badges, Quick Add & Theme Toggle */}
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                    {/* Quick Add Button (Desktop optional trigger) */}
+                    {/* Quick Add Button (Desktop trigger) */}
                     {onOpenQuickAdd && (
-                        <button
-                            type="button"
+                        <Button
+                            variant="primary"
+                            size="sm"
                             onClick={onOpenQuickAdd}
                             aria-label="Quick Add"
-                            className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                            className="hidden md:inline-flex"
+                            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
                         >
-                            <Plus className="h-4 w-4" />
-                            <span>Add Expense</span>
-                        </button>
+                            Add Expense
+                        </Button>
                     )}
 
                     {/* Connection Status Badge (Only shown in Demo Mode) */}
                     {isMockMode && (
                         <div
                             title="Running in local Demo Mode with sample seed data"
-                            className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300"
+                            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-(--border-ink) bg-[#ffe999] px-2.5 py-1 text-xs font-bold text-[#1a1a1a] shadow-(--shadow-cute-sm)"
                         >
-                            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                            <span className="h-2 w-2 rounded-full bg-[#f59e0b] animate-pulse border border-[#1a1a1a]" />
                             <span>Demo Mode</span>
                         </div>
                     )}
@@ -272,12 +270,12 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                         type="button"
                         onClick={toggleTheme}
                         aria-label={`Toggle theme (currently ${theme})`}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                     >
                         {theme === "dark" ? (
-                            <Sun className="h-4 w-4 text-amber-400" />
+                            <Sun className="h-4 w-4 text-[#ffe999]" />
                         ) : (
-                            <Moon className="h-4 w-4 text-slate-600" />
+                            <Moon className="h-4 w-4 text-[#1a1a1a]" />
                         )}
                     </button>
 
@@ -288,9 +286,9 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             onClick={() => setIsLogoutConfirmOpen(true)}
                             aria-label="Lock Budget Bubby"
                             title="Lock / Sign Out"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-xs transition-all hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800/40 cursor-pointer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-(--shadow-cute-sm) transition-all hover:bg-[#fff1ee] hover:text-[#9a1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                         >
-                            <LogOut className="h-4 w-4" />
+                            <LogOut className="h-4 w-4 stroke-[2.5]" />
                         </button>
                     )}
                 </div>
@@ -304,48 +302,48 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="logout-title"
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-hidden"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-hidden"
                         onClick={() => setIsLogoutConfirmOpen(false)}
                     >
                         <div
-                            className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+                            className="w-full max-w-sm rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) p-5 shadow-(--shadow-cute-lg) animate-in zoom-in-95 duration-150"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center gap-3 mb-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
-                                    <AlertTriangle className="h-5 w-5" />
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff1ee] text-[#9a1b1b] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                    <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
                                 </div>
                                 <div>
                                     <h3
                                         id="logout-title"
-                                        className="text-sm font-bold text-slate-900 dark:text-white"
+                                        className="text-sm font-black text-(--text-ink) font-display"
                                     >
                                         Lock &amp; Sign Out?
                                     </h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    <p className="text-xs font-medium text-(--text-muted)">
                                         You will need your 6-digit PIN to unlock again.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-2.5 mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                                <button
-                                    type="button"
+                            <div className="flex items-center justify-end gap-2.5 mt-5 pt-3 border-t-[1.5px] border-(--border-subtle)">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => setIsLogoutConfirmOpen(false)}
-                                    className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                 >
                                     Cancel
-                                </button>
-                                <button
-                                    type="button"
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    size="sm"
                                     onClick={() => {
                                         setIsLogoutConfirmOpen(false);
                                         signOut();
                                     }}
-                                    className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-600/20 cursor-pointer"
                                 >
                                     Sign Out
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>,

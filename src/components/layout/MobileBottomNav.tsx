@@ -8,113 +8,139 @@
  * 4. Plan (Goals, Loans & Policies)
  */
 
-import {
-  LayoutDashboard,
-  Plus,
-  Receipt,
-  Landmark,
-  Compass,
-} from 'lucide-react';
+import { LayoutDashboard, Plus, Receipt, Landmark, Compass } from "lucide-react";
 
 export interface MobileBottomNavProps {
-  activeTab?: string;
-  onSelectTab?: (tab: string) => void;
-  onQuickAdd?: () => void;
-  className?: string;
+    activeTab?: string;
+    onSelectTab?: (tab: string) => void;
+    onQuickAdd?: () => void;
+    className?: string;
 }
 
 export function MobileBottomNav({
-  activeTab = 'dashboard',
-  onSelectTab,
-  onQuickAdd,
-  className = '',
+    activeTab = "dashboard",
+    onSelectTab,
+    onQuickAdd,
+    className = "",
 }: MobileBottomNavProps) {
-  const isSpendActive = activeTab === 'expenses' || activeTab === 'budget';
-  const isPlanActive = ['plan', 'goals', 'loans', 'recurring'].includes(activeTab);
+    const isSpendActive = activeTab === "expenses" || activeTab === "budget";
+    const isPlanActive = ["plan", "goals", "loans", "recurring"].includes(activeTab);
 
-  return (
-    <nav
-      aria-label="Mobile Navigation"
-      className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 transition-colors duration-200 ${className}`}
-    >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2 relative">
-        {/* Tab 1: Home / Dashboard */}
-        <button
-          type="button"
-          onClick={() => onSelectTab?.('dashboard')}
-          aria-label="Dashboard"
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'dashboard'
-              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-          }`}
+    return (
+        <nav
+            aria-label="Mobile Navigation"
+            className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-(--bg-card)/95 backdrop-blur-lg border-t-[1.5px] border-(--border-ink) transition-colors duration-200 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
         >
-          <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Home</span>
-        </button>
+            <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2 relative">
+                {/* Tab 1: Home / Dashboard */}
+                <button
+                    type="button"
+                    onClick={() => onSelectTab?.("dashboard")}
+                    aria-label="Dashboard"
+                    className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${
+                        activeTab === "dashboard"
+                            ? "text-(--text-ink) font-black"
+                            : "text-(--text-muted) hover:text-(--text-ink)"
+                    }`}
+                >
+                    <div
+                        className={`p-1 rounded-xl transition-all ${
+                            activeTab === "dashboard"
+                                ? "bg-[#dfc2ff] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                : ""
+                        }`}
+                    >
+                        <LayoutDashboard className="h-5 w-5 stroke-[2.5]" />
+                    </div>
+                    <span className="text-[10px] font-bold mt-0.5">Home</span>
+                </button>
 
-        {/* Tab 2: Spend & Budget */}
-        <button
-          type="button"
-          onClick={() => onSelectTab?.('expenses')}
-          aria-label="Expenses"
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            isSpendActive
-              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-          }`}
-        >
-          <Receipt className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Spend</span>
-        </button>
+                {/* Tab 2: Spend & Budget */}
+                <button
+                    type="button"
+                    onClick={() => onSelectTab?.("expenses")}
+                    aria-label="Expenses"
+                    className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${
+                        isSpendActive
+                            ? "text-(--text-ink) font-black"
+                            : "text-(--text-muted) hover:text-(--text-ink)"
+                    }`}
+                >
+                    <div
+                        className={`p-1 rounded-xl transition-all ${
+                            isSpendActive
+                                ? "bg-[#ffe999] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                : ""
+                        }`}
+                    >
+                        <Receipt className="h-5 w-5 stroke-[2.5]" />
+                    </div>
+                    <span className="text-[10px] font-bold mt-0.5">Spend</span>
+                </button>
 
-        {/* Center Floating Quick Add Action (FAB) */}
-        <div className="flex flex-col items-center justify-center flex-1 -mt-5">
-          <button
-            type="button"
-            onClick={onQuickAdd}
-            aria-label="Quick Add"
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-transform focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
-          >
-            <Plus className="h-6 w-6 stroke-[2.5]" />
-          </button>
-          <span className="text-[10px] mt-0.5 text-slate-500 font-medium dark:text-slate-400">
-            Quick Add
-          </span>
-        </div>
+                {/* Center Floating Quick Add Action (FAB) */}
+                <div className="flex flex-col items-center justify-center flex-1 -mt-6">
+                    <button
+                        type="button"
+                        onClick={onQuickAdd}
+                        aria-label="Quick Add"
+                        className="flex items-center justify-center w-12 h-12 rounded-2xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute) hover:scale-105 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer focus:outline-none"
+                    >
+                        <Plus className="h-6 w-6 stroke-3" />
+                    </button>
+                    <span className="text-[10px] mt-0.5 text-(--text-muted) font-extrabold font-display">
+                        Quick Add
+                    </span>
+                </div>
 
-        {/* Tab 3: Balances & Net Worth */}
-        <button
-          type="button"
-          onClick={() => onSelectTab?.('accounts')}
-          aria-label="Accounts"
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            activeTab === 'accounts'
-              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-          }`}
-        >
-          <Landmark className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Balances</span>
-        </button>
+                {/* Tab 3: Balances & Net Worth */}
+                <button
+                    type="button"
+                    onClick={() => onSelectTab?.("accounts")}
+                    aria-label="Accounts"
+                    className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${
+                        activeTab === "accounts"
+                            ? "text-(--text-ink) font-black"
+                            : "text-(--text-muted) hover:text-(--text-ink)"
+                    }`}
+                >
+                    <div
+                        className={`p-1 rounded-xl transition-all ${
+                            activeTab === "accounts"
+                                ? "bg-[#fcbffa] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                : ""
+                        }`}
+                    >
+                        <Landmark className="h-5 w-5 stroke-[2.5]" />
+                    </div>
+                    <span className="text-[10px] font-bold mt-0.5">Balances</span>
+                </button>
 
-        {/* Tab 4: Plan (Goals, Loans, Recurring) */}
-        <button
-          type="button"
-          onClick={() => onSelectTab?.('plan')}
-          aria-label="Plan"
-          className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-            isPlanActive
-              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-          }`}
-        >
-          <Compass className="h-5 w-5" />
-          <span className="text-[11px] mt-1">Plan</span>
-        </button>
-      </div>
-    </nav>
-  );
+                {/* Tab 4: Plan (Goals, Loans, Recurring) */}
+                <button
+                    type="button"
+                    onClick={() => onSelectTab?.("plan")}
+                    aria-label="Plan"
+                    className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${
+                        isPlanActive
+                            ? "text-(--text-ink) font-black"
+                            : "text-(--text-muted) hover:text-(--text-ink)"
+                    }`}
+                >
+                    <div
+                        className={`p-1 rounded-xl transition-all ${
+                            isPlanActive
+                                ? "bg-[#bbf7d0] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                : ""
+                        }`}
+                    >
+                        <Compass className="h-5 w-5 stroke-[2.5]" />
+                    </div>
+                    <span className="text-[10px] font-bold mt-0.5">Plan</span>
+                </button>
+            </div>
+        </nav>
+    );
 }
 
 export default MobileBottomNav;

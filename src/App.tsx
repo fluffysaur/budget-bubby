@@ -57,26 +57,26 @@ export function RouteSkeletonLoader() {
     >
       {/* Header bar placeholder */}
       <div className="flex items-center justify-between">
-        <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-48" />
-        <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-lg w-28" />
+        <div className="h-8 bg-[#d8d0c7]/60 dark:bg-slate-800 rounded-xl w-48" />
+        <div className="h-8 bg-[#d8d0c7]/60 dark:bg-slate-800 rounded-xl w-28" />
       </div>
 
       {/* Hero card / 3-column stats skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="h-28 bg-slate-200 dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/50 dark:border-slate-800" />
-        <div className="h-28 bg-slate-200 dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/50 dark:border-slate-800" />
-        <div className="h-28 bg-slate-200 dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200/50 dark:border-slate-800 sm:col-span-2 lg:col-span-1" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) sm:col-span-2 lg:col-span-1" />
       </div>
 
       {/* Main card placeholder */}
-      <div className="h-72 bg-slate-200 dark:bg-slate-800/60 rounded-2xl p-6 border border-slate-200/50 dark:border-slate-800 flex flex-col justify-between">
-        <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded w-1/4" />
+      <div className="h-72 bg-(--bg-card) rounded-2xl p-6 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute) flex flex-col justify-between">
+        <div className="h-6 bg-[#d8d0c7]/70 dark:bg-slate-700 rounded-lg w-1/4" />
         <div className="space-y-3">
-          <div className="h-4 bg-slate-300 dark:bg-slate-700/60 rounded w-full" />
-          <div className="h-4 bg-slate-300 dark:bg-slate-700/60 rounded w-5/6" />
-          <div className="h-4 bg-slate-300 dark:bg-slate-700/40 rounded w-4/6" />
+          <div className="h-4 bg-[#d8d0c7]/50 dark:bg-slate-700/60 rounded-md w-full" />
+          <div className="h-4 bg-[#d8d0c7]/50 dark:bg-slate-700/60 rounded-md w-5/6" />
+          <div className="h-4 bg-[#d8d0c7]/40 dark:bg-slate-700/40 rounded-md w-4/6" />
         </div>
-        <div className="h-4 bg-slate-300 dark:bg-slate-700/40 rounded w-1/3" />
+        <div className="h-4 bg-[#d8d0c7]/40 dark:bg-slate-700/40 rounded-md w-1/3" />
       </div>
     </div>
   );
@@ -164,7 +164,7 @@ function AppLayoutInner() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
       {/* Desktop Navigation Sidebar */}
       <DesktopSidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
 
@@ -237,10 +237,10 @@ export function AppShell() {
   // If live Supabase is configured and we are still verifying the session
   if (isSupabaseConfigured() && authLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-emerald-400">
+      <div className="flex h-screen w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">Loading Budget Bubby...</span>
+          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#dfc2ff] border-t-transparent" />
+          <span className="text-xs font-bold text-(--text-muted) tracking-wider uppercase font-mono-num">Loading Budget Bubby...</span>
         </div>
       </div>
     );
