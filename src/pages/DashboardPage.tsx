@@ -34,6 +34,7 @@ import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget
 import { QuickAddExpenseModal } from "../components/expenses/QuickAddExpenseModal";
 import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
 import { AddAccountModal } from "../components/accounts/AddAccountModal";
+import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import type {
     Account,
     Category,
@@ -264,6 +265,12 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                     <DailyCheckinStreakBar
                         memberId={activeMember?.id}
                         onCheckinSuccess={refreshHousehold}
+                    />
+
+                    {/* Category Budget Limit Guardrail Alerts */}
+                    <CategoryLimitWarningBanner
+                        categories={monthlyBudget?.categories || []}
+                        onNavigateCategory={() => onNavigateTab?.("budget")}
                     />
 
                     {/* DAILY SPEND & CHECK-IN HERO STRIP (Optimized for Fast Mobile Checking) */}

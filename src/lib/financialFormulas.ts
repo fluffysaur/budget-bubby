@@ -29,6 +29,10 @@ import type {
   SettlementSummary,
   GoalPacingResult,
   GoalStatus,
+  MonthlySurplusPoint,
+  CumulativeSurplusSummary,
+  CategoryLimitAlert,
+  MonthlyBudgetCategoryDetail,
 } from '../types/finance';
 import {
   addMonths,
@@ -623,5 +627,126 @@ export function calculateBonusAllocation(
       amount: Math.round(afterCpf * s.percentage * 100) / 100,
       color: s.color,
     })),
+  };
+}
+
+/**
+ * 12. Evaluates category spending limit alerts for spendable categories.
+ * Returns alerts for categories at or above 80% (warning) or 100% (exceeded).
+ */
+export function evaluateCategoryLimitAlerts(
+  categories: MonthlyBudgetCategoryDetail[] = []
+): CategoryLimitAlert[] {
+  const alerts: CategoryLimitAlert[] = [];
+  for (const c of categories) {
+    if (!isSpendableCategory(c.category || c.category_id)) continue;
+    const allocated = c.allocated_amount || 0;
+    if (allocated <= 0) continue;
+    const spent = c.actualSpent || 0;
+    const percentage = (spent / allocated) * 100;
+    const roundedPercentage = Math.round(percentage);
+    if (percentage >= 100) {
+      alerts.push({
+        categoryId: c.category_id,
+        categoryName: c.category?.name || 'Category',
+        color: c.category?.color || '#EF4444',
+        spent,
+        allocated,
+        percentage: roundedPercentage,
+        severity: 'exceeded',
+      });
+    } else if (percentage >= 80) {
+      alerts.push({
+        categoryId: c.category_id,
+        categoryName: c.category?.name || 'Category',
+        color: c.category?.color || '#F59E0B',
+        spent,
+        allocated,
+        percentage: roundedPercentage,
+        severity: 'warning',
+      });
+    }
+  }
+  return alerts;
+}
+
+export interface CalculateSurplusOptions {
+  months: string[]; // List of 'YYYY-MM'
+  monthlyCap: number | Record<string, number>;
+  expenses: Expense[];
+  categories?: Category[];
+  memberId?: string;
+  perspective?: Perspective;
+}
+
+/**
+ * 13. Calculates Cumulative Spending Surplus / Deficit across months.
+ * Formula:
+ *   Monthly Delta = Monthly Spendable Cap - Spendable Expenses (excluding goal-funded expenses)
+ *   Cumulative Surplus = Sum of Deltas across chronological history
+ */
+export function calculateCumulativeSurplus({
+  months,
+  monthlyCap,
+  expenses,
+  categories = [],
+  memberId,
+  perspective = 'household',
+}: CalculateSurplusOptions): CumulativeSurplusSummary {
+  let runningCumulative = 0;
+  const history: MonthlySurplusPoint[] = [];
+
+  const categoryMap = new Map<string, Category>();
+  for (const cat of categories) {
+    categoryMap.set(cat.id, cat);
+  }
+
+  for (const m of months) {
+    const cap = typeof monthlyCap === 'number' ? monthlyCap : (monthlyCap[m] ?? 0);
+    const monthExpenses = expenses.filter((e) => e.date && e.date.startsWith(m));
+
+    let spent = 0;
+    let goalSpent = 0;
+
+    for (const exp of monthExpenses) {
+      const cat = exp.category_id ? categoryMap.get(exp.category_id) : undefined;
+      // If category is known and not spendable, exclude
+      if (cat && !isSpendableCategory(cat)) {
+        continue;
+      }
+      const share = getMemberExpenseShare(exp, memberId, perspective);
+      if (share <= 0) continue;
+
+      if (exp.goal_id) {
+        // Goal-funded expense: tracked separately so it does not count against spendable budget
+        goalSpent += share;
+      } else {
+        spent += share;
+      }
+    }
+
+    const roundedCap = Math.round(cap * 100) / 100;
+    const roundedSpent = Math.round(spent * 100) / 100;
+    const roundedGoalSpent = Math.round(goalSpent * 100) / 100;
+    const delta = Math.round((roundedCap - roundedSpent) * 100) / 100;
+    runningCumulative = Math.round((runningCumulative + delta) * 100) / 100;
+
+    history.push({
+      month: m,
+      cap: roundedCap,
+      spent: roundedSpent,
+      goalSpent: roundedGoalSpent,
+      delta,
+      cumulative: runningCumulative,
+    });
+  }
+
+  const currentMonth = months[months.length - 1];
+  const currentPoint = history.find((h) => h.month === currentMonth) || history[history.length - 1];
+
+  return {
+    currentMonthSurplus: currentPoint ? currentPoint.delta : 0,
+    cumulativeSurplus: runningCumulative,
+    monthlyHistory: history,
   };
 }

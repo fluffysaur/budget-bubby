@@ -18,10 +18,14 @@ import {
   Save,
   RotateCcw,
   Plus,
+  Lock,
+  Unlock,
+  Scale,
 } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { mockCategories } from '../../data/mockSeedData';
-import { calculateCPFAndNetPay } from '../../lib/financialFormulas';
+import { calculateCPFAndNetPay, calculateDisposableBudget } from '../../lib/financialFormulas';
+import { formatSGD } from '../../lib/currency';
 import { isValidUuid } from '../../lib/uuid';
 import type {
   BaseBudgetProfile,
@@ -73,8 +77,81 @@ export function BaseProfileEditorModal({
 
   // Category percentages mapped by categoryId: number (0-100)
   const [categoryPercentages, setCategoryPercentages] = useState<Record<string, number>>({});
+  // Locked category state for auto-balancing
+  const [lockedCategories, setLockedCategories] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Live disposable pool calculation based on current form inputs
+  const currentDisposablePool = useMemo(() => {
+    const gross = Math.max(0, parseFloat(grossSalary) || 0);
+    const rate = (parseFloat(cpfRate) || 0) / 100;
+    const tax = parseFloat(taxes) || 0;
+    const ins = parseFloat(insurance) || 0;
+    const net = calculateCPFAndNetPay(gross, rate).takeHomePay;
+    return calculateDisposableBudget(net, tax, ins);
+  }, [grossSalary, cpfRate, taxes, insurance]);
+
+  const toggleCategoryLock = (categoryId: string) => {
+    setLockedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
+
+  const handleAutoBalance = () => {
+    const unlockedCats = categories.filter((c) => !lockedCategories[c.id]);
+
+    if (unlockedCats.length === 0) {
+      setErrorMessage('All categories are locked. Please unlock at least one category to auto-balance.');
+      return;
+    }
+
+    const lockedSum = categories
+      .filter((c) => lockedCategories[c.id])
+      .reduce((sum, c) => sum + (categoryPercentages[c.id] || 0), 0);
+
+    const targetUnlockedSum = Math.max(0, 100 - lockedSum);
+    const currentUnlockedSum = unlockedCats.reduce(
+      (sum, c) => sum + (categoryPercentages[c.id] || 0),
+      0
+    );
+
+    const updated: Record<string, number> = { ...categoryPercentages };
+
+    if (currentUnlockedSum <= 0) {
+      const baseShare = Math.floor(targetUnlockedSum / unlockedCats.length);
+      const remainder = targetUnlockedSum - baseShare * unlockedCats.length;
+
+      unlockedCats.forEach((c, idx) => {
+        updated[c.id] = baseShare + (idx < remainder ? 1 : 0);
+      });
+    } else {
+      let runningAllocated = 0;
+      unlockedCats.forEach((c) => {
+        const current = categoryPercentages[c.id] || 0;
+        const proportion = current / currentUnlockedSum;
+        const allocated = Math.round(targetUnlockedSum * proportion);
+        updated[c.id] = allocated;
+        runningAllocated += allocated;
+      });
+
+      // Compensate any rounding difference to ensure sum is strictly 100%
+      const diff = targetUnlockedSum - runningAllocated;
+      if (diff !== 0 && unlockedCats.length > 0) {
+        let bestCat = unlockedCats[0];
+        for (const c of unlockedCats) {
+          if ((updated[c.id] || 0) > (updated[bestCat.id] || 0)) {
+            bestCat = c;
+          }
+        }
+        updated[bestCat.id] = Math.max(0, (updated[bestCat.id] || 0) + diff);
+      }
+    }
+
+    setCategoryPercentages(updated);
+    setErrorMessage(null);
+  };
 
   // Synchronize initial state when modal opens or profile/allocations change
   useEffect(() => {
@@ -407,24 +484,37 @@ export function BaseProfileEditorModal({
                 )}
               </div>
 
-              {/* Total Percentage Indicator */}
-              <div
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
-                  isValidTotal
-                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800'
-                }`}
-              >
-                {isValidTotal ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                ) : (
-                  <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
-                )}
-                <span>Total: {totalPercentage}%</span>
+              <div className="flex items-center gap-2">
+                {/* Auto-Balance to 100% Button */}
+                <button
+                  type="button"
+                  onClick={handleAutoBalance}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
+                  title="Proportionally auto-adjust unlocked categories to reach 100%"
+                >
+                  <Scale className="h-3.5 w-3.5" />
+                  <span>Auto-Balance to 100%</span>
+                </button>
+
+                {/* Total Percentage Indicator */}
+                <div
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                    isValidTotal
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                      : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                  }`}
+                >
+                  {isValidTotal ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  ) : (
+                    <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
+                  )}
+                  <span>Total: {totalPercentage}%</span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-4">
+            <div className="space-y-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-4">
               {categories.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-xs text-slate-500 mb-2">No categories configured yet.</p>
@@ -442,39 +532,91 @@ export function BaseProfileEditorModal({
               ) : (
                 categories.map((cat) => {
                   const currentPct = categoryPercentages[cat.id] ?? 0;
+                  const isLocked = Boolean(lockedCategories[cat.id]);
+                  const dollarEquivalent =
+                    Math.round(currentDisposablePool * ((currentPct || 0) / 100) * 100) / 100;
+
                   return (
                     <div
                       key={cat.id}
-                      className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 dark:border-slate-800/60 last:border-none"
+                      className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-2"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <label
-                          htmlFor={`cat-alloc-${cat.id}`}
-                          className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate cursor-pointer"
-                        >
-                          {cat.name}
-                        </label>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {/* Category Lock Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => toggleCategoryLock(cat.id)}
+                            title={isLocked ? `Unlock ${cat.name}` : `Lock ${cat.name}`}
+                            aria-label={isLocked ? `Unlock category` : `Lock category`}
+                            data-testid={`lock-${cat.id}`}
+                            className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                              isLocked
+                                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                            }`}
+                          >
+                            {isLocked ? (
+                              <Lock className="h-3.5 w-3.5" />
+                            ) : (
+                              <Unlock className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+
+                          <span
+                            className="h-2.5 w-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <label
+                            htmlFor={`cat-alloc-${cat.id}`}
+                            className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate cursor-pointer"
+                          >
+                            {cat.name}
+                          </label>
+                          {isLocked && (
+                            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800/60">
+                              Locked
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Live Dollar Equivalent & Numeric Input */}
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          <span
+                            data-testid={`cat-dollar-${cat.id}`}
+                            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-mono"
+                          >
+                            {formatSGD(dollarEquivalent)}/mo
+                          </span>
+                          <div className="relative w-20">
+                            <input
+                              id={`cat-alloc-${cat.id}`}
+                              type="number"
+                              step="any"
+                              min="0"
+                              max="100"
+                              value={currentPct}
+                              onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
+                              className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
+                            />
+                            <span className="absolute right-1.5 top-1.5 text-[11px] text-slate-400">%</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="relative w-24">
-                          <input
-                            id={`cat-alloc-${cat.id}`}
-                            type="number"
-                            step="any"
-                            min="0"
-                            max="100"
-                            aria-label={`${cat.name} Allocation`}
-                            value={currentPct}
-                            onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
-                            className="w-full pr-6 pl-2.5 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
-                          />
-                          <span className="absolute right-2 top-2 text-xs text-slate-400">%</span>
-                        </div>
+                      {/* Interactive Range Slider */}
+                      <div className="pt-0.5">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          aria-label={`Allocation slider`}
+                          data-testid={`slider-${cat.id}`}
+                          value={currentPct}
+                          onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
+                          className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                        />
                       </div>
                     </div>
                   );

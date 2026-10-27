@@ -158,3 +158,14 @@ export function monthsBetween(startDate: string | Date, endDate: string | Date):
 
   return (d2.year - d1.year) * 12 + (d2.month - d1.month);
 }
+
+/**
+ * Returns a chronological list of 'YYYY-MM' strings for the past `count` months ending at `endMonth`.
+ */
+export function getPastMonthsList(endMonth: string, count: number = 6): string[] {
+  const list: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    list.push(addMonths(endMonth, -i));
+  }
+  return list;
+}

@@ -113,8 +113,8 @@ export function CategoryProgressList({
           const spentPercentage =
             allocated > 0 ? (actual / allocated) * 100 : actual > 0 ? 100 : 0;
           const roundedPercentage = Math.round(spentPercentage);
-          const isOverBudget = actual > allocated;
-          const isNearLimit = !isOverBudget && spentPercentage > 80;
+          const isOverBudget = spentPercentage >= 100 || actual > allocated;
+          const isNearLimit = !isOverBudget && spentPercentage >= 80;
 
           // Status Badge details
           let statusLabel = 'On Track';
@@ -243,7 +243,7 @@ export function CategoryProgressList({
               </div>
 
               {/* Progress Bar Meter */}
-              <div className="space-y-1 mt-2.5">
+              <div className="space-y-1.5 mt-2.5">
                 <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${progressBarColor}`}
@@ -255,16 +255,34 @@ export function CategoryProgressList({
                   />
                 </div>
 
-                {/* Over-budget Warning Footer */}
-                {isOverBudget && (
-                  <div className="flex items-center justify-between text-[11px] text-rose-600 dark:text-rose-400 font-medium pt-1">
+                {/* Warning Badges (Amber for >= 80%, Rose for >= 100%) */}
+                {isOverBudget ? (
+                  <div className="flex items-center justify-between text-[11px] text-rose-600 dark:text-rose-400 font-semibold pt-0.5">
                     <span className="flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       Over by {formatSGD(Math.abs(remaining))}
                     </span>
-                    <span>{roundedPercentage}% of budget</span>
+                    <span
+                      data-testid={`badge-rose-${catDetail.category_id}`}
+                      className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold text-[10px] border border-rose-300 dark:border-rose-800"
+                    >
+                      Rose Cap Exceeded
+                    </span>
                   </div>
-                )}
+                ) : isNearLimit ? (
+                  <div className="flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold pt-0.5">
+                    <span className="flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {formatSGD(remaining)} remaining
+                    </span>
+                    <span
+                      data-testid={`badge-amber-${catDetail.category_id}`}
+                      className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-[10px] border border-amber-300 dark:border-amber-800"
+                    >
+                      Amber Guardrail
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
           );
