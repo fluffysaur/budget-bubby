@@ -475,7 +475,7 @@ export const mockSavingsGoals: SavingsGoal[] = [
     owner_id: null,
     title: 'Wedding',
     target_amount: 55000.0,
-    saved_so_far: 55000.0,
+    saved_so_far: 50000.0,
     target_date: '2027-05-01',
     monthly_contribution: 0.0,
     emoji: '💍',
@@ -1018,6 +1018,69 @@ export const mockExpenses: Expense[] = [
     split_ratio: 0.5,
     settled: true,
     created_at: '2026-06-19T12:00:00.000Z',
+  },
+  // Epic 4 Big-Ticket Goal & Spend Tags Seed Expenses
+  {
+    id: 'exp-00000000-0816',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-10-15',
+    item: 'Grand Ballroom Wedding Banquet Deposit',
+    amount: 5000.0,
+    remarks: 'Wedding banquet first deposit',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: true,
+    tags: ['Wedding'],
+    goal_id: 'goal-00000000-0501', // Linked to Wedding goal
+    created_at: '2026-10-15T14:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0817',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0012',
+    category_id: 'cat-00000000-0103', // Transport
+    date: '2026-10-18',
+    item: 'Singapore Airlines Flight to Da Nang',
+    amount: 980.0,
+    remarks: 'Couples holiday flights',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: true,
+    tags: ['Vietnam Trip'],
+    created_at: '2026-10-18T10:00:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0818',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0101', // Food
+    date: '2026-10-22',
+    item: 'Hoi An Ancient Town Dining & Cafe Tour',
+    amount: 145.5,
+    remarks: 'Trip street food and dinner',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: true,
+    tags: ['Vietnam Trip'],
+    created_at: '2026-10-22T20:30:00.000Z',
+  },
+  {
+    id: 'exp-00000000-0819',
+    household_id: 'hh-00000000-0001',
+    payer_id: 'mem-00000000-0011',
+    category_id: 'cat-00000000-0102', // Lifestyle
+    date: '2026-10-24',
+    item: 'Interior Designer 3D Render & Consultation',
+    amount: 800.0,
+    remarks: 'Initial deposit for kitchen & living carpentry',
+    is_shared: true,
+    split_ratio: 0.5,
+    settled: true,
+    tags: ['Home Reno'],
+    goal_id: 'goal-00000000-0504', // Linked to Renovation goal
+    created_at: '2026-10-24T16:00:00.000Z',
   },
 ];
 

@@ -562,8 +562,9 @@ class MockFinanceServiceImpl implements FinanceService {
         category && category.name.toLowerCase().includes('lifestyle')
       );
 
+      // Exclude goal-funded expenses from normal monthly spendable category caps
       const expenseShareSum = this.state.expenses
-        .filter((e) => e.category_id === bc.category_id && e.date.startsWith(month))
+        .filter((e) => e.category_id === bc.category_id && e.date.startsWith(month) && !e.goal_id)
         .reduce(
           (sum, e) => sum + getMemberExpenseShare(e, budget!.owner_id, 'personal'),
           0

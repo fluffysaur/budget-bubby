@@ -26,7 +26,8 @@ import { formatSGD } from '../lib/currency';
 import { GoalCard } from '../components/goals/GoalCard';
 import { AddEditGoalModal } from '../components/goals/AddEditGoalModal';
 import { QuickDepositModal } from '../components/goals/QuickDepositModal';
-import type { SavingsGoal } from '../types/finance';
+import { SpendFromGoalModal } from '../components/goals/SpendFromGoalModal';
+import type { SavingsGoal, Expense, Category } from '../types/finance';
 
 export interface GoalsPageProps {
   className?: string;
@@ -36,9 +37,11 @@ export interface GoalsPageProps {
 type GoalFilterTab = 'all' | 'in_progress' | 'achieved';
 
 export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) {
-  const { perspective, activeMember, overview } = useHousehold();
+  const { perspective, activeMember, overview, members: ctxMembers, refreshData: refreshHousehold } = useHousehold();
 
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<GoalFilterTab>('all');
@@ -48,14 +51,22 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
   const [depositGoal, setDepositGoal] = useState<SavingsGoal | null>(null);
+  const [isSpendOpen, setIsSpendOpen] = useState<boolean>(false);
+  const [spendGoal, setSpendGoal] = useState<SavingsGoal | null>(null);
 
-  // Load goals from service
-  const loadGoals = useCallback(async () => {
+  // Load goals, expenses, and categories from service
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setErrorMessage(null);
-      const data = await financeService.getGoals();
-      setGoals(data || []);
+      const [goalsData, expensesData, categoriesData] = await Promise.all([
+        financeService.getGoals(),
+        financeService.getExpenses(),
+        financeService.getCategories(),
+      ]);
+      setGoals(goalsData || []);
+      setExpenses(expensesData || []);
+      setCategories(categoriesData || []);
     } catch (err: unknown) {
       console.error('Failed to load savings goals:', err);
       setErrorMessage(err instanceof Error ? err.message : 'Failed to load savings goals');
@@ -65,8 +76,20 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
   }, []);
 
   useEffect(() => {
-    loadGoals();
-  }, [loadGoals]);
+    loadData();
+  }, [loadData]);
+
+  // Map expenses linked to each goal
+  const goalExpensesMap = useMemo(() => {
+    const map = new Map<string, Expense[]>();
+    for (const exp of expenses) {
+      if (!exp.goal_id) continue;
+      const list = map.get(exp.goal_id) || [];
+      list.push(exp);
+      map.set(exp.goal_id, list);
+    }
+    return map;
+  }, [expenses]);
 
   // Perspective-filtered goals if applicable
   const perspectiveGoals = useMemo(() => {
@@ -123,12 +146,24 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
     setIsDepositOpen(true);
   };
 
-  const handleGoalSaved = () => {
-    loadGoals();
+  const handleOpenSpendModal = (goal: SavingsGoal) => {
+    setSpendGoal(goal);
+    setIsSpendOpen(true);
   };
 
-  const handleDepositSaved = () => {
-    loadGoals();
+  const handleGoalSaved = async () => {
+    await loadData();
+    await refreshHousehold();
+  };
+
+  const handleDepositSaved = async () => {
+    await loadData();
+    await refreshHousehold();
+  };
+
+  const handleSpendSaved = async () => {
+    await loadData();
+    await refreshHousehold();
   };
 
   return (
@@ -344,8 +379,10 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
             <GoalCard
               key={goal.id}
               goal={goal}
+              linkedExpenses={goalExpensesMap.get(goal.id) || []}
               onEdit={handleOpenEditModal}
               onQuickDeposit={handleOpenDepositModal}
+              onSpendFromGoal={handleOpenSpendModal}
             />
           ))}
         </div>
@@ -366,6 +403,20 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
         onClose={() => setIsDepositOpen(false)}
         goal={depositGoal}
         onDepositSaved={handleDepositSaved}
+      />
+
+      {/* Spend from Goal Modal */}
+      <SpendFromGoalModal
+        isOpen={isSpendOpen}
+        onClose={() => {
+          setIsSpendOpen(false);
+          setSpendGoal(null);
+        }}
+        goal={spendGoal}
+        categories={categories}
+        members={overview?.members || ctxMembers}
+        defaultPayerId={activeMember?.id}
+        onSpendSaved={handleSpendSaved}
       />
     </div>
   );

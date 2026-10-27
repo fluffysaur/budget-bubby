@@ -2,31 +2,62 @@
  * GoalCard Component
  * Milestone savings goal card displaying:
  * - Emoji icon badge & goal title
- * - Target amount, saved so far, and remaining amount
+ * - Target Amount, Total Saved, Goal-Funded Spend, and Remaining Balance
  * - Visual progress bar with accessible role="progressbar"
  * - Pacing indicator badge (Achieved, On Track, Behind)
  * - Monthly current contribution vs needed pace
  * - Target date and remaining months countdown
+ * - '+ Spend from Goal' button to trigger quick spend logger
+ * - List of linked expenses funded by this goal
  * - Quick Deposit and Edit actions
  */
 
-import { CheckCircle2, TrendingUp, AlertCircle, Calendar, Pencil, Coins, Clock } from 'lucide-react';
+import { useState } from 'react';
+import {
+  CheckCircle2,
+  TrendingUp,
+  AlertCircle,
+  Calendar,
+  Pencil,
+  Coins,
+  Clock,
+  ShoppingBag,
+  Receipt,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { calculateGoalPacing } from '../../lib/financialFormulas';
-import { formatDisplayMonth } from '../../lib/dateUtils';
-import type { SavingsGoal } from '../../types/finance';
+import { formatDisplayMonth, formatDisplayDate } from '../../lib/dateUtils';
+import type { SavingsGoal, Expense } from '../../types/finance';
 
 export interface GoalCardProps {
   goal: SavingsGoal;
+  linkedExpenses?: Expense[];
   onEdit?: (goal: SavingsGoal) => void;
   onQuickDeposit?: (goal: SavingsGoal) => void;
+  onSpendFromGoal?: (goal: SavingsGoal) => void;
   className?: string;
 }
 
-export function GoalCard({ goal, onEdit, onQuickDeposit, className = '' }: GoalCardProps) {
+export function GoalCard({
+  goal,
+  linkedExpenses = [],
+  onEdit,
+  onQuickDeposit,
+  onSpendFromGoal,
+  className = '',
+}: GoalCardProps) {
+  const [showExpenses, setShowExpenses] = useState<boolean>(true);
+
+  // Big-Ticket Goal Financial Highlights
   const targetAmount = Math.max(0, goal.target_amount);
   const savedSoFar = Math.max(0, goal.saved_so_far);
-  const remainingAmount = Math.max(0, targetAmount - savedSoFar);
+  const goalFundedSpend = Math.round(
+    linkedExpenses.reduce((sum, e) => sum + e.amount, 0) * 100
+  ) / 100;
+  const remainingBalance = Math.max(0, targetAmount - savedSoFar);
+  const totalSaved = Math.round((savedSoFar + (goalFundedSpend > 0 && savedSoFar < targetAmount ? 0 : 0)) * 100) / 100;
 
   const progressPercent = targetAmount > 0
     ? Math.min(100, Math.round((savedSoFar / targetAmount) * 100))
@@ -111,30 +142,38 @@ export function GoalCard({ goal, onEdit, onQuickDeposit, className = '' }: GoalC
           </div>
         </div>
 
-        {/* Financial Highlights */}
-        <div className="mt-5 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/50">
+        {/* Big-Ticket Financial Highlights (Target Amount, Total Saved, Goal-Funded Spend, Remaining Balance) */}
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/50">
           <div>
-            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-              Target
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Target Amount
             </span>
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 block truncate" title={formatSGD(targetAmount)}>
               {formatSGD(targetAmount)}
             </span>
           </div>
-          <div className="border-x border-slate-200/60 dark:border-slate-700/60">
-            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-              Saved
+          <div className="border-l sm:border-x border-slate-200/60 dark:border-slate-700/60">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Total Saved
             </span>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block truncate" title={formatSGD(savedSoFar)}>
-              {formatSGD(savedSoFar)}
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block truncate" title={formatSGD(totalSaved)}>
+              {formatSGD(totalSaved)}
             </span>
           </div>
-          <div>
-            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-              Remaining
+          <div className="border-t sm:border-t-0 sm:border-r border-slate-200/60 dark:border-slate-700/60 pt-2 sm:pt-0">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Goal-Funded Spend
             </span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-0.5 block truncate" title={formatSGD(remainingAmount)}>
-              {formatSGD(remainingAmount)}
+            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 mt-0.5 block truncate" title={formatSGD(goalFundedSpend)}>
+              {formatSGD(goalFundedSpend)}
+            </span>
+          </div>
+          <div className="border-t sm:border-t-0 border-slate-200/60 dark:border-slate-700/60 pt-2 sm:pt-0">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Remaining Balance
+            </span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-0.5 block truncate" title={formatSGD(remainingBalance)}>
+              {formatSGD(remainingBalance)}
             </span>
           </div>
         </div>
@@ -142,7 +181,7 @@ export function GoalCard({ goal, onEdit, onQuickDeposit, className = '' }: GoalC
         {/* Progress Bar & Percentage */}
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
-            <span className="text-slate-600 dark:text-slate-400">Progress</span>
+            <span className="text-slate-600 dark:text-slate-400">Milestone Progress</span>
             <span className={isAchieved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}>
               {progressPercent}%
             </span>
@@ -185,29 +224,89 @@ export function GoalCard({ goal, onEdit, onQuickDeposit, className = '' }: GoalC
             </div>
           )}
         </div>
+
+        {/* List of Linked Expenses Funded by This Goal */}
+        {linkedExpenses.length > 0 && (
+          <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowExpenses((prev) => !prev)}
+              className="flex items-center justify-between w-full text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 cursor-pointer hover:text-purple-600 transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <Receipt className="h-3.5 w-3.5 text-purple-500" />
+                <span>Linked Goal Expenses ({linkedExpenses.length})</span>
+              </span>
+              <span className="flex items-center gap-1 text-[11px] text-purple-600 dark:text-purple-400 font-mono">
+                <span>{formatSGD(goalFundedSpend)}</span>
+                {showExpenses ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </span>
+            </button>
+
+            {showExpenses && (
+              <div
+                className="space-y-1.5 max-h-36 overflow-y-auto pr-1"
+                data-testid={`linked-expenses-${goal.id}`}
+              >
+                {linkedExpenses.map((exp) => (
+                  <div
+                    key={exp.id}
+                    data-testid={`linked-expense-item-${exp.id}`}
+                    className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60"
+                  >
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {exp.item}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {formatDisplayDate(exp.date)}
+                      </span>
+                    </div>
+                    <span className="font-bold text-purple-700 dark:text-purple-300 shrink-0">
+                      {formatSGD(exp.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Action Footer */}
-      <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+      <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+        {/* + Spend from Goal Button */}
         <button
           type="button"
-          onClick={() => onQuickDeposit?.(goal)}
-          aria-label={`Deposit to ${goal.title}`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-emerald-600 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-emerald-400 transition-colors"
+          onClick={() => onSpendFromGoal?.(goal)}
+          aria-label={`+ Spend from ${goal.title}`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700 shadow-xs hover:bg-purple-100 hover:text-purple-800 focus:outline-hidden focus:ring-2 focus:ring-purple-500/20 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition-colors cursor-pointer"
         >
-          <Coins className="h-3.5 w-3.5 text-emerald-500" />
-          <span>Deposit</span>
+          <ShoppingBag className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+          <span>+ Spend from Goal</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => onEdit?.(goal)}
-          aria-label={`Edit ${goal.title}`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-400 transition-colors"
-        >
-          <Pencil className="h-3.5 w-3.5 text-blue-500" />
-          <span>Edit</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onQuickDeposit?.(goal)}
+            aria-label={`Deposit to ${goal.title}`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-emerald-600 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+          >
+            <Coins className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Deposit</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onEdit?.(goal)}
+            aria-label={`Edit ${goal.title}`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
+          >
+            <Pencil className="h-3.5 w-3.5 text-blue-500" />
+            <span>Edit</span>
+          </button>
+        </div>
       </div>
     </div>
   );
