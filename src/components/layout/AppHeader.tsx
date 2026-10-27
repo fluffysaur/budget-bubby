@@ -53,7 +53,15 @@ function getPerspectiveKeyForMember(displayName: string, id: string): Perspectiv
 }
 
 export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: AppHeaderProps) {
-    const { perspective, setPerspective, members: ctxMembers, activeMember, theme, toggleTheme, isMockMode } = useHousehold();
+    const {
+        perspective,
+        setPerspective,
+        members: ctxMembers,
+        activeMember,
+        theme,
+        toggleTheme,
+        isMockMode,
+    } = useHousehold();
     const { signOut, isAuthenticated } = useAuth();
 
     const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
@@ -120,7 +128,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         if (perspective === "household") return perspectiveOptions[0];
         return (
             perspectiveOptions.find(
-                (opt) => opt.key === perspective || (activeMember && opt.memberId === activeMember.id)
+                (opt) => opt.key === perspective || (activeMember && opt.memberId === activeMember.id),
             ) || perspectiveOptions[0]
         );
     }, [perspective, activeMember, perspectiveOptions]);

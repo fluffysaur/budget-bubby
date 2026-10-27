@@ -189,10 +189,7 @@ export function ManageCategoriesModal({
             .reduce((sum, c) => sum + (categoryPercentages[c.id] || 0), 0);
 
         const targetUnlockedSum = Math.max(0, 100 - lockedSum);
-        const currentUnlockedSum = unlockedCats.reduce(
-            (sum, c) => sum + (categoryPercentages[c.id] || 0),
-            0
-        );
+        const currentUnlockedSum = unlockedCats.reduce((sum, c) => sum + (categoryPercentages[c.id] || 0), 0);
 
         const updated: Record<string, number> = { ...categoryPercentages };
 
@@ -244,7 +241,9 @@ export function ManageCategoriesModal({
             const updatedAllocs: BaseProfileAllocation[] = categories.map((cat) => {
                 const existing = baseAllocations.find((a) => a.category_id === cat.id);
                 return {
-                    id: existing?.id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `alloc-${cat.id}`),
+                    id:
+                        existing?.id ||
+                        (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `alloc-${cat.id}`),
                     profile_id: activeProf.id,
                     category_id: cat.id,
                     target_percentage: (categoryPercentages[cat.id] || 0) / 100,
@@ -604,316 +603,322 @@ export function ManageCategoriesModal({
                 ) : (
                     /* Existing Categories View */
                     <>
-
-                {/* Form Mode (Add or Edit) */}
-                {formMode ? (
-                    <form
-                        onSubmit={handleSubmitForm}
-                        className="mt-4 space-y-4"
-                    >
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                                {formMode === "create" ? "Add New Category" : `Edit Category: ${editingCategory?.name}`}
-                            </h3>
-                            <button
-                                type="button"
-                                onClick={() => setFormMode(null)}
-                                className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
+                        {/* Form Mode (Add or Edit) */}
+                        {formMode ? (
+                            <form
+                                onSubmit={handleSubmitForm}
+                                className="mt-4 space-y-4"
                             >
-                                Cancel
-                            </button>
-                        </div>
-
-                        {/* Category Name */}
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                Category Name
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. Groceries, Gym, Rent"
-                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                            />
-                        </div>
-
-                        {/* Category Group */}
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                Classification Type
-                            </label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setGroup("spendable")}
-                                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
-                                        group === "spendable"
-                                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                                            : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
-                                    }`}
-                                >
-                                    <span className="block font-semibold">Spendable Category</span>
-                                    <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
-                                        Tracked with daily spending meters (Food, Transport, Lifestyle, Buffer)
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setGroup("allocation")}
-                                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
-                                        group === "allocation"
-                                            ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300"
-                                            : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
-                                    }`}
-                                >
-                                    <span className="block font-semibold">Wealth & Fixed Allocation</span>
-                                    <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
-                                        Transferred or saved off the top (Investments, Savings, Tithing)
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Color Presets */}
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                Accent Color
-                            </label>
-                            <div className="flex flex-wrap gap-2.5 items-center">
-                                {PRESET_COLORS.map((c) => (
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                        {formMode === "create"
+                                            ? "Add New Category"
+                                            : `Edit Category: ${editingCategory?.name}`}
+                                    </h3>
                                     <button
-                                        key={c}
                                         type="button"
-                                        onClick={() => setColor(c)}
-                                        className="h-7 w-7 rounded-full border-2 transition-transform cursor-pointer flex items-center justify-center"
-                                        style={{
-                                            backgroundColor: c,
-                                            borderColor: color === c ? "#ffffff" : "transparent",
-                                            transform: color === c ? "scale(1.15)" : "scale(1)",
-                                        }}
+                                        onClick={() => setFormMode(null)}
+                                        className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
                                     >
-                                        {color === c && <Check className="h-3.5 w-3.5 text-white stroke-3" />}
+                                        Cancel
                                     </button>
-                                ))}
-                            </div>
-                        </div>
+                                </div>
 
-                        {/* Icon Presets */}
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                Icon
-                            </label>
-                            <div className="grid grid-cols-7 gap-2">
-                                {PRESET_ICONS.map((item) => {
-                                    const IconComp = item.Icon;
-                                    const isSelected = icon === item.id;
-                                    return (
+                                {/* Category Name */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                        Category Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="e.g. Groceries, Gym, Rent"
+                                        className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                    />
+                                </div>
+
+                                {/* Category Group */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                        Classification Type
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
                                         <button
-                                            key={item.id}
                                             type="button"
-                                            onClick={() => setIcon(item.id)}
-                                            title={item.label}
-                                            className={`p-2 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
-                                                isSelected
-                                                    ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                                                    : "border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                            onClick={() => setGroup("spendable")}
+                                            className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                                                group === "spendable"
+                                                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                                                    : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
                                             }`}
                                         >
-                                            <IconComp className="h-4 w-4" />
+                                            <span className="block font-semibold">Spendable Category</span>
+                                            <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
+                                                Tracked with daily spending meters (Food, Transport, Lifestyle, Buffer)
+                                            </span>
                                         </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setGroup("allocation")}
+                                            className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
+                                                group === "allocation"
+                                                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300"
+                                                    : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                            }`}
+                                        >
+                                            <span className="block font-semibold">Wealth & Fixed Allocation</span>
+                                            <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
+                                                Transferred or saved off the top (Investments, Savings, Tithing)
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
 
-                        {/* Form Actions */}
-                        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                            <button
-                                type="button"
-                                onClick={() => setFormMode(null)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
-                            >
-                                {formMode === "create" ? "Create Category" : "Save Changes"}
-                            </button>
-                        </div>
-                    </form>
-                ) : (
-                    /* List Mode */
-                    <div className="mt-4 space-y-5 max-h-[60vh] overflow-y-auto pr-1">
-                        {/* Top Action Row */}
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                {categories.length} {categories.length === 1 ? "Category" : "Categories"} Configured
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleRestorePresets}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-colors cursor-pointer"
-                                    title="Restore standard recommended Singapore categories"
-                                >
-                                    <RotateCcw className="h-3 w-3" />
-                                    <span>Restore Presets</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleOpenCreate}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
-                                >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    <span>Add Category</span>
-                                </button>
-                            </div>
-                        </div>
+                                {/* Color Presets */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                        Accent Color
+                                    </label>
+                                    <div className="flex flex-wrap gap-2.5 items-center">
+                                        {PRESET_COLORS.map((c) => (
+                                            <button
+                                                key={c}
+                                                type="button"
+                                                onClick={() => setColor(c)}
+                                                className="h-7 w-7 rounded-full border-2 transition-transform cursor-pointer flex items-center justify-center"
+                                                style={{
+                                                    backgroundColor: c,
+                                                    borderColor: color === c ? "#ffffff" : "transparent",
+                                                    transform: color === c ? "scale(1.15)" : "scale(1)",
+                                                }}
+                                            >
+                                                {color === c && <Check className="h-3.5 w-3.5 text-white stroke-3" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
-                        {loading ? (
-                            <div className="py-12 text-center text-xs text-slate-400">Loading categories...</div>
-                        ) : categories.length === 0 ? (
-                            <div className="py-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6">
-                                <Tag className="h-8 w-8 mx-auto text-slate-400 mb-2 opacity-50" />
-                                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Categories</h4>
-                                <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                                    You have no categories configured yet. Add custom categories or restore recommended
-                                    presets.
-                                </p>
-                                <div className="mt-4 flex items-center justify-center gap-3">
+                                {/* Icon Presets */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                        Icon
+                                    </label>
+                                    <div className="grid grid-cols-7 gap-2">
+                                        {PRESET_ICONS.map((item) => {
+                                            const IconComp = item.Icon;
+                                            const isSelected = icon === item.id;
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    onClick={() => setIcon(item.id)}
+                                                    title={item.label}
+                                                    className={`p-2 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
+                                                        isSelected
+                                                            ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                                            : "border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                    }`}
+                                                >
+                                                    <IconComp className="h-4 w-4" />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Form Actions */}
+                                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                                     <button
                                         type="button"
-                                        onClick={handleRestorePresets}
-                                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 cursor-pointer"
+                                        onClick={() => setFormMode(null)}
+                                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                     >
-                                        Restore Presets
+                                        Cancel
                                     </button>
                                     <button
-                                        type="button"
-                                        onClick={handleOpenCreate}
-                                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
                                     >
-                                        + Add Category
+                                        {formMode === "create" ? "Create Category" : "Save Changes"}
                                     </button>
                                 </div>
-                            </div>
+                            </form>
                         ) : (
-                            <>
-                                {/* Spendable Categories Section */}
-                                <div>
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center justify-between">
-                                        <span>Spendable Categories ({spendableCategories.length})</span>
-                                        <span className="text-[10px] lowercase text-slate-400 font-normal">
-                                            tracked against monthly spend
-                                        </span>
-                                    </h4>
-                                    <div className="space-y-1.5">
-                                        {spendableCategories.map((cat) => {
-                                            const IconComp = getIconComponent(cat.icon);
-                                            return (
-                                                <div
-                                                    key={cat.id}
-                                                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div
-                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
-                                                            style={{ backgroundColor: cat.color || "#64748B" }}
-                                                        >
-                                                            <IconComp className="h-4 w-4" />
-                                                        </div>
-                                                        <div>
-                                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                {cat.name}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleOpenEdit(cat)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                            title="Edit Category"
-                                                        >
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setDeletingCategory(cat)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                            title="Delete Category"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                            /* List Mode */
+                            <div className="mt-4 space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+                                {/* Top Action Row */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        {categories.length} {categories.length === 1 ? "Category" : "Categories"}{" "}
+                                        Configured
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleRestorePresets}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-colors cursor-pointer"
+                                            title="Restore standard recommended Singapore categories"
+                                        >
+                                            <RotateCcw className="h-3 w-3" />
+                                            <span>Restore Presets</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenCreate}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                            <span>Add Category</span>
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Wealth & Fixed Allocation Section */}
-                                <div>
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center justify-between">
-                                        <span>Wealth & Fixed Allocations ({allocationCategories.length})</span>
-                                        <span className="text-[10px] lowercase text-slate-400 font-normal">
-                                            transferred directly from gross income
-                                        </span>
-                                    </h4>
-                                    <div className="space-y-1.5">
-                                        {allocationCategories.map((cat) => {
-                                            const IconComp = getIconComponent(cat.icon);
-                                            return (
-                                                <div
-                                                    key={cat.id}
-                                                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div
-                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
-                                                            style={{ backgroundColor: cat.color || "#64748B" }}
-                                                        >
-                                                            <IconComp className="h-4 w-4" />
-                                                        </div>
-                                                        <div>
-                                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                {cat.name}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleOpenEdit(cat)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                            title="Edit Category"
-                                                        >
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setDeletingCategory(cat)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                            title="Delete Category"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                {loading ? (
+                                    <div className="py-12 text-center text-xs text-slate-400">
+                                        Loading categories...
                                     </div>
-                                </div>
-                            </>
+                                ) : categories.length === 0 ? (
+                                    <div className="py-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6">
+                                        <Tag className="h-8 w-8 mx-auto text-slate-400 mb-2 opacity-50" />
+                                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                            No Categories
+                                        </h4>
+                                        <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+                                            You have no categories configured yet. Add custom categories or restore
+                                            recommended presets.
+                                        </p>
+                                        <div className="mt-4 flex items-center justify-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={handleRestorePresets}
+                                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 cursor-pointer"
+                                            >
+                                                Restore Presets
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleOpenCreate}
+                                                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                                            >
+                                                + Add Category
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Spendable Categories Section */}
+                                        <div>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center justify-between">
+                                                <span>Spendable Categories ({spendableCategories.length})</span>
+                                                <span className="text-[10px] lowercase text-slate-400 font-normal">
+                                                    tracked against monthly spend
+                                                </span>
+                                            </h4>
+                                            <div className="space-y-1.5">
+                                                {spendableCategories.map((cat) => {
+                                                    const IconComp = getIconComponent(cat.icon);
+                                                    return (
+                                                        <div
+                                                            key={cat.id}
+                                                            className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div
+                                                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                                                                    style={{ backgroundColor: cat.color || "#64748B" }}
+                                                                >
+                                                                    <IconComp className="h-4 w-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                                        {cat.name}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenEdit(cat)}
+                                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                    title="Edit Category"
+                                                                >
+                                                                    <Pencil className="h-3.5 w-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDeletingCategory(cat)}
+                                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                    title="Delete Category"
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Wealth & Fixed Allocation Section */}
+                                        <div>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center justify-between">
+                                                <span>Wealth & Fixed Allocations ({allocationCategories.length})</span>
+                                                <span className="text-[10px] lowercase text-slate-400 font-normal">
+                                                    transferred directly from gross income
+                                                </span>
+                                            </h4>
+                                            <div className="space-y-1.5">
+                                                {allocationCategories.map((cat) => {
+                                                    const IconComp = getIconComponent(cat.icon);
+                                                    return (
+                                                        <div
+                                                            key={cat.id}
+                                                            className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div
+                                                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                                                                    style={{ backgroundColor: cat.color || "#64748B" }}
+                                                                >
+                                                                    <IconComp className="h-4 w-4" />
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                                        {cat.name}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenEdit(cat)}
+                                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                    title="Edit Category"
+                                                                >
+                                                                    <Pencil className="h-3.5 w-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDeletingCategory(cat)}
+                                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                    title="Delete Category"
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         )}
-                    </div>
-                )}
-                </>
+                    </>
                 )}
 
                 {/* Delete Confirmation Sub-Dialog */}
