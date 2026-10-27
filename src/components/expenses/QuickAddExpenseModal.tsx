@@ -2,23 +2,31 @@
  * Quick Add Expense Modal
  * Fast, mobile-optimized modal with:
  * - AnimatedModal wrapper (drawer slide on mobile, scale on desktop)
- * - Ultra-minimal layout without verbose copy
- * - Large numeric amount input
- * - Category chips
- * - Contextual 1-tap quick tags
- * - Inline Payer & Shared 50/50 toggle
- * - Compact Date & Note toggle
+ * - CentsFirstAmountInput (ATM cashier-style digits input)
+ * - Multi-currency FX conversion (SGD, VND, JPY, MYR, THB, USD, EUR, etc.) with live preview
+ * - 2-button segmented toggle: 👤 Personal | 👥 Shared (50/50)
+ * - Smart category auto-detection on typing/tagging
+ * - Persistent recent custom tags per category in localStorage
+ * - 1-tap Date chips (Today, Yesterday, 2d ago) + compact date picker
+ * - Inline remarks/notes input
+ * - Tag picker (#tags)
+ * - "Funded by Goal" linking
  */
 
-import { useState, useEffect, useRef, useMemo, type FormEvent } from 'react';
-import { X, Plus, Calendar, MessageSquarePlus, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import { X, Plus, Sparkles, Hash, Target } from 'lucide-react';
 import { useHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
-import { getTodayDateString } from '../../lib/dateUtils';
+import { getTodayDateString, getSingaporeDate, formatISODate } from '../../lib/dateUtils';
 import { isSpendableCategory } from '../../lib/financialFormulas';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
-import type { Category, HouseholdMember, Expense, CreateExpenseInput } from '../../types/finance';
+import {
+  SUPPORTED_CURRENCIES,
+  convertToSGD,
+} from '../../lib/currencyConverter';
+import type { Category, HouseholdMember, Expense, CreateExpenseInput, SavingsGoal } from '../../types/finance';
 import { AnimatedModal } from '../ui/AnimatedModal';
+import { CentsFirstAmountInput } from './CentsFirstAmountInput';
 
 export interface QuickAddExpenseModalProps {
   isOpen: boolean;
@@ -28,21 +36,76 @@ export interface QuickAddExpenseModalProps {
   defaultShared?: boolean;
   categories?: Category[];
   members?: HouseholdMember[];
+  goals?: SavingsGoal[];
 }
 
-const QUICK_TAGS_BY_CATEGORY: Record<string, string[]> = {
-  food: ['Lunch', 'Dinner', 'Coffee', 'Groceries', 'Hawker', 'Breakfast'],
-  transport: ['MRT / Bus', 'Grab', 'Gojek', 'Taxi', 'Parking'],
-  lifestyle: ['Shopping', 'Date Night', 'Coffee & Cake', 'Personal Care', 'Gifts'],
-  buffer: ['Clinic / Pharmacy', 'Household Items', 'Utilities', 'Repair / Misc'],
+const DEFAULT_QUICK_TAGS_BY_CATEGORY: Record<string, string[]> = {
+  food: ['Lunch', 'Dinner', 'Coffee', 'Groceries', 'Hawker', 'FairPrice'],
+  transport: ['Grab', 'MRT', 'Bus', 'Gojek', 'Taxi', 'Parking'],
+  lifestyle: ['Shopping', 'Date Night', 'Movie', 'Personal Care', 'Gifts'],
+  buffer: ['Clinic', 'Pharmacy', 'Utilities', 'Household Items', 'Misc'],
 };
 
-const DEFAULT_QUICK_TAGS = ['Lunch', 'Dinner', 'Coffee', 'Groceries', 'MRT / Bus', 'Grab'];
+const GLOBAL_DEFAULT_QUICK_TAGS = ['Lunch', 'Dinner', 'Coffee', 'FairPrice', 'Grab', 'MRT'];
 
-function getQuickTagsForCategory(categoryName?: string): string[] {
-  if (!categoryName) return DEFAULT_QUICK_TAGS;
-  const normalized = categoryName.trim().toLowerCase();
-  return QUICK_TAGS_BY_CATEGORY[normalized] || DEFAULT_QUICK_TAGS;
+const RECENT_TAGS_STORAGE_KEY = 'budget_bubby_recent_tags_v1';
+
+// Category keyword matching rules
+const KEYWORD_CATEGORY_MAP: { keywords: string[]; categoryKey: string }[] = [
+  {
+    keywords: [
+      'grab', 'gojek', 'mrt', 'bus', 'taxi', 'comfortdelgro', 'parking',
+      'petrol', 'ez-link', 'ezlink', 'simplygo', 'transit', 'fuel', 'tada'
+    ],
+    categoryKey: 'transport',
+  },
+  {
+    keywords: [
+      'lunch', 'dinner', 'breakfast', 'coffee', 'cafe', 'hawker', 'food',
+      'groceries', 'fairprice', 'cold storage', 'sheng siong', 'shengsiong',
+      'breadtalk', 'toast box', 'yakun', 'starbucks', 'kfc', 'mcdonalds',
+      'macdonalds', 'bubble tea', 'koi', 'liho', 'snack', 'restaurant', 'subway'
+    ],
+    categoryKey: 'food',
+  },
+  {
+    keywords: [
+      'shopping', 'movie', 'cinema', 'gym', 'netflix', 'spotify',
+      'date night', 'personal care', 'gifts', 'uniqlo', 'zara', 'shopee',
+      'lazada', 'entertainment', 'games', 'haircut'
+    ],
+    categoryKey: 'lifestyle',
+  },
+  {
+    keywords: [
+      'clinic', 'pharmacy', 'doctor', 'hospital', 'panadol', 'watsons',
+      'guardian', 'utilities', 'repair', 'sp services', 'maintenance', 'dentist'
+    ],
+    categoryKey: 'buffer',
+  },
+];
+
+function getStoredRecentTags(): Record<string, string[]> {
+  if (typeof window === 'undefined' || !window.localStorage) return {};
+  try {
+    const raw = window.localStorage.getItem(RECENT_TAGS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function storeRecentTag(categoryId: string, tag: string) {
+  if (typeof window === 'undefined' || !window.localStorage || !categoryId || !tag.trim()) return;
+  try {
+    const store = getStoredRecentTags();
+    const existing = Array.isArray(store[categoryId]) ? store[categoryId] : [];
+    const updated = [tag.trim(), ...existing.filter((t) => t.toLowerCase() !== tag.trim().toLowerCase())].slice(0, 6);
+    store[categoryId] = updated;
+    window.localStorage.setItem(RECENT_TAGS_STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    // Ignore localStorage failures
+  }
 }
 
 export function QuickAddExpenseModal({
@@ -53,8 +116,10 @@ export function QuickAddExpenseModal({
   defaultShared,
   categories: propCategories,
   members: propMembers,
+  goals: propGoals,
 }: QuickAddExpenseModalProps) {
   const { members: ctxMembers, activeMember, perspective } = useHousehold();
+
   const members = propMembers && propMembers.length > 0
     ? propMembers
     : ctxMembers && ctxMembers.length > 0
@@ -74,69 +139,177 @@ export function QuickAddExpenseModal({
     [categories]
   );
 
-  const amountInputRef = useRef<HTMLInputElement>(null);
-
   // Default to Personal when in Personal perspective, or Shared when in Combined view (unless overridden)
   const resolvedDefaultShared =
     defaultShared !== undefined ? defaultShared : perspective === 'household';
 
-  // Form State
-  const [amount, setAmount] = useState<string>('');
+  // Amount & Currency State
+  const [amount, setAmount] = useState<number>(0);
+  const [currencyCode, setCurrencyCode] = useState<string>('SGD');
+  const [customExchangeRate, setCustomExchangeRate] = useState<number | undefined>(undefined);
+
+  // Item & Category State
   const [item, setItem] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>(
     spendableCategories[0]?.id || categories[0]?.id || ''
   );
+  const [categoryManuallySelected, setCategoryManuallySelected] = useState<boolean>(false);
   const [showMoreCategories, setShowMoreCategories] = useState<boolean>(false);
+
+  // Payer & Shared State
   const [payerId, setPayerId] = useState<string>(() => {
     if (defaultPayerId) return defaultPayerId;
     if (activeMember) return activeMember.id;
     return members[0]?.id || '';
   });
   const [isShared, setIsShared] = useState<boolean>(resolvedDefaultShared);
+
+  // Date & Notes State
   const [date, setDate] = useState<string>(getTodayDateString());
   const [remarks, setRemarks] = useState<string>('');
-  const [showDateAndNotes, setShowDateAndNotes] = useState<boolean>(false);
+
+  // Tags State
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState<string>('');
+
+  // Goals State
+  const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(propGoals || []);
+  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
+
+  // Submission State
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Fetch active goals if not supplied in props
+  useEffect(() => {
+    if (propGoals) {
+      setActiveGoals(propGoals);
+      return;
+    }
+    let isMounted = true;
+    financeService.getGoals()
+      .then((g) => {
+        if (isMounted && g) {
+          setActiveGoals(g);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [propGoals, isOpen]);
 
   // Reset form and focus on open
   useEffect(() => {
     if (isOpen) {
-      setAmount('');
+      setAmount(0);
+      setCurrencyCode('SGD');
+      setCustomExchangeRate(undefined);
       setItem('');
       setCategoryId(spendableCategories[0]?.id || categories[0]?.id || '');
+      setCategoryManuallySelected(false);
       setShowMoreCategories(false);
       setPayerId(defaultPayerId || (activeMember ? activeMember.id : members[0]?.id || ''));
       setIsShared(defaultShared !== undefined ? defaultShared : perspective === 'household');
       setDate(getTodayDateString());
       setRemarks('');
-      setShowDateAndNotes(false);
+      setTags([]);
+      setNewTagInput('');
+      setSelectedGoalId('');
       setErrorMessage(null);
       setIsSubmitting(false);
-
-      // Auto-focus amount
-      setTimeout(() => {
-        amountInputRef.current?.focus();
-      }, 50);
     }
   }, [isOpen, defaultPayerId, defaultShared, activeMember, perspective, categories, spendableCategories, members]);
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
-  const quickTags = getQuickTagsForCategory(selectedCategory?.name);
+
+  // Calculate currency conversion
+  const selectedCurrency = useMemo(
+    () => SUPPORTED_CURRENCIES.find((c) => c.code === currencyCode) || SUPPORTED_CURRENCIES[0],
+    [currencyCode]
+  );
+
+  const fxConversion = useMemo(() => {
+    if (currencyCode === 'SGD') {
+      return { amountInSGD: amount, exchangeRate: 1 };
+    }
+    return convertToSGD(amount, currencyCode, customExchangeRate);
+  }, [amount, currencyCode, customExchangeRate]);
+
+  // Quick Tags: recent tags from localStorage + defaults for this category
+  const quickTags = useMemo(() => {
+    const catNameLower = selectedCategory?.name?.trim().toLowerCase() || '';
+    const catDefaults = DEFAULT_QUICK_TAGS_BY_CATEGORY[catNameLower] || GLOBAL_DEFAULT_QUICK_TAGS;
+    const stored = getStoredRecentTags();
+    const catRecent = selectedCategory ? stored[selectedCategory.id] || [] : [];
+    // Combine recent first, then defaults, deduplicated
+    const combined = [...catRecent, ...catDefaults];
+    return Array.from(new Set(combined)).slice(0, 7);
+  }, [selectedCategory]);
+
   const visibleCategories = showMoreCategories
     ? categories
     : spendableCategories.length > 0
     ? spendableCategories
     : categories;
 
+  // Auto-detect category from description/tag text if user hasn't explicitly chosen one
+  const handleItemTextChange = (text: string) => {
+    setItem(text);
+    if (!categoryManuallySelected) {
+      const lower = text.toLowerCase();
+      for (const map of KEYWORD_CATEGORY_MAP) {
+        if (map.keywords.some((kw) => lower.includes(kw))) {
+          const match = categories.find((c) =>
+            c.name.toLowerCase().includes(map.categoryKey)
+          );
+          if (match) {
+            setCategoryId(match.id);
+            break;
+          }
+        }
+      }
+    }
+  };
+
+  const handleSelectQuickTag = (tag: string) => {
+    handleItemTextChange(tag);
+  };
+
+  // Add tag
+  const handleAddTag = (rawTag: string) => {
+    const trimmed = rawTag.trim();
+    if (!trimmed) return;
+    const formatted = trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+    if (!tags.includes(formatted)) {
+      setTags([...tags, formatted]);
+    }
+    setNewTagInput('');
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter((t) => t !== tagToRemove));
+  };
+
+  // Date shortcut calculations
+  const todayStr = useMemo(() => getTodayDateString(), []);
+  const yesterdayStr = useMemo(() => {
+    const d = getSingaporeDate();
+    d.setDate(d.getDate() - 1);
+    return formatISODate(d);
+  }, []);
+  const twoDaysAgoStr = useMemo(() => {
+    const d = getSingaporeDate();
+    d.setDate(d.getDate() - 2);
+    return formatISODate(d);
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const numericAmount = parseFloat(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      setErrorMessage('Please enter a valid expense amount greater than S$0.00');
-      amountInputRef.current?.focus();
+    if (isNaN(amount) || amount <= 0) {
+      setErrorMessage('Please enter a valid expense amount greater than 0');
       return;
     }
 
@@ -147,18 +320,33 @@ export function QuickAddExpenseModal({
 
     try {
       setIsSubmitting(true);
+
+      const finalAmountInSGD = currencyCode === 'SGD' ? amount : fxConversion.amountInSGD;
+      const finalExchangeRate = currencyCode === 'SGD' ? 1 : fxConversion.exchangeRate;
+
       const input: CreateExpenseInput = {
         payer_id: payerId,
         category_id: categoryId || null,
-        date: date || getTodayDateString(),
+        date: date || todayStr,
         item: item.trim(),
-        amount: numericAmount,
+        amount: finalAmountInSGD,
         remarks: remarks.trim() ? remarks.trim() : null,
         is_shared: isShared,
         split_ratio: isShared ? 0.5 : 0.0,
+        tags: tags.length > 0 ? tags : undefined,
+        goal_id: selectedGoalId || null,
+        original_amount: currencyCode !== 'SGD' ? amount : null,
+        original_currency: currencyCode,
+        exchange_rate: currencyCode !== 'SGD' ? finalExchangeRate : 1,
       };
 
       const created = await financeService.addExpense(input);
+
+      // Persist recent tag for the category
+      if (categoryId && item.trim()) {
+        storeRecentTag(categoryId, item.trim());
+      }
+
       onExpenseAdded?.(created);
       onClose();
     } catch (err: unknown) {
@@ -168,14 +356,12 @@ export function QuickAddExpenseModal({
     }
   };
 
-  const isToday = date === getTodayDateString();
-
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
       <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
-        <div className="p-5 sm:p-6 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
+        <div className="p-4 sm:p-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
               <Plus className="h-4.5 w-4.5 stroke-[2.5]" />
             </div>
@@ -195,7 +381,7 @@ export function QuickAddExpenseModal({
 
         {/* Form wrapping scrollable content and pinned footer */}
         <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4">
             {/* Error Alert */}
             {errorMessage && (
               <div className="rounded-xl bg-rose-50 p-2.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
@@ -203,249 +389,404 @@ export function QuickAddExpenseModal({
               </div>
             )}
 
-            {/* Large Amount Input */}
-          <div>
-            <label
-              htmlFor="expense-amount"
-              className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
-            >
-              Amount (S$)
-            </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-4 text-2xl font-bold text-emerald-600 dark:text-emerald-400 select-none">
-                S$
-              </span>
-              <input
-                ref={amountInputRef}
-                id="expense-amount"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50/50 py-2.5 pl-14 sm:pl-16 pr-4 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 transition-colors placeholder:text-slate-300 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800/50 dark:text-white dark:placeholder:text-slate-600 dark:focus:border-emerald-400 dark:focus:bg-slate-800"
-              />
-            </div>
-          </div>
-
-          {/* Category Chips */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Category
-              </span>
-              {allocationCategories.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowMoreCategories((prev) => !prev)}
-                  className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
+            {/* Amount Input Header with Inline Currency Selector */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label
+                  htmlFor="expense-amount"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                 >
-                  {showMoreCategories ? 'Spendable only' : `+ More (${allocationCategories.length})`}
-                </button>
+                  Amount
+                </label>
+
+                {/* Inline Currency Selector Dropdown Pill */}
+                <div className="relative">
+                  <select
+                    aria-label="Select currency"
+                    value={currencyCode}
+                    onChange={(e) => {
+                      setCurrencyCode(e.target.value);
+                      setCustomExchangeRate(undefined);
+                    }}
+                    className="rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold px-2.5 py-1 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {SUPPORTED_CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.code} ({c.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* ATM / Cashier Cents-First Amount Input */}
+              <CentsFirstAmountInput
+                id="expense-amount"
+                value={amount}
+                onChange={(newAmt) => setAmount(newAmt)}
+                currencySymbol={selectedCurrency.symbol}
+                currencyCode={currencyCode}
+                autoFocus
+              />
+
+              {/* Foreign Currency Live Conversion Preview & Editable Rate */}
+              {currencyCode !== 'SGD' && (
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50/80 p-2.5 text-xs text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <span>Converted:</span>
+                    <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">
+                      ≈ S${fxConversion.amountInSGD.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">1 SGD =</span>
+                    <input
+                      type="number"
+                      step="any"
+                      aria-label="Exchange rate"
+                      value={customExchangeRate ?? fxConversion.exchangeRate}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setCustomExchangeRate(isNaN(val) || val <= 0 ? undefined : val);
+                      }}
+                      className="w-20 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 px-2 py-0.5 text-xs font-semibold text-center text-slate-800 dark:text-slate-100"
+                    />
+                    <span className="text-[10px] font-semibold">{currencyCode}</span>
+                  </div>
+                </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-1.5" aria-label="Category Selection">
-              {visibleCategories.map((cat) => {
-                const isSelected = categoryId === cat.id;
-                return (
+
+            {/* Category Chips */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Category
+                </span>
+                {allocationCategories.length > 0 && (
                   <button
-                    key={cat.id}
                     type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => setCategoryId(cat.id)}
-                    className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500 font-semibold ring-2 ring-emerald-600/30'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 font-medium'
-                    }`}
+                    onClick={() => setShowMoreCategories((prev) => !prev)}
+                    className="text-[11px] font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 cursor-pointer"
                   >
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: isSelected ? '#ffffff' : cat.color || '#10B981' }}
-                    />
-                    <span>{cat.name}</span>
+                    {showMoreCategories ? 'Spendable only' : `+ More (${allocationCategories.length})`}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Quick Tags + Description */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label
-                htmlFor="expense-item"
-                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-              >
-                Item / Description
-              </label>
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
-                <Sparkles className="h-3 w-3 text-emerald-500" />
-                Tap tag or type
-              </span>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5 mb-2" aria-label="Quick Tags">
-              {quickTags.map((tag) => {
-                const isActiveTag = item.toLowerCase() === tag.toLowerCase();
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setItem(tag)}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
-                      isActiveTag
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700 font-semibold'
-                        : 'bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
-            </div>
-
-            <input
-              id="expense-item"
-              type="text"
-              placeholder="e.g., FairPrice Groceries, Grab, Lunch"
-              value={item}
-              onChange={(e) => setItem(e.target.value)}
-              required
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-emerald-400"
-            />
-          </div>
-
-          {/* Minimal Inline Payer & Shared Toggle */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-800/40">
-            {/* Payer Toggle */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">
-                Payer:
-              </span>
-              <div className="flex gap-1" aria-label="Payer Selection">
-                {members.map((member) => {
-                  const isSelected = payerId === member.id;
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5" aria-label="Category Selection">
+                {visibleCategories.map((cat) => {
+                  const isSelected = categoryId === cat.id;
                   return (
                     <button
-                      key={member.id}
+                      key={cat.id}
                       type="button"
                       aria-pressed={isSelected}
-                      onClick={() => setPayerId(member.id)}
-                      className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-all cursor-pointer ${
+                      onClick={() => {
+                        setCategoryId(cat.id);
+                        setCategoryManuallySelected(true);
+                      }}
+                      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                          ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500 font-semibold ring-2 ring-emerald-600/30'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 font-medium'
                       }`}
                     >
-                      <span>{member.avatar_url || '👤'}</span>
-                      <span>{member.display_name}</span>
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: isSelected ? '#ffffff' : cat.color || '#10B981' }}
+                      />
+                      <span>{cat.name}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Split Toggle */}
-            <div className="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200/60 dark:border-slate-700/60">
+            {/* Quick Tags + Description */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label
+                  htmlFor="expense-item"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                >
+                  Item / Description
+                </label>
+                <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                  <Sparkles className="h-3 w-3 text-emerald-500" />
+                  Tap tag or type
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 mb-2" aria-label="Quick Tags">
+                {quickTags.map((tag) => {
+                  const isActiveTag = item.toLowerCase() === tag.toLowerCase();
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleSelectQuickTag(tag)}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                        isActiveTag
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700 font-semibold'
+                          : 'bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <input
+                id="expense-item"
+                type="text"
+                placeholder="e.g., FairPrice Groceries, Grab, Lunch"
+                value={item}
+                onChange={(e) => handleItemTextChange(e.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-emerald-400"
+              />
+            </div>
+
+            {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
+            <div className="space-y-2 rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-800/40">
+              {/* Payer Toggle */}
+              <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  Payer:
+                </span>
+                <div className="flex gap-1" aria-label="Payer Selection">
+                  {members.map((member) => {
+                    const isSelected = payerId === member.id;
+                    return (
+                      <button
+                        key={member.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => setPayerId(member.id)}
+                        className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                        }`}
+                      >
+                        <span>{member.avatar_url || '👤'}</span>
+                        <span>{member.display_name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2-Button Segmented Personal / Shared Toggle */}
+              <div>
+                {/* Hidden input for backwards-compatibility with test queries */}
+                <input
+                  id="expense-shared-toggle"
+                  type="checkbox"
+                  aria-label="Shared"
+                  checked={isShared}
+                  onChange={(e) => setIsShared(e.target.checked)}
+                  className="sr-only"
+                />
+
+                <div
+                  role="group"
+                  aria-label="Expense Split Type"
+                  className="flex rounded-xl bg-slate-200/70 dark:bg-slate-900/60 p-1 border border-slate-200/80 dark:border-slate-700/80"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={!isShared}
+                    onClick={() => setIsShared(false)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      !isShared
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <span>👤</span>
+                    <span>Personal</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={isShared}
+                    onClick={() => setIsShared(true)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      isShared
+                        ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <span>👥</span>
+                    <span>Shared (50/50)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 1-Tap Date Chips + Compact Date Picker */}
+            <div>
               <label
-                htmlFor="expense-shared-toggle"
-                className="text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer"
+                htmlFor="expense-date"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
               >
-                {isShared ? 'Shared (50/50)' : 'Personal'}
+                Date
+              </label>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  aria-pressed={date === todayStr}
+                  onClick={() => setDate(todayStr)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    date === todayStr
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={date === yesterdayStr}
+                  onClick={() => setDate(yesterdayStr)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    date === yesterdayStr
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  Yesterday
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={date === twoDaysAgoStr}
+                  onClick={() => setDate(twoDaysAgoStr)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    date === twoDaysAgoStr
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  2d ago
+                </button>
+                <div className="relative flex items-center">
+                  <input
+                    id="expense-date"
+                    type="date"
+                    aria-label="Custom Date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dedicated Inline Remarks / Notes */}
+            <div>
+              <label
+                htmlFor="expense-remarks"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+              >
+                Remarks / Notes
               </label>
               <input
-                id="expense-shared-toggle"
-                type="checkbox"
-                aria-label="Shared"
-                checked={isShared}
-                onChange={(e) => setIsShared(e.target.checked)}
-                className="sr-only"
+                id="expense-remarks"
+                type="text"
+                placeholder="Optional notes or context..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
               />
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isShared}
-                onClick={() => setIsShared((prev) => !prev)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  isShared ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
-                }`}
+            </div>
+
+            {/* Tag Picker (#tags) */}
+            <div>
+              <label
+                htmlFor="expense-tag-input"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
               >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                    isShared ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* Compact Date & Notes Toggle */}
-          <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20 p-2.5">
-            <button
-              type="button"
-              onClick={() => setShowDateAndNotes((prev) => !prev)}
-              className="w-full flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {isToday ? 'Today' : date}
-                </span>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
-                <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate max-w-[180px]">
-                  <MessageSquarePlus className="h-3.5 w-3.5 shrink-0" />
-                  {remarks ? remarks : 'Add note / date'}
-                </span>
-              </span>
-              {showDateAndNotes ? (
-                <ChevronUp className="h-4 w-4 text-slate-400" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              )}
-            </button>
-
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 ${showDateAndNotes ? 'block' : 'sr-only'}`}>
-              <div>
-                <label
-                  htmlFor="expense-date"
-                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+                Tags
+              </label>
+              <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-semibold"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      aria-label={`Remove tag ${tag}`}
+                      className="text-emerald-500 hover:text-emerald-800 dark:hover:text-emerald-100 cursor-pointer ml-0.5"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex-1">
+                  <Hash className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    id="expense-tag-input"
+                    type="text"
+                    placeholder="e.g. VietnamTrip, Reimbursable"
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag(newTagInput);
+                      }
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleAddTag(newTagInput)}
+                  className="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 px-3 py-1.5 text-xs font-semibold cursor-pointer"
                 >
-                  Date
-                </label>
-                <input
-                  id="expense-date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
+                  + Tag
+                </button>
+              </div>
+            </div>
+
+            {/* Funded by Goal (Optional) */}
+            {activeGoals.length > 0 && (
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <label
+                    htmlFor="expense-goal"
+                    className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  >
+                    Funded by Goal (Optional)
+                  </label>
+                </div>
+                <select
+                  id="expense-goal"
+                  aria-label="Funded by Goal"
+                  value={selectedGoalId}
+                  onChange={(e) => setSelectedGoalId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="expense-remarks"
-                  className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
                 >
-                  Remarks / Notes
-                </label>
-                <input
-                  id="expense-remarks"
-                  type="text"
-                  placeholder="Optional..."
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
-                />
+                  <option value="">None (Standard Budget)</option>
+                  {activeGoals.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.emoji || '🎯'} {g.title} (S${g.saved_so_far.toLocaleString('en-SG')} saved)
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
+            )}
           </div>
-        </div>
 
-        {/* Submit Actions Footer */}
+          {/* Submit Actions Footer */}
           <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
             <button
               type="button"

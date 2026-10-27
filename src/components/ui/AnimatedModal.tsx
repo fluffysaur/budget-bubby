@@ -87,20 +87,20 @@ export function AnimatedModal({
           handleRequestClose();
         }
       }}
-      className={`fixed inset-0 z-50 flex ${
+      className={`fixed inset-0 z-50 flex overflow-x-hidden ${
         isDrawerOnMobile ? 'items-end sm:items-center' : 'items-center'
       } justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200 ${
         isClosing ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
       <div
-        className={`w-full ${maxWidth} ${
+        className={`w-full max-w-full sm:${maxWidth} ${
           isDrawerOnMobile
             ? `max-h-[92dvh] sm:max-h-[90dvh] rounded-t-3xl sm:rounded-2xl ${
                 isClosing ? 'animate-drawer-out sm:animate-modal-out' : 'animate-drawer-in sm:animate-modal-in'
               }`
             : `max-h-[90dvh] rounded-2xl ${isClosing ? 'animate-modal-out' : 'animate-modal-in'}`
-        } bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden transition-all ${className}`}
+        } bg-white dark:bg-slate-900 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden transition-all pb-[env(safe-area-inset-bottom,0px)] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {isDrawerOnMobile && (

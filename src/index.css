@@ -34,6 +34,22 @@
   --space-16: 64px;
 }
 
+/* Prevent viewport horizontal overflow & clipping on mobile devices */
+html,
+body,
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Safe area inset utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Global Interactive Cursor States */
 @layer base {
   button,
