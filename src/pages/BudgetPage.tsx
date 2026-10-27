@@ -24,7 +24,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button } from '../components/ui';
+import { PageHeader, Button, StatCard } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -36,7 +36,6 @@ import { MonthPicker } from '../components/budget/MonthPicker';
 import { BudgetWaterfall } from '../components/budget/BudgetWaterfall';
 import { CategoryProgressList } from '../components/budget/CategoryProgressList';
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
-import { ManageCategoriesModal } from '../components/categories/ManageCategoriesModal';
 import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
 import { CategoryLimitWarningBanner } from '../components/budget/CategoryLimitWarningBanner';
 import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCard';
@@ -66,7 +65,6 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
 
   // Modal State
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
-  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState<boolean>(false);
   const [editingProfileMemberId, setEditingProfileMemberId] = useState<string | null>(null);
 
   // Determine perspective display name
@@ -107,27 +105,23 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
     try {
       setIsLoading(true);
 
-      if (perspective === 'household') {
-        // Combined household view: fetch budgets for both members and combine
-        const m1 = members[0];
-        const m2 = members[1];
+      if (perspective === 'household' && members.length > 0) {
+        // Combined household view: fetch budgets for all members and combine dynamically
+        const memberBudgets = await Promise.all(
+          members.map((m) => financeService.getMonthlyBudget(selectedMonth, m.id))
+        );
 
-        if (m1 && m2) {
-          const [b1, b2] = await Promise.all([
-            financeService.getMonthlyBudget(selectedMonth, m1.id),
-            financeService.getMonthlyBudget(selectedMonth, m2.id),
-          ]);
-
-          const combinedGross = (b1.budget.gross_salary || 0) + (b2.budget.gross_salary || 0);
-          const combinedBonus = (b1.budget.bonus || 0) + (b2.budget.bonus || 0);
-          const combinedCpf = (b1.budget.cpf_deduction || 0) + (b2.budget.cpf_deduction || 0);
-          const combinedTaxes = (b1.budget.taxes_deduction || 0) + (b2.budget.taxes_deduction || 0);
-          const combinedInsurance = (b1.budget.insurance_deduction || 0) + (b2.budget.insurance_deduction || 0);
-          const combinedAfter = (b1.budget.after_deductions || 0) + (b2.budget.after_deductions || 0);
+        if (memberBudgets.length > 0) {
+          const combinedGross = memberBudgets.reduce((s, b) => s + (b.budget.gross_salary || 0), 0);
+          const combinedBonus = memberBudgets.reduce((s, b) => s + (b.budget.bonus || 0), 0);
+          const combinedCpf = memberBudgets.reduce((s, b) => s + (b.budget.cpf_deduction || 0), 0);
+          const combinedTaxes = memberBudgets.reduce((s, b) => s + (b.budget.taxes_deduction || 0), 0);
+          const combinedInsurance = memberBudgets.reduce((s, b) => s + (b.budget.insurance_deduction || 0), 0);
+          const combinedAfter = memberBudgets.reduce((s, b) => s + (b.budget.after_deductions || 0), 0);
 
           const combinedBudget: MonthlyBudget = {
             id: `mb-combined-${selectedMonth}`,
-            household_id: b1.budget.household_id,
+            household_id: memberBudgets[0].budget.household_id,
             owner_id: 'household',
             month: selectedMonth,
             gross_salary: combinedGross,
@@ -137,10 +131,10 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
             insurance_deduction: Math.round(combinedInsurance * 100) / 100,
             after_deductions: Math.round(combinedAfter * 100) / 100,
             notes: 'Combined household monthly budget',
-            is_locked: b1.budget.is_locked && b2.budget.is_locked,
+            is_locked: memberBudgets.every((b) => b.budget.is_locked),
           };
 
-          // Merge categories from both members
+          // Merge categories across all members
           const categoryMap = new Map<string, MonthlyBudgetCategoryDetail>();
 
           const mergeCats = (catList: MonthlyBudgetCategoryDetail[]) => {
@@ -173,8 +167,9 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
             }
           };
 
-          mergeCats(b1.categories);
-          mergeCats(b2.categories);
+          for (const mb of memberBudgets) {
+            mergeCats(mb.categories);
+          }
 
           const combinedCategories = Array.from(categoryMap.values());
           const totalSpent = Math.round(
@@ -326,46 +321,21 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
   const spendableRemaining = spendableAllocated - spendableSpent;
 
   return (
-    <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+    <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
       {/* Top Header Section */}
       <PageHeader
         title="Monthly Budget"
-        subtitle="Monthly allocations, CPF deduction waterfall, and category meters"
         actions={
-          <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center flex-wrap gap-2">
             <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
 
             <Button
-              variant="outline"
-              leftIcon={<Tag className="h-4 w-4 stroke-[2.2] text-slate-500" />}
-              onClick={() => setIsManageCategoriesOpen(true)}
+              variant="secondary"
+              leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
+              onClick={() => handleOpenEditor()}
             >
-              Manage Categories
+              Edit Budget
             </Button>
-
-            {perspective === 'household' && members.length > 1 ? (
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-                {members.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => handleOpenEditor(m.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 shadow-2xs transition-all cursor-pointer"
-                  >
-                    <Settings className="h-3 w-3 text-slate-400" />
-                    <span>Edit {m.display_name}&apos;s Budget</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <Button
-                variant="secondary"
-                leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
-                onClick={() => handleOpenEditor()}
-              >
-                Edit Budget
-              </Button>
-            )}
           </div>
         }
       />
@@ -374,83 +344,42 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
       <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />
 
       {/* High-Level Financial Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Gross Salary */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Gross Pay
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2">
-            <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              {formatSGD(totalGross)}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-            Base salary + bonus
-          </p>
-        </div>
+        <StatCard
+          title="Gross Pay"
+          value={formatSGD(totalGross)}
+          tooltip="Base salary plus any monthly bonus before deductions."
+          icon={<DollarSign className="h-4 w-4" />}
+          iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+        />
 
         {/* Card 2: Total Deductions */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Total Deductions
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
-              <TrendingDown className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2">
-            <span className="text-2xl font-extrabold tracking-tight text-rose-600 dark:text-rose-400">
-              -{formatSGD(totalDeductions)}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-            CPF + Taxes + Insurance
-          </p>
-        </div>
+        <StatCard
+          title="Deductions"
+          value={<span className="text-rose-600 dark:text-rose-400">-{formatSGD(totalDeductions)}</span>}
+          tooltip="Employee CPF contribution (20%) + amortized monthly Taxes & Insurance."
+          icon={<TrendingDown className="h-4 w-4" />}
+          iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+        />
 
         {/* Card 3: Disposable Pool */}
-        <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/20 p-5 shadow-xs transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-              Disposable Pool
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-              <Wallet className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2">
-            <span className="text-2xl font-extrabold tracking-tight text-emerald-900 dark:text-emerald-100">
-              {formatSGD(disposablePool)}
-            </span>
-          </div>
-          <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">
-            After-deductions take-home
-          </p>
-        </div>
+        <StatCard
+          title="Disposable Pool"
+          value={<span className="text-emerald-900 dark:text-emerald-100">{formatSGD(disposablePool)}</span>}
+          tooltip="Net take-home pay after CPF, taxes, and insurance available for category allocations."
+          icon={<Wallet className="h-4 w-4 text-white" />}
+          iconBg="bg-emerald-600"
+          className="border-2 border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/20"
+        />
 
         {/* Card 4: Actual Spent & Remaining */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Spent / Remaining
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-              <Receipt className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              {formatSGD(totalSpent)}
-            </span>
+        <StatCard
+          title="Spent"
+          value={formatSGD(totalSpent)}
+          subtitle={
             <span
-              className={`text-xs font-bold ${
+              className={`font-bold ${
                 totalRemaining < 0
                   ? 'text-rose-600 dark:text-rose-400'
                   : 'text-emerald-600 dark:text-emerald-400'
@@ -459,16 +388,15 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
               {totalRemaining < 0 ? 'Over ' : 'Left '}
               {formatSGD(Math.abs(totalRemaining))}
             </span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-            Across {budgetDetail?.categories.length || 0} active categories
-          </p>
-        </div>
+          }
+          icon={<Receipt className="h-4 w-4" />}
+          iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+        />
       </div>
 
       {/* Loading Indicator */}
       {isLoading ? (
-        <div className="flex items-center justify-center p-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="flex items-center justify-center p-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex flex-col items-center gap-3 text-slate-500">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
             <span className="text-sm font-medium">Loading budget details...</span>
@@ -479,39 +407,26 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                  Category Spending Meters
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Daily spendable categories ({formatSGD(spendableRemaining)} remaining of {formatSGD(spendableAllocated)} cap)
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsManageCategoriesOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-colors cursor-pointer"
-              >
-                <Tag className="h-3.5 w-3.5 text-slate-400" />
-                <span>Manage Categories</span>
-              </button>
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                Category Spending Meters
+              </h2>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {formatSGD(spendableRemaining)} left of {formatSGD(spendableAllocated)} cap
+              </span>
             </div>
 
             {categories.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-                  <Tag className="h-6 w-6" />
+              <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                  <Tag className="h-5 w-5" />
                 </div>
-                <h3 className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
+                <h3 className="mt-2.5 text-sm font-bold text-slate-800 dark:text-slate-200">
                   No Categories Configured
                 </h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Your budget has no categories configured yet. You can restore the recommended preset categories or create custom categories.
-                </p>
-                <div className="mt-4 flex items-center justify-center gap-3">
+                <div className="mt-3 flex items-center justify-center gap-2.5">
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={async () => {
                       await financeService.seedDefaultCategories();
                       await handleCategoriesChanged();
@@ -521,7 +436,8 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
                   </Button>
                   <Button
                     variant="primary"
-                    onClick={() => setIsManageCategoriesOpen(true)}
+                    size="sm"
+                    onClick={() => handleOpenEditor()}
                   >
                     + Add Category
                   </Button>
@@ -545,7 +461,6 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           {allocationCats.length > 0 && (
             <CollapsibleSection
               title="Wealth & Fixed Allocations"
-              subtitle="Investments, Long-Term Savings & Tithing safely ring-fenced from daily spending"
               badge={`${formatSGD(allocationCats.reduce((s, c) => s + c.allocated_amount, 0))}/mo`}
               icon={<PiggyBank className="h-4 w-4" />}
               defaultOpen={false}
@@ -557,7 +472,6 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           {/* Collapsible: Budget Waterfall Breakdown */}
           <CollapsibleSection
             title="Monthly CPF & Take-Home Flow"
-            subtitle="From gross salary down to disposable category allocations"
             badge={perspectiveDisplayName}
             icon={<DollarSign className="h-4 w-4" />}
             defaultOpen={true}
@@ -579,7 +493,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
         </>
       )}
 
-      {/* Base Profile Editor Modal */}
+      {/* Unified Budget & Categories Editor Modal */}
       {activeProfile && (
         <BaseProfileEditorModal
           isOpen={isEditorOpen}
@@ -597,16 +511,10 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           }
           selectedMonth={selectedMonth}
           onSaveSuccess={handleProfileSaved}
-          onManageCategories={() => setIsManageCategoriesOpen(true)}
+          onCategoriesChanged={handleCategoriesChanged}
+          onSelectMember={(memberId) => setEditingProfileMemberId(memberId)}
         />
       )}
-
-      {/* Manage Categories Modal */}
-      <ManageCategoriesModal
-        isOpen={isManageCategoriesOpen}
-        onClose={() => setIsManageCategoriesOpen(false)}
-        onCategoriesChanged={handleCategoriesChanged}
-      />
     </div>
   );
 }

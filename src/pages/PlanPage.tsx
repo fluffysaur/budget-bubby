@@ -46,10 +46,7 @@ export function PlanPage({ initialTab = 'goals', className = '' }: PlanPageProps
   return (
     <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
       {/* Page Header */}
-      <PageHeader
-        title="Plan"
-        subtitle="Savings milestones, mortgage payoff schedule, recurring policies, and bonus allocations"
-      />
+      <PageHeader title="Plan" />
 
       {/* Segmented Sub-Tab Bar */}
       <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800/80 rounded-2xl overflow-x-auto">

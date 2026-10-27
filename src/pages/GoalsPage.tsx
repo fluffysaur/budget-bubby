@@ -172,7 +172,6 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
       {!embedded ? (
         <PageHeader
           title="Savings Goals & Milestones"
-          subtitle="Track joint wedding, HDB down payment, renovation, and couple aspirations with real-time monthly pacing"
           actions={
             <Button
               variant="primary"
@@ -185,10 +184,7 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
           }
         />
       ) : (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Savings Goals &amp; Milestones — track wedding, HDB down payment, and pacing
-          </p>
+        <div className="flex items-center justify-end">
           <Button
             variant="primary"
             size="sm"
@@ -210,32 +206,32 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
       )}
 
       {/* 4 Summary Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Total Target */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Target</span>
             <div className="rounded-xl bg-blue-50 p-2 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
               <Target className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {formatSGD(totalTarget)}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Across {perspectiveGoals.length} milestone {perspectiveGoals.length === 1 ? 'goal' : 'goals'}
+            Across {perspectiveGoals.length} {perspectiveGoals.length === 1 ? 'goal' : 'goals'}
           </div>
         </div>
 
         {/* Card 2: Total Saved */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Saved</span>
             <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
               <PiggyBank className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
+          <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
             {formatSGD(totalSaved)}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -244,14 +240,14 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
         </div>
 
         {/* Card 3: Overall Progress */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-semibold uppercase tracking-wider">Overall Progress</span>
             <div className="rounded-xl bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
               <Sparkles className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {overallProgress}%
           </div>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -263,18 +259,15 @@ export function GoalsPage({ className = '', embedded = false }: GoalsPageProps) 
         </div>
 
         {/* Card 4: Total Monthly Contributions */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-semibold uppercase tracking-wider">Monthly Savings Pace</span>
             <div className="rounded-xl bg-purple-50 p-2 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
               <Calendar className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {formatSGD(totalMonthlyContributions)}/mo
-          </div>
-          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Active monthly savings budget
           </div>
         </div>
       </div>

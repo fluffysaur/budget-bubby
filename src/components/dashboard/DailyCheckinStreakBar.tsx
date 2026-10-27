@@ -16,6 +16,7 @@ import { useHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
 import { getTodayDateString, formatISODate } from '../../lib/dateUtils';
 import { playChaChingSound } from '../../lib/soundEffects';
+import { TooltipPopover } from '../ui/TooltipPopover';
 import type { DailyCheckin, StreakSummary } from '../../types/finance';
 
 export interface DailyCheckinStreakBarProps {
@@ -161,7 +162,7 @@ export function DailyCheckinStreakBar({
   return (
     <div
       data-testid="daily-checkin-streak-bar"
-      className={`relative overflow-hidden rounded-3xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-rose-500/10 dark:from-amber-950/20 dark:via-slate-900 dark:to-rose-950/20 p-4 sm:p-5 shadow-xs transition-all ${className}`}
+      className={`relative overflow-hidden rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-rose-500/10 dark:from-amber-950/20 dark:via-slate-900 dark:to-rose-950/20 p-4 sm:p-5 shadow-xs transition-all ${className}`}
     >
       <div className="flex flex-col gap-4">
         {/* Top Header Row: Streak Counters & Action / Checked In status */}
@@ -237,13 +238,17 @@ export function DailyCheckinStreakBar({
 
         {/* 7-Day Mini Calendar Dots */}
         <div className="pt-2 border-t border-amber-200/50 dark:border-slate-800/80">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               Last 7 Days
             </span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              Log an expense or tap "No Spend" to keep your streak!
-            </span>
+            <TooltipPopover
+              title="Daily Check-In Streak"
+              ariaLabel="Streak rules"
+              align="left"
+            >
+              Log an expense or tap &ldquo;No Spend Today&rdquo; each day to keep your personal and couple streak alive!
+            </TooltipPopover>
           </div>
 
           <div

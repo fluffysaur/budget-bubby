@@ -17,16 +17,11 @@ export function PerspectiveBanner({ className = '' }: PerspectiveBannerProps) {
 
   const isHousehold = perspective === 'household';
 
-  // Find partner display names
-  const yiJiaMember = members.find((m) =>
-    m.display_name.toLowerCase().includes('yi jia')
-  );
-  const rachelMember = members.find((m) =>
-    m.display_name.toLowerCase().includes('rachel')
-  );
-
-  const yiJiaName = yiJiaMember ? yiJiaMember.display_name : 'Yi Jia';
-  const rachelName = rachelMember ? rachelMember.display_name : 'Rachel';
+  // Build household members label dynamically
+  const membersLabel =
+    members && members.length > 0
+      ? members.map((m) => m.display_name).join(' & ')
+      : 'Yi Jia & Rachel';
 
   if (isHousehold) {
     return (
@@ -45,7 +40,7 @@ export function PerspectiveBanner({ className = '' }: PerspectiveBannerProps) {
                 Combined
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                ({yiJiaName} &amp; {rachelName})
+                ({membersLabel})
               </span>
               <span className="hidden md:inline text-xs text-slate-500 dark:text-slate-400">
                 — Pooled accounts, combined cash flow &amp; 50/50 shared splits

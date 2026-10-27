@@ -193,7 +193,6 @@ export function LoansPage({ className = '', embedded = false }: LoansPageProps) 
       {!embedded && (
         <PageHeader
           title="Loans & Debt Freedom"
-          subtitle="Track mortgage amortization schedules, simulate early prepayment strategies, and plan your path to zero debt."
           actions={
             displayedLoans.length > 1 ? (
               <div

@@ -130,7 +130,7 @@ describe('Layout Components', () => {
   });
 
   describe('AppHeader', () => {
-    it('renders perspective pills, currency badge, mock status, and theme toggle', async () => {
+    it('renders unified perspective dropdown, currency badge, mock status, and theme toggle', async () => {
       await act(async () => {
         render(
           <HouseholdProvider>
@@ -139,20 +139,29 @@ describe('Layout Components', () => {
         );
       });
 
-      // Perspective buttons exist
-      expect(screen.getByRole('button', { name: /combined/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /yi jia/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /rachel/i })).toBeInTheDocument();
+      // Perspective dropdown trigger exists
+      const dropdownTrigger = screen.getByRole('button', { name: /select financial perspective/i });
+      expect(dropdownTrigger).toBeInTheDocument();
+      expect(dropdownTrigger).toHaveTextContent(/combined/i);
 
       // Demo status badge exists
       expect(screen.getByText('Demo Mode')).toBeInTheDocument();
 
-      // Clicking perspective switches it
-      const rachelButton = screen.getByRole('button', { name: /rachel/i });
+      // Open perspective dropdown and select Rachel
       await act(async () => {
-        fireEvent.click(rachelButton);
+        fireEvent.click(dropdownTrigger);
       });
-      expect(rachelButton).toHaveAttribute('aria-pressed', 'true');
+
+      expect(screen.getByRole('option', { name: /combined/i })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: /yi jia/i })).toBeInTheDocument();
+      const rachelOption = screen.getByRole('option', { name: /rachel/i });
+      expect(rachelOption).toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(rachelOption);
+      });
+
+      expect(dropdownTrigger).toHaveTextContent(/rachel/i);
 
       // Theme toggle button
       const themeBtn = screen.getByRole('button', { name: /toggle theme/i });

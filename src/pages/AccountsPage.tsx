@@ -136,31 +136,32 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
       {/* Page Header */}
       <PageHeader
         title="Accounts & Net Worth"
-        subtitle="Cash, CPF, investment portfolio growth center & credit card statement tracker"
         actions={
-          activeTab === 'accounts' ? (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                aria-label="Add Account"
-                leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                Add Account
-              </Button>
-              <Button
-                variant="primary"
-                aria-label="Update Balances"
-                leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
-                onClick={() => {
-                  setSelectedAccount(null);
-                  setIsUpdateModalOpen(true);
-                }}
-              >
-                Update Balances
-              </Button>
-            </div>
-          ) : undefined
+          <div className="flex items-center gap-2 min-h-[38px]">
+            {activeTab === 'accounts' && (
+              <>
+                <Button
+                  variant="secondary"
+                  aria-label="Add Account"
+                  leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  Add Account
+                </Button>
+                <Button
+                  variant="primary"
+                  aria-label="Update Balances"
+                  leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
+                  onClick={() => {
+                    setSelectedAccount(null);
+                    setIsUpdateModalOpen(true);
+                  }}
+                >
+                  Update Balances
+                </Button>
+              </>
+            )}
+          </div>
         }
       />
 
@@ -206,12 +207,12 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
       ) : (
         <>
           {/* High-Level Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {/* Card 1: True Net Worth */}
             <StatCard
               title="True Net Worth"
               value={formatSGD(trueNetWorth)}
-              subtitle="Total Assets - Outstanding Loans"
+              tooltip="Calculated as Total Assets minus Outstanding Loans."
               icon={<TrendingUp className="h-4 w-4 text-white" />}
               iconBg="bg-indigo-600"
               className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"
@@ -221,7 +222,7 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
             <StatCard
               title="Total Assets"
               value={formatSGD(totalAssets)}
-              subtitle={`${accounts.length} account${accounts.length === 1 ? '' : 's'} in view`}
+              subtitle={`${accounts.length} account${accounts.length === 1 ? '' : 's'}`}
               icon={<Wallet className="h-4 w-4" />}
               iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
             />
@@ -230,7 +231,7 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
             <StatCard
               title="Total Liabilities / Loans"
               value={formatSGD(totalLiabilities)}
-              subtitle={`${loans.length} active mortgage / loan${loans.length === 1 ? '' : 's'}`}
+              subtitle={`${loans.length} active loan${loans.length === 1 ? '' : 's'}`}
               icon={<CreditCard className="h-4 w-4" />}
               iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
             />
@@ -238,7 +239,7 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
 
           {/* Loading Indicator */}
           {isLoading ? (
-            <div className="flex items-center justify-center p-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div className="flex items-center justify-center p-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
               <div className="flex flex-col items-center gap-3 text-slate-500">
                 <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
                 <span className="text-sm font-medium">Loading account balances &amp; net worth...</span>

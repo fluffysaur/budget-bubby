@@ -7,6 +7,7 @@
 
 import type { ComponentType } from "react";
 import { LayoutDashboard, PieChart, Receipt, Landmark, Compass, Wallet, Heart } from "lucide-react";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
 
 export interface NavItem {
     id: string;
@@ -56,6 +57,13 @@ export interface DesktopSidebarProps {
 }
 
 export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className = "" }: DesktopSidebarProps) {
+    const household = useOptionalHousehold();
+    const members = household?.members || [];
+    const subtitleText =
+        members.length > 0
+            ? members.map((m) => m.display_name).join(" & ")
+            : "Household Finance";
+
     const renderNavItem = (item: NavItem) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -96,7 +104,9 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
                         <span>Budget Bubby</span>
                         <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500" />
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Yi Jia &amp; Rachel</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[140px]">
+                        {subtitleText}
+                    </span>
                 </div>
             </div>
 

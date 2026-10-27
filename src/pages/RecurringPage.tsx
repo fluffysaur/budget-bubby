@@ -213,7 +213,6 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
       {!embedded ? (
         <PageHeader
           title="Recurring Policies & Taxes"
-          subtitle="Track insurance coverage, IRAS tax schedules, and recurring household obligations"
           actions={
             <>
               <Button
@@ -233,10 +232,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
           }
         />
       ) : (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Recurring Policies &amp; Taxes — insurance coverage, IRAS tax schedules, and obligations
-          </p>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
@@ -266,9 +262,9 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
       )}
 
       {/* 4 Summary Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1: Total Annual Outflow */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Total Annual Outflow
@@ -277,16 +273,16 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             {formatSGD(totalAnnualOutflow)}
           </p>
           <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Across {inScopePolicies.length} tracked policies
+            {inScopePolicies.length} tracked policies
           </span>
         </div>
 
         {/* Metric 2: Monthly Amortized Outflow */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Monthly Amortized Outflow
@@ -295,17 +291,17 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
               <TrendingDown className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+          <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
             {formatSGD(monthlyAmortizedOutflow)}
             <span className="text-sm font-semibold text-slate-400 ml-1">/mo</span>
           </p>
           <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Monthly budget deduction impact
+            Monthly deduction impact
           </span>
         </div>
 
         {/* Metric 3: Upcoming Renewal */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Upcoming Renewal
@@ -318,12 +314,12 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
             {upcomingRenewalText}
           </p>
           <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Next scheduled payment obligation
+            Next scheduled payment
           </span>
         </div>
 
         {/* Metric 4: Heaviest Month */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">
               Heaviest Month
@@ -341,13 +337,13 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
             )}
           </p>
           <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Highest lump-sum cash demand
+            Highest lump-sum demand
           </span>
         </div>
       </div>
 
       {/* 12-Month Renewal Calendar */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
         <RenewalCalendar policies={inScopePolicies} />
       </div>
 

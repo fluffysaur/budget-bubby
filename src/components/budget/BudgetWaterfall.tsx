@@ -53,31 +53,26 @@ export function BudgetWaterfall({
 
   return (
     <div
-      className={`rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-7 shadow-xs space-y-6 transition-colors ${className}`}
+      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs space-y-5 transition-colors ${className}`}
     >
       {/* Waterfall Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Budget Waterfall Breakdown
-            </h2>
-            {perspectiveName && (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                {perspectiveName}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            From gross salary down to disposable category allocations
-          </p>
+      <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 dark:border-slate-800 pb-3.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+            Budget Waterfall Breakdown
+          </h2>
+          {perspectiveName && (
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+              {perspectiveName}
+            </span>
+          )}
         </div>
 
         {onEditProfile && (
           <button
             type="button"
             onClick={onEditProfile}
-            className="self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
           >
             <Settings className="h-3.5 w-3.5" />
             <span>Edit Budget</span>
@@ -86,23 +81,23 @@ export function BudgetWaterfall({
       </div>
 
       {/* Waterfall Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 relative">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
         {/* Step 1: Gross Salary */}
-        <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4 transition-all">
+        <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Step 1: Gross Pay
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              1. Gross Pay
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-              <DollarSign className="h-4 w-4" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+              <DollarSign className="h-3.5 w-3.5" />
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-1.5">
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               {formatSGD(totalGross)}
             </span>
           </div>
-          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+          <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
             <div className="flex justify-between">
               <span>Salary:</span>
               <span className="font-semibold text-slate-700 dark:text-slate-300">{formatSGD(grossSalary)}</span>
@@ -120,41 +115,41 @@ export function BudgetWaterfall({
         </div>
 
         {/* Step 2: Employee CPF Deduction (20%) */}
-        <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4 transition-all">
+        <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Step 2: Employee CPF
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              2. CPF (20%)
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-              <Building2 className="h-4 w-4" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+              <Building2 className="h-3.5 w-3.5" />
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl sm:text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+          <div className="mt-1.5">
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
               -{formatSGD(cpfDeduction)}
             </span>
           </div>
-          <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-            Mandatory 20% ordinary employee deduction
+          <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            Employee CPF
           </p>
         </div>
 
         {/* Step 3: Fixed Deductions */}
-        <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4 transition-all">
+        <div className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Step 3: Fixed Deductions
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              3. Deductions
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-              <Receipt className="h-4 w-4" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+              <Receipt className="h-3.5 w-3.5" />
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl sm:text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
+          <div className="mt-1.5">
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
               -{formatSGD(fixedDeductions)}
             </span>
           </div>
-          <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+          <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
             <div className="flex justify-between">
               <span>Taxes:</span>
               <span className="font-semibold text-slate-700 dark:text-slate-300">-{formatSGD(taxesDeduction)}</span>
@@ -167,22 +162,22 @@ export function BudgetWaterfall({
         </div>
 
         {/* Step 4: After Deductions Disposable Pool */}
-        <div className="relative rounded-2xl border-2 border-emerald-500/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 transition-all shadow-xs">
+        <div className="relative rounded-2xl border-2 border-emerald-500/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 transition-all shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-              Step 4: Disposable Pool
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+              4. Disposable Pool
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
-              <Wallet className="h-4 w-4" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+              <Wallet className="h-3.5 w-3.5" />
             </div>
           </div>
-          <div className="mt-2">
-            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-900 dark:text-emerald-100">
+          <div className="mt-1.5">
+            <span className="text-lg sm:text-xl font-extrabold tracking-tight text-emerald-900 dark:text-emerald-100">
               {formatSGD(afterDeductions)}
             </span>
           </div>
-          <p className="mt-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
-            Net Take-Home available for category allocation
+          <p className="mt-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+            Net Take-Home
           </p>
         </div>
       </div>

@@ -1,19 +1,18 @@
 /**
  * Responsive Application Header
  * Features:
- * - Mobile dropdown perspective switcher: Combined / Yi Jia / Rachel
- * - Desktop pill perspective switcher: Combined / Yi Jia / Rachel
- * - Flush-to-sides top navigation (16px spacing)
- * - Currency indicator: SGD S$
+ * - Unified dropdown perspective switcher (mobile & desktop): Combined + dynamic household members
+ * - Aligned horizontal spacing (px-4 sm:px-6)
  * - Connection status: Demo Mock vs Live Supabase
  * - Theme toggle: Light / Dark mode
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Sun, Moon, Users, User, Plus, ChevronDown, Check, LogOut, AlertTriangle } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
+import { mockMembers } from "../../data/mockSeedData";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 
@@ -23,15 +22,47 @@ export interface AppHeaderProps {
     onNavigateTab?: (tab: string) => void;
 }
 
+const MEMBER_COLOR_PALETTE = [
+    {
+        iconColor: "text-blue-600 dark:text-blue-400",
+        activeBg: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+    },
+    {
+        iconColor: "text-rose-600 dark:text-rose-400",
+        activeBg: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
+    },
+    {
+        iconColor: "text-purple-600 dark:text-purple-400",
+        activeBg: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+    },
+    {
+        iconColor: "text-amber-600 dark:text-amber-400",
+        activeBg: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+    },
+    {
+        iconColor: "text-teal-600 dark:text-teal-400",
+        activeBg: "bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300",
+    },
+];
+
+function getPerspectiveKeyForMember(displayName: string, id: string): PerspectiveType {
+    const clean = displayName.toLowerCase().replace(/\s+/g, "");
+    if (clean.includes("yijia")) return "yijia";
+    if (clean.includes("rachel")) return "rachel";
+    return id;
+}
+
 export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: AppHeaderProps) {
-    const { perspective, setPerspective, members, theme, toggleTheme, isMockMode } = useHousehold();
+    const { perspective, setPerspective, members: ctxMembers, activeMember, theme, toggleTheme, isMockMode } = useHousehold();
     const { signOut, isAuthenticated } = useAuth();
+
+    const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Close mobile dropdown when clicking outside
+    // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -58,39 +89,43 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isLogoutConfirmOpen]);
 
-    // Find partner display names from members or fallbacks
-    const yiJiaMember = members.find((m) => m.display_name.toLowerCase().includes("yi jia"));
-    const rachelMember = members.find((m) => m.display_name.toLowerCase().includes("rachel"));
+    const perspectiveOptions = useMemo(() => {
+        const list = [
+            {
+                key: "household" as PerspectiveType,
+                memberId: null as string | null,
+                label: "Combined",
+                icon: Users,
+                iconColor: "text-emerald-600 dark:text-emerald-400",
+                activeBg: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+            },
+        ];
 
-    const yiJiaName = yiJiaMember ? yiJiaMember.display_name : "Yi Jia";
-    const rachelName = rachelMember ? rachelMember.display_name : "Rachel";
+        members.forEach((m, idx) => {
+            const palette = MEMBER_COLOR_PALETTE[idx % MEMBER_COLOR_PALETTE.length];
+            list.push({
+                key: getPerspectiveKeyForMember(m.display_name, m.id),
+                memberId: m.id,
+                label: m.display_name,
+                icon: User,
+                iconColor: palette.iconColor,
+                activeBg: palette.activeBg,
+            });
+        });
 
-    const perspectiveConfig: Record<
-        PerspectiveType,
-        { label: string; icon: typeof Users; color: string; badgeBg: string }
-    > = {
-        household: {
-            label: "Combined",
-            icon: Users,
-            color: "text-emerald-700 dark:text-emerald-400",
-            badgeBg: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400",
-        },
-        yijia: {
-            label: yiJiaName,
-            icon: User,
-            color: "text-blue-700 dark:text-blue-400",
-            badgeBg: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400",
-        },
-        rachel: {
-            label: rachelName,
-            icon: User,
-            color: "text-rose-700 dark:text-rose-400",
-            badgeBg: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400",
-        },
-    };
+        return list;
+    }, [members]);
 
-    const currentConfig = perspectiveConfig[perspective] || perspectiveConfig.household;
-    const CurrentIcon = currentConfig.icon;
+    const currentOption = useMemo(() => {
+        if (perspective === "household") return perspectiveOptions[0];
+        return (
+            perspectiveOptions.find(
+                (opt) => opt.key === perspective || (activeMember && opt.memberId === activeMember.id)
+            ) || perspectiveOptions[0]
+        );
+    }, [perspective, activeMember, perspectiveOptions]);
+
+    const CurrentIcon = currentOption.icon;
 
     const handleSelectPerspective = (p: PerspectiveType) => {
         setPerspective(p);
@@ -101,12 +136,11 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         <header
             className={`sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/95 ${className}`}
         >
-            <div className="flex h-16 w-full items-center justify-between px-4">
-                {/* Left / Center: Perspective Switcher */}
+            <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
+                {/* Left: Unified Perspective Dropdown (Mobile & Desktop) */}
                 <div className="flex items-center">
-                    {/* Mobile Perspective Dropdown */}
                     <div
-                        className="relative sm:hidden"
+                        className="relative"
                         ref={dropdownRef}
                     >
                         <button
@@ -115,10 +149,10 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                         >
-                            <CurrentIcon className={`h-4 w-4 ${currentConfig.color}`} />
-                            <span>{currentConfig.label}</span>
+                            <CurrentIcon className={`h-4 w-4 ${currentOption.iconColor}`} />
+                            <span>{currentOption.label}</span>
                             <ChevronDown
                                 className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-150 ${
                                     isDropdownOpen ? "rotate-180" : ""
@@ -130,125 +164,37 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             <div
                                 role="listbox"
                                 aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-1.5 w-44 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl transition-all dark:border-slate-700 dark:bg-slate-800 z-50 animate-in fade-in zoom-in-95 duration-100"
+                                className="absolute left-0 mt-1.5 w-48 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl transition-all dark:border-slate-700 dark:bg-slate-800 z-50 animate-in fade-in zoom-in-95 duration-100"
                             >
-                                <button
-                                    type="button"
-                                    role="option"
-                                    aria-selected={perspective === "household"}
-                                    onClick={() => handleSelectPerspective("household")}
-                                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-                                        perspective === "household"
-                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                        <span>Combined</span>
-                                    </div>
-                                    {perspective === "household" && (
-                                        <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                    )}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    role="option"
-                                    aria-selected={perspective === "yijia"}
-                                    onClick={() => handleSelectPerspective("yijia")}
-                                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-                                        perspective === "yijia"
-                                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
-                                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                        <span>{yiJiaName}</span>
-                                    </div>
-                                    {perspective === "yijia" && (
-                                        <Check className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                                    )}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    role="option"
-                                    aria-selected={perspective === "rachel"}
-                                    onClick={() => handleSelectPerspective("rachel")}
-                                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-                                        perspective === "rachel"
-                                            ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                                        <span>{rachelName}</span>
-                                    </div>
-                                    {perspective === "rachel" && (
-                                        <Check className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
-                                    )}
-                                </button>
+                                {perspectiveOptions.map((opt) => {
+                                    const Icon = opt.icon;
+                                    const isSelected = currentOption.key === opt.key;
+                                    return (
+                                        <button
+                                            key={opt.key}
+                                            type="button"
+                                            role="option"
+                                            aria-selected={isSelected}
+                                            onClick={() => handleSelectPerspective(opt.key)}
+                                            className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                                                isSelected
+                                                    ? opt.activeBg
+                                                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <Icon className={`h-4 w-4 shrink-0 ${opt.iconColor}`} />
+                                                <span className="truncate">{opt.label}</span>
+                                            </div>
+                                            {isSelected && (
+                                                <Check className={`h-3.5 w-3.5 shrink-0 ${opt.iconColor}`} />
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
-
-                    {/* Desktop Perspective Switcher Pills */}
-                    <nav
-                        aria-label="Perspective Switcher"
-                        className="hidden sm:flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
-                    >
-                        {/* Combined */}
-                        <button
-                            type="button"
-                            onClick={() => setPerspective("household")}
-                            aria-pressed={perspective === "household"}
-                            aria-label="Combined Household"
-                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
-                                perspective === "household"
-                                    ? "bg-white text-emerald-700 shadow-sm dark:bg-slate-700 dark:text-emerald-400"
-                                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-                            }`}
-                        >
-                            <Users className="h-4 w-4" />
-                            <span>Combined</span>
-                            <span className="sr-only">Household</span>
-                        </button>
-
-                        {/* Yi Jia */}
-                        <button
-                            type="button"
-                            onClick={() => setPerspective("yijia")}
-                            aria-pressed={perspective === "yijia"}
-                            aria-label={yiJiaName}
-                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
-                                perspective === "yijia"
-                                    ? "bg-white text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-400"
-                                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-                            }`}
-                        >
-                            <User className="h-4 w-4" />
-                            <span>{yiJiaName}</span>
-                        </button>
-
-                        {/* Rachel */}
-                        <button
-                            type="button"
-                            onClick={() => setPerspective("rachel")}
-                            aria-pressed={perspective === "rachel"}
-                            aria-label={rachelName}
-                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
-                                perspective === "rachel"
-                                    ? "bg-white text-rose-700 shadow-sm dark:bg-slate-700 dark:text-rose-400"
-                                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-                            }`}
-                        >
-                            <User className="h-4 w-4" />
-                            <span>{rachelName}</span>
-                        </button>
-                    </nav>
                 </div>
 
                 {/* Right: Badges, Quick Add & Theme Toggle */}

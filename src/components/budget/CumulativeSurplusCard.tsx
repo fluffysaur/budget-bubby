@@ -18,13 +18,13 @@ import {
   PiggyBank,
   Sparkles,
   Calendar,
-  ShieldCheck,
   Loader2,
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { getCurrentMonth, formatShortMonth, getPastMonthsList } from '../../lib/dateUtils';
 import { calculateCumulativeSurplus } from '../../lib/financialFormulas';
 import { financeService } from '../../services/financeService';
+import { TooltipPopover } from '../ui/TooltipPopover';
 import type {
   CumulativeSurplusSummary,
   Expense,
@@ -171,25 +171,29 @@ export function CumulativeSurplusCard({
   return (
     <div
       data-testid="cumulative-surplus-card"
-      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs transition-colors space-y-5 ${className}`}
+      className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors space-y-4 ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-            <PiggyBank className="h-5 w-5" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+            <PiggyBank className="h-4 w-4" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
               Cumulative Spending Surplus
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Unspent spendable cap rolled over month-to-month
-            </p>
+            <TooltipPopover
+              title="Goal-Funded Protection & Rollover"
+              ariaLabel="Goal-Funded Protection info"
+              align="left"
+            >
+              Unspent spendable cap rolls over month-to-month. <strong>Goal-Funded Protection:</strong> Expenses paid out of pre-saved savings goals are excluded from spendable expenses to prevent artificial budget deficits.
+            </TooltipPopover>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
           <Calendar className="h-3.5 w-3.5 text-slate-400" />
           <span>{formatShortMonth(selectedMonth)}</span>
         </div>
@@ -341,14 +345,6 @@ export function CumulativeSurplusCard({
             );
           })}
         </div>
-      </div>
-
-      {/* Goal Exclusion Explanatory Footer */}
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 text-[11px] text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800">
-        <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-        <span>
-          <strong>Goal-Funded Protection:</strong> Expenses paid out of pre-saved savings goals are excluded from spendable expenses, preventing artificial budget deficits.
-        </span>
       </div>
     </div>
   );

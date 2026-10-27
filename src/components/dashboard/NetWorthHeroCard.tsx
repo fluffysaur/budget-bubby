@@ -12,6 +12,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
+import { TooltipPopover } from '../ui/TooltipPopover';
 import type { Perspective } from '../../types/finance';
 
 export interface NetWorthHeroCardProps {
@@ -48,7 +49,7 @@ export function NetWorthHeroCard({
     <div
       role="region"
       aria-label="True Net Worth Summary"
-      className={`relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-950 p-6 sm:p-8 shadow-xs transition-colors ${className}`}
+      className={`relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-gradient-to-br from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-950 p-5 sm:p-6 shadow-xs transition-colors ${className}`}
     >
       {/* Background ambient glow */}
       <div
@@ -58,7 +59,7 @@ export function NetWorthHeroCard({
       />
 
       {/* Top row: Status & Trend Pill */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         {displayName ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800/90 dark:text-slate-200">
             {displayName}
@@ -72,7 +73,7 @@ export function NetWorthHeroCard({
         {/* Trend Indicator Pill */}
         <div
           data-testid="trend-indicator"
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
             isPositive
               ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/70'
               : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800/70'
@@ -86,20 +87,29 @@ export function NetWorthHeroCard({
           ) : (
             <>
               <TrendingDown className="h-3.5 w-3.5" />
-              <span>Mortgage / Debt Payoff Phase</span>
+              <span>Debt Payoff Phase</span>
             </>
           )}
         </div>
       </div>
 
       {/* Hero Net Worth Amount */}
-      <div className="mt-5">
-        <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-          True Net Worth
-        </span>
+      <div className="mt-4">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            True Net Worth
+          </span>
+          <TooltipPopover
+            title="True Net Worth Formula"
+            ariaLabel="True Net Worth Formula"
+            align="left"
+          >
+            Total Assets (Cash, Investments &amp; CPF) minus Total Outstanding Loans &amp; Liabilities.
+          </TooltipPopover>
+        </div>
         <div className="mt-1 flex items-baseline gap-3">
           <h2
-            className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight ${
+            className={`text-3xl sm:text-4xl font-black tracking-tight ${
               isPositive
                 ? 'text-slate-900 dark:text-white'
                 : 'text-rose-600 dark:text-rose-400'
@@ -108,13 +118,10 @@ export function NetWorthHeroCard({
             {formatSGD(netWorth)}
           </h2>
         </div>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-          Total Assets minus Total Outstanding Loans &amp; Liabilities
-        </p>
       </div>
 
       {/* Sub-Metrics Pills: Assets and Liabilities */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 border-t border-slate-200/80 dark:border-slate-800">
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-200/80 dark:border-slate-800">
         {/* Total Assets Pill */}
         <div className="flex items-center justify-between rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-4">
           <div className="flex items-center gap-3">

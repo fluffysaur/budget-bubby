@@ -1,12 +1,10 @@
 /**
  * Expenses Page
- * Top-level page combining:
- * - ExpenseTrendsCard: 6-month historical monthly spend, 3-mo/6-mo averages & category benchmarks
- * - Summary metric cards: Total Spent, Shared Spending, and Unsettled / Who Owes Whom
- * - Quick Add Expense modal trigger (mobile bottom-sheet optimized)
- * - Mobile-friendly collapsible filter bar
- * - Responsive transaction ledger table & mobile cards
- * - Reactive to Household Context perspective
+ * Minimal, Ledger-First Spend Hub:
+ * - PageHeader with '+ Bulk Log' and 'Add Expense'
+ * - Compact 3-metric summary strip: Total Spent, Shared Spending, and Unsettled / Who Owes Whom
+ * - Mobile-friendly collapsible filter bar & responsive transaction ledger table right at the top
+ * - Collapsible Spend Trends & Tags drawers below the ledger
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -20,11 +18,11 @@ import {
   ChevronDown,
   ChevronUp,
   Tag,
-  Zap,
   FileSpreadsheet,
+  BarChart3,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard } from '../components/ui';
+import { PageHeader, Button, StatCard, CollapsibleSection } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
@@ -35,8 +33,6 @@ import {
 import { mockCategories, mockMembers } from '../data/mockSeedData';
 import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
 import { BulkAddExpenseModal } from '../components/expenses/BulkAddExpenseModal';
-import { FastLogWidget } from '../components/expenses/FastLogWidget';
-import { ManageCategoriesModal } from '../components/categories/ManageCategoriesModal';
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
@@ -58,7 +54,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
 
   const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
   const [categories, setCategories] = useState<Category[]>(mockCategories);
-  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState<boolean>(false);
 
   // Filter State
   const [filter, setFilter] = useState<ExpenseFilter>({
@@ -75,7 +70,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
-  const [showFastLog, setShowFastLog] = useState<boolean>(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
   // Synchronize perspective filter if active member changes
@@ -219,35 +213,19 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   }, [filter, perspective]);
 
   return (
-    <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+    <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
       {/* Header Section */}
       <PageHeader
         title="Expenses"
-        subtitle="Daily expense ledger and couple splits"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              leftIcon={<Tag className="h-4 w-4 stroke-[2.2] text-slate-500" />}
-              onClick={() => setIsManageCategoriesOpen(true)}
-            >
-              Manage Categories
-            </Button>
-            <Button
-              variant="outline"
-              aria-label="Fast Log"
-              leftIcon={<Zap className="h-4 w-4 stroke-[2.2] text-amber-500 fill-amber-500" />}
-              onClick={() => setShowFastLog((prev) => !prev)}
-            >
-              {showFastLog ? 'Hide Fast Log' : 'Fast Log'}
-            </Button>
             <Button
               variant="outline"
               aria-label="+ Bulk Log"
               leftIcon={<FileSpreadsheet className="h-4 w-4 stroke-[2.2] text-emerald-600" />}
               onClick={() => setIsBulkAddOpen(true)}
             >
-              + Bulk Log
+              Bulk Log
             </Button>
             <Button
               variant="primary"
@@ -261,44 +239,13 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         }
       />
 
-      {/* Optional Inline Fast Log Widget */}
-      {showFastLog && (
-        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-top-2 duration-200">
-          <FastLogWidget
-            categories={categories}
-            members={members}
-            defaultPayerId={filter.payerId}
-            onExpenseLogged={handleExpenseAdded}
-          />
-        </div>
-      )}
-
-      {/* Monthly Expense Trends & Benchmarks Card */}
-      <ExpenseTrendsCard
-        trends={trendsSummary}
-        perspectiveLabel={
-          perspective === 'household'
-            ? 'Household'
-            : activeMember?.display_name || 'Personal'
-        }
-      />
-
-      {/* Spend Tags Cross-Category Overview */}
-      <SpendTagsOverviewCard
-        expenses={allExpenses && allExpenses.length > 0 ? allExpenses : expenses}
-        categories={categories}
-        activeTag={filter.tag}
-        onSelectTag={(tag) => setFilter((prev) => ({ ...prev, tag: prev.tag === tag ? undefined : tag }))}
-        onClearTag={() => setFilter((prev) => ({ ...prev, tag: undefined }))}
-      />
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Compact 3-Metric Summary Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Card 1: Total Spent */}
         <StatCard
           title="Total Spent"
           value={formatSGD(totalSpent)}
-          subtitle={`${expenses.length} transaction${expenses.length === 1 ? '' : 's'} in view`}
+          subtitle={`${expenses.length} transaction${expenses.length === 1 ? '' : 's'}`}
           icon={<Receipt className="h-4 w-4" />}
           iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
         />
@@ -307,14 +254,14 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         <StatCard
           title="Shared Spending"
           value={formatSGD(totalShared)}
-          subtitle="Default 50/50 couple split"
+          tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
           icon={<ArrowRightLeft className="h-4 w-4" />}
           iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
         />
 
         {/* Card 3: Unsettled Balance (Who Owes Whom) */}
         <StatCard
-          title="Unsettled / Who Owes Whom"
+          title="Unsettled Balance"
           value={formatSGD(settlement.netBalance)}
           subtitle={settlement.settlementText}
           icon={settlement.netBalance === 0 ? <CheckCircle2 className="h-4 w-4" /> : <Scale className="h-4 w-4" />}
@@ -334,7 +281,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs active:bg-slate-50 cursor-pointer"
         >
           <Filter className="h-3.5 w-3.5 text-emerald-600" />
-          <span>Filter &amp; Search Ledger</span>
+          <span>Filter &amp; Search</span>
           {activeFilterCount > 0 && (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
               {activeFilterCount}
@@ -369,7 +316,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         />
       </div>
 
-      {/* Expense List Table */}
+      {/* Expense List Table (Ledger-First!) */}
       <ExpenseListTable
         expenses={expenses}
         categories={categories}
@@ -378,6 +325,46 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         onExpenseSaved={handleExpenseAdded}
         isLoading={isLoading}
       />
+
+      {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
+      <div className="space-y-3 pt-2">
+        <CollapsibleSection
+          title="Monthly Spend Trends & Averages"
+          summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
+          icon={<BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+          defaultOpen={false}
+        >
+          <ExpenseTrendsCard
+            trends={trendsSummary}
+            perspectiveLabel={
+              perspective === 'household'
+                ? 'Household'
+                : activeMember?.display_name || 'Personal'
+            }
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Spend Tags & Trip Breakdown"
+          badge={
+            filter.tag ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                #{filter.tag}
+              </span>
+            ) : undefined
+          }
+          icon={<Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
+          defaultOpen={Boolean(filter.tag)}
+        >
+          <SpendTagsOverviewCard
+            expenses={allExpenses && allExpenses.length > 0 ? allExpenses : expenses}
+            categories={categories}
+            activeTag={filter.tag}
+            onSelectTag={(tag) => setFilter((prev) => ({ ...prev, tag: prev.tag === tag ? undefined : tag }))}
+            onClearTag={() => setFilter((prev) => ({ ...prev, tag: undefined }))}
+          />
+        </CollapsibleSection>
+      </div>
 
       {/* Bulk Add Expense Modal */}
       <BulkAddExpenseModal
@@ -397,21 +384,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         defaultPayerId={filter.payerId}
         categories={categories}
         members={members}
-      />
-
-      {/* Manage Categories Modal */}
-      <ManageCategoriesModal
-        isOpen={isManageCategoriesOpen}
-        onClose={() => setIsManageCategoriesOpen(false)}
-        onCategoriesChanged={async () => {
-          try {
-            const cats = await financeService.getCategories();
-            if (cats && cats.length > 0) setCategories(cats);
-          } catch (err) {
-            console.error('Failed to reload categories:', err);
-          }
-          await loadExpenses();
-        }}
       />
     </div>
   );

@@ -125,22 +125,17 @@ export function SettlementWidget({
     <div
       role="region"
       aria-label="Shared Expense Settlement Center"
-      className={`rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs transition-colors ${className}`}
+      className={`rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
+      <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800/80">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-            <Scale className="h-5 w-5" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+            <Scale className="h-4 w-4" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Running Settlement
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Couple shared expenses (50/50 split balance)
-            </p>
-          </div>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+            Running Settlement
+          </h3>
         </div>
 
         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">

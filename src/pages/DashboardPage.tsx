@@ -221,15 +221,10 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
     };
 
     return (
-        <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+        <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
             {/* Top Header & Quick Actions */}
             <PageHeader
                 title="Home"
-                subtitle={
-                    isHousehold
-                        ? "Combined household hub, running settlements, and couple milestones"
-                        : `${perspectiveDisplayName}'s personal take-home, allocations, and individual assets`
-                }
                 actions={
                     <>
                         <Button
@@ -253,7 +248,7 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
 
             {/* Loading Indicator */}
             {isLoading ? (
-                <div className="flex items-center justify-center p-16 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="flex items-center justify-center p-16 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <div className="flex flex-col items-center gap-3 text-slate-500">
                         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
                         <span className="text-sm font-medium">Loading household overview...</span>
@@ -274,20 +269,15 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                     />
 
                     {/* DAILY SPEND & CHECK-IN HERO STRIP (Optimized for Fast Mobile Checking) */}
-                    <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-linear-to-br from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-900/60 p-4 sm:p-5 shadow-xs">
-                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+                    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-linear-to-br from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-900/60 p-4 sm:p-5 shadow-xs">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800/80">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
                                     <Wallet className="h-4 w-4" />
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                        Daily Spend &amp; Monthly Limits
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                        Food, Lifestyle, Transport &amp; Buffer
-                                    </p>
-                                </div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                                    Daily Spend &amp; Monthly Limits
+                                </h3>
                             </div>
 
                             {/* Settlement Pill if in household view */}
@@ -402,28 +392,22 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                             </div>
                         </>
                     ) : (
-                        /* PERSONAL PERSPECTIVE VIEW (Yi Jia / Rachel) */
-                        <div className="space-y-6">
+                        /* PERSONAL PERSPECTIVE VIEW (Yi Jia / Rachel / Member N) */
+                        <div className="space-y-5">
                             {/* Personal Monthly Budget Progress */}
                             <div
                                 role="region"
                                 aria-label="Personal Budget Progress"
-                                className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs transition-colors"
+                                className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors"
                             >
-                                <div className="flex items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-slate-800/80">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-                                            <PieChart className="h-5 w-5" />
+                                <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+                                            <PieChart className="h-4 w-4" />
                                         </div>
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                                Personal Monthly Budget
-                                            </h3>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                {monthlyBudget?.budget.month || getCurrentMonth()} Take-Home &amp;
-                                                Spending Limits
-                                            </p>
-                                        </div>
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                                            Personal Monthly Budget
+                                        </h3>
                                     </div>
 
                                     {onNavigateTab && (
@@ -438,49 +422,44 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                 </div>
 
                                 {/* 4 Metric Cards for Personal Budget */}
-                                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
                                     {/* Gross Salary */}
-                                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                                    <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5">
                                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                                             Gross Salary
                                         </span>
-                                        <div className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white">
+                                        <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
                                             {formatSGD(monthlyBudget?.budget.gross_salary || 0)}
                                         </div>
-                                        <p className="mt-0.5 text-[10px] text-slate-400">Monthly base</p>
                                     </div>
 
                                     {/* CPF Deduction */}
-                                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                                    <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5">
                                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                                             CPF (20%)
                                         </span>
-                                        <div className="mt-1 text-lg font-extrabold text-rose-600 dark:text-rose-400">
+                                        <div className="mt-1 text-base sm:text-lg font-extrabold text-rose-600 dark:text-rose-400">
                                             -{formatSGD(monthlyBudget?.budget.cpf_deduction || 0)}
                                         </div>
-                                        <p className="mt-0.5 text-[10px] text-slate-400">Employee contribution</p>
                                     </div>
 
                                     {/* Disposable / Take-Home */}
-                                    <div className="rounded-2xl border border-emerald-200/60 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-4">
+                                    <div className="rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5">
                                         <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                                             Take-Home Pay
                                         </span>
-                                        <div className="mt-1 text-lg font-black text-emerald-900 dark:text-emerald-100">
+                                        <div className="mt-1 text-base sm:text-lg font-black text-emerald-900 dark:text-emerald-100">
                                             {formatSGD(monthlyBudget?.disposablePool || 0)}
                                         </div>
-                                        <p className="mt-0.5 text-[10px] text-emerald-700 dark:text-emerald-400">
-                                            After CPF &amp; allocations
-                                        </p>
                                     </div>
 
                                     {/* Spent & Remaining */}
-                                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                                    <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5">
                                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                            Spent / Remaining
+                                            Spent / Left
                                         </span>
-                                        <div className="mt-1 flex items-baseline justify-between">
-                                            <span className="text-lg font-extrabold text-slate-900 dark:text-white">
+                                        <div className="mt-1 flex items-baseline justify-between gap-1 flex-wrap">
+                                            <span className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
                                                 {formatSGD(monthlyBudget?.totalSpent || 0)}
                                             </span>
                                             <span
@@ -493,32 +472,26 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                                 Left {formatSGD(monthlyBudget?.totalRemaining || 0)}
                                             </span>
                                         </div>
-                                        <p className="mt-0.5 text-[10px] text-slate-400">Current month total</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Personal Accounts & Recent Personal Transactions */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                                 {/* Personal Accounts List */}
                                 <div
                                     role="region"
                                     aria-label="Personal Accounts"
-                                    className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs transition-colors"
+                                    className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors"
                                 >
-                                    <div className="flex items-center justify-between pb-5 border-b border-slate-100 dark:border-slate-800/80">
+                                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/80">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-                                                <Landmark className="h-5 w-5" />
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+                                                <Landmark className="h-4 w-4" />
                                             </div>
-                                            <div>
-                                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                                    Personal Accounts
-                                                </h3>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Cash, CPF &amp; Investment balances
-                                                </p>
-                                            </div>
+                                            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                                                Personal Accounts
+                                            </h3>
                                         </div>
                                         {onNavigateTab && (
                                             <button
@@ -531,7 +504,7 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                         )}
                                     </div>
 
-                                    <div className="mt-5 space-y-3">
+                                    <div className="mt-4 space-y-2.5">
                                         {accounts.length === 0 ? (
                                             <div className="py-6 text-center">
                                                 <p className="text-xs text-slate-400 mb-3">
@@ -550,10 +523,10 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                             accounts.map((acc) => (
                                                 <div
                                                     key={acc.id}
-                                                    className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-4"
+                                                    className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-3.5"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-2xs text-xs font-bold text-slate-700 dark:text-slate-200">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white dark:bg-slate-800 shadow-2xs text-xs font-bold text-slate-700 dark:text-slate-200">
                                                             {acc.institution?.slice(0, 3) || acc.type.slice(0, 3)}
                                                         </div>
                                                         <div>
@@ -595,21 +568,16 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                 <div
                                     role="region"
                                     aria-label="Recent Transactions"
-                                    className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs transition-colors"
+                                    className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-colors"
                                 >
-                                    <div className="flex items-center justify-between pb-5 border-b border-slate-100 dark:border-slate-800/80">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400">
-                                                <Receipt className="h-5 w-5" />
+                                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/80">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-950/50 dark:text-teal-400">
+                                                <Receipt className="h-4 w-4" />
                                             </div>
-                                            <div>
-                                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                                    Recent Expenses
-                                                </h3>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Latest expenses paid by {perspectiveDisplayName}
-                                                </p>
-                                            </div>
+                                            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                                                Recent Expenses
+                                            </h3>
                                         </div>
                                         {onNavigateTab && (
                                             <button
@@ -622,7 +590,7 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                         )}
                                     </div>
 
-                                    <div className="mt-5 space-y-3">
+                                    <div className="mt-4 space-y-2.5">
                                         {personalExpenses.length === 0 ? (
                                             <p className="text-xs text-slate-400 py-6 text-center">
                                                 No recent transactions paid by {perspectiveDisplayName}.
@@ -631,7 +599,7 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                                             personalExpenses.map((exp) => (
                                                 <div
                                                     key={exp.id}
-                                                    className="flex items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-4"
+                                                    className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-800/40 p-3.5"
                                                 >
                                                     <div>
                                                         <span className="text-sm font-bold text-slate-900 dark:text-white">

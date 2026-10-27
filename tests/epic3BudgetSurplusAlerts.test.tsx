@@ -328,7 +328,9 @@ describe('Epic 3: Cumulative Surplus & Deficit Calculations', () => {
     expect(bankedBadge).toBeInTheDocument();
     expect(screen.getByText(/Total Banked Surplus: \+S\$520\.40/i)).toBeInTheDocument();
 
-    // Goal Protection callout
+    // Goal Protection tooltip callout
+    const tooltipBtn = screen.getByRole('button', { name: /goal-funded protection info/i });
+    fireEvent.click(tooltipBtn);
     expect(screen.getByText(/Goal-Funded Protection:/i)).toBeInTheDocument();
   });
 });
