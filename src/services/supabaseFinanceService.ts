@@ -29,6 +29,14 @@ import type {
   Perspective,
   RecurringPolicy,
   SavingsGoal,
+  UpdateExpenseInput,
+  CreditCard,
+  CreateCreditCardInput,
+  CreditCardStatement,
+  UpsertCreditCardStatementInput,
+  DailyCheckin,
+  CheckinType,
+  StreakSummary,
 } from '../types/finance';
 import { supabase } from './supabaseClient';
 import {
@@ -823,7 +831,15 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async getExpenses(filter?: ExpenseFilter): Promise<Expense[]> {
     const client = getClient();
-    let query = client.from('expenses').select('*').order('date', { ascending: false });
+    const sortBy = filter?.sortBy || 'date';
+    const ascending = filter?.sortOrder === 'asc';
+    let query = client.from('expenses').select('*');
+
+    if (sortBy === 'amount') {
+      query = query.order('amount', { ascending });
+    } else {
+      query = query.order('date', { ascending });
+    }
 
     if (filter?.month) {
       const nextMonth = addMonths(filter.month, 1);
@@ -841,8 +857,20 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (filter?.settled !== undefined) {
       query = query.eq('settled', filter.settled);
     }
+    if (filter?.goalId) {
+      query = query.eq('goal_id', filter.goalId);
+    }
+    if (filter?.tag) {
+      query = query.contains('tags', [filter.tag]);
+    }
     if (filter?.search) {
-      query = query.ilike('item', `%${filter.search}%`);
+      query = query.or(`item.ilike.%${filter.search}%,remarks.ilike.%${filter.search}%`);
+    }
+
+    if (filter?.page && filter?.pageSize) {
+      const from = (filter.page - 1) * filter.pageSize;
+      const to = from + filter.pageSize - 1;
+      query = query.range(from, to);
     }
 
     const { data, error } = await query;
@@ -882,30 +910,56 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       if (matchedCat) {
         resolvedCategoryId = matchedCat.id;
       } else {
-        // Fallback to match by Spendable categories
         resolvedCategoryId = categories?.[0]?.id || null;
       }
     }
 
+    const insertPayload: Record<string, unknown> = {
+      payer_id: resolvedPayerId,
+      household_id: householdId,
+      category_id: resolvedCategoryId,
+      date: input.date,
+      item: input.item,
+      amount: input.amount,
+      remarks: input.remarks || null,
+      is_shared: input.is_shared,
+      split_ratio: input.split_ratio ?? 0.50,
+      settled: false,
+      tags: input.tags || [],
+      goal_id: input.goal_id || null,
+      original_amount: input.original_amount !== undefined ? input.original_amount : null,
+      original_currency: input.original_currency || 'SGD',
+      exchange_rate: input.exchange_rate !== undefined ? input.exchange_rate : null,
+    };
+
     const { data, error } = await client
       .from('expenses')
-      .insert({
-        payer_id: resolvedPayerId,
-        household_id: householdId,
-        category_id: resolvedCategoryId,
-        date: input.date,
-        item: input.item,
-        amount: input.amount,
-        remarks: input.remarks || null,
-        is_shared: input.is_shared,
-        split_ratio: input.split_ratio ?? 0.50,
-        settled: false,
-      })
+      .insert(insertPayload)
       .select();
 
     if (error) throw error;
+
+    // Adjust linked goal if goal_id is present
+    if (input.goal_id && isValidUuid(input.goal_id)) {
+      try {
+        const { data: goal } = await client.from('savings_goals').select('saved_so_far').eq('id', input.goal_id).single();
+        if (goal) {
+          const newSaved = Math.max(0, Math.round(((goal.saved_so_far || 0) - input.amount) * 100) / 100);
+          await client.from('savings_goals').update({ saved_so_far: newSaved }).eq('id', input.goal_id);
+        }
+      } catch (goalErr) {
+        console.warn('Failed to adjust goal balance on addExpense:', goalErr);
+      }
+    }
+
+    // Auto-record daily checkin
+    try {
+      await this.recordDailyCheckin(resolvedPayerId, input.date, 'expense');
+    } catch {
+      // Non-fatal
+    }
+
     if (!data || data.length === 0) {
-      // In case RLS suppresses reading back the row
       return {
         id: `exp-${Date.now()}`,
         household_id: householdId,
@@ -918,14 +972,78 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         is_shared: input.is_shared,
         split_ratio: input.split_ratio ?? 0.50,
         settled: false,
+        tags: input.tags || [],
+        goal_id: input.goal_id || null,
+        original_amount: input.original_amount !== undefined ? input.original_amount : null,
+        original_currency: input.original_currency || 'SGD',
+        exchange_rate: input.exchange_rate !== undefined ? input.exchange_rate : null,
         created_at: new Date().toISOString(),
       };
     }
     return data[0] as Expense;
   }
 
+  public async updateExpense(id: string, updates: UpdateExpenseInput): Promise<Expense> {
+    const client = getClient();
+    const { data: existing, error: fetchErr } = await client.from('expenses').select('*').eq('id', id).single();
+    if (fetchErr) throw fetchErr;
+
+    // Handle goal balance adjustments
+    const oldGoalId = existing.goal_id;
+    const oldAmount = Number(existing.amount);
+    const newGoalId = updates.goal_id !== undefined ? updates.goal_id : oldGoalId;
+    const newAmount = updates.amount !== undefined ? updates.amount : oldAmount;
+
+    if (oldGoalId && oldGoalId !== newGoalId && isValidUuid(oldGoalId)) {
+      try {
+        const { data: g } = await client.from('savings_goals').select('saved_so_far').eq('id', oldGoalId).single();
+        if (g) {
+          await client.from('savings_goals').update({ saved_so_far: Math.round(((g.saved_so_far || 0) + oldAmount) * 100) / 100 }).eq('id', oldGoalId);
+        }
+      } catch (err) {
+        console.warn('Failed to restore goal balance:', err);
+      }
+    }
+
+    if (newGoalId && isValidUuid(newGoalId)) {
+      try {
+        const { data: g } = await client.from('savings_goals').select('saved_so_far').eq('id', newGoalId).single();
+        if (g) {
+          const diff = (oldGoalId === newGoalId) ? (newAmount - oldAmount) : newAmount;
+          await client.from('savings_goals').update({ saved_so_far: Math.max(0, Math.round(((g.saved_so_far || 0) - diff) * 100) / 100) }).eq('id', newGoalId);
+        }
+      } catch (err) {
+        console.warn('Failed to adjust new goal balance:', err);
+      }
+    }
+
+    const { data, error } = await client.from('expenses').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return data as Expense;
+  }
+
+  public async bulkAddExpenses(expenses: CreateExpenseInput[]): Promise<Expense[]> {
+    const created: Expense[] = [];
+    for (const item of expenses) {
+      const exp = await this.addExpense(item);
+      created.push(exp);
+    }
+    return created;
+  }
+
   public async deleteExpense(id: string): Promise<void> {
     const client = getClient();
+    try {
+      const { data: exp } = await client.from('expenses').select('goal_id, amount').eq('id', id).single();
+      if (exp?.goal_id && isValidUuid(exp.goal_id)) {
+        const { data: g } = await client.from('savings_goals').select('saved_so_far').eq('id', exp.goal_id).single();
+        if (g) {
+          await client.from('savings_goals').update({ saved_so_far: Math.round(((g.saved_so_far || 0) + Number(exp.amount)) * 100) / 100 }).eq('id', exp.goal_id);
+        }
+      }
+    } catch {
+      // ignore
+    }
     const { error } = await client.from('expenses').delete().eq('id', id);
     if (error) throw error;
   }
@@ -1094,6 +1212,179 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const client = getClient();
     const { error } = await client.from('recurring_policies').delete().eq('id', id);
     if (error) throw error;
+  }
+
+  // Credit Cards
+  public async getCreditCards(): Promise<CreditCard[]> {
+    const client = getClient();
+    const { data, error } = await client.from('credit_cards').select('*').order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data || []) as CreditCard[];
+  }
+
+  public async addCreditCard(input: CreateCreditCardInput): Promise<CreditCard> {
+    const client = getClient();
+    const householdId = input.household_id || (await this.getHouseholdId());
+    const { data, error } = await client
+      .from('credit_cards')
+      .insert({
+        household_id: householdId,
+        owner_id: input.owner_id,
+        name: input.name,
+        bank: input.bank,
+        last4: input.last4 || null,
+        billing_day: input.billing_day,
+        due_day: input.due_day,
+        credit_limit: input.credit_limit || null,
+        color: input.color || '#059669',
+        is_active: true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data as CreditCard;
+  }
+
+  public async updateCreditCard(id: string, updates: Partial<CreditCard>): Promise<CreditCard> {
+    const client = getClient();
+    const { data, error } = await client
+      .from('credit_cards')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as CreditCard;
+  }
+
+  public async deleteCreditCard(id: string): Promise<void> {
+    const client = getClient();
+    const { error } = await client.from('credit_cards').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  public async getCreditCardStatements(month?: string): Promise<CreditCardStatement[]> {
+    const client = getClient();
+    let query = client.from('credit_card_statements').select('*, card:credit_cards(*)');
+    if (month) {
+      query = query.eq('month', month);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []) as CreditCardStatement[];
+  }
+
+  public async upsertCreditCardStatement(input: UpsertCreditCardStatementInput): Promise<CreditCardStatement> {
+    const client = getClient();
+    const householdId = input.household_id || (await this.getHouseholdId());
+    const { data, error } = await client
+      .from('credit_card_statements')
+      .upsert(
+        {
+          ...(input.id ? { id: input.id } : {}),
+          card_id: input.card_id,
+          household_id: householdId,
+          month: input.month,
+          statement_amount: input.statement_amount,
+          due_date: input.due_date,
+          is_paid: input.is_paid || false,
+          paid_at: input.paid_at || null,
+          notes: input.notes || null,
+        },
+        { onConflict: 'card_id,month' }
+      )
+      .select('*, card:credit_cards(*)')
+      .single();
+    if (error) throw error;
+    return data as CreditCardStatement;
+  }
+
+  // Daily Check-ins & Streaks
+  public async getDailyCheckins(memberId?: string): Promise<DailyCheckin[]> {
+    const client = getClient();
+    let query = client.from('daily_checkins').select('*').order('checkin_date', { ascending: false });
+    if (memberId) {
+      query = query.eq('member_id', memberId);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []) as DailyCheckin[];
+  }
+
+  public async recordDailyCheckin(
+    memberId: string,
+    date: string,
+    type: CheckinType
+  ): Promise<DailyCheckin> {
+    const client = getClient();
+    const householdId = await this.getHouseholdId();
+    const { data, error } = await client
+      .from('daily_checkins')
+      .upsert(
+        {
+          household_id: householdId,
+          member_id: memberId,
+          checkin_date: date,
+          type,
+        },
+        { onConflict: 'member_id,checkin_date' }
+      )
+      .select()
+      .single();
+    if (error) throw error;
+    return data as DailyCheckin;
+  }
+
+  public async getStreakSummary(memberId?: string): Promise<StreakSummary> {
+    const checkins = await this.getDailyCheckins(memberId);
+    const today = getTodayDateString();
+    const dateSet = new Set(checkins.map((c) => c.checkin_date));
+    const checkedInToday = dateSet.has(today);
+
+    let currentStreak = 0;
+    const cursor = new Date();
+    if (!checkedInToday) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    while (true) {
+      const iso = cursor.toISOString().slice(0, 10);
+      if (dateSet.has(iso)) {
+        currentStreak++;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    const sortedDates = Array.from(dateSet).sort();
+    let longestStreak = 0;
+    let running = 0;
+    let prevDate: Date | null = null;
+
+    for (const dStr of sortedDates) {
+      const cur = new Date(dStr + 'T00:00:00');
+      if (prevDate) {
+        const diffDays = Math.round((cur.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          running++;
+        } else if (diffDays > 1) {
+          running = 1;
+        }
+      } else {
+        running = 1;
+      }
+      prevDate = cur;
+      if (running > longestStreak) longestStreak = running;
+    }
+
+    return {
+      currentStreak,
+      longestStreak: Math.max(longestStreak, currentStreak),
+      checkedInToday,
+      lastCheckinDate: checkins[0]?.checkin_date || null,
+      coupleStreak: currentStreak,
+    };
   }
 }
 

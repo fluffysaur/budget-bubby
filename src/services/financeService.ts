@@ -1,5 +1,5 @@
 /**
- * Dual-Mode Finance Service Dispatcher for Budget Buddy.
+ * Dual-Mode Finance Service Dispatcher for Budget Bubby.
  * Seamlessly switches between Supabase PostgreSQL and In-Memory / LocalStorage Mock.
  */
 
@@ -15,6 +15,7 @@ import type {
   CreateCategoryInput,
   UpdateCategoryInput,
   CreateExpenseInput,
+  UpdateExpenseInput,
   CreateGoalInput,
   CreatePolicyInput,
   Expense,
@@ -26,6 +27,13 @@ import type {
   Perspective,
   RecurringPolicy,
   SavingsGoal,
+  CreditCard,
+  CreateCreditCardInput,
+  CreditCardStatement,
+  UpsertCreditCardStatementInput,
+  DailyCheckin,
+  CheckinType,
+  StreakSummary,
 } from '../types/finance';
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
@@ -64,6 +72,8 @@ export interface FinanceService {
   updateMonthlyBudget(budget: Partial<MonthlyBudget> & { id?: string }): Promise<void>;
   getExpenses(filter?: ExpenseFilter): Promise<Expense[]>;
   addExpense(expense: CreateExpenseInput): Promise<Expense>;
+  updateExpense(id: string, updates: UpdateExpenseInput): Promise<Expense>;
+  bulkAddExpenses(expenses: CreateExpenseInput[]): Promise<Expense[]>;
   deleteExpense(id: string): Promise<void>;
   settleSharedExpenses(member1Id: string, member2Id: string): Promise<void>;
   getLoans(): Promise<Loan[]>;
@@ -74,11 +84,25 @@ export interface FinanceService {
   addPolicy(policy: CreatePolicyInput): Promise<RecurringPolicy>;
   updatePolicy(id: string, updates: Partial<RecurringPolicy>): Promise<RecurringPolicy>;
   deletePolicy(id: string): Promise<void>;
+  // Credit Cards
+  getCreditCards(): Promise<CreditCard[]>;
+  addCreditCard(input: CreateCreditCardInput): Promise<CreditCard>;
+  updateCreditCard(id: string, updates: Partial<CreditCard>): Promise<CreditCard>;
+  deleteCreditCard(id: string): Promise<void>;
+  getCreditCardStatements(month?: string): Promise<CreditCardStatement[]>;
+  upsertCreditCardStatement(input: UpsertCreditCardStatementInput): Promise<CreditCardStatement>;
+  // Streaks & Daily Check-ins
+  getDailyCheckins(memberId?: string): Promise<DailyCheckin[]>;
+  recordDailyCheckin(memberId: string, date: string, type: CheckinType): Promise<DailyCheckin>;
+  getStreakSummary(memberId?: string): Promise<StreakSummary>;
 }
 
 export function isDemoModeActive(): boolean {
   if (typeof window !== 'undefined' && window.sessionStorage) {
-    return window.sessionStorage.getItem('budget_buddy_demo_pin') === 'true';
+    return (
+      window.sessionStorage.getItem('budget_bubby_demo_pin') === 'true' ||
+      window.sessionStorage.getItem('budget_buddy_demo_pin') === 'true'
+    );
   }
   return false;
 }
@@ -117,18 +141,29 @@ export const financeService: FinanceService = {
   updateMonthlyBudget: (budget) => getActiveService().updateMonthlyBudget(budget),
   getExpenses: (filter) => getActiveService().getExpenses(filter),
   addExpense: (expense) => getActiveService().addExpense(expense),
+  updateExpense: (id, updates) => getActiveService().updateExpense(id, updates),
+  bulkAddExpenses: (expenses) => getActiveService().bulkAddExpenses(expenses),
   deleteExpense: (id) => getActiveService().deleteExpense(id),
   settleSharedExpenses: (m1, m2) => getActiveService().settleSharedExpenses(m1, m2),
   getLoans: () => getActiveService().getLoans(),
   getGoals: () => getActiveService().getGoals(),
   addGoal: (goal) => getActiveService().addGoal(goal),
-  updateGoal(id, updates) {
-    return getActiveService().updateGoal(id, updates);
-  },
+  updateGoal: (id, updates) => getActiveService().updateGoal(id, updates),
   getPolicies: () => getActiveService().getPolicies(),
   addPolicy: (policy) => getActiveService().addPolicy(policy),
   updatePolicy: (id, updates) => getActiveService().updatePolicy(id, updates),
   deletePolicy: (id) => getActiveService().deletePolicy(id),
+  // Credit Cards
+  getCreditCards: () => getActiveService().getCreditCards(),
+  addCreditCard: (input) => getActiveService().addCreditCard(input),
+  updateCreditCard: (id, updates) => getActiveService().updateCreditCard(id, updates),
+  deleteCreditCard: (id) => getActiveService().deleteCreditCard(id),
+  getCreditCardStatements: (month) => getActiveService().getCreditCardStatements(month),
+  upsertCreditCardStatement: (input) => getActiveService().upsertCreditCardStatement(input),
+  // Streaks & Daily Check-ins
+  getDailyCheckins: (memberId) => getActiveService().getDailyCheckins(memberId),
+  recordDailyCheckin: (memberId, date, type) => getActiveService().recordDailyCheckin(memberId, date, type),
+  getStreakSummary: (memberId) => getActiveService().getStreakSummary(memberId),
 };
 
 export default financeService;

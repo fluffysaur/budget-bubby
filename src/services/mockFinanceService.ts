@@ -29,12 +29,23 @@ import type {
   Perspective,
   RecurringPolicy,
   SavingsGoal,
+  UpdateExpenseInput,
+  CreditCard,
+  CreateCreditCardInput,
+  CreditCardStatement,
+  UpsertCreditCardStatementInput,
+  DailyCheckin,
+  CheckinType,
+  StreakSummary,
 } from '../types/finance';
 import {
   mockSeedData,
   mockCategories,
   mockHistoricalAccountSnapshots,
   mockSubscriptionPolicies,
+  mockCreditCards,
+  mockCreditCardStatements,
+  mockDailyCheckins,
   type MockSeedDataset,
 } from '../data/mockSeedData';
 import {
@@ -79,6 +90,16 @@ function loadInitialData(): MockSeedDataset {
       ...dataset.recurringPolicies,
       ...cloneDeep(mockSubscriptionPolicies),
     ];
+  }
+
+  if (!dataset.creditCards) {
+    dataset.creditCards = cloneDeep(mockCreditCards);
+  }
+  if (!dataset.creditCardStatements) {
+    dataset.creditCardStatements = cloneDeep(mockCreditCardStatements);
+  }
+  if (!dataset.dailyCheckins) {
+    dataset.dailyCheckins = cloneDeep(mockDailyCheckins);
   }
 
   return dataset;
@@ -639,17 +660,50 @@ class MockFinanceServiceImpl implements FinanceService {
     if (filter?.settled !== undefined) {
       result = result.filter((e) => e.settled === filter.settled);
     }
+    if (filter?.tag) {
+      const tagLower = filter.tag.toLowerCase();
+      result = result.filter(
+        (e) => e.tags && e.tags.some((t) => t.toLowerCase() === tagLower)
+      );
+    }
+    if (filter?.goalId) {
+      result = result.filter((e) => e.goal_id === filter.goalId);
+    }
     if (filter?.search) {
       const query = filter.search.toLowerCase();
       result = result.filter(
         (e) =>
           e.item.toLowerCase().includes(query) ||
-          (e.remarks && e.remarks.toLowerCase().includes(query))
+          (e.remarks && e.remarks.toLowerCase().includes(query)) ||
+          (e.tags && e.tags.some((t) => t.toLowerCase().includes(query)))
       );
     }
 
-    // Sort newest first
-    result.sort((a, b) => b.date.localeCompare(a.date));
+    // Sorting
+    const sortBy = filter?.sortBy || 'date';
+    const sortOrder = filter?.sortOrder || 'desc';
+    result.sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'date') {
+        comparison = a.date.localeCompare(b.date);
+      } else if (sortBy === 'amount') {
+        comparison = a.amount - b.amount;
+      } else if (sortBy === 'category') {
+        const catA = this.state.categories.find((c) => c.id === a.category_id)?.name || '';
+        const catB = this.state.categories.find((c) => c.id === b.category_id)?.name || '';
+        comparison = catA.localeCompare(catB);
+      } else if (sortBy === 'payer') {
+        comparison = a.payer_id.localeCompare(b.payer_id);
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    // Pagination
+    if (filter?.page && filter?.pageSize) {
+      const start = (filter.page - 1) * filter.pageSize;
+      result = result.slice(start, start + filter.pageSize);
+    }
+
     return cloneDeep(result);
   }
 
@@ -666,15 +720,79 @@ class MockFinanceServiceImpl implements FinanceService {
       is_shared: input.is_shared,
       split_ratio: input.split_ratio ?? 0.50,
       settled: false,
+      tags: input.tags || [],
+      goal_id: input.goal_id || null,
+      original_amount: input.original_amount !== undefined ? input.original_amount : null,
+      original_currency: input.original_currency || 'SGD',
+      exchange_rate: input.exchange_rate !== undefined ? input.exchange_rate : null,
       created_at: new Date().toISOString(),
     };
+
+    // If linked to a goal, deduct from goal saved_so_far
+    if (newExpense.goal_id) {
+      const goal = this.state.savingsGoals.find((g) => g.id === newExpense.goal_id);
+      if (goal) {
+        goal.saved_so_far = Math.max(0, Math.round((goal.saved_so_far - newExpense.amount) * 100) / 100);
+      }
+    }
+
+    // Auto-record daily check-in
+    await this.recordDailyCheckin(newExpense.payer_id, newExpense.date, 'expense');
 
     this.state.expenses.unshift(newExpense);
     this.persist();
     return cloneDeep(newExpense);
   }
 
+  public async updateExpense(id: string, updates: UpdateExpenseInput): Promise<Expense> {
+    const expense = this.state.expenses.find((e) => e.id === id);
+    if (!expense) {
+      throw new Error(`Expense with id "${id}" not found`);
+    }
+
+    // Handle goal adjustment if amount or goal_id changed
+    const oldGoalId = expense.goal_id;
+    const oldAmount = expense.amount;
+    const newGoalId = updates.goal_id !== undefined ? updates.goal_id : oldGoalId;
+    const newAmount = updates.amount !== undefined ? updates.amount : oldAmount;
+
+    if (oldGoalId && oldGoalId !== newGoalId) {
+      const prevGoal = this.state.savingsGoals.find((g) => g.id === oldGoalId);
+      if (prevGoal) {
+        prevGoal.saved_so_far = Math.round((prevGoal.saved_so_far + oldAmount) * 100) / 100;
+      }
+    }
+
+    if (newGoalId) {
+      const targetGoal = this.state.savingsGoals.find((g) => g.id === newGoalId);
+      if (targetGoal) {
+        const diff = (oldGoalId === newGoalId) ? (newAmount - oldAmount) : newAmount;
+        targetGoal.saved_so_far = Math.max(0, Math.round((targetGoal.saved_so_far - diff) * 100) / 100);
+      }
+    }
+
+    Object.assign(expense, updates);
+    this.persist();
+    return cloneDeep(expense);
+  }
+
+  public async bulkAddExpenses(expenses: CreateExpenseInput[]): Promise<Expense[]> {
+    const created: Expense[] = [];
+    for (const input of expenses) {
+      const exp = await this.addExpense(input);
+      created.push(exp);
+    }
+    return created;
+  }
+
   public async deleteExpense(id: string): Promise<void> {
+    const expense = this.state.expenses.find((e) => e.id === id);
+    if (expense && expense.goal_id) {
+      const goal = this.state.savingsGoals.find((g) => g.id === expense.goal_id);
+      if (goal) {
+        goal.saved_so_far = Math.round((goal.saved_so_far + expense.amount) * 100) / 100;
+      }
+    }
     this.state.expenses = this.state.expenses.filter((e) => e.id !== id);
     this.persist();
   }
@@ -806,6 +924,216 @@ class MockFinanceServiceImpl implements FinanceService {
   public async deletePolicy(id: string): Promise<void> {
     this.state.recurringPolicies = this.state.recurringPolicies.filter((p) => p.id !== id);
     this.persist();
+  }
+
+  // Credit Cards
+  public async getCreditCards(): Promise<CreditCard[]> {
+    return cloneDeep(this.state.creditCards || []);
+  }
+
+  public async addCreditCard(input: CreateCreditCardInput): Promise<CreditCard> {
+    const newCard: CreditCard = {
+      id: `cc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      household_id: input.household_id || this.state.household.id,
+      owner_id: input.owner_id,
+      name: input.name,
+      bank: input.bank,
+      last4: input.last4 || null,
+      billing_day: input.billing_day,
+      due_day: input.due_day,
+      credit_limit: input.credit_limit || null,
+      color: input.color || '#059669',
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+
+    if (!this.state.creditCards) this.state.creditCards = [];
+    this.state.creditCards.push(newCard);
+    this.persist();
+    return cloneDeep(newCard);
+  }
+
+  public async updateCreditCard(id: string, updates: Partial<CreditCard>): Promise<CreditCard> {
+    const card = this.state.creditCards?.find((c) => c.id === id);
+    if (!card) throw new Error(`Credit card with id "${id}" not found`);
+    Object.assign(card, updates);
+    this.persist();
+    return cloneDeep(card);
+  }
+
+  public async deleteCreditCard(id: string): Promise<void> {
+    if (this.state.creditCards) {
+      this.state.creditCards = this.state.creditCards.filter((c) => c.id !== id);
+    }
+    if (this.state.creditCardStatements) {
+      this.state.creditCardStatements = this.state.creditCardStatements.filter((s) => s.card_id !== id);
+    }
+    this.persist();
+  }
+
+  public async getCreditCardStatements(month?: string): Promise<CreditCardStatement[]> {
+    let statements = cloneDeep(this.state.creditCardStatements || []);
+    if (month) {
+      statements = statements.filter((s) => s.month === month);
+    }
+    for (const stmt of statements) {
+      stmt.card = this.state.creditCards?.find((c) => c.id === stmt.card_id);
+    }
+    return statements;
+  }
+
+  public async upsertCreditCardStatement(input: UpsertCreditCardStatementInput): Promise<CreditCardStatement> {
+    if (!this.state.creditCardStatements) this.state.creditCardStatements = [];
+
+    const existingIdx = this.state.creditCardStatements.findIndex(
+      (s) => s.card_id === input.card_id && s.month === input.month
+    );
+
+    let statement: CreditCardStatement;
+    if (existingIdx >= 0) {
+      statement = this.state.creditCardStatements[existingIdx];
+      statement.statement_amount = input.statement_amount;
+      statement.due_date = input.due_date;
+      if (input.is_paid !== undefined) statement.is_paid = input.is_paid;
+      if (input.paid_at !== undefined) statement.paid_at = input.paid_at;
+      if (input.notes !== undefined) statement.notes = input.notes;
+    } else {
+      statement = {
+        id: input.id || `ccs-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        card_id: input.card_id,
+        household_id: input.household_id || this.state.household.id,
+        month: input.month,
+        statement_amount: input.statement_amount,
+        due_date: input.due_date,
+        is_paid: input.is_paid || false,
+        paid_at: input.paid_at || null,
+        notes: input.notes || null,
+      };
+      this.state.creditCardStatements.push(statement);
+    }
+
+    this.persist();
+    statement.card = this.state.creditCards?.find((c) => c.id === statement.card_id);
+    return cloneDeep(statement);
+  }
+
+  // Daily Check-ins & Streak
+  public async getDailyCheckins(memberId?: string): Promise<DailyCheckin[]> {
+    let checkins = cloneDeep(this.state.dailyCheckins || []);
+    if (memberId) {
+      checkins = checkins.filter((c) => c.member_id === memberId);
+    }
+    checkins.sort((a, b) => b.checkin_date.localeCompare(a.checkin_date));
+    return checkins;
+  }
+
+  public async recordDailyCheckin(
+    memberId: string,
+    date: string,
+    type: CheckinType
+  ): Promise<DailyCheckin> {
+    if (!this.state.dailyCheckins) this.state.dailyCheckins = [];
+
+    const existing = this.state.dailyCheckins.find(
+      (c) => c.member_id === memberId && c.checkin_date === date
+    );
+
+    if (existing) {
+      if (type === 'expense') {
+        existing.type = 'expense';
+      }
+      this.persist();
+      return cloneDeep(existing);
+    }
+
+    const checkin: DailyCheckin = {
+      id: `chk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      household_id: this.state.household.id,
+      member_id: memberId,
+      checkin_date: date,
+      type,
+      created_at: new Date().toISOString(),
+    };
+
+    this.state.dailyCheckins.push(checkin);
+    this.persist();
+    return cloneDeep(checkin);
+  }
+
+  public async getStreakSummary(memberId?: string): Promise<StreakSummary> {
+    const today = getTodayDateString();
+    const checkins = await this.getDailyCheckins(memberId);
+    const dateSet = new Set(checkins.map((c) => c.checkin_date));
+    const checkedInToday = dateSet.has(today);
+
+    // Calculate current streak counting backward
+    let currentStreak = 0;
+    const cursor = new Date();
+    if (!checkedInToday) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    while (true) {
+      const iso = cursor.toISOString().slice(0, 10);
+      if (dateSet.has(iso)) {
+        currentStreak++;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    // Longest streak
+    const sortedDates = Array.from(dateSet).sort();
+    let longestStreak = 0;
+    let running = 0;
+    let prevDate: Date | null = null;
+
+    for (const dStr of sortedDates) {
+      const cur = new Date(dStr + 'T00:00:00');
+      if (prevDate) {
+        const diffDays = Math.round((cur.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          running++;
+        } else if (diffDays > 1) {
+          running = 1;
+        }
+      } else {
+        running = 1;
+      }
+      prevDate = cur;
+      if (running > longestStreak) longestStreak = running;
+    }
+
+    // Couple streak (days where both member 0 and member 1 checked in)
+    const m1 = this.state.members[0]?.id;
+    const m2 = this.state.members[1]?.id;
+    let coupleStreak = 0;
+    if (m1 && m2) {
+      const m1Dates = new Set(this.state.dailyCheckins?.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
+      const m2Dates = new Set(this.state.dailyCheckins?.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
+      const cCursor = new Date();
+      if (!m1Dates.has(today) || !m2Dates.has(today)) {
+        cCursor.setDate(cCursor.getDate() - 1);
+      }
+      while (true) {
+        const iso = cCursor.toISOString().slice(0, 10);
+        if (m1Dates.has(iso) && m2Dates.has(iso)) {
+          coupleStreak++;
+          cCursor.setDate(cCursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    }
+
+    return {
+      currentStreak,
+      longestStreak: Math.max(longestStreak, currentStreak),
+      checkedInToday,
+      lastCheckinDate: checkins[0]?.checkin_date || null,
+      coupleStreak,
+    };
   }
 }
 

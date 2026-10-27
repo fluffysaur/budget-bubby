@@ -19,6 +19,9 @@ import type {
   LoanPayment,
   SavingsGoal,
   RecurringPolicy,
+  CreditCard,
+  CreditCardStatement,
+  DailyCheckin,
 } from '../types/finance';
 
 export const mockHousehold: Household = {
@@ -1018,6 +1021,104 @@ export const mockExpenses: Expense[] = [
   },
 ];
 
+export const mockCreditCards: CreditCard[] = [
+  {
+    id: 'cc-00000000-0001',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011', // Yi Jia
+    name: 'DBS Altitude Visa',
+    bank: 'DBS',
+    last4: '4128',
+    billing_day: 15,
+    due_day: 5,
+    credit_limit: 15000,
+    color: '#0284c7',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cc-00000000-0002',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0012', // Rachel
+    name: 'UOB One Card',
+    bank: 'UOB',
+    last4: '8832',
+    billing_day: 20,
+    due_day: 10,
+    credit_limit: 12000,
+    color: '#059669',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cc-00000000-0003',
+    household_id: 'hh-00000000-0001',
+    owner_id: 'mem-00000000-0011', // Yi Jia (Joint use)
+    name: 'OCBC 365 Dining & Groceries',
+    bank: 'OCBC',
+    last4: '1945',
+    billing_day: 28,
+    due_day: 18,
+    credit_limit: 10000,
+    color: '#e11d48',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+  },
+];
+
+export const mockCreditCardStatements: CreditCardStatement[] = [
+  {
+    id: 'ccs-00000000-0001',
+    card_id: 'cc-00000000-0001',
+    household_id: 'hh-00000000-0001',
+    month: '2026-10',
+    statement_amount: 842.50,
+    due_date: '2026-11-05',
+    is_paid: false,
+    notes: 'Miles & general dining',
+  },
+  {
+    id: 'ccs-00000000-0002',
+    card_id: 'cc-00000000-0002',
+    household_id: 'hh-00000000-0001',
+    month: '2026-10',
+    statement_amount: 620.00,
+    due_date: '2026-11-10',
+    is_paid: true,
+    paid_at: '2026-10-25T10:00:00.000Z',
+    notes: 'Shopee & groceries cash rebate',
+  },
+  {
+    id: 'ccs-00000000-0003',
+    card_id: 'cc-00000000-0003',
+    household_id: 'hh-00000000-0001',
+    month: '2026-10',
+    statement_amount: 350.20,
+    due_date: '2026-11-18',
+    is_paid: false,
+    notes: 'FairPrice & utilities',
+  },
+];
+
+export const mockDailyCheckins: DailyCheckin[] = [
+  {
+    id: 'chk-00000000-0001',
+    household_id: 'hh-00000000-0001',
+    member_id: 'mem-00000000-0011',
+    checkin_date: '2026-10-27',
+    type: 'expense',
+    created_at: '2026-10-27T12:00:00.000Z',
+  },
+  {
+    id: 'chk-00000000-0002',
+    household_id: 'hh-00000000-0001',
+    member_id: 'mem-00000000-0012',
+    checkin_date: '2026-10-27',
+    type: 'expense',
+    created_at: '2026-10-27T13:00:00.000Z',
+  },
+];
+
 export interface MockSeedDataset {
   household: Household;
   members: HouseholdMember[];
@@ -1033,6 +1134,9 @@ export interface MockSeedDataset {
   monthlyBudgets: MonthlyBudget[];
   monthlyBudgetCategories: MonthlyBudgetCategory[];
   expenses: Expense[];
+  creditCards: CreditCard[];
+  creditCardStatements: CreditCardStatement[];
+  dailyCheckins: DailyCheckin[];
 }
 
 export const mockSeedData: MockSeedDataset = {
@@ -1050,6 +1154,9 @@ export const mockSeedData: MockSeedDataset = {
   monthlyBudgets: mockMonthlyBudgets,
   monthlyBudgetCategories: mockMonthlyBudgetCategories,
   expenses: mockExpenses,
+  creditCards: mockCreditCards,
+  creditCardStatements: mockCreditCardStatements,
+  dailyCheckins: mockDailyCheckins,
 };
 
 export default mockSeedData;

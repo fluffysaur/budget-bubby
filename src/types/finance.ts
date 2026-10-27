@@ -169,6 +169,11 @@ export interface Expense {
   is_shared: boolean;
   split_ratio: number; // 0.0 - 1.0 (partner's share, default 0.50)
   settled: boolean;
+  tags?: string[];
+  goal_id?: string | null;
+  original_amount?: number | null;
+  original_currency?: string | null;
+  exchange_rate?: number | null;
   created_at?: string;
 }
 
@@ -182,7 +187,32 @@ export interface CreateExpenseInput {
   remarks?: string | null;
   is_shared: boolean;
   split_ratio?: number;
+  tags?: string[];
+  goal_id?: string | null;
+  original_amount?: number | null;
+  original_currency?: string | null;
+  exchange_rate?: number | null;
 }
+
+export interface UpdateExpenseInput {
+  payer_id?: string;
+  category_id?: string | null;
+  date?: string;
+  item?: string;
+  amount?: number;
+  remarks?: string | null;
+  is_shared?: boolean;
+  split_ratio?: number;
+  settled?: boolean;
+  tags?: string[];
+  goal_id?: string | null;
+  original_amount?: number | null;
+  original_currency?: string | null;
+  exchange_rate?: number | null;
+}
+
+export type ExpenseSortField = 'date' | 'amount' | 'category' | 'payer';
+export type SortDirection = 'asc' | 'desc';
 
 export interface ExpenseFilter {
   month?: string; // 'YYYY-MM'
@@ -191,6 +221,108 @@ export interface ExpenseFilter {
   isShared?: boolean;
   settled?: boolean;
   search?: string;
+  tag?: string;
+  goalId?: string;
+  sortBy?: ExpenseSortField;
+  sortOrder?: SortDirection;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface CreditCard {
+  id: string;
+  household_id: string;
+  owner_id: string;
+  name: string;
+  bank: string;
+  last4?: string | null;
+  billing_day: number;
+  due_day: number;
+  credit_limit?: number | null;
+  color: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface CreateCreditCardInput {
+  household_id?: string;
+  owner_id: string;
+  name: string;
+  bank: string;
+  last4?: string | null;
+  billing_day: number;
+  due_day: number;
+  credit_limit?: number | null;
+  color?: string;
+}
+
+export interface CreditCardStatement {
+  id: string;
+  card_id: string;
+  household_id: string;
+  month: string; // 'YYYY-MM'
+  statement_amount: number;
+  due_date: string; // 'YYYY-MM-DD'
+  is_paid: boolean;
+  paid_at?: string | null;
+  notes?: string | null;
+  card?: CreditCard;
+}
+
+export interface UpsertCreditCardStatementInput {
+  id?: string;
+  card_id: string;
+  household_id?: string;
+  month: string;
+  statement_amount: number;
+  due_date: string;
+  is_paid?: boolean;
+  paid_at?: string | null;
+  notes?: string | null;
+}
+
+export type CheckinType = 'expense' | 'no_spend';
+
+export interface DailyCheckin {
+  id: string;
+  household_id: string;
+  member_id: string;
+  checkin_date: string; // 'YYYY-MM-DD'
+  type: CheckinType;
+  created_at?: string;
+}
+
+export interface StreakSummary {
+  currentStreak: number;
+  longestStreak: number;
+  checkedInToday: boolean;
+  lastCheckinDate?: string | null;
+  coupleStreak: number;
+}
+
+export interface MonthlySurplusPoint {
+  month: string;
+  cap: number;
+  spent: number;
+  goalSpent: number;
+  delta: number;
+  cumulative: number;
+}
+
+export interface CumulativeSurplusSummary {
+  currentMonthSurplus: number;
+  cumulativeSurplus: number;
+  monthlyHistory: MonthlySurplusPoint[];
+}
+
+export interface CategoryLimitAlert {
+  categoryId: string;
+  categoryName: string;
+  color: string;
+  spent: number;
+  allocated: number;
+  percentage: number;
+  severity: 'warning' | 'exceeded';
 }
 
 export interface Loan {
