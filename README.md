@@ -8,45 +8,48 @@
 ## Table of Contents
 
 - [Budget Bubby 🇸ɢ 💍](#budget-bubby-ɢ-)
-  - [Table of Contents](#table-of-contents)
-  - [Key Features](#key-features)
-    - [1. Daily Expense Logging & Ledger Power Tools](#1-daily-expense-logging--ledger-power-tools)
-    - [2. Couple Splits & 50/50 Settlement Center](#2-couple-splits--5050-settlement-center)
-    - [3. Dynamic Perspective Switching](#3-dynamic-perspective-switching)
-    - [4. Budget Waterfall, % Sliders & Limit Alerts](#4-budget-waterfall--sliders--limit-alerts)
-    - [5. Cumulative Surplus / Deficit Rollover](#5-cumulative-surplus--deficit-rollover)
-    - [6. Big-Ticket Goals & Sinking Fund Drawdowns](#6-big-ticket-goals--sinking-fund-drawdowns)
-    - [7. Spend Tags & Trip Expense Tracking](#7-spend-tags--trip-expense-tracking)
-    - [8. Credit Card Statements Tracker](#8-credit-card-statements-tracker)
-    - [9. Daily Check-in Streak & Habit Tracker](#9-daily-check-in-streak--habit-tracker)
-    - [10. Accounts, Investments & True Net Worth](#10-accounts-investments--true-net-worth)
-    - [11. HDB Mortgage & Prepayment Simulator](#11-hdb-mortgage--prepayment-simulator)
-    - [12. Recurring Policies & Tax Renewal Calendar](#12-recurring-policies--tax-renewal-calendar)
-    - [13. WebAuthn Biometrics & PIN Security](#13-webauthn-biometrics--pin-security)
-    - [14. In-App Notifications & PWA Reminders](#14-in-app-notifications--pwa-reminders)
-    - [15. Offline-First Sync & Instant Loading](#15-offline-first-sync--instant-loading)
-  - [Singapore-Specific Financial Engine](#singapore-specific-financial-engine)
-  - [Architecture & Tech Stack](#architecture--tech-stack)
-  - [Local Development Quickstart](#local-development-quickstart)
-    - [1. Prerequisites](#1-prerequisites)
-    - [2. Installation](#2-installation)
-    - [3. Run Development Server](#3-run-development-server)
-  - [Dual-Mode Data Access](#dual-mode-data-access)
-  - [Supabase Setup & Migrations](#supabase-setup--migrations)
-    - [1. Database Migrations Overview](#1-database-migrations-overview)
-    - [2. Apply Private Seed (Optional)](#2-apply-private-seed-optional)
-    - [3. Environment Variables & Authentication](#3-environment-variables--authentication)
-    - [4. Private PIN Access Setup](#4-private-pin-access-setup)
-  - [Testing & Quality Assurance](#testing--quality-assurance)
-  - [PWA Mobile Installation](#pwa-mobile-installation)
-  - [Vercel Deployment Guide](#vercel-deployment-guide)
-  - [Security & Git Safety](#security--git-safety)
+    - [Table of Contents](#table-of-contents)
+    - [Key Features](#key-features)
+        - [1. Daily Expense Logging \& Ledger Power Tools](#1-daily-expense-logging--ledger-power-tools)
+        - [2. Couple Splits \& 50/50 Settlement Center](#2-couple-splits--5050-settlement-center)
+        - [3. Dynamic Perspective Switching](#3-dynamic-perspective-switching)
+        - [4. Budget Waterfall, % Sliders \& Limit Alerts](#4-budget-waterfall--sliders--limit-alerts)
+        - [5. Cumulative Surplus / Deficit Rollover](#5-cumulative-surplus--deficit-rollover)
+        - [6. Big-Ticket Goals \& Sinking Fund Drawdowns](#6-big-ticket-goals--sinking-fund-drawdowns)
+        - [7. Spend Tags \& Trip Expense Tracking](#7-spend-tags--trip-expense-tracking)
+        - [8. Credit Card Statements Tracker](#8-credit-card-statements-tracker)
+        - [9. Daily Check-in Streak \& Habit Tracker](#9-daily-check-in-streak--habit-tracker)
+        - [10. Accounts, Investments \& True Net Worth](#10-accounts-investments--true-net-worth)
+        - [11. HDB Mortgage \& Prepayment Simulator](#11-hdb-mortgage--prepayment-simulator)
+        - [12. Recurring Policies \& Tax Renewal Calendar](#12-recurring-policies--tax-renewal-calendar)
+        - [13. WebAuthn Biometrics \& PIN Security](#13-webauthn-biometrics--pin-security)
+        - [14. In-App Notifications \& PWA Reminders](#14-in-app-notifications--pwa-reminders)
+        - [15. Offline-First Sync \& Instant Loading](#15-offline-first-sync--instant-loading)
+    - [Singapore-Specific Financial Engine](#singapore-specific-financial-engine)
+    - [Architecture \& Tech Stack](#architecture--tech-stack)
+    - [Local Development Quickstart](#local-development-quickstart)
+        - [1. Prerequisites](#1-prerequisites)
+        - [2. Installation](#2-installation)
+        - [3. Run Development Server](#3-run-development-server)
+    - [Dual-Mode Data Access](#dual-mode-data-access)
+    - [Supabase Setup \& Migrations](#supabase-setup--migrations)
+        - [1. Database Migrations Overview](#1-database-migrations-overview)
+        - [2. Apply Private Seed (Optional)](#2-apply-private-seed-optional)
+        - [3. Environment Variables \& Authentication](#3-environment-variables--authentication)
+        - [4. Private PIN Access Setup](#4-private-pin-access-setup)
+    - [Testing \& Quality Assurance](#testing--quality-assurance)
+        - [Test Coverage Highlights](#test-coverage-highlights)
+    - [PWA Mobile Installation](#pwa-mobile-installation)
+    - [Vercel Deployment Guide](#vercel-deployment-guide)
+        - [SPA Routing on Vercel](#spa-routing-on-vercel)
+    - [Security \& Git Safety](#security--git-safety)
 
 ---
 
 ## Key Features
 
 ### 1. Daily Expense Logging & Ledger Power Tools
+
 - **ATM Cents-First Amount Input**: Fast right-to-left decimal entry (`1` $\rightarrow$ `$0.01`, `1250` $\rightarrow$ `$12.50`) without needing to tap the decimal point. Supports zero-decimal currencies (`VND`, `JPY`, `KRW`, `IDR`).
 - **Segmented Personal / Shared Pill**: Clear 1-tap toggling between `👤 Personal` and `👥 Shared 50/50` with visual split explanations.
 - **Multi-Currency Conversion & Live Rates**: Regional currency conversion (`SGD`, `MYR`, `VND`, `JPY`, `THB`, `USD`, `EUR`, etc.) with cached exchange rates and custom rate overrides.
@@ -59,72 +62,86 @@
 - **Audio & Particle Celebration**: Realistic Web Audio "cha-ching" chime with gesture auto-unlock and confetti animation on logging spend.
 
 ### 2. Couple Splits & 50/50 Settlement Center
+
 - **Automated Net Balance Computation**: Automatically tracks who paid for what and calculates running debt balances (e.g. _"Rachel owes Yi Jia S$1,234.56"_).
 - **1-Click Settlement**: Clear shared balances in a single tap with recorded settlement timestamps and history audit logs.
 - **Custom Split Ratios**: Adjust splits per transaction when expenses are not strictly 50/50.
 
 ### 3. Dynamic Perspective Switching
+
 - **Combined Household**: Pooled net worth, joint assets, shared spending settlements, combined savings milestones, and household renewals.
 - **Yi Jia's Personal Perspective**: Individual salary, 20% CPF deduction, personal bank accounts, and personal category caps.
 - **Rachel's Personal Perspective**: Individual salary, 20% CPF deduction, personal bank accounts, and personal category caps.
 
 ### 4. Budget Waterfall, % Sliders & Limit Alerts
+
 - **Visual Budget Waterfall**: Flow from `Gross Salary` $\rightarrow$ `20% CPF Employee Deduction` $\rightarrow$ `Net Take-Home Pay` $\rightarrow$ `Tithing (10%)` $\rightarrow$ `Spendable Allocations` $\rightarrow$ `Unallocated Buffer`.
 - **Interactive % Allocation Sliders**: Dynamic percentage sliders in `ManageCategoriesModal` and `BaseProfileEditorModal` with live dollar conversions, lock toggles, and auto-balancing to 100%.
 - **Persistent Warning Banner**: `CategoryLimitWarningBanner` permanently surfaced on Dashboard and Budget pages highlighting categories approaching or exceeding their caps.
 - **Multi-Tier Audio/Visual Alerts**: Visual amber toast + warning chime at $\ge 80\%$, red alert toast + exceeded chime at $\ge 100\%$.
 
 ### 5. Cumulative Surplus / Deficit Rollover
+
 - **Month-to-Month Rollover**: `CumulativeSurplusCard` displays cumulative savings surplus rolled over across months.
 - **Spendable Isolation**: Calculated from monthly spendable cap minus spendable expenses, specifically excluding goal-funded drawdowns to avoid double penalties.
 
 ### 6. Big-Ticket Goals & Sinking Fund Drawdowns
+
 - **Milestone Couple Goals**: Track HDB Down Payment, Wedding Banquet, Home Renovation, Emergency Fund, and Honeymoon.
 - **Direct Expense Drawdown**: Connect expenses directly to goals (via Quick Add or `SpendFromGoalModal`). Spending draws down `saved_so_far` while isolating the spend from monthly budget caps to prevent double-counting.
 - **Monthly Pacing Badges**: Real-time pacing indicators: _Ahead of Pace_, _On Track_, _Behind Pace_.
 
 ### 7. Spend Tags & Trip Expense Tracking
+
 - **Tagging Engine**: Tag any expense with `#tags` (e.g. `#VietnamTrip`, `#WeddingBanquet`, `#BlackFriday`).
 - **Spend Tags Overview**: Dedicated `SpendTagsOverviewCard` displaying total spend, transaction counts, and date ranges per tag.
 - **Multi-Tag Filter**: Filter the main ledger across multiple tags simultaneously.
 
 ### 8. Credit Card Statements Tracker
+
 - **Statement & Cycle Management**: `CreditCardTrackerSection` tracking cards (DBS Altitude, OCBC 365, UOB One, etc.) with statement dates, due dates, and statement balances.
 - **1-Tap Payment Toggle**: Toggle statements between **Unpaid** and **Paid** with visual settlement confirmation.
 - **Due Date Proximity Badges**: Highlights upcoming payments with countdown days and overdue warnings.
 
 ### 9. Daily Check-in Streak & Habit Tracker
+
 - **Daily Check-in Bar**: Pinned prominently on Dashboard with current streak count, couple streak calculation, and fire milestone badge.
 - **1-Tap "No Spend Today"**: Quick check-in action for zero-spend days that advances the couple streak without adding dummy expenses.
 - **7-Day Mini Calendar**: Visual dot indicators displaying check-in consistency for the active week.
 
 ### 10. Accounts, Investments & True Net Worth
+
 - **Comprehensive Asset Tracking**: Cash, High-Yield Savings Accounts, Brokerage/Investments, and CPF (OA, SA, MA).
 - **True Net Worth Formula**:
   $$\text{True Net Worth} = \sum (\text{Cash} + \text{Investments} + \text{CPF OA/SA/MA}) - \sum (\text{HDB Loan} + \text{Other Liabilities})$$
 - **Balance Snapshots**: Historical balance tracking and monthly net worth growth charts.
 
 ### 11. HDB Mortgage & Prepayment Simulator
+
 - **Amortization Engine**: Complete schedule breaking down principal vs interest for every monthly installment.
 - **Prepayment Simulator**: Compute total interest saved and tenure months cut by making additional monthly contributions or lump-sum prepayments.
 
 ### 12. Recurring Policies & Tax Renewal Calendar
+
 - **Annual Amortization**: Smooths out annual lump sums (IRAS Income Tax, Property Tax, Life & Health Insurance) into monthly budget deductions.
 - **12-Month Renewal Visualizer**: Timeline identifying heavy payment months ahead of time.
 
 ### 13. WebAuthn Biometrics & PIN Security
+
 - **Platform Biometrics**: Authenticate instantly via Touch ID, Face ID, or Windows Hello / Fingerprint directly from `PinLoginScreen`.
 - **Encrypted Local Token**: Device-bound biometric tokens encrypt user session verification without storing raw PINs in cleartext.
 - **Private 6-Digit PIN**: Secure fallback authentication for Yi Jia and Rachel.
 
 ### 14. In-App Notifications & PWA Reminders
+
 - **Notification Bell & Popover**: Header badge showing unread notifications with 1-click action triggers.
 - **Scheduled Alerts**: Automatic notifications for:
-  - Daily spend check-in (evening reminder).
-  - Monthly balance reconciliation (1st and last day of month).
-  - Credit card payment due dates (within 5 days of due date).
+    - Daily spend check-in (evening reminder).
+    - Monthly balance reconciliation (1st and last day of month).
+    - Credit card payment due dates (within 5 days of due date).
 
 ### 15. Offline-First Sync & Instant Loading
+
 - **Offline Mutation Outbox**: Expenses logged offline are stored in a persistent queue (`offlineSyncQueue.ts`) and automatically synced when connectivity returns.
 - **Offline Banner Counter**: Top connectivity banner showing pending sync counts and sync progress.
 - **Route-Level Code-Splitting**: All major pages code-split via `React.lazy()` with branded skeleton loaders for `<50ms` first paint.
@@ -227,10 +244,10 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 Budget Bubby features a transparent **Dual-Mode Data Architecture** implemented in `src/services/financeService.ts`:
 
-| Mode | Trigger Condition | Data Source | Persistence |
-| :--- | :--- | :--- | :--- |
-| **Demo Mock Mode** | No `.env` file or placeholder credentials | `src/data/mockSeedData.ts` | Local browser session (instant zero-config demo) |
-| **Live Supabase Mode** | Valid `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` | Supabase PostgreSQL database | Cloud PostgreSQL with Row-Level Security |
+| Mode                   | Trigger Condition                                      | Data Source                  | Persistence                                      |
+| :--------------------- | :----------------------------------------------------- | :--------------------------- | :----------------------------------------------- |
+| **Demo Mock Mode**     | No `.env` file or placeholder credentials              | `src/data/mockSeedData.ts`   | Local browser session (instant zero-config demo) |
+| **Live Supabase Mode** | Valid `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` | Supabase PostgreSQL database | Cloud PostgreSQL with Row-Level Security         |
 
 The active mode is indicated by the status badge in the top right header (**Demo Mock** with amber indicator vs. **Live Supabase** with emerald indicator).
 
@@ -270,8 +287,8 @@ VITE_RACHEL_EMAIL=rachel@example.com
 ### 4. Private PIN Access Setup
 
 1. In **Supabase Dashboard → Authentication → Users**, create the two partner user accounts:
-   - User 1: Yi Jia's email with Yi Jia's chosen unique 6-digit PIN as the password.
-   - User 2: Rachel's email with Rachel's chosen unique 6-digit PIN as the password.
+    - User 1: Yi Jia's email with Yi Jia's chosen unique 6-digit PIN as the password.
+    - User 2: Rachel's email with Rachel's chosen unique 6-digit PIN as the password.
 2. In **Authentication → Providers → Email**, turn off **"Allow new users to sign up"** so unauthorized visitors cannot create accounts.
 3. When accessing Budget Bubby, enter your 6-digit PIN (or authenticate with Fingerprint / Face ID).
 
@@ -295,15 +312,15 @@ npm run test:e2e
 ### Test Coverage Highlights
 
 - **Epic Test Suites**:
-  - `epic0Foundation.test.ts`: Currency conversion, FX caching, and Web Audio engine.
-  - `epic1ExpenseEntryUX.test.tsx`: Cents-first input, segmented personal/shared pill, currency selector, and safe areas.
-  - `epic2LedgerFastBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget, and bulk paste parser.
-  - `epic3BudgetSurplusAlerts.test.tsx`: Category % sliders, cumulative surplus card, and 80%/100% warning alerts.
-  - `epic4TagsGoalsCCTracker.test.tsx`: Spend tags, goal-spend isolation, and credit card statement tracking.
-  - `epic5StreakAuthNotifications.test.tsx`: Daily check-in streak, WebAuthn biometrics, and notification reminders.
-  - `epic6OfflineSyncPerf.test.tsx`: Offline outbox queue, reconnect sync, and lazy route Suspense loading.
+    - `epic0Foundation.test.ts`: Currency conversion, FX caching, and Web Audio engine.
+    - `epic1ExpenseEntryUX.test.tsx`: Cents-first input, segmented personal/shared pill, currency selector, and safe areas.
+    - `epic2LedgerFastBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget, and bulk paste parser.
+    - `epic3BudgetSurplusAlerts.test.tsx`: Category % sliders, cumulative surplus card, and 80%/100% warning alerts.
+    - `epic4TagsGoalsCCTracker.test.tsx`: Spend tags, goal-spend isolation, and credit card statement tracking.
+    - `epic5StreakAuthNotifications.test.tsx`: Daily check-in streak, WebAuthn biometrics, and notification reminders.
+    - `epic6OfflineSyncPerf.test.tsx`: Offline outbox queue, reconnect sync, and lazy route Suspense loading.
 - **Component & Domain Tests**:
-  - `ExpenseComponents.test.tsx`, `BudgetComponents.test.tsx`, `GoalsComponents.test.tsx`, `AccountsComponents.test.tsx`, `LoansComponents.test.tsx`, `RecurringComponents.test.tsx`, `HouseholdContext.test.tsx`, `Auth.test.tsx`, `pwa.test.tsx`.
+    - `ExpenseComponents.test.tsx`, `BudgetComponents.test.tsx`, `GoalsComponents.test.tsx`, `AccountsComponents.test.tsx`, `LoansComponents.test.tsx`, `RecurringComponents.test.tsx`, `HouseholdContext.test.tsx`, `Auth.test.tsx`, `pwa.test.tsx`.
 
 ---
 
@@ -324,12 +341,12 @@ Budget Bubby is pre-configured for one-click deployment on [Vercel](https://verc
 
 1. Push your repository to GitHub / GitLab / Bitbucket.
 2. Import the project in Vercel:
-   - **Framework Preset**: `Vite`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
+    - **Framework Preset**: `Vite`
+    - **Build Command**: `npm run build`
+    - **Output Directory**: `dist`
 3. Add Environment Variables in Vercel Project Settings (if using live Supabase):
-   - `VITE_SUPABASE_URL` = `https://your-project.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` = `your-anon-key`
+    - `VITE_SUPABASE_URL` = `https://your-project.supabase.co`
+    - `VITE_SUPABASE_ANON_KEY` = `your-anon-key`
 4. Deploy!
 
 ### SPA Routing on Vercel
@@ -338,7 +355,7 @@ The included `vercel.json` ensures that direct visits or page reloads on routes 
 
 ```json
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+    "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
 ```
 
