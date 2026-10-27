@@ -33,6 +33,7 @@ import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget
 import { QuickAddExpenseModal } from "../components/expenses/QuickAddExpenseModal";
 import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
 import { AddAccountModal } from "../components/accounts/AddAccountModal";
+import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import type {
     Account,
     Category,
@@ -259,6 +260,12 @@ export function DashboardPage({ className = "", onNavigateTab }: DashboardPagePr
                 </div>
             ) : (
                 <>
+                    {/* Category Budget Limit Guardrail Alerts */}
+                    <CategoryLimitWarningBanner
+                        categories={monthlyBudget?.categories || []}
+                        onNavigateCategory={() => onNavigateTab?.("budget")}
+                    />
+
                     {/* DAILY SPEND & CHECK-IN HERO STRIP (Optimized for Fast Mobile Checking) */}
                     <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-linear-to-br from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-900/60 p-4 sm:p-5 shadow-xs">
                         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">

@@ -38,6 +38,8 @@ import { CategoryProgressList } from '../components/budget/CategoryProgressList'
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
 import { ManageCategoriesModal } from '../components/categories/ManageCategoriesModal';
 import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
+import { CategoryLimitWarningBanner } from '../components/budget/CategoryLimitWarningBanner';
+import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCard';
 import type {
   BaseBudgetProfile,
   BaseProfileAllocation,
@@ -368,6 +370,9 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
         }
       />
 
+      {/* Category Limit Warning Banner (Guardrails) */}
+      <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />
+
       {/* High-Level Financial Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Gross Salary */}
@@ -528,6 +533,13 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
               />
             )}
           </div>
+
+          {/* Cumulative Spending Surplus / Deficit Card */}
+          <CumulativeSurplusCard
+            selectedMonth={selectedMonth}
+            memberId={perspective !== 'household' && activeMember ? activeMember.id : undefined}
+            perspective={perspective}
+          />
 
           {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
           {allocationCats.length > 0 && (
