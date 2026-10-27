@@ -38,6 +38,7 @@ import type {
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
 import { supabaseFinanceService } from './supabaseFinanceService';
+import { offlineSyncQueue } from './offlineSyncQueue';
 
 export interface FinanceService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
@@ -139,11 +140,40 @@ export const financeService: FinanceService = {
   getMonthlyBudget: (month, memberId) =>
     getActiveService().getMonthlyBudget(month, memberId),
   updateMonthlyBudget: (budget) => getActiveService().updateMonthlyBudget(budget),
-  getExpenses: (filter) => getActiveService().getExpenses(filter),
-  addExpense: (expense) => getActiveService().addExpense(expense),
-  updateExpense: (id, updates) => getActiveService().updateExpense(id, updates),
-  bulkAddExpenses: (expenses) => getActiveService().bulkAddExpenses(expenses),
-  deleteExpense: (id) => getActiveService().deleteExpense(id),
+  getExpenses: async (filter) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return mockFinanceService.getExpenses(filter);
+    }
+    try {
+      return await getActiveService().getExpenses(filter);
+    } catch {
+      return mockFinanceService.getExpenses(filter);
+    }
+  },
+  addExpense: (expense) => {
+    if (offlineSyncQueue.isReplaying()) {
+      return getActiveService().addExpense(expense);
+    }
+    return offlineSyncQueue.addExpense(expense);
+  },
+  updateExpense: (id, updates) => {
+    if (offlineSyncQueue.isReplaying()) {
+      return getActiveService().updateExpense(id, updates);
+    }
+    return offlineSyncQueue.updateExpense(id, updates);
+  },
+  bulkAddExpenses: (expenses) => {
+    if (offlineSyncQueue.isReplaying()) {
+      return getActiveService().bulkAddExpenses(expenses);
+    }
+    return offlineSyncQueue.bulkAddExpenses(expenses);
+  },
+  deleteExpense: (id) => {
+    if (offlineSyncQueue.isReplaying()) {
+      return getActiveService().deleteExpense(id);
+    }
+    return offlineSyncQueue.deleteExpense(id);
+  },
   settleSharedExpenses: (m1, m2) => getActiveService().settleSharedExpenses(m1, m2),
   getLoans: () => getActiveService().getLoans(),
   getGoals: () => getActiveService().getGoals(),
@@ -162,7 +192,12 @@ export const financeService: FinanceService = {
   upsertCreditCardStatement: (input) => getActiveService().upsertCreditCardStatement(input),
   // Streaks & Daily Check-ins
   getDailyCheckins: (memberId) => getActiveService().getDailyCheckins(memberId),
-  recordDailyCheckin: (memberId, date, type) => getActiveService().recordDailyCheckin(memberId, date, type),
+  recordDailyCheckin: (memberId, date, type) => {
+    if (offlineSyncQueue.isReplaying()) {
+      return getActiveService().recordDailyCheckin(memberId, date, type);
+    }
+    return offlineSyncQueue.recordDailyCheckin(memberId, date, type);
+  },
   getStreakSummary: (memberId) => getActiveService().getStreakSummary(memberId),
 };
 
