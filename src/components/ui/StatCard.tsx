@@ -46,13 +46,18 @@ export function StatCard({
                 className={`w-full p-4 sm:p-5 text-left block ${onClick ? "cursor-pointer" : ""}`}
             >
                 <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted) truncate">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted) line-clamp-2 wrap-break-word">
                             {title}
                         </span>
                         {tooltip && (
                             <TooltipPopover
-                                title={tooltipTitle || (typeof title === "string" ? title : "Details")}
+                                title={
+                                    tooltipTitle ||
+                                    (typeof title === "string"
+                                        ? title
+                                        : "Details")
+                                }
                                 ariaLabel={`${typeof title === "string" ? title : "Stat"} info`}
                                 align="left"
                             >
@@ -62,29 +67,29 @@ export function StatCard({
                     </div>
                     {icon && (
                         <div
-                            className={`p-2 rounded-xl border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${iconBg}`}
+                            className={`p-2 rounded-xl border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${iconBg}`}
                         >
                             {icon}
                         </div>
                     )}
                 </div>
 
-                <div className="mt-2.5 flex items-baseline justify-between gap-2 flex-wrap">
-                    <div className="text-xl sm:text-2xl font-black text-(--text-ink) tracking-tight font-mono-num">
+                <div className="mt-2.5 flex items-baseline justify-between gap-2 flex-wrap min-w-0">
+                    <div className="text-lg sm:text-xl xl:text-2xl font-black text-(--text-ink) tracking-tight font-mono-num">
                         {value}
                     </div>
                     {badge && <div className="shrink-0">{badge}</div>}
                 </div>
 
                 {subtitle && (
-                    <div className="mt-1.5 text-xs font-medium text-(--text-muted) truncate">
+                    <div className="mt-1.5 text-xs font-medium text-(--text-muted) line-clamp-2 wrap-break-word">
                         {subtitle}
                     </div>
                 )}
             </Component>
 
             {footer && (
-                <div className="border-t-[1.5px] border-(--border-ink) bg-(--bg-cream) px-4 py-2 text-xs font-bold text-(--text-muted)">
+                <div className="border-t-2 border-(--border-ink) bg-(--bg-cream) px-4 py-2 text-xs font-bold text-(--text-muted)">
                     {footer}
                 </div>
             )}
