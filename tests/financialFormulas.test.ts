@@ -6,8 +6,10 @@ import {
   calculateLoanAmortization,
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
+  calculateSpendablePacing,
+  detectUnspentMonthEndSurplus,
 } from '../src/lib/financialFormulas';
-import type { Expense } from '../src/types/finance';
+import type { Expense, Category } from '../src/types/finance';
 
 describe('financialFormulas', () => {
   describe('calculateCPFAndNetPay', () => {
@@ -329,6 +331,152 @@ describe('financialFormulas', () => {
       expect(result.monthsRemaining).toBe(1);
       expect(result.neededPerMonth).toBe(3000);
       expect(result.status).toBe('behind');
+    });
+  });
+
+  describe('calculateSpendablePacing', () => {
+    const mockCategories: Category[] = [
+      { id: 'cat-food', household_id: 'hh-1', name: 'Food', color: '#F59E0B', icon: 'utensils', is_system: true, group: 'spendable' },
+      { id: 'cat-lifestyle', household_id: 'hh-1', name: 'Lifestyle', color: '#EC4899', icon: 'sparkles', is_system: true, group: 'spendable' },
+      { id: 'cat-invest', household_id: 'hh-1', name: 'Investments', color: '#10B981', icon: 'trending-up', is_system: true, group: 'allocation' },
+      { id: 'cat-savings', household_id: 'hh-1', name: 'Savings', color: '#6366F1', icon: 'piggy-bank', is_system: true, group: 'allocation' },
+    ];
+
+    it('calculates dynamic daily pace and remaining spendable for active month', () => {
+      const expenses: Expense[] = [
+        { id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 300, date: '2026-10-05', is_shared: false, item: 'Groceries', split_ratio: 0.5, settled: false },
+        { id: 'e2', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-lifestyle', amount: 200, date: '2026-10-10', is_shared: false, item: 'Shopping', split_ratio: 0.5, settled: false },
+        // Goal-funded expense should be excluded
+        { id: 'e3', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-lifestyle', amount: 500, date: '2026-10-12', is_shared: false, goal_id: 'goal-wedding', item: 'Wedding Ring', split_ratio: 0.5, settled: false },
+        // Allocation category expense should be excluded
+        { id: 'e4', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-invest', amount: 1000, date: '2026-10-15', is_shared: false, item: 'Stocks', split_ratio: 0.5, settled: false },
+      ];
+
+      // October has 31 days. Suppose today is 2026-10-11 => 31 - 11 + 1 = 21 days remaining
+      const pacing = calculateSpendablePacing({
+        month: '2026-10',
+        todayDate: '2026-10-11',
+        monthlyCap: 1550,
+        expenses,
+        categories: mockCategories,
+      });
+
+      expect(pacing.spendableAllocated).toBe(1550);
+      expect(pacing.spendableSpent).toBe(500); // 300 + 200
+      expect(pacing.spendableRemaining).toBe(1050); // 1550 - 500
+      expect(pacing.daysInMonth).toBe(31);
+      expect(pacing.dayOfMonth).toBe(11);
+      expect(pacing.daysRemaining).toBe(21);
+      // dynamicDailyPace = 1050 / 21 = 50
+      expect(pacing.dynamicDailyPace).toBe(50);
+      expect(pacing.isCurrentMonth).toBe(true);
+      expect(pacing.pacingStatus).toBe('safe');
+    });
+
+    it('handles personal perspective with 50/50 shared split accurately', () => {
+      const expenses: Expense[] = [
+        // Personal 100%
+        { id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 100, date: '2026-10-05', is_shared: false, item: 'Lunch', split_ratio: 0.5, settled: false },
+        // Shared paid by m1 (50% share = 100)
+        { id: 'e2', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 200, date: '2026-10-06', is_shared: true, split_ratio: 0.5, item: 'Dinner', settled: false },
+        // Shared paid by partner m2 (m1 share = 50)
+        { id: 'e3', household_id: 'hh-1', payer_id: 'm2', category_id: 'cat-food', amount: 100, date: '2026-10-07', is_shared: true, split_ratio: 0.5, item: 'Groceries', settled: false },
+      ];
+
+      const pacing = calculateSpendablePacing({
+        month: '2026-10',
+        todayDate: '2026-10-11',
+        memberId: 'm1',
+        perspective: 'm1',
+        monthlyCap: 1000,
+        expenses,
+        categories: mockCategories,
+      });
+
+      // m1 spent: 100 + 100 + 50 = 250
+      expect(pacing.spendableSpent).toBe(250);
+      expect(pacing.spendableRemaining).toBe(750);
+    });
+
+    it('reports zero daily pace and completed surplus when viewing past month', () => {
+      const expenses: Expense[] = [
+        { id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 800, date: '2026-08-15', is_shared: false, item: 'Meals', split_ratio: 0.5, settled: false },
+      ];
+
+      const pacing = calculateSpendablePacing({
+        month: '2026-08',
+        todayDate: '2026-10-15',
+        monthlyCap: 1000,
+        expenses,
+        categories: mockCategories,
+      });
+
+      expect(pacing.isCurrentMonth).toBe(false);
+      expect(pacing.daysRemaining).toBe(0);
+      expect(pacing.dynamicDailyPace).toBe(0);
+      expect(pacing.spendableRemaining).toBe(200);
+    });
+
+    it('flags warning when spent >= 85% and exceeded when remaining < 0', () => {
+      const warningPacing = calculateSpendablePacing({
+        month: '2026-10',
+        todayDate: '2026-10-15',
+        monthlyCap: 1000,
+        expenses: [{ id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 900, date: '2026-10-10', is_shared: false, item: 'Meals', split_ratio: 0.5, settled: false }],
+        categories: mockCategories,
+      });
+      expect(warningPacing.pacingStatus).toBe('warning');
+
+      const exceededPacing = calculateSpendablePacing({
+        month: '2026-10',
+        todayDate: '2026-10-15',
+        monthlyCap: 1000,
+        expenses: [{ id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 1100, date: '2026-10-10', is_shared: false, item: 'Meals', split_ratio: 0.5, settled: false }],
+        categories: mockCategories,
+      });
+      expect(exceededPacing.pacingStatus).toBe('exceeded');
+      expect(exceededPacing.spendableRemaining).toBe(-100);
+    });
+  });
+
+  describe('detectUnspentMonthEndSurplus', () => {
+    const mockCategories: Category[] = [
+      { id: 'cat-food', household_id: 'hh-1', name: 'Food', color: '#F59E0B', icon: 'utensils', is_system: true, group: 'spendable' },
+    ];
+
+    it('detects unspent surplus from the previous month', () => {
+      const expenses: Expense[] = [
+        { id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 800, date: '2026-09-10', is_shared: false, item: 'Meals', split_ratio: 0.5, settled: false },
+      ];
+
+      const result = detectUnspentMonthEndSurplus({
+        currentMonth: '2026-10',
+        lastMonth: '2026-09',
+        monthlyCap: 1200,
+        expenses,
+        categories: mockCategories,
+      });
+
+      expect(result.hasUnspentSurplus).toBe(true);
+      expect(result.surplusAmount).toBe(400); // 1200 - 800
+      expect(result.lastMonth).toBe('2026-09');
+    });
+
+    it('returns false when previous month was overspent or fully spent', () => {
+      const expenses: Expense[] = [
+        { id: 'e1', household_id: 'hh-1', payer_id: 'm1', category_id: 'cat-food', amount: 1300, date: '2026-09-10', is_shared: false, item: 'Meals', split_ratio: 0.5, settled: false },
+      ];
+
+      const result = detectUnspentMonthEndSurplus({
+        currentMonth: '2026-10',
+        lastMonth: '2026-09',
+        monthlyCap: 1200,
+        expenses,
+        categories: mockCategories,
+      });
+
+      expect(result.hasUnspentSurplus).toBe(false);
+      expect(result.surplusAmount).toBe(0);
     });
   });
 });

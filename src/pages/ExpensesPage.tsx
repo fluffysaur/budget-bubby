@@ -20,6 +20,7 @@ import {
   Tag,
   FileSpreadsheet,
   BarChart3,
+  PiggyBank,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, CollapsibleSection } from '../components/ui';
@@ -29,6 +30,8 @@ import {
   usePoliciesQuery,
   useCategoriesQuery,
   useGoalsQuery,
+  useBaseProfilesQuery,
+  useBaseAllocationsQuery,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -36,14 +39,19 @@ import { getCurrentMonth } from '../lib/dateUtils';
 import {
   calculateSharedExpenseSettlement,
   calculateExpenseTrendsSummary,
+  calculateSpendablePacing,
+  detectUnspentMonthEndSurplus,
 } from '../lib/financialFormulas';
-import { mockCategories, mockMembers } from '../data/mockSeedData';
+import { mockCategories, mockMembers, mockBaseProfiles, mockBaseAllocations } from '../data/mockSeedData';
 import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
 import { BulkAddExpenseModal } from '../components/expenses/BulkAddExpenseModal';
 import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
 import { SpendTagsOverviewCard } from '../components/expenses/SpendTagsOverviewCard';
+import { MonthEndSweepBanner } from '../components/budget/MonthEndSweepBanner';
+import { SurplusSweepModal, type SurplusSweepAllocation } from '../components/budget/SurplusSweepModal';
+import { BankSurplusModal } from '../components/budget/BankSurplusModal';
 import type { ExpenseFilter } from '../types/finance';
 
 export interface ExpensesPageProps {
@@ -85,6 +93,8 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const { data: policiesData } = usePoliciesQuery();
   const { data: categoriesData } = useCategoriesQuery();
   const { data: goalsData } = useGoalsQuery();
+  const { data: baseProfilesData } = useBaseProfilesQuery();
+  const { data: baseAllocationsData } = useBaseAllocationsQuery();
 
   const expenses = useMemo(() => expensesData || [], [expensesData]);
   const allExpenses = useMemo(() => allExpensesData || expensesData || [], [allExpensesData, expensesData]);
@@ -94,11 +104,72 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     [categoriesData],
   );
   const goals = useMemo(() => goalsData || [], [goalsData]);
+  const baseProfiles = useMemo(
+    () => (baseProfilesData && baseProfilesData.length > 0 ? baseProfilesData : mockBaseProfiles),
+    [baseProfilesData],
+  );
+  const baseAllocations = useMemo(
+    () => (baseAllocationsData && baseAllocationsData.length > 0 ? baseAllocationsData : mockBaseAllocations),
+    [baseAllocationsData],
+  );
   const isLoading = expensesLoading && !expensesData;
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
+
+  // Month-end Sweep Modal State
+  const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
+  const [sweepMonth, setSweepMonth] = useState<string>('');
+  const [sweepAmount, setSweepAmount] = useState<number>(0);
+  const [isBankSurplusModalOpen, setIsBankSurplusModalOpen] = useState<boolean>(false);
+  const [dismissedSweepMonth, setDismissedSweepMonth] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('budget_bubby_dismissed_sweep');
+    } catch {
+      return null;
+    }
+  });
+
+  const handleOpenSweep = (month: string, amount: number) => {
+    setSweepMonth(month);
+    setSweepAmount(amount);
+    setIsSweepModalOpen(true);
+  };
+
+  const handleOpenBankSurplus = (month: string, amount: number) => {
+    setSweepMonth(month);
+    setSweepAmount(amount);
+    setIsBankSurplusModalOpen(true);
+  };
+
+  const handleDismissSweep = (month: string) => {
+    setDismissedSweepMonth(month);
+    try {
+      localStorage.setItem('budget_bubby_dismissed_sweep', month);
+    } catch {}
+  };
+
+  const handleConfirmBankSurplus = () => {
+    if (sweepMonth) {
+      handleDismissSweep(sweepMonth);
+    }
+  };
+
+  const handleSweepComplete = async (allocations: SurplusSweepAllocation[]) => {
+    for (const alloc of allocations) {
+      const goal = goals.find((g) => g.id === alloc.goalId);
+      if (goal) {
+        await financeService.updateGoal(goal.id, {
+          saved_so_far: Math.round((goal.saved_so_far + alloc.amount) * 100) / 100,
+        });
+      }
+    }
+    await refreshHousehold();
+    if (sweepMonth) {
+      handleDismissSweep(sweepMonth);
+    }
+  };
 
   // Handle adding an expense
   const handleExpenseAdded = async () => {
@@ -182,6 +253,37 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     );
   }, [allExpenses, expenses, categories, policies, perspective, activeMember, filter.month]);
 
+  // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
+  const spendablePacing = useMemo(() => {
+    return calculateSpendablePacing({
+      month: filter.month || getCurrentMonth(),
+      memberId: activeMember?.id,
+      perspective,
+      expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
+      categories,
+      baseProfiles,
+      baseAllocations,
+    });
+  }, [filter.month, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
+
+  // Check unspent surplus from the prior month
+  const unspentSurplusInfo = useMemo(() => {
+    return detectUnspentMonthEndSurplus({
+      currentMonth: getCurrentMonth(),
+      memberId: activeMember?.id,
+      perspective,
+      expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
+      categories,
+      baseProfiles,
+      baseAllocations,
+    });
+  }, [activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
+
+  const showSweepBanner =
+    unspentSurplusInfo.hasUnspentSurplus &&
+    dismissedSweepMonth !== unspentSurplusInfo.lastMonth &&
+    (!filter.month || filter.month === getCurrentMonth());
+
   // Active filter count for mobile indicator
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -223,9 +325,85 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         }
       />
 
-      {/* Compact 3-Metric Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {/* Card 1: Total Spent */}
+      {/* Celebratory Month-End Sweep Notification Banner */}
+      {showSweepBanner && (
+        <MonthEndSweepBanner
+          month={unspentSurplusInfo.lastMonth}
+          surplusAmount={unspentSurplusInfo.surplusAmount}
+          onSweepClick={() =>
+            handleOpenSweep(
+              unspentSurplusInfo.lastMonth,
+              unspentSurplusInfo.surplusAmount
+            )
+          }
+          onBankSurplusClick={() =>
+            handleOpenBankSurplus(
+              unspentSurplusInfo.lastMonth,
+              unspentSurplusInfo.surplusAmount
+            )
+          }
+        />
+      )}
+
+      {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: Spendable Remaining (Primary Card) */}
+        <StatCard
+          title="Spendable Remaining"
+          value={formatSGD(spendablePacing.spendableRemaining)}
+          subtitle={
+            spendablePacing.isCurrentMonth
+              ? `${formatSGD(spendablePacing.dynamicDailyPace)}/day (${spendablePacing.daysRemaining} days left)`
+              : spendablePacing.spendableRemaining >= 0
+              ? `Ended with +${formatSGD(spendablePacing.spendableRemaining)} surplus`
+              : `Ended with -${formatSGD(Math.abs(spendablePacing.spendableRemaining))} deficit`
+          }
+          tooltip="Remaining allowance for day-to-day spendable categories (Food, Lifestyle, Transport, Buffer). Excludes goal-funded purchases. In personal view, shared expenses count at your 50% share."
+          icon={<PiggyBank className="h-4 w-4" />}
+          iconBg={
+            spendablePacing.pacingStatus === 'safe'
+              ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+              : spendablePacing.pacingStatus === 'warning'
+              ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+              : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+          }
+          footer={
+            <div className="space-y-1.5 mt-1">
+              <div className="flex items-center justify-between text-[11px] text-(--text-muted) font-medium">
+                <span>Spent {formatSGD(spendablePacing.spendableSpent)}</span>
+                <span>Limit {formatSGD(spendablePacing.spendableAllocated)}</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 border border-(--border-subtle)">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    spendablePacing.pacingStatus === 'exceeded'
+                      ? 'bg-rose-500'
+                      : spendablePacing.pacingStatus === 'warning'
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${Math.min(100, spendablePacing.progressPercent)}%` }}
+                />
+              </div>
+              {!spendablePacing.isCurrentMonth && spendablePacing.spendableRemaining > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleOpenSweep(
+                      filter.month || unspentSurplusInfo.lastMonth,
+                      spendablePacing.spendableRemaining
+                    )
+                  }
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1 cursor-pointer pt-0.5"
+                >
+                  <span>Sweep {formatSGD(spendablePacing.spendableRemaining)} to Goals →</span>
+                </button>
+              )}
+            </div>
+          }
+        />
+
+        {/* Card 2: Total Spent */}
         <StatCard
           title="Total Spent"
           value={formatSGD(totalSpent)}
@@ -234,7 +412,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
         />
 
-        {/* Card 2: Shared Spending */}
+        {/* Card 3: Shared Spending */}
         <StatCard
           title="Shared Spending"
           value={formatSGD(totalShared)}
@@ -243,7 +421,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
           iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
         />
 
-        {/* Card 3: Unsettled Balance (Who Owes Whom) */}
+        {/* Card 4: Unsettled Balance (Who Owes Whom) */}
         <StatCard
           title="Unsettled Balance"
           value={formatSGD(settlement.netBalance)}
@@ -370,6 +548,25 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         categories={categories}
         members={members}
         goals={goals}
+      />
+
+      {/* Month-End Surplus Sweep to Goals Modal */}
+      <SurplusSweepModal
+        isOpen={isSweepModalOpen}
+        onClose={() => setIsSweepModalOpen(false)}
+        surplusAmount={sweepAmount}
+        month={sweepMonth}
+        goals={goals}
+        onSweepComplete={handleSweepComplete}
+      />
+
+      {/* Bank as Surplus Confirmation Modal */}
+      <BankSurplusModal
+        isOpen={isBankSurplusModalOpen}
+        onClose={() => setIsBankSurplusModalOpen(false)}
+        surplusAmount={sweepAmount}
+        month={sweepMonth}
+        onConfirm={handleConfirmBankSurplus}
       />
     </div>
   );

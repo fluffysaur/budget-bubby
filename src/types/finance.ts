@@ -315,6 +315,19 @@ export interface CumulativeSurplusSummary {
   monthlyHistory: MonthlySurplusPoint[];
 }
 
+export interface SpendablePacingResult {
+  spendableAllocated: number;
+  spendableSpent: number;
+  spendableRemaining: number;
+  daysInMonth: number;
+  dayOfMonth: number;
+  daysRemaining: number;
+  dynamicDailyPace: number;
+  isCurrentMonth: boolean;
+  pacingStatus: 'safe' | 'warning' | 'exceeded';
+  progressPercent: number;
+}
+
 export interface CategoryLimitAlert {
   categoryId: string;
   categoryName: string;

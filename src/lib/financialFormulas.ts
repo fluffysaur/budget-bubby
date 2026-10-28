@@ -33,6 +33,10 @@ import type {
   CumulativeSurplusSummary,
   CategoryLimitAlert,
   MonthlyBudgetCategoryDetail,
+  SpendablePacingResult,
+  BaseBudgetProfile,
+  BaseProfileAllocation,
+  MonthlyBudgetDetail,
 } from '../types/finance';
 import {
   addMonths,
@@ -749,5 +753,206 @@ export function calculateCumulativeSurplus({
     currentMonthSurplus: currentPoint ? currentPoint.delta : 0,
     cumulativeSurplus: runningCumulative,
     monthlyHistory: history,
+  };
+}
+
+export interface CalculateSpendablePacingOptions {
+  month: string;
+  todayDate?: string;
+  memberId?: string;
+  perspective?: Perspective;
+  expenses: Expense[];
+  categories?: Category[];
+  monthlyCap?: number;
+  baseProfiles?: BaseBudgetProfile[];
+  baseAllocations?: BaseProfileAllocation[];
+  monthlyBudget?: MonthlyBudgetDetail | null;
+}
+
+export interface DetectSurplusOptions {
+  currentMonth?: string;
+  lastMonth?: string;
+  memberId?: string;
+  perspective?: Perspective;
+  expenses: Expense[];
+  categories?: Category[];
+  monthlyCap?: number;
+  baseProfiles?: BaseBudgetProfile[];
+  baseAllocations?: BaseProfileAllocation[];
+}
+
+/**
+ * 14. Calculates Spendable Budget Pacing for the month:
+ * - Spendable Allocated (Cap)
+ * - Spendable Spent (excluding goal-funded expenses, respecting 50/50 shared split)
+ * - Spendable Remaining
+ * - Dynamic Daily Pace (Remaining ÷ Days remaining in month)
+ * - Pacing Status ('safe' | 'warning' | 'exceeded')
+ */
+export function calculateSpendablePacing({
+  month,
+  todayDate,
+  memberId,
+  perspective = 'household',
+  expenses,
+  categories = [],
+  monthlyCap,
+  baseProfiles = [],
+  baseAllocations = [],
+  monthlyBudget,
+}: CalculateSpendablePacingOptions): SpendablePacingResult {
+  // Determine monthly spendable allocated
+  let cap = 0;
+  if (monthlyCap !== undefined && monthlyCap > 0) {
+    cap = monthlyCap;
+  } else if (monthlyBudget?.spendableAllocated && monthlyBudget.spendableAllocated > 0) {
+    cap = monthlyBudget.spendableAllocated;
+  } else if (baseProfiles.length > 0 && baseAllocations.length > 0) {
+    // Derive from base profiles & allocations
+    const activeProfiles = perspective === 'household' || !memberId
+      ? baseProfiles
+      : baseProfiles.filter((p) => p.owner_id === memberId || p.id === memberId);
+
+    let totalCap = 0;
+    for (const prof of activeProfiles) {
+      const takeHome = Math.max(0, prof.gross_salary * (1 - (prof.cpf_employee_rate ?? 0.2)));
+      const profAllocs = baseAllocations.filter((a) => a.profile_id === prof.id);
+      for (const a of profAllocs) {
+        const cat = categories.find((c) => c.id === a.category_id);
+        if (cat && isSpendableCategory(cat)) {
+          totalCap += takeHome * (a.target_percentage || 0);
+        }
+      }
+    }
+    cap = totalCap > 0 ? totalCap : 1500;
+  } else {
+    cap = 1500;
+  }
+
+  // Calculate actual spendable spent this month
+  const categoryMap = new Map<string, Category>();
+  for (const cat of categories) {
+    categoryMap.set(cat.id, cat);
+  }
+
+  const monthExpenses = expenses.filter((e) => e.date && e.date.startsWith(month));
+  let spent = 0;
+  for (const exp of monthExpenses) {
+    // Skip goal-funded expenses
+    if (exp.goal_id) continue;
+
+    const cat = exp.category_id ? categoryMap.get(exp.category_id) : undefined;
+    if (cat && !isSpendableCategory(cat)) continue;
+
+    const share = getMemberExpenseShare(exp, memberId, perspective);
+    if (share > 0) {
+      spent += share;
+    }
+  }
+
+  const spendableAllocated = Math.round(cap * 100) / 100;
+  const spendableSpent = Math.round(spent * 100) / 100;
+  const spendableRemaining = Math.round((spendableAllocated - spendableSpent) * 100) / 100;
+
+  // Days in month calculation
+  const parts = month.split('-');
+  const year = parseInt(parts[0], 10) || 2026;
+  const monthNum = parseInt(parts[1], 10) || 10;
+  const daysInMonth = new Date(year, monthNum, 0).getDate();
+
+  // Active / current day calculations
+  const todayStr = todayDate || getTodayDateString();
+  const currentMonthStr = todayStr.slice(0, 7);
+  const isCurrentMonth = month === currentMonthStr;
+
+  let dayOfMonth = 0;
+  let daysRemaining = 0;
+  let dynamicDailyPace = 0;
+
+  if (isCurrentMonth) {
+    dayOfMonth = parseInt(todayStr.slice(8, 10), 10) || 1;
+    daysRemaining = Math.max(1, daysInMonth - dayOfMonth + 1);
+    dynamicDailyPace = spendableRemaining > 0
+      ? Math.round((spendableRemaining / daysRemaining) * 100) / 100
+      : 0;
+  } else if (month < currentMonthStr) {
+    // Past month
+    dayOfMonth = daysInMonth;
+    daysRemaining = 0;
+    dynamicDailyPace = 0;
+  } else {
+    // Future month
+    dayOfMonth = 0;
+    daysRemaining = daysInMonth;
+    dynamicDailyPace = spendableRemaining > 0
+      ? Math.round((spendableRemaining / daysInMonth) * 100) / 100
+      : 0;
+  }
+
+  const progressPercent = spendableAllocated > 0
+    ? Math.round((spendableSpent / spendableAllocated) * 100)
+    : 0;
+
+  let pacingStatus: 'safe' | 'warning' | 'exceeded' = 'safe';
+  if (spendableRemaining < 0) {
+    pacingStatus = 'exceeded';
+  } else if (progressPercent >= 85) {
+    pacingStatus = 'warning';
+  }
+
+  return {
+    spendableAllocated,
+    spendableSpent,
+    spendableRemaining,
+    daysInMonth,
+    dayOfMonth,
+    daysRemaining,
+    dynamicDailyPace,
+    isCurrentMonth,
+    pacingStatus,
+    progressPercent,
+  };
+}
+
+/**
+ * 15. Detects unspent surplus from the preceding month to prompt month-end sweep.
+ */
+export function detectUnspentMonthEndSurplus({
+  currentMonth,
+  lastMonth,
+  memberId,
+  perspective = 'household',
+  expenses,
+  categories = [],
+  monthlyCap,
+  baseProfiles,
+  baseAllocations,
+}: DetectSurplusOptions): {
+  hasUnspentSurplus: boolean;
+  surplusAmount: number;
+  lastMonth: string;
+} {
+  const activeCurrentMonth = currentMonth || getCurrentMonth();
+  const targetLastMonth = lastMonth || addMonths(activeCurrentMonth, -1);
+
+  const pastPacing = calculateSpendablePacing({
+    month: targetLastMonth,
+    todayDate: `${activeCurrentMonth}-01`,
+    memberId,
+    perspective,
+    expenses,
+    categories,
+    monthlyCap,
+    baseProfiles,
+    baseAllocations,
+  });
+
+  const hasUnspentSurplus = pastPacing.spendableRemaining > 0;
+  const surplusAmount = hasUnspentSurplus ? pastPacing.spendableRemaining : 0;
+
+  return {
+    hasUnspentSurplus,
+    surplusAmount,
+    lastMonth: targetLastMonth,
   };
 }

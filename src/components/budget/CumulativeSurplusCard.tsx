@@ -25,11 +25,14 @@ import { getCurrentMonth, formatShortMonth, getPastMonthsList } from '../../lib/
 import { calculateCumulativeSurplus } from '../../lib/financialFormulas';
 import { financeService } from '../../services/financeService';
 import { TooltipPopover } from '../ui/TooltipPopover';
+import { Button } from '../ui/Button';
+import { SurplusSweepModal, type SurplusSweepAllocation } from './SurplusSweepModal';
 import type {
   CumulativeSurplusSummary,
   Expense,
   Category,
   Perspective,
+  SavingsGoal,
 } from '../../types/finance';
 
 export interface CumulativeSurplusCardProps {
@@ -39,6 +42,7 @@ export interface CumulativeSurplusCardProps {
   summary?: CumulativeSurplusSummary;
   expenses?: Expense[];
   categories?: Category[];
+  goals?: SavingsGoal[];
   monthlyCap?: number | Record<string, number>;
   className?: string;
 }
@@ -50,13 +54,18 @@ export function CumulativeSurplusCard({
   summary: propSummary,
   expenses: propExpenses,
   categories: propCategories,
+  goals: propGoals,
   monthlyCap: propMonthlyCap,
   className = '',
 }: CumulativeSurplusCardProps) {
   const [loading, setLoading] = useState<boolean>(!propSummary);
   const [fetchedExpenses, setFetchedExpenses] = useState<Expense[]>([]);
   const [fetchedCategories, setFetchedCategories] = useState<Category[]>([]);
+  const [fetchedGoals, setFetchedGoals] = useState<SavingsGoal[]>([]);
   const [derivedMonthlyCap, setDerivedMonthlyCap] = useState<number>(1500);
+  const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
+
+  const goals = useMemo(() => propGoals || fetchedGoals || [], [propGoals, fetchedGoals]);
 
   // Generate last 6 months range ending at selectedMonth
   const monthsRange = useMemo(() => {
@@ -74,15 +83,17 @@ export function CumulativeSurplusCard({
     async function loadData() {
       try {
         setLoading(true);
-        const [expList, catList, budgetDetail] = await Promise.all([
+        const [expList, catList, goalList, budgetDetail] = await Promise.all([
           propExpenses ? Promise.resolve(propExpenses) : financeService.getExpenses().catch(() => []),
           propCategories ? Promise.resolve(propCategories) : financeService.getCategories().catch(() => []),
+          propGoals ? Promise.resolve(propGoals) : financeService.getGoals().catch(() => []),
           financeService.getMonthlyBudget(selectedMonth, memberId).catch(() => null),
         ]);
 
         if (!isMounted) return;
         setFetchedExpenses(expList || []);
         setFetchedCategories(catList || []);
+        setFetchedGoals(goalList || []);
 
         if (propMonthlyCap !== undefined) {
           if (typeof propMonthlyCap === 'number') {
@@ -162,6 +173,20 @@ export function CumulativeSurplusCard({
   const totalBanked = summary.cumulativeSurplus;
   const isBankedPositive = totalBanked >= 0;
 
+  // Goals & Sweep Modal State
+  const availableSweepAmount = currentSurplus > 0 ? currentSurplus : totalBanked > 0 ? totalBanked : 0;
+
+  const handleSweepComplete = async (allocations: SurplusSweepAllocation[]) => {
+    for (const alloc of allocations) {
+      const goal = goals.find((g) => g.id === alloc.goalId);
+      if (goal) {
+        await financeService.updateGoal(goal.id, {
+          saved_so_far: Math.round((goal.saved_so_far + alloc.amount) * 100) / 100,
+        });
+      }
+    }
+  };
+
   // Find max absolute delta for visual relative bar scaling
   const maxAbsDelta = Math.max(
     ...summary.monthlyHistory.map((h) => Math.abs(h.delta)),
@@ -193,9 +218,22 @@ export function CumulativeSurplusCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) shadow-cute-sm">
-          <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-          <span>{formatShortMonth(selectedMonth)}</span>
+        <div className="flex items-center gap-2">
+          {availableSweepAmount > 0 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsSweepModalOpen(true)}
+              aria-label="Sweep surplus"
+              leftIcon={<PiggyBank className="h-3.5 w-3.5 text-indigo-600" />}
+            >
+              Sweep to Goals
+            </Button>
+          )}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) shadow-cute-sm">
+            <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
+            <span>{formatShortMonth(selectedMonth)}</span>
+          </div>
         </div>
       </div>
 
@@ -338,6 +376,16 @@ export function CumulativeSurplusCard({
           })}
         </div>
       </div>
+
+      {/* Surplus Sweep Modal */}
+      <SurplusSweepModal
+        isOpen={isSweepModalOpen}
+        onClose={() => setIsSweepModalOpen(false)}
+        surplusAmount={availableSweepAmount}
+        month={selectedMonth}
+        goals={goals}
+        onSweepComplete={handleSweepComplete}
+      />
     </div>
   );
 }
