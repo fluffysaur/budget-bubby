@@ -6,8 +6,9 @@
  */
 
 import type { ComponentType } from "react";
-import { LayoutDashboard, PieChart, Receipt, Landmark, Compass, Wallet, Heart } from "lucide-react";
+import { LayoutDashboard, PieChart, Receipt, Landmark, Compass, Heart } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
+import { BubbyIcon } from "../ui/BubbyIcon";
 
 export interface NavItem {
     id: string;
@@ -93,8 +94,8 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
         >
             {/* Brand Header */}
             <div className="h-16 flex items-center px-5 border-b-[1.5px] border-(--border-ink) gap-3 bg-(--bg-cream)">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
-                    <Wallet className="h-4.5 w-4.5 stroke-[2.5]" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0">
+                    <BubbyIcon className="h-7 w-7" />
                 </div>
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5 font-black text-(--text-ink) tracking-tight text-sm font-display">

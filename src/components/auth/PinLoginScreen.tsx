@@ -4,8 +4,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Lock, Delete, RotateCcw, AlertCircle, Loader2, Fingerprint, ScanFace, CheckCircle2 } from "lucide-react";
+import { Delete, RotateCcw, AlertCircle, Loader2, Fingerprint, ScanFace, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { BubbyIcon } from "../ui/BubbyIcon";
 import {
     isBiometricsAvailable,
     isBiometricsEnrolled,
@@ -199,8 +200,8 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
         >
             <div className="w-full max-w-xs flex flex-col items-center">
                 {/* App Branding & Icon */}
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-[#dfc2ff] border-2 border-(--border-ink) text-[#1a1a1a] mb-4 shadow-(--shadow-cute)">
-                    <Lock className="h-8 w-8 stroke-[2.5]" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-[#dfc2ff] border-2 border-(--border-ink) text-[#1a1a1a] mb-4 shadow-(--shadow-cute) overflow-hidden">
+                    <BubbyIcon className="h-13 w-13" />
                 </div>
 
                 <h1 className="text-2xl font-black tracking-tight text-(--text-ink) mb-1 font-display">Budget Bubby</h1>

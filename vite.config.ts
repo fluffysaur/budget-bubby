@@ -13,6 +13,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: [
         'icon.svg',
+        'favicon.ico',
         'pwa-192x192.png',
         'pwa-512x512.png',
         'apple-touch-icon.png',
@@ -22,8 +23,8 @@ export default defineConfig({
         name: 'Budget Bubby - Couple Finance',
         short_name: 'Budget Bubby',
         description: 'Couple & Personal Finance Planner for Singapore households',
-        theme_color: '#059669',
-        background_color: '#0f172a',
+        theme_color: '#f3efec',
+        background_color: '#f3efec',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

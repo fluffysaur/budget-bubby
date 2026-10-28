@@ -1,31 +1,113 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#059669"/>
-      <stop offset="50%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#0d9488"/>
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-opacity="0.25"/>
-    </filter>
-  </defs>
-  <!-- Background squircle -->
-  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
-  
-  <!-- Content Group -->
-  <g transform="translate(64, 64)" filter="url(#shadow)">
-    <!-- Wallet Card Shape -->
-    <rect x="32" y="74" width="320" height="236" rx="36" fill="#ffffff" fill-opacity="0.95"/>
-    <rect x="32" y="74" width="320" height="70" rx="36" fill="#f8fafc"/>
-    <line x1="32" y1="144" x2="352" y2="144" stroke="#e2e8f0" stroke-width="4"/>
-    
-    <!-- Wallet Flap & Clasp -->
-    <path d="M 230 144 H 352 V 240 H 230 C 206 240 188 218 188 192 C 188 166 206 144 230 144 Z" fill="#059669"/>
-    <circle cx="236" cy="192" r="16" fill="#facc15"/>
-    
-    <!-- Heart Accent -->
-    <g transform="translate(100, 170) scale(1.6)">
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#f43f5e"/>
-    </g>
+  <!-- Background Squircle (Flat Pastel Lilac with Clean Monoline Ink Border) -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#dfc2ff" stroke="#141414" stroke-width="8"/>
+
+  <!-- Celebratory Doodle Confetti (matching reference artstyle) -->
+  <!-- Top Left Pink Confetti Piece -->
+  <path d="M 108 124 L 126 114 L 132 128 L 114 136 Z" fill="#f7a8c9" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Left Small Purple Dot -->
+  <circle cx="88" cy="174" r="6.5" fill="#b388eb" stroke="#141414" stroke-width="5"/>
+  <!-- Left Ribbon Curl -->
+  <path d="M 78 236 C 84 222, 98 222, 102 232 C 106 242, 118 240, 124 228 L 116 218 C 110 228, 102 228, 98 218 C 92 208, 76 210, 70 226 Z" fill="#f7a8c9" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Top Left-Center Curved Confetti (clear of head tuft) -->
+  <path d="M 164 76 C 174 66, 190 68, 196 76 L 186 86 C 180 80, 172 80, 164 86 Z" fill="#ffe999" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Top Right Pink Ribbon Swirl -->
+  <path d="M 366 96 C 378 86, 394 92, 392 106 C 390 118, 404 122, 414 114 L 408 102 C 400 108, 392 104, 394 94 C 396 80, 376 74, 360 86 Z" fill="#f7a8c9" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Right Small Dot -->
+  <circle cx="422" cy="168" r="6.5" fill="#ffe999" stroke="#141414" stroke-width="5"/>
+  <!-- Right Confetti Piece -->
+  <path d="M 402 216 L 420 208 L 426 222 L 408 228 Z" fill="#f7a8c9" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Subtle Flat Ground Shadow -->
+  <ellipse cx="256" cy="434" rx="126" ry="12" fill="#c7a2f5"/>
+
+  <!-- Left Foot -->
+  <ellipse cx="198" cy="422" rx="30" ry="14" fill="#f59e42" stroke="#141414" stroke-width="6.5" transform="rotate(-5 198 422)"/>
+  <!-- Right Foot -->
+  <ellipse cx="314" cy="422" rx="30" ry="14" fill="#f59e42" stroke="#141414" stroke-width="6.5" transform="rotate(5 314 422)"/>
+
+  <!-- Cute Head Feather Tuft (behind head border so it joins cleanly) -->
+  <path d="M 246 104 C 242 82, 230 74, 226 80 C 234 88, 239 96, 241 104 Z" fill="#2b333c" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 254 104 C 258 78, 272 72, 277 78 C 268 86, 263 95, 261 104 Z" fill="#2b333c" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Penguin Main Body (Flat Charcoal-Slate so black ink lines pop cleanly) -->
+  <path d="M 256 100
+           C 188 100, 148 144, 142 208
+           C 138 248, 122 286, 122 338
+           C 122 404, 174 424, 256 424
+           C 338 424, 390 404, 390 338
+           C 390 286, 374 248, 370 208
+           C 364 144, 324 100, 256 100 Z"
+        fill="#2b333c" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- White Face & Belly Patch -->
+  <path d="M 256 154
+           C 234 134, 174 138, 172 194
+           C 170 232, 180 264, 172 310
+           C 162 364, 198 406, 256 406
+           C 314 406, 350 364, 340 310
+           C 332 264, 342 232, 340 194
+           C 338 138, 278 134, 256 154 Z"
+        fill="#ffffff" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Minimalist Korean Doodle Face (matching reference image) -->
+  <!-- Gentle Curved Eyebrows -->
+  <path d="M 224 176 Q 232 171 239 175" fill="none" stroke="#141414" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 273 175 Q 280 171 288 176" fill="none" stroke="#141414" stroke-width="4.5" stroke-linecap="round"/>
+
+  <!-- Close-set Solid Black Oval Dot Eyes (no anime sparkles) -->
+  <ellipse cx="233" cy="190" rx="4.5" ry="6.5" fill="#141414"/>
+  <ellipse cx="279" cy="190" rx="4.5" ry="6.5" fill="#141414"/>
+
+  <!-- Soft Rosy Blush Cheeks -->
+  <ellipse cx="204" cy="204" rx="13" ry="7.5" fill="#f7a8c9" opacity="0.75"/>
+  <ellipse cx="308" cy="204" rx="13" ry="7.5" fill="#f7a8c9" opacity="0.75"/>
+
+  <!-- Cute Small Rounded Beak & Smile -->
+  <path d="M 244 200 C 244 195, 268 195, 268 200 C 268 209, 262 215, 256 215 C 250 215, 244 209, 244 200 Z"
+        fill="#f59e42" stroke="#141414" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Flat Pastel Gold Coin Held Against Tummy -->
+  <g>
+    <!-- Outer Coin Circle -->
+    <circle cx="256" cy="322" r="74" fill="#ffe47a" stroke="#141414" stroke-width="6.5"/>
+    <!-- Inner Coin Ring -->
+    <circle cx="256" cy="322" r="56" fill="#ffda54" stroke="#141414" stroke-width="4.5"/>
+    <!-- Clean Doodle Dollar Sign in Monoline Ink -->
+    <path d="M 268 304 C 268 295, 244 295, 244 306 C 244 316, 268 317, 268 329 C 268 340, 244 340, 244 330"
+          fill="none" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="256" y1="289" x2="256" y2="346" stroke="#141414" stroke-width="6" stroke-linecap="round"/>
   </g>
+
+  <!-- Seamlessly Attached Left Arm / Flipper -->
+  <!-- 1. Fill shape stays inside the outer body border at shoulder (x=136) so outer black border is never clipped -->
+  <path d="M 136 240
+           C 118 278, 124 342, 198 342
+           C 216 342, 218 316, 198 313
+           C 168 308, 158 284, 160 256
+           Z"
+        fill="#2b333c" stroke="none"/>
+  <!-- 2. Open stroke starting exactly on the outer body contour at (136, 240), wrapping around flipper tip, ending at armpit crease -->
+  <path d="M 136 240
+           C 118 278, 124 342, 198 342
+           C 216 342, 218 316, 198 313
+           C 168 308, 158 284, 160 256"
+        fill="none" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Seamlessly Attached Right Arm / Flipper -->
+  <!-- 1. Fill shape stays inside the outer body border at shoulder (x=376) -->
+  <path d="M 376 240
+           C 394 278, 388 342, 314 342
+           C 296 342, 294 316, 314 313
+           C 344 308, 354 284, 352 256
+           Z"
+        fill="#2b333c" stroke="none"/>
+  <!-- 2. Open stroke starting exactly on the outer body contour at (376, 240), wrapping around flipper tip, ending at armpit crease -->
+  <path d="M 376 240
+           C 394 278, 388 342, 314 342
+           C 296 342, 294 316, 314 313
+           C 344 308, 354 284, 352 256"
+        fill="none" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

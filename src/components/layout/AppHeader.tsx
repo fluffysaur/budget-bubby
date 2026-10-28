@@ -18,6 +18,7 @@ import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { Button } from "../ui/Button";
+import { BubbyIcon } from "../ui/BubbyIcon";
 
 export interface AppHeaderProps {
     className?: string;
@@ -135,8 +136,11 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
             className={`sticky top-0 z-40 w-full border-b-[1.5px] border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
         >
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
-                {/* Left: Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
+                {/* Left: Brand Icon (Mobile) + Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
                 <div className="flex items-center">
+                    <div className="flex md:hidden h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0 mr-2.5">
+                        <BubbyIcon className="h-6 w-6" />
+                    </div>
                     {/* Mobile Perspective Dropdown */}
                     <div
                         className="relative sm:hidden"
