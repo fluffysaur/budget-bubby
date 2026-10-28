@@ -16,9 +16,11 @@ import {
     Save,
     ArrowRightLeft,
     AlertCircle,
+    ChevronDown,
 } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
+import { Select } from "../ui/Select";
 import { financeService } from "../../services/financeService";
 import {
     SUPPORTED_CURRENCIES,
@@ -215,18 +217,24 @@ export function EditExpenseModal({
                             <label className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                                 Amount &amp; Currency
                             </label>
-                            <select
-                                aria-label="Select currency"
-                                value={currency}
-                                onChange={(e) => setCurrency(e.target.value)}
-                                className="rounded-full border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                            >
-                                {SUPPORTED_CURRENCIES.map((c) => (
-                                    <option key={c.code} value={c.code}>
-                                        {c.flag} {c.code} ({c.symbol})
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="relative flex items-center">
+                                <select
+                                    aria-label="Select currency"
+                                    value={currency}
+                                    onChange={(e) => setCurrency(e.target.value)}
+                                    className="appearance-none rounded-full border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                >
+                                    {SUPPORTED_CURRENCIES.map((c) => (
+                                        <option key={c.code} value={c.code}>
+                                            {c.flag} {c.code} ({c.symbol})
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                    strokeWidth={2.5}
+                                />
+                            </div>
                         </div>
 
                         <CentsFirstAmountInput
@@ -468,17 +476,13 @@ export function EditExpenseModal({
                     {/* Goal Link (Optional) */}
                     {availableGoals.length > 0 && (
                         <div>
-                            <label
-                                htmlFor="edit-expense-goal"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Link to Savings Goal (Optional)
-                            </label>
-                            <select
+                            <Select
                                 id="edit-expense-goal"
+                                label="Link to Savings Goal (Optional)"
                                 value={goalId}
                                 onChange={(e) => setGoalId(e.target.value)}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                                sizeVariant="sm"
+                                className="bg-(--bg-canvas)"
                             >
                                 <option value="">None (Standard expense)</option>
                                 {availableGoals.map((g) => (
@@ -486,7 +490,7 @@ export function EditExpenseModal({
                                         {g.title} (Saved: {formatSGD(g.saved_so_far)} / {formatSGD(g.target_amount)})
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     )}
 

@@ -13,6 +13,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { CreditCard, Building, Calendar, DollarSign, Palette, User } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Select } from "../ui/Select";
 import { financeService } from "../../services/financeService";
 import type { CreditCard as CreditCardType, HouseholdMember, CreateCreditCardInput } from "../../types/finance";
 
@@ -206,18 +207,18 @@ export function AddEditCreditCardModal({
                                 <Building className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Issuing Bank *</span>
                             </label>
-                            <select
+                            <Select
                                 id="card-bank"
                                 value={bank}
                                 onChange={(e) => setBank(e.target.value)}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="bg-(--bg-canvas)"
                             >
                                 {PRESET_BANKS.map((b) => (
                                     <option key={b} value={b}>
                                         {b}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                             {bank === "Other" && (
                                 <input
                                     type="text"
@@ -315,18 +316,18 @@ export function AddEditCreditCardModal({
                                 <User className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Cardholder</span>
                             </label>
-                            <select
+                            <Select
                                 id="card-owner"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
                                     <option key={m.id} value={m.id}>
                                         {m.display_name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     </div>
 

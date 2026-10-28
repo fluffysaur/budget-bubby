@@ -18,6 +18,7 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from '../../services/financeService';
@@ -380,18 +381,24 @@ export function BulkAddExpenseModal({
                         <span className="font-bold text-[11px] uppercase tracking-wider text-(--text-muted)">
                             Payer:
                         </span>
-                        <select
-                            aria-label="Payer for all expenses"
-                            value={payerId}
-                            onChange={(e) => setPayerId(e.target.value)}
-                            className="rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                        >
-                            {members.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                    {m.avatar_url || "👤"} {m.display_name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="relative flex items-center">
+                            <select
+                                aria-label="Payer for all expenses"
+                                value={payerId}
+                                onChange={(e) => setPayerId(e.target.value)}
+                                className="appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            >
+                                {members.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                        {m.avatar_url || "👤"} {m.display_name}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown
+                                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                strokeWidth={2.5}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -490,34 +497,46 @@ export function BulkAddExpenseModal({
 
                                                 {/* Currency */}
                                                 <td className="px-2 py-2">
-                                                    <select
-                                                        aria-label={`Currency for row ${idx + 1}`}
-                                                        value={row.currency}
-                                                        onChange={(e) => handleUpdateRow(row.id, { currency: e.target.value })}
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-1.5 py-1.5 text-xs font-bold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
-                                                    >
-                                                        {SUPPORTED_CURRENCIES.map((c) => (
-                                                            <option key={c.code} value={c.code}>
-                                                                {c.code}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    <div className="relative flex items-center">
+                                                        <select
+                                                            aria-label={`Currency for row ${idx + 1}`}
+                                                            value={row.currency}
+                                                            onChange={(e) => handleUpdateRow(row.id, { currency: e.target.value })}
+                                                            className="w-full appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) pl-2 pr-6 py-1.5 text-xs font-bold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
+                                                        >
+                                                            {SUPPORTED_CURRENCIES.map((c) => (
+                                                                <option key={c.code} value={c.code}>
+                                                                    {c.code}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown
+                                                            className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-(--text-muted)"
+                                                            strokeWidth={2.5}
+                                                        />
+                                                    </div>
                                                 </td>
 
                                                 {/* Category */}
                                                 <td className="px-2 py-2">
-                                                    <select
-                                                        aria-label={`Category for row ${idx + 1}`}
-                                                        value={row.categoryId}
-                                                        onChange={(e) => handleUpdateRow(row.id, { categoryId: e.target.value })}
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
-                                                    >
-                                                        {categories.map((cat) => (
-                                                            <option key={cat.id} value={cat.id}>
-                                                                {cat.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    <div className="relative flex items-center">
+                                                        <select
+                                                            aria-label={`Category for row ${idx + 1}`}
+                                                            value={row.categoryId}
+                                                            onChange={(e) => handleUpdateRow(row.id, { categoryId: e.target.value })}
+                                                            className="w-full appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) pl-2 pr-6 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
+                                                        >
+                                                            {categories.map((cat) => (
+                                                                <option key={cat.id} value={cat.id}>
+                                                                    {cat.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown
+                                                            className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-(--text-muted)"
+                                                            strokeWidth={2.5}
+                                                        />
+                                                    </div>
                                                 </td>
 
                                                 {/* Item / Description */}

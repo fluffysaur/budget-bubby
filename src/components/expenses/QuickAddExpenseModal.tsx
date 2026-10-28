@@ -428,7 +428,7 @@ export function QuickAddExpenseModal({
                             </label>
 
                             {/* Inline Currency Selector Dropdown Pill */}
-                            <div className="relative">
+                            <div className="relative flex items-center">
                                 <select
                                     aria-label="Select currency"
                                     value={currencyCode}
@@ -436,7 +436,7 @@ export function QuickAddExpenseModal({
                                         setCurrencyCode(e.target.value);
                                         setCustomExchangeRate(undefined);
                                     }}
-                                    className="rounded-full bg-(--bg-canvas) text-xs font-bold px-2.5 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="appearance-none rounded-full bg-(--bg-canvas) text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 >
                                     {SUPPORTED_CURRENCIES.map((c) => (
                                         <option key={c.code} value={c.code}>
@@ -444,6 +444,10 @@ export function QuickAddExpenseModal({
                                         </option>
                                     ))}
                                 </select>
+                                <ChevronDown
+                                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                    strokeWidth={2.5}
+                                />
                             </div>
                         </div>
 

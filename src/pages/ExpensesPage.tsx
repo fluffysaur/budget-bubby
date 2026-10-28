@@ -272,9 +272,9 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
             </span>
           )}
           {isMobileFilterOpen ? (
-            <ChevronUp className="h-3.5 w-3.5 text-(--text-muted) ml-1" />
+            <ChevronUp className="h-4 w-4 text-(--text-muted) ml-1.5" strokeWidth={2.5} />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-(--text-muted) ml-1" />
+            <ChevronDown className="h-4 w-4 text-(--text-muted) ml-1.5" strokeWidth={2.5} />
           )}
         </button>
 

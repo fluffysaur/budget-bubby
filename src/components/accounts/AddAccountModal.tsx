@@ -19,6 +19,7 @@ import {
 import type { Account, AccountType, HouseholdMember } from '../../types/finance';
 import { financeService } from '../../services/financeService';
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from '../ui/AnimatedModal';
+import { Select } from '../ui/Select';
 
 export interface AddAccountModalProps {
   isOpen: boolean;
@@ -178,24 +179,30 @@ export function AddAccountModal({
                 <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                   Quick Preset
                 </span>
-                <select
-                  aria-label="More presets"
-                  onChange={(e) => {
-                    const found = ALL_PRESETS.find((p) => p.name === e.target.value);
-                    if (found) handleSelectPreset(found);
-                  }}
-                  defaultValue=""
-                  className="text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) px-2 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
-                >
-                  <option value="" disabled>
-                    More presets...
-                  </option>
-                  {ALL_PRESETS.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name} ({p.type})
+                <div className="relative flex items-center">
+                  <select
+                    aria-label="More presets"
+                    onChange={(e) => {
+                      const found = ALL_PRESETS.find((p) => p.name === e.target.value);
+                      if (found) handleSelectPreset(found);
+                    }}
+                    defaultValue=""
+                    className="appearance-none text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) pl-2 pr-6 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                  >
+                    <option value="" disabled>
+                      More presets...
                     </option>
-                  ))}
-                </select>
+                    {ALL_PRESETS.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.name} ({p.type})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-(--text-muted)"
+                    strokeWidth={2.5}
+                  />
+                </div>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {POPULAR_PRESETS.map((preset) => {
@@ -252,20 +259,20 @@ export function AddAccountModal({
             {/* Account Type & Starting Balance */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="account-type" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
-                  Type *
-                </label>
-                <select
+                <Select
                   id="account-type"
+                  label="Type *"
+                  labelClassName="text-[11px] mb-1"
                   value={type}
                   onChange={(e) => setType(e.target.value as AccountType)}
-                  className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                  sizeVariant="sm"
+                  className="bg-(--bg-canvas)"
                 >
                   <option value="Cash">Cash / Savings</option>
                   <option value="Investment">Investment / Brokerage</option>
                   <option value="CPF">CPF (OA/SA/MA)</option>
                   <option value="Other">Other Asset</option>
-                </select>
+                </Select>
               </div>
 
               <div>
@@ -293,21 +300,21 @@ export function AddAccountModal({
             {/* Owner & Joint Status */}
             <div className="grid grid-cols-2 gap-3 items-center">
               <div>
-                <label htmlFor="account-owner" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
-                  Owner *
-                </label>
-                <select
+                <Select
                   id="account-owner"
+                  label="Owner *"
+                  labelClassName="text-[11px] mb-1"
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                  sizeVariant="sm"
+                  className="bg-(--bg-canvas)"
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.display_name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="flex items-center pt-5">

@@ -172,11 +172,12 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) transition-all cursor-pointer"
+                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) transition-all cursor-pointer"
                         >
                             <span>{currentOption.label}</span>
                             <ChevronDown
-                                className={`h-3.5 w-3.5 stroke-[2.5] text-(--text-muted) transition-transform duration-150 ${
+                                strokeWidth={2.5}
+                                className={`h-4 w-4 text-(--text-muted) transition-transform duration-150 ${
                                     isDropdownOpen ? "rotate-180" : ""
                                 }`}
                             />

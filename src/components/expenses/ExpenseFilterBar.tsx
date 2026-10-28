@@ -13,6 +13,7 @@ import type { ChangeEvent } from 'react';
 import { Search, RotateCcw } from 'lucide-react';
 import type { Category, HouseholdMember, ExpenseFilter } from '../../types/finance';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
+import { Select } from '../ui/Select';
 
 export interface ExpenseFilterBarProps {
   filter: ExpenseFilter;
@@ -134,17 +135,14 @@ export function ExpenseFilterBar({
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Category Select */}
           <div className="min-w-0">
-            <label
-              htmlFor="filter-category"
-              className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-            >
-              Category
-            </label>
-            <select
+            <Select
               id="filter-category"
+              label="Category"
+              labelClassName="text-[11px] mb-1 tracking-wider"
               value={filter.categoryId || ''}
               onChange={handleCategoryChange}
-              className="w-full truncate rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+              sizeVariant="sm"
+              className="bg-(--bg-canvas)"
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -152,22 +150,19 @@ export function ExpenseFilterBar({
                   {cat.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           {/* Payer Select */}
           <div className="min-w-0">
-            <label
-              htmlFor="filter-payer"
-              className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-            >
-              Payer
-            </label>
-            <select
+            <Select
               id="filter-payer"
+              label="Payer"
+              labelClassName="text-[11px] mb-1 tracking-wider"
               value={filter.payerId || ''}
               onChange={handlePayerChange}
-              className="w-full truncate rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+              sizeVariant="sm"
+              className="bg-(--bg-canvas)"
             >
               <option value="">All Payers</option>
               {members.map((member) => (
@@ -175,19 +170,15 @@ export function ExpenseFilterBar({
                   {member.display_name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           {/* Shared Split Select */}
           <div className="min-w-0">
-            <label
-              htmlFor="filter-shared"
-              className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-            >
-              Type / Split
-            </label>
-            <select
+            <Select
               id="filter-shared"
+              label="Type / Split"
+              labelClassName="text-[11px] mb-1 tracking-wider"
               value={
                 filter.isShared === undefined
                   ? 'all'
@@ -196,12 +187,13 @@ export function ExpenseFilterBar({
                   : 'personal'
               }
               onChange={handleSharedChange}
-              className="w-full truncate rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+              sizeVariant="sm"
+              className="bg-(--bg-canvas)"
             >
               <option value="all">All Expenses</option>
               <option value="shared">Shared (50/50)</option>
               <option value="personal">Personal Only</option>
-            </select>
+            </Select>
           </div>
 
           {/* Month Selector */}
@@ -217,7 +209,7 @@ export function ExpenseFilterBar({
               type="month"
               value={filter.month || ''}
               onChange={handleMonthChange}
-              className="w-full rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-mono-num font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+              className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 pr-3.5 py-2 text-xs font-mono-num font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
             />
           </div>
         </div>

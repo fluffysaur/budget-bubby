@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { ShoppingBag, Calendar, DollarSign, Tag, User, Layers } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Select } from "../ui/Select";
 import { financeService } from "../../services/financeService";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { formatSGD } from "../../lib/currency";
@@ -191,18 +192,19 @@ export function SpendFromGoalModal({
                                 <Layers className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Category</span>
                             </label>
-                            <select
+                            <Select
                                 id="spend-category"
                                 value={categoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                sizeVariant="sm"
+                                className="bg-(--bg-canvas)"
                             >
                                 {categories.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
 
                         <div>
@@ -210,18 +212,19 @@ export function SpendFromGoalModal({
                                 <User className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Payer</span>
                             </label>
-                            <select
+                            <Select
                                 id="spend-payer"
                                 value={payerId}
                                 onChange={(e) => setPayerId(e.target.value)}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                sizeVariant="sm"
+                                className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
                                     <option key={m.id} value={m.id}>
                                         {m.display_name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     </div>
 

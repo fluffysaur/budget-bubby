@@ -15,6 +15,7 @@ import type { RecurringPolicy, RecurringPolicyType, RecurringFrequency, CreatePo
 import { useHousehold } from "../../context/HouseholdContext";
 import { mockMembers } from "../../data/mockSeedData";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Select } from "../ui/Select";
 
 function useSafeHousehold() {
     try {
@@ -200,37 +201,27 @@ export function AddPolicyModal({
                     {/* Type and Owner grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label
-                                htmlFor="policy-type"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Type
-                            </label>
-                            <select
+                            <Select
                                 id="policy-type"
+                                label="Type"
                                 value={type}
                                 onChange={(e) => setType(e.target.value as RecurringPolicyType)}
-                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="bg-(--bg-canvas)"
                             >
                                 <option value="insurance">🛡️ Life / Health Insurance</option>
                                 <option value="tax">🏛️ Income / Property Tax</option>
                                 <option value="subscription">📱 Subscription (Netflix, Spotify)</option>
                                 <option value="other">📦 Other Recurring</option>
-                            </select>
+                            </Select>
                         </div>
 
                         <div>
-                            <label
-                                htmlFor="policy-owner"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Owner
-                            </label>
-                            <select
+                            <Select
                                 id="policy-owner"
+                                label="Owner"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
-                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
                                     <option
@@ -240,7 +231,7 @@ export function AddPolicyModal({
                                         👤 {m.display_name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     </div>
 
@@ -271,38 +262,28 @@ export function AddPolicyModal({
                         </div>
 
                         <div>
-                            <label
-                                htmlFor="policy-frequency"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Frequency
-                            </label>
-                            <select
+                            <Select
                                 id="policy-frequency"
+                                label="Frequency"
                                 value={frequency}
                                 onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
-                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="bg-(--bg-canvas)"
                             >
                                 <option value="annually">Once a year (Annual)</option>
                                 <option value="monthly">Every month (Monthly)</option>
-                            </select>
+                            </Select>
                         </div>
                     </div>
 
                     {/* Conditional Renewal Month (Only if Annual) */}
                     {frequency === "annually" && (
                         <div>
-                            <label
-                                htmlFor="policy-month"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Renewal Month
-                            </label>
-                            <select
+                            <Select
                                 id="policy-month"
+                                label="Renewal Month"
                                 value={paymentMonth}
                                 onChange={(e) => setPaymentMonth(Number(e.target.value))}
-                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="bg-(--bg-canvas)"
                             >
                                 {MONTH_OPTIONS.map((m) => (
                                     <option
@@ -312,7 +293,7 @@ export function AddPolicyModal({
                                         📅 {m.label}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     )}
 

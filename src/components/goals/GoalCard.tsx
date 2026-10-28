@@ -293,12 +293,12 @@ export function GoalCard({
                                     {linkedExpenses.length})
                                 </span>
                             </span>
-                            <span className="flex items-center gap-1 text-[11px] text-purple-600 dark:text-purple-400 font-mono">
+                            <span className="flex items-center gap-1.5 text-[11px] text-purple-600 dark:text-purple-400 font-mono">
                                 <span>{formatSGD(goalSpend)}</span>
                                 {showExpenses ? (
-                                    <ChevronUp className="h-3.5 w-3.5" />
+                                    <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
                                 ) : (
-                                    <ChevronDown className="h-3.5 w-3.5" />
+                                    <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
                                 )}
                             </span>
                         </button>

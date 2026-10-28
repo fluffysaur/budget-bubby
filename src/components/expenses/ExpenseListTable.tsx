@@ -33,6 +33,7 @@ import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
 import { LoadingCard } from '../ui/LoadingCard';
 import { EmptyStateCard } from '../ui/EmptyStateCard';
+import { Select } from '../ui/Select';
 import { financeService } from '../../services/financeService';
 import type {
   Expense,
@@ -242,7 +243,7 @@ export function ExpenseListTable({
           <ArrowUpDown className="h-3.5 w-3.5" />
           <span className="font-bold">Sort by:</span>
         </div>
-        <select
+        <Select
           aria-label="Sort ledger"
           value={activeSortBy ? `${activeSortBy}-${activeSortOrder}` : ''}
           onChange={(e) => {
@@ -262,7 +263,9 @@ export function ExpenseListTable({
               setInternalSortOrder(order);
             }
           }}
-          className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer"
+          sizeVariant="sm"
+          containerClassName="w-auto"
+          className="bg-(--bg-canvas) font-bold text-xs py-1"
         >
           <option value="">Default order</option>
           <option value="date-desc">Date (Newest first)</option>
@@ -271,7 +274,7 @@ export function ExpenseListTable({
           <option value="amount-asc">Amount (Lowest first)</option>
           <option value="category-asc">Category (A-Z)</option>
           <option value="payer-asc">Payer (A-Z)</option>
-        </select>
+        </Select>
       </div>
 
       {/* Main Ledger Container */}
@@ -470,16 +473,18 @@ export function ExpenseListTable({
             {/* Page Size Selector */}
             <div className="flex items-center gap-1.5">
               <span className="text-(--text-muted) font-medium hidden sm:inline">Per page:</span>
-              <select
+              <Select
                 aria-label="Select page size"
                 value={activePageSize}
                 onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
-                className="rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) px-2 py-1 text-xs font-bold text-(--text-ink) shadow-cute-sm cursor-pointer"
+                sizeVariant="sm"
+                containerClassName="w-auto"
+                className="bg-(--bg-card) font-bold text-xs py-1 shadow-cute-sm"
               >
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
-              </select>
+              </Select>
             </div>
 
             {/* Prev / Next & Page Numbers */}

@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, AlertCircle, Loader2, Check } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Select } from "../ui/Select";
 import type { Account, AccountType, HouseholdMember } from "../../types/finance";
 import { financeService } from "../../services/financeService";
 
@@ -138,37 +139,27 @@ export function EditAccountModal({
                     {/* Category & Owner */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label
-                                htmlFor="edit-account-type"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Account Category *
-                            </label>
-                            <select
+                            <Select
                                 id="edit-account-type"
+                                label="Account Category *"
                                 value={type}
                                 onChange={(e) => setType(e.target.value as AccountType)}
-                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                                className="bg-(--bg-canvas)"
                             >
                                 <option value="Cash">Cash / Savings / Current</option>
                                 <option value="Investment">Investment / Brokerage / SRS</option>
                                 <option value="CPF">CPF (OA / SA / MA)</option>
                                 <option value="Other">Other Asset</option>
-                            </select>
+                            </Select>
                         </div>
 
                         <div>
-                            <label
-                                htmlFor="edit-account-owner"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Primary Owner *
-                            </label>
-                            <select
+                            <Select
                                 id="edit-account-owner"
+                                label="Primary Owner *"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                                className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
                                     <option
@@ -178,7 +169,7 @@ export function EditAccountModal({
                                         {m.display_name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                     </div>
 
