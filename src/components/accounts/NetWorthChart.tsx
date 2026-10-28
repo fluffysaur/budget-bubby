@@ -121,18 +121,19 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
         >
             {/* Header & Chart Legends */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 gap-3">
-                <div>
+                <div className="shrink-0">
                     <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
                             <TrendingUp className="h-4 w-4" />
                         </div>
-                        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
                             Net Worth
                         </h2>
                         <TooltipPopover
                             title="Net Worth Formula"
                             ariaLabel="Net Worth Formula"
                             align="left"
+                            className="shrink-0"
                         >
                             Net Worth = Total Assets - Outstanding Loans &amp; Liabilities
                         </TooltipPopover>
