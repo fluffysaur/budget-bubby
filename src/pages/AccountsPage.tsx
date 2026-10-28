@@ -140,42 +140,7 @@ export function AccountsPage({
     return (
         <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
             {/* Page Header */}
-            <PageHeader
-                title="Accounts & Net Worth"
-                actions={
-                    <div className="grid grid-cols-2 sm:flex items-center gap-2 min-h-9.5 w-full sm:w-auto">
-                        {activeTab === "accounts" && (
-                            <>
-                                <Button
-                                    variant="secondary"
-                                    aria-label="Add Account"
-                                    className="w-full sm:w-auto"
-                                    leftIcon={
-                                        <Plus className="h-4 w-4 stroke-[2.5]" />
-                                    }
-                                    onClick={() => setIsAddModalOpen(true)}
-                                >
-                                    Add Account
-                                </Button>
-                                <Button
-                                    variant="primary"
-                                    aria-label="Update Balances"
-                                    className="w-full sm:w-auto"
-                                    leftIcon={
-                                        <CalendarCheck className="h-4 w-4 stroke-[2.5]" />
-                                    }
-                                    onClick={() => {
-                                        setSelectedAccount(null);
-                                        setIsUpdateModalOpen(true);
-                                    }}
-                                >
-                                    Update Balances
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                }
-            />
+            <PageHeader title="Accounts & Net Worth" />
 
             {/* Sub-Tab Navigation Bar */}
             <SegmentedTabs
@@ -205,6 +170,34 @@ export function AccountsPage({
                 />
             ) : (
                 <>
+                    {/* Action Buttons Row */}
+                    <div className="flex items-center justify-end gap-2">
+                        <Button
+                            variant="secondary"
+                            aria-label="Add Account"
+                            className="flex-1 sm:flex-initial"
+                            leftIcon={
+                                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                            }
+                            onClick={() => setIsAddModalOpen(true)}
+                        >
+                            Add Account
+                        </Button>
+                        <Button
+                            variant="primary"
+                            aria-label="Update Balances"
+                            className="flex-1 sm:flex-initial"
+                            leftIcon={
+                                <CalendarCheck className="h-4 w-4" strokeWidth={2.5} />
+                            }
+                            onClick={() => {
+                                setSelectedAccount(null);
+                                setIsUpdateModalOpen(true);
+                            }}
+                        >
+                            Update Balances
+                        </Button>
+                    </div>
                     {/* High-Level Metric Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                         {/* Card 1: Net Worth */}

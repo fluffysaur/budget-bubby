@@ -149,7 +149,7 @@ export function AddAccountModal({
         <ModalHeader
           id="add-account-title"
           title="Add New Account"
-          icon={<Landmark className="h-4.5 w-4.5 stroke-[2.5]" />}
+          icon={<Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />}
           iconBgColor="bg-(--pastel-butter-light)"
           onClose={onClose}
         />
@@ -157,9 +157,9 @@ export function AddAccountModal({
         <ModalBody>
             {/* Empty State Banner (if 0 accounts exist) */}
             {isInitialSetup && (
-              <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 flex items-start gap-2.5">
-                <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
+              <div className="p-3 rounded-2xl bg-(--pastel-butter-light) border-2 border-(--border-ink) shadow-cute-sm flex items-start gap-2.5">
+                <Sparkles className="h-4 w-4 stroke-3 text-(--text-ink) shrink-0 mt-0.5" />
+                <div className="text-xs text-(--text-ink) leading-relaxed">
                   <span className="font-bold">No accounts found yet.</span> Add your bank, CPF, or investment account to track balances.
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function AddAccountModal({
             {/* Quick Presets */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                   Quick Preset
                 </span>
                 <select
@@ -185,7 +185,7 @@ export function AddAccountModal({
                     if (found) handleSelectPreset(found);
                   }}
                   defaultValue=""
-                  className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-transparent border-none cursor-pointer focus:outline-none"
+                  className="text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) px-2 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                 >
                   <option value="" disabled>
                     More presets...
@@ -205,10 +205,10 @@ export function AddAccountModal({
                       key={preset.name}
                       type="button"
                       onClick={() => handleSelectPreset(preset)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                         isSelected
-                          ? 'bg-emerald-600 text-white font-semibold shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                          ? 'bg-(--pastel-butter) text-(--text-ink) border-(--border-ink) shadow-cute-sm'
+                          : 'bg-(--bg-canvas) text-(--text-ink) border-(--border-subtle) hover:border-(--border-ink)'
                       }`}
                     >
                       {preset.name}
@@ -221,7 +221,7 @@ export function AddAccountModal({
             {/* Account Name & Bank / Institution */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label htmlFor="account-name" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                <label htmlFor="account-name" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                   Account Name *
                 </label>
                 <input
@@ -231,11 +231,11 @@ export function AddAccountModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. DBS Multiplier"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                 />
               </div>
               <div>
-                <label htmlFor="account-institution" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                <label htmlFor="account-institution" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                   Bank / Institution
                 </label>
                 <input
@@ -244,7 +244,7 @@ export function AddAccountModal({
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
                   placeholder="e.g. DBS, OCBC, UOB"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                 />
               </div>
             </div>
@@ -252,14 +252,14 @@ export function AddAccountModal({
             {/* Account Type & Starting Balance */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="account-type" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                <label htmlFor="account-type" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                   Type *
                 </label>
                 <select
                   id="account-type"
                   value={type}
                   onChange={(e) => setType(e.target.value as AccountType)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                 >
                   <option value="Cash">Cash / Savings</option>
                   <option value="Investment">Investment / Brokerage</option>
@@ -269,11 +269,11 @@ export function AddAccountModal({
               </div>
 
               <div>
-                <label htmlFor="initial-balance" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                <label htmlFor="initial-balance" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                   Starting Balance (SGD) *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-(--text-muted) select-none">
                     S$
                   </span>
                   <input
@@ -284,7 +284,7 @@ export function AddAccountModal({
                     value={balance}
                     onChange={(e) => setBalance(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-8 pr-2.5 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full pl-9 pr-3 py-2 text-xs font-bold font-mono-num rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                   />
                 </div>
               </div>
@@ -293,14 +293,14 @@ export function AddAccountModal({
             {/* Owner & Joint Status */}
             <div className="grid grid-cols-2 gap-3 items-center">
               <div>
-                <label htmlFor="account-owner" className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                <label htmlFor="account-owner" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                   Owner *
                 </label>
                 <select
                   id="account-owner"
                   value={ownerId}
                   onChange={(e) => setOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -317,9 +317,9 @@ export function AddAccountModal({
                     checked={isJoint}
                     onChange={(e) => setIsJoint(e.target.checked)}
                     disabled={type === 'CPF'}
-                    className="h-4 w-4 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-40"
+                    className="h-4 w-4 rounded-md border-(--border-ink) text-(--text-ink) accent-(--text-ink) cursor-pointer disabled:opacity-40"
                   />
-                  <span className={`text-xs font-semibold ${type === 'CPF' ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                  <span className={`text-xs font-bold ${type === 'CPF' ? 'text-(--text-muted)' : 'text-(--text-ink)'}`}>
                     Joint Account
                   </span>
                 </label>
@@ -327,11 +327,11 @@ export function AddAccountModal({
             </div>
 
             {/* Collapsible More Details (Institution + Notes) */}
-            <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 p-2.5">
+            <div className="rounded-xl border border-(--border-subtle) bg-(--bg-canvas) p-3">
               <button
                 type="button"
                 onClick={() => setShowMoreDetails((prev) => !prev)}
-                className="w-full flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer"
+                className="w-full flex items-center justify-between text-xs font-bold text-(--text-ink) cursor-pointer"
               >
                 <span>{showMoreDetails ? 'Hide extra details' : '+ More details (Bank, Notes)'}</span>
                 {showMoreDetails ? (
@@ -342,22 +342,22 @@ export function AddAccountModal({
               </button>
 
               {showMoreDetails && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5 pt-2.5 border-t border-(--border-subtle)">
                   <div>
-                    <label htmlFor="account-institution" className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    <label htmlFor="account-institution-extra" className="block text-[10px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                       Institution
                     </label>
                     <input
-                      id="account-institution"
+                      id="account-institution-extra"
                       type="text"
                       value={institution}
                       onChange={(e) => setInstitution(e.target.value)}
                       placeholder="e.g. DBS, OCBC"
-                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
                     />
                   </div>
                   <div>
-                    <label htmlFor="account-notes" className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    <label htmlFor="account-notes" className="block text-[10px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                       Notes
                     </label>
                     <input
@@ -366,7 +366,7 @@ export function AddAccountModal({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="e.g. Salary account"
-                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
                     />
                   </div>
                 </div>
@@ -396,7 +396,7 @@ export function AddAccountModal({
               </>
             ) : (
               <>
-                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                 <span>Create Account</span>
               </>
             )}

@@ -19,7 +19,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
-import { AnimatedModal, ModalHeader, ModalFooter } from '../ui/AnimatedModal';
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from '../../services/financeService';
 import {
   SUPPORTED_CURRENCIES,
@@ -329,298 +329,306 @@ export function BulkAddExpenseModal({
     }
   };
 
-  return (
-    <AnimatedModal
-      isOpen={isOpen}
-      onClose={onClose}
-      maxWidth="max-w-4xl"
-    >
-      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-        {/* Header */}
-        <ModalHeader
-          title="Bulk Add Expenses"
-          subtitle="Rapid multi-row batch entry or paste receipts / text"
-          icon={<Sparkles className="h-4.5 w-4.5 stroke-[2.5]" />}
-          iconBgColor="bg-(--pastel-lilac-light)"
-          onClose={onClose}
-        />
+    return (
+        <AnimatedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            maxWidth="max-w-4xl"
+        >
+            <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                {/* Header */}
+                <ModalHeader
+                    title="Bulk Add Expenses"
+                    subtitle="Rapid multi-row batch entry or paste receipts / text"
+                    icon={<Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />}
+                    iconBgColor="bg-(--pastel-lilac-light)"
+                    onClose={onClose}
+                />
 
-        {/* Global Controls & Tabs */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--bg-card) px-6 py-3">
-          {/* Mode Tabs */}
-          <div className="flex items-center rounded-xl bg-(--bg-canvas) p-1 border border-(--border-subtle)">
-            <button
-              type="button"
-              onClick={() => setActiveTab('grid')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'grid'
-                  ? 'bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
-                  : 'text-(--text-muted) hover:text-(--text-ink)'
-              }`}
-            >
-              <TableIcon className="h-3.5 w-3.5" />
-              <span>Table Grid ({rows.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('paste')}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'paste'
-                  ? 'bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
-                  : 'text-(--text-muted) hover:text-(--text-ink)'
-              }`}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span>Paste Text / Receipts</span>
-            </button>
-          </div>
-
-          {/* Payer Selector */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-semibold text-slate-500 dark:text-slate-400">Payer for all:</span>
-            <select
-              aria-label="Payer for all expenses"
-              value={payerId}
-              onChange={(e) => setPayerId(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.avatar_url || '👤'} {m.display_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {errorMessage && (
-            <div className="mb-4 flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {activeTab === 'paste' ? (
-            /* Paste Text Mode */
-            <div className="space-y-4">
-              <div className="rounded-xl bg-emerald-50/70 p-4 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40">
-                <p className="font-bold mb-1">💡 Smart Text &amp; Receipt Parser</p>
-                <p>
-                  Paste lines with amount, item description, and optional hashtags. Amounts and categories will be detected automatically!
-                </p>
-                <div className="mt-2 font-mono text-[11px] opacity-80">
-                  Example: 12.50 Lunch at Maxwell<br />
-                  4.20 Coffee #Coffee<br />
-                  35.00 Grab to Airport #VietnamTrip
-                </div>
-              </div>
-
-              <textarea
-                rows={9}
-                value={pasteText}
-                onChange={(e) => setPasteText(e.target.value)}
-                placeholder="Paste multi-line transactions here..."
-                className="w-full rounded-2xl border border-slate-200 bg-white p-4 font-mono text-xs text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-850 dark:text-white"
-              />
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleApplyPasteText}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 cursor-pointer"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span>Parse into Table Grid</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Table Grid Mode */
-            <div className="space-y-3">
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-                  <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                    <tr>
-                      <th className="py-2.5 pl-3 pr-2 w-32">Date</th>
-                      <th className="px-2 py-2.5 w-24">Amount</th>
-                      <th className="px-2 py-2.5 w-24">Currency</th>
-                      <th className="px-2 py-2.5 w-36">Category</th>
-                      <th className="px-2 py-2.5 min-w-35">Description</th>
-                      <th className="px-2 py-2.5 w-20 text-center">Shared</th>
-                      <th className="px-2 py-2.5 w-32">Tags</th>
-                      <th className="py-2.5 pl-2 pr-3 w-10 text-center"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {rows.map((row, idx) => (
-                      <tr key={row.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                        {/* Date */}
-                        <td className="py-2 pl-3 pr-2">
-                          <input
-                            type="date"
-                            value={row.date}
-                            onChange={(e) => handleUpdateRow(row.id, { date: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          />
-                        </td>
-
-                        {/* Amount */}
-                        <td className="px-2 py-2">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            value={row.amount}
-                            onChange={(e) =>
-                              handleUpdateRow(row.id, {
-                                amount: e.target.value === '' ? '' : parseFloat(e.target.value),
-                              })
-                            }
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          />
-                        </td>
-
-                        {/* Currency */}
-                        <td className="px-2 py-2">
-                          <select
-                            aria-label={`Currency for row ${idx + 1}`}
-                            value={row.currency}
-                            onChange={(e) => handleUpdateRow(row.id, { currency: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-1.5 py-1.5 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          >
-                            {SUPPORTED_CURRENCIES.map((c) => (
-                              <option key={c.code} value={c.code}>
-                                {c.code}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        {/* Category */}
-                        <td className="px-2 py-2">
-                          <select
-                            aria-label={`Category for row ${idx + 1}`}
-                            value={row.categoryId}
-                            onChange={(e) => handleUpdateRow(row.id, { categoryId: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          >
-                            {categories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-
-                        {/* Item / Description */}
-                        <td className="px-2 py-2">
-                          <input
-                            type="text"
-                            placeholder="e.g. Lunch"
-                            value={row.item}
-                            onChange={(e) => handleUpdateRow(row.id, { item: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          />
-                        </td>
-
-                        {/* Shared Toggle */}
-                        <td className="px-2 py-2 text-center">
-                          <button
+                {/* Global Controls & Tabs */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--bg-card) px-4 sm:px-6 py-2.5">
+                    {/* Mode Tabs */}
+                    <div className="flex items-center rounded-xl bg-(--bg-canvas) p-1 border border-(--border-subtle)">
+                        <button
                             type="button"
-                            onClick={() => handleUpdateRow(row.id, { isShared: !row.isShared })}
-                            className={`inline-flex items-center justify-center rounded-lg px-2 py-1 text-[11px] font-bold cursor-pointer transition-colors ${
-                              row.isShared
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            onClick={() => setActiveTab("grid")}
+                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                activeTab === "grid"
+                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
+                                    : "text-(--text-muted) hover:text-(--text-ink)"
                             }`}
-                          >
-                            {row.isShared ? '50/50' : 'Solo'}
-                          </button>
-                        </td>
-
-                        {/* Tags */}
-                        <td className="px-2 py-2">
-                          <input
-                            type="text"
-                            placeholder="#tag"
-                            value={row.tags.join(', ')}
-                            onChange={(e) =>
-                              handleUpdateRow(row.id, {
-                                tags: e.target.value
-                                  .split(',')
-                                  .map((t) => t.trim().replace(/^#/, ''))
-                                  .filter(Boolean),
-                              })
-                            }
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          />
-                        </td>
-
-                        {/* Delete Row Button */}
-                        <td className="py-2 pl-2 pr-3 text-center">
-                          <button
+                        >
+                            <TableIcon className="h-3.5 w-3.5" />
+                            <span>Table Grid ({rows.length})</span>
+                        </button>
+                        <button
                             type="button"
-                            onClick={() => handleDeleteRow(row.id)}
-                            aria-label={`Delete row ${idx + 1}`}
-                            className="rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            onClick={() => setActiveTab("paste")}
+                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                activeTab === "paste"
+                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
+                                    : "text-(--text-muted) hover:text-(--text-ink)"
+                            }`}
+                        >
+                            <FileText className="h-3.5 w-3.5" />
+                            <span>Paste Text / Receipts</span>
+                        </button>
+                    </div>
 
-              {/* Add Row Button */}
-              <button
-                type="button"
-                onClick={handleAddRow}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-850 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                <span>+ Add Row</span>
-              </button>
+                    {/* Payer Selector */}
+                    <div className="flex items-center gap-2 text-xs">
+                        <span className="font-bold text-[11px] uppercase tracking-wider text-(--text-muted)">
+                            Payer:
+                        </span>
+                        <select
+                            aria-label="Payer for all expenses"
+                            value={payerId}
+                            onChange={(e) => setPayerId(e.target.value)}
+                            className="rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                        >
+                            {members.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                    {m.avatar_url || "👤"} {m.display_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Modal Body */}
+                <ModalBody className="p-4 sm:p-6 space-y-4">
+                    {errorMessage && (
+                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 p-3 text-xs font-medium text-rose-700 dark:text-rose-300">
+                            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                            <span>{errorMessage}</span>
+                        </div>
+                    )}
+
+                    {activeTab === "paste" ? (
+                        /* Paste Text Mode */
+                        <div className="space-y-4">
+                            <div className="rounded-2xl bg-(--pastel-butter-light) p-4 text-xs text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                <p className="font-bold mb-1 flex items-center gap-1.5 text-(--text-ink)">
+                                    <Sparkles className="h-4 w-4 stroke-3 text-(--text-ink)" />
+                                    <span>Smart Text &amp; Receipt Parser</span>
+                                </p>
+                                <p className="text-(--text-muted) text-xs">
+                                    Paste lines with amount, item description, and optional hashtags. Amounts and categories will be detected automatically!
+                                </p>
+                                <div className="mt-2.5 font-mono text-[11px] bg-(--bg-card) p-2.5 rounded-xl border border-(--border-ink) text-(--text-ink) leading-relaxed">
+                                    Example: 12.50 Lunch at Maxwell<br />
+                                    4.20 Coffee #Coffee<br />
+                                    35.00 Grab to Airport #VietnamTrip
+                                </div>
+                            </div>
+
+                            <textarea
+                                rows={8}
+                                value={pasteText}
+                                onChange={(e) => setPasteText(e.target.value)}
+                                placeholder="Paste multi-line transactions here..."
+                                className="w-full rounded-2xl border-2 border-(--border-subtle) focus:border-(--border-ink) bg-(--bg-card) p-4 font-mono text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            />
+
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={handleApplyPasteText}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-4 py-2 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                >
+                                    <Sparkles className="h-4 w-4 stroke-3" />
+                                    <span>Parse into Table Grid</span>
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Table Grid Mode */
+                        <div className="space-y-3">
+                            <div className="overflow-x-auto rounded-2xl border-2 border-(--border-ink) shadow-cute-sm bg-(--bg-card)">
+                                <table className="w-full text-left text-xs text-(--text-ink)">
+                                    <thead className="bg-(--bg-canvas) text-[11px] font-bold uppercase tracking-wider text-(--text-muted) border-b-2 border-(--border-ink)">
+                                        <tr>
+                                            <th className="py-2.5 pl-3 pr-2 w-32">Date</th>
+                                            <th className="px-2 py-2.5 w-24">Amount</th>
+                                            <th className="px-2 py-2.5 w-24">Currency</th>
+                                            <th className="px-2 py-2.5 w-36">Category</th>
+                                            <th className="px-2 py-2.5 min-w-35">Description</th>
+                                            <th className="px-2 py-2.5 w-20 text-center">Shared</th>
+                                            <th className="px-2 py-2.5 w-32">Tags</th>
+                                            <th className="py-2.5 pl-2 pr-3 w-10 text-center"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-(--border-subtle)">
+                                        {rows.map((row, idx) => (
+                                            <tr key={row.id} className="hover:bg-(--pastel-butter-light)/30 transition-colors">
+                                                {/* Date */}
+                                                <td className="py-2 pl-3 pr-2">
+                                                    <input
+                                                        type="date"
+                                                        value={row.date}
+                                                        onChange={(e) => handleUpdateRow(row.id, { date: e.target.value })}
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                    />
+                                                </td>
+
+                                                {/* Amount */}
+                                                <td className="px-2 py-2">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        placeholder="0.00"
+                                                        value={row.amount}
+                                                        onChange={(e) =>
+                                                            handleUpdateRow(row.id, {
+                                                                amount: e.target.value === "" ? "" : parseFloat(e.target.value),
+                                                            })
+                                                        }
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-bold font-mono-num text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                    />
+                                                </td>
+
+                                                {/* Currency */}
+                                                <td className="px-2 py-2">
+                                                    <select
+                                                        aria-label={`Currency for row ${idx + 1}`}
+                                                        value={row.currency}
+                                                        onChange={(e) => handleUpdateRow(row.id, { currency: e.target.value })}
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-1.5 py-1.5 text-xs font-bold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
+                                                    >
+                                                        {SUPPORTED_CURRENCIES.map((c) => (
+                                                            <option key={c.code} value={c.code}>
+                                                                {c.code}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+
+                                                {/* Category */}
+                                                <td className="px-2 py-2">
+                                                    <select
+                                                        aria-label={`Category for row ${idx + 1}`}
+                                                        value={row.categoryId}
+                                                        onChange={(e) => handleUpdateRow(row.id, { categoryId: e.target.value })}
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
+                                                    >
+                                                        {categories.map((cat) => (
+                                                            <option key={cat.id} value={cat.id}>
+                                                                {cat.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+
+                                                {/* Item / Description */}
+                                                <td className="px-2 py-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. Lunch"
+                                                        value={row.item}
+                                                        onChange={(e) => handleUpdateRow(row.id, { item: e.target.value })}
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                    />
+                                                </td>
+
+                                                {/* Shared Toggle */}
+                                                <td className="px-2 py-2 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUpdateRow(row.id, { isShared: !row.isShared })}
+                                                        className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                                                            row.isShared
+                                                                ? "bg-(--pastel-sage-light) text-(--text-ink) border-(--border-ink) shadow-cute-sm"
+                                                                : "bg-(--bg-canvas) text-(--text-muted) border-(--border-subtle) hover:border-(--border-ink)"
+                                                        }`}
+                                                    >
+                                                        {row.isShared ? "50/50" : "Solo"}
+                                                    </button>
+                                                </td>
+
+                                                {/* Tags */}
+                                                <td className="px-2 py-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="#tag"
+                                                        value={row.tags.join(", ")}
+                                                        onChange={(e) =>
+                                                            handleUpdateRow(row.id, {
+                                                                tags: e.target.value
+                                                                    .split(",")
+                                                                    .map((t) => t.trim().replace(/^#/, ""))
+                                                                    .filter(Boolean),
+                                                            })
+                                                        }
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-mono text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                    />
+                                                </td>
+
+                                                {/* Delete Row Button */}
+                                                <td className="py-2 pl-2 pr-3 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteRow(row.id)}
+                                                        aria-label={`Delete row ${idx + 1}`}
+                                                        className="flex h-7 w-7 mx-auto items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) hover:bg-(--pastel-coral-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Add Row Button */}
+                            <button
+                                type="button"
+                                onClick={handleAddRow}
+                                className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-all shadow-cute-sm"
+                            >
+                                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                                <span>+ Add Row</span>
+                            </button>
+                        </div>
+                    )}
+                </ModalBody>
+
+                {/* Footer Summary & Submit */}
+                <ModalFooter className="justify-between">
+                    <div className="text-xs text-(--text-muted)">
+                        <span className="font-bold text-(--text-ink)">
+                            {summary.count} item{summary.count === 1 ? "" : "s"}
+                        </span>{" "}
+                        totaling{" "}
+                        <span className="font-black text-(--text-ink) text-sm font-mono-num">
+                            {formatSGD(summary.totalSGD)}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || summary.count === 0}
+                            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>{isSubmitting ? "Saving All..." : `Log All (${summary.count})`}</span>
+                        </button>
+                    </div>
+                </ModalFooter>
             </div>
-          )}
-        </div>
-
-        {/* Footer Summary & Submit */}
-        <ModalFooter className="justify-between">
-          <div className="text-xs text-(--text-muted)">
-            <span className="font-bold text-(--text-ink)">{summary.count} item{summary.count === 1 ? '' : 's'}</span> totaling{' '}
-            <span className="font-black text-(--text-ink) text-sm font-mono-num">
-              {formatSGD(summary.totalSGD)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting || summary.count === 0}
-              className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              <span>{isSubmitting ? 'Saving All...' : `Log All (${summary.count})`}</span>
-            </button>
-          </div>
-        </ModalFooter>
-      </div>
-    </AnimatedModal>
-  );
+        </AnimatedModal>
+    );
 }
 
 export default BulkAddExpenseModal;

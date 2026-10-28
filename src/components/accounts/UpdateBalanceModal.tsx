@@ -24,6 +24,7 @@ import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { TruncatedText } from "../ui/TruncatedText";
 
 export interface UpdateBalanceModalProps {
     isOpen: boolean;
@@ -219,14 +220,14 @@ export function UpdateBalanceModal({
                 maxWidth="max-w-md"
             >
                 <div className="p-6 text-center space-y-4">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500">
-                        <Landmark className="h-6 w-6" />
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-(--pastel-butter-light) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                        <Landmark className="h-6 w-6" strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        <h3 className="text-base font-bold text-(--text-ink) font-display">
                             No Accounts Found
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <p className="text-xs text-(--text-muted) mt-1">
                             Add your first bank account or CPF to start tracking
                             balances.
                         </p>
@@ -237,9 +238,9 @@ export function UpdateBalanceModal({
                             onClose();
                             onOpenAddAccount();
                         }}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 shadow-md shadow-emerald-500/20 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                     >
-                        <Plus className="h-4 w-4 stroke-[2.5]" />
+                        <Plus className="h-4 w-4" strokeWidth={2.5} />
                         <span>Add First Account</span>
                     </button>
                 </div>
@@ -263,7 +264,7 @@ export function UpdateBalanceModal({
                         id="single-modal-title"
                         title="Update Account Balance"
                         subtitle={`${account.name} ${account.institution ? `(${account.institution})` : ""}`}
-                        icon={<Landmark className="h-4.5 w-4.5 stroke-[2.5]" />}
+                        icon={<Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />}
                         iconBgColor="bg-(--pastel-butter-light)"
                         onClose={onClose}
                     />
@@ -279,12 +280,12 @@ export function UpdateBalanceModal({
                         <div>
                             <label
                                 htmlFor="single-balance-input"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                                className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                             >
                                 New Balance (S$)
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-muted) select-none">
                                     S$
                                 </span>
                                 <input
@@ -298,12 +299,12 @@ export function UpdateBalanceModal({
                                     placeholder="0.00"
                                     required
                                     autoFocus
-                                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                    className="w-full pl-11 pr-3.5 py-2.5 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) text-base font-bold font-mono-num focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
-                            <p className="text-[11px] text-slate-400 mt-1">
+                            <p className="text-[11px] text-(--text-muted) mt-1.5">
                                 Previous:{" "}
-                                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                                <span className="font-bold text-(--text-ink)">
                                     {formatSGD(account.balance)}
                                 </span>
                             </p>
@@ -313,7 +314,7 @@ export function UpdateBalanceModal({
                             <div>
                                 <label
                                     htmlFor="single-date-input"
-                                    className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1"
+                                    className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                                 >
                                     Snapshot Date
                                 </label>
@@ -324,13 +325,13 @@ export function UpdateBalanceModal({
                                     onChange={(e) =>
                                         setDate(e.target.value)
                                     }
-                                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                             <div>
                                 <label
                                     htmlFor="single-notes-input"
-                                    className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1"
+                                    className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                                 >
                                     Notes (Optional)
                                 </label>
@@ -342,7 +343,7 @@ export function UpdateBalanceModal({
                                         setSingleNotes(e.target.value)
                                     }
                                     placeholder="e.g. Salary credited"
-                                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
@@ -359,7 +360,7 @@ export function UpdateBalanceModal({
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-[1.5px] border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
                         >
                             {isSubmitting ? (
                                 <>
@@ -388,22 +389,22 @@ export function UpdateBalanceModal({
                     id="multi-modal-title"
                     title="Update Account Balances"
                     subtitle="Type directly into any balance. Only modified accounts will be saved."
-                    icon={<Landmark className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
 
                 {/* Search, Filter Pills & Date */}
-                <div className="px-5 py-2.5 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+                <div className="px-4 sm:px-5 py-2.5 bg-(--bg-card) border-b border-(--border-subtle) flex flex-wrap items-center justify-between gap-2.5 shrink-0">
                     {/* Search bar */}
                     <div className="relative flex-1 min-w-40 max-w-xs">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)" />
                         <input
                             type="text"
                             placeholder="Search accounts..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
@@ -415,10 +416,10 @@ export function UpdateBalanceModal({
                                     key={cat}
                                     type="button"
                                     onClick={() => setTypeFilter(cat)}
-                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded-xl text-[11px] border transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                         typeFilter === cat
-                                            ? "bg-emerald-600 text-white shadow-xs"
-                                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                                            ? "bg-(--pastel-lilac) text-(--text-ink) border-(--border-ink) shadow-cute-sm font-bold"
+                                            : "bg-(--bg-canvas) text-(--text-muted) border-(--border-subtle) hover:border-(--border-ink) hover:text-(--text-ink) font-semibold"
                                     }`}
                                 >
                                     {cat}
@@ -429,34 +430,31 @@ export function UpdateBalanceModal({
 
                     {/* Date Picker */}
                     <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-[11px] font-medium text-slate-400">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                             Date:
                         </span>
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white"
+                            className="px-2 py-1 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                         />
                     </div>
                 </div>
 
                 {/* Change Counter Banner */}
-                <div className="px-5 py-1.5 bg-slate-100/60 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs shrink-0">
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                <div className="px-4 sm:px-5 py-1.5 bg-(--bg-canvas) border-b border-(--border-subtle) flex items-center justify-between text-xs shrink-0">
+                    <span className="text-[11px] font-bold text-(--text-muted)">
                         Showing {filteredAccounts.length} of{" "}
                         {accountsList.length} accounts
                     </span>
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                    <span className="text-[11px] font-black text-(--text-ink) bg-(--pastel-butter-light) px-2 py-0.5 rounded-full border border-(--border-ink)">
                         {modifiedAccounts.length} modified
                     </span>
                 </div>
 
                 {/* Accounts List */}
-                <form
-                    onSubmit={handleMultiSubmit}
-                    className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2"
-                >
+                <ModalBody className="p-4 sm:p-5 space-y-2">
                     {error && (
                         <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
                             <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
@@ -465,7 +463,7 @@ export function UpdateBalanceModal({
                     )}
 
                     {filteredAccounts.length === 0 ? (
-                        <div className="text-center py-8 text-xs text-slate-400">
+                        <div className="text-center py-8 text-xs text-(--text-muted)">
                             No accounts match "{searchQuery}"
                         </div>
                     ) : (
@@ -484,33 +482,34 @@ export function UpdateBalanceModal({
                             return (
                                 <div
                                     key={acc.id}
-                                    className={`p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
+                                    className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
                                         isModified
-                                            ? "border-emerald-400/80 bg-emerald-50/30 dark:border-emerald-700/60 dark:bg-emerald-950/20"
-                                            : "border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900/40"
+                                            ? "border-2 border-(--border-ink) bg-(--pastel-butter-light)/40 shadow-cute-sm"
+                                            : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-card)"
                                     }`}
                                 >
                                     {/* Account Name & Info */}
                                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs shrink-0">
+                                        <div className="h-7 w-7 rounded-xl bg-(--bg-canvas) border border-(--border-subtle) flex items-center justify-center text-xs shrink-0">
                                             {acc.type === "Cash"
                                                 ? "💵"
                                                 : acc.type === "Investment"
                                                   ? "📈"
                                                   : "🏛️"}
                                         </div>
-                                        <div className="min-w-0">
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                                                    {acc.name}
-                                                </span>
+                                                <TruncatedText
+                                                    text={acc.name}
+                                                    className="text-xs sm:text-sm font-bold text-(--text-ink)"
+                                                />
                                                 {acc.is_joint && (
-                                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shrink-0">
                                                         Joint
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                                            <div className="text-[10px] text-(--text-muted) flex items-center gap-1.5 font-medium mt-0.5">
                                                 <span>
                                                     {acc.institution ||
                                                         acc.type}
@@ -518,7 +517,9 @@ export function UpdateBalanceModal({
                                                 <span>•</span>
                                                 <span>
                                                     Prev:{" "}
-                                                    {formatSGD(currentVal)}
+                                                    <span className="font-mono-num font-bold">
+                                                        {formatSGD(currentVal)}
+                                                    </span>
                                                 </span>
                                             </div>
                                         </div>
@@ -529,10 +530,10 @@ export function UpdateBalanceModal({
                                         {/* Delta Pill */}
                                         {isModified ? (
                                             <span
-                                                className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                                                className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-(--border-ink) shadow-cute-sm ${
                                                     diff > 0
-                                                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                                                        : "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300"
+                                                        ? "bg-(--pastel-sage-light) text-(--text-ink)"
+                                                        : "bg-(--pastel-coral-light) text-(--text-ink)"
                                                 }`}
                                             >
                                                 {diff > 0 ? (
@@ -544,14 +545,14 @@ export function UpdateBalanceModal({
                                                 {formatSGD(diff)}
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] text-slate-300 dark:text-slate-600 hidden sm:inline">
+                                            <span className="text-[10px] text-(--text-muted) opacity-40 hidden sm:inline">
                                                 —
                                             </span>
                                         )}
 
                                         {/* Numeric Input */}
                                         <div className="relative w-32 sm:w-36">
-                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">
+                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-(--text-muted) select-none">
                                                 S$
                                             </span>
                                             <input
@@ -568,10 +569,10 @@ export function UpdateBalanceModal({
                                                     }))
                                                 }
                                                 placeholder="0.00"
-                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-lg border text-right text-xs font-bold transition-all focus:outline-none focus:ring-1 ${
+                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-right text-xs font-bold font-mono-num transition-all focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) ${
                                                     isModified
-                                                        ? "border-emerald-500 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20"
-                                                        : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white"
+                                                        ? "border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
+                                                        : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"
                                                 }`}
                                             />
                                         </div>
@@ -580,7 +581,7 @@ export function UpdateBalanceModal({
                             );
                         })
                     )}
-                </form>
+                </ModalBody>
 
                 {/* Footer Actions */}
                 <ModalFooter className="justify-between">
