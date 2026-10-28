@@ -92,12 +92,14 @@ export function ExpenseListTable({
   const activePageSize = propPageSize ?? internalPageSize;
 
   const handleSort = (field: ExpenseSortField) => {
-    let newOrder: SortDirection = 'desc';
-    if (activeSortBy === field) {
-      newOrder = activeSortOrder === 'asc' ? 'desc' : 'asc';
-    } else {
-      newOrder = field === 'date' || field === 'amount' ? 'desc' : 'asc';
-    }
+    const newOrder: SortDirection =
+      activeSortBy === field
+        ? activeSortOrder === 'asc'
+          ? 'desc'
+          : 'asc'
+        : field === 'date' || field === 'amount'
+          ? 'desc'
+          : 'asc';
 
     if (onSortChange) {
       onSortChange(field, newOrder);
@@ -297,16 +299,26 @@ export function ExpenseListTable({
                 return (
                   <tr
                     key={expense.id}
-                    className="block sm:table-row p-4 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
+                    className="flex flex-wrap items-center sm:table-row p-3 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
                   >
                     {/* Date */}
-                    <td className="py-1 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 block sm:table-cell whitespace-nowrap font-mono-num font-semibold text-(--text-ink)">
+                    <td className="order-1 py-0 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 flex-1 sm:flex-initial sm:table-cell whitespace-nowrap font-mono-num font-bold sm:font-semibold text-[11px] sm:text-xs text-(--text-muted) sm:text-(--text-ink)">
                       <span>{formatDisplayDate(expense.date)}</span>
                     </td>
 
+                    {/* Formatted SGD Amount */}
+                    <td className="order-2 py-0 sm:py-4 px-0 sm:px-3 ml-auto sm:ml-0 shrink-0 sm:table-cell text-right">
+                      <div className="font-mono-num font-black text-sm text-(--text-ink)">{formatSGD(expense.amount)}</div>
+                      {hasForeignCurrency && (
+                        <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
+                          {formatForeignAmount(expense.original_amount!, expense.original_currency!)}
+                        </div>
+                      )}
+                    </td>
+
                     {/* Item Description & Remarks */}
-                    <td className="py-1 sm:py-4 px-0 sm:px-3 block sm:table-cell max-w-xs">
-                      <div className="font-bold text-(--text-ink) flex items-center gap-1.5 min-w-0">
+                    <td className="order-3 w-full py-1 sm:py-4 px-0 sm:px-3 sm:table-cell max-w-xs">
+                      <div className="font-bold text-sm text-(--text-ink) flex items-center gap-1.5 min-w-0">
                         <TruncatedText text={expense.item} />
                         {expense.tags && expense.tags.length > 0 && (
                           <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
@@ -322,33 +334,33 @@ export function ExpenseListTable({
                     </td>
 
                     {/* Category Badge */}
-                    <td className="py-1 sm:py-4 px-0 sm:px-3 inline-block sm:table-cell whitespace-nowrap mr-2 sm:mr-0">
+                    <td className="order-4 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
                       {category ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
                           <span
-                            className="h-2 w-2 rounded-full shrink-0 border border-black/20"
+                            className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
                             style={{ backgroundColor: category.color || '#dfc2ff' }}
                           />
                           <span>{category.name}</span>
                         </span>
                       ) : (
-                        <span className="text-(--text-muted) text-[11px]">Uncategorized</span>
+                        <span className="text-(--text-muted) text-[10px] sm:text-[11px]">Uncategorized</span>
                       )}
                     </td>
 
                     {/* Payer Avatar / Name */}
-                    <td className="py-1 sm:py-4 px-0 sm:px-3 inline-block sm:table-cell whitespace-nowrap mr-2 sm:mr-0">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-(--text-ink)">
-                        <span>{payer?.avatar_url || '👤'}</span>
-                        <span>{payer?.display_name || 'Unknown'}</span>
+                    <td className="order-5 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
+                      <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-(--text-ink)">
+                        <span className="text-xs">{payer?.avatar_url || '👤'}</span>
+                        <span className="text-[10px] sm:text-xs">{payer?.display_name || 'Unknown'}</span>
                       </span>
                     </td>
 
                     {/* Split Status Badge */}
-                    <td className="py-1 sm:py-4 px-0 sm:px-3 inline-block sm:table-cell whitespace-nowrap">
+                    <td className="order-6 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap">
                       {expense.is_shared ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2.5 sm:px-3 py-0.5 sm:py-0.8 text-[11px] font-bold text-(--text-ink)">
-                          <ArrowRightLeft className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-bold text-(--text-ink)">
+                          <ArrowRightLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                           <span>
                             {expense.split_ratio && expense.split_ratio !== 0.5
                               ? `Split ${Math.round(expense.split_ratio * 100)}%`
@@ -356,24 +368,14 @@ export function ExpenseListTable({
                           </span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[11px] font-medium text-(--text-muted)">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-medium text-(--text-muted)">
                           <span>Personal</span>
                         </span>
                       )}
                     </td>
 
-                    {/* Formatted SGD Amount */}
-                    <td className="py-1 sm:py-4 px-0 sm:px-3 block sm:table-cell text-left sm:text-right">
-                      <div className="font-mono-num font-black text-sm text-(--text-ink)">{formatSGD(expense.amount)}</div>
-                      {hasForeignCurrency && (
-                        <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
-                          {formatForeignAmount(expense.original_amount!, expense.original_currency!)}
-                        </div>
-                      )}
-                    </td>
-
                     {/* Edit & Delete Action Buttons */}
-                    <td className="py-1.5 sm:py-4 pl-0 sm:pl-3 pr-0 sm:pr-6 block sm:table-cell text-right sm:text-center whitespace-nowrap">
+                    <td className="order-7 py-0 sm:py-4 pl-0 sm:pl-3 pr-0 sm:pr-6 ml-auto sm:ml-0 inline-flex items-center sm:table-cell text-right sm:text-center whitespace-nowrap">
                       <div className="inline-flex items-center gap-1.5">
                         <button
                           type="button"
@@ -382,19 +384,19 @@ export function ExpenseListTable({
                             setEditingExpense(expense);
                           }}
                           aria-label={`Edit ${expense.item}`}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                           title="Edit expense"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeletingExpense(expense)}
                           aria-label={`Delete ${expense.item}`}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                           title="Delete expense"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </div>
                     </td>

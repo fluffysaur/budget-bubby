@@ -281,16 +281,18 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 <div className="flex items-center space-x-2 sm:space-x-3">
                     {/* Quick Add Button (Desktop trigger) */}
                     {onOpenQuickAdd && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={onOpenQuickAdd}
-                            aria-label="Quick Add"
-                            className="hidden md:inline-flex"
-                            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
-                        >
-                            Add Expense
-                        </Button>
+                        <div className="hidden md:block">
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={onOpenQuickAdd}
+                                aria-label="Quick Add"
+                                className="hidden md:inline-flex"
+                                leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+                            >
+                                Add Expense
+                            </Button>
+                        </div>
                     )}
 
                     {/* Connection Status Badge (Only shown in Demo Mode) */}

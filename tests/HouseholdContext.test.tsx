@@ -170,6 +170,31 @@ describe('Layout Components', () => {
       });
       expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
+
+    it('hides Add Expense button on mobile viewports via responsive desktop-only classes', async () => {
+      const handleOpenQuickAdd = vi.fn();
+      await act(async () => {
+        render(
+          <HouseholdProvider>
+            <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
+          </HouseholdProvider>
+        );
+      });
+
+      const addExpenseBtn = screen.getByRole('button', { name: /quick add/i });
+      expect(addExpenseBtn).toBeInTheDocument();
+      expect(addExpenseBtn).toHaveClass('hidden');
+      expect(addExpenseBtn).toHaveClass('md:inline-flex');
+
+      // Base inline-flex should have been overridden by hidden via twMerge
+      const classList = addExpenseBtn.className.split(/\s+/);
+      expect(classList).not.toContain('inline-flex');
+
+      // Parent container also enforces hidden below md
+      const parent = addExpenseBtn.parentElement;
+      expect(parent).toHaveClass('hidden');
+      expect(parent).toHaveClass('md:block');
+    });
   });
 
   describe('DesktopSidebar', () => {

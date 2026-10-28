@@ -1,5 +1,6 @@
 import React, { forwardRef } from "react";
 import { Loader2 } from "lucide-react";
+import { twMerge } from "tailwind-merge";
 
 export type ButtonVariant = "primary" | "secondary" | "butter" | "outline" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -56,7 +57,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 ref={ref}
                 type={type}
                 disabled={isDisabled}
-                className={`inline-flex items-center justify-center transition-all cursor-pointer select-none active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:pointer-events-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+                className={twMerge(
+                    "inline-flex items-center justify-center transition-all cursor-pointer select-none active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50 disabled:pointer-events-none",
+                    variantStyles[variant],
+                    sizeStyles[size],
+                    className,
+                )}
                 {...props}
             >
                 {isLoading ? (

@@ -170,7 +170,7 @@ export function DeleteExpenseModal({
                         onClick={handleDelete}
                         disabled={isDeleting}
                         aria-label={`Confirm delete ${expense.item}`}
-                        className="inline-flex items-center gap-2 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) px-5 py-2.5 text-xs font-black text-white shadow-cute-sm hover:bg-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl border-2 border-(--border-ink) bg-rose-600 px-5 py-2.5 text-xs font-black text-white shadow-(--shadow-cute-sm) hover:bg-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                         <Trash2 className="h-4 w-4" />
                         <span>{isDeleting ? "Deleting..." : "Delete Expense"}</span>

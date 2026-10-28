@@ -92,7 +92,7 @@ export function DeleteAccountModal({
                         type="button"
                         onClick={handleDelete}
                         disabled={isDeleting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) px-5 py-2.5 text-xs font-black text-white shadow-cute-sm hover:bg-rose-700 active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-rose-600 px-5 py-2.5 text-xs font-black text-white shadow-(--shadow-cute-sm) hover:bg-rose-700 active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
                     >
                         {isDeleting ? (
                             <>
