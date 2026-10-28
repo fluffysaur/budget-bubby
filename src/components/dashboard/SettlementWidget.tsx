@@ -114,12 +114,12 @@ export function SettlementWidget({
         <div
             role="region"
             aria-label="Shared Expense Settlement Center"
-            className={`rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors ${className}`}
+            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors ${className}`}
         >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 pb-4 border-b-[1.5px] border-(--border-subtle)">
+            <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                         <Scale className="h-4 w-4 stroke-[2.5]" />
                     </div>
                     <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
@@ -127,14 +127,14 @@ export function SettlementWidget({
                     </h3>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-(--bg-cream) border-[1.5px] border-(--border-ink) px-3 py-1 text-[11px] font-bold text-(--text-ink) shadow-(--shadow-cute-sm)">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-(--bg-cream) border-2 border-(--border-ink) px-3 py-1 text-[11px] font-bold text-(--text-ink) shadow-(--shadow-cute-sm)">
                     <ArrowRightLeft className="h-3 w-3 stroke-[2.5]" />
                     <span>50 / 50 Split</span>
                 </span>
             </div>
 
             {/* Main Status Display */}
-            <div className="mt-5 rounded-2xl bg-(--bg-cream) p-5 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
+            <div className="mt-5 rounded-2xl bg-(--bg-cream) p-5 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
@@ -189,7 +189,7 @@ export function SettlementWidget({
             {/* Partner Contributions Breakdown */}
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Member 1 Breakdown */}
-                <div className="rounded-2xl border-[1.5px] border-(--border-ink) bg-[#fffbeb] dark:bg-[#382f18] p-4 shadow-(--shadow-cute-sm)">
+                <div className="rounded-2xl border-2 border-(--border-ink) bg-[#fffbeb] dark:bg-[#382f18] p-4 shadow-(--shadow-cute-sm)">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-lg">{m1.avatar_url || "👨"}</span>
@@ -208,7 +208,7 @@ export function SettlementWidget({
                 </div>
 
                 {/* Member 2 Breakdown */}
-                <div className="rounded-2xl border-[1.5px] border-(--border-ink) bg-[#fff0fa] dark:bg-[#3d1f39] p-4 shadow-(--shadow-cute-sm)">
+                <div className="rounded-2xl border-2 border-(--border-ink) bg-[#fff0fa] dark:bg-[#3d1f39] p-4 shadow-(--shadow-cute-sm)">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-lg">{m2.avatar_url || "👩"}</span>

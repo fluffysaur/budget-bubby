@@ -68,14 +68,14 @@ export function UpcomingBillsWidget({
         switch (type) {
             case "insurance":
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#dfc2ff] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-[1.5px] border-(--border-ink) shrink-0">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#dfc2ff] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
                         <Shield className="h-2.5 w-2.5 stroke-[2.5]" />
                         <span>Insurance</span>
                     </span>
                 );
             case "tax":
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f76b57] px-2 py-0.5 text-[10px] font-black text-white border-[1.5px] border-(--border-ink) shrink-0">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f76b57] px-2 py-0.5 text-[10px] font-black text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
                         <Receipt className="h-2.5 w-2.5 stroke-[2.5]" />
                         <span>Tax</span>
                     </span>
@@ -83,7 +83,7 @@ export function UpcomingBillsWidget({
             case "subscription":
             default:
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#bbf7d0] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-[1.5px] border-(--border-ink) shrink-0">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#bbf7d0] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
                         <RotateCw className="h-2.5 w-2.5 stroke-[2.5]" />
                         <span>Subscription</span>
                     </span>
@@ -109,12 +109,12 @@ export function UpcomingBillsWidget({
         <div
             role="region"
             aria-label="Upcoming Bills and Renewals"
-            className={`rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
+            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
         >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 pb-4 border-b-[1.5px] border-(--border-subtle)">
+            <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ffe999] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                         <CalendarClock className="h-5 w-5 stroke-[2.5]" />
                     </div>
                     <div>
@@ -131,7 +131,7 @@ export function UpcomingBillsWidget({
                     <button
                         type="button"
                         onClick={onViewAll}
-                        className="flex items-center gap-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                     >
                         <span>View All</span>
                         <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
@@ -142,8 +142,8 @@ export function UpcomingBillsWidget({
             {/* Content */}
             <div className="mt-4">
                 {displayPolicies.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border-[1.5px] border-dashed border-(--border-subtle) py-8 text-center bg-(--bg-cream)">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) text-lg mb-2">
+                    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-(--border-ink) py-8 text-center bg-(--bg-cream)">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-lg mb-2">
                             📋
                         </div>
                         <p className="text-sm font-bold text-(--text-ink) font-display">
@@ -161,10 +161,10 @@ export function UpcomingBillsWidget({
                             return (
                                 <div
                                     key={policy.id}
-                                    className="flex items-center justify-between gap-3 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-card)"
+                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-card)"
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-[1.5px] border-(--border-ink) text-(--text-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-[#342445] border-2 border-(--border-ink) text-(--text-ink) shadow-(--shadow-cute-sm) shrink-0">
                                             <Bell className="h-4 w-4 stroke-[2.5]" />
                                         </div>
                                         <div className="min-w-0 flex-1">
