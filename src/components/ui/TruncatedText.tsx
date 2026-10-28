@@ -1,4 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import {
+    useFloating,
+    autoUpdate,
+    offset,
+    flip,
+    shift,
+    FloatingPortal,
+    useDismiss,
+    useRole,
+    useInteractions,
+    type Placement,
+} from "@floating-ui/react";
 
 export interface TruncatedTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     text: string;
@@ -22,15 +34,56 @@ export function TruncatedText({
 }: TruncatedTextProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isOverflowing, setIsOverflowing] = useState(false);
-    const containerRef = useRef<HTMLSpanElement>(null);
+    const containerRef = useRef<HTMLElement | null>(null);
     const textRef = useRef<HTMLSpanElement>(null);
+
+    // Compute placement from position and alignment
+    const placementBase = position === "bottom" ? "bottom" : "top";
+    const placementAlign =
+        align === "center" ? "" : align === "right" ? "-end" : "-start";
+    const placement = `${placementBase}${placementAlign}` as Placement;
+
+    const {
+        refs: { setReference, setFloating },
+        floatingStyles,
+        context,
+    } = useFloating({
+        open: isOpen && isOverflowing,
+        onOpenChange: (open) => {
+            if (!open) {
+                setIsOpen(false);
+            }
+        },
+        placement,
+        whileElementsMounted: autoUpdate,
+        middleware: [
+            offset(6),
+            flip({ fallbackAxisSideDirection: "start" }),
+            shift({ padding: 8 }),
+        ],
+    });
+
+    const dismiss = useDismiss(context, {
+        escapeKey: true,
+        outsidePress: true,
+        outsidePressEvent: "mousedown",
+    });
+    const role = useRole(context, { role: "tooltip" });
+
+    const { getReferenceProps, getFloatingProps } = useInteractions([
+        dismiss,
+        role,
+    ]);
 
     // Check if the text actually overflows its container
     const checkOverflow = useCallback(() => {
         if (textRef.current) {
-            const hasOverflow = textRef.current.scrollWidth > textRef.current.clientWidth + 1;
+            const hasOverflow =
+                textRef.current.scrollWidth > textRef.current.clientWidth + 1;
             setIsOverflowing(hasOverflow);
+            return hasOverflow;
         }
+        return false;
     }, []);
 
     useEffect(() => {
@@ -39,28 +92,10 @@ export function TruncatedText({
         return () => window.removeEventListener("resize", checkOverflow);
     }, [checkOverflow, text]);
 
-    // Handle outside clicks to close the popover on mobile
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleOutsideClick);
-        document.addEventListener("touchstart", handleOutsideClick);
-        return () => {
-            document.removeEventListener("mousedown", handleOutsideClick);
-            document.removeEventListener("touchstart", handleOutsideClick);
-        };
-    }, [isOpen]);
-
     // Desktop hover handlers
     const handleMouseEnter = () => {
-        checkOverflow();
-        if (isOverflowing) {
+        const hasOverflow = checkOverflow();
+        if (hasOverflow || isOverflowing) {
             setIsOpen(true);
         }
     };
@@ -71,33 +106,25 @@ export function TruncatedText({
 
     // Mobile / Touch click toggle handler
     const handleClick = (e: React.MouseEvent) => {
-        checkOverflow();
-        if (isOverflowing) {
+        const hasOverflow = checkOverflow();
+        if (hasOverflow || isOverflowing) {
             e.stopPropagation();
             setIsOpen((prev) => !prev);
         }
     };
 
-    const alignClass =
-        align === "center"
-            ? "left-1/2 -translate-x-1/2"
-            : align === "right"
-            ? "right-0"
-            : "left-0";
-
-    const positionClass =
-        position === "bottom"
-            ? "top-full mt-1.5"
-            : "bottom-full mb-1.5";
-
     const Component = as;
 
     return (
         <Component
-            ref={containerRef as any}
+            ref={(node: HTMLElement | null) => {
+                containerRef.current = node;
+                setReference(node);
+            }}
             className={`relative inline-flex items-center min-w-0 max-w-full ${maxWidthClass}`}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            {...getReferenceProps()}
         >
             <span
                 ref={textRef}
@@ -113,17 +140,21 @@ export function TruncatedText({
 
             {/* Floating Cute Tooltip Popover */}
             {isOpen && isOverflowing && (
-                <div
-                    role="tooltip"
-                    onClick={(e) => e.stopPropagation()}
-                    className={`absolute z-50 w-max max-w-[260px] sm:max-w-xs px-2.5 py-1.5 text-xs font-bold leading-snug rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) animate-in fade-in zoom-in-95 duration-150 break-words whitespace-normal pointer-events-auto select-text font-display ${alignClass} ${positionClass} ${tooltipClassName}`}
-                >
-                    {text}
-                </div>
+                <FloatingPortal>
+                    <div
+                        ref={setFloating}
+                        style={floatingStyles}
+                        role="tooltip"
+                        onClick={(e) => e.stopPropagation()}
+                        {...getFloatingProps()}
+                        className={`z-9999 w-max max-w-65 sm:max-w-xs px-2.5 py-1.5 text-xs font-bold leading-snug rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) animate-in fade-in zoom-in-95 duration-150 wrap-break-word whitespace-normal pointer-events-auto select-text font-display ${tooltipClassName}`}
+                    >
+                        {text}
+                    </div>
+                </FloatingPortal>
             )}
         </Component>
     );
 }
 
 export default TruncatedText;
-
