@@ -16,7 +16,32 @@ import { ExpenseListTable } from '../src/components/expenses/ExpenseListTable';
 import { CentsFirstAmountInput } from '../src/components/expenses/CentsFirstAmountInput';
 import { financeService } from '../src/services/financeService';
 import { mockCategories, mockMembers } from '../src/data/mockSeedData';
-import type { Expense } from '../src/types/finance';
+import type { Expense, SavingsGoal } from '../src/types/finance';
+
+const mockGoals: SavingsGoal[] = [
+  {
+    id: 'goal-wedding-1',
+    household_id: 'hh-00000000-0001',
+    title: 'Wedding Banquet',
+    target_amount: 30000,
+    saved_so_far: 15000,
+    target_date: '2026-12-31',
+    monthly_contribution: 1500,
+    status: 'on_track',
+    emoji: '💍',
+  },
+  {
+    id: 'goal-japan-2',
+    household_id: 'hh-00000000-0001',
+    title: 'Japan Trip',
+    target_amount: 5000,
+    saved_so_far: 3500,
+    target_date: '2026-11-30',
+    monthly_contribution: 500,
+    status: 'on_track',
+    emoji: '✈️',
+  },
+];
 
 const testExpense: Expense = {
   id: 'exp-test-e2-1',
@@ -304,6 +329,10 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
       const descInputs = screen.getAllByPlaceholderText('e.g. Lunch');
       fireEvent.change(descInputs[0], { target: { value: 'Supermarket Run' } });
 
+      // Update time for row 1
+      const timeInputRow1 = screen.getByLabelText('Time for row 1');
+      fireEvent.change(timeInputRow1, { target: { value: '16:45' } });
+
       // Click submit
       const submitBtn = screen.getByRole('button', { name: /Log All/i });
       fireEvent.click(submitBtn);
@@ -314,12 +343,145 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
             expect.objectContaining({
               amount: 25.5,
               item: 'Supermarket Run',
+              time: '16:45',
             }),
           ])
         );
         expect(onAddedMock).toHaveBeenCalled();
         expect(onCloseMock).toHaveBeenCalled();
       });
+    });
+
+    it('parses text with 24h and 12h times into structured rows with time', () => {
+      const sampleText = `14:30 12.50 Lunch at Maxwell
+2:15pm 4.20 Iced Coffee #Coffee
+2026-10-28 09:00 35.00 Grab to Airport`;
+
+      const parsed = parseBulkExpenseText(sampleText, '2026-10-27', mockCategories);
+
+      expect(parsed).toHaveLength(3);
+      expect(parsed[0].time).toBe('14:30');
+      expect(parsed[0].amount).toBe(12.5);
+      expect(parsed[0].item).toBe('Lunch at Maxwell');
+
+      expect(parsed[1].time).toBe('14:15');
+      expect(parsed[1].amount).toBe(4.2);
+      expect(parsed[1].item).toBe('Iced Coffee');
+
+      expect(parsed[2].date).toBe('2026-10-28');
+      expect(parsed[2].time).toBe('09:00');
+      expect(parsed[2].amount).toBe(35.0);
+      expect(parsed[2].item).toBe('Grab to Airport');
+    });
+
+    it('parses text matching savings goal hashtags and titles', () => {
+      const sampleText = `800.00 Wedding Banquet deposit #WeddingBanquet
+120.00 Universal Studios Japan #JapanTrip
+15.00 Casual Lunch #Food`;
+
+      const parsed = parseBulkExpenseText(
+        sampleText,
+        '2026-10-27',
+        mockCategories,
+        mockGoals
+      );
+
+      expect(parsed).toHaveLength(3);
+      // Row 1: Linked to Wedding Banquet goal
+      expect(parsed[0].amount).toBe(800.0);
+      expect(parsed[0].goalId).toBe('goal-wedding-1');
+      expect(parsed[0].categoryId).toBe('');
+
+      // Row 2: Linked to Japan Trip goal
+      expect(parsed[1].amount).toBe(120.0);
+      expect(parsed[1].goalId).toBe('goal-japan-2');
+      expect(parsed[1].categoryId).toBe('');
+
+      // Row 3: Standard category
+      expect(parsed[2].amount).toBe(15.0);
+      expect(parsed[2].goalId).toBeNull();
+      expect(parsed[2].categoryId).toBeDefined();
+    });
+
+    it('allows linking a row to a savings goal via unified dropdown and displays goal-funded summary badge', async () => {
+      const bulkAddSpy = vi
+        .spyOn(financeService, 'bulkAddExpenses')
+        .mockResolvedValue([testExpense]);
+      const onAddedMock = vi.fn();
+      const onCloseMock = vi.fn();
+
+      render(
+        <BulkAddExpenseModal
+          isOpen={true}
+          onClose={onCloseMock}
+          onExpensesAdded={onAddedMock}
+          categories={mockCategories}
+          members={mockMembers}
+          goals={mockGoals}
+        />
+      );
+
+      // Verify "Set Goal for All" dropdown is present
+      const batchGoalSelect = screen.getByLabelText(/Set savings goal for all expenses/i);
+      expect(batchGoalSelect).toBeInTheDocument();
+
+      // Enter amount & description for first row
+      const amountInputs = screen.getAllByPlaceholderText('0.00');
+      fireEvent.change(amountInputs[0], { target: { value: '450.00' } });
+
+      const descInputs = screen.getAllByPlaceholderText('e.g. Lunch');
+      fireEvent.change(descInputs[0], { target: { value: 'Bridal Gown Rental' } });
+
+      // Change row 1 Category / Goal dropdown to goal-wedding-1
+      const catOrGoalSelects = screen.getAllByLabelText(/Category or Goal for row 1/i);
+      fireEvent.change(catOrGoalSelects[0], { target: { value: 'goal:goal-wedding-1' } });
+
+      // Check footer summary updates with goal-funded count
+      expect(screen.getByText(/1 goal-funded/i)).toBeInTheDocument();
+
+      // Submit
+      const submitBtn = screen.getByRole('button', { name: /Log All/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(bulkAddSpy).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.objectContaining({
+              amount: 450,
+              item: 'Bridal Gown Rental',
+              goal_id: 'goal-wedding-1',
+              category_id: null,
+            }),
+          ])
+        );
+        expect(onAddedMock).toHaveBeenCalled();
+      });
+    });
+
+    it('updates all rows when Set Goal for All is changed in top toolbar', async () => {
+      render(
+        <BulkAddExpenseModal
+          isOpen={true}
+          onClose={vi.fn()}
+          categories={mockCategories}
+          members={mockMembers}
+          goals={mockGoals}
+        />
+      );
+
+      // Select Japan Trip for all rows
+      const batchGoalSelect = screen.getByLabelText(/Set savings goal for all expenses/i);
+      fireEvent.change(batchGoalSelect, { target: { value: 'goal-japan-2' } });
+
+      // Check that all Category or Goal selects in rows reflect Japan Trip
+      const catOrGoalSelects = screen.getAllByLabelText(/Category or Goal for row/i);
+      expect(catOrGoalSelects[0]).toHaveValue('goal:goal-japan-2');
+      expect(catOrGoalSelects[1]).toHaveValue('goal:goal-japan-2');
+      expect(catOrGoalSelects[2]).toHaveValue('goal:goal-japan-2');
+
+      // Reset back to None
+      fireEvent.change(batchGoalSelect, { target: { value: '' } });
+      expect(catOrGoalSelects[0]).toHaveValue(`cat:${mockCategories[0].id}`);
     });
   });
 

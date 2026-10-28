@@ -536,6 +536,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         onExpensesAdded={handleExpenseAdded}
         categories={categories}
         members={members}
+        goals={goals}
         defaultPayerId={filter.payerId}
       />
 

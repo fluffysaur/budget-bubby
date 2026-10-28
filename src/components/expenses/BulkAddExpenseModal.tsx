@@ -9,7 +9,7 @@
  * - Audio celebration on completion
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
+  Target,
 } from 'lucide-react';
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from '../../services/financeService';
@@ -29,14 +30,16 @@ import {
 import { formatSGD } from '../../lib/currency';
 import { getTodayDateString, getCurrentSingaporeTime } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
-import type { Expense, Category, HouseholdMember, CreateExpenseInput } from '../../types/finance';
+import type { Expense, Category, HouseholdMember, CreateExpenseInput, SavingsGoal } from '../../types/finance';
 
 export interface BulkExpenseDraftRow {
   id: string;
   date: string;
+  time?: string;
   amount: number | '';
   currency: string;
   categoryId: string;
+  goalId?: string | null;
   item: string;
   isShared: boolean;
   tags: string[];
@@ -48,6 +51,7 @@ export interface BulkAddExpenseModalProps {
   onExpensesAdded?: (expenses: Expense[]) => void;
   categories?: Category[];
   members?: HouseholdMember[];
+  goals?: SavingsGoal[];
   defaultPayerId?: string;
 }
 
@@ -57,7 +61,9 @@ export interface BulkAddExpenseModalProps {
 export function parseBulkExpenseText(
   text: string,
   defaultDate: string,
-  categories: Category[] = []
+  categories: Category[] = [],
+  goals: SavingsGoal[] = [],
+  batchGoalId?: string | null
 ): BulkExpenseDraftRow[] {
   const lines = text
     .split('\n')
@@ -85,6 +91,16 @@ export function parseBulkExpenseText(
     });
   };
 
+  // Helper to find goal by keyword
+  const findGoalByKeyword = (kw: string): SavingsGoal | undefined => {
+    const cleanKw = kw.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!cleanKw) return undefined;
+    return goals.find((g) => {
+      const cleanTitle = g.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return cleanTitle && (cleanKw.includes(cleanTitle) || cleanTitle.includes(cleanKw));
+    });
+  };
+
   const defaultCategory = categories[0]?.id || '';
 
   return lines.map((line, index) => {
@@ -107,7 +123,29 @@ export function parseBulkExpenseText(
       working = working.replace(dateMatch[0], ' ').trim();
     }
 
-    // 3. Extract currency if specified (e.g. VND, JPY, MYR, USD, S$, $, RM, ₫, ¥)
+    // 3. Extract time if specified (e.g. 14:30, 2:30pm, 09:15 AM, 9am)
+    let time: string = getCurrentSingaporeTime();
+    const timeMatch24 = working.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\s*(am|pm)?\b/i);
+    const timeMatch12 = !timeMatch24 ? working.match(/\b(1[0-2]|0?[1-9])\s*(am|pm)\b/i) : null;
+
+    if (timeMatch24) {
+      let hours = parseInt(timeMatch24[1], 10);
+      const minutes = timeMatch24[2];
+      const ampm = timeMatch24[3]?.toLowerCase();
+      if (ampm === 'pm' && hours < 12) hours += 12;
+      if (ampm === 'am' && hours === 12) hours = 0;
+      time = `${String(hours).padStart(2, '0')}:${minutes}`;
+      working = working.replace(timeMatch24[0], ' ').trim();
+    } else if (timeMatch12) {
+      let hours = parseInt(timeMatch12[1], 10);
+      const ampm = timeMatch12[2].toLowerCase();
+      if (ampm === 'pm' && hours < 12) hours += 12;
+      if (ampm === 'am' && hours === 12) hours = 0;
+      time = `${String(hours).padStart(2, '0')}:00`;
+      working = working.replace(timeMatch12[0], ' ').trim();
+    }
+
+    // 4. Extract currency if specified (e.g. VND, JPY, MYR, USD, S$, $, RM, ₫, ¥)
     let currency = 'SGD';
     for (const c of SUPPORTED_CURRENCIES) {
       const codeRegex = new RegExp(`\\b${c.code}\\b`, 'i');
@@ -118,7 +156,7 @@ export function parseBulkExpenseText(
       }
     }
 
-    // 4. Extract amount (e.g. 12.50, 4.20, $35.00, S$12.50)
+    // 5. Extract amount (e.g. 12.50, 4.20, $35.00, S$12.50)
     let amount: number = 0;
     const amountMatch = working.match(/(?:S\$|\$|RM|₫|¥|฿|€|£)?\s*(\d+(?:,\d{3})*(?:\.\d{1,2})?|\d+)/i);
     if (amountMatch) {
@@ -127,7 +165,7 @@ export function parseBulkExpenseText(
       working = working.replace(amountMatch[0], ' ').trim();
     }
 
-    // 5. Clean up remaining description
+    // 6. Clean up remaining description
     let item = working
       .replace(/^[-–—:]+/, '')
       .replace(/[-–—:]+$/, '')
@@ -137,18 +175,29 @@ export function parseBulkExpenseText(
       item = tags.length > 0 ? tags.join(' ') : `Expense ${index + 1}`;
     }
 
-    // 6. Auto-detect category from description & tags
-    const detectedCat =
-      findCategoryByKeyword(item) ||
-      findCategoryByKeyword(tags.join(' '));
-    const categoryId = detectedCat ? detectedCat.id : defaultCategory;
+    // 7. Detect Savings Goal or Category from description & tags
+    const detectedGoal =
+      findGoalByKeyword(tags.join(' ')) ||
+      findGoalByKeyword(item);
+
+    const goalId = detectedGoal ? detectedGoal.id : (batchGoalId || null);
+
+    let categoryId = '';
+    if (!goalId) {
+      const detectedCat =
+        findCategoryByKeyword(item) ||
+        findCategoryByKeyword(tags.join(' '));
+      categoryId = detectedCat ? detectedCat.id : defaultCategory;
+    }
 
     return {
       id: `draft-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
       date,
+      time,
       amount: amount > 0 ? amount : '',
       currency,
       categoryId,
+      goalId,
       item,
       isShared: true,
       tags,
@@ -162,10 +211,30 @@ export function BulkAddExpenseModal({
   onExpensesAdded,
   categories: propCategories,
   members: propMembers,
+  goals: propGoals,
   defaultPayerId,
 }: BulkAddExpenseModalProps) {
   const categories = propCategories && propCategories.length > 0 ? propCategories : mockCategories;
   const members = propMembers && propMembers.length > 0 ? propMembers : mockMembers;
+
+  const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(propGoals || []);
+  const [batchGoalId, setBatchGoalId] = useState<string>('');
+
+  // Load active goals if not provided in props
+  useEffect(() => {
+    if (propGoals && propGoals.length > 0) {
+      setActiveGoals(propGoals);
+    } else if (isOpen) {
+      financeService
+        .getGoals()
+        .then((g) => {
+          if (g) setActiveGoals(g);
+        })
+        .catch((err) => {
+          console.error('Failed to load goals in BulkAddExpenseModal:', err);
+        });
+    }
+  }, [propGoals, isOpen]);
 
   const today = getTodayDateString();
   const defaultCategory = categories[0]?.id || '';
@@ -179,41 +248,72 @@ export function BulkAddExpenseModal({
 62.40 NTUC FairPrice Groceries #Groceries`
   );
 
-  const [rows, setRows] = useState<BulkExpenseDraftRow[]>(() => [
-    {
-      id: `row-1`,
-      date: today,
-      amount: '',
-      currency: 'SGD',
-      categoryId: defaultCategory,
-      item: '',
-      isShared: true,
-      tags: [],
-    },
-    {
-      id: `row-2`,
-      date: today,
-      amount: '',
-      currency: 'SGD',
-      categoryId: defaultCategory,
-      item: '',
-      isShared: true,
-      tags: [],
-    },
-    {
-      id: `row-3`,
-      date: today,
-      amount: '',
-      currency: 'SGD',
-      categoryId: defaultCategory,
-      item: '',
-      isShared: true,
-      tags: [],
-    },
-  ]);
+  const [rows, setRows] = useState<BulkExpenseDraftRow[]>(() => {
+    const defaultTime = getCurrentSingaporeTime();
+    return [
+      {
+        id: `row-1`,
+        date: today,
+        time: defaultTime,
+        amount: '',
+        currency: 'SGD',
+        categoryId: defaultCategory,
+        goalId: null,
+        item: '',
+        isShared: true,
+        tags: [],
+      },
+      {
+        id: `row-2`,
+        date: today,
+        time: defaultTime,
+        amount: '',
+        currency: 'SGD',
+        categoryId: defaultCategory,
+        goalId: null,
+        item: '',
+        isShared: true,
+        tags: [],
+      },
+      {
+        id: `row-3`,
+        date: today,
+        time: defaultTime,
+        amount: '',
+        currency: 'SGD',
+        categoryId: defaultCategory,
+        goalId: null,
+        item: '',
+        isShared: true,
+        tags: [],
+      },
+    ];
+  });
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Apply batch goal to all rows
+  const handleBatchGoalChange = (newGoalId: string) => {
+    setBatchGoalId(newGoalId);
+    if (newGoalId) {
+      setRows((prev) =>
+        prev.map((r) => ({
+          ...r,
+          goalId: newGoalId,
+          categoryId: '',
+        }))
+      );
+    } else {
+      setRows((prev) =>
+        prev.map((r) => ({
+          ...r,
+          goalId: null,
+          categoryId: r.categoryId || defaultCategory,
+        }))
+      );
+    }
+  };
 
   // Add an empty row
   const handleAddRow = () => {
@@ -222,9 +322,11 @@ export function BulkAddExpenseModal({
       {
         id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         date: today,
+        time: getCurrentSingaporeTime(),
         amount: '',
         currency: 'SGD',
-        categoryId: defaultCategory,
+        categoryId: batchGoalId ? '' : defaultCategory,
+        goalId: batchGoalId ? batchGoalId : null,
         item: '',
         isShared: true,
         tags: [],
@@ -242,9 +344,22 @@ export function BulkAddExpenseModal({
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
   };
 
+  // Update row Category or Goal
+  const handleCategoryOrGoalChange = (rowId: string, val: string) => {
+    if (val.startsWith('goal:')) {
+      const gId = val.slice(5);
+      handleUpdateRow(rowId, { goalId: gId, categoryId: '' });
+    } else if (val.startsWith('cat:')) {
+      const cId = val.slice(4);
+      handleUpdateRow(rowId, { categoryId: cId, goalId: null });
+    } else {
+      handleUpdateRow(rowId, { categoryId: val, goalId: null });
+    }
+  };
+
   // Parse text into grid rows
   const handleApplyPasteText = () => {
-    const parsed = parseBulkExpenseText(pasteText, today, categories);
+    const parsed = parseBulkExpenseText(pasteText, today, categories, activeGoals, batchGoalId);
     if (parsed.length > 0) {
       setRows(parsed);
       setActiveTab('grid');
@@ -254,20 +369,25 @@ export function BulkAddExpenseModal({
     }
   };
 
-  // Compute total count & estimated SGD total
+  // Compute total count, goal-funded count & estimated SGD total
   const summary = useMemo(() => {
     let count = 0;
+    let goalCount = 0;
     let totalSGD = 0;
     for (const r of rows) {
       const num = typeof r.amount === 'number' ? r.amount : parseFloat(r.amount);
       if (num && num > 0) {
         count++;
+        if (r.goalId) {
+          goalCount++;
+        }
         const { amountInSGD } = convertToSGD(num, r.currency);
         totalSGD += amountInSGD;
       }
     }
     return {
       count,
+      goalCount,
       totalSGD: Math.round(totalSGD * 100) / 100,
     };
   }, [rows]);
@@ -294,9 +414,10 @@ export function BulkAddExpenseModal({
         const { amountInSGD, exchangeRate } = convertToSGD(num, r.currency);
         return {
           payer_id: payerId,
-          category_id: r.categoryId || null,
+          category_id: r.goalId ? null : (r.categoryId || null),
+          goal_id: r.goalId || null,
           date: r.date || today,
-          time: getCurrentSingaporeTime(),
+          time: r.time || getCurrentSingaporeTime(),
           item: r.item.trim(),
           amount: amountInSGD,
           original_amount: r.currency !== 'SGD' ? num : null,
@@ -377,29 +498,65 @@ export function BulkAddExpenseModal({
                         </button>
                     </div>
 
-                    {/* Payer Selector */}
-                    <div className="flex items-center gap-2 text-xs">
-                        <span className="font-bold text-[11px] uppercase tracking-wider text-(--text-muted)">
-                            Payer:
-                        </span>
-                        <div className="relative flex items-center">
-                            <select
-                                aria-label="Payer for all expenses"
-                                value={payerId}
-                                onChange={(e) => setPayerId(e.target.value)}
-                                className="appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                            >
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.avatar_url || "👤"} {m.display_name}
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown
-                                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
-                                strokeWidth={2.5}
-                            />
+                    {/* Batch Global Controls */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                        {/* Payer Selector */}
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-[11px] uppercase tracking-wider text-(--text-muted)">
+                                Payer:
+                            </span>
+                            <div className="relative flex items-center">
+                                <select
+                                    aria-label="Payer for all expenses"
+                                    value={payerId}
+                                    onChange={(e) => setPayerId(e.target.value)}
+                                    className="appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                >
+                                    {members.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.avatar_url || "👤"} {m.display_name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                    strokeWidth={2.5}
+                                />
+                            </div>
                         </div>
+
+                        {/* Batch Goal Selector */}
+                        {activeGoals.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-[11px] uppercase tracking-wider text-(--text-muted) flex items-center gap-1">
+                                    <Target className="h-3 w-3 text-(--text-muted)" />
+                                    <span>Set Goal for All:</span>
+                                </span>
+                                <div className="relative flex items-center">
+                                    <select
+                                        aria-label="Set savings goal for all expenses"
+                                        value={batchGoalId}
+                                        onChange={(e) => handleBatchGoalChange(e.target.value)}
+                                        className={`appearance-none rounded-xl border pl-3 pr-8 py-1 text-xs font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) ${
+                                            batchGoalId
+                                                ? "border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200"
+                                                : "border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"
+                                        }`}
+                                    >
+                                        <option value="">None (Use Categories)</option>
+                                        {activeGoals.map((g) => (
+                                            <option key={g.id} value={g.id}>
+                                                {g.emoji || "🎯"} {g.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown
+                                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                        strokeWidth={2.5}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -421,12 +578,12 @@ export function BulkAddExpenseModal({
                                     <span>Smart Text &amp; Receipt Parser</span>
                                 </p>
                                 <p className="text-(--text-muted) text-xs">
-                                    Paste lines with amount, item description, and optional hashtags. Amounts and categories will be detected automatically!
+                                    Paste lines with amount, item description, and optional date/time or hashtags. Amounts, categories, and savings goals will be detected automatically!
                                 </p>
                                 <div className="mt-2.5 font-mono text-[11px] bg-(--bg-card) p-2.5 rounded-xl border border-(--border-ink) text-(--text-ink) leading-relaxed">
                                     Example: 12.50 Lunch at Maxwell<br />
-                                    4.20 Coffee #Coffee<br />
-                                    35.00 Grab to Airport #VietnamTrip
+                                    14:30 4.20 Coffee #Coffee<br />
+                                    2026-10-28 19:45 35.00 Grab to Airport #VietnamTrip
                                 </div>
                             </div>
 
@@ -456,10 +613,11 @@ export function BulkAddExpenseModal({
                                 <table className="w-full text-left text-xs text-(--text-ink)">
                                     <thead className="bg-(--bg-canvas) text-[11px] font-bold uppercase tracking-wider text-(--text-muted) border-b-2 border-(--border-ink)">
                                         <tr>
-                                            <th className="py-2.5 pl-3 pr-2 w-32">Date</th>
+                                            <th className="py-2.5 pl-3 pr-2 w-28">Date</th>
+                                            <th className="px-2 py-2.5 w-24">Time</th>
                                             <th className="px-2 py-2.5 w-24">Amount</th>
                                             <th className="px-2 py-2.5 w-24">Currency</th>
-                                            <th className="px-2 py-2.5 w-36">Category</th>
+                                            <th className="px-2 py-2.5 w-44">Category / Goal</th>
                                             <th className="px-2 py-2.5 min-w-35">Description</th>
                                             <th className="px-2 py-2.5 w-20 text-center">Shared</th>
                                             <th className="px-2 py-2.5 w-32">Tags</th>
@@ -468,14 +626,33 @@ export function BulkAddExpenseModal({
                                     </thead>
                                     <tbody className="divide-y divide-(--border-subtle)">
                                         {rows.map((row, idx) => (
-                                            <tr key={row.id} className="hover:bg-(--pastel-butter-light)/30 transition-colors">
+                                            <tr
+                                                key={row.id}
+                                                className={`transition-colors ${
+                                                    row.goalId
+                                                        ? "bg-purple-50/40 dark:bg-purple-950/15 hover:bg-purple-50/60 dark:hover:bg-purple-950/25"
+                                                        : "hover:bg-(--pastel-butter-light)/30"
+                                                }`}
+                                            >
                                                 {/* Date */}
                                                 <td className="py-2 pl-3 pr-2">
                                                     <input
                                                         type="date"
+                                                        aria-label={`Date for row ${idx + 1}`}
                                                         value={row.date}
                                                         onChange={(e) => handleUpdateRow(row.id, { date: e.target.value })}
                                                         className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                    />
+                                                </td>
+
+                                                {/* Time */}
+                                                <td className="px-2 py-2">
+                                                    <input
+                                                        type="time"
+                                                        aria-label={`Time for row ${idx + 1}`}
+                                                        value={row.time || ""}
+                                                        onChange={(e) => handleUpdateRow(row.id, { time: e.target.value })}
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-mono-num font-semibold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                                                     />
                                                 </td>
 
@@ -518,20 +695,35 @@ export function BulkAddExpenseModal({
                                                     </div>
                                                 </td>
 
-                                                {/* Category */}
+                                                {/* Category or Goal */}
                                                 <td className="px-2 py-2">
                                                     <div className="relative flex items-center">
                                                         <select
-                                                            aria-label={`Category for row ${idx + 1}`}
-                                                            value={row.categoryId}
-                                                            onChange={(e) => handleUpdateRow(row.id, { categoryId: e.target.value })}
-                                                            className="w-full appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) pl-2 pr-6 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
+                                                            aria-label={`Category or Goal for row ${idx + 1}`}
+                                                            value={row.goalId ? `goal:${row.goalId}` : `cat:${row.categoryId || defaultCategory}`}
+                                                            onChange={(e) => handleCategoryOrGoalChange(row.id, e.target.value)}
+                                                            className={`w-full appearance-none rounded-xl border pl-2 pr-6 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer ${
+                                                                row.goalId
+                                                                    ? "border-purple-300 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-200 font-bold"
+                                                                    : "border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"
+                                                            }`}
                                                         >
-                                                            {categories.map((cat) => (
-                                                                <option key={cat.id} value={cat.id}>
-                                                                    {cat.name}
-                                                                </option>
-                                                            ))}
+                                                            <optgroup label="Categories">
+                                                                {categories.map((cat) => (
+                                                                    <option key={cat.id} value={`cat:${cat.id}`}>
+                                                                        {cat.name}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                            {activeGoals.length > 0 && (
+                                                                <optgroup label="🎯 Savings Goals">
+                                                                    {activeGoals.map((g) => (
+                                                                        <option key={g.id} value={`goal:${g.id}`}>
+                                                                            {g.emoji || "🎯"} {g.title}
+                                                                        </option>
+                                                                    ))}
+                                                                </optgroup>
+                                                            )}
                                                         </select>
                                                         <ChevronDown
                                                             className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-(--text-muted)"
@@ -616,14 +808,22 @@ export function BulkAddExpenseModal({
 
                 {/* Footer Summary & Submit */}
                 <ModalFooter className="justify-between">
-                    <div className="text-xs text-(--text-muted)">
-                        <span className="font-bold text-(--text-ink)">
-                            {summary.count} item{summary.count === 1 ? "" : "s"}
-                        </span>{" "}
-                        totaling{" "}
-                        <span className="font-black text-(--text-ink) text-sm font-mono-num">
-                            {formatSGD(summary.totalSGD)}
+                    <div className="text-xs text-(--text-muted) flex items-center flex-wrap gap-2">
+                        <span>
+                            <span className="font-bold text-(--text-ink)">
+                                {summary.count} item{summary.count === 1 ? "" : "s"}
+                            </span>{" "}
+                            totaling{" "}
+                            <span className="font-black text-(--text-ink) text-sm font-mono-num">
+                                {formatSGD(summary.totalSGD)}
+                            </span>
                         </span>
+                        {summary.goalCount > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                <Target className="h-3 w-3" />
+                                <span>{summary.goalCount} goal-funded</span>
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2.5">
