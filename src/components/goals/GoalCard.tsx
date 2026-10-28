@@ -53,26 +53,20 @@ export function GoalCard({
 
     // Big-Ticket Goal Financial Highlights
     const targetAmount = Math.max(0, goal.target_amount);
-    const savedSoFar = Math.max(0, goal.saved_so_far);
-    const goalFundedSpend =
+    const totalSaved = Math.max(0, goal.saved_so_far);
+    const goalSpend =
         Math.round(linkedExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) /
         100;
-    const remainingBalance = Math.max(0, targetAmount - savedSoFar);
-    const totalSaved =
-        Math.round(
-            (savedSoFar +
-                (goalFundedSpend > 0 && savedSoFar < targetAmount ? 0 : 0)) *
-                100,
-        ) / 100;
+    const balance = Math.max(0, Math.round((totalSaved - goalSpend) * 100) / 100);
 
     const progressPercent =
         targetAmount > 0
-            ? Math.min(100, Math.round((savedSoFar / targetAmount) * 100))
+            ? Math.min(100, Math.round((totalSaved / targetAmount) * 100))
             : 0;
 
     const pacing = calculateGoalPacing(
         targetAmount,
-        savedSoFar,
+        totalSaved,
         goal.target_date,
         goal.monthly_contribution,
     );
@@ -201,25 +195,25 @@ export function GoalCard({
 
                     <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
                         <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                            Goal-Funded Spend
+                            Goal Spend
                         </span>
                         <span
                             className="text-xs sm:text-sm font-mono-num font-black text-purple-700 dark:text-purple-300 mt-0.5 block truncate"
-                            title={formatSGD(goalFundedSpend)}
+                            title={formatSGD(goalSpend)}
                         >
-                            {formatSGD(goalFundedSpend)}
+                            {formatSGD(goalSpend)}
                         </span>
                     </div>
 
                     <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
                         <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                            Remaining Balance
+                            Balance
                         </span>
                         <span
-                            className="text-xs sm:text-sm font-mono-num font-black text-(--text-muted) mt-0.5 block truncate"
-                            title={formatSGD(remainingBalance)}
+                            className="text-xs sm:text-sm font-mono-num font-black text-(--text-ink) mt-0.5 block truncate"
+                            title={formatSGD(balance)}
                         >
-                            {formatSGD(remainingBalance)}
+                            {formatSGD(balance)}
                         </span>
                     </div>
                 </div>
@@ -300,7 +294,7 @@ export function GoalCard({
                                 </span>
                             </span>
                             <span className="flex items-center gap-1 text-[11px] text-purple-600 dark:text-purple-400 font-mono">
-                                <span>{formatSGD(goalFundedSpend)}</span>
+                                <span>{formatSGD(goalSpend)}</span>
                                 {showExpenses ? (
                                     <ChevronUp className="h-3.5 w-3.5" />
                                 ) : (

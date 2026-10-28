@@ -107,7 +107,7 @@ export function AnimatedModal({
             }}
             className={`fixed inset-0 z-50 flex overflow-hidden ${
                 isDrawerOnMobile ? "items-end sm:items-center" : "items-center"
-            } justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-200 ${
+            } justify-center p-0 sm:p-4 bg-black/60 transition-opacity duration-200 ${
                 isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
         >

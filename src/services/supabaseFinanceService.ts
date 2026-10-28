@@ -940,19 +940,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
     if (error) throw error;
 
-    // Adjust linked goal if goal_id is present
-    if (input.goal_id && isValidUuid(input.goal_id)) {
-      try {
-        const { data: goal } = await client.from('savings_goals').select('saved_so_far').eq('id', input.goal_id).single();
-        if (goal) {
-          const newSaved = Math.max(0, Math.round(((goal.saved_so_far || 0) - input.amount) * 100) / 100);
-          await client.from('savings_goals').update({ saved_so_far: newSaved }).eq('id', input.goal_id);
-        }
-      } catch (goalErr) {
-        console.warn('Failed to adjust goal balance on addExpense:', goalErr);
-      }
-    }
-
     // Auto-record daily checkin
     try {
       await this.recordDailyCheckin(resolvedPayerId, input.date, 'expense');
@@ -986,38 +973,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async updateExpense(id: string, updates: UpdateExpenseInput): Promise<Expense> {
     const client = getClient();
-    const { data: existing, error: fetchErr } = await client.from('expenses').select('*').eq('id', id).single();
-    if (fetchErr) throw fetchErr;
-
-    // Handle goal balance adjustments
-    const oldGoalId = existing.goal_id;
-    const oldAmount = Number(existing.amount);
-    const newGoalId = updates.goal_id !== undefined ? updates.goal_id : oldGoalId;
-    const newAmount = updates.amount !== undefined ? updates.amount : oldAmount;
-
-    if (oldGoalId && oldGoalId !== newGoalId && isValidUuid(oldGoalId)) {
-      try {
-        const { data: g } = await client.from('savings_goals').select('saved_so_far').eq('id', oldGoalId).single();
-        if (g) {
-          await client.from('savings_goals').update({ saved_so_far: Math.round(((g.saved_so_far || 0) + oldAmount) * 100) / 100 }).eq('id', oldGoalId);
-        }
-      } catch (err) {
-        console.warn('Failed to restore goal balance:', err);
-      }
-    }
-
-    if (newGoalId && isValidUuid(newGoalId)) {
-      try {
-        const { data: g } = await client.from('savings_goals').select('saved_so_far').eq('id', newGoalId).single();
-        if (g) {
-          const diff = (oldGoalId === newGoalId) ? (newAmount - oldAmount) : newAmount;
-          await client.from('savings_goals').update({ saved_so_far: Math.max(0, Math.round(((g.saved_so_far || 0) - diff) * 100) / 100) }).eq('id', newGoalId);
-        }
-      } catch (err) {
-        console.warn('Failed to adjust new goal balance:', err);
-      }
-    }
-
     const { data, error } = await client.from('expenses').update(updates).eq('id', id).select().single();
     if (error) throw error;
     return data as Expense;
@@ -1034,17 +989,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async deleteExpense(id: string): Promise<void> {
     const client = getClient();
-    try {
-      const { data: exp } = await client.from('expenses').select('goal_id, amount').eq('id', id).single();
-      if (exp?.goal_id && isValidUuid(exp.goal_id)) {
-        const { data: g } = await client.from('savings_goals').select('saved_so_far').eq('id', exp.goal_id).single();
-        if (g) {
-          await client.from('savings_goals').update({ saved_so_far: Math.round(((g.saved_so_far || 0) + Number(exp.amount)) * 100) / 100 }).eq('id', exp.goal_id);
-        }
-      }
-    } catch {
-      // ignore
-    }
     const { error } = await client.from('expenses').delete().eq('id', id);
     if (error) throw error;
   }

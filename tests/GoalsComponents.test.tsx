@@ -59,7 +59,7 @@ const sampleBehindGoal: SavingsGoal = {
 };
 
 describe('GoalCard Component', () => {
-  it('renders emoji, title, target amount, saved so far, and remaining amount', () => {
+  it('renders emoji, title, target amount, total saved, and balance', () => {
     render(<GoalCard goal={sampleOnTrackGoal} />);
 
     // Emoji & Title
@@ -68,10 +68,38 @@ describe('GoalCard Component', () => {
 
     // Target amount
     expect(screen.getByText(formatSGD(190000.0))).toBeInTheDocument();
-    // Saved so far
+    // Total Saved & Balance (when goal spend is 0, balance = total saved)
+    const matchingAmounts = screen.getAllByText(formatSGD(100000.0));
+    expect(matchingAmounts).toHaveLength(2);
+  });
+
+  it('calculates balance as total saved minus goal spend without deducting milestone progress', () => {
+    const mockExpense = {
+      id: 'exp-goal-1',
+      household_id: 'hh-1',
+      payer_id: 'user-1',
+      category_id: null,
+      date: '2026-10-15',
+      item: 'Renovation deposit',
+      amount: 15000.0,
+      is_shared: true,
+      split_ratio: 0.5,
+      settled: false,
+      goal_id: sampleOnTrackGoal.id,
+    };
+
+    render(<GoalCard goal={sampleOnTrackGoal} linkedExpenses={[mockExpense]} />);
+
+    // Target amount: 190,000
+    expect(screen.getByText(formatSGD(190000.0))).toBeInTheDocument();
+    // Total saved remains 100,000
     expect(screen.getByText(formatSGD(100000.0))).toBeInTheDocument();
-    // Remaining amount: 190,000 - 100,000 = 90,000
-    expect(screen.getByText(formatSGD(90000.0))).toBeInTheDocument();
+    // Goal spend: 15,000 (appears in highlight card and linked expenses list)
+    expect(screen.getAllByText(formatSGD(15000.0)).length).toBeGreaterThan(0);
+    // Balance: 100,000 - 15,000 = 85,000
+    expect(screen.getByText(formatSGD(85000.0))).toBeInTheDocument();
+    // Milestone progress remains 100,000 / 190,000 = 53%
+    expect(screen.getByText('53%')).toBeInTheDocument();
   });
 
   it('renders accessible progress bar with calculated percentage', () => {

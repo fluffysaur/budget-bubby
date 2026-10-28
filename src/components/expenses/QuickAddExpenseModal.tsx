@@ -183,6 +183,8 @@ export function QuickAddExpenseModal({
     // Goals State
     const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(propGoals || []);
     const [selectedGoalId, setSelectedGoalId] = useState<string>("");
+    const [isGoalSpend, setIsGoalSpend] = useState<boolean>(false);
+    const [showMoreGoals, setShowMoreGoals] = useState<boolean>(false);
 
     // Accordion State
     const [showMoreOptions, setShowMoreOptions] = useState<boolean>(false);
@@ -228,6 +230,8 @@ export function QuickAddExpenseModal({
             setTags([]);
             setNewTagInput("");
             setSelectedGoalId("");
+            setIsGoalSpend(false);
+            setShowMoreGoals(false);
             setShowMoreOptions(false);
             setRecentTagsList(getStoredRecentTags());
             setErrorMessage(null);
@@ -313,8 +317,7 @@ export function QuickAddExpenseModal({
     // Count active items in the "More options" accordion
     const moreOptionsActiveCount =
         (remarks.trim() ? 1 : 0) +
-        (tags.length > 0 ? 1 : 0) +
-        (selectedGoalId ? 1 : 0);
+        (tags.length > 0 ? 1 : 0);
 
     // Auto-expand accordion if any nested fields have active values
     const isAccordionExpanded = showMoreOptions || moreOptionsActiveCount > 0;
@@ -346,6 +349,11 @@ export function QuickAddExpenseModal({
             return;
         }
 
+        if (isGoalSpend && !selectedGoalId) {
+            setErrorMessage("Please select which savings goal funds this expense");
+            return;
+        }
+
         try {
             setIsSubmitting(true);
 
@@ -354,7 +362,7 @@ export function QuickAddExpenseModal({
 
             const input: CreateExpenseInput = {
                 payer_id: payerId,
-                category_id: categoryId || null,
+                category_id: isGoalSpend ? null : (categoryId || null),
                 date: date || todayStr,
                 item: item.trim(),
                 amount: finalAmountInSGD,
@@ -362,7 +370,7 @@ export function QuickAddExpenseModal({
                 is_shared: isShared,
                 split_ratio: isShared ? 0.5 : 0.0,
                 tags: tags.length > 0 ? tags : undefined,
-                goal_id: selectedGoalId || null,
+                goal_id: isGoalSpend ? (selectedGoalId || null) : null,
                 original_amount: currencyCode !== "SGD" ? amount : null,
                 original_currency: currencyCode,
                 exchange_rate: currencyCode !== "SGD" ? finalExchangeRate : 1,
@@ -477,49 +485,179 @@ export function QuickAddExpenseModal({
                         )}
                     </div>
 
-                    {/* Category Chips */}
+                    {/* Goal Spend Full-Width Toggle Card */}
+                    {activeGoals.length > 0 && (
+                        <div
+                            onClick={() => {
+                                const next = !isGoalSpend;
+                                setIsGoalSpend(next);
+                                if (next && !selectedGoalId && activeGoals.length > 0) {
+                                    setSelectedGoalId(activeGoals[0].id);
+                                }
+                                if (!next) {
+                                    setSelectedGoalId("");
+                                }
+                            }}
+                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-cute-sm ${
+                                isGoalSpend
+                                    ? "bg-(--pastel-lilac-light) border-(--border-ink)"
+                                    : "bg-(--bg-card) border-(--border-subtle) hover:border-(--border-ink)"
+                            }`}
+                        >
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div
+                                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-(--border-ink) ${
+                                        isGoalSpend
+                                            ? "bg-(--pastel-lilac)"
+                                            : "bg-(--bg-canvas)"
+                                    }`}
+                                >
+                                    <Target
+                                        className={`h-4 w-4 stroke-[2.5] ${
+                                            isGoalSpend
+                                                ? "text-(--text-ink)"
+                                                : "text-(--text-muted)"
+                                        }`}
+                                    />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-xs font-black text-(--text-ink) font-display flex items-center gap-1.5">
+                                        <span>Fund from Savings Goal</span>
+                                        {isGoalSpend && (
+                                            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac) px-1.5 py-0.2 rounded border border-(--border-ink)">
+                                                Active
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-(--text-muted) truncate mt-0.5">
+                                        Excludes from monthly budget caps
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Tactile Sliding Switch Pill */}
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={isGoalSpend}
+                                aria-label="Fund from Savings Goal"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const next = !isGoalSpend;
+                                    setIsGoalSpend(next);
+                                    if (next && !selectedGoalId && activeGoals.length > 0) {
+                                        setSelectedGoalId(activeGoals[0].id);
+                                    }
+                                    if (!next) {
+                                        setSelectedGoalId("");
+                                    }
+                                }}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                    isGoalSpend ? "bg-(--pastel-lilac)" : "bg-slate-200 dark:bg-slate-700"
+                                }`}
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-cute-sm border border-(--border-ink) transition duration-200 ease-in-out ${
+                                        isGoalSpend ? "translate-x-5" : "translate-x-0.5"
+                                    }`}
+                                />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Category or Goal Selection */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                                Category
+                                {isGoalSpend ? "Goal" : "Category"}
                             </span>
-                            {allocationCategories.length > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowMoreCategories((prev) => !prev)}
-                                    className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
-                                >
-                                    {showMoreCategories ? "Spendable only" : `+ More (${allocationCategories.length})`}
-                                </button>
-                            )}
+                            <div>
+                                {isGoalSpend ? (
+                                    activeGoals.length > 4 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowMoreGoals((prev) => !prev)}
+                                            className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
+                                        >
+                                            {showMoreGoals
+                                                ? "Show less"
+                                                : `+ More (${activeGoals.length - 4})`}
+                                        </button>
+                                    )
+                                ) : (
+                                    allocationCategories.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowMoreCategories((prev) => !prev)}
+                                            className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
+                                        >
+                                            {showMoreCategories
+                                                ? "Spendable only"
+                                                : `+ More (${allocationCategories.length})`}
+                                        </button>
+                                    )
+                                )}
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-1.5" aria-label="Category Selection">
-                            {visibleCategories.map((cat) => {
-                                const isSelected = categoryId === cat.id;
-                                return (
-                                    <button
-                                        key={cat.id}
-                                        type="button"
-                                        aria-pressed={isSelected}
-                                        onClick={() => {
-                                            setCategoryId(cat.id);
-                                            setCategoryManuallySelected(true);
-                                        }}
-                                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
-                                            isSelected
-                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
-                                                : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
-                                        }`}
-                                    >
-                                        <span
-                                            className="h-2 w-2 rounded-full border border-black/20"
-                                            style={{ backgroundColor: cat.color || "#dfc2ff" }}
-                                        />
-                                        <span>{cat.name}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
+
+                        {isGoalSpend ? (
+                            <div className="flex flex-wrap gap-1.5" aria-label="Goal Selection">
+                                {activeGoals.length === 0 ? (
+                                    <p className="text-xs text-(--text-muted) py-1">No active savings goals found.</p>
+                                ) : (
+                                    (showMoreGoals ? activeGoals : activeGoals.slice(0, 4)).map((g) => {
+                                        const isSelected = selectedGoalId === g.id;
+                                        return (
+                                            <button
+                                                key={g.id}
+                                                type="button"
+                                                aria-pressed={isSelected}
+                                                onClick={() => setSelectedGoalId(g.id)}
+                                                className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
+                                                    isSelected
+                                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
+                                                        : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
+                                                }`}
+                                            >
+                                                <span role="img" aria-label={g.title} className="text-xs shrink-0">
+                                                    {g.emoji || "🎯"}
+                                                </span>
+                                                <span>{g.title}</span>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex flex-wrap gap-1.5" aria-label="Category Selection">
+                                {visibleCategories.map((cat) => {
+                                    const isSelected = categoryId === cat.id;
+                                    return (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            aria-pressed={isSelected}
+                                            onClick={() => {
+                                                setCategoryId(cat.id);
+                                                setCategoryManuallySelected(true);
+                                            }}
+                                            className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
+                                                isSelected
+                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
+                                                    : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
+                                            }`}
+                                        >
+                                            <span
+                                                className="h-2 w-2 rounded-full border border-black/20"
+                                                style={{ backgroundColor: cat.color || "#dfc2ff" }}
+                                            />
+                                            <span>{cat.name}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* Clean Item / Description Input (No suggestions bar) */}
@@ -796,35 +934,6 @@ export function QuickAddExpenseModal({
                                     </div>
                                 )}
                             </div>
-
-                            {/* Funded by Goal (Optional) */}
-                            {activeGoals.length > 0 && (
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <Target className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                                        <label
-                                            htmlFor="expense-goal"
-                                            className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)"
-                                        >
-                                            Funded by Goal (Optional)
-                                        </label>
-                                    </div>
-                                    <select
-                                        id="expense-goal"
-                                        aria-label="Funded by Goal"
-                                        value={selectedGoalId}
-                                        onChange={(e) => setSelectedGoalId(e.target.value)}
-                                        className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-xs font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
-                                    >
-                                        <option value="">None (Standard Budget)</option>
-                                        {activeGoals.map((g) => (
-                                            <option key={g.id} value={g.id}>
-                                                {g.emoji || "🎯"} {g.title} (S${g.saved_so_far.toLocaleString("en-SG")} saved)
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </ModalBody>

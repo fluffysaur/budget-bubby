@@ -729,14 +729,6 @@ class MockFinanceServiceImpl implements FinanceService {
       created_at: new Date().toISOString(),
     };
 
-    // If linked to a goal, deduct from goal saved_so_far
-    if (newExpense.goal_id) {
-      const goal = this.state.savingsGoals.find((g) => g.id === newExpense.goal_id);
-      if (goal) {
-        goal.saved_so_far = Math.max(0, Math.round((goal.saved_so_far - newExpense.amount) * 100) / 100);
-      }
-    }
-
     // Auto-record daily check-in
     await this.recordDailyCheckin(newExpense.payer_id, newExpense.date, 'expense');
 
@@ -749,27 +741,6 @@ class MockFinanceServiceImpl implements FinanceService {
     const expense = this.state.expenses.find((e) => e.id === id);
     if (!expense) {
       throw new Error(`Expense with id "${id}" not found`);
-    }
-
-    // Handle goal adjustment if amount or goal_id changed
-    const oldGoalId = expense.goal_id;
-    const oldAmount = expense.amount;
-    const newGoalId = updates.goal_id !== undefined ? updates.goal_id : oldGoalId;
-    const newAmount = updates.amount !== undefined ? updates.amount : oldAmount;
-
-    if (oldGoalId && oldGoalId !== newGoalId) {
-      const prevGoal = this.state.savingsGoals.find((g) => g.id === oldGoalId);
-      if (prevGoal) {
-        prevGoal.saved_so_far = Math.round((prevGoal.saved_so_far + oldAmount) * 100) / 100;
-      }
-    }
-
-    if (newGoalId) {
-      const targetGoal = this.state.savingsGoals.find((g) => g.id === newGoalId);
-      if (targetGoal) {
-        const diff = (oldGoalId === newGoalId) ? (newAmount - oldAmount) : newAmount;
-        targetGoal.saved_so_far = Math.max(0, Math.round((targetGoal.saved_so_far - diff) * 100) / 100);
-      }
     }
 
     Object.assign(expense, updates);
@@ -788,11 +759,8 @@ class MockFinanceServiceImpl implements FinanceService {
 
   public async deleteExpense(id: string): Promise<void> {
     const expense = this.state.expenses.find((e) => e.id === id);
-    if (expense && expense.goal_id) {
-      const goal = this.state.savingsGoals.find((g) => g.id === expense.goal_id);
-      if (goal) {
-        goal.saved_so_far = Math.round((goal.saved_so_far + expense.amount) * 100) / 100;
-      }
+    if (!expense) {
+      return;
     }
     this.state.expenses = this.state.expenses.filter((e) => e.id !== id);
     this.persist();

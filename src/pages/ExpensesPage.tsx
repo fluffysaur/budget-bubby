@@ -37,7 +37,7 @@ import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
 import { SpendTagsOverviewCard } from '../components/expenses/SpendTagsOverviewCard';
-import type { Expense, ExpenseFilter, RecurringPolicy, Category } from '../types/finance';
+import type { Expense, ExpenseFilter, RecurringPolicy, Category, SavingsGoal } from '../types/finance';
 
 export interface ExpensesPageProps {
   className?: string;
@@ -67,6 +67,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
@@ -85,15 +86,17 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const loadExpenses = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [data, fullData, policiesData, categoriesData] = await Promise.all([
+      const [data, fullData, policiesData, categoriesData, goalsData] = await Promise.all([
         financeService.getExpenses(filter),
         financeService.getExpenses(),
         financeService.getPolicies(),
         financeService.getCategories(),
+        financeService.getGoals(),
       ]);
       setExpenses(data || []);
       setAllExpenses(fullData || data || []);
       setPolicies(policiesData || []);
+      setGoals(goalsData || []);
       if (categoriesData && categoriesData.length > 0) {
         setCategories(categoriesData);
       }
@@ -323,6 +326,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         expenses={expenses}
         categories={categories}
         members={members}
+        goals={goals}
         onDeleteExpense={handleDeleteExpense}
         onExpenseSaved={handleExpenseAdded}
         isLoading={isLoading}
@@ -386,6 +390,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
         defaultPayerId={filter.payerId}
         categories={categories}
         members={members}
+        goals={goals}
       />
     </div>
   );

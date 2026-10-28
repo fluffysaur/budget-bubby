@@ -182,8 +182,8 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
     // 4 Sinking Fund Metric labels
     expect(screen.getByText('Target Amount')).toBeInTheDocument();
     expect(screen.getByText('Total Saved')).toBeInTheDocument();
-    expect(screen.getByText('Goal-Funded Spend')).toBeInTheDocument();
-    expect(screen.getByText('Remaining Balance')).toBeInTheDocument();
+    expect(screen.getByText('Goal Spend')).toBeInTheDocument();
+    expect(screen.getByText('Balance')).toBeInTheDocument();
 
     // Target Amount: 55,000
     expect(screen.getByText(formatSGD(55000.0))).toBeInTheDocument();
@@ -234,12 +234,11 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
       expect(onClose).toHaveBeenCalled();
     });
 
-    // Verify in mockFinanceService that goal balance was drawn down:
-    // Originally 50000.0 in seed data - 2500 = 47500.0
+    // Verify that goal saved_so_far represents total saved and does not deduct milestone progress:
     const goals = await financeService.getGoals();
     const updatedWedding = goals.find((g) => g.id === 'goal-00000000-0501');
     expect(updatedWedding).toBeDefined();
-    expect(updatedWedding?.saved_so_far).toBe(47500.0);
+    expect(updatedWedding?.saved_so_far).toBe(50000.0);
   });
 
   it('excludes goal-funded spend from blowing up normal monthly spendable category caps', async () => {

@@ -429,9 +429,11 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.click(screen.getByRole('button', { name: /\+ tag/i }));
     expect(screen.getByText('#VietnamTrip')).toBeInTheDocument();
 
-    // Link Goal
-    const goalSelect = screen.getByLabelText(/funded by goal/i);
-    fireEvent.change(goalSelect, { target: { value: 'goal-vietnam-trip' } });
+    // Toggle Goal Spend and select goal
+    const goalSpendSwitch = screen.getByRole('switch', { name: /fund from savings goal/i });
+    fireEvent.click(goalSpendSwitch);
+    const goalChip = screen.getByRole('button', { name: /vietnam trip/i });
+    fireEvent.click(goalChip);
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /add expense/i }));
@@ -488,6 +490,91 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     // 4. Click a recent tag -> attaches it to tags list
     fireEvent.click(screen.getByRole('button', { name: /add tag dinner/i }));
     expect(screen.getByText('#Dinner')).toBeInTheDocument();
+  });
+
+  it('renders dedicated "Fund from Savings Goal" toggle row and shows "+ More" button when > 4 goals', async () => {
+    const manyGoals = [
+      ...sampleGoals,
+      {
+        id: 'goal-3',
+        household_id: 'hh-1',
+        title: 'Emergency Fund',
+        target_amount: 20000,
+        saved_so_far: 15000,
+        target_date: '2027-12-01',
+        monthly_contribution: 500,
+        emoji: '🛡️',
+        status: 'on_track' as const,
+      },
+      {
+        id: 'goal-4',
+        household_id: 'hh-1',
+        title: 'New Car',
+        target_amount: 40000,
+        saved_so_far: 10000,
+        target_date: '2028-01-01',
+        monthly_contribution: 800,
+        emoji: '🚗',
+        status: 'on_track' as const,
+      },
+      {
+        id: 'goal-5',
+        household_id: 'hh-1',
+        title: 'Baby Fund',
+        target_amount: 30000,
+        saved_so_far: 5000,
+        target_date: '2028-06-01',
+        monthly_contribution: 600,
+        emoji: '👶',
+        status: 'on_track' as const,
+      },
+      {
+        id: 'goal-6',
+        household_id: 'hh-1',
+        title: 'Tech Upgrade',
+        target_amount: 5000,
+        saved_so_far: 2000,
+        target_date: '2027-03-01',
+        monthly_contribution: 300,
+        emoji: '💻',
+        status: 'on_track' as const,
+      },
+    ];
+
+    await act(async () => {
+      render(
+        <HouseholdProvider>
+          <QuickAddExpenseModal
+            isOpen={true}
+            onClose={vi.fn()}
+            categories={mockCategories}
+            members={mockMembers}
+            goals={manyGoals}
+          />
+        </HouseholdProvider>
+      );
+    });
+
+    // 1. Initial state: Category is visible, toggle row is present
+    expect(screen.getByText('Fund from Savings Goal')).toBeInTheDocument();
+    expect(screen.getByText('Excludes from monthly budget caps')).toBeInTheDocument();
+    expect(screen.getByText('Category')).toBeInTheDocument();
+
+    // 2. Toggle ON
+    const switchEl = screen.getByRole('switch', { name: /fund from savings goal/i });
+    expect(switchEl).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(switchEl);
+    expect(switchEl).toHaveAttribute('aria-checked', 'true');
+
+    // 3. Header swaps to "Goal" and shows "+ More (1)" button (5 goals total - 4 visible)
+    expect(screen.getByText('Goal')).toBeInTheDocument();
+    const moreBtn = screen.getByRole('button', { name: /\+ more \(1\)/i });
+    expect(moreBtn).toBeInTheDocument();
+
+    // 4. Click "+ More" -> expands to all 6 goals, button becomes "Show less"
+    fireEvent.click(moreBtn);
+    expect(screen.getByRole('button', { name: /tech upgrade/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /show less/i })).toBeInTheDocument();
   });
 
   it('dispatches window expenseAdded event upon successful expense submission', async () => {

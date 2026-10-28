@@ -412,6 +412,44 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
       expect(screen.getAllByText('M - Mango Juice').length).toBeGreaterThan(0);
     });
 
+    it('renders a distinct Goal badge with emoji and title in place of category for goal-funded spend', () => {
+      const goalExpense: Expense = {
+        ...testExpense,
+        id: 'exp-goal-test',
+        item: 'Wedding Rings',
+        amount: 2500.0,
+        goal_id: 'goal-wedding-1',
+        category_id: null,
+      };
+
+      const mockGoals = [
+        {
+          id: 'goal-wedding-1',
+          household_id: 'hh-1',
+          title: 'Wedding Fund',
+          target_amount: 30000,
+          saved_so_far: 20000,
+          target_date: '2027-06-01',
+          monthly_contribution: 500,
+          emoji: '💍',
+          status: 'on_track' as const,
+        },
+      ];
+
+      render(
+        <ExpenseListTable
+          expenses={[goalExpense]}
+          categories={mockCategories}
+          members={mockMembers}
+          goals={mockGoals}
+        />
+      );
+
+      expect(screen.getByText('Wedding Rings')).toBeInTheDocument();
+      expect(screen.getByText('Wedding Fund')).toBeInTheDocument();
+      expect(screen.getByText('💍')).toBeInTheDocument();
+    });
+
     it('sorts columns by Date and Amount on header click', () => {
       const onSortMock = vi.fn();
       render(

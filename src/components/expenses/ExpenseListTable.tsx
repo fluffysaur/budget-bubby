@@ -11,7 +11,7 @@
  * - Responsive card layout on mobile so ledger never overflows or clips
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Trash2,
   Pencil,
@@ -33,10 +33,12 @@ import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
 import { LoadingCard } from '../ui/LoadingCard';
 import { EmptyStateCard } from '../ui/EmptyStateCard';
+import { financeService } from '../../services/financeService';
 import type {
   Expense,
   Category,
   HouseholdMember,
+  SavingsGoal,
   ExpenseSortField,
   SortDirection,
 } from '../../types/finance';
@@ -45,6 +47,7 @@ export interface ExpenseListTableProps {
   expenses: Expense[];
   categories?: Category[];
   members?: HouseholdMember[];
+  goals?: SavingsGoal[];
   onDeleteExpense?: (id: string) => Promise<void> | void;
   onEditExpense?: (expense: Expense) => void;
   onExpenseSaved?: (expense: Expense) => void;
@@ -62,6 +65,7 @@ export function ExpenseListTable({
   expenses,
   categories = mockCategories,
   members = mockMembers,
+  goals: propGoals,
   onDeleteExpense,
   onEditExpense,
   onExpenseSaved,
@@ -74,6 +78,27 @@ export function ExpenseListTable({
   onPageChange,
   onPageSizeChange,
 }: ExpenseListTableProps) {
+  // Goals for Goal Spend badges
+  const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(propGoals || []);
+
+  useEffect(() => {
+    if (propGoals && propGoals.length > 0) {
+      setInternalGoals(propGoals);
+      return;
+    }
+    let isMounted = true;
+    financeService
+      .getGoals()
+      .then((res) => {
+        if (isMounted && res) {
+          setInternalGoals(res);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [propGoals]);
   // Internal sort state (fallback if uncontrolled)
   const [internalSortBy, setInternalSortBy] = useState<ExpenseSortField | null>(propSortBy || null);
   const [internalSortOrder, setInternalSortOrder] = useState<SortDirection>(propSortOrder || 'desc');
@@ -126,14 +151,19 @@ export function ExpenseListTable({
     }
   };
 
-  const getCategory = (catId?: string | null): Category | undefined => {
+  const getCategory = useCallback((catId?: string | null): Category | undefined => {
     if (!catId) return undefined;
     return categories.find((c) => c.id === catId);
-  };
+  }, [categories]);
 
-  const getMember = (memberId: string): HouseholdMember | undefined => {
+  const getGoal = useCallback((goalId?: string | null): SavingsGoal | undefined => {
+    if (!goalId) return undefined;
+    return internalGoals.find((g) => g.id === goalId);
+  }, [internalGoals]);
+
+  const getMember = useCallback((memberId: string): HouseholdMember | undefined => {
     return members.find((m) => m.id === memberId);
-  };
+  }, [members]);
 
   // Sort expenses (preserves input order by default unless sort is active)
   const sortedExpenses = useMemo(() => {
@@ -146,18 +176,22 @@ export function ExpenseListTable({
       } else if (activeSortBy === 'amount') {
         comparison = a.amount - b.amount;
       } else if (activeSortBy === 'category') {
-        const catA = categories.find((c) => c.id === a.category_id)?.name || '';
-        const catB = categories.find((c) => c.id === b.category_id)?.name || '';
+        const catA = a.goal_id
+          ? (getGoal(a.goal_id)?.title || 'Goal')
+          : (getCategory(a.category_id)?.name || '');
+        const catB = b.goal_id
+          ? (getGoal(b.goal_id)?.title || 'Goal')
+          : (getCategory(b.category_id)?.name || '');
         comparison = catA.localeCompare(catB);
       } else if (activeSortBy === 'payer') {
-        const payerA = members.find((m) => m.id === a.payer_id)?.display_name || a.payer_id;
-        const payerB = members.find((m) => m.id === b.payer_id)?.display_name || b.payer_id;
+        const payerA = getMember(a.payer_id)?.display_name || a.payer_id;
+        const payerB = getMember(b.payer_id)?.display_name || b.payer_id;
         comparison = payerA.localeCompare(payerB);
       }
       return activeSortOrder === 'desc' ? -comparison : comparison;
     });
     return list;
-  }, [expenses, activeSortBy, activeSortOrder, categories, members]);
+  }, [expenses, activeSortBy, activeSortOrder, getCategory, getGoal, getMember]);
 
   // Paginate sorted items
   const totalItems = sortedExpenses.length;
@@ -333,9 +367,26 @@ export function ExpenseListTable({
                       )}
                     </td>
 
-                    {/* Category Badge */}
+                    {/* Category or Goal Badge */}
                     <td className="order-4 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
-                      {category ? (
+                      {expense.goal_id ? (
+                        (() => {
+                          const goal = getGoal(expense.goal_id);
+                          return (
+                            <span
+                              className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-cute-sm"
+                              title={goal ? `Goal Spend: ${goal.title}` : 'Goal Spend'}
+                            >
+                              <span role="img" aria-label="Goal" className="text-xs shrink-0">
+                                {goal?.emoji || '🎯'}
+                              </span>
+                              <span className="truncate max-w-28 sm:max-w-36">
+                                {goal?.title || 'Goal Spend'}
+                              </span>
+                            </span>
+                          );
+                        })()
+                      ) : category ? (
                         <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
                           <span
                             className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"

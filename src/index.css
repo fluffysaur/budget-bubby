@@ -243,22 +243,22 @@ body,
 /* Modal and Drawer Animations */
 @keyframes drawerSlideUp {
     from {
-        transform: translateY(100%);
-        opacity: 0.8;
+        transform: translate3d(0, 100%, 0);
+        opacity: 0.9;
     }
     to {
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
         opacity: 1;
     }
 }
 
 @keyframes drawerSlideDown {
     from {
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
         opacity: 1;
     }
     to {
-        transform: translateY(100%);
+        transform: translate3d(0, 100%, 0);
         opacity: 0;
     }
 }
@@ -323,18 +323,26 @@ body,
 @media (max-width: 639.98px) {
     .modal-sheet-enter {
         animation: drawerSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
     .modal-sheet-exit {
         animation: drawerSlideDown 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
 }
 
 @media (min-width: 640px) {
     .modal-sheet-enter {
         animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
     }
     .modal-sheet-exit {
         animation: modalScaleOut 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+        will-change: transform, opacity;
     }
 }
 
@@ -348,10 +356,25 @@ body,
 
 .animate-drawer-in {
     animation: drawerSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .animate-drawer-out {
     animation: drawerSlideDown 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Scrollbar Utility - Hides scrollbars while keeping touch/scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .animate-cha-ching {

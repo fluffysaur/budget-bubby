@@ -63,9 +63,9 @@ export function CentsFirstAmountInput({
   const internalInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sync state synchronously if value prop changed externally
-  const prevValueRef = useRef(value);
-  if (value !== undefined && value !== prevValueRef.current) {
-    prevValueRef.current = value;
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== undefined && value !== prevValue) {
+    setPrevValue(value);
     const targetUnits = isZeroDecimal ? Math.round(value) : Math.round(value * 100);
     if (targetUnits !== internalUnits) {
       setInternalUnits(targetUnits);
@@ -86,8 +86,8 @@ export function CentsFirstAmountInput({
       internalInputRef.current = el;
       if (typeof inputRef === 'function') {
         inputRef(el);
-      } else if (inputRef && 'current' in inputRef) {
-        (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+      } else if (inputRef) {
+        Object.assign(inputRef, { current: el });
       }
     },
     [inputRef]
@@ -197,9 +197,23 @@ export function CentsFirstAmountInput({
   };
 
   useEffect(() => {
-    if (autoFocus && internalInputRef.current) {
-      internalInputRef.current.focus();
+    if (!autoFocus) return;
+
+    // Detect if device primarily uses touch / coarse pointer to prevent mobile keyboard pop-in jitter
+    const isTouchDevice =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
+
+    if (isTouchDevice) {
+      return;
     }
+
+    // Delay focus until drawer slide-up animation completes smoothly
+    const timer = setTimeout(() => {
+      internalInputRef.current?.focus();
+    }, 240);
+
+    return () => clearTimeout(timer);
   }, [autoFocus]);
 
   const computedAriaLabel =
@@ -222,7 +236,6 @@ export function CentsFirstAmountInput({
           name={name}
           type="text"
           inputMode="numeric"
-          autoFocus={autoFocus}
           disabled={disabled}
           aria-label={computedAriaLabel}
           value={formattedDisplay}

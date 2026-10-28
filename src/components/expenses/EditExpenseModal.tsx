@@ -163,7 +163,7 @@ export function EditExpenseModal({
 
             const updates: UpdateExpenseInput = {
                 payer_id: payerId,
-                category_id: categoryId || null,
+                category_id: goalId ? null : (categoryId || null),
                 date,
                 item: item.trim(),
                 amount: amountInSGD,

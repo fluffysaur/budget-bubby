@@ -146,7 +146,9 @@ export function clearPendingMutations(): void {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       window.localStorage.removeItem(OFFLINE_OUTBOX_STORAGE_KEY);
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
   notifySyncStatusChanged(false, 0);
 }

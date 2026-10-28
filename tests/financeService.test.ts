@@ -303,10 +303,10 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       expect(created.goal_id).toBe(targetGoal.id);
       expect(created.original_currency).toBe('VND');
 
-      // Verify goal balance was drawn down
+      // Verify goal saved_so_far represents total saved and does not deduct milestone progress
       const updatedGoals = await financeService.getGoals();
       const updatedTargetGoal = updatedGoals.find((g) => g.id === targetGoal.id);
-      expect(updatedTargetGoal?.saved_so_far).toBe(Math.max(0, initialSaved - 15.5));
+      expect(updatedTargetGoal?.saved_so_far).toBe(initialSaved);
     });
 
     it('filters expenses by tag and goalId', async () => {
