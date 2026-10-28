@@ -489,6 +489,56 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.click(screen.getByRole('button', { name: /add tag dinner/i }));
     expect(screen.getByText('#Dinner')).toBeInTheDocument();
   });
+
+  it('dispatches window expenseAdded event upon successful expense submission', async () => {
+    const mockExpense = {
+      id: 'exp-event-sub-1',
+      household_id: 'hh-00000000-0001',
+      payer_id: 'mem-00000000-0011',
+      category_id: 'cat-00000000-0101',
+      date: '2026-09-15',
+      item: 'Kaya Toast Set',
+      amount: 5.8,
+      remarks: null,
+      is_shared: true,
+      split_ratio: 0.5,
+      settled: false,
+    };
+    vi.spyOn(financeService, 'addExpense').mockResolvedValueOnce(mockExpense);
+
+    const eventListener = vi.fn();
+    window.addEventListener('expenseAdded', eventListener);
+
+    await act(async () => {
+      render(
+        <HouseholdProvider>
+          <QuickAddExpenseModal
+            isOpen={true}
+            onClose={vi.fn()}
+            categories={mockCategories}
+            members={mockMembers}
+          />
+        </HouseholdProvider>
+      );
+    });
+
+    fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: '5.80' } });
+    fireEvent.change(screen.getByLabelText(/item|description/i), {
+      target: { value: 'Kaya Toast Set' },
+    });
+
+    const submitBtn = screen.getByRole('button', { name: /add expense/i });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    await waitFor(() => {
+      expect(eventListener).toHaveBeenCalledTimes(1);
+    });
+    expect((eventListener.mock.calls[0][0] as CustomEvent).detail).toEqual(mockExpense);
+
+    window.removeEventListener('expenseAdded', eventListener);
+  });
 });
 
 describe('ExpenseSuccessCelebration Toast & Audio', () => {
@@ -523,5 +573,34 @@ describe('ExpenseSuccessCelebration Toast & Audio', () => {
     // Verify mobile overflow constraint
     const toast = screen.getByRole('status');
     expect(toast.className).toContain('max-w-[calc(100vw-2rem)]');
+  });
+
+  it('triggers celebration toast from window expenseAdded event and dismisses on click', () => {
+    const playSpy = vi.spyOn(soundEffects, 'playChaChingSound').mockImplementation(() => {});
+
+    render(<ExpenseSuccessCelebration />);
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('expenseAdded', {
+          detail: {
+            id: 'exp-event-1',
+            item: 'Bubble Tea',
+            amount: 6.5,
+          },
+        })
+      );
+    });
+
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('Bubble Tea')).toBeInTheDocument();
+    expect(screen.getByText('S$6.50')).toBeInTheDocument();
+    expect(playSpy).toHaveBeenCalledTimes(1);
+
+    // Clicking toast dismisses it immediately
+    fireEvent.click(screen.getByRole('status'));
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

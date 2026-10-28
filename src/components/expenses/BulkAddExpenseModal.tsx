@@ -27,7 +27,6 @@ import {
 } from '../../lib/currencyConverter';
 import { formatSGD } from '../../lib/currency';
 import { getTodayDateString } from '../../lib/dateUtils';
-import { playChaChingSound } from '../../lib/soundEffects';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import type { Expense, Category, HouseholdMember, CreateExpenseInput } from '../../types/finance';
 
@@ -308,7 +307,18 @@ export function BulkAddExpenseModal({
       });
 
       const created = await financeService.bulkAddExpenses(expenseInputs);
-      playChaChingSound();
+      if (typeof window !== 'undefined' && created.length > 0) {
+        const totalAmount = created.reduce((sum, e) => sum + e.amount, 0);
+        window.dispatchEvent(
+          new CustomEvent('expenseAdded', {
+            detail: {
+              ...created[0],
+              item: created.length === 1 ? created[0].item : `${created.length} expenses logged`,
+              amount: totalAmount,
+            },
+          })
+        );
+      }
       onExpensesAdded?.(created);
       onClose();
     } catch (err) {

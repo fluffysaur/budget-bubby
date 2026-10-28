@@ -375,6 +375,13 @@ export function QuickAddExpenseModal({
                 storeRecentTags(tags);
             }
 
+            // Dispatch global event for celebration toast, sound & category alerts
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("expenseAdded", { detail: created }),
+                );
+            }
+
             onExpenseAdded?.(created);
             onClose();
         } catch (err: unknown) {

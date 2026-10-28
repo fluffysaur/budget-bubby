@@ -106,7 +106,12 @@ export function SpendFromGoalModal({
                 goal_id: goal.id,
             };
 
-            await financeService.addExpense(input);
+            const created = await financeService.addExpense(input);
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("expenseAdded", { detail: created }),
+                );
+            }
             onSpendSaved?.();
             onClose();
         } catch (err: unknown) {
