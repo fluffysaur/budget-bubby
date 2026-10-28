@@ -5,192 +5,236 @@ export interface BubbyIconProps {
 }
 
 /**
- * Budget Bubby Penguin Mascot Vector Icon (framed for in-app badges & headers)
+ * Budget Bubby Penguin Mascot Vector Icon (Waving ^ ^ Cheerful Peeking Portrait)
  */
-export const BubbyIcon: React.FC<BubbyIconProps> = ({ className = "h-7 w-7" }) => {
+export const BubbyIcon: React.FC<BubbyIconProps> = ({
+    className = "h-7 w-7",
+}) => {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="95 68 322 368"
+            viewBox="36 64 436 448"
             className={className}
             aria-hidden="true"
         >
-            {/* Subtle Flat Ground Shadow */}
-            <ellipse cx="256" cy="428" rx="120" ry="10" fill="#c7a2f5" />
+            {/* Cute Rounded Head Feather Tuft */}
+            <path
+                d="M 254 114
+                   C 242 84, 216 76, 214 92
+                   C 212 104, 230 114, 244 120
+                   Z"
+                fill="#2b333c"
+                stroke="#141414"
+                strokeWidth="11"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M 258 114
+                   C 268 78, 300 72, 300 90
+                   C 300 104, 282 114, 266 120
+                   Z"
+                fill="#2b333c"
+                stroke="#141414"
+                strokeWidth="11"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
 
-            {/* Left & Right Feet */}
+            {/* Resting Right Flipper */}
+            <path
+                d="M 386 334
+                   C 432 362, 464 406, 452 430
+                   C 442 450, 408 438, 384 416
+                   Z"
+                fill="#2b333c"
+                stroke="#141414"
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            {/* Penguin Main Round Chubby Head & Torso Silhouette (Peeking from bottom) */}
+            <path
+                d="M 106 520
+                   C 104 436, 118 368, 128 316
+                   C 134 282, 130 242, 144 198
+                   C 164 134, 206 112, 260 112
+                   C 314 112, 356 134, 376 198
+                   C 390 242, 386 282, 392 316
+                   C 402 368, 416 436, 414 520
+                   Z"
+                fill="#2b333c"
+                stroke="#141414"
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+
+            {/* Glossy Forehead Highlight */}
             <ellipse
-                cx="198"
-                cy="418"
-                rx="30"
-                ry="14"
-                fill="#f59e42"
-                stroke="#141414"
-                strokeWidth="8"
-                transform="rotate(-5 198 418)"
+                cx="190"
+                cy="154"
+                rx="18"
+                ry="8"
+                transform="rotate(-28 190 154)"
+                fill="#ffffff"
+                opacity="0.88"
             />
-            <ellipse
-                cx="314"
-                cy="418"
-                rx="30"
-                ry="14"
-                fill="#f59e42"
-                stroke="#141414"
-                strokeWidth="8"
-                transform="rotate(5 314 418)"
-            />
+            <circle cx="166" cy="174" r="6" fill="#ffffff" opacity="0.88" />
 
-            {/* Cute Head Feather Tuft */}
+            {/* White Face Mask & Connected White Tummy Patch */}
             <path
-                d="M 246 104 C 242 82, 230 74, 226 80 C 234 88, 239 96, 241 104 Z"
-                fill="#2b333c"
-                stroke="#141414"
-                strokeWidth="7.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M 254 104 C 258 78, 272 72, 277 78 C 268 86, 263 95, 261 104 Z"
-                fill="#2b333c"
-                stroke="#141414"
-                strokeWidth="7.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-
-            {/* Penguin Main Body */}
-            <path
-                d="M 256 100
-                   C 188 100, 148 144, 142 208
-                   C 138 248, 122 286, 122 338
-                   C 122 404, 174 422, 256 422
-                   C 338 422, 390 404, 390 338
-                   C 390 286, 374 248, 370 208
-                   C 364 144, 324 100, 256 100 Z"
-                fill="#2b333c"
-                stroke="#141414"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-
-            {/* White Face & Belly Patch */}
-            <path
-                d="M 256 154
-                   C 234 134, 174 138, 172 194
-                   C 170 232, 180 264, 172 310
-                   C 162 364, 198 404, 256 404
-                   C 314 404, 350 364, 340 310
-                   C 332 264, 342 232, 340 194
-                   C 338 138, 278 134, 256 154 Z"
+                d="M 260 258
+                   C 246 190, 160 180, 150 256
+                   C 142 312, 174 342, 168 368
+                   C 158 412, 146 462, 146 520
+                   L 374 520
+                   C 374 462, 362 412, 352 368
+                   C 346 342, 378 312, 370 256
+                   C 360 180, 274 190, 260 258
+                   Z"
                 fill="#ffffff"
                 stroke="#141414"
-                strokeWidth="7.5"
+                strokeWidth="11"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
 
-            {/* Gentle Curved Eyebrows */}
+            {/* Seamless Waving Left Flipper */}
             <path
-                d="M 224 176 Q 232 171 239 175"
-                fill="none"
+                d="M 138 286
+                   C 100 248, 54 216, 50 244
+                   C 46 276, 74 344, 130 378"
+                fill="#2b333c"
                 stroke="#141414"
-                strokeWidth="5.5"
-                strokeLinecap="round"
-            />
-            <path
-                d="M 273 175 Q 280 171 288 176"
-                fill="none"
-                stroke="#141414"
-                strokeWidth="5.5"
-                strokeLinecap="round"
-            />
-
-            {/* Solid Black Oval Dot Eyes */}
-            <ellipse cx="233" cy="190" rx="5" ry="7" fill="#141414" />
-            <ellipse cx="279" cy="190" rx="5" ry="7" fill="#141414" />
-
-            {/* Soft Rosy Blush Cheeks */}
-            <ellipse cx="204" cy="204" rx="14" ry="8" fill="#f7a8c9" opacity="0.8" />
-            <ellipse cx="308" cy="204" rx="14" ry="8" fill="#f7a8c9" opacity="0.8" />
-
-            {/* Cute Small Rounded Beak */}
-            <path
-                d="M 244 200 C 244 195, 268 195, 268 200 C 268 209, 262 215, 256 215 C 250 215, 244 209, 244 200 Z"
-                fill="#f59e42"
-                stroke="#141414"
-                strokeWidth="6.5"
+                strokeWidth="12"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
 
-            {/* Flat Pastel Gold Coin Held Against Tummy */}
+            {/* Happy ^ ^ Squinting Arc Eyes */}
+            <path
+                d="M 176 264 Q 197 236 218 264"
+                fill="none"
+                stroke="#141414"
+                strokeWidth="11.5"
+                strokeLinecap="round"
+            />
+            <path
+                d="M 302 264 Q 323 236 344 264"
+                fill="none"
+                stroke="#141414"
+                strokeWidth="11.5"
+                strokeLinecap="round"
+            />
+
+            {/* Soft Rosy Blush Cheeks with Cute Diagonal Blush Marks */}
             <g>
-                <circle
-                    cx="256"
-                    cy="322"
-                    r="74"
-                    fill="#ffe47a"
-                    stroke="#141414"
-                    strokeWidth="8"
-                />
-                <circle
-                    cx="256"
-                    cy="322"
-                    r="55"
-                    fill="#ffda54"
-                    stroke="#141414"
-                    strokeWidth="5.5"
-                />
-                <path
-                    d="M 268 304 C 268 295, 244 295, 244 306 C 244 316, 268 317, 268 329 C 268 340, 244 340, 244 330"
-                    fill="none"
-                    stroke="#141414"
-                    strokeWidth="7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                <ellipse
+                    cx="176"
+                    cy="296"
+                    rx="23"
+                    ry="12.5"
+                    fill="#f7a8c9"
+                    opacity="0.9"
                 />
                 <line
-                    x1="256"
-                    y1="289"
-                    x2="256"
-                    y2="346"
-                    stroke="#141414"
-                    strokeWidth="7"
+                    x1="167"
+                    y1="300"
+                    x2="172"
+                    y2="292"
+                    stroke="#ec4899"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                />
+                <line
+                    x1="175"
+                    y1="300"
+                    x2="180"
+                    y2="292"
+                    stroke="#ec4899"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                />
+                <line
+                    x1="183"
+                    y1="300"
+                    x2="188"
+                    y2="292"
+                    stroke="#ec4899"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                />
+            </g>
+            <g>
+                <ellipse
+                    cx="344"
+                    cy="296"
+                    rx="23"
+                    ry="12.5"
+                    fill="#f7a8c9"
+                    opacity="0.9"
+                />
+                <line
+                    x1="335"
+                    y1="300"
+                    x2="340"
+                    y2="292"
+                    stroke="#ec4899"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                />
+                <line
+                    x1="343"
+                    y1="300"
+                    x2="348"
+                    y2="292"
+                    stroke="#ec4899"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                />
+                <line
+                    x1="351"
+                    y1="300"
+                    x2="356"
+                    y2="292"
+                    stroke="#ec4899"
+                    strokeWidth="3.5"
                     strokeLinecap="round"
                 />
             </g>
 
-            {/* Seamlessly Attached Left Arm / Flipper */}
+            {/* Cute Diamond-Rounded Open Smiling Beak */}
             <path
-                d="M 136 240 C 118 278, 124 342, 198 342 C 216 342, 218 316, 198 313 C 168 308, 158 284, 160 256 Z"
-                fill="#2b333c"
-                stroke="none"
-            />
-            <path
-                d="M 136 240 C 118 278, 124 342, 198 342 C 216 342, 218 316, 198 313 C 168 308, 158 284, 160 256"
-                fill="none"
+                d="M 224 278
+                   Q 260 254 296 278
+                   Q 290 322 260 326
+                   Q 230 322 224 278 Z"
+                fill="#f59e42"
                 stroke="#141414"
-                strokeWidth="8"
+                strokeWidth="10"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-
-            {/* Seamlessly Attached Right Arm / Flipper */}
             <path
-                d="M 376 240 C 394 278, 388 342, 314 342 C 296 342, 294 316, 314 313 C 344 308, 354 284, 352 256 Z"
-                fill="#2b333c"
-                stroke="none"
-            />
-            <path
-                d="M 376 240 C 394 278, 388 342, 314 342 C 296 342, 294 316, 314 313 C 344 308, 354 284, 352 256"
-                fill="none"
+                d="M 237 285
+                   Q 260 294 283 285
+                   Q 277 314 260 316
+                   Q 243 314 237 285 Z"
+                fill="#9a1b1b"
                 stroke="#141414"
-                strokeWidth="8"
+                strokeWidth="6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+            />
+            <path
+                d="M 246 302
+                   Q 260 295 274 302
+                   Q 269 315 260 316
+                   Q 251 315 246 302 Z"
+                fill="#f472b6"
             />
         </svg>
     );
 };
-

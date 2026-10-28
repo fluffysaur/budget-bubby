@@ -94,8 +94,8 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
         >
             {/* Brand Header */}
             <div className="h-16 flex items-center px-5 border-b-[1.5px] border-(--border-ink) gap-3 bg-(--bg-cream)">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0">
-                    <BubbyIcon className="h-7 w-7" />
+                <div className="flex h-9 w-9 items-end justify-center rounded-xl bg-(--accent-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0 pt-0.5">
+                    <BubbyIcon className="h-8 w-8" />
                 </div>
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5 font-black text-(--text-ink) tracking-tight text-sm font-display">

@@ -228,8 +228,8 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
         >
             <div className="w-full max-w-xs flex flex-col items-center">
                 {/* App Branding & Icon */}
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-[#dfc2ff] border-2 border-(--border-ink) text-[#1a1a1a] mb-4 shadow-(--shadow-cute) overflow-hidden">
-                    <BubbyIcon className="h-13 w-13" />
+                <div className="flex h-16 w-16 items-end justify-center rounded-3xl bg-(--accent-lilac) border-2 border-(--border-ink) text-(--text-ink) mb-4 shadow-(--shadow-cute) overflow-hidden pt-1">
+                    <BubbyIcon className="h-14 w-14" />
                 </div>
 
                 <h1 className="text-2xl font-black tracking-tight text-(--text-ink) mb-1 font-display">

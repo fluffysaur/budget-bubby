@@ -1,113 +1,112 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Background Squircle (Flat Pastel Lilac with Clean Monoline Ink Border) -->
-  <rect x="16" y="16" width="480" height="480" rx="112" fill="#dfc2ff" stroke="#141414" stroke-width="8"/>
+  <defs>
+    <!-- Squircle clip path ensuring Bubby's torso and resting flipper bleed cleanly to the bottom curve -->
+    <clipPath id="squircle-clip">
+      <rect x="16" y="16" width="480" height="480" rx="112" />
+    </clipPath>
+  </defs>
 
-  <!-- Celebratory Doodle Confetti (matching reference artstyle) -->
-  <!-- Top Left Pink Confetti Piece -->
-  <path d="M 108 124 L 126 114 L 132 128 L 114 136 Z" fill="#f7a8c9" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Left Small Purple Dot -->
-  <circle cx="88" cy="174" r="6.5" fill="#b388eb" stroke="#141414" stroke-width="5"/>
-  <!-- Left Ribbon Curl -->
-  <path d="M 78 236 C 84 222, 98 222, 102 232 C 106 242, 118 240, 124 228 L 116 218 C 110 228, 102 228, 98 218 C 92 208, 76 210, 70 226 Z" fill="#f7a8c9" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Background Squircle (Signature Pastel Lilac) -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#dfc2ff" />
 
-  <!-- Top Left-Center Curved Confetti (clear of head tuft) -->
-  <path d="M 164 76 C 174 66, 190 68, 196 76 L 186 86 C 180 80, 172 80, 164 86 Z" fill="#ffe999" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Character Group clipped to the inner squircle area -->
+  <g clip-path="url(#squircle-clip)">
+    <!-- Cute Rounded Head Feather Tuft (Reference 2's soft heart-sprout tuft) -->
+    <path d="M 254 114
+             C 242 84, 216 76, 214 92
+             C 212 104, 230 114, 244 120
+             Z"
+          fill="#2b333c" stroke="#141414" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 258 114
+             C 268 78, 300 72, 300 90
+             C 300 104, 282 114, 266 120
+             Z"
+          fill="#2b333c" stroke="#141414" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Top Right Pink Ribbon Swirl -->
-  <path d="M 366 96 C 378 86, 394 92, 392 106 C 390 118, 404 122, 414 114 L 408 102 C 400 108, 392 104, 394 94 C 396 80, 376 74, 360 86 Z" fill="#f7a8c9" stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Right Small Dot -->
-  <circle cx="422" cy="168" r="6.5" fill="#ffe999" stroke="#141414" stroke-width="5"/>
-  <!-- Right Confetti Piece -->
-  <path d="M 402 216 L 420 208 L 426 222 L 408 228 Z" fill="#f7a8c9" stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Resting Right Flipper (Tucked cute at the side like Reference 2) -->
+    <path d="M 386 334
+             C 432 362, 464 406, 452 430
+             C 442 450, 408 438, 384 416
+             Z"
+          fill="#2b333c" stroke="#141414" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Subtle Flat Ground Shadow -->
-  <ellipse cx="256" cy="434" rx="126" ry="12" fill="#c7a2f5"/>
+    <!-- Penguin Main Round Chubby Head & Torso Silhouette (Peeking from bottom) -->
+    <path d="M 106 520
+             C 104 436, 118 368, 128 316
+             C 134 282, 130 242, 144 198
+             C 164 134, 206 112, 260 112
+             C 314 112, 356 134, 376 198
+             C 390 242, 386 282, 392 316
+             C 402 368, 416 436, 414 520
+             Z"
+          fill="#2b333c" stroke="#141414" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Left Foot -->
-  <ellipse cx="198" cy="422" rx="30" ry="14" fill="#f59e42" stroke="#141414" stroke-width="6.5" transform="rotate(-5 198 422)"/>
-  <!-- Right Foot -->
-  <ellipse cx="314" cy="422" rx="30" ry="14" fill="#f59e42" stroke="#141414" stroke-width="6.5" transform="rotate(5 314 422)"/>
+    <!-- Glossy Forehead Highlight (Cute jelly-bean shine from Reference 1 & 3) -->
+    <ellipse cx="190" cy="154" rx="18" ry="8" transform="rotate(-28 190 154)" fill="#ffffff" opacity="0.88" />
+    <circle cx="166" cy="174" r="6" fill="#ffffff" opacity="0.88" />
 
-  <!-- Cute Head Feather Tuft (behind head border so it joins cleanly) -->
-  <path d="M 246 104 C 242 82, 230 74, 226 80 C 234 88, 239 96, 241 104 Z" fill="#2b333c" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 254 104 C 258 78, 272 72, 277 78 C 268 86, 263 95, 261 104 Z" fill="#2b333c" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- White Face Mask (Deep owl/widow's peak dip into the beak + wide chubby cheeks) -->
+    <!-- Plus Connected White Tummy Patch -->
+    <path d="M 260 258
+             C 246 190, 160 180, 150 256
+             C 142 312, 174 342, 168 368
+             C 158 412, 146 462, 146 520
+             L 374 520
+             C 374 462, 362 412, 352 368
+             C 346 342, 378 312, 370 256
+             C 360 180, 274 190, 260 258
+             Z"
+          fill="#ffffff" stroke="#141414" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- Penguin Main Body (Flat Charcoal-Slate so black ink lines pop cleanly) -->
-  <path d="M 256 100
-           C 188 100, 148 144, 142 208
-           C 138 248, 122 286, 122 338
-           C 122 404, 174 424, 256 424
-           C 338 424, 390 404, 390 338
-           C 390 286, 374 248, 370 208
-           C 364 144, 324 100, 256 100 Z"
-        fill="#2b333c" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Seamless Waving Left Flipper (Cleanly joins flipper to shoulder over the body seam) -->
+    <path d="M 138 286
+             C 100 248, 54 216, 50 244
+             C 46 276, 74 344, 130 378"
+          fill="#2b333c" stroke="#141414" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- White Face & Belly Patch -->
-  <path d="M 256 154
-           C 234 134, 174 138, 172 194
-           C 170 232, 180 264, 172 310
-           C 162 364, 198 406, 256 406
-           C 314 406, 350 364, 340 310
-           C 332 264, 342 232, 340 194
-           C 338 138, 278 134, 256 154 Z"
-        fill="#ffffff" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Happy ^ ^ Squinting Arc Eyes (Well-spaced from the beak so everything breathes cleanly) -->
+    <!-- Left ^ Eye -->
+    <path d="M 176 264 Q 197 236 218 264"
+          fill="none" stroke="#141414" stroke-width="11.5" stroke-linecap="round" />
+    <!-- Right ^ Eye -->
+    <path d="M 302 264 Q 323 236 344 264"
+          fill="none" stroke="#141414" stroke-width="11.5" stroke-linecap="round" />
 
-  <!-- Minimalist Korean Doodle Face (matching reference image) -->
-  <!-- Gentle Curved Eyebrows -->
-  <path d="M 224 176 Q 232 171 239 175" fill="none" stroke="#141414" stroke-width="4.5" stroke-linecap="round"/>
-  <path d="M 273 175 Q 280 171 288 176" fill="none" stroke="#141414" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Soft Rosy Blush Cheeks with Cute Diagonal Blush Marks (from Reference 1 & 3) -->
+    <g>
+      <ellipse cx="176" cy="296" rx="23" ry="12.5" fill="#f7a8c9" opacity="0.9" />
+      <line x1="167" y1="300" x2="172" y2="292" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round" />
+      <line x1="175" y1="300" x2="180" y2="292" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round" />
+      <line x1="183" y1="300" x2="188" y2="292" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+    <g>
+      <ellipse cx="344" cy="296" rx="23" ry="12.5" fill="#f7a8c9" opacity="0.9" />
+      <line x1="335" y1="300" x2="340" y2="292" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round" />
+      <line x1="343" y1="300" x2="348" y2="292" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round" />
+      <line x1="351" y1="300" x2="356" y2="292" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round" />
+    </g>
 
-  <!-- Close-set Solid Black Oval Dot Eyes (no anime sparkles) -->
-  <ellipse cx="233" cy="190" rx="4.5" ry="6.5" fill="#141414"/>
-  <ellipse cx="279" cy="190" rx="4.5" ry="6.5" fill="#141414"/>
-
-  <!-- Soft Rosy Blush Cheeks -->
-  <ellipse cx="204" cy="204" rx="13" ry="7.5" fill="#f7a8c9" opacity="0.75"/>
-  <ellipse cx="308" cy="204" rx="13" ry="7.5" fill="#f7a8c9" opacity="0.75"/>
-
-  <!-- Cute Small Rounded Beak & Smile -->
-  <path d="M 244 200 C 244 195, 268 195, 268 200 C 268 209, 262 215, 256 215 C 250 215, 244 209, 244 200 Z"
-        fill="#f59e42" stroke="#141414" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- Flat Pastel Gold Coin Held Against Tummy -->
-  <g>
-    <!-- Outer Coin Circle -->
-    <circle cx="256" cy="322" r="74" fill="#ffe47a" stroke="#141414" stroke-width="6.5"/>
-    <!-- Inner Coin Ring -->
-    <circle cx="256" cy="322" r="56" fill="#ffda54" stroke="#141414" stroke-width="4.5"/>
-    <!-- Clean Doodle Dollar Sign in Monoline Ink -->
-    <path d="M 268 304 C 268 295, 244 295, 244 306 C 244 316, 268 317, 268 329 C 268 340, 244 340, 244 330"
-          fill="none" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="256" y1="289" x2="256" y2="346" stroke="#141414" stroke-width="6" stroke-linecap="round"/>
+    <!-- Cute Diamond-Rounded Open Smiling Beak (Reference 2 & 3 style) -->
+    <!-- Outer Beak Rim -->
+    <path d="M 224 278
+             Q 260 254 296 278
+             Q 290 322 260 326
+             Q 230 322 224 278 Z"
+          fill="#f59e42" stroke="#141414" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Inner Smile Mouth Cavity -->
+    <path d="M 237 285
+             Q 260 294 283 285
+             Q 277 314 260 316
+             Q 243 314 237 285 Z"
+          fill="#9a1b1b" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Sweet Pink Tongue -->
+    <path d="M 246 302
+             Q 260 295 274 302
+             Q 269 315 260 316
+             Q 251 315 246 302 Z"
+          fill="#f472b6" />
   </g>
 
-  <!-- Seamlessly Attached Left Arm / Flipper -->
-  <!-- 1. Fill shape stays inside the outer body border at shoulder (x=136) so outer black border is never clipped -->
-  <path d="M 136 240
-           C 118 278, 124 342, 198 342
-           C 216 342, 218 316, 198 313
-           C 168 308, 158 284, 160 256
-           Z"
-        fill="#2b333c" stroke="none"/>
-  <!-- 2. Open stroke starting exactly on the outer body contour at (136, 240), wrapping around flipper tip, ending at armpit crease -->
-  <path d="M 136 240
-           C 118 278, 124 342, 198 342
-           C 216 342, 218 316, 198 313
-           C 168 308, 158 284, 160 256"
-        fill="none" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- Seamlessly Attached Right Arm / Flipper -->
-  <!-- 1. Fill shape stays inside the outer body border at shoulder (x=376) -->
-  <path d="M 376 240
-           C 394 278, 388 342, 314 342
-           C 296 342, 294 316, 314 313
-           C 344 308, 354 284, 352 256
-           Z"
-        fill="#2b333c" stroke="none"/>
-  <!-- 2. Open stroke starting exactly on the outer body contour at (376, 240), wrapping around flipper tip, ending at armpit crease -->
-  <path d="M 376 240
-           C 394 278, 388 342, 314 342
-           C 296 342, 294 316, 314 313
-           C 344 308, 354 284, 352 256"
-        fill="none" stroke="#141414" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Crisp Monoline Ink Squircle Border (drawn on top to frame cleanly) -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#141414" stroke-width="12" />
 </svg>
