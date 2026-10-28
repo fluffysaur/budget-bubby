@@ -187,11 +187,11 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
         <>
           {/* High-Level Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {/* Card 1: True Net Worth */}
+            {/* Card 1: Net Worth */}
             <StatCard
-              title="True Net Worth"
+              title="Net Worth"
               value={formatSGD(trueNetWorth)}
-              tooltip="Calculated as Total Assets minus Outstanding Loans."
+              tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
               icon={<TrendingUp className="h-4 w-4 text-white" />}
               iconBg="bg-indigo-600"
               className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"

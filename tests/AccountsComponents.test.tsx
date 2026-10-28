@@ -279,18 +279,20 @@ describe('NetWorthChart', () => {
 
     render(<NetWorthChart data={testData} />);
 
-    expect(screen.getByRole('heading', { name: /net worth progression/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^net worth$/i })).toBeInTheDocument();
+    // Verify calculation tooltip trigger exists
+    expect(screen.getByRole('button', { name: /net worth formula/i })).toBeInTheDocument();
     // Verify legend pills exist
     expect(screen.getAllByText(/total assets/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/liabilities/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/true net worth/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^net worth$/i).length).toBeGreaterThan(0);
   });
 
-  it('calculates True Net Worth using formula True Net Worth = Total Assets - Outstanding Loans when generating from accounts and loans', () => {
+  it('calculates Net Worth using formula Net Worth = Total Assets - Outstanding Loans & Liabilities when generating from accounts and loans', () => {
     // Total assets: 100,000 SGD. Outstanding loan: 500,000 - 50,000 = 450,000 SGD.
     // Net worth = 100,000 - 450,000 = -350,000 SGD.
     render(<NetWorthChart accounts={sampleAccounts} loans={sampleLoans} />);
-    expect(screen.getByRole('heading', { name: /net worth progression/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^net worth$/i })).toBeInTheDocument();
     expect(screen.getByText('-S$350,000.00')).toBeInTheDocument();
   });
 });
@@ -302,7 +304,7 @@ describe('AccountsPage', () => {
     vi.spyOn(financeService, 'getLoans').mockResolvedValue(sampleLoans);
   });
 
-  it('renders True Net Worth, Total Assets, and Total Liabilities metric cards correctly', async () => {
+  it('renders Net Worth, Total Assets, and Total Liabilities metric cards correctly', async () => {
     // Total Assets = 100,000 SGD
     // Total Liabilities = 500,000 - 50,000 = 450,000 SGD
     // True Net Worth = 100,000 - 450,000 = -350,000 SGD

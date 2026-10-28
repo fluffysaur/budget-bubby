@@ -13,6 +13,7 @@ import { TrendingUp } from "lucide-react";
 import type { Account, Loan } from "../../types/finance";
 import { formatSGD } from "../../lib/currency";
 import { getCurrentMonth, addMonths, formatDisplayMonth } from "../../lib/dateUtils";
+import { TooltipPopover } from "../ui/TooltipPopover";
 
 export interface NetWorthDataPoint {
     date: string;
@@ -126,19 +127,23 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                             <TrendingUp className="h-4 w-4" />
                         </div>
                         <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-                            Net Worth Progression
+                            Net Worth
                         </h2>
+                        <TooltipPopover
+                            title="Net Worth Formula"
+                            ariaLabel="Net Worth Formula"
+                            align="left"
+                        >
+                            Net Worth = Total Assets - Outstanding Loans &amp; Liabilities
+                        </TooltipPopover>
                     </div>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        True Net Worth = Total Assets - Outstanding Loans
-                    </p>
                 </div>
 
                 {/* Legend Pills */}
                 <div className="flex items-center flex-wrap gap-2 text-xs font-semibold">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
                         <span className="h-2 w-2 rounded-full bg-indigo-600" />
-                        <span>True Net Worth</span>
+                        <span>Net Worth</span>
                         {latestPoint && <span className="font-bold ml-1">{formatSGD(latestPoint.netWorth)}</span>}
                     </div>
 

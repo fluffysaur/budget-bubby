@@ -1,6 +1,6 @@
 /**
- * Epic 2 Comprehensive Test Suite:
- * Ledger Power Tools, Edit and Delete Modals, Sort, Pagination, Fast Log and Bulk Log
+ * Expense Ledger Tools:
+ * Edit/Delete Modals, Sort, Pagination, Fast Log and Bulk Log
  */
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -51,7 +51,7 @@ const testGoalExpense: Expense = {
   created_at: '2026-10-26T14:00:00Z',
 };
 
-describe('Epic 2: Ledger Power Tools, Fast Log & Bulk Log', () => {
+describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();

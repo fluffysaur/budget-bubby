@@ -27,7 +27,7 @@ vi.mock('recharts', async (importOriginal) => {
   };
 });
 
-describe('Epic 6: Offline-First Sync Queue & Fast Lazy Loading', () => {
+describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
   beforeEach(() => {
     localStorage.clear();
     clearPendingMutations();

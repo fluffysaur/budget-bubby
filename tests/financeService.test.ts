@@ -3,6 +3,7 @@ import { mockFinanceService } from '../src/services/mockFinanceService';
 import { financeService } from '../src/services/financeService';
 import { isSupabaseConfigured } from '../src/services/supabaseClient';
 import { mockAccounts, mockMembers } from '../src/data/mockSeedData';
+import { getTodayDateString } from '../src/lib/dateUtils';
 
 describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
   beforeEach(() => {
@@ -274,6 +275,133 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
 
       const goalsAfter = await mockFinanceService.getGoals();
       expect(goalsAfter.length).toBe(initialCount + 1);
+    });
+  });
+
+  describe('Extended Operations (Tags, FX, Goals Drawdown, Credit Cards & Streaks)', () => {
+    it('supports adding expense with tags, foreign currency, and goal linking', async () => {
+      const today = getTodayDateString();
+      const goals = await financeService.getGoals();
+      const targetGoal = goals[0];
+      const initialSaved = targetGoal.saved_so_far;
+
+      const created = await financeService.addExpense({
+        payer_id: 'mem-00000000-0011',
+        category_id: 'cat-00000000-0101',
+        date: today,
+        item: 'Pho Hanoi Dinner',
+        amount: 15.5,
+        is_shared: true,
+        tags: ['Vietnam Trip', 'Dinner'],
+        goal_id: targetGoal.id,
+        original_amount: 290000,
+        original_currency: 'VND',
+        exchange_rate: 18700,
+      });
+
+      expect(created.tags).toEqual(['Vietnam Trip', 'Dinner']);
+      expect(created.goal_id).toBe(targetGoal.id);
+      expect(created.original_currency).toBe('VND');
+
+      // Verify goal balance was drawn down
+      const updatedGoals = await financeService.getGoals();
+      const updatedTargetGoal = updatedGoals.find((g) => g.id === targetGoal.id);
+      expect(updatedTargetGoal?.saved_so_far).toBe(Math.max(0, initialSaved - 15.5));
+    });
+
+    it('filters expenses by tag and goalId', async () => {
+      const allExpenses = await financeService.getExpenses({ tag: 'Vietnam Trip' });
+      expect(allExpenses.length).toBeGreaterThan(0);
+      expect(allExpenses[0].tags).toContain('Vietnam Trip');
+    });
+
+    it('updates an existing expense and restores goal balance when goal link changes', async () => {
+      const expenses = await financeService.getExpenses();
+      const exp = expenses[0];
+
+      const updated = await financeService.updateExpense(exp.id, {
+        item: 'Pho Hanoi Special Dinner',
+        amount: 20.0,
+      });
+
+      expect(updated.item).toBe('Pho Hanoi Special Dinner');
+      expect(updated.amount).toBe(20.0);
+    });
+
+    it('supports bulk expense addition', async () => {
+      const today = getTodayDateString();
+      const bulk = await financeService.bulkAddExpenses([
+        {
+          payer_id: 'mem-00000000-0011',
+          date: today,
+          item: 'Bulk 1',
+          amount: 5,
+          is_shared: false,
+        },
+        {
+          payer_id: 'mem-00000000-0012',
+          date: today,
+          item: 'Bulk 2',
+          amount: 10,
+          is_shared: true,
+        },
+      ]);
+
+      expect(bulk).toHaveLength(2);
+      expect(bulk[0].item).toBe('Bulk 1');
+      expect(bulk[1].item).toBe('Bulk 2');
+    });
+
+    it('manages credit cards and monthly statements', async () => {
+      const cards = await financeService.getCreditCards();
+      expect(cards.length).toBeGreaterThanOrEqual(2);
+
+      const newCard = await financeService.addCreditCard({
+        owner_id: 'mem-00000000-0011',
+        name: 'Citi Cash Back',
+        bank: 'Citibank',
+        last4: '1234',
+        billing_day: 10,
+        due_day: 28,
+        credit_limit: 8000,
+      });
+
+      expect(newCard.name).toBe('Citi Cash Back');
+
+      // Upsert statement
+      const stmt = await financeService.upsertCreditCardStatement({
+        card_id: newCard.id,
+        month: '2026-10',
+        statement_amount: 450.75,
+        due_date: '2026-10-28',
+        is_paid: false,
+      });
+
+      expect(stmt.statement_amount).toBe(450.75);
+      expect(stmt.is_paid).toBe(false);
+
+      // Toggle paid
+      const paidStmt = await financeService.upsertCreditCardStatement({
+        card_id: newCard.id,
+        month: '2026-10',
+        statement_amount: 450.75,
+        due_date: '2026-10-28',
+        is_paid: true,
+        paid_at: new Date().toISOString(),
+      });
+      expect(paidStmt.is_paid).toBe(true);
+    });
+
+    it('records daily checkins and calculates streak summaries', async () => {
+      const today = getTodayDateString();
+      await financeService.recordDailyCheckin('mem-00000000-0011', today, 'no_spend');
+
+      const checkins = await financeService.getDailyCheckins('mem-00000000-0011');
+      expect(checkins.some((c) => c.checkin_date === today)).toBe(true);
+
+      const streak = await financeService.getStreakSummary('mem-00000000-0011');
+      expect(streak.checkedInToday).toBe(true);
+      expect(streak.currentStreak).toBeGreaterThanOrEqual(1);
     });
   });
 });

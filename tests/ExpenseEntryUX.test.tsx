@@ -1,5 +1,5 @@
 /**
- * Epic 1 Test Suite: Expense Entry UX, Currency Conversion, Audio & Mobile Overflow
+ * Expense Entry UX: Cents-First Input, Currency Conversion, Audio & Mobile Overflow
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -14,7 +14,7 @@ import { mockCategories, mockMembers } from '../src/data/mockSeedData';
 import { getTodayDateString, getSingaporeDate, formatISODate } from '../src/lib/dateUtils';
 import type { SavingsGoal } from '../src/types/finance';
 
-describe('Epic 1 - CentsFirstAmountInput Component', () => {
+describe('CentsFirstAmountInput Component', () => {
   it('shifts digits right-to-left ATM/Cashier style (0.00 -> 0.01 -> 0.12 -> 1.25 -> 12.50)', () => {
     const onChange = vi.fn();
     render(<CentsFirstAmountInput onChange={onChange} currencySymbol="S$" currencyCode="SGD" />);
@@ -108,7 +108,7 @@ describe('Epic 1 - CentsFirstAmountInput Component', () => {
   });
 });
 
-describe('Epic 1 - QuickAddExpenseModal Currency Conversion & UX', () => {
+describe('QuickAddExpenseModal Currency Conversion & UX', () => {
   const sampleGoals: SavingsGoal[] = [
     {
       id: 'goal-vietnam-trip',
@@ -491,7 +491,7 @@ describe('Epic 1 - QuickAddExpenseModal Currency Conversion & UX', () => {
   });
 });
 
-describe('Epic 1 - ExpenseSuccessCelebration Toast & Audio', () => {
+describe('ExpenseSuccessCelebration Toast & Audio', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });

@@ -1,5 +1,5 @@
 /**
- * Unit & Integration Tests for Epic 3:
+ * Budget Guardrails & Surplus Alerts:
  * - CategoryLimitWarningBanner (Amber 80% and Rose 100% guardrails)
  * - Audio triggers (playBudgetWarningSound and playBudgetExceededSound) on expenseAdded
  * - Immediate toast alert notifications
@@ -32,7 +32,7 @@ vi.mock('../src/lib/soundEffects', () => ({
   initAudioUnlock: vi.fn(),
 }));
 
-describe('Epic 3: Budget Guardrails & CategoryLimitWarningBanner', () => {
+describe('Budget Guardrails & CategoryLimitWarningBanner', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -205,7 +205,7 @@ describe('Epic 3: Budget Guardrails & CategoryLimitWarningBanner', () => {
   });
 });
 
-describe('Epic 3: Cumulative Surplus & Deficit Calculations', () => {
+describe('Cumulative Surplus & Deficit Calculations', () => {
   it('correctly calculates cumulative surplus across months and excludes goal-funded expenses', () => {
     const expenses: Expense[] = [
       // Month 1: 2026-08 (Cap: 1000)
@@ -335,7 +335,7 @@ describe('Epic 3: Cumulative Surplus & Deficit Calculations', () => {
   });
 });
 
-describe('Epic 3: Interactive Sliders, Live Dollar Equivalent & Auto-Balance', () => {
+describe('Interactive Sliders, Live Dollar Equivalent & Auto-Balance', () => {
   const profile = mockBaseProfiles[0];
   const allocations = mockBaseAllocations.filter((a) => a.profile_id === profile.id);
 
@@ -426,7 +426,7 @@ describe('Epic 3: Interactive Sliders, Live Dollar Equivalent & Auto-Balance', (
   });
 });
 
-describe('Epic 3: CategoryProgressList Warning Badges', () => {
+describe('CategoryProgressList Warning Badges', () => {
   it('displays Amber badge for spend >= 80% and Rose badge for spend >= 100%', () => {
     const categories: MonthlyBudgetCategoryDetail[] = [
       {

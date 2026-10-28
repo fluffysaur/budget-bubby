@@ -8,41 +8,41 @@
 ## Table of Contents
 
 - [Budget Bubby 🇸ɢ 💍](#budget-bubby-ɢ-)
-    - [Table of Contents](#table-of-contents)
-    - [Key Features](#key-features)
-        - [1. Daily Expense Logging \& Ledger Power Tools](#1-daily-expense-logging--ledger-power-tools)
-        - [2. Couple Splits \& 50/50 Settlement Center](#2-couple-splits--5050-settlement-center)
-        - [3. Dynamic Perspective Switching](#3-dynamic-perspective-switching)
-        - [4. Budget Waterfall, % Sliders \& Limit Alerts](#4-budget-waterfall--sliders--limit-alerts)
-        - [5. Cumulative Surplus / Deficit Rollover](#5-cumulative-surplus--deficit-rollover)
-        - [6. Big-Ticket Goals \& Sinking Fund Drawdowns](#6-big-ticket-goals--sinking-fund-drawdowns)
-        - [7. Spend Tags \& Trip Expense Tracking](#7-spend-tags--trip-expense-tracking)
-        - [8. Credit Card Statements Tracker](#8-credit-card-statements-tracker)
-        - [9. Daily Check-in Streak \& Habit Tracker](#9-daily-check-in-streak--habit-tracker)
-        - [10. Accounts, Investments \& True Net Worth](#10-accounts-investments--true-net-worth)
-        - [11. HDB Mortgage \& Prepayment Simulator](#11-hdb-mortgage--prepayment-simulator)
-        - [12. Recurring Policies \& Tax Renewal Calendar](#12-recurring-policies--tax-renewal-calendar)
-        - [13. WebAuthn Biometrics \& PIN Security](#13-webauthn-biometrics--pin-security)
-        - [14. In-App Notifications \& PWA Reminders](#14-in-app-notifications--pwa-reminders)
-        - [15. Offline-First Sync \& Instant Loading](#15-offline-first-sync--instant-loading)
-    - [Singapore-Specific Financial Engine](#singapore-specific-financial-engine)
-    - [Architecture \& Tech Stack](#architecture--tech-stack)
-    - [Local Development Quickstart](#local-development-quickstart)
-        - [1. Prerequisites](#1-prerequisites)
-        - [2. Installation](#2-installation)
-        - [3. Run Development Server](#3-run-development-server)
-    - [Dual-Mode Data Access](#dual-mode-data-access)
-    - [Supabase Setup \& Migrations](#supabase-setup--migrations)
-        - [1. Database Migrations Overview](#1-database-migrations-overview)
-        - [2. Apply Private Seed (Optional)](#2-apply-private-seed-optional)
-        - [3. Environment Variables \& Authentication](#3-environment-variables--authentication)
-        - [4. Private PIN Access Setup](#4-private-pin-access-setup)
-    - [Testing \& Quality Assurance](#testing--quality-assurance)
-        - [Test Coverage Highlights](#test-coverage-highlights)
-    - [PWA Mobile Installation](#pwa-mobile-installation)
-    - [Vercel Deployment Guide](#vercel-deployment-guide)
-        - [SPA Routing on Vercel](#spa-routing-on-vercel)
-    - [Security \& Git Safety](#security--git-safety)
+  - [Table of Contents](#table-of-contents)
+  - [Key Features](#key-features)
+    - [1. Daily Expense Logging \& Ledger Power Tools](#1-daily-expense-logging--ledger-power-tools)
+    - [2. Couple Splits \& 50/50 Settlement Center](#2-couple-splits--5050-settlement-center)
+    - [3. Dynamic Perspective Switching](#3-dynamic-perspective-switching)
+    - [4. Budget Waterfall, % Sliders \& Limit Alerts](#4-budget-waterfall--sliders--limit-alerts)
+    - [5. Cumulative Surplus / Deficit Rollover](#5-cumulative-surplus--deficit-rollover)
+    - [6. Big-Ticket Goals \& Sinking Fund Drawdowns](#6-big-ticket-goals--sinking-fund-drawdowns)
+    - [7. Spend Tags \& Trip Expense Tracking](#7-spend-tags--trip-expense-tracking)
+    - [8. Credit Card Statements Tracker](#8-credit-card-statements-tracker)
+    - [9. Daily Check-in Streak \& Habit Tracker](#9-daily-check-in-streak--habit-tracker)
+    - [10. Accounts, Investments \& True Net Worth](#10-accounts-investments--true-net-worth)
+    - [11. HDB Mortgage \& Prepayment Simulator](#11-hdb-mortgage--prepayment-simulator)
+    - [12. Recurring Policies \& Tax Renewal Calendar](#12-recurring-policies--tax-renewal-calendar)
+    - [13. WebAuthn Biometrics \& PIN Security](#13-webauthn-biometrics--pin-security)
+    - [14. In-App Notifications \& PWA Reminders](#14-in-app-notifications--pwa-reminders)
+    - [15. Offline-First Sync \& Instant Loading](#15-offline-first-sync--instant-loading)
+  - [Singapore-Specific Financial Engine](#singapore-specific-financial-engine)
+  - [Architecture \& Tech Stack](#architecture--tech-stack)
+  - [Local Development Quickstart](#local-development-quickstart)
+    - [1. Prerequisites](#1-prerequisites)
+    - [2. Installation](#2-installation)
+    - [3. Run Development Server](#3-run-development-server)
+  - [Dual-Mode Data Access](#dual-mode-data-access)
+  - [Supabase Setup \& Migrations](#supabase-setup--migrations)
+    - [1. Database Migrations Overview](#1-database-migrations-overview)
+    - [2. Apply Private Seed (Optional)](#2-apply-private-seed-optional)
+    - [3. Environment Variables \& Authentication](#3-environment-variables--authentication)
+    - [4. Private PIN Access Setup](#4-private-pin-access-setup)
+  - [Testing \& Quality Assurance](#testing--quality-assurance)
+    - [Test Coverage Highlights](#test-coverage-highlights)
+  - [PWA Mobile Installation](#pwa-mobile-installation)
+  - [Vercel Deployment Guide](#vercel-deployment-guide)
+    - [SPA Routing on Vercel](#spa-routing-on-vercel)
+  - [Security \& Git Safety](#security--git-safety)
 
 ---
 
@@ -311,16 +311,16 @@ npm run test:e2e
 
 ### Test Coverage Highlights
 
-- **Epic Test Suites**:
-    - `epic0Foundation.test.ts`: Currency conversion, FX caching, and Web Audio engine.
-    - `epic1ExpenseEntryUX.test.tsx`: Cents-first input, segmented personal/shared pill, currency selector, and safe areas.
-    - `epic2LedgerFastBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget, and bulk paste parser.
-    - `epic3BudgetSurplusAlerts.test.tsx`: Category % sliders, cumulative surplus card, and 80%/100% warning alerts.
-    - `epic4TagsGoalsCCTracker.test.tsx`: Spend tags, goal-spend isolation, and credit card statement tracking.
-    - `epic5StreakAuthNotifications.test.tsx`: Daily check-in streak, WebAuthn biometrics, and notification reminders.
-    - `epic6OfflineSyncPerf.test.tsx`: Offline outbox queue, reconnect sync, and lazy route Suspense loading.
+- **Feature & Integration Test Suites**:
+    - `ExpenseEntryUX.test.tsx`: Cents-first input, segmented personal/shared pill, currency selector, and safe areas.
+    - `ExpenseLedgerBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget, and bulk paste parser.
+    - `BudgetSurplusAlerts.test.tsx`: Category % sliders, cumulative surplus card, and 80%/100% warning alerts.
+    - `CreditCardTracker.test.tsx`: Credit card statements, due dates & bill management.
+    - `SpendTagsAndGoals.test.tsx`: Spend tags overview, sinking fund goal drawdowns & budget isolation.
+    - `StreakAndNotifications.test.tsx`: Daily check-in streak bar, notification scheduler reminders & notification popover.
+    - `OfflineSyncAndPerf.test.tsx`: Offline outbox queue, reconnect sync, and lazy route Suspense loading.
 - **Component & Domain Tests**:
-    - `ExpenseComponents.test.tsx`, `BudgetComponents.test.tsx`, `GoalsComponents.test.tsx`, `AccountsComponents.test.tsx`, `LoansComponents.test.tsx`, `RecurringComponents.test.tsx`, `HouseholdContext.test.tsx`, `Auth.test.tsx`, `pwa.test.tsx`.
+    - `ExpenseComponents.test.tsx`, `BudgetComponents.test.tsx`, `GoalsComponents.test.tsx`, `AccountsComponents.test.tsx`, `LoansComponents.test.tsx`, `RecurringComponents.test.tsx`, `HouseholdContext.test.tsx`, `Auth.test.tsx` (PIN & WebAuthn biometrics), `pwa.test.tsx`, `currencyConverter.test.ts`, `soundEffects.test.ts`, `financeService.test.ts`.
 
 ---
 
