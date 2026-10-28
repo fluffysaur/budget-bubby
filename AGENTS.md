@@ -12,10 +12,14 @@ Always use canonical Tailwind v4 utilities rather than arbitrary values where st
 - **Borders**: Use standard border width tokens:
     - `border-2` (NOT `border-[2px]` or `border-[1.5px]`)
     - `border-t-2` (NOT `border-t-[2px]`)
+- **Z-Index & Integer Values**:
+    - Use unbracketed integers directly: `z-9999` (NOT `z-[9999]`), `z-50` (NOT `z-[50]`).
 - **Transforms & Tactile Press**:
     - `active:translate-x-0.5 active:translate-y-0.5` (NOT `active:translate-x-[1px] active:translate-y-[1px]`)
 - **Grid Spacing & Dimensions**:
-    - `min-w-40` (160px), `min-w-24` (96px), `max-w-25` (100px) instead of arbitrary pixel brackets.
+    - `min-w-40` (160px), `min-w-24` (96px), `max-w-25` (100px), `max-w-65` (260px) instead of arbitrary pixel brackets (`max-w-[260px]`).
+- **Text Wrapping**:
+    - Use `wrap-break-word` (NOT `break-words`) for `overflow-wrap: break-word`.
 - **Icon Strokes**:
     - Use `stroke-3` (NOT `stroke-[3]`).
     - For fractional stroke widths on Lucide icons, use the SVG prop `strokeWidth={2.5}` instead of arbitrary classes like `stroke-[2.5]`.
