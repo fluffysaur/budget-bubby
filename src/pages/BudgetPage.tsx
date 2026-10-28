@@ -53,9 +53,10 @@ import type {
 
 export interface BudgetPageProps {
   className?: string;
+  embedded?: boolean;
 }
 
-export function BudgetPage({ className = '' }: BudgetPageProps) {
+export function BudgetPage({ className = '', embedded = false }: BudgetPageProps) {
   const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
 
   // State
@@ -286,23 +287,39 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
   return (
     <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
       {/* Top Header Section */}
-      <PageHeader
-        title="Monthly Budget"
-        actions={
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-            <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+      {!embedded ? (
+        <PageHeader
+          title="Monthly Budget"
+          actions={
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+              <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
 
-            <Button
-              variant="secondary"
-              leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
-              onClick={() => handleOpenEditor()}
-              className="w-full sm:w-auto justify-center"
-            >
-              Edit Budget
-            </Button>
-          </div>
-        }
-      />
+              <Button
+                variant="secondary"
+                leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
+                onClick={() => handleOpenEditor()}
+                className="w-full sm:w-auto justify-center"
+              >
+                Edit Budget
+              </Button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<Settings className="h-3.5 w-3.5 stroke-[2.2] text-slate-500" />}
+            onClick={() => handleOpenEditor()}
+            className="w-full sm:w-auto justify-center"
+          >
+            Edit Budget
+          </Button>
+        </div>
+      )}
 
       {/* Category Limit Warning Banner (Guardrails) */}
       <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />

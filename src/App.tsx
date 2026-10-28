@@ -40,8 +40,7 @@ import type { Expense } from './types/finance';
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const BudgetPage = lazy(() => import('./pages/BudgetPage'));
-const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
+const SpendPage = lazy(() => import('./pages/SpendPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 const PlanPage = lazy(() => import('./pages/PlanPage'));
 const FastLogPage = lazy(() => import('./pages/FastLogPage'));
@@ -98,7 +97,7 @@ function AppLayoutInner() {
     const segment = location.pathname.replace(/^\//, '').split('/')[0];
     if (!segment || segment === 'dashboard') return 'dashboard';
     if (['goals', 'loans', 'recurring'].includes(segment)) return 'plan';
-    if (segment === 'fast-log') return 'expenses';
+    if (['spend', 'expenses', 'budget', 'fast-log'].includes(segment)) return 'spend';
     return segment;
   }, [location.pathname]);
 
@@ -106,6 +105,10 @@ function AppLayoutInner() {
     (tabId: string) => {
       if (tabId === 'dashboard') {
         navigate('/');
+      } else if (tabId === 'budget') {
+        navigate('/spend?tab=budget');
+      } else if (tabId === 'expenses') {
+        navigate('/spend?tab=expenses');
       } else {
         navigate(`/${tabId}`);
       }
@@ -183,8 +186,9 @@ function AppLayoutInner() {
               <Routes>
                 <Route path="/" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
                 <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
-                <Route path="/budget" element={<BudgetPage />} />
-                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/spend" element={<SpendPage onNavigateTab={handleSelectTab} />} />
+                <Route path="/budget" element={<SpendPage initialTab="budget" onNavigateTab={handleSelectTab} />} />
+                <Route path="/expenses" element={<SpendPage initialTab="expenses" onNavigateTab={handleSelectTab} />} />
                 <Route path="/fast-log" element={<FastLogPage onNavigateTab={handleSelectTab} />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />

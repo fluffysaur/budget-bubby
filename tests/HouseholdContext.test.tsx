@@ -214,15 +214,14 @@ describe('Layout Components', () => {
 
       expect(screen.getByText('Budget Bubby')).toBeInTheDocument();
       expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('Budget')).toBeInTheDocument();
-      expect(screen.getByText('Expenses')).toBeInTheDocument();
+      expect(screen.getByText('Spend')).toBeInTheDocument();
       expect(screen.getByText('Accounts')).toBeInTheDocument();
       expect(screen.getByText('Plan')).toBeInTheDocument();
 
       await act(async () => {
-        fireEvent.click(screen.getByText('Expenses'));
+        fireEvent.click(screen.getByText('Spend'));
       });
-      expect(onSelectTab).toHaveBeenCalledWith('expenses');
+      expect(onSelectTab).toHaveBeenCalledWith('spend');
     });
   });
 
@@ -243,10 +242,10 @@ describe('Layout Components', () => {
       fireEvent.click(screen.getByRole('button', { name: /quick add/i }));
       expect(onQuickAdd).toHaveBeenCalled();
 
-      // Click on Expenses tab
-      const expensesTab = screen.getByRole('button', { name: /expenses/i });
-      fireEvent.click(expensesTab);
-      expect(onSelectTab).toHaveBeenCalledWith('expenses');
+      // Click on Spend tab
+      const spendTab = screen.getByRole('button', { name: /spend/i });
+      fireEvent.click(spendTab);
+      expect(onSelectTab).toHaveBeenCalledWith('spend');
     });
   });
 

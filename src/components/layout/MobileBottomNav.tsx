@@ -23,7 +23,7 @@ export function MobileBottomNav({
     onQuickAdd,
     className = "",
 }: MobileBottomNavProps) {
-    const isSpendActive = activeTab === "expenses" || activeTab === "budget";
+    const isSpendActive = activeTab === "spend" || activeTab === "expenses" || activeTab === "budget";
     const isPlanActive = ["plan", "goals", "loans", "recurring"].includes(activeTab);
 
     return (
@@ -58,8 +58,8 @@ export function MobileBottomNav({
                 {/* Tab 2: Spend & Budget */}
                 <button
                     type="button"
-                    onClick={() => onSelectTab?.("expenses")}
-                    aria-label="Expenses"
+                    onClick={() => onSelectTab?.("spend")}
+                    aria-label="Spend"
                     className={`flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
                         isSpendActive
                             ? "text-(--text-ink) font-black"

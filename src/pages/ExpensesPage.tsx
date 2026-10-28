@@ -56,9 +56,10 @@ import type { ExpenseFilter } from '../types/finance';
 
 export interface ExpensesPageProps {
   className?: string;
+  embedded?: boolean;
 }
 
-export function ExpensesPage({ className = '' }: ExpensesPageProps) {
+export function ExpensesPage({ className = '', embedded = false }: ExpensesPageProps) {
   const {
     perspective,
     overview,
@@ -299,31 +300,56 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   return (
     <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
       {/* Header Section */}
-      <PageHeader
-        title="Expenses"
-        actions={
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="secondary"
-              aria-label="+ Bulk Log"
-              className="w-full sm:w-auto"
-              leftIcon={<FileSpreadsheet className="h-4 w-4 stroke-[2.2] text-emerald-600" />}
-              onClick={() => setIsBulkAddOpen(true)}
-            >
-              Bulk Log
-            </Button>
-            <Button
-              variant="primary"
-              aria-label="+ Add Expense"
-              className="hidden md:inline-flex"
-              leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
-              onClick={() => setIsModalOpen(true)}
-            >
-              Add Expense
-            </Button>
-          </div>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title="Expenses"
+          actions={
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                aria-label="+ Bulk Log"
+                className="w-full sm:w-auto"
+                leftIcon={<FileSpreadsheet className="h-4 w-4 stroke-[2.2] text-emerald-600" />}
+                onClick={() => setIsBulkAddOpen(true)}
+              >
+                Bulk Log
+              </Button>
+              <Button
+                variant="primary"
+                aria-label="+ Add Expense"
+                className="hidden md:inline-flex"
+                leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+                onClick={() => setIsModalOpen(true)}
+              >
+                Add Expense
+              </Button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label="+ Bulk Log"
+            className="w-full sm:w-auto"
+            leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 stroke-[2.2] text-emerald-600" />}
+            onClick={() => setIsBulkAddOpen(true)}
+          >
+            Bulk Log
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            aria-label="+ Add Expense"
+            className="hidden md:inline-flex"
+            leftIcon={<Plus className="h-3.5 w-3.5 stroke-[2.5]" />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Add Expense
+          </Button>
+        </div>
+      )}
 
       {/* Celebratory Month-End Sweep Notification Banner */}
       {showSweepBanner && (

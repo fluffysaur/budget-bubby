@@ -36,14 +36,34 @@ describe("App Integration & Routing", () => {
         const sidebarNav = screen.getByRole("navigation", { name: "Sidebar" });
         expect(sidebarNav).toBeInTheDocument();
         expect(within(sidebarNav).getByRole("button", { name: /Home/i })).toBeInTheDocument();
-        expect(within(sidebarNav).getByRole("button", { name: /Budget/i })).toBeInTheDocument();
-        expect(within(sidebarNav).getByRole("button", { name: /Expenses/i })).toBeInTheDocument();
+        expect(within(sidebarNav).getByRole("button", { name: /Spend/i })).toBeInTheDocument();
         expect(within(sidebarNav).getByRole("button", { name: /Accounts/i })).toBeInTheDocument();
         expect(within(sidebarNav).getByRole("button", { name: /Plan/i })).toBeInTheDocument();
 
         // Default Dashboard page renders Net Worth card
         await waitFor(() => {
             expect(screen.getByText(/True Net Worth/i)).toBeInTheDocument();
+        });
+    });
+
+    it("navigates to /spend and defaults to expenses ledger", async () => {
+        render(<App initialEntries={["/spend"]} />);
+
+        await waitFor(() => {
+            const main = screen.getByRole("main");
+            expect(within(main).getByText(/Total Spent/i)).toBeInTheDocument();
+            expect(within(main).getByRole("tab", { name: /Expenses/i })).toHaveAttribute("aria-selected", "true");
+            expect(within(main).getByRole("tab", { name: /Budget/i })).toHaveAttribute("aria-selected", "false");
+        });
+    });
+
+    it("navigates to /spend?tab=budget and activates budget sub-tab", async () => {
+        render(<App initialEntries={["/spend?tab=budget"]} />);
+
+        await waitFor(() => {
+            const main = screen.getByRole("main");
+            expect(within(main).getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(within(main).getByRole("tab", { name: /Budget/i })).toHaveAttribute("aria-selected", "true");
         });
     });
 
@@ -143,22 +163,22 @@ describe("App Integration & Routing", () => {
 
         const sidebarNav = screen.getByRole("navigation", { name: "Sidebar" });
 
-        // Click Budget in sidebar
-        const budgetBtn = within(sidebarNav).getByRole("button", { name: /Budget/i });
-        fireEvent.click(budgetBtn);
-
-        await waitFor(() => {
-            const main = screen.getByRole("main");
-            expect(within(main).getByText(/Budget Waterfall/i)).toBeInTheDocument();
-        });
-
-        // Click Expenses in sidebar
-        const expensesBtn = within(sidebarNav).getByRole("button", { name: /Expenses/i });
-        fireEvent.click(expensesBtn);
+        // Click Spend in sidebar
+        const spendBtn = within(sidebarNav).getByRole("button", { name: /Spend/i });
+        fireEvent.click(spendBtn);
 
         await waitFor(() => {
             const main = screen.getByRole("main");
             expect(within(main).getByText(/Total Spent/i)).toBeInTheDocument();
+        });
+
+        // Switch to Budget sub-tab
+        const budgetTab = screen.getByRole("tab", { name: /Budget/i });
+        fireEvent.click(budgetTab);
+
+        await waitFor(() => {
+            const main = screen.getByRole("main");
+            expect(within(main).getByText(/Budget Waterfall/i)).toBeInTheDocument();
         });
     });
 

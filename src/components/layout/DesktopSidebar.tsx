@@ -6,7 +6,7 @@
  */
 
 import type { ComponentType } from "react";
-import { LayoutDashboard, PieChart, Receipt, Landmark, Compass, Heart } from "lucide-react";
+import { LayoutDashboard, Receipt, Landmark, Compass, Heart } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { BubbyIcon } from "../ui/BubbyIcon";
 
@@ -26,16 +26,10 @@ const NAV_ITEMS: NavItem[] = [
         description: "Daily spend check & quick actions",
     },
     {
-        id: "expenses",
-        label: "Expenses",
+        id: "spend",
+        label: "Spend",
         icon: Receipt,
-        description: "Daily ledger & monthly spend trends",
-    },
-    {
-        id: "budget",
-        label: "Budget",
-        icon: PieChart,
-        description: "Spendable caps & CPF waterfall",
+        description: "Expenses ledger & monthly budget caps",
     },
     {
         id: "accounts",
@@ -62,9 +56,19 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
     const members = household?.members || [];
     const subtitleText = members.length > 0 ? members.map((m) => m.display_name).join(" & ") : "Household Finance";
 
+    const isItemActive = (itemId: string) => {
+        if (itemId === "spend") {
+            return activeTab === "spend" || activeTab === "expenses" || activeTab === "budget";
+        }
+        if (itemId === "plan") {
+            return ["plan", "goals", "loans", "recurring"].includes(activeTab);
+        }
+        return activeTab === itemId;
+    };
+
     const renderNavItem = (item: NavItem) => {
         const Icon = item.icon;
-        const isActive = activeTab === item.id;
+        const isActive = isItemActive(item.id);
         return (
             <button
                 key={item.id}
