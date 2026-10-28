@@ -47,3 +47,8 @@ Always use canonical Tailwind v4 utilities rather than arbitrary values where st
 ## 4. React & Fast Refresh Hygiene
 
 - In component files (`.tsx`), avoid exporting non-component helper functions unless annotated with `// eslint-disable-next-line react-refresh/only-export-components`, or extract them to dedicated files in `src/lib/` or `src/services/`.
+- **TanStack Query Fallback Memoization (`react-hooks/exhaustive-deps`)**:
+    - Never write inline fallback array/object literals for query data used in dependency arrays:
+        - Avoid: `const accounts = accountsData || [];`
+        - Prefer: `const accounts = useMemo(() => accountsData || [], [accountsData]);`
+        - Or use a top-level immutable constant: `const EMPTY_LIST = []; const accounts = accountsData ?? EMPTY_LIST;`
