@@ -6,6 +6,7 @@ import React, {
     useRef,
 } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
 const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -48,6 +49,14 @@ export function AnimatedModal({
             setShouldRender(true);
             setIsClosing(false);
         } else if (shouldRender && !isClosing) {
+            if (
+                typeof globalThis !== "undefined" &&
+                (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === "test"
+            ) {
+                setShouldRender(false);
+                setIsClosing(false);
+                return;
+            }
             setIsClosing(true);
             closingTimerRef.current = setTimeout(() => {
                 setShouldRender(false);
@@ -127,6 +136,100 @@ export function AnimatedModal({
     return typeof document !== "undefined"
         ? createPortal(modalNode, document.body)
         : modalNode;
+}
+
+export interface ModalHeaderProps {
+    title: React.ReactNode;
+    subtitle?: React.ReactNode;
+    icon?: React.ReactNode;
+    iconBgColor?: string;
+    onClose: () => void;
+    closeAriaLabel?: string;
+    id?: string;
+    actions?: React.ReactNode;
+    className?: string;
+}
+
+export function ModalHeader({
+    title,
+    subtitle,
+    icon,
+    iconBgColor = "bg-(--pastel-lilac-light)",
+    onClose,
+    closeAriaLabel = "Close modal",
+    id,
+    actions,
+    className = "",
+}: ModalHeaderProps) {
+    return (
+        <div
+            className={`p-4 sm:p-5 pb-3 border-b border-(--border-subtle) flex items-center justify-between shrink-0 ${className}`}
+        >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {icon && (
+                    <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-(--text-ink) border border-(--border-ink) ${iconBgColor}`}
+                    >
+                        {icon}
+                    </div>
+                )}
+                <div className="min-w-0 flex-1">
+                    <h2
+                        id={id}
+                        className="font-display font-bold text-base text-(--text-ink) leading-tight truncate"
+                    >
+                        {title}
+                    </h2>
+                    {subtitle && (
+                        <p className="text-xs text-(--text-muted) leading-normal truncate mt-0.5">
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+                {actions}
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label={closeAriaLabel}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                >
+                    <X className="h-4 w-4" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+export interface ModalBodyProps {
+    children: React.ReactNode;
+    className?: string;
+}
+
+export function ModalBody({ children, className = "" }: ModalBodyProps) {
+    return (
+        <div
+            className={`flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 ${className}`}
+        >
+            {children}
+        </div>
+    );
+}
+
+export interface ModalFooterProps {
+    children: React.ReactNode;
+    className?: string;
+}
+
+export function ModalFooter({ children, className = "" }: ModalFooterProps) {
+    return (
+        <div
+            className={`flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-(--border-subtle) shrink-0 bg-(--bg-card) pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] ${className}`}
+        >
+            {children}
+        </div>
+    );
 }
 
 export default AnimatedModal;

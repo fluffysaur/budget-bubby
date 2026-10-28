@@ -2,6 +2,7 @@
  * AddEditGoalModal Component
  * Accessible dialog for creating or updating a savings milestone goal.
  * Features:
+ * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
  * - Emoji picker preset chips & custom emoji input
  * - Title, Target Amount, Saved So Far, Target Date, Monthly Contribution inputs
  * - Live pacing calculator preview (Required pace & status indicator)
@@ -10,7 +11,8 @@
  */
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { X, Target, AlertCircle, TrendingUp } from "lucide-react";
+import { Target, AlertCircle, TrendingUp } from "lucide-react";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from "../../services/financeService";
 import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
@@ -37,12 +39,18 @@ const EMOJI_PRESETS = [
     { emoji: "🎯", label: "Other Goal" },
 ];
 
-export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, householdId }: AddEditGoalModalProps) {
+export function AddEditGoalModal({
+    isOpen,
+    onClose,
+    goal,
+    onGoalSaved,
+    householdId,
+}: AddEditGoalModalProps) {
     const titleInputRef = useRef<HTMLInputElement>(null);
 
     // Form State
     const [emoji, setEmoji] = useState<string>("🎯");
-    const [title, setTitle] = useState<string>("");
+    const [title, setTitle] = useState<string>("" );
     const [targetAmount, setTargetAmount] = useState<string>("");
     const [savedSoFar, setSavedSoFar] = useState<string>("0");
     const [targetDate, setTargetDate] = useState<string>("");
@@ -58,16 +66,13 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
                 setTitle(goal.title);
                 setTargetAmount(goal.target_amount.toString());
                 setSavedSoFar(goal.saved_so_far.toString());
-                // Handle YYYY-MM or YYYY-MM-DD
-                const d = goal.target_date;
-                setTargetDate(d.length === 7 ? `${d}-01` : d);
-                setMonthlyContribution(goal.monthly_contribution.toString());
+                setTargetDate(goal.target_date ? goal.target_date.substring(0, 10) : "");
+                setMonthlyContribution(goal.monthly_contribution ? goal.monthly_contribution.toString() : "0");
             } else {
                 setEmoji("🎯");
                 setTitle("");
                 setTargetAmount("");
                 setSavedSoFar("0");
-                // Default target date to 1 year ahead
                 const oneYearAhead = new Date();
                 oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1);
                 setTargetDate(formatISODate(oneYearAhead));
@@ -83,20 +88,9 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
         }
     }, [isOpen, goal]);
 
-    // Handle ESC key to dismiss modal
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isOpen) {
-                onClose();
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
-
     if (!isOpen) return null;
 
-    // Live Pacing Preview Calculation
+    // Derived pacing calculations for live feedback
     const numericTarget = parseFloat(targetAmount) || 0;
     const numericSaved = parseFloat(savedSoFar) || 0;
     const numericMonthly = parseFloat(monthlyContribution) || 0;
@@ -111,7 +105,7 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
         setErrorMessage(null);
 
         if (!title.trim()) {
-            setErrorMessage("Please enter a goal title");
+            setErrorMessage("Please enter a goal title (e.g. Wedding Banquet, HDB Reno)");
             titleInputRef.current?.focus();
             return;
         }
@@ -143,7 +137,7 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
             const normalizedDate = targetDate.length === 7 ? `${targetDate}-01` : targetDate;
 
             if (goal) {
-                // Edit Mode
+                // Update Mode
                 const updated = await financeService.updateGoal(goal.id, {
                     emoji: emoji || "🎯",
                     title: title.trim(),
@@ -177,62 +171,29 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
     };
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="goal-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    onClose();
-                }
-            }}
-        >
-            <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-                            <Target className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h2
-                                id="goal-modal-title"
-                                className="text-lg font-bold text-slate-900 dark:text-white"
-                            >
-                                {goal ? "Edit Savings Goal" : "New Savings Goal"}
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Track couple milestones, target dates, and monthly savings pace
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Close modal"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                <ModalHeader
+                    id="goal-modal-title"
+                    title={goal ? "Edit Savings Goal" : "New Savings Goal"}
+                    subtitle="Track couple milestones, target dates, and monthly savings pace"
+                    icon={<Target className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-butter-light)"
+                    onClose={onClose}
+                />
 
-                {/* Error Alert */}
-                {errorMessage && (
-                    <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-                        <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
-                        <span>{errorMessage}</span>
-                    </div>
-                )}
+                <ModalBody>
+                    {/* Error Alert */}
+                    {errorMessage && (
+                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                            <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                            <span>{errorMessage}</span>
+                        </div>
+                    )}
 
-                {/* Form */}
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-4 space-y-4"
-                >
                     {/* Emoji Presets & Custom Selector */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
                             Goal Icon / Emoji
                         </label>
                         <div className="flex flex-wrap gap-1.5 mb-2">
@@ -242,10 +203,10 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
                                     type="button"
                                     aria-label={p.label}
                                     onClick={() => setEmoji(p.emoji)}
-                                    className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all ${
+                                    className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                                         emoji === p.emoji
-                                            ? "bg-blue-600 text-white shadow-xs ring-2 ring-blue-600/30"
-                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                            ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                            : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                     }`}
                                 >
                                     <span className="text-sm">{p.emoji}</span>
@@ -260,125 +221,115 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
                                 value={emoji}
                                 onChange={(e) => setEmoji(e.target.value)}
                                 maxLength={4}
-                                className="w-16 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-center text-lg focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                className="w-14 text-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-2 text-xl shadow-xs"
+                                placeholder="🎯"
                             />
-                            <span className="text-xs text-slate-400">or type any custom emoji</span>
+                            <span className="text-xs text-(--text-muted)">Custom emoji</span>
                         </div>
                     </div>
 
                     {/* Goal Title */}
                     <div>
                         <label
-                            htmlFor="goal-title-input"
-                            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                            htmlFor="goal-title"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Goal Title <span className="text-rose-500">*</span>
+                            Goal Title *
                         </label>
                         <input
-                            id="goal-title-input"
+                            id="goal-title"
                             ref={titleInputRef}
                             type="text"
-                            aria-label="Goal Title"
-                            placeholder="e.g. HDB Down Payment, Wedding, Baby Fund"
+                            placeholder="e.g. Wedding Banquet, HDB Renovation"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-sm font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
-                    {/* Amounts Grid: Target & Saved */}
+                    {/* Target Amount & Saved So Far Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label
-                                htmlFor="goal-target-amount"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                                htmlFor="goal-target"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Target Amount (S$) <span className="text-rose-500">*</span>
+                                Target Amount (S$) *
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                                    S$
-                                </span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
                                 <input
-                                    id="goal-target-amount"
+                                    id="goal-target"
                                     type="number"
-                                    step="any"
+                                    step="0.01"
                                     min="0.01"
-                                    aria-label="Target Amount"
-                                    placeholder="50,000"
+                                    placeholder="20,000"
                                     value={targetAmount}
                                     onChange={(e) => setTargetAmount(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3.5 py-2 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
 
                         <div>
                             <label
-                                htmlFor="goal-saved-so-far"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                                htmlFor="goal-saved"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Saved So Far (S$)
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                                    S$
-                                </span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
                                 <input
-                                    id="goal-saved-so-far"
+                                    id="goal-saved"
                                     type="number"
-                                    step="any"
+                                    step="0.01"
                                     min="0"
-                                    aria-label="Saved So Far"
                                     placeholder="0"
                                     value={savedSoFar}
                                     onChange={(e) => setSavedSoFar(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3.5 py-2 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* Target Date & Monthly Contribution */}
+                    {/* Target Date & Monthly Contribution Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label
-                                htmlFor="goal-target-date"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                                htmlFor="goal-date"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Target Date <span className="text-rose-500">*</span>
+                                Target Date (Optional)
                             </label>
                             <input
-                                id="goal-target-date"
+                                id="goal-date"
                                 type="date"
-                                aria-label="Target Date"
                                 value={targetDate}
                                 onChange={(e) => setTargetDate(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-medium text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                             />
                         </div>
 
                         <div>
                             <label
-                                htmlFor="goal-monthly-contribution"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                                htmlFor="goal-monthly"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Monthly Contribution (S$)
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                                    S$
-                                </span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
                                 <input
-                                    id="goal-monthly-contribution"
+                                    id="goal-monthly"
                                     type="number"
-                                    step="any"
+                                    step="0.01"
                                     min="0"
-                                    aria-label="Monthly Contribution"
                                     placeholder="500"
                                     value={monthlyContribution}
                                     onChange={(e) => setMonthlyContribution(e.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3.5 py-2 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
@@ -386,19 +337,19 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
 
                     {/* Live Pacing Preview */}
                     {livePacing && (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-800/60">
-                            <div className="flex items-center justify-between font-semibold text-slate-700 dark:text-slate-200">
+                        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 text-xs shadow-cute-sm">
+                            <div className="flex items-center justify-between font-bold text-(--text-ink)">
                                 <span className="flex items-center gap-1.5">
-                                    <TrendingUp className="h-3.5 w-3.5 text-blue-500" />
+                                    <TrendingUp className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
                                     Pacing Projection
                                 </span>
                                 <span
-                                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold border border-(--border-ink) ${
                                         livePacing.status === "achieved"
-                                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400"
+                                            ? "bg-(--pastel-mint) text-(--text-ink)"
                                             : livePacing.status === "on_track"
-                                              ? "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400"
-                                              : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400"
+                                              ? "bg-(--pastel-lilac) text-(--text-ink)"
+                                              : "bg-(--pastel-coral) text-white"
                                     }`}
                                 >
                                     {livePacing.status === "achieved"
@@ -408,44 +359,45 @@ export function AddEditGoalModal({ isOpen, onClose, goal, onGoalSaved, household
                                           : "Behind"}
                                 </span>
                             </div>
-                            <div className="mt-2 grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-300">
+                            <div className="mt-2 grid grid-cols-2 gap-2 text-(--text-muted)">
                                 <div>
-                                    <span className="text-[11px] text-slate-400 block">Required Pace:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                    <span className="text-[11px] block">Required Pace:</span>
+                                    <span className="font-bold text-(--text-ink) font-mono-num">
                                         {livePacing.status === "achieved"
                                             ? "Complete"
                                             : `${formatSGD(livePacing.neededPerMonth)}/mo`}
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-[11px] text-slate-400 block">Time to Target:</span>
-                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                    <span className="text-[11px] block">Time to Target:</span>
+                                    <span className="font-bold text-(--text-ink) font-mono-num">
                                         {livePacing.monthsRemaining} months
                                     </span>
                                 </div>
                             </div>
                         </div>
                     )}
+                </ModalBody>
 
-                    {/* Actions */}
-                    <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50 transition-colors"
-                        >
-                            {isSubmitting ? "Saving..." : goal ? "Save Changes" : "Create Goal"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <ModalFooter>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                    >
+                        {isSubmitting ? "Saving..." : goal ? "Save Changes" : "Create Goal"}
+                    </button>
+                </ModalFooter>
+            </form>
+        </AnimatedModal>
     );
 }
+
+export default AddEditGoalModal;

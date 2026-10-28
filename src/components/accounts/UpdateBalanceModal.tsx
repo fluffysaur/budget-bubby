@@ -10,7 +10,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
-    X,
     Search,
     CheckCircle2,
     AlertCircle,
@@ -24,7 +23,7 @@ import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
-import { AnimatedModal } from "../ui/AnimatedModal";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 
 export interface UpdateBalanceModalProps {
     isOpen: boolean;
@@ -256,144 +255,126 @@ export function UpdateBalanceModal({
                 onClose={onClose}
                 maxWidth="max-w-md"
             >
-                <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-                    <div className="flex items-center justify-between p-5 sm:p-6 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <form
+                    onSubmit={handleSingleSubmit}
+                    className="flex flex-col min-h-0 flex-1 overflow-hidden"
+                >
+                    <ModalHeader
+                        id="single-modal-title"
+                        title="Update Account Balance"
+                        subtitle={`${account.name} ${account.institution ? `(${account.institution})` : ""}`}
+                        icon={<Landmark className="h-4.5 w-4.5 stroke-[2.5]" />}
+                        iconBgColor="bg-(--pastel-butter-light)"
+                        onClose={onClose}
+                    />
+
+                    <ModalBody>
+                        {error && (
+                            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
+                                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                                <span>{error}</span>
+                            </div>
+                        )}
+
                         <div>
-                            <h2
-                                id="single-modal-title"
-                                className="text-base font-bold text-slate-900 dark:text-white"
+                            <label
+                                htmlFor="single-balance-input"
+                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
                             >
-                                Update Account Balance
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {account.name}{" "}
-                                {account.institution
-                                    ? `(${account.institution})`
-                                    : ""}
+                                New Balance (S$)
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                                    S$
+                                </span>
+                                <input
+                                    id="single-balance-input"
+                                    type="number"
+                                    step="0.01"
+                                    value={singleBalance}
+                                    onChange={(e) =>
+                                        setSingleBalance(e.target.value)
+                                    }
+                                    placeholder="0.00"
+                                    required
+                                    autoFocus
+                                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                />
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-1">
+                                Previous:{" "}
+                                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                                    {formatSGD(account.balance)}
+                                </span>
                             </p>
                         </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label
+                                    htmlFor="single-date-input"
+                                    className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1"
+                                >
+                                    Snapshot Date
+                                </label>
+                                <input
+                                    id="single-date-input"
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) =>
+                                        setDate(e.target.value)
+                                    }
+                                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    htmlFor="single-notes-input"
+                                    className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1"
+                                >
+                                    Notes (Optional)
+                                </label>
+                                <input
+                                    id="single-notes-input"
+                                    type="text"
+                                    value={singleNotes}
+                                    onChange={(e) =>
+                                        setSingleNotes(e.target.value)
+                                    }
+                                    placeholder="e.g. Salary credited"
+                                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                                />
+                            </div>
+                        </div>
+                    </ModalBody>
+
+                    <ModalFooter>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
-                            aria-label="Close modal"
+                            className="px-4 py-2 rounded-xl text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                         >
-                            <X className="h-5 w-5" />
+                            Cancel
                         </button>
-                    </div>
-
-                    <form
-                        onSubmit={handleSingleSubmit}
-                        className="flex flex-col min-h-0 flex-1 overflow-hidden"
-                    >
-                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
-                            {error && (
-                                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
-                                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                                    <span>{error}</span>
-                                </div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-[1.5px] border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    <span>Save Balance</span>
+                                </>
                             )}
-
-                            <div>
-                                <label
-                                    htmlFor="single-balance-input"
-                                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                                >
-                                    New Balance (S$)
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                                        S$
-                                    </span>
-                                    <input
-                                        id="single-balance-input"
-                                        type="number"
-                                        step="0.01"
-                                        value={singleBalance}
-                                        onChange={(e) =>
-                                            setSingleBalance(e.target.value)
-                                        }
-                                        placeholder="0.00"
-                                        required
-                                        autoFocus
-                                        className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                                    />
-                                </div>
-                                <p className="text-[11px] text-slate-400 mt-1">
-                                    Previous:{" "}
-                                    <span className="font-semibold text-slate-600 dark:text-slate-300">
-                                        {formatSGD(account.balance)}
-                                    </span>
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label
-                                        htmlFor="single-date-input"
-                                        className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1"
-                                    >
-                                        Snapshot Date
-                                    </label>
-                                    <input
-                                        id="single-date-input"
-                                        type="date"
-                                        value={date}
-                                        onChange={(e) =>
-                                            setDate(e.target.value)
-                                        }
-                                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
-                                    />
-                                </div>
-                                <div>
-                                    <label
-                                        htmlFor="single-notes-input"
-                                        className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1"
-                                    >
-                                        Notes (Optional)
-                                    </label>
-                                    <input
-                                        id="single-notes-input"
-                                        type="text"
-                                        value={singleNotes}
-                                        onChange={(e) =>
-                                            setSingleNotes(e.target.value)
-                                        }
-                                        placeholder="e.g. Salary credited"
-                                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-(--border-subtle) shrink-0 bg-(--bg-card) pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-[1.5px] border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        <span>Saving...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                        <span>Save Balance</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                        </button>
+                    </ModalFooter>
+                </form>
             </AnimatedModal>
         );
     }
@@ -403,34 +384,14 @@ export function UpdateBalanceModal({
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
             <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-                            <Landmark className="h-4.5 w-4.5" />
-                        </div>
-                        <div>
-                            <h2
-                                id="multi-modal-title"
-                                className="text-base font-bold text-slate-900 dark:text-white"
-                            >
-                                Update Account Balances
-                            </h2>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                Type directly into any balance. Only modified
-                                accounts will be saved.
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
-                        aria-label="Close modal"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+                <ModalHeader
+                    id="multi-modal-title"
+                    title="Update Account Balances"
+                    subtitle="Type directly into any balance. Only modified accounts will be saved."
+                    icon={<Landmark className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-butter-light)"
+                    onClose={onClose}
+                />
 
                 {/* Search, Filter Pills & Date */}
                 <div className="px-5 py-2.5 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
@@ -622,11 +583,11 @@ export function UpdateBalanceModal({
                 </form>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between px-5 py-3 bg-(--bg-canvas) border-t border-(--border-subtle) shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+                <ModalFooter className="justify-between">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                     >
                         Cancel
                     </button>
@@ -635,7 +596,7 @@ export function UpdateBalanceModal({
                         type="button"
                         onClick={handleMultiSubmit}
                         disabled={isSubmitting || modifiedAccounts.length === 0}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-[1.5px] border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
                         {isSubmitting ? (
                             <>
@@ -653,7 +614,7 @@ export function UpdateBalanceModal({
                             </>
                         )}
                     </button>
-                </div>
+                </ModalFooter>
             </div>
         </AnimatedModal>
     );

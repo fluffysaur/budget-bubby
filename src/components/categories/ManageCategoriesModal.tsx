@@ -10,7 +10,6 @@
 
 import React, { useState, useEffect, useId, useMemo } from "react";
 import {
-    X,
     Plus,
     Pencil,
     Trash2,
@@ -41,6 +40,7 @@ import {
     Sliders,
 } from "lucide-react";
 import { financeService } from "../../services/financeService";
+import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
 import type { Category, CategoryGroup, BaseBudgetProfile, BaseProfileAllocation } from "../../types/finance";
 import { isSpendableCategory, calculateCPFAndNetPay, calculateDisposableBudget } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
@@ -380,39 +380,20 @@ export function ManageCategoriesModal({
     const allocationCategories = categories.filter((c) => !isSpendableCategory(c));
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-hidden"
-        >
-            <div
-                className={`relative w-full max-w-xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 ${className}`}
-            >
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
+            <div className={`flex flex-col min-h-0 flex-1 overflow-hidden ${className}`}>
                 {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div>
-                        <h2
-                            id={titleId}
-                            className="text-lg font-bold text-slate-900 dark:text-white"
-                        >
-                            Manage Categories
-                        </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Customize your spendable meters and wealth allocations
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                        aria-label="Close modal"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+                <ModalHeader
+                    id={titleId}
+                    title="Manage Categories"
+                    subtitle="Customize your spendable meters and wealth allocations"
+                    icon={<Tag className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-lilac-light)"
+                    onClose={onClose}
+                />
 
-                {/* View Switcher Tabs */}
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
+                    {/* View Switcher Tabs */}
                 <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl my-3">
                     <button
                         type="button"
@@ -955,8 +936,9 @@ export function ManageCategoriesModal({
                         </div>
                     </div>
                 )}
+                </div>
             </div>
-        </div>
+        </AnimatedModal>
     );
 }
 

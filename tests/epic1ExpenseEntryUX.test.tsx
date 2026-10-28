@@ -447,6 +447,48 @@ describe('Epic 1 - QuickAddExpenseModal Currency Conversion & UX', () => {
       );
     });
   });
+
+  it('declutters description by removing suggested quick tags, supports more options accordion and 3 recent tags', async () => {
+    // Seed localStorage with recent tags
+    window.localStorage.setItem(
+      'budget_bubby_recent_tags_global_v2',
+      JSON.stringify(['Dinner', 'Hawker', 'FairPrice', 'OldTag'])
+    );
+
+    await act(async () => {
+      render(
+        <HouseholdProvider>
+          <QuickAddExpenseModal
+            isOpen={true}
+            onClose={vi.fn()}
+            categories={mockCategories}
+            members={mockMembers}
+            goals={sampleGoals}
+          />
+        </HouseholdProvider>
+      );
+    });
+
+    // 1. Suggested tag row above description is removed
+    expect(screen.queryByText(/tap tag or type/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /quick tags/i })).not.toBeInTheDocument();
+
+    // 2. Expand accordion
+    const moreOptionsToggle = screen.getByRole('button', { name: /more options/i });
+    expect(moreOptionsToggle).toBeInTheDocument();
+    fireEvent.click(moreOptionsToggle);
+
+    // 3. Up to 3 recent tags are displayed
+    expect(screen.getByRole('button', { name: /add tag dinner/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add tag hawker/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add tag fairprice/i })).toBeInTheDocument();
+    // 4th tag should NOT be shown since limit is 3
+    expect(screen.queryByRole('button', { name: /add tag oldtag/i })).not.toBeInTheDocument();
+
+    // 4. Click a recent tag -> attaches it to tags list
+    fireEvent.click(screen.getByRole('button', { name: /add tag dinner/i }));
+    expect(screen.getByText('#Dinner')).toBeInTheDocument();
+  });
 });
 
 describe('Epic 1 - ExpenseSuccessCelebration Toast & Audio', () => {

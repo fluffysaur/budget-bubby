@@ -9,7 +9,6 @@
 
 import { useState, useEffect, useMemo, useId } from "react";
 import {
-    X,
     CheckCircle2,
     AlertCircle,
     Percent,
@@ -40,7 +39,9 @@ import {
     Gift,
     User,
 } from "lucide-react";
+import { Sliders } from "lucide-react";
 import { financeService } from "../../services/financeService";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { mockCategories } from "../../data/mockSeedData";
 import { calculateCPFAndNetPay, calculateDisposableBudget, isSpendableCategory } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
@@ -483,72 +484,51 @@ export function BaseProfileEditorModal({
     const profileMember = members?.find((m) => m.id === profile.owner_id);
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-hidden ${className}`}
-        >
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
             <div
-                className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors"
+                className={`flex flex-col min-h-0 flex-1 overflow-hidden ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex flex-col gap-3 p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h2
-                                id={titleId}
-                                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white"
-                            >
-                                Edit Budget &amp; Categories
-                            </h2>
-                            {profileMember && members.length <= 1 && (
-                                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                                    {profileMember.display_name}
-                                </span>
-                            )}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            aria-label="Close modal"
-                            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    </div>
+                <ModalHeader
+                    id={titleId}
+                    title="Edit Budget & Categories"
+                    subtitle={profileMember && members.length <= 1 ? profileMember.display_name : undefined}
+                    icon={<Sliders className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-lilac-light)"
+                    onClose={onClose}
+                />
 
-                    {/* Member Switcher Bar (when multiple household members exist) */}
-                    {members.length > 1 && (
-                        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl overflow-x-auto">
-                            {members.map((m) => {
-                                const isSelected = m.id === profile.owner_id;
-                                return (
-                                    <button
-                                        key={m.id}
-                                        type="button"
-                                        onClick={() => onSelectMember?.(m.id)}
-                                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                                            isSelected
-                                                ? "bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 shadow-2xs"
-                                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                                        }`}
-                                    >
-                                        <User className="h-3.5 w-3.5 shrink-0" />
-                                        <span>{m.display_name}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
+                {/* Member Switcher Bar (when multiple household members exist) */}
+                {members.length > 1 && (
+                    <div className="flex items-center gap-1.5 p-2 bg-(--bg-canvas) border-b border-(--border-subtle) overflow-x-auto shrink-0">
+                        {members.map((m) => {
+                            const isSelected = m.id === profile.owner_id;
+                            return (
+                                <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => onSelectMember?.(m.id)}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                                        isSelected
+                                            ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
+                                            : "text-(--text-muted) hover:text-(--text-ink)"
+                                    }`}
+                                >
+                                    <User className="h-3.5 w-3.5 shrink-0" />
+                                    <span>{m.display_name}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Scrollable Form Body */}
                 <form
                     onSubmit={handleSubmit}
-                    className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5"
+                    className="flex flex-col min-h-0 flex-1 overflow-hidden"
                 >
+                    <ModalBody className="p-4 sm:p-5 space-y-5">
                     {errorMessage && (
                         <div className="flex items-center gap-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300">
                             <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
@@ -998,13 +978,14 @@ export function BaseProfileEditorModal({
                             )}
                         </div>
                     </div>
+                    </ModalBody>
 
                     {/* Footer Actions */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <ModalFooter className="justify-between">
                         <button
                             type="button"
                             onClick={handleReset}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                         >
                             <RotateCcw className="h-3.5 w-3.5" />
                             <span>Reset</span>
@@ -1014,23 +995,23 @@ export function BaseProfileEditorModal({
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                                className="px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) rounded-xl hover:bg-(--pastel-cream) transition-all cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={!isValidTotal || isSubmitting}
-                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                             >
                                 <Save className="h-3.5 w-3.5" />
                                 <span>{isSubmitting ? "Saving..." : "Save Budget"}</span>
                             </button>
                         </div>
-                    </div>
+                    </ModalFooter>
                 </form>
             </div>
-        </div>
+        </AnimatedModal>
     );
 }
 

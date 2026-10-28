@@ -11,7 +11,6 @@
 
 import { useState, useMemo } from 'react';
 import {
-  X,
   Plus,
   Trash2,
   FileText,
@@ -20,7 +19,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
-import { AnimatedModal } from '../ui/AnimatedModal';
+import { AnimatedModal, ModalHeader, ModalFooter } from '../ui/AnimatedModal';
 import { financeService } from '../../services/financeService';
 import {
   SUPPORTED_CURRENCIES,
@@ -325,46 +324,28 @@ export function BulkAddExpenseModal({
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="max-w-4xl"
-      className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden"
     >
-      <div className="flex flex-col max-h-[90vh]">
+      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Bulk Add Expenses
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Rapid multi-row batch entry or paste receipts / text
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close modal"
-            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <ModalHeader
+          title="Bulk Add Expenses"
+          subtitle="Rapid multi-row batch entry or paste receipts / text"
+          icon={<Sparkles className="h-4.5 w-4.5 stroke-[2.5]" />}
+          iconBgColor="bg-(--pastel-lilac-light)"
+          onClose={onClose}
+        />
 
         {/* Global Controls & Tabs */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/60 px-6 py-3 dark:border-slate-800 dark:bg-slate-850">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--bg-card) px-6 py-3">
           {/* Mode Tabs */}
-          <div className="flex items-center rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800">
+          <div className="flex items-center rounded-xl bg-(--bg-canvas) p-1 border border-(--border-subtle)">
             <button
               type="button"
               onClick={() => setActiveTab('grid')}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'grid'
-                  ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-900 dark:text-emerald-400'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
+                  : 'text-(--text-muted) hover:text-(--text-ink)'
               }`}
             >
               <TableIcon className="h-3.5 w-3.5" />
@@ -375,8 +356,8 @@ export function BulkAddExpenseModal({
               onClick={() => setActiveTab('paste')}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'paste'
-                  ? 'bg-white text-emerald-700 shadow-xs dark:bg-slate-900 dark:text-emerald-400'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
+                  : 'text-(--text-muted) hover:text-(--text-ink)'
               }`}
             >
               <FileText className="h-3.5 w-3.5" />
@@ -599,20 +580,20 @@ export function BulkAddExpenseModal({
         </div>
 
         {/* Footer Summary & Submit */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-850">
-          <div className="text-xs text-slate-600 dark:text-slate-400">
-            <span className="font-bold text-slate-900 dark:text-white">{summary.count} item{summary.count === 1 ? '' : 's'}</span> totaling{' '}
-            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">
+        <ModalFooter className="justify-between">
+          <div className="text-xs text-(--text-muted)">
+            <span className="font-bold text-(--text-ink)">{summary.count} item{summary.count === 1 ? '' : 's'}</span> totaling{' '}
+            <span className="font-black text-(--text-ink) text-sm font-mono-num">
               {formatSGD(summary.totalSGD)}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
             >
               Cancel
             </button>
@@ -620,13 +601,13 @@ export function BulkAddExpenseModal({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || summary.count === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <CheckCircle2 className="h-4 w-4" />
               <span>{isSubmitting ? 'Saving All...' : `Log All (${summary.count})`}</span>
             </button>
           </div>
-        </div>
+        </ModalFooter>
       </div>
     </AnimatedModal>
   );

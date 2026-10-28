@@ -2,14 +2,16 @@
  * QuickDepositModal Component
  * Accessible dialog to quickly deposit funds into a savings goal.
  * Features:
- * - Quick preset chips (+S$100, +S$500, +S$1,000, +S$5,000)
+ * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
+ * - Quick preset chips (+S$100, +S$250, +S$500, +S$1,000, +S$5,000)
  * - Custom numeric deposit input
  * - Live preview of updated balance and new progress %
  * - Updates goal saved_so_far via financeService.updateGoal
  */
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { X, Coins, AlertCircle } from "lucide-react";
+import { Coins, AlertCircle } from "lucide-react";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import type { SavingsGoal } from "../../types/finance";
@@ -23,7 +25,12 @@ export interface QuickDepositModalProps {
 
 const DEPOSIT_PRESETS = [100, 250, 500, 1000, 5000];
 
-export function QuickDepositModal({ isOpen, onClose, goal, onDepositSaved }: QuickDepositModalProps) {
+export function QuickDepositModal({
+    isOpen,
+    onClose,
+    goal,
+    onDepositSaved,
+}: QuickDepositModalProps) {
     const depositInputRef = useRef<HTMLInputElement>(null);
 
     const [depositAmount, setDepositAmount] = useState<string>("");
@@ -42,17 +49,6 @@ export function QuickDepositModal({ isOpen, onClose, goal, onDepositSaved }: Qui
             return () => clearTimeout(timer);
         }
     }, [isOpen, goal]);
-
-    // Handle ESC key to dismiss
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isOpen) {
-                onClose();
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
 
     if (!isOpen || !goal) return null;
 
@@ -86,145 +82,115 @@ export function QuickDepositModal({ isOpen, onClose, goal, onDepositSaved }: Qui
     };
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="deposit-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    onClose();
-                }
-            }}
-        >
-            <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-                            <Coins className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h2
-                                id="deposit-modal-title"
-                                className="text-lg font-bold text-slate-900 dark:text-white"
-                            >
-                                Quick Deposit
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                <span>{goal.emoji}</span>
-                                <span className="font-semibold">{goal.title}</span>
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Close modal"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                <ModalHeader
+                    id="deposit-modal-title"
+                    title="Quick Deposit"
+                    subtitle={`Deposit into ${goal.title}`}
+                    icon={<Coins className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-butter-light)"
+                    onClose={onClose}
+                />
 
-                {/* Error Alert */}
-                {errorMessage && (
-                    <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-                        <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
-                        <span>{errorMessage}</span>
-                    </div>
-                )}
+                <ModalBody>
+                    {/* Error Alert */}
+                    {errorMessage && (
+                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                            <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                            <span>{errorMessage}</span>
+                        </div>
+                    )}
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-4 space-y-4"
-                >
-                    {/* Quick Preset Buttons */}
+                    {/* Quick Deposit Chips */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                            Quick Presets
+                        <label className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            Quick Deposit Presets
                         </label>
-                        <div className="flex flex-wrap gap-2">
-                            {DEPOSIT_PRESETS.map((amount) => (
+                        <div className="flex flex-wrap gap-1.5">
+                            {DEPOSIT_PRESETS.map((amt) => (
                                 <button
-                                    key={amount}
+                                    key={amt}
                                     type="button"
-                                    onClick={() => setDepositAmount(amount.toString())}
-                                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 transition-all"
+                                    onClick={() => setDepositAmount(amt.toString())}
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                        numericDeposit === amt
+                                            ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                            : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
+                                    }`}
                                 >
-                                    +{formatSGD(amount)}
+                                    +{formatSGD(amt)}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Deposit Amount Input */}
+                    {/* Custom Deposit Amount */}
                     <div>
                         <label
-                            htmlFor="quick-deposit-amount"
-                            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                            htmlFor="deposit-amount"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Deposit Amount (S$) <span className="text-rose-500">*</span>
+                            Deposit Amount (S$) *
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                                S$
-                            </span>
+                            <span className="absolute left-3 top-2.5 text-base font-bold text-(--text-muted)">S$</span>
                             <input
-                                id="quick-deposit-amount"
+                                id="deposit-amount"
                                 ref={depositInputRef}
                                 type="number"
-                                step="any"
+                                step="0.01"
                                 min="0.01"
                                 required
-                                aria-label="Deposit Amount"
-                                placeholder="500.00"
+                                placeholder="0.00"
                                 value={depositAmount}
                                 onChange={(e) => setDepositAmount(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-10 pr-3.5 py-2.5 text-lg font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             />
                         </div>
                     </div>
 
-                    {/* Balance Preview */}
-                    <div className="rounded-xl bg-slate-50 p-3 text-xs border border-slate-100 dark:bg-slate-800/60 dark:border-slate-800">
-                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
-                            <span>Current Saved:</span>
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                {formatSGD(goal.saved_so_far)}
-                            </span>
+                    {/* Updated Progress Preview */}
+                    {numericDeposit > 0 && (
+                        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 text-xs shadow-cute-sm space-y-2">
+                            <div className="flex justify-between font-bold text-(--text-ink)">
+                                <span>Projected Balance:</span>
+                                <span className="font-mono-num">{formatSGD(newSavedSoFar)}</span>
+                            </div>
+                            <div className="w-full h-2 rounded-full bg-(--bg-canvas) border border-(--border-ink) overflow-hidden">
+                                <div
+                                    className="h-full bg-(--pastel-lilac) transition-all duration-300"
+                                    style={{ width: `${newProgressPercent}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between text-[11px] text-(--text-muted)">
+                                <span>New Progress:</span>
+                                <span className="font-bold text-(--text-ink)">{newProgressPercent}%</span>
+                            </div>
                         </div>
-                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
-                            <span>New Saved Total:</span>
-                            <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                {formatSGD(newSavedSoFar)}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 border-t border-slate-200/60 pt-1.5 dark:border-slate-700/60">
-                            <span>New Progress:</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{newProgressPercent}%</span>
-                        </div>
-                    </div>
+                    )}
+                </ModalBody>
 
-                    {/* Actions */}
-                    <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 disabled:opacity-50 transition-colors"
-                        >
-                            {isSubmitting ? "Depositing..." : "Confirm Deposit"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <ModalFooter>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || numericDeposit <= 0}
+                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                    >
+                        <Coins className="h-4 w-4 stroke-[2.5]" />
+                        <span>{isSubmitting ? "Depositing..." : "Confirm Deposit"}</span>
+                    </button>
+                </ModalFooter>
+            </form>
+        </AnimatedModal>
     );
 }
+
+export default QuickDepositModal;

@@ -8,7 +8,6 @@
  */
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { Sun, Moon, Plus, ChevronDown, Check, LogOut, AlertTriangle, Download } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
@@ -19,6 +18,7 @@ import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { Button } from "../ui/Button";
 import { BubbyIcon } from "../ui/BubbyIcon";
+import { AnimatedModal, ModalHeader, ModalFooter } from "../ui/AnimatedModal";
 
 export interface AppHeaderProps {
     className?: string;
@@ -343,60 +343,40 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
             </div>
 
             {/* Logout Confirmation Modal */}
-            {isLogoutConfirmOpen &&
-                typeof document !== "undefined" &&
-                createPortal(
-                    <div
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="logout-title"
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-hidden"
-                        onClick={() => setIsLogoutConfirmOpen(false)}
-                    >
-                        <div
-                            className="w-full max-w-sm rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) p-5 shadow-(--shadow-cute-lg) animate-in zoom-in-95 duration-150"
-                            onClick={(e) => e.stopPropagation()}
+            <AnimatedModal
+                isOpen={isLogoutConfirmOpen}
+                onClose={() => setIsLogoutConfirmOpen(false)}
+                maxWidth="max-w-sm"
+            >
+                <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                    <ModalHeader
+                        title="Lock & Sign Out?"
+                        subtitle="You will need your 6-digit PIN to unlock again."
+                        icon={<AlertTriangle className="h-5 w-5 stroke-[2.5] text-rose-700" />}
+                        iconBgColor="bg-rose-100"
+                        onClose={() => setIsLogoutConfirmOpen(false)}
+                    />
+                    <ModalFooter className="justify-end gap-2.5">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsLogoutConfirmOpen(false)}
                         >
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff1ee] text-[#9a1b1b] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                    <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
-                                </div>
-                                <div>
-                                    <h3
-                                        id="logout-title"
-                                        className="text-sm font-black text-(--text-ink) font-display"
-                                    >
-                                        Lock &amp; Sign Out?
-                                    </h3>
-                                    <p className="text-xs font-medium text-(--text-muted)">
-                                        You will need your 6-digit PIN to unlock again.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2.5 mt-5 pt-3 border-t-[1.5px] border-(--border-subtle)">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setIsLogoutConfirmOpen(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => {
-                                        setIsLogoutConfirmOpen(false);
-                                        signOut();
-                                    }}
-                                >
-                                    Sign Out
-                                </Button>
-                            </div>
-                        </div>
-                    </div>,
-                    document.body,
-                )}
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => {
+                                setIsLogoutConfirmOpen(false);
+                                signOut();
+                            }}
+                        >
+                            Sign Out
+                        </Button>
+                    </ModalFooter>
+                </div>
+            </AnimatedModal>
 
             {/* iOS install modal when prompt triggered from menu */}
             <IOSInstallModal

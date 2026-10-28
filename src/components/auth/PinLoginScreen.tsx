@@ -4,9 +4,18 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Delete, RotateCcw, AlertCircle, Loader2, Fingerprint, ScanFace, CheckCircle2 } from "lucide-react";
+import {
+    Delete,
+    RotateCcw,
+    AlertCircle,
+    Loader2,
+    Fingerprint,
+    ScanFace,
+    CheckCircle2,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { BubbyIcon } from "../ui/BubbyIcon";
+import { AnimatedModal } from "../ui/AnimatedModal";
 import {
     isBiometricsAvailable,
     isBiometricsEnrolled,
@@ -26,9 +35,12 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Biometrics States
-    const [biometricsAvailable, setBiometricsAvailable] = useState<boolean>(false);
-    const [biometricsEnrolled, setBiometricsEnrolled] = useState<boolean>(false);
-    const [isBiometricAuthenticating, setIsBiometricAuthenticating] = useState<boolean>(false);
+    const [biometricsAvailable, setBiometricsAvailable] =
+        useState<boolean>(false);
+    const [biometricsEnrolled, setBiometricsEnrolled] =
+        useState<boolean>(false);
+    const [isBiometricAuthenticating, setIsBiometricAuthenticating] =
+        useState<boolean>(false);
     const [biometricError, setBiometricError] = useState<string | null>(null);
 
     // Enrollment Prompt Modal State
@@ -69,15 +81,25 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     return;
                 }
             }
-            setBiometricError("Biometric verification failed. Please enter your PIN.");
+            setBiometricError(
+                "Biometric verification failed. Please enter your PIN.",
+            );
         } catch (err: unknown) {
             const message =
-                err instanceof Error ? err.message : "Biometric authentication was cancelled or unavailable.";
+                err instanceof Error
+                    ? err.message
+                    : "Biometric authentication was cancelled or unavailable.";
             setBiometricError(message);
         } finally {
             setIsBiometricAuthenticating(false);
         }
-    }, [authLoading, isBiometricAuthenticating, clearAuthError, signInWithPin, onSuccess]);
+    }, [
+        authLoading,
+        isBiometricAuthenticating,
+        clearAuthError,
+        signInWithPin,
+        onSuccess,
+    ]);
 
     // Handle PIN submission
     const processPinSubmission = useCallback(
@@ -183,7 +205,13 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [authLoading, showEnrollPrompt, handleDigit, handleBackspace, handleClear]);
+    }, [
+        authLoading,
+        showEnrollPrompt,
+        handleDigit,
+        handleBackspace,
+        handleClear,
+    ]);
 
     // Focus container on mount
     useEffect(() => {
@@ -204,9 +232,12 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     <BubbyIcon className="h-13 w-13" />
                 </div>
 
-                <h1 className="text-2xl font-black tracking-tight text-(--text-ink) mb-1 font-display">Budget Bubby</h1>
+                <h1 className="text-2xl font-black tracking-tight text-(--text-ink) mb-1 font-display">
+                    Budget Bubby
+                </h1>
                 <p className="text-xs font-semibold text-(--text-muted) mb-6 text-center">
-                    Enter your 6-digit PIN to unlock <span className="opacity-40">•</span>{" "}
+                    Enter your 6-digit PIN to unlock{" "}
+                    <span className="opacity-40">•</span>{" "}
                     <button
                         type="button"
                         onClick={() => processPinSubmission("000000")}
@@ -254,7 +285,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                                 data-testid={`pin-dot-${idx}`}
                                 className={`h-4.5 w-4.5 rounded-full border-[1.5px] border-(--border-ink) transition-all duration-150 ${
                                     isFilled
-                                        ? "bg-emerald-400 bg-[#dfc2ff] scale-110 shadow-(--shadow-cute-sm)"
+                                        ? "bg-emerald-400 scale-110 shadow-(--shadow-cute-sm)"
                                         : "bg-(--bg-card)"
                                 }`}
                             />
@@ -361,66 +392,62 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
             </div>
 
             {/* Biometrics Enrollment Dialog */}
-            {showEnrollPrompt && (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="enroll-biometrics-title"
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in overflow-hidden"
-                >
-                    <div className="w-full max-w-sm rounded-3xl bg-(--bg-card) border-2 border-(--border-ink) p-6 shadow-(--shadow-cute-lg) animate-in zoom-in-95">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dfc2ff] text-[#1a1a1a] mb-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                <Fingerprint className="h-8 w-8 stroke-[2.5]" />
-                            </div>
+            <AnimatedModal
+                isOpen={showEnrollPrompt}
+                onClose={handleSkipEnrollment}
+                maxWidth="max-w-sm"
+            >
+                <div className="flex flex-col min-h-0 flex-1 overflow-hidden p-6 text-center items-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--pastel-lilac) text-(--text-ink) mb-4 border-2 border-(--border-ink) shadow-cute-sm">
+                        <Fingerprint className="h-8 w-8 stroke-[2.5]" />
+                    </div>
 
-                            <h2
-                                id="enroll-biometrics-title"
-                                className="text-lg font-black text-(--text-ink) mb-2 font-display"
-                            >
-                                Enable Biometric Login?
-                            </h2>
+                    <h2
+                        id="enroll-biometrics-title"
+                        className="text-lg font-black text-(--text-ink) mb-2 font-display"
+                    >
+                        Enable Biometric Login?
+                    </h2>
 
-                            <p className="text-xs font-medium text-(--text-muted) mb-6 leading-relaxed">
-                                Unlock Budget Bubby faster next time using Touch ID, Face ID, or your device fingerprint
-                                without entering your 6-digit PIN.
-                            </p>
+                    <p className="text-xs font-medium text-(--text-muted) mb-6 leading-relaxed">
+                        Unlock Budget Bubby faster next time using Touch ID,
+                        Face ID, or your device fingerprint without entering
+                        your 6-digit PIN.
+                    </p>
 
-                            <div className="w-full flex flex-col gap-2.5">
-                                <button
-                                    type="button"
-                                    data-testid="confirm-enroll-biometrics-btn"
-                                    disabled={isEnrolling}
-                                    onClick={handleConfirmEnrollment}
-                                    className="w-full py-3 rounded-xl bg-[#dfc2ff] hover:bg-[#1a1a1a] hover:text-[#fbf7f1] text-[#1a1a1a] text-xs font-black border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                                >
-                                    {isEnrolling ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                                            <span>Enrolling Device...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
-                                            <span>Enable Biometrics</span>
-                                        </>
-                                    )}
-                                </button>
+                    <div className="w-full flex flex-col gap-2.5">
+                        <button
+                            type="button"
+                            data-testid="confirm-enroll-biometrics-btn"
+                            disabled={isEnrolling}
+                            onClick={handleConfirmEnrollment}
+                            className="w-full py-3 rounded-xl bg-(--pastel-lilac) hover:bg-(--pastel-lilac-dark) text-(--text-ink) text-xs font-black border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                            {isEnrolling ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+                                    <span>Enrolling Device...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
+                                    <span>Enable Biometrics</span>
+                                </>
+                            )}
+                        </button>
 
-                                <button
-                                    type="button"
-                                    data-testid="skip-enroll-biometrics-btn"
-                                    disabled={isEnrolling}
-                                    onClick={handleSkipEnrollment}
-                                    className="w-full py-2.5 rounded-xl bg-(--bg-cream) hover:bg-(--bg-card) border-[1.5px] border-(--border-subtle) text-(--text-ink) text-xs font-bold transition-all cursor-pointer"
-                                >
-                                    Skip for Now
-                                </button>
-                            </div>
-                        </div>
+                        <button
+                            type="button"
+                            data-testid="skip-enroll-biometrics-btn"
+                            disabled={isEnrolling}
+                            onClick={handleSkipEnrollment}
+                            className="w-full py-2.5 rounded-xl bg-(--bg-cream) hover:bg-(--pastel-cream) border-2 border-(--border-subtle) text-(--text-ink) text-xs font-bold transition-all cursor-pointer"
+                        >
+                            Skip for Now
+                        </button>
                     </div>
                 </div>
-            )}
+            </AnimatedModal>
         </div>
     );
 }

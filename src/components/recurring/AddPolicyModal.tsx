@@ -2,6 +2,7 @@
  * AddPolicyModal Component
  * Dialog modal for creating or editing recurring policies, taxes, and subscriptions.
  * Features:
+ * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
  * - Pre-filling for editing existing policies
  * - Field validation (Name required, positive Amount)
  * - Frequency selector with conditional renewal month input
@@ -9,10 +10,11 @@
  */
 
 import { useState, useEffect, type FormEvent } from "react";
-import { X, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import type { RecurringPolicy, RecurringPolicyType, RecurringFrequency, CreatePolicyInput } from "../../types/finance";
 import { useHousehold } from "../../context/HouseholdContext";
 import { mockMembers } from "../../data/mockSeedData";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 
 function useSafeHousehold() {
     try {
@@ -55,12 +57,16 @@ const MONTH_OPTIONS = [
     { value: 12, label: "December" },
 ];
 
-export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }: AddPolicyModalProps) {
+export function AddPolicyModal({
+    isOpen,
+    onClose,
+    onSave,
+    initialPolicy = null,
+}: AddPolicyModalProps) {
     const { members, activeMember } = useSafeHousehold();
 
     // Find member IDs
     const yiJiaMember = members.find((m) => m.display_name.toLowerCase().includes("yi jia"));
-    const rachelMember = members.find((m) => m.display_name.toLowerCase().includes("rachel"));
 
     const defaultOwnerId = activeMember?.id || yiJiaMember?.id || "mem-00000000-0011";
 
@@ -86,7 +92,7 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
                 setAmount(String(initialPolicy.amount));
                 setFrequency(initialPolicy.frequency);
                 setPaymentMonth(initialPolicy.payment_month || 1);
-                setStartDate(initialPolicy.start_date || "");
+                setStartDate(initialPolicy.start_date ? initialPolicy.start_date.substring(0, 10) : "");
                 setNotes(initialPolicy.notes || "");
             } else {
                 setName("");
@@ -94,7 +100,7 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
                 setOwnerId(defaultOwnerId);
                 setAmount("");
                 setFrequency("annually");
-                setPaymentMonth(9); // Default to Sep
+                setPaymentMonth(1);
                 setStartDate("");
                 setNotes("");
             }
@@ -103,23 +109,12 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
         }
     }, [isOpen, initialPolicy, defaultOwnerId]);
 
-    // Handle ESC key to dismiss
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
-
     if (!isOpen) return null;
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setErrorMessage(null);
 
-        // Validation
         const trimmedName = name.trim();
         if (!trimmedName) {
             setErrorMessage("Policy name is required.");
@@ -161,84 +156,53 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
     const isEditing = Boolean(initialPolicy?.id);
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-headline"
-            onClick={onClose}
-            className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-                            <Shield className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h3
-                                id="modal-headline"
-                                className="text-lg font-bold text-slate-900 dark:text-white"
-                            >
-                                {isEditing ? "Edit Recurring Policy" : "Add Recurring Policy"}
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {isEditing
-                                    ? "Update renewal dates or premium amounts"
-                                    : "Track insurance, tax obligations, or recurring subscriptions"}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Close modal"
-                        className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                <ModalHeader
+                    id="modal-headline"
+                    title={isEditing ? "Edit Recurring Policy" : "Add Recurring Policy"}
+                    subtitle={
+                        isEditing
+                            ? "Update renewal dates or premium amounts"
+                            : "Track insurance, tax obligations, or recurring subscriptions"
+                    }
+                    icon={<Shield className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-butter-light)"
+                    onClose={onClose}
+                />
 
-                {/* Error notification */}
-                {errorMessage && (
-                    <div className="mx-6 mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
-                        {errorMessage}
-                    </div>
-                )}
+                <ModalBody>
+                    {/* Error notification */}
+                    {errorMessage && (
+                        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
+                            {errorMessage}
+                        </div>
+                    )}
 
-                {/* Form */}
-                <form
-                    onSubmit={handleSubmit}
-                    className="p-6 space-y-4"
-                >
                     {/* Policy Name */}
                     <div>
                         <label
                             htmlFor="policy-name"
-                            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Policy Name
+                            Policy Name *
                         </label>
                         <input
                             id="policy-name"
                             type="text"
+                            placeholder="e.g. AIA Guaranteed Protect Plus, IncomeShield"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Manulife LifeReady 25, IRAS Income Tax"
-                            className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                            className="w-full px-3.5 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
-                    {/* Type & Owner Row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Type */}
+                    {/* Type and Owner grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label
                                 htmlFor="policy-type"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Type
                             </label>
@@ -246,19 +210,19 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
                                 id="policy-type"
                                 value={type}
                                 onChange={(e) => setType(e.target.value as RecurringPolicyType)}
-                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             >
-                                <option value="insurance">Insurance</option>
-                                <option value="tax">Tax</option>
-                                <option value="subscription">Subscription</option>
+                                <option value="insurance">🛡️ Life / Health Insurance</option>
+                                <option value="tax">🏛️ Income / Property Tax</option>
+                                <option value="subscription">📱 Subscription (Netflix, Spotify)</option>
+                                <option value="other">📦 Other Recurring</option>
                             </select>
                         </div>
 
-                        {/* Owner */}
                         <div>
                             <label
                                 htmlFor="policy-owner"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Owner
                             </label>
@@ -266,47 +230,50 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
                                 id="policy-owner"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
-                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             >
-                                {yiJiaMember && <option value={yiJiaMember.id}>👨 Yi Jia</option>}
-                                {rachelMember && <option value={rachelMember.id}>👩 Rachel</option>}
-                                <option value="joint">👥 Joint Household</option>
+                                {members.map((m) => (
+                                    <option
+                                        key={m.id}
+                                        value={m.id}
+                                    >
+                                        👤 {m.display_name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
 
-                    {/* Amount & Frequency Row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Premium Amount */}
+                    {/* Amount & Frequency grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label
                                 htmlFor="policy-amount"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Premium Amount
+                                Premium Amount *
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold">
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
                                     S$
                                 </span>
                                 <input
                                     id="policy-amount"
                                     type="number"
                                     step="0.01"
-                                    min="0"
+                                    min="0.01"
+                                    placeholder="1200.00"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0.00"
-                                    className="w-full pl-8 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                    className="w-full pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
 
-                        {/* Frequency */}
                         <div>
                             <label
                                 htmlFor="policy-frequency"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Frequency
                             </label>
@@ -314,67 +281,63 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
                                 id="policy-frequency"
                                 value={frequency}
                                 onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
-                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             >
-                                <option value="annually">Annually</option>
-                                <option value="monthly">Monthly</option>
+                                <option value="annually">Once a year (Annual)</option>
+                                <option value="monthly">Every month (Monthly)</option>
                             </select>
                         </div>
                     </div>
 
-                    {/* Conditional Renewal Month (for annual policies) & Start Date */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Renewal Month */}
+                    {/* Conditional Renewal Month (Only if Annual) */}
+                    {frequency === "annually" && (
                         <div>
                             <label
-                                htmlFor="policy-renewal-month"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                                htmlFor="policy-month"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Renewal Month
                             </label>
                             <select
-                                id="policy-renewal-month"
+                                id="policy-month"
                                 value={paymentMonth}
-                                disabled={frequency === "monthly"}
                                 onChange={(e) => setPaymentMonth(Number(e.target.value))}
-                                className={`w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${
-                                    frequency === "monthly" ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                                className="w-full px-3 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             >
-                                {MONTH_OPTIONS.map((opt) => (
+                                {MONTH_OPTIONS.map((m) => (
                                     <option
-                                        key={opt.value}
-                                        value={opt.value}
+                                        key={m.value}
+                                        value={m.value}
                                     >
-                                        {opt.label} (Month {opt.value})
+                                        📅 {m.label}
                                     </option>
                                 ))}
                             </select>
                         </div>
+                    )}
 
-                        {/* Start Date */}
-                        <div>
-                            <label
-                                htmlFor="policy-start-date"
-                                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
-                            >
-                                Start Date
-                            </label>
-                            <input
-                                id="policy-start-date"
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                            />
-                        </div>
+                    {/* Start Date */}
+                    <div>
+                        <label
+                            htmlFor="policy-start-date"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                        >
+                            Policy Inception / Start Date (Optional)
+                        </label>
+                        <input
+                            id="policy-start-date"
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-3 py-2 text-xs font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                        />
                     </div>
 
                     {/* Notes */}
                     <div>
                         <label
                             htmlFor="policy-notes"
-                            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
                             Notes
                         </label>
@@ -384,30 +347,29 @@ export function AddPolicyModal({ isOpen, onClose, onSave, initialPolicy = null }
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="e.g. GIRO deduction, hospital plan rider details..."
-                            className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+                            className="w-full px-3.5 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) resize-none"
                         />
                     </div>
+                </ModalBody>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="px-5 py-2 text-sm font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 focus:outline-none focus:ring-2 focus:ring-emerald-600/40 disabled:opacity-50 transition-all"
-                        >
-                            {isSubmitting ? "Saving..." : "Save Policy"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <ModalFooter>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                    >
+                        {isSubmitting ? "Saving..." : "Save Policy"}
+                    </button>
+                </ModalFooter>
+            </form>
+        </AnimatedModal>
     );
 }
 

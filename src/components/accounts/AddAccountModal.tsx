@@ -8,7 +8,6 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  X,
   Plus,
   Landmark,
   AlertCircle,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { Account, AccountType, HouseholdMember } from '../../types/finance';
 import { financeService } from '../../services/financeService';
-import { AnimatedModal } from '../ui/AnimatedModal';
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from '../ui/AnimatedModal';
 
 export interface AddAccountModalProps {
   isOpen: boolean;
@@ -145,31 +144,17 @@ export function AddAccountModal({
 
   return (
     <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+      <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
         {/* Header */}
-        <div className="p-5 sm:p-6 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <Landmark className="h-4.5 w-4.5" />
-            </div>
-            <h2 id="add-account-title" className="text-base font-bold text-slate-900 dark:text-white">
-              Add New Account
-            </h2>
-          </div>
+        <ModalHeader
+          id="add-account-title"
+          title="Add New Account"
+          icon={<Landmark className="h-4.5 w-4.5 stroke-[2.5]" />}
+          iconBgColor="bg-(--pastel-butter-light)"
+          onClose={onClose}
+        />
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Form wrapping scrollable content and pinned footer */}
-        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-3.5">
+        <ModalBody>
             {/* Empty State Banner (if 0 accounts exist) */}
             {isInitialSetup && (
               <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 flex items-start gap-2.5">
@@ -387,38 +372,37 @@ export function AddAccountModal({
                 </div>
               )}
             </div>
-          </div>
+        </ModalBody>
 
-          {/* Action Buttons Footer */}
-          <div className="flex items-center justify-end gap-2.5 p-4 sm:p-5 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 active:scale-95 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-                  <span>Create Account</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Action Buttons Footer */}
+        <ModalFooter>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>Create Account</span>
+              </>
+            )}
+          </button>
+        </ModalFooter>
+      </form>
     </AnimatedModal>
   );
 }

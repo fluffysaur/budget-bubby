@@ -28,12 +28,11 @@ import {
     ChevronRight,
     ReceiptText,
     DollarSign,
-    X,
     FileCheck2,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { StatCard } from "../ui/StatCard";
-import { AnimatedModal } from "../ui/AnimatedModal";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import {
@@ -713,35 +712,19 @@ export function CreditCardTrackerSection({
                 onClose={() => setIsLogStatementOpen(false)}
                 maxWidth="max-w-md"
             >
-                <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-                    <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-2">
-                            <ReceiptText className="h-5 w-5 text-indigo-600" />
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    {existingStatement
-                                        ? "Edit Statement"
-                                        : "Log Monthly Statement"}
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {statementCard?.name} •{" "}
-                                    {formatDisplayMonth(selectedMonth)}
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setIsLogStatementOpen(false)}
-                            className="text-slate-400 hover:text-slate-600 p-1"
-                        >
-                            <X className="h-5 w-5" />
-                        </button>
-                    </div>
+                <form
+                    onSubmit={handleSaveStatement}
+                    className="flex flex-col min-h-0 flex-1 overflow-hidden"
+                >
+                    <ModalHeader
+                        title={existingStatement ? "Edit Statement" : "Log Monthly Statement"}
+                        subtitle={`${statementCard?.name || ""} • ${formatDisplayMonth(selectedMonth)}`}
+                        icon={<ReceiptText className="h-5 w-5 stroke-[2.5]" />}
+                        iconBgColor="bg-(--pastel-lilac)"
+                        onClose={() => setIsLogStatementOpen(false)}
+                    />
 
-                    <form
-                        onSubmit={handleSaveStatement}
-                        className="p-5 space-y-4"
-                    >
+                    <ModalBody className="p-5 space-y-4">
                         {stmtError && (
                             <div className="p-3 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
                                 {stmtError}
@@ -810,25 +793,25 @@ export function CreditCardTrackerSection({
                                 className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
                             />
                         </div>
+                    </ModalBody>
 
-                        <div className="flex items-center justify-end gap-2 pt-2">
-                            <Button
-                                variant="secondary"
-                                type="button"
-                                onClick={() => setIsLogStatementOpen(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="primary"
-                                type="submit"
-                                disabled={isSavingStmt}
-                            >
-                                {isSavingStmt ? "Saving..." : "Save Statement"}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
+                    <ModalFooter className="justify-end gap-2">
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            onClick={() => setIsLogStatementOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="primary"
+                            type="submit"
+                            disabled={isSavingStmt}
+                        >
+                            {isSavingStmt ? "Saving..." : "Save Statement"}
+                        </Button>
+                    </ModalFooter>
+                </form>
             </AnimatedModal>
 
             {/* Delete Card Confirmation Modal */}
@@ -838,47 +821,42 @@ export function CreditCardTrackerSection({
                     onClose={() => setCardToDelete(null)}
                     maxWidth="max-w-sm"
                 >
-                    <div className="p-6 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
-                                <Trash2 className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                    Delete Credit Card
-                                </h3>
-                                <p className="text-xs text-slate-500">
-                                    This action cannot be undone.
-                                </p>
-                            </div>
-                        </div>
+                    <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                        <ModalHeader
+                            title="Delete Credit Card"
+                            subtitle="This action cannot be undone."
+                            icon={<Trash2 className="h-5 w-5 stroke-[2.5] text-rose-700" />}
+                            iconBgColor="bg-rose-100"
+                            onClose={() => setCardToDelete(null)}
+                        />
 
-                        <p className="text-xs text-slate-600 dark:text-slate-300">
-                            Are you sure you want to delete{" "}
-                            <span className="font-bold">
-                                {cardToDelete.name}
-                            </span>
-                            ? All logged monthly statements for this card will
-                            also be removed.
-                        </p>
+                        <ModalBody className="p-5">
+                            <p className="text-xs text-(--text-muted) leading-relaxed">
+                                Are you sure you want to delete{" "}
+                                <span className="font-bold text-(--text-ink)">
+                                    {cardToDelete.name}
+                                </span>
+                                ? All logged monthly statements for this card will
+                                also be removed.
+                            </p>
+                        </ModalBody>
 
-                        <div className="flex items-center justify-end gap-2 pt-2">
+                        <ModalFooter className="justify-end gap-2">
                             <Button
                                 variant="secondary"
                                 onClick={() => setCardToDelete(null)}
                             >
                                 Cancel
                             </Button>
-                            <button
-                                type="button"
+                            <Button
+                                variant="danger"
                                 onClick={() =>
                                     handleDeleteCard(cardToDelete.id)
                                 }
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer"
                             >
                                 Delete Card
-                            </button>
-                        </div>
+                            </Button>
+                        </ModalFooter>
                     </div>
                 </AnimatedModal>
             )}

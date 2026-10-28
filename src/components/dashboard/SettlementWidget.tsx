@@ -7,11 +7,12 @@
  */
 
 import { useState, useMemo } from "react";
-import { Scale, CheckCircle2, ArrowRightLeft, CheckCheck, X, AlertTriangle, Loader2 } from "lucide-react";
+import { Scale, CheckCircle2, ArrowRightLeft, CheckCheck, AlertTriangle, Loader2 } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import { mockMembers } from "../../data/mockSeedData";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import type { Expense, HouseholdMember, SettlementSummary } from "../../types/finance";
 
 export interface SettlementWidgetProps {
@@ -227,87 +228,71 @@ export function SettlementWidget({
             </div>
 
             {/* Confirmation Modal */}
-            {isConfirmOpen && (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="settle-dialog-title"
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-hidden"
-                >
-                    <div className="w-full max-w-md rounded-3xl bg-(--bg-card) p-6 shadow-(--shadow-cute-lg) border-2 border-(--border-ink) animate-in fade-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between pb-3 border-b-[1.5px] border-(--border-subtle)">
-                            <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#bbf7d0] text-[#14532d] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                    <CheckCheck className="h-4 w-4" />
-                                </div>
-                                <h4
-                                    id="settle-dialog-title"
-                                    className="text-base font-bold text-slate-900 dark:text-white"
-                                >
-                                    Confirm Settlement
-                                </h4>
+            <AnimatedModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                maxWidth="max-w-md"
+            >
+                <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                    <ModalHeader
+                        id="settle-dialog-title"
+                        title="Confirm Settlement"
+                        icon={<CheckCheck className="h-5 w-5 stroke-[2.5] text-emerald-700" />}
+                        iconBgColor="bg-(--pastel-mint)"
+                        onClose={() => setIsConfirmOpen(false)}
+                    />
+
+                    <ModalBody className="p-5 space-y-4">
+                        <p className="text-xs sm:text-sm text-(--text-muted) leading-relaxed">
+                            Are you sure you want to mark all shared couple expenses between{" "}
+                            <strong className="text-(--text-ink)">{m1.display_name}</strong> and{" "}
+                            <strong className="text-(--text-ink)">{m2.display_name}</strong> as
+                            settled?
+                        </p>
+                        <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40">
+                            <div className="flex items-start gap-2">
+                                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                                <span>
+                                    Current outstanding balance is <strong>{formatSGD(summary.netBalance)}</strong>.
+                                    After settling, the net balance will reset to S$0.00.
+                                </span>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setIsConfirmOpen(false)}
-                                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
                         </div>
 
-                        <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                            <p>
-                                Are you sure you want to mark all shared couple expenses between{" "}
-                                <strong className="text-slate-900 dark:text-white">{m1.display_name}</strong> and{" "}
-                                <strong className="text-slate-900 dark:text-white">{m2.display_name}</strong> as
-                                settled?
-                            </p>
-                            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40">
-                                <div className="flex items-start gap-2">
-                                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                                    <span>
-                                        Current outstanding balance is <strong>{formatSGD(summary.netBalance)}</strong>.
-                                        After settling, the net balance will reset to S$0.00.
-                                    </span>
-                                </div>
+                        {errorMessage && (
+                            <div className="rounded-xl bg-rose-50 p-2 text-xs text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                                {errorMessage}
                             </div>
+                        )}
+                    </ModalBody>
 
-                            {errorMessage && (
-                                <div className="rounded-xl bg-rose-50 p-2 text-xs text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-                                    {errorMessage}
-                                </div>
+                    <ModalFooter className="justify-end gap-2.5">
+                        <button
+                            type="button"
+                            onClick={() => setIsConfirmOpen(false)}
+                            disabled={isSettling}
+                            className="px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) rounded-xl hover:bg-(--pastel-cream) transition-all cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleConfirmSettleUp}
+                            disabled={isSettling}
+                            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        >
+                            {isSettling ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>Settling...</span>
+                                </>
+                            ) : (
+                                <span>Confirm Settlement</span>
                             )}
-                        </div>
-
-                        <div className="mt-6 flex items-center justify-end gap-2.5">
-                            <button
-                                type="button"
-                                onClick={() => setIsConfirmOpen(false)}
-                                disabled={isSettling}
-                                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmSettleUp}
-                                disabled={isSettling}
-                                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs transition-colors cursor-pointer"
-                            >
-                                {isSettling ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        <span>Settling...</span>
-                                    </>
-                                ) : (
-                                    <span>Confirm Settlement</span>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                        </button>
+                    </ModalFooter>
                 </div>
-            )}
+            </AnimatedModal>
         </div>
     );
 }

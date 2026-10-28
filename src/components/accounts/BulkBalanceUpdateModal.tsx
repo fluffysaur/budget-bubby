@@ -6,11 +6,12 @@
  */
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
-import { X, CalendarCheck2, Sparkles, Check, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { CalendarCheck2, Sparkles, Check, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { financeService } from "../../services/financeService";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
+import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 
 export interface BulkBalanceUpdateModalProps {
     isOpen: boolean;
@@ -19,7 +20,12 @@ export interface BulkBalanceUpdateModalProps {
     onBalancesUpdated?: (updatedAccounts: Account[]) => void;
 }
 
-export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUpdated }: BulkBalanceUpdateModalProps) {
+export function BulkBalanceUpdateModal({
+    isOpen,
+    onClose,
+    accounts,
+    onBalancesUpdated,
+}: BulkBalanceUpdateModalProps) {
     const [snapshotDate, setSnapshotDate] = useState<string>(getTodayDateString());
     const [balancesMap, setBalancesMap] = useState<Record<string, string>>({});
     const [filterType, setFilterType] = useState<"all" | "non-cpf">("all");
@@ -40,15 +46,6 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
         }
     }, [isOpen, accounts]);
 
-    // Close on Escape
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isOpen) onClose();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
-
     const visibleAccounts = useMemo(() => {
         if (filterType === "non-cpf") {
             return accounts.filter((a) => a.type !== "CPF");
@@ -64,41 +61,43 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
 
         for (const acc of accounts) {
             prevTotal += acc.balance;
-            const parsed = parseFloat(balancesMap[acc.id] ?? String(acc.balance));
-            const val = isNaN(parsed) ? acc.balance : parsed;
-            newTotal += val;
-            if (Math.abs(val - acc.balance) >= 0.01) {
-                changedCount++;
+            const currentEntered = balancesMap[acc.id];
+            const parsed = parseFloat(currentEntered !== undefined ? currentEntered : String(acc.balance));
+            const valid = !isNaN(parsed) ? parsed : acc.balance;
+            newTotal += valid;
+            if (Math.abs(valid - acc.balance) >= 0.01) {
+                changedCount += 1;
             }
         }
 
-        const delta = Math.round((newTotal - prevTotal) * 100) / 100;
         return {
-            prevTotal: Math.round(prevTotal * 100) / 100,
-            newTotal: Math.round(newTotal * 100) / 100,
-            delta,
+            prevTotal,
+            newTotal,
+            delta: newTotal - prevTotal,
             changedCount,
         };
     }, [accounts, balancesMap]);
 
-    if (!isOpen) return null;
+    const handleBalanceChange = (accountId: string, value: string) => {
+        setBalancesMap((prev) => ({
+            ...prev,
+            [accountId]: value,
+        }));
+    };
 
-    // Quick helper to add standard monthly CPF contribution (+S$1,200 OA, +S$450 SA, +S$350 MA)
+    // Quick Action: Auto-add CPF contributions for OA/SA/MA
     const handleAutoIncrementCpf = () => {
         setBalancesMap((prev) => {
             const next = { ...prev };
             for (const acc of accounts) {
                 if (acc.type === "CPF") {
-                    const currentVal = parseFloat(next[acc.id] ?? String(acc.balance)) || acc.balance;
-                    const lower = acc.name.toLowerCase();
-                    const increment = lower.includes("ordinary")
+                    const current = parseFloat(next[acc.id] || String(acc.balance)) || 0;
+                    const increment = acc.name.includes("OA")
                         ? 1200
-                        : lower.includes("special")
-                          ? 450
-                          : lower.includes("medisave")
-                            ? 350
-                            : 500;
-                    next[acc.id] = (Math.round((currentVal + increment) * 100) / 100).toFixed(2);
+                        : acc.name.includes("SA")
+                          ? 400
+                          : 350;
+                    next[acc.id] = (current + increment).toFixed(2);
                 }
             }
             return next;
@@ -109,88 +108,67 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
         e.preventDefault();
         setErrorMessage(null);
 
+        const updates: BulkBalanceUpdateItem[] = [];
+
+        for (const acc of accounts) {
+            const entered = balancesMap[acc.id];
+            if (entered !== undefined && entered.trim() !== "") {
+                const numeric = parseFloat(entered);
+                if (isNaN(numeric) || numeric < 0) {
+                    setErrorMessage(`Please enter a valid balance for ${acc.name}`);
+                    return;
+                }
+                if (Math.abs(numeric - acc.balance) >= 0.01) {
+                    updates.push({
+                        accountId: acc.id,
+                        balance: numeric,
+                    });
+                }
+            }
+        }
+
+        if (updates.length === 0) {
+            onClose();
+            return;
+        }
+
         try {
             setIsSubmitting(true);
-            const updates: BulkBalanceUpdateItem[] = accounts.map((acc) => {
-                const raw = balancesMap[acc.id];
-                const parsed = raw !== undefined ? parseFloat(raw) : acc.balance;
-                if (isNaN(parsed) || parsed < 0) {
-                    throw new Error(`Invalid balance entered for ${acc.name}`);
-                }
-                const rounded = Math.round(parsed * 100) / 100;
-                return {
-                    accountId: acc.id,
-                    balance: rounded,
-                    newBalance: rounded,
-                    notes: `Month-end check-in (${snapshotDate})`,
-                };
-            });
-
             const updated = await financeService.bulkUpdateAccountBalances(updates, snapshotDate);
             onBalancesUpdated?.(updated);
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to update balances");
+            setErrorMessage(err instanceof Error ? err.message : "Failed to save balance snapshots");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bulk-balance-modal-title"
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden bg-slate-900/60 backdrop-blur-xs"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
-            }}
-        >
-            <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-2xl bg-white p-5 sm:p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800 max-h-[92vh] flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-                            <CalendarCheck2 className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h2
-                                id="bulk-balance-modal-title"
-                                className="text-base sm:text-lg font-bold text-slate-900 dark:text-white"
-                            >
-                                Month-End Balance Check-In
-                            </h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Pre-filled with last balances — edit only what changed &amp; save all in 1 click
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Close modal"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                <ModalHeader
+                    id="bulk-balance-modal-title"
+                    title="Month-End Check-In"
+                    subtitle="Pre-filled with last balances — edit only what changed & save all"
+                    icon={<CalendarCheck2 className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    iconBgColor="bg-(--pastel-butter-light)"
+                    onClose={onClose}
+                />
 
-                {errorMessage && (
-                    <div className="mt-3 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 shrink-0">
-                        {errorMessage}
-                    </div>
-                )}
+                <ModalBody>
+                    {errorMessage && (
+                        <div className="rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                            {errorMessage}
+                        </div>
+                    )}
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-3.5 flex flex-col flex-1 min-h-0"
-                >
                     {/* Controls Strip: Date, Filter, CPF Auto-Fill */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-(--border-subtle)">
                         <div className="flex items-center gap-2">
                             <label
                                 htmlFor="bulk-snapshot-date"
-                                className="text-xs font-semibold text-slate-600 dark:text-slate-300"
+                                className="text-xs font-bold text-(--text-muted)"
                             >
                                 Snapshot Date:
                             </label>
@@ -199,19 +177,19 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
                                 type="date"
                                 value={snapshotDate}
                                 onChange={(e) => setSnapshotDate(e.target.value)}
-                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-mono-num font-medium text-(--text-ink)"
                             />
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5">
+                        <div className="flex items-center gap-1.5">
+                            <div className="inline-flex rounded-lg bg-(--bg-canvas) p-0.5 border border-(--border-subtle)">
                                 <button
                                     type="button"
                                     onClick={() => setFilterType("all")}
-                                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                                         filterType === "all"
-                                            ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-700 dark:text-white"
-                                            : "text-slate-500 dark:text-slate-400"
+                                            ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                            : "text-(--text-muted) hover:text-(--text-ink)"
                                     }`}
                                 >
                                     All ({accounts.length})
@@ -219,10 +197,10 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
                                 <button
                                     type="button"
                                     onClick={() => setFilterType("non-cpf")}
-                                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                                         filterType === "non-cpf"
-                                            ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-700 dark:text-white"
-                                            : "text-slate-500 dark:text-slate-400"
+                                            ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                            : "text-(--text-muted) hover:text-(--text-ink)"
                                     }`}
                                 >
                                     Non-CPF ({accounts.filter((a) => a.type !== "CPF").length})
@@ -233,125 +211,129 @@ export function BulkBalanceUpdateModal({ isOpen, onClose, accounts, onBalancesUp
                                 <button
                                     type="button"
                                     onClick={handleAutoIncrementCpf}
-                                    className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50/70 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 dark:border-purple-800/60 dark:bg-purple-950/40 dark:text-purple-300 cursor-pointer"
+                                    className="inline-flex items-center gap-1 rounded-lg border border-(--border-ink) bg-(--pastel-butter-light) px-2.5 py-1 text-xs font-bold text-(--text-ink) hover:bg-(--pastel-butter) cursor-pointer"
                                 >
                                     <Sparkles className="h-3 w-3" />
-                                    <span>+ Monthly CPF</span>
+                                    <span>+ CPF</span>
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    {/* Scrollable Account Rows */}
-                    <div className="flex-1 overflow-y-auto py-3 space-y-2 pr-1 max-h-[50vh]">
-                        {visibleAccounts.map((acc) => {
-                            const currentInput = balancesMap[acc.id] ?? String(acc.balance);
-                            const parsed = parseFloat(currentInput);
-                            const diff = !isNaN(parsed) ? Math.round((parsed - acc.balance) * 100) / 100 : 0;
+                    {/* Account Rows */}
+                    <div className="space-y-2.5">
+                        {visibleAccounts.map((account) => {
+                            const entered = balancesMap[account.id] ?? String(account.balance);
+                            const numericEntered = parseFloat(entered);
+                            const isChanged = !isNaN(numericEntered) && Math.abs(numericEntered - account.balance) >= 0.01;
+                            const diff = !isNaN(numericEntered) ? numericEntered - account.balance : 0;
 
                             return (
                                 <div
-                                    key={acc.id}
-                                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 px-3.5 py-2.5"
+                                    key={account.id}
+                                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                                        isChanged
+                                            ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
+                                            : "border-(--border-subtle) bg-(--bg-card)"
+                                    }`}
                                 >
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1 mr-3">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                                                {acc.name}
+                                            <span className="text-xs font-bold text-(--text-ink) truncate">
+                                                {account.name}
                                             </span>
-                                            <span className="rounded-md bg-slate-200/70 dark:bg-slate-700 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-                                                {acc.type}
-                                            </span>
+                                            {account.is_joint && (
+                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-(--pastel-lilac) text-(--text-ink)">
+                                                    Joint
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                            <span>Prev: {formatSGD(acc.balance)}</span>
-                                            {Math.abs(diff) >= 0.01 && (
+                                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-(--text-muted)">
+                                            <span>{account.type}</span>
+                                            <span>•</span>
+                                            <span className="font-mono-num">Last: {formatSGD(account.balance)}</span>
+                                            {isChanged && (
                                                 <span
-                                                    className={`inline-flex items-center font-semibold ${
-                                                        diff > 0
-                                                            ? "text-emerald-600 dark:text-emerald-400"
-                                                            : "text-rose-600 dark:text-rose-400"
+                                                    className={`inline-flex items-center font-bold font-mono-num ${
+                                                        diff >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"
                                                     }`}
                                                 >
-                                                    {diff > 0 ? (
+                                                    {diff >= 0 ? (
                                                         <ArrowUpRight className="h-3 w-3" />
                                                     ) : (
                                                         <ArrowDownRight className="h-3 w-3" />
                                                     )}
-                                                    {diff > 0 ? "+" : ""}
-                                                    {formatSGD(diff)}
+                                                    {formatSGD(Math.abs(diff))}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="relative w-36 sm:w-44 shrink-0">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                                    <div className="w-32 relative shrink-0">
+                                        <span className="absolute left-2.5 top-2 text-xs font-bold text-(--text-muted)">
                                             S$
                                         </span>
                                         <input
                                             type="number"
                                             step="0.01"
                                             min="0"
-                                            aria-label={`Balance for ${acc.name}`}
-                                            value={currentInput}
+                                            value={entered}
                                             onChange={(e) =>
-                                                setBalancesMap((prev) => ({ ...prev, [acc.id]: e.target.value }))
+                                                handleBalanceChange(account.id, e.target.value)
                                             }
-                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1.5 pl-8 pr-3 text-right text-sm font-bold text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-1.5 pl-8 pr-2.5 text-right text-sm font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         />
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
+                </ModalBody>
 
-                    {/* Live Total Preview & Submit Footer */}
-                    <div className="pt-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0">
-                        <div className="flex items-center gap-4 text-xs">
-                            <div>
-                                <span className="text-slate-500 dark:text-slate-400 block">New Total Assets</span>
-                                <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                                    {formatSGD(summary.newTotal)}
-                                </span>
-                            </div>
-                            <div className="h-7 w-px bg-slate-200 dark:bg-slate-800" />
-                            <div>
-                                <span className="text-slate-500 dark:text-slate-400 block">Net Change</span>
-                                <span
-                                    className={`text-sm font-bold ${
-                                        summary.delta >= 0
-                                            ? "text-emerald-600 dark:text-emerald-400"
-                                            : "text-rose-600 dark:text-rose-400"
-                                    }`}
-                                >
-                                    {summary.delta >= 0 ? "+" : ""}
-                                    {formatSGD(summary.delta)} ({summary.changedCount} edited)
-                                </span>
-                            </div>
+                <ModalFooter className="flex-col sm:flex-row sm:justify-between">
+                    <div className="flex items-center gap-3 text-xs w-full sm:w-auto justify-between sm:justify-start">
+                        <div>
+                            <span className="text-(--text-muted) block text-[10px]">New Total Assets</span>
+                            <span className="text-base font-black text-(--text-ink) font-mono-num">
+                                {formatSGD(summary.newTotal)}
+                            </span>
                         </div>
-
-                        <div className="flex items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        <div className="h-7 w-px bg-(--border-subtle)" />
+                        <div>
+                            <span className="text-(--text-muted) block text-[10px]">Net Change</span>
+                            <span
+                                className={`text-sm font-black font-mono-num ${
+                                    summary.delta >= 0
+                                        ? "text-emerald-700 dark:text-emerald-300"
+                                        : "text-rose-700 dark:text-rose-300"
+                                }`}
                             >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="flex items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-600 disabled:opacity-50 transition-all cursor-pointer"
-                            >
-                                <Check className="h-4 w-4 stroke-[2.5]" />
-                                <span>{isSubmitting ? "Saving Snapshot..." : "Save Month-End Snapshot"}</span>
-                            </button>
+                                {summary.delta >= 0 ? "+" : ""}
+                                {formatSGD(summary.delta)} ({summary.changedCount} edited)
+                            </span>
                         </div>
                     </div>
-                </form>
-            </div>
-        </div>
+
+                    <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        >
+                            <Check className="h-4 w-4 stroke-[2.5]" />
+                            <span>{isSubmitting ? "Saving..." : "Save Month-End Snapshot"}</span>
+                        </button>
+                    </div>
+                </ModalFooter>
+            </form>
+        </AnimatedModal>
     );
 }
 
