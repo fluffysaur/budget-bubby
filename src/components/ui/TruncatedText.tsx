@@ -47,6 +47,7 @@ export function TruncatedText({
         refs: { setReference, setFloating },
         floatingStyles,
         context,
+        isPositioned,
     } = useFloating({
         open: isOpen && isOverflowing,
         onOpenChange: (open) => {
@@ -143,11 +144,14 @@ export function TruncatedText({
                 <FloatingPortal>
                     <div
                         ref={setFloating}
-                        style={floatingStyles}
+                        style={{
+                            ...floatingStyles,
+                            opacity: isPositioned ? 1 : 0,
+                        }}
                         role="tooltip"
                         onClick={(e) => e.stopPropagation()}
                         {...getFloatingProps()}
-                        className={`z-9999 w-max max-w-65 sm:max-w-xs px-2.5 py-1.5 text-xs font-bold leading-snug rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) animate-in fade-in zoom-in-95 duration-150 wrap-break-word whitespace-normal pointer-events-auto select-text font-display ${tooltipClassName}`}
+                        className={`z-9999 w-max max-w-65 sm:max-w-xs px-2.5 py-1.5 text-xs font-bold leading-snug rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) wrap-break-word whitespace-normal pointer-events-auto select-text font-display transition-opacity duration-150 ${tooltipClassName}`}
                     >
                         {text}
                     </div>

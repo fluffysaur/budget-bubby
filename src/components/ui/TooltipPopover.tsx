@@ -46,6 +46,7 @@ export function TooltipPopover({
         refs: { setReference, setFloating },
         floatingStyles,
         context,
+        isPositioned,
     } = useFloating({
         open: isOpen,
         onOpenChange: setIsOpen,
@@ -95,9 +96,12 @@ export function TooltipPopover({
                 <FloatingPortal>
                     <div
                         ref={setFloating}
-                        style={floatingStyles}
+                        style={{
+                            ...floatingStyles,
+                            opacity: isPositioned ? 1 : 0,
+                        }}
                         {...getFloatingProps()}
-                        className="z-9999 w-72 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-4 shadow-(--shadow-cute) animate-in fade-in zoom-in-95 duration-150 select-text"
+                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-(--shadow-cute) select-text transition-opacity duration-150"
                     >
                         <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-(--border-subtle)">
                             {title && (
