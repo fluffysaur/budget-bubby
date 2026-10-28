@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
+  RotateCcw,
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { formatForeignAmount } from '../../lib/currencyConverter';
@@ -32,8 +33,9 @@ import { EditExpenseModal } from './EditExpenseModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
 import { LoadingCard } from '../ui/LoadingCard';
-import { EmptyStateCard } from '../ui/EmptyStateCard';
 import { Select } from '../ui/Select';
+import { Button } from '../ui/Button';
+import { ExpenseFilterBar } from './ExpenseFilterBar';
 import { financeService } from '../../services/financeService';
 import type {
   Expense,
@@ -42,6 +44,7 @@ import type {
   SavingsGoal,
   ExpenseSortField,
   SortDirection,
+  ExpenseFilter,
 } from '../../types/finance';
 
 export interface ExpenseListTableProps {
@@ -60,6 +63,9 @@ export interface ExpenseListTableProps {
   pageSize?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
+  filter?: ExpenseFilter;
+  onFilterChange?: (newFilter: ExpenseFilter) => void;
+  onResetFilters?: () => void;
 }
 
 export function ExpenseListTable({
@@ -78,6 +84,9 @@ export function ExpenseListTable({
   pageSize: propPageSize,
   onPageChange,
   onPageSizeChange,
+  filter,
+  onFilterChange,
+  onResetFilters,
 }: ExpenseListTableProps) {
   // Goals for Goal Spend badges
   const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(propGoals || []);
@@ -221,16 +230,6 @@ export function ExpenseListTable({
     );
   }
 
-  if (expenses.length === 0) {
-    return (
-      <EmptyStateCard
-        icon={<Receipt className="h-6 w-6" />}
-        title="No expenses found"
-        description="There are no expenses matching your filter criteria. Try changing your filters or add a new expense."
-      />
-    );
-  }
-
   // Render sort header icon
   const renderSortIcon = (field: ExpenseSortField) => {
     if (activeSortBy !== field) {
@@ -245,49 +244,92 @@ export function ExpenseListTable({
 
   return (
     <div className="space-y-4">
-      {/* Mobile Sort Bar */}
-      <div className="sm:hidden flex items-center justify-between gap-2 rounded-xl bg-(--bg-card) p-3 border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-xs">
-        <div className="flex items-center gap-1.5 text-(--text-muted)">
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          <span className="font-bold">Sort by:</span>
-        </div>
-        <Select
-          aria-label="Sort ledger"
-          value={activeSortBy ? `${activeSortBy}-${activeSortOrder}` : ''}
-          onChange={(e) => {
-            if (!e.target.value) {
-              if (onSortChange) {
-                // If reset
-              } else {
-                setInternalSortBy(null);
-              }
-              return;
-            }
-            const [field, order] = e.target.value.split('-') as [ExpenseSortField, SortDirection];
-            if (onSortChange) {
-              onSortChange(field, order);
-            } else {
-              setInternalSortBy(field);
-              setInternalSortOrder(order);
-            }
-          }}
-          sizeVariant="sm"
-          containerClassName="w-auto"
-          className="bg-(--bg-canvas) font-bold text-xs py-1"
-        >
-          <option value="">Default order</option>
-          <option value="date-desc">Date (Newest first)</option>
-          <option value="date-asc">Date (Oldest first)</option>
-          <option value="amount-desc">Amount (Highest first)</option>
-          <option value="amount-asc">Amount (Lowest first)</option>
-          <option value="category-asc">Category (A-Z)</option>
-          <option value="payer-asc">Payer (A-Z)</option>
-        </Select>
-      </div>
-
       {/* Main Ledger Container */}
       <div className="overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute) transition-colors">
-        <div className="overflow-x-auto">
+        {/* Unified Card Header: Filter, Search & Sort Toolbar */}
+        {filter && onFilterChange ? (
+          <div className="border-b-2 border-(--border-ink) bg-(--bg-canvas)/40 p-3 sm:p-4">
+            <ExpenseFilterBar
+              filter={filter}
+              onFilterChange={onFilterChange}
+              onReset={onResetFilters}
+              categories={categories}
+              members={members}
+              sortBy={activeSortBy}
+              sortOrder={activeSortOrder}
+              onSortChange={(field, order) => {
+                if (onSortChange) {
+                  onSortChange(field, order);
+                } else {
+                  setInternalSortBy(field);
+                  setInternalSortOrder(order);
+                }
+              }}
+              embeddedInCard
+            />
+          </div>
+        ) : (
+          /* Fallback Mobile Sort Bar when standalone without filter toolbar */
+          <div className="sm:hidden border-b-2 border-(--border-ink) bg-(--bg-canvas)/40 p-3 flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1.5 text-(--text-muted)">
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              <span className="font-bold">Sort by:</span>
+            </div>
+            <Select
+              aria-label="Sort ledger"
+              value={activeSortBy ? `${activeSortBy}-${activeSortOrder}` : ''}
+              onChange={(e) => {
+                if (!e.target.value) {
+                  if (!onSortChange) setInternalSortBy(null);
+                  return;
+                }
+                const [field, order] = e.target.value.split('-') as [ExpenseSortField, SortDirection];
+                if (onSortChange) {
+                  onSortChange(field, order);
+                } else {
+                  setInternalSortBy(field);
+                  setInternalSortOrder(order);
+                }
+              }}
+              sizeVariant="sm"
+              containerClassName="w-auto"
+              className="bg-(--bg-canvas) font-bold text-xs py-1"
+            >
+              <option value="">Default order</option>
+              <option value="date-desc">Date (Newest first)</option>
+              <option value="date-asc">Date (Oldest first)</option>
+              <option value="amount-desc">Amount (Highest first)</option>
+              <option value="amount-asc">Amount (Lowest first)</option>
+              <option value="category-asc">Category (A-Z)</option>
+              <option value="payer-asc">Payer (A-Z)</option>
+            </Select>
+          </div>
+        )}
+
+        {/* Ledger Body: Empty State or Table + Cards */}
+        {expenses.length === 0 ? (
+          <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-(--shadow-cute-sm) mb-3">
+              <Receipt className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-extrabold text-(--text-ink) mb-1">No expenses found</h3>
+            <p className="text-xs text-(--text-muted) max-w-sm mb-4">
+              There are no expenses matching your filter criteria. Try changing your filters or add a new expense.
+            </p>
+            {onResetFilters && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onResetFilters}
+                leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-(--text-ink) block sm:table">
             <thead className="hidden sm:table-header-group bg-(--bg-canvas) border-b-2 border-(--border-ink) text-[11px] uppercase tracking-wider font-extrabold text-(--text-muted) select-none">
               <tr>
@@ -557,6 +599,8 @@ export function ExpenseListTable({
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Edit Expense Modal */}

@@ -14,9 +14,6 @@ import {
   ArrowRightLeft,
   Scale,
   CheckCircle2,
-  Filter,
-  ChevronDown,
-  ChevronUp,
   Tag,
   FileSpreadsheet,
   BarChart3,
@@ -45,7 +42,6 @@ import {
 import { mockCategories, mockMembers, mockBaseProfiles, mockBaseAllocations } from '../data/mockSeedData';
 import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
 import { BulkAddExpenseModal } from '../components/expenses/BulkAddExpenseModal';
-import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
 import { SpendTagsOverviewCard } from '../components/expenses/SpendTagsOverviewCard';
@@ -117,7 +113,6 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
   // Month-end Sweep Modal State
   const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
@@ -285,18 +280,6 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
     dismissedSweepMonth !== unspentSurplusInfo.lastMonth &&
     (!filter.month || filter.month === getCurrentMonth());
 
-  // Active filter count for mobile indicator
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filter.search) count++;
-    if (filter.categoryId) count++;
-    if (filter.payerId && perspective === 'household') count++;
-    if (filter.isShared !== undefined) count++;
-    if (filter.month !== getCurrentMonth()) count++;
-    if (filter.tag) count++;
-    return count;
-  }, [filter, perspective]);
-
   return (
     <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
       {/* Header Section */}
@@ -461,55 +444,15 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         />
       </div>
 
-      {/* Mobile Filter Toggle Button */}
-      <div className="sm:hidden flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setIsMobileFilterOpen((prev) => !prev)}
-          className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) px-3.5 py-2 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-        >
-          <Filter className="h-3.5 w-3.5 text-purple-700 dark:text-purple-300" />
-          <span>Filter &amp; Search</span>
-          {activeFilterCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-(--pastel-lilac) border border-(--border-ink) text-[10px] font-black text-(--text-ink)">
-              {activeFilterCount}
-            </span>
-          )}
-          {isMobileFilterOpen ? (
-            <ChevronUp className="h-4 w-4 text-(--text-muted) ml-1.5" strokeWidth={2.5} />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-(--text-muted) ml-1.5" strokeWidth={2.5} />
-          )}
-        </button>
-
-        {activeFilterCount > 0 && (
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
-          >
-            Clear filters
-          </button>
-        )}
-      </div>
-
-      {/* Filter Bar (Collapsible on mobile, always visible on tablet/desktop) */}
-      <div className={`${isMobileFilterOpen ? 'block' : 'hidden sm:block'}`}>
-        <ExpenseFilterBar
-          filter={filter}
-          onFilterChange={setFilter}
-          onReset={handleResetFilters}
-          categories={categories}
-          members={members}
-        />
-      </div>
-
-      {/* Expense List Table (Ledger-First!) */}
+      {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
       <ExpenseListTable
         expenses={expenses}
         categories={categories}
         members={members}
         goals={goals}
+        filter={filter}
+        onFilterChange={setFilter}
+        onResetFilters={handleResetFilters}
         onDeleteExpense={handleDeleteExpense}
         onExpenseSaved={handleExpenseAdded}
         isLoading={isLoading}
