@@ -10,6 +10,7 @@
 import { useMemo } from 'react';
 import { Tag, Filter, Check, X, Layers } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
+import { Card } from '../ui/Card';
 import type { Expense, Category } from '../../types/finance';
 
 export interface TagAggregate {
@@ -108,26 +109,28 @@ export function SpendTagsOverviewCard({
   }, [tagAggregates]);
 
   return (
-    <div
+    <Card
+      variant="white"
+      padding="md"
       data-testid="spend-tags-overview-card"
-      className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 ${className}`}
+      className={className}
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b-2 border-(--border-ink)">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
             <Tag className="h-4.5 w-4.5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-(--text-ink) font-display flex items-center gap-2">
               <span>Spend Tags Overview</span>
               {tagAggregates.length > 0 && (
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-(--bg-cream) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)">
                   {tagAggregates.length} {tagAggregates.length === 1 ? 'tag' : 'tags'}
                 </span>
               )}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-(--text-muted)">
               Cross-category tracking for big trips, renovations, and milestone events
             </p>
           </div>
@@ -135,7 +138,7 @@ export function SpendTagsOverviewCard({
 
         {activeTag && (
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-2.5 py-1 rounded-xl flex items-center gap-1.5">
+            <span className="text-xs font-bold text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-(--shadow-cute-sm)">
               <Filter className="h-3 w-3" />
               <span>Filtering by #{activeTag}</span>
             </span>
@@ -143,7 +146,7 @@ export function SpendTagsOverviewCard({
               type="button"
               aria-label="Clear tag filter"
               onClick={onClearTag}
-              className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="flex h-6 w-6 items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -152,10 +155,10 @@ export function SpendTagsOverviewCard({
       </div>
 
       {tagAggregates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center">
-          <Tag className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">No Spend Tags Recorded</p>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto mt-0.5">
+        <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-6 text-center shadow-(--shadow-cute-sm)">
+          <Tag className="h-8 w-8 text-(--text-muted) mx-auto mb-2 opacity-60" />
+          <p className="text-xs font-bold text-(--text-ink) font-display">No Spend Tags Recorded</p>
+          <p className="text-[11px] text-(--text-muted) max-w-sm mx-auto mt-0.5">
             Add tags like &ldquo;Vietnam Trip&rdquo;, &ldquo;Home Reno&rdquo;, or &ldquo;Wedding&rdquo; when logging expenses to group costs across Food, Transport, and Lifestyle.
           </p>
         </div>
@@ -171,10 +174,10 @@ export function SpendTagsOverviewCard({
                   key={item.tag}
                   data-testid={`tag-card-${item.tag}`}
                   onClick={() => onSelectTag?.(item.tag)}
-                  className={`group relative flex flex-col justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
+                  className={`group relative flex flex-col justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-purple-500 bg-purple-50/40 dark:bg-purple-950/30 ring-2 ring-purple-500/20 shadow-xs'
-                      : 'border-slate-200/80 bg-slate-50/60 hover:bg-white dark:border-slate-800 dark:bg-slate-800/40 dark:hover:bg-slate-800/80'
+                      ? 'border-(--border-ink) bg-(--pastel-lilac) shadow-(--shadow-cute)'
+                      : 'border-(--border-ink) bg-(--bg-cream) hover:bg-(--pastel-butter-light) shadow-(--shadow-cute-sm)'
                   }`}
                 >
                   <div>
@@ -259,12 +262,12 @@ export function SpendTagsOverviewCard({
           </div>
 
           {/* Footer note */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-1">
+          <div className="flex items-center justify-between text-[11px] text-(--text-muted) pt-1">
             <span>Click any tag to filter the transaction ledger</span>
-            <span>Total Tagged Spend: <span className="font-bold text-slate-600 dark:text-slate-300">{formatSGD(totalTaggedSpend)}</span></span>
+            <span>Total Tagged Spend: <span className="font-bold text-(--text-ink) font-mono-num">{formatSGD(totalTaggedSpend)}</span></span>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

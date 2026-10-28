@@ -29,6 +29,7 @@ import {
 import { formatSGD } from '../../lib/currency';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { TruncatedText } from '../ui/TruncatedText';
+import { EmptyStateCard } from '../ui/EmptyStateCard';
 import type { MonthlyBudgetCategoryDetail } from '../../types/finance';
 
 export interface CategoryProgressListProps {
@@ -58,19 +59,12 @@ export function CategoryProgressList({
 }: CategoryProgressListProps) {
   if (categories.length === 0) {
     return (
-      <div
-        className={`rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center ${className}`}
-      >
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
-          <HelpCircle className="h-6 w-6" />
-        </div>
-        <h3 className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
-          No Budget Categories
-        </h3>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          No budget categories found for this month.
-        </p>
-      </div>
+      <EmptyStateCard
+        icon={<HelpCircle className="h-6 w-6" />}
+        title="No Budget Categories"
+        description="No budget categories found for this month."
+        className={className}
+      />
     );
   }
 
@@ -84,13 +78,15 @@ export function CategoryProgressList({
     <div className={`space-y-4 ${className}`}>
       {/* Over Budget Alert Banner */}
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200">
-          <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
-          <div className="text-xs sm:text-sm">
-            <span className="font-bold">
+        <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fff1ee] dark:bg-[#3b1c19] text-[#9a1b1b] dark:text-[#fca5a5] shadow-(--shadow-cute-sm)">
+          <div className="p-1.5 rounded-xl bg-[#f76b57] text-white border-2 border-(--border-ink) shrink-0 shadow-(--shadow-cute-sm)">
+            <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
+          </div>
+          <div className="text-xs sm:text-sm min-w-0 flex-1">
+            <span className="font-bold font-display">
               {overBudgetCategories.length} {overBudgetCategories.length === 1 ? 'category has' : 'categories have'} exceeded budget:
             </span>{' '}
-            <span>
+            <span className="font-medium opacity-90">
               {overBudgetCategories.map((c) => c.category?.name || 'Category').join(', ')}
             </span>
           </div>
@@ -138,12 +134,12 @@ export function CategoryProgressList({
             <div
               key={catDetail.id || catDetail.category_id}
               onClick={() => onCategoryClick?.(catDetail.category_id)}
-              className={`rounded-2xl border-[1.5px] bg-(--bg-card) ${
+              className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) ${
                 compact ? 'p-3.5 sm:p-4' : 'p-4 sm:p-5'
-              } shadow-cute-sm transition-all ${
+              } shadow-(--shadow-cute-sm) transition-all ${
                 isOverBudget
-                  ? 'border-(--pastel-coral)'
-                  : 'border-(--border-ink) hover:bg-(--pastel-butter-light)/20'
+                  ? 'bg-[#fff1ee]/50 dark:bg-[#3b1c19]/40'
+                  : 'hover:bg-(--pastel-butter-light)/20'
               } ${onCategoryClick ? 'cursor-pointer' : ''}`}
             >
               {/* Card Header: Icon, Name, Target % & Status Badge */}

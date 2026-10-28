@@ -94,7 +94,7 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-lilac-subtle) text-purple-900 dark:text-purple-200 border-[1.5px] border-(--border-ink)"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink)"
           >
             <Shield className="w-3 h-3 text-purple-600 dark:text-purple-300" />
             Insurance
@@ -104,7 +104,7 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-butter-subtle) text-amber-900 dark:text-amber-200 border-[1.5px] border-(--border-ink)"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink)"
           >
             <FileText className="w-3 h-3 text-amber-700 dark:text-amber-400" />
             Tax
@@ -114,7 +114,7 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-mint-subtle) text-emerald-900 dark:text-emerald-200 border-[1.5px] border-(--border-ink)"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink)"
           >
             <Repeat className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
             Subscription
@@ -124,7 +124,7 @@ export function PolicyTable({
         return (
           <span
             role="status"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-[1.5px] border-(--border-ink)"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--bg-cream) text-(--text-ink) border-2 border-(--border-ink)"
           >
             <HelpCircle className="w-3 h-3" />
             {type}
@@ -173,10 +173,10 @@ export function PolicyTable({
                 key={type}
                 type="button"
                 onClick={() => setSelectedType(type)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border-[1.5px] border-(--border-ink) ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border-2 border-(--border-ink) ${
                   isActive
-                    ? 'bg-(--pastel-butter) text-(--color-ink) shadow-cute-sm'
-                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-(--canvas-cream)'
+                    ? 'bg-(--pastel-butter) text-(--text-ink) shadow-(--shadow-cute-sm)'
+                    : 'bg-(--bg-card) text-(--text-muted) hover:bg-(--bg-cream) hover:text-(--text-ink)'
                 }`}
               >
                 {labels[type]}
@@ -187,10 +187,10 @@ export function PolicyTable({
       </div>
 
       {/* Table Container */}
-      <div className="overflow-x-auto rounded-2xl border-[1.5px] border-(--border-ink) bg-white dark:bg-slate-900 shadow-cute">
+      <div className="overflow-x-auto rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute)">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b-[1.5px] border-(--border-ink) bg-(--canvas-cream) dark:bg-slate-800/80 text-xs font-bold text-(--color-ink) dark:text-slate-300 uppercase tracking-wider font-display">
+            <tr className="border-b-2 border-(--border-ink) bg-(--bg-cream) text-xs font-bold text-(--text-ink) uppercase tracking-wider font-display">
               <th scope="col" className="py-3.5 px-4">Policy Name</th>
               <th scope="col" className="py-3.5 px-4">Type</th>
               <th scope="col" className="py-3.5 px-4">Owner</th>
@@ -201,13 +201,13 @@ export function PolicyTable({
               <th scope="col" className="py-3.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+          <tbody className="divide-y-2 divide-(--border-ink) text-sm">
             {filteredPolicies.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                  <AlertCircle className="w-8 h-8 mx-auto mb-2 text-slate-400 opacity-60" />
-                  <p className="font-bold text-base text-(--color-ink) dark:text-white">No policies found</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <td colSpan={8} className="py-12 text-center text-(--text-muted)">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-60" />
+                  <p className="font-bold text-base text-(--text-ink) font-display">No policies found</p>
+                  <p className="text-xs text-(--text-muted) mt-1">
                     Try adjusting your search query or filter selection.
                   </p>
                   {(searchTerm || selectedType !== 'all') && (
@@ -217,7 +217,7 @@ export function PolicyTable({
                         setSearchTerm('');
                         setSelectedType('all');
                       }}
-                      className="mt-3 inline-flex items-center text-xs font-bold text-(--color-ink) underline cursor-pointer"
+                      className="mt-3 inline-flex items-center text-xs font-bold text-(--text-ink) underline cursor-pointer"
                     >
                       Clear active filters
                     </button>
@@ -238,7 +238,7 @@ export function PolicyTable({
                 return (
                   <tr
                     key={policy.id}
-                    className="hover:bg-(--canvas-cream)/50 dark:hover:bg-slate-800/40 transition-colors"
+                    className="hover:bg-(--bg-cream)/70 transition-colors"
                   >
                     {/* Policy Name & Notes */}
                     <td className="py-3.5 px-4 font-bold text-(--color-ink) dark:text-white">

@@ -16,11 +16,10 @@ import {
     PiggyBank,
     Sparkles,
     Calendar,
-    Loader2,
     AlertCircle,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, Button, StatCard } from "../components/ui";
+import { PageHeader, Button, StatCard, LoadingCard, EmptyStateCard } from "../components/ui";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { GoalCard } from "../components/goals/GoalCard";
@@ -338,44 +337,32 @@ export function GoalsPage({
 
             {/* Content Area: Loader, Empty State, or Grid */}
             {isLoading ? (
-                <div className="flex h-64 items-center justify-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-400">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                        <span className="text-xs font-semibold">
-                            Loading savings goals...
-                        </span>
-                    </div>
-                </div>
+                <LoadingCard message="Loading savings goals..." />
             ) : displayedGoals.length === 0 ? (
-                <div
-                    id="goals-tabpanel"
-                    role="tabpanel"
-                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center dark:border-slate-800"
-                >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl dark:bg-slate-800">
-                        🎯
-                    </div>
-                    <h3 className="mt-4 text-base font-bold text-slate-800 dark:text-white">
-                        {activeTab === "all"
+                <EmptyStateCard
+                    icon={<span className="text-2xl">🎯</span>}
+                    title={
+                        activeTab === "all"
                             ? "No savings goals found"
                             : activeTab === "in_progress"
                               ? "No goals currently in progress"
-                              : "No goals achieved yet"}
-                    </h3>
-                    <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
-                        {activeTab === "all"
+                              : "No goals achieved yet"
+                    }
+                    description={
+                        activeTab === "all"
                             ? "Set milestones for your wedding, HDB down payment, renovation, or honeymoon to calculate required monthly pacing."
-                            : "Try changing your filter tab to see your other savings goals."}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={handleOpenCreateModal}
-                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer"
-                    >
-                        <Plus className="h-4 w-4 stroke-[2.5]" />
-                        <span>Create your first goal</span>
-                    </button>
-                </div>
+                            : "Try changing your filter tab to see your other savings goals."
+                    }
+                    action={
+                        <Button
+                            variant="primary"
+                            onClick={handleOpenCreateModal}
+                            leftIcon={<Plus className="h-4 w-4 stroke-3" />}
+                        >
+                            Create your first goal
+                        </Button>
+                    }
+                />
             ) : (
                 <div
                     id="goals-tabpanel"

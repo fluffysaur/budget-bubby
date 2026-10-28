@@ -19,7 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard } from '../components/ui';
+import { PageHeader, Button, StatCard, Card } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getSingaporeDate } from '../lib/dateUtils';
@@ -307,9 +307,9 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
       </div>
 
       {/* 12-Month Renewal Calendar */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <Card variant="white" padding="md">
         <RenewalCalendar policies={inScopePolicies} />
-      </div>
+      </Card>
 
       {/* Policy Table */}
       <div className="space-y-3">

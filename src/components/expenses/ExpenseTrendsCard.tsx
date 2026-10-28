@@ -21,6 +21,7 @@ import {
 import { TrendingDown, TrendingUp, BarChart3, Sparkles } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { TooltipPopover } from '../ui/TooltipPopover';
+import { Card } from '../ui/Card';
 import type { ExpenseTrendsSummary, MonthlyExpenseTrendPoint, CategoryAverageMetric } from '../../types/finance';
 
 export interface ExpenseTrendsCardProps {
@@ -51,18 +52,20 @@ export function ExpenseTrendsCard({
   const pctString = Math.abs(vsThreeMonthPct).toFixed(1);
 
   return (
-    <div
-      className={`rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 ${className}`}
+    <Card
+      variant="white"
+      padding="md"
+      className={className}
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-(--border-ink)">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
             <BarChart3 className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h3 className="text-sm font-bold text-(--text-ink) font-display">
                 Monthly Expense Trends &amp; Averages
               </h3>
               <TooltipPopover
@@ -211,24 +214,24 @@ export function ExpenseTrendsCard({
               return (
                 <div
                   key={cat.categoryId}
-                  className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-2.5"
+                  className="rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-(--shadow-cute-sm)"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <span className="font-bold text-(--text-ink) flex items-center gap-1.5">
                       <span
-                        className="h-2.5 w-2.5 rounded-full"
+                        className="h-2.5 w-2.5 rounded-full border border-(--border-ink)"
                         style={{ backgroundColor: cat.color }}
                       />
                       {cat.categoryName}
                     </span>
-                    <span className="font-medium text-slate-600 dark:text-slate-300">
-                      <strong className={isOverAvg ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}>
+                    <span className="font-bold text-(--text-ink)">
+                      <strong className={isOverAvg ? 'text-amber-600 dark:text-amber-400 font-mono-num' : 'text-(--text-ink) font-mono-num'}>
                         {formatSGD(cat.currentMonth)}
                       </strong>{' '}
-                      <span className="text-slate-400">/ avg {formatSGD(cat.averageMonthly)}</span>
+                      <span className="text-(--text-muted) font-mono-num">/ avg {formatSGD(cat.averageMonthly)}</span>
                     </span>
                   </div>
-                  <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden">
+                  <div className="mt-1.5 h-2 w-full rounded-full bg-(--bg-card) border border-(--border-ink) overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -243,7 +246,7 @@ export function ExpenseTrendsCard({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 

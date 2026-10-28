@@ -71,7 +71,7 @@ export function AccountCard({
 
   return (
     <div
-      className={`flex flex-col justify-between rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-3.5 sm:p-4 shadow-cute-sm hover:shadow-cute transition-all ${className}`}
+      className={`flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 sm:p-4 shadow-(--shadow-cute-sm) hover:shadow-(--shadow-cute) transition-all ${className}`}
     >
       <div>
         {/* Header: Institution & Type Badges */}

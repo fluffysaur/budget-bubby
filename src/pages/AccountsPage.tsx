@@ -9,300 +9,331 @@
  * - Quick individual balance update modal (UpdateBalanceModal)
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Wallet,
-  CreditCard,
-  TrendingUp,
-  Loader2,
-  CalendarCheck,
-  Plus,
-  ReceiptText,
-} from 'lucide-react';
-import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, SegmentedTabs } from '../components/ui';
-import { financeService } from '../services/financeService';
-import { formatSGD } from '../lib/currency';
-import { AccountGroupList } from '../components/accounts/AccountGroupList';
-import { UpdateBalanceModal } from '../components/accounts/UpdateBalanceModal';
-import { AddAccountModal } from '../components/accounts/AddAccountModal';
-import { EditAccountModal } from '../components/accounts/EditAccountModal';
-import { DeleteAccountModal } from '../components/accounts/DeleteAccountModal';
-import { NetWorthChart } from '../components/accounts/NetWorthChart';
-import { CreditCardTrackerSection } from '../components/accounts/CreditCardTrackerSection';
-import type { Account, Loan } from '../types/finance';
+    Wallet,
+    CreditCard,
+    TrendingUp,
+    CalendarCheck,
+    Plus,
+    ReceiptText,
+} from "lucide-react";
+import { useHousehold } from "../context/HouseholdContext";
+import {
+    PageHeader,
+    Button,
+    StatCard,
+    SegmentedTabs,
+    LoadingCard,
+} from "../components/ui";
+import { financeService } from "../services/financeService";
+import { formatSGD } from "../lib/currency";
+import { AccountGroupList } from "../components/accounts/AccountGroupList";
+import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
+import { AddAccountModal } from "../components/accounts/AddAccountModal";
+import { EditAccountModal } from "../components/accounts/EditAccountModal";
+import { DeleteAccountModal } from "../components/accounts/DeleteAccountModal";
+import { NetWorthChart } from "../components/accounts/NetWorthChart";
+import { CreditCardTrackerSection } from "../components/accounts/CreditCardTrackerSection";
+import type { Account, Loan } from "../types/finance";
 
 export interface AccountsPageProps {
-  className?: string;
-  defaultTab?: 'accounts' | 'credit_cards';
+    className?: string;
+    defaultTab?: "accounts" | "credit_cards";
 }
 
-export function AccountsPage({ className = '', defaultTab = 'accounts' }: AccountsPageProps) {
-  const { perspective, activeMember, members, refreshData: refreshHousehold } = useHousehold();
+export function AccountsPage({
+    className = "",
+    defaultTab = "accounts",
+}: AccountsPageProps) {
+    const {
+        perspective,
+        activeMember,
+        members,
+        refreshData: refreshHousehold,
+    } = useHousehold();
 
-  const [activeTab, setActiveTab] = useState<'accounts' | 'credit_cards'>(defaultTab);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loans, setLoans] = useState<Loan[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [activeTab, setActiveTab] = useState<"accounts" | "credit_cards">(
+        defaultTab,
+    );
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [loans, setLoans] = useState<Loan[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Modal States
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
-  const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+    // Modal States
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(
+        null,
+    );
+    const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+    const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+    const [accountToDelete, setAccountToDelete] = useState<Account | null>(
+        null,
+    );
 
-  // Load accounts and loans for current perspective
-  const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const [accountsData, loansData] = await Promise.all([
-        financeService.getAccounts(perspective),
-        financeService.getLoans(),
-      ]);
-      setAccounts(accountsData || []);
-      setLoans(loansData || []);
-    } catch (err) {
-      console.error('Failed to load accounts or loans:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [perspective]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // Handlers for individual balance update modal
-  const handleOpenUpdateModal = (account: Account) => {
-    setSelectedAccount(account);
-    setIsUpdateModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsUpdateModalOpen(false);
-    setSelectedAccount(null);
-  };
-
-  const handleBalanceUpdated = async () => {
-    await loadData();
-    await refreshHousehold();
-  };
-
-  // Handler for inline balance edit from AccountGroupList
-  const handleInlineUpdateBalance = async (accountId: string, newBalance: number) => {
-    try {
-      await financeService.updateAccountBalance(accountId, newBalance);
-      await loadData();
-      await refreshHousehold();
-    } catch (err) {
-      console.error('Failed to update inline balance:', err);
-    }
-  };
-
-  // Metrics Calculations
-  const totalAssets = useMemo(() => {
-    const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
-    return Math.round(sum * 100) / 100;
-  }, [accounts]);
-
-  const activeLoans = useMemo(() => {
-    return loans.filter((l) => {
-      if (l.status !== 'active') return false;
-      if (perspective === 'household') return true;
-      return !l.borrower_id || l.borrower_id === activeMember?.id;
-    });
-  }, [loans, perspective, activeMember]);
-
-  const totalLiabilities = useMemo(() => {
-    const sum = activeLoans.reduce((acc, l) => {
-      const remaining = l.principal - l.amount_paid;
-      if (perspective !== 'household' && !l.borrower_id) {
-        return acc + remaining * 0.5; // 50% split for joint household loans
-      }
-      return acc + remaining;
-    }, 0);
-    return Math.round(sum * 100) / 100;
-  }, [activeLoans, perspective]);
-
-  const trueNetWorth = useMemo(() => {
-    return Math.round((totalAssets - totalLiabilities) * 100) / 100;
-  }, [totalAssets, totalLiabilities]);
-
-  return (
-    <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
-      {/* Page Header */}
-      <PageHeader
-        title="Accounts & Net Worth"
-        actions={
-          <div className="grid grid-cols-2 sm:flex items-center gap-2 min-h-[38px] w-full sm:w-auto">
-            {activeTab === 'accounts' && (
-              <>
-                <Button
-                  variant="secondary"
-                  aria-label="Add Account"
-                  className="w-full sm:w-auto"
-                  leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
-                  onClick={() => setIsAddModalOpen(true)}
-                >
-                  Add Account
-                </Button>
-                <Button
-                  variant="primary"
-                  aria-label="Update Balances"
-                  className="w-full sm:w-auto"
-                  leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
-                  onClick={() => {
-                    setSelectedAccount(null);
-                    setIsUpdateModalOpen(true);
-                  }}
-                >
-                  Update Balances
-                </Button>
-              </>
-            )}
-          </div>
+    // Load accounts and loans for current perspective
+    const loadData = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const [accountsData, loansData] = await Promise.all([
+                financeService.getAccounts(perspective),
+                financeService.getLoans(),
+            ]);
+            setAccounts(accountsData || []);
+            setLoans(loansData || []);
+        } catch (err) {
+            console.error("Failed to load accounts or loans:", err);
+        } finally {
+            setIsLoading(false);
         }
-      />
+    }, [perspective]);
 
-      {/* Sub-Tab Navigation Bar */}
-      <SegmentedTabs
-        tabs={[
-          { id: 'accounts', label: 'Accounts', icon: <Wallet className="h-4 w-4" /> },
-          { id: 'credit_cards', label: 'Credit Cards', icon: <ReceiptText className="h-4 w-4" /> },
-        ]}
-        activeTab={activeTab}
-        onChange={(id) => setActiveTab(id as 'accounts' | 'credit_cards')}
-      />
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
-      {activeTab === 'credit_cards' ? (
-        <CreditCardTrackerSection
-          members={members}
-          perspective={perspective}
-          activeMemberId={activeMember?.id}
-        />
-      ) : (
-        <>
-          {/* High-Level Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {/* Card 1: Net Worth */}
-            <StatCard
-              title="Net Worth"
-              value={formatSGD(trueNetWorth)}
-              tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
-              icon={<TrendingUp className="h-4 w-4 text-white" />}
-              iconBg="bg-indigo-600"
-              className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"
+    // Handlers for individual balance update modal
+    const handleOpenUpdateModal = (account: Account) => {
+        setSelectedAccount(account);
+        setIsUpdateModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsUpdateModalOpen(false);
+        setSelectedAccount(null);
+    };
+
+    const handleBalanceUpdated = async () => {
+        await loadData();
+        await refreshHousehold();
+    };
+
+    // Handler for inline balance edit from AccountGroupList
+    const handleInlineUpdateBalance = async (
+        accountId: string,
+        newBalance: number,
+    ) => {
+        try {
+            await financeService.updateAccountBalance(accountId, newBalance);
+            await loadData();
+            await refreshHousehold();
+        } catch (err) {
+            console.error("Failed to update inline balance:", err);
+        }
+    };
+
+    // Metrics Calculations
+    const totalAssets = useMemo(() => {
+        const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
+        return Math.round(sum * 100) / 100;
+    }, [accounts]);
+
+    const activeLoans = useMemo(() => {
+        return loans.filter((l) => {
+            if (l.status !== "active") return false;
+            if (perspective === "household") return true;
+            return !l.borrower_id || l.borrower_id === activeMember?.id;
+        });
+    }, [loans, perspective, activeMember]);
+
+    const totalLiabilities = useMemo(() => {
+        const sum = activeLoans.reduce((acc, l) => {
+            const remaining = l.principal - l.amount_paid;
+            if (perspective !== "household" && !l.borrower_id) {
+                return acc + remaining * 0.5; // 50% split for joint household loans
+            }
+            return acc + remaining;
+        }, 0);
+        return Math.round(sum * 100) / 100;
+    }, [activeLoans, perspective]);
+
+    const trueNetWorth = useMemo(() => {
+        return Math.round((totalAssets - totalLiabilities) * 100) / 100;
+    }, [totalAssets, totalLiabilities]);
+
+    return (
+        <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+            {/* Page Header */}
+            <PageHeader
+                title="Accounts & Net Worth"
+                actions={
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2 min-h-9.5 w-full sm:w-auto">
+                        {activeTab === "accounts" && (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    aria-label="Add Account"
+                                    className="w-full sm:w-auto"
+                                    leftIcon={
+                                        <Plus className="h-4 w-4 stroke-[2.5]" />
+                                    }
+                                    onClick={() => setIsAddModalOpen(true)}
+                                >
+                                    Add Account
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    aria-label="Update Balances"
+                                    className="w-full sm:w-auto"
+                                    leftIcon={
+                                        <CalendarCheck className="h-4 w-4 stroke-[2.5]" />
+                                    }
+                                    onClick={() => {
+                                        setSelectedAccount(null);
+                                        setIsUpdateModalOpen(true);
+                                    }}
+                                >
+                                    Update Balances
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                }
             />
 
-            {/* Card 2: Total Assets */}
-            <StatCard
-              title="Total Assets"
-              value={formatSGD(totalAssets)}
-              subtitle={`${accounts.length} account${accounts.length === 1 ? '' : 's'}`}
-              icon={<Wallet className="h-4 w-4" />}
-              iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+            {/* Sub-Tab Navigation Bar */}
+            <SegmentedTabs
+                tabs={[
+                    {
+                        id: "accounts",
+                        label: "Accounts",
+                        icon: <Wallet className="h-4 w-4" />,
+                    },
+                    {
+                        id: "credit_cards",
+                        label: "Credit Cards",
+                        icon: <ReceiptText className="h-4 w-4" />,
+                    },
+                ]}
+                activeTab={activeTab}
+                onChange={(id) =>
+                    setActiveTab(id as "accounts" | "credit_cards")
+                }
             />
 
-            {/* Card 3: Total Liabilities / Loans */}
-            <StatCard
-              title="Total Liabilities / Loans"
-              value={formatSGD(totalLiabilities)}
-              subtitle={`${loans.length} active loan${loans.length === 1 ? '' : 's'}`}
-              icon={<CreditCard className="h-4 w-4" />}
-              iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-            />
-          </div>
+            {activeTab === "credit_cards" ? (
+                <CreditCardTrackerSection
+                    members={members}
+                    perspective={perspective}
+                    activeMemberId={activeMember?.id}
+                />
+            ) : (
+                <>
+                    {/* High-Level Metric Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        {/* Card 1: Net Worth */}
+                        <StatCard
+                            title="Net Worth"
+                            value={formatSGD(trueNetWorth)}
+                            tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
+                            icon={<TrendingUp className="h-4 w-4 text-white" />}
+                            iconBg="bg-indigo-600"
+                            className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"
+                        />
 
-          {/* Loading Indicator */}
-          {isLoading ? (
-            <div className="flex items-center justify-center p-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-              <div className="flex flex-col items-center gap-3 text-slate-500">
-                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-                <span className="text-sm font-medium">Loading account balances &amp; net worth...</span>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Net Worth Progression Area Chart */}
-              <NetWorthChart accounts={accounts} loans={loans} />
+                        {/* Card 2: Total Assets */}
+                        <StatCard
+                            title="Total Assets"
+                            value={formatSGD(totalAssets)}
+                            subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
+                            icon={<Wallet className="h-4 w-4" />}
+                            iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                        />
 
-              {/* Grouped Accounts Listing with Table / Card view */}
-              <AccountGroupList
+                        {/* Card 3: Total Liabilities / Loans */}
+                        <StatCard
+                            title="Total Liabilities / Loans"
+                            value={formatSGD(totalLiabilities)}
+                            subtitle={`${loans.length} active loan${loans.length === 1 ? "" : "s"}`}
+                            icon={<CreditCard className="h-4 w-4" />}
+                            iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                        />
+                    </div>
+
+                    {/* Loading Indicator */}
+                    {isLoading ? (
+                        <LoadingCard message="Loading account balances & net worth..." />
+                    ) : (
+                        <>
+                            {/* Net Worth Progression Area Chart */}
+                            <NetWorthChart accounts={accounts} loans={loans} />
+
+                            {/* Grouped Accounts Listing with Table / Card view */}
+                            <AccountGroupList
+                                accounts={accounts}
+                                onUpdateBalance={handleOpenUpdateModal}
+                                onQuickSaveBalance={handleInlineUpdateBalance}
+                                onEditAccount={(acc) => {
+                                    setAccountToEdit(acc);
+                                    setIsEditModalOpen(true);
+                                }}
+                                onDeleteAccount={(acc) => {
+                                    setAccountToDelete(acc);
+                                    setIsDeleteModalOpen(true);
+                                }}
+                                onAddAccount={() => setIsAddModalOpen(true)}
+                            />
+                        </>
+                    )}
+                </>
+            )}
+
+            {/* Individual & Multi Account Balance Modal */}
+            <UpdateBalanceModal
+                isOpen={isUpdateModalOpen}
+                account={selectedAccount}
                 accounts={accounts}
-                onUpdateBalance={handleOpenUpdateModal}
-                onQuickSaveBalance={handleInlineUpdateBalance}
-                onEditAccount={(acc) => {
-                  setAccountToEdit(acc);
-                  setIsEditModalOpen(true);
+                onClose={handleCloseModal}
+                onBalanceUpdated={handleBalanceUpdated}
+                onBalancesUpdated={handleBalanceUpdated}
+                onOpenAddAccount={() => setIsAddModalOpen(true)}
+            />
+
+            {/* Add Account Modal */}
+            <AddAccountModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                members={members}
+                defaultOwnerId={activeMember?.id}
+                isInitialSetup={accounts.length === 0}
+                onAccountCreated={async () => {
+                    await loadData();
+                    await refreshHousehold();
                 }}
-                onDeleteAccount={(acc) => {
-                  setAccountToDelete(acc);
-                  setIsDeleteModalOpen(true);
+            />
+
+            {/* Edit Account Modal */}
+            <EditAccountModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setAccountToEdit(null);
                 }}
-                onAddAccount={() => setIsAddModalOpen(true)}
-              />
-            </>
-          )}
-        </>
-      )}
+                account={accountToEdit}
+                members={members}
+                onAccountUpdated={async () => {
+                    await loadData();
+                    await refreshHousehold();
+                }}
+            />
 
-      {/* Individual & Multi Account Balance Modal */}
-      <UpdateBalanceModal
-        isOpen={isUpdateModalOpen}
-        account={selectedAccount}
-        accounts={accounts}
-        onClose={handleCloseModal}
-        onBalanceUpdated={handleBalanceUpdated}
-        onBalancesUpdated={handleBalanceUpdated}
-        onOpenAddAccount={() => setIsAddModalOpen(true)}
-      />
-
-      {/* Add Account Modal */}
-      <AddAccountModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        members={members}
-        defaultOwnerId={activeMember?.id}
-        isInitialSetup={accounts.length === 0}
-        onAccountCreated={async () => {
-          await loadData();
-          await refreshHousehold();
-        }}
-      />
-
-      {/* Edit Account Modal */}
-      <EditAccountModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setAccountToEdit(null);
-        }}
-        account={accountToEdit}
-        members={members}
-        onAccountUpdated={async () => {
-          await loadData();
-          await refreshHousehold();
-        }}
-      />
-
-      {/* Delete Account Confirmation Modal */}
-      <DeleteAccountModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setAccountToDelete(null);
-        }}
-        account={accountToDelete}
-        onAccountDeleted={async () => {
-          await loadData();
-          await refreshHousehold();
-        }}
-      />
-    </div>
-  );
+            {/* Delete Account Confirmation Modal */}
+            <DeleteAccountModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setAccountToDelete(null);
+                }}
+                account={accountToDelete}
+                onAccountDeleted={async () => {
+                    await loadData();
+                    await refreshHousehold();
+                }}
+            />
+        </div>
+    );
 }
 
 export default AccountsPage;

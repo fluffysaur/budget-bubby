@@ -14,6 +14,7 @@ import type { Account, Loan } from "../../types/finance";
 import { formatSGD } from "../../lib/currency";
 import { getCurrentMonth, addMonths, formatDisplayMonth } from "../../lib/dateUtils";
 import { TooltipPopover } from "../ui/TooltipPopover";
+import { Card } from "../ui/Card";
 
 export interface NetWorthDataPoint {
     date: string;
@@ -46,25 +47,25 @@ function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
     if (!active || !payload || !payload.length) return null;
 
     return (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs p-3 shadow-lg text-xs space-y-2 min-w-42.5">
-            <div className="font-bold text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-100 dark:border-slate-800">
+        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-(--shadow-cute) text-xs space-y-2 min-w-42.5">
+            <div className="font-bold text-(--text-ink) font-display pb-1 border-b-2 border-(--border-ink)">
                 {label}
             </div>
             {payload.map((entry) => {
                 const colorClass =
                     entry.dataKey === "assets"
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
                         : entry.dataKey === "liabilities"
-                          ? "text-rose-600 dark:text-rose-400"
-                          : "text-indigo-600 dark:text-indigo-400 font-bold";
+                          ? "text-rose-600 dark:text-rose-400 font-bold"
+                          : "text-indigo-600 dark:text-indigo-400 font-black";
 
                 return (
                     <div
                         key={entry.dataKey}
                         className="flex items-center justify-between gap-3"
                     >
-                        <span className="text-slate-500 dark:text-slate-400">{entry.name}:</span>
-                        <span className={`font-semibold ${colorClass}`}>{formatSGD(entry.value)}</span>
+                        <span className="text-(--text-muted)">{entry.name}:</span>
+                        <span className={`font-mono-num ${colorClass}`}>{formatSGD(entry.value)}</span>
                     </div>
                 );
             })}
@@ -116,17 +117,19 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
     const latestPoint = chartData[chartData.length - 1];
 
     return (
-        <div
-            className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs ${className}`}
+        <Card
+            variant="white"
+            padding="lg"
+            className={className}
         >
             {/* Header & Chart Legends */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800 gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b-2 border-(--border-ink) gap-3">
                 <div className="shrink-0">
                     <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#dfc2ff] text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                             <TrendingUp className="h-4 w-4" />
                         </div>
-                        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
+                        <h2 className="text-base sm:text-lg font-bold text-(--text-ink) font-display tracking-tight whitespace-nowrap">
                             Net Worth
                         </h2>
                         <TooltipPopover
@@ -281,7 +284,7 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-        </div>
+        </Card>
     );
 }
 

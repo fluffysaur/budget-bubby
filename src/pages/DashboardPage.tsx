@@ -14,13 +14,12 @@ import {
     PieChart,
     Landmark,
     Receipt,
-    Loader2,
     Wallet,
     ArrowRightLeft,
     ChevronRight,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, TruncatedText } from "../components/ui";
+import { PageHeader, TruncatedText, LoadingCard } from "../components/ui";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
@@ -264,14 +263,7 @@ export function DashboardPage({
 
             {/* Loading Indicator */}
             {isLoading ? (
-                <div className="flex items-center justify-center p-16 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <div className="flex flex-col items-center gap-3 text-slate-500">
-                        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-                        <span className="text-sm font-medium">
-                            Loading household overview...
-                        </span>
-                    </div>
-                </div>
+                <LoadingCard message="Loading household overview..." />
             ) : (
                 <>
                     {/* GAMIFIED DAILY CHECK-IN STREAK BAR */}

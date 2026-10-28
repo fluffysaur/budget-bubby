@@ -42,12 +42,12 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         },
         ref,
     ) => {
-        let borderAndShadow = "border-[1.5px] border-(--border-ink) shadow-(--shadow-cute)";
+        let borderAndShadow = "border-2 border-(--border-ink) shadow-(--shadow-cute)";
 
         if (elevation === "flat") {
-            borderAndShadow = "border-[1.5px] border-(--border-ink)";
+            borderAndShadow = "border-2 border-(--border-ink)";
         } else if (elevation === "subtle") {
-            borderAndShadow = "border-[1.5px] border-(--border-subtle)";
+            borderAndShadow = "border-2 border-(--border-subtle)";
         }
 
         const interactiveStyles = interactive

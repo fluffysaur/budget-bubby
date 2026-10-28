@@ -151,14 +151,14 @@ export function RenewalCalendar({
             {/* Calendar Header / Overview */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-(--pastel-lilac) text-(--color-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm">
+                    <div className="p-2 rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                         <Calendar className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className="text-base font-bold text-(--color-ink) dark:text-white font-display">
+                        <h3 className="text-base font-bold text-(--text-ink) font-display">
                             Annual Renewal Timeline &amp; Cash Outlay Map
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-(--text-muted)">
                             12-Month distribution of annual lump sums and
                             monthly recurring commitments
                         </p>
@@ -166,13 +166,13 @@ export function RenewalCalendar({
                 </div>
 
                 {/* Legend */}
-                <div className="flex items-center gap-3 text-xs font-bold text-(--color-ink) dark:text-slate-300">
+                <div className="flex items-center gap-3 text-xs font-bold text-(--text-ink)">
                     <div className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-full bg-(--pastel-mint) border-[1.5px] border-(--border-ink)" />
+                        <span className="w-3 h-3 rounded-full bg-(--pastel-mint) border-2 border-(--border-ink)" />
                         <span>Today / Active</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-full bg-(--pastel-coral) border-[1.5px] border-(--border-ink)" />
+                        <span className="w-3 h-3 rounded-full bg-(--pastel-coral) border-2 border-(--border-ink)" />
                         <span>Heavy Outlay</span>
                     </div>
                 </div>
@@ -184,35 +184,35 @@ export function RenewalCalendar({
                     return (
                         <div
                             key={m.monthNumber}
-                            className={`relative flex flex-col rounded-2xl p-4 transition-all border-[1.5px] border-(--border-ink) ${
+                            className={`relative flex flex-col rounded-2xl p-4 transition-all border-2 border-(--border-ink) ${
                                 m.isCurrent
-                                    ? "bg-(--pastel-mint-subtle) shadow-cute"
+                                    ? "bg-(--pastel-mint) shadow-(--shadow-cute)"
                                     : m.isHeavy
-                                      ? "bg-(--pastel-coral-subtle) shadow-cute-sm"
-                                      : "bg-white dark:bg-slate-900 shadow-cute-sm"
+                                      ? "bg-[#fff1ee] dark:bg-[#3b1c19] shadow-(--shadow-cute-sm)"
+                                      : "bg-(--bg-card) shadow-(--shadow-cute-sm)"
                             }`}
                         >
                             {/* Header: Month Name + Badges */}
                             <div className="flex items-start justify-between gap-1 mb-2">
                                 <div>
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                                         {m.monthShort}
                                     </span>
-                                    <p className="text-sm font-bold text-(--color-ink) dark:text-white font-display">
+                                    <p className="text-sm font-bold text-(--text-ink) font-display">
                                         {m.monthFull}
                                     </p>
                                 </div>
 
                                 <div className="flex flex-col items-end gap-1">
                                     {m.isCurrent && (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-(--pastel-mint) text-(--color-ink) border-[1.5px] border-(--border-ink)">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-(--text-ink) border-2 border-(--border-ink)">
                                             Current
                                         </span>
                                     )}
                                     {m.isHeavy && (
                                         <span
                                             title="Heavy Outlay Month"
-                                            className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-(--pastel-coral) text-white border-[1.5px] border-(--border-ink)"
+                                            className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-(--pastel-coral) text-white border-2 border-(--border-ink)"
                                         >
                                             <Flame className="w-2.5 h-2.5 fill-white text-white" />
                                             Heavy
@@ -223,7 +223,7 @@ export function RenewalCalendar({
 
                             {/* Total Monthly Outlay */}
                             <div className="mb-3">
-                                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                <span className="text-[11px] font-medium text-(--text-muted)">
                                     Total Outlay
                                 </span>
                                 <p
@@ -231,8 +231,8 @@ export function RenewalCalendar({
                                         m.isHeavy
                                             ? "text-rose-600 dark:text-rose-400"
                                             : m.totalOutlay > 0
-                                              ? "text-(--color-ink) dark:text-white"
-                                              : "text-slate-400 dark:text-slate-600"
+                                              ? "text-(--text-ink)"
+                                              : "text-(--text-muted) opacity-60"
                                     }`}
                                 >
                                     {formatSGD(m.totalOutlay)}
@@ -242,22 +242,22 @@ export function RenewalCalendar({
                             {/* Policy Chips in this Month */}
                             <div className="flex-1 flex flex-col gap-2 min-h-[68px]">
                                 {m.policies.length === 0 ? (
-                                    <div className="flex-1 flex items-center justify-center text-[11px] text-slate-400 italic">
+                                    <div className="flex-1 flex items-center justify-center text-[11px] text-(--text-muted) italic">
                                         No renewals
                                     </div>
                                 ) : (
                                     m.policies.map((p) => (
                                         <div
                                             key={`${m.monthNumber}-${p.id}`}
-                                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white dark:bg-slate-800 border-[1.5px] border-(--border-ink)/50 text-xs shadow-xs"
+                                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) text-xs shadow-(--shadow-cute-sm)"
                                         >
-                                            <div className="flex items-center gap-1 min-w-0">
+                                            <div className="flex items-center gap-1 min-w-0 flex-1">
                                                 {renderPolicyIcon(p.type)}
-                                                <span className="font-bold text-(--color-ink) dark:text-slate-200 truncate">
+                                                <span className="font-bold text-(--text-ink) truncate">
                                                     {p.name}
                                                 </span>
                                             </div>
-                                            <span className="font-bold font-mono-num text-(--color-ink) dark:text-white shrink-0 text-[11px]">
+                                            <span className="font-bold font-mono-num text-(--text-ink) shrink-0 text-[11px]">
                                                 {formatSGD(p.amount)}
                                             </span>
                                         </div>

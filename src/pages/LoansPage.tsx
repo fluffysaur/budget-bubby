@@ -13,10 +13,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   CreditCard,
-  Loader2,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader } from '../components/ui';
+import { PageHeader, LoadingCard, EmptyStateCard } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { calculateLoanAmortization } from '../lib/financialFormulas';
 import { LoanSummaryCard } from '../components/loans/LoanSummaryCard';
@@ -164,26 +163,21 @@ export function LoansPage({ className = '', embedded = false }: LoansPageProps) 
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-100 space-y-3">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Loading loan amortization details...
-        </p>
-      </div>
+      <LoadingCard
+        message="Loading loan amortization details..."
+        className={`my-8 ${className}`}
+      />
     );
   }
 
   if (!activeLoan || displayedLoans.length === 0) {
     return (
-      <div className={`p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 ${className}`}>
-        <CreditCard className="w-10 h-10 mx-auto text-slate-400 mb-3" />
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-          No active loans found
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-          There are currently no active mortgage or debt obligations registered for this perspective.
-        </p>
-      </div>
+      <EmptyStateCard
+        icon={<CreditCard className="w-6 h-6" />}
+        title="No active loans found"
+        description="There are currently no active mortgage or debt obligations registered for this perspective."
+        className={className}
+      />
     );
   }
 

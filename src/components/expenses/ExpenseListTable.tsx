@@ -31,6 +31,8 @@ import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import { EditExpenseModal } from './EditExpenseModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
+import { LoadingCard } from '../ui/LoadingCard';
+import { EmptyStateCard } from '../ui/EmptyStateCard';
 import type {
   Expense,
   Category,
@@ -170,26 +172,17 @@ export function ExpenseListTable({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-slate-400 dark:text-slate-500">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mb-3" />
-        <p className="text-xs font-medium">Loading transactions...</p>
-      </div>
+      <LoadingCard message="Loading transactions..." />
     );
   }
 
   if (expenses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900/50">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 mb-3">
-          <Receipt className="h-6 w-6" />
-        </div>
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-          No expenses found
-        </h3>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-          There are no expenses matching your filter criteria. Try changing your filters or add a new expense.
-        </p>
-      </div>
+      <EmptyStateCard
+        icon={<Receipt className="h-6 w-6" />}
+        title="No expenses found"
+        description="There are no expenses matching your filter criteria. Try changing your filters or add a new expense."
+      />
     );
   }
 
@@ -208,7 +201,7 @@ export function ExpenseListTable({
   return (
     <div className="space-y-4">
       {/* Mobile Sort Bar */}
-      <div className="sm:hidden flex items-center justify-between gap-2 rounded-xl bg-(--bg-card) p-3 border-[1.5px] border-(--border-ink) shadow-cute-sm text-xs">
+      <div className="sm:hidden flex items-center justify-between gap-2 rounded-xl bg-(--bg-card) p-3 border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-xs">
         <div className="flex items-center gap-1.5 text-(--text-muted)">
           <ArrowUpDown className="h-3.5 w-3.5" />
           <span className="font-bold">Sort by:</span>
@@ -233,7 +226,7 @@ export function ExpenseListTable({
               setInternalSortOrder(order);
             }
           }}
-          className="rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer"
+          className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-bold text-(--text-ink) cursor-pointer"
         >
           <option value="">Default order</option>
           <option value="date-desc">Date (Newest first)</option>
@@ -246,10 +239,10 @@ export function ExpenseListTable({
       </div>
 
       {/* Main Ledger Container */}
-      <div className="overflow-hidden rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) shadow-cute transition-colors">
+      <div className="overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute) transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-(--text-ink) block sm:table">
-            <thead className="hidden sm:table-header-group bg-(--bg-canvas) border-b-[1.5px] border-(--border-ink) text-[11px] uppercase tracking-wider font-extrabold text-(--text-muted) select-none">
+            <thead className="hidden sm:table-header-group bg-(--bg-canvas) border-b-2 border-(--border-ink) text-[11px] uppercase tracking-wider font-extrabold text-(--text-muted) select-none">
               <tr>
                 <th
                   scope="col"

@@ -19,12 +19,11 @@ import {
   TrendingDown,
   Wallet,
   Receipt,
-  Loader2,
   PiggyBank,
   Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard } from '../components/ui';
+import { PageHeader, Button, StatCard, LoadingCard } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -396,12 +395,7 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
 
       {/* Loading Indicator */}
       {isLoading ? (
-        <div className="flex items-center justify-center p-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center gap-3 text-slate-500">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-            <span className="text-sm font-medium">Loading budget details...</span>
-          </div>
-        </div>
+        <LoadingCard message="Loading budget details..." />
       ) : (
         <>
           {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
