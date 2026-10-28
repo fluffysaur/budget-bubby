@@ -1063,8 +1063,12 @@ class MockFinanceServiceImpl implements FinanceService {
 
   public async getStreakSummary(memberId?: string): Promise<StreakSummary> {
     const today = getTodayDateString();
-    const checkins = await this.getDailyCheckins(memberId);
-    const dateSet = new Set(checkins.map((c) => c.checkin_date));
+    const allCheckins = await this.getDailyCheckins();
+    const targetMemberCheckins = memberId
+      ? allCheckins.filter((c) => c.member_id === memberId)
+      : allCheckins;
+
+    const dateSet = new Set(targetMemberCheckins.map((c) => c.checkin_date));
     const checkedInToday = dateSet.has(today);
 
     // Calculate current streak counting backward
@@ -1106,13 +1110,13 @@ class MockFinanceServiceImpl implements FinanceService {
       if (running > longestStreak) longestStreak = running;
     }
 
-    // Couple streak (days where both member 0 and member 1 checked in)
+    // Couple streak (days where BOTH partners checked in)
     const m1 = this.state.members[0]?.id;
     const m2 = this.state.members[1]?.id;
     let coupleStreak = 0;
     if (m1 && m2) {
-      const m1Dates = new Set(this.state.dailyCheckins?.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
-      const m2Dates = new Set(this.state.dailyCheckins?.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
+      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
+      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
       const cCursor = new Date(today + 'T12:00:00');
       if (!m1Dates.has(today) || !m2Dates.has(today)) {
         cCursor.setDate(cCursor.getDate() - 1);
@@ -1128,11 +1132,32 @@ class MockFinanceServiceImpl implements FinanceService {
       }
     }
 
+    // If viewing household (no memberId specified), set currentStreak to max of both partners' streaks
+    let resolvedCurrentStreak = currentStreak;
+    if (!memberId && m1 && m2) {
+      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
+      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
+      const calcMemberStreak = (dates: Set<string>) => {
+        let s = 0;
+        const cur = new Date(today + 'T12:00:00');
+        if (!dates.has(today)) cur.setDate(cur.getDate() - 1);
+        while (true) {
+          const iso = formatISODate(cur);
+          if (dates.has(iso)) {
+            s++;
+            cur.setDate(cur.getDate() - 1);
+          } else break;
+        }
+        return s;
+      };
+      resolvedCurrentStreak = Math.max(calcMemberStreak(m1Dates), calcMemberStreak(m2Dates));
+    }
+
     return {
-      currentStreak,
-      longestStreak: Math.max(longestStreak, currentStreak),
+      currentStreak: resolvedCurrentStreak,
+      longestStreak: Math.max(longestStreak, resolvedCurrentStreak),
       checkedInToday,
-      lastCheckinDate: checkins[0]?.checkin_date || null,
+      lastCheckinDate: targetMemberCheckins[0]?.checkin_date || null,
       coupleStreak,
     };
   }

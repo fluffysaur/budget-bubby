@@ -85,12 +85,12 @@ describe('Epic 5: Daily Check-in Streak, Biometric Auth & PWA Notifications', ()
       // Verify streak badge is displayed
       const personalBadge = await screen.findByTestId('personal-streak-badge');
       expect(personalBadge).toBeInTheDocument();
-      expect(personalBadge.textContent).toContain('streak');
+      expect(personalBadge.getAttribute('title')).toContain('streak');
 
       // Verify couple streak badge
       const coupleBadge = screen.getByTestId('couple-streak-badge');
       expect(coupleBadge).toBeInTheDocument();
-      expect(coupleBadge.textContent).toContain('couple streak');
+      expect(coupleBadge.getAttribute('title')).toContain('streak');
 
       // Verify 7-day mini calendar dots
       const calendarDots = screen.getByTestId('streak-calendar-dots');
@@ -149,7 +149,7 @@ describe('Epic 5: Daily Check-in Streak, Biometric Auth & PWA Notifications', ()
 
       const noSpendBtn = await screen.findByTestId('no-spend-checkin-btn');
       expect(noSpendBtn).toBeInTheDocument();
-      expect(noSpendBtn.textContent).toContain('No Spend Today — Check In');
+      expect(noSpendBtn.textContent).toContain('No Spend — Check In');
 
       // Click 1-tap button
       await act(async () => {

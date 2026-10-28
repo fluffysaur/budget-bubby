@@ -29,9 +29,9 @@ export interface PlanPageProps {
 
 const SUB_TABS: { id: PlanSubTab; label: string; icon: typeof Target }[] = [
   { id: 'goals', label: 'Goals', icon: Target },
-  { id: 'loans', label: 'Loans & Mortgage', icon: CreditCard },
-  { id: 'recurring', label: 'Recurring & Taxes', icon: CalendarClock },
-  { id: 'bonus', label: 'Bonus Calculator', icon: Sparkles },
+  { id: 'loans', label: 'Loans', icon: CreditCard },
+  { id: 'recurring', label: 'Recurring', icon: CalendarClock },
+  { id: 'bonus', label: 'Bonus', icon: Sparkles },
 ];
 
 export function PlanPage({ initialTab = 'goals', className = '' }: PlanPageProps) {

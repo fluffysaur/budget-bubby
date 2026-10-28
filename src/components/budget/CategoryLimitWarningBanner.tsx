@@ -36,9 +36,11 @@ export function CategoryLimitWarningBanner({
   className = '',
   onNavigateCategory,
 }: CategoryLimitWarningBannerProps) {
-  const [toast, setToast] = useState<ToastAlert | null>(null);
-  const categoriesRef = useRef(categories);
-  categoriesRef.current = categories;
+    const [toast, setToast] = useState<ToastAlert | null>(null);
+    const categoriesRef = useRef(categories);
+    useEffect(() => {
+        categoriesRef.current = categories;
+    }, [categories]);
 
   // Listen to window 'expenseAdded' event to detect boundary crossing (80% or 100%)
   useEffect(() => {
@@ -178,30 +180,30 @@ export function CategoryLimitWarningBanner({
           className="fixed top-5 right-5 z-50 max-w-sm sm:max-w-md w-full animate-in slide-in-from-top-4 duration-300 pointer-events-auto"
         >
           <div
-            className={`p-4 rounded-2xl border shadow-xl flex items-start gap-3 backdrop-blur-md ${
+            className={`p-4 rounded-2xl border-2 border-(--border-ink) shadow-(--shadow-cute-lg) flex items-start gap-3 backdrop-blur-md ${
               toast.type === 'exceeded'
-                ? 'bg-rose-50/95 dark:bg-rose-950/95 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-100'
-                : 'bg-amber-50/95 dark:bg-amber-950/95 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-100'
+                ? 'bg-[#fff1ee] text-[#9a1b1b] dark:bg-[#3b1c19] dark:text-[#fca5a5]'
+                : 'bg-[#fffbeb] text-[#92400e] dark:bg-[#382f18] dark:text-[#fde68a]'
             }`}
           >
             <div
-              className={`p-2 rounded-xl shrink-0 ${
+              className={`p-2 rounded-xl border border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${
                 toast.type === 'exceeded'
-                  ? 'bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-300'
-                  : 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300'
+                  ? 'bg-[#f76b57] text-white'
+                  : 'bg-[#ffe999] text-[#1a1a1a]'
               }`}
             >
               {toast.type === 'exceeded' ? (
-                <ShieldAlert className="h-5 w-5" />
+                <ShieldAlert className="h-5 w-5 stroke-[2.5]" />
               ) : (
-                <AlertTriangle className="h-5 w-5" />
+                <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
               )}
             </div>
             <div className="flex-1 min-w-0 pr-1">
-              <h4 className="text-xs font-bold uppercase tracking-wider mb-0.5">
+              <h4 className="text-xs font-black uppercase tracking-wider mb-0.5 font-display">
                 {toast.title}
               </h4>
-              <p className="text-xs font-semibold leading-relaxed">
+              <p className="text-xs font-bold leading-relaxed">
                 {toast.message}
               </p>
             </div>
@@ -229,15 +231,15 @@ export function CategoryLimitWarningBanner({
           {exceededAlerts.length > 0 && (
             <div
               data-testid="category-limit-exceeded-banner"
-              className="p-4 rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/40 text-rose-900 dark:text-rose-100 shadow-2xs transition-all"
+              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fff1ee] dark:bg-[#3b1c19] text-[#9a1b1b] dark:text-[#fca5a5] shadow-(--shadow-cute-sm) transition-all"
             >
               <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">
-                  <AlertCircle className="h-4 w-4" />
+                <div className="p-1.5 rounded-xl bg-[#f76b57] text-white border border-(--border-ink) shrink-0 mt-0.5">
+                  <AlertCircle className="h-4 w-4 stroke-[2.5]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                    <span className="text-xs font-black uppercase tracking-wider text-[#9a1b1b] dark:text-[#fca5a5] font-display">
                       Budget Cap Exceeded ({exceededAlerts.length})
                     </span>
                   </div>
@@ -245,12 +247,12 @@ export function CategoryLimitWarningBanner({
                     {exceededAlerts.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between gap-2 text-xs text-rose-800 dark:text-rose-200 flex-wrap"
+                        className="flex items-center justify-between gap-2 text-xs font-bold text-[#9a1b1b] dark:text-[#fca5a5] flex-wrap"
                       >
-                        <span className="font-semibold">
+                        <span>
                           {item.name} has exceeded cap by {formatSGD(item.over)}!
                         </span>
-                        <span className="text-[11px] opacity-80">
+                        <span className="text-[11px] font-mono-num opacity-90">
                           {formatSGD(item.spent)} of {formatSGD(item.allocated)} ({item.percentage}%)
                         </span>
                       </div>
@@ -265,15 +267,15 @@ export function CategoryLimitWarningBanner({
           {warningAlerts.length > 0 && (
             <div
               data-testid="category-limit-nearing-banner"
-              className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100 shadow-2xs transition-all"
+              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fffbeb] dark:bg-[#382f18] text-[#92400e] dark:text-[#fde68a] shadow-(--shadow-cute-sm) transition-all"
             >
               <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                  <AlertTriangle className="h-4 w-4" />
+                <div className="p-1.5 rounded-xl bg-[#ffe999] text-[#1a1a1a] border border-(--border-ink) shrink-0 mt-0.5">
+                  <AlertTriangle className="h-4 w-4 stroke-[2.5]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                    <span className="text-xs font-black uppercase tracking-wider text-[#92400e] dark:text-[#fde68a] font-display">
                       Nearing Limit Warning ({warningAlerts.length})
                     </span>
                   </div>
@@ -281,19 +283,19 @@ export function CategoryLimitWarningBanner({
                     {warningAlerts.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between gap-2 text-xs text-amber-800 dark:text-amber-200 flex-wrap"
+                        className="flex items-center justify-between gap-2 text-xs font-bold text-[#92400e] dark:text-[#fde68a] flex-wrap"
                       >
-                        <span className="font-semibold">
+                        <span>
                           {item.name} is at {item.percentage}% ({formatSGD(item.spent)} of {formatSGD(item.allocated)}) — {formatSGD(item.left)} left
                         </span>
                         {onNavigateCategory && (
                           <button
                             type="button"
                             onClick={() => onNavigateCategory(item.id)}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100 hover:underline cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[11px] font-black text-[#92400e] dark:text-[#fde68a] hover:underline cursor-pointer"
                           >
                             <span>View</span>
-                            <ArrowUpRight className="h-3 w-3" />
+                            <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
                           </button>
                         )}
                       </div>

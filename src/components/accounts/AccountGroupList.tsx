@@ -52,21 +52,21 @@ interface GroupConfig {
 const GROUP_CONFIGS: GroupConfig[] = [
   {
     type: 'Cash',
-    title: 'Cash & Liquid Savings',
+    title: 'Cash',
     description: 'Everyday checking, high-yield savings, and liquid emergency reserves',
     icon: Wallet,
     headerColor: 'text-emerald-600 dark:text-emerald-400',
   },
   {
     type: 'Investment',
-    title: 'Investment Portfolio',
+    title: 'Investments',
     description: 'Equities, ETFs, brokerages (SGX CDP, IBKR, Webull, Moomoo)',
     icon: TrendingUp,
     headerColor: 'text-blue-600 dark:text-blue-400',
   },
   {
     type: 'CPF',
-    title: 'CPF Accounts (OA / SA / MA)',
+    title: 'CPF',
     description: 'Ordinary Account, Special Account, and MediSave balances',
     icon: Landmark,
     headerColor: 'text-purple-600 dark:text-purple-400',

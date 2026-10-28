@@ -9,10 +9,12 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Sun, Moon, Users, User, Plus, ChevronDown, Check, LogOut, AlertTriangle } from "lucide-react";
+import { Sun, Moon, Plus, ChevronDown, Check, LogOut, AlertTriangle, Download } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { mockMembers } from "../../data/mockSeedData";
+import { usePWAInstall } from "../../hooks/usePWAInstall";
+import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { Button } from "../ui/Button";
@@ -25,19 +27,15 @@ export interface AppHeaderProps {
 
 const MEMBER_COLOR_PALETTE = [
     {
-        iconColor: "text-[#1a1a1a] dark:text-[#fde68a]",
         activeBg: "bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        iconColor: "text-[#1a1a1a] dark:text-[#fbcfe8]",
         activeBg: "bg-[#fcbffa] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        iconColor: "text-[#1a1a1a] dark:text-[#dfc2ff]",
         activeBg: "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        iconColor: "text-[#1a1a1a] dark:text-[#86efac]",
         activeBg: "bg-[#bbf7d0] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
 ];
@@ -60,6 +58,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         isMockMode,
     } = useHousehold();
     const { signOut, isAuthenticated } = useAuth();
+    const { canInstall, isInstalled, showIOSModal, setShowIOSModal, promptInstall } = usePWAInstall();
 
     const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
 
@@ -100,8 +99,6 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 key: "household" as PerspectiveType,
                 memberId: null as string | null,
                 label: "Combined",
-                icon: Users,
-                iconColor: "text-[#1a1a1a]",
                 activeBg: "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
             },
         ];
@@ -112,8 +109,6 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 key: getPerspectiveKeyForMember(m.display_name, m.id),
                 memberId: m.id,
                 label: m.display_name,
-                icon: User,
-                iconColor: palette.iconColor,
                 activeBg: palette.activeBg,
             });
         });
@@ -129,8 +124,6 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
             ) || perspectiveOptions[0]
         );
     }, [perspective, activeMember, perspectiveOptions]);
-
-    const CurrentIcon = currentOption.icon;
 
     const handleSelectPerspective = (p: PerspectiveType) => {
         setPerspective(p);
@@ -157,7 +150,6 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             aria-label="Select Financial Perspective"
                             className="flex items-center gap-2 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) transition-all cursor-pointer"
                         >
-                            <CurrentIcon className={`h-4 w-4 stroke-[2.5] ${currentOption.iconColor}`} />
                             <span>{currentOption.label}</span>
                             <ChevronDown
                                 className={`h-3.5 w-3.5 stroke-[2.5] text-(--text-muted) transition-transform duration-150 ${
@@ -170,10 +162,12 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             <div
                                 role="listbox"
                                 aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-2 w-48 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-lg) transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
+                                className="absolute left-0 mt-2 w-52 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-lg) transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
                             >
+                                <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
+                                    Perspectives
+                                </div>
                                 {perspectiveOptions.map((opt) => {
-                                    const Icon = opt.icon;
                                     const isSelected = currentOption.key === opt.key;
                                     return (
                                         <button
@@ -188,16 +182,65 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                                     : "text-(--text-ink) hover:bg-(--bg-cream)"
                                             }`}
                                         >
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <Icon className={`h-4 w-4 shrink-0 stroke-[2.5] ${opt.iconColor}`} />
-                                                <span className="truncate">{opt.label}</span>
-                                            </div>
+                                            <span className="truncate">{opt.label}</span>
                                             {isSelected && (
                                                 <Check className="h-3.5 w-3.5 shrink-0 stroke-3" />
                                             )}
                                         </button>
                                     );
                                 })}
+
+                                {/* Mobile Settings & Utilities section */}
+                                <div className="mt-2 pt-2 border-t-[1.5px] border-(--border-subtle) space-y-1">
+                                    <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
+                                        Settings
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            toggleTheme();
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {theme === "dark" ? (
+                                                <Sun className="h-4 w-4 text-[#ffe999]" />
+                                            ) : (
+                                                <Moon className="h-4 w-4 text-[#1a1a1a]" />
+                                            )}
+                                            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                                        </div>
+                                    </button>
+
+                                    {!isInstalled && canInstall && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                promptInstall();
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#14532d] dark:text-[#86efac] hover:bg-[#bbf7d0]/30 transition-colors cursor-pointer"
+                                        >
+                                            <Download className="h-4 w-4 stroke-[2.5]" />
+                                            <span>Install App</span>
+                                        </button>
+                                    )}
+
+                                    {(!isMockMode || isAuthenticated) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsDropdownOpen(false);
+                                                setIsLogoutConfirmOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#9a1b1b] dark:text-rose-400 hover:bg-[#fff1ee] dark:hover:bg-[#3d1c1a] transition-colors cursor-pointer"
+                                        >
+                                            <LogOut className="h-4 w-4 stroke-[2.5]" />
+                                            <span>Lock / Sign Out</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -208,7 +251,6 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                         className="hidden sm:flex items-center rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-subtle) p-1"
                     >
                         {perspectiveOptions.map((opt) => {
-                            const Icon = opt.icon;
                             const isSelected = perspective === opt.key;
                             return (
                                 <button
@@ -223,7 +265,6 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"
                                     }`}
                                 >
-                                    <Icon className={`h-4 w-4 stroke-[2.5] ${opt.iconColor}`} />
                                     <span>{opt.label}</span>
                                     {opt.label === "Combined" && <span className="sr-only">Household</span>}
                                 </button>
@@ -232,7 +273,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     </nav>
                 </div>
 
-                {/* Right: Badges, Quick Add & Theme Toggle */}
+                {/* Right: Badges, Quick Add & Desktop Settings */}
                 <div className="flex items-center space-x-2 sm:space-x-3">
                     {/* Quick Add Button (Desktop trigger) */}
                     {onOpenQuickAdd && (
@@ -255,22 +296,25 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                             className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-(--border-ink) bg-[#ffe999] px-2.5 py-1 text-xs font-bold text-[#1a1a1a] shadow-(--shadow-cute-sm)"
                         >
                             <span className="h-2 w-2 rounded-full bg-[#f59e0b] animate-pulse border border-[#1a1a1a]" />
-                            <span>Demo Mode</span>
+                            <span className="hidden xs:inline">Demo Mode</span>
+                            <span className="xs:hidden">Demo</span>
                         </div>
                     )}
 
                     {/* Notification Center Popover */}
                     <NotificationCenterPopover onNavigateTab={onNavigateTab} />
 
-                    {/* PWA Install Button */}
-                    <PWAInstallButton />
+                    {/* PWA Install Button (Desktop) */}
+                    <div className="hidden sm:block">
+                        <PWAInstallButton />
+                    </div>
 
-                    {/* Theme Toggle Button */}
+                    {/* Theme Toggle Button (Desktop) */}
                     <button
                         type="button"
                         onClick={toggleTheme}
                         aria-label={`Toggle theme (currently ${theme})`}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                     >
                         {theme === "dark" ? (
                             <Sun className="h-4 w-4 text-[#ffe999]" />
@@ -279,14 +323,14 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                         )}
                     </button>
 
-                    {/* Lock / Sign Out Button */}
+                    {/* Lock / Sign Out Button (Desktop) */}
                     {(!isMockMode || isAuthenticated) && (
                         <button
                             type="button"
                             onClick={() => setIsLogoutConfirmOpen(true)}
                             aria-label="Lock Budget Bubby"
                             title="Lock / Sign Out"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-(--shadow-cute-sm) transition-all hover:bg-[#fff1ee] hover:text-[#9a1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-(--shadow-cute-sm) transition-all hover:bg-[#fff1ee] hover:text-[#9a1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                         >
                             <LogOut className="h-4 w-4 stroke-[2.5]" />
                         </button>
@@ -349,6 +393,12 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     </div>,
                     document.body,
                 )}
+
+            {/* iOS install modal when prompt triggered from menu */}
+            <IOSInstallModal
+                isOpen={showIOSModal}
+                onClose={() => setShowIOSModal(false)}
+            />
         </header>
     );
 }

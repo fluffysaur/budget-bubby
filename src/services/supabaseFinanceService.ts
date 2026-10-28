@@ -1337,9 +1337,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getStreakSummary(memberId?: string): Promise<StreakSummary> {
-    const checkins = await this.getDailyCheckins(memberId);
+    const allCheckins = await this.getDailyCheckins();
+    const targetMemberCheckins = memberId
+      ? allCheckins.filter((c) => c.member_id === memberId)
+      : allCheckins;
+
     const today = getTodayDateString();
-    const dateSet = new Set(checkins.map((c) => c.checkin_date));
+    const dateSet = new Set(targetMemberCheckins.map((c) => c.checkin_date));
     const checkedInToday = dateSet.has(today);
 
     let currentStreak = 0;
@@ -1379,12 +1383,58 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       if (running > longestStreak) longestStreak = running;
     }
 
+    // Couple streak (days where BOTH partners checked in)
+    const client = getClient();
+    const { data: membersData } = await client.from('household_members').select('id').order('created_at', { ascending: true });
+    const members = (membersData || []) as { id: string }[];
+    const m1 = members[0]?.id;
+    const m2 = members[1]?.id;
+
+    let coupleStreak = 0;
+    if (m1 && m2) {
+      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
+      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
+      const cCursor = new Date(today + 'T12:00:00');
+      if (!m1Dates.has(today) || !m2Dates.has(today)) {
+        cCursor.setDate(cCursor.getDate() - 1);
+      }
+      while (true) {
+        const iso = formatISODate(cCursor);
+        if (m1Dates.has(iso) && m2Dates.has(iso)) {
+          coupleStreak++;
+          cCursor.setDate(cCursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    }
+
+    let resolvedCurrentStreak = currentStreak;
+    if (!memberId && m1 && m2) {
+      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
+      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
+      const calcMemberStreak = (dates: Set<string>) => {
+        let s = 0;
+        const cur = new Date(today + 'T12:00:00');
+        if (!dates.has(today)) cur.setDate(cur.getDate() - 1);
+        while (true) {
+          const iso = formatISODate(cur);
+          if (dates.has(iso)) {
+            s++;
+            cur.setDate(cur.getDate() - 1);
+          } else break;
+        }
+        return s;
+      };
+      resolvedCurrentStreak = Math.max(calcMemberStreak(m1Dates), calcMemberStreak(m2Dates));
+    }
+
     return {
-      currentStreak,
-      longestStreak: Math.max(longestStreak, currentStreak),
+      currentStreak: resolvedCurrentStreak,
+      longestStreak: Math.max(longestStreak, resolvedCurrentStreak),
       checkedInToday,
-      lastCheckinDate: checkins[0]?.checkin_date || null,
-      coupleStreak: currentStreak,
+      lastCheckinDate: targetMemberCheckins[0]?.checkin_date || null,
+      coupleStreak,
     };
   }
 }

@@ -137,12 +137,13 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
       <PageHeader
         title="Accounts & Net Worth"
         actions={
-          <div className="flex items-center gap-2 min-h-[38px]">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 min-h-[38px] w-full sm:w-auto">
             {activeTab === 'accounts' && (
               <>
                 <Button
                   variant="secondary"
                   aria-label="Add Account"
+                  className="w-full sm:w-auto"
                   leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
                   onClick={() => setIsAddModalOpen(true)}
                 >
@@ -151,6 +152,7 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
                 <Button
                   variant="primary"
                   aria-label="Update Balances"
+                  className="w-full sm:w-auto"
                   leftIcon={<CalendarCheck className="h-4 w-4 stroke-[2.5]" />}
                   onClick={() => {
                     setSelectedAccount(null);
@@ -168,8 +170,8 @@ export function AccountsPage({ className = '', defaultTab = 'accounts' }: Accoun
       {/* Sub-Tab Navigation Bar */}
       <SegmentedTabs
         tabs={[
-          { id: 'accounts', label: 'Accounts & Assets', icon: <Wallet className="h-4 w-4" /> },
-          { id: 'credit_cards', label: 'Credit Card Tracker', icon: <ReceiptText className="h-4 w-4" /> },
+          { id: 'accounts', label: 'Accounts', icon: <Wallet className="h-4 w-4" /> },
+          { id: 'credit_cards', label: 'Credit Cards', icon: <ReceiptText className="h-4 w-4" /> },
         ]}
         activeTab={activeTab}
         onChange={(id) => setActiveTab(id as 'accounts' | 'credit_cards')}

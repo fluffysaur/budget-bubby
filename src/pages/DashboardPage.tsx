@@ -20,7 +20,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, Button, TruncatedText } from "../components/ui";
+import { PageHeader, TruncatedText } from "../components/ui";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
@@ -257,30 +257,9 @@ export function DashboardPage({
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
-            {/* Top Header & Quick Actions */}
+            {/* Top Header */}
             <PageHeader
                 title="Home"
-                actions={
-                    <>
-                        <Button
-                            variant="primary"
-                            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
-                            onClick={() => setIsQuickAddOpen(true)}
-                        >
-                            Add Expense
-                        </Button>
-
-                        <Button
-                            variant="secondary"
-                            leftIcon={
-                                <Landmark className="h-4 w-4 text-slate-500" />
-                            }
-                            onClick={() => handleOpenUpdateBalance()}
-                        >
-                            Update Balance
-                        </Button>
-                    </>
-                }
             />
 
             {/* Loading Indicator */}
@@ -388,7 +367,7 @@ export function DashboardPage({
                             ))}
                         </div>
 
-                        {/* Bottom 1-Tap Quick Actions */}
+                        {/* Bottom Spendable Remaining */}
                         <div className="mt-4 pt-3 border-t-[1.5px] border-(--border-subtle) flex items-center justify-between text-xs">
                             <span className="text-(--text-muted) font-semibold">
                                 Spendable remaining this month:{" "}
@@ -402,15 +381,6 @@ export function DashboardPage({
                                     {formatSGD(spendableSummary.totalRemaining)}
                                 </strong>
                             </span>
-
-                            <button
-                                type="button"
-                                onClick={() => setIsQuickAddOpen(true)}
-                                className="inline-flex items-center gap-1 font-black text-[#7e22ce] dark:text-[#dfc2ff] hover:underline cursor-pointer"
-                            >
-                                <Plus className="h-3.5 w-3.5 stroke-3" />
-                                <span>Log Expense</span>
-                            </button>
                         </div>
                     </div>
 

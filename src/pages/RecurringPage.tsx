@@ -19,7 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button } from '../components/ui';
+import { PageHeader, Button, StatCard } from '../components/ui';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getSingaporeDate } from '../lib/dateUtils';
@@ -122,7 +122,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
   }, [inScopePolicies]);
 
   // Metric 3 & 4: Monthly Outlay Map, Heaviest Month & Upcoming Renewal
-  const { heaviestMonthName, heaviestMonthAmount, upcomingRenewalText } = useMemo(() => {
+  const { heaviestMonthName, heaviestMonthAmount, upcomingRenewalText, upcomingRenewalSub } = useMemo(() => {
     const monthlyTotals = Array(12).fill(0);
     const sgNow = getSingaporeDate();
     const currentMonthNum = sgNow.getMonth() + 1; // 1-12
@@ -162,18 +162,22 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
       }
     }
 
-    let upcomingText = 'None upcoming';
+    let upcomingPolicyName = 'None upcoming';
+    let upcomingPolicySub = 'No upcoming renewals';
     if (nextPolicy && nextPolicy.payment_month) {
       const dueMonthStr = MONTH_NAMES[nextPolicy.payment_month - 1];
-      upcomingText = `${nextPolicy.name} (${dueMonthStr.slice(0, 3)}, ${formatSGD(nextPolicy.amount)})`;
+      upcomingPolicyName = nextPolicy.name;
+      upcomingPolicySub = `${dueMonthStr.slice(0, 3)} • ${formatSGD(nextPolicy.amount)}`;
     } else if (inScopePolicies.some((p) => p.frequency === 'monthly')) {
-      upcomingText = 'Monthly Active Subscriptions';
+      upcomingPolicyName = 'Active Subscriptions';
+      upcomingPolicySub = 'Billed monthly';
     }
 
     return {
       heaviestMonthName: heaviestName,
       heaviestMonthAmount: maxVal,
-      upcomingRenewalText: upcomingText,
+      upcomingRenewalText: upcomingPolicyName,
+      upcomingRenewalSub: upcomingPolicySub,
     };
   }, [inScopePolicies]);
 
@@ -214,7 +218,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
         <PageHeader
           title="Recurring Policies & Taxes"
           actions={
-            <>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="secondary"
                 onClick={loadPolicies}
@@ -223,20 +227,18 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
               />
               <Button
                 variant="primary"
+                className="w-full sm:w-auto"
                 leftIcon={<Plus className="w-4 h-4 stroke-[2.5]" />}
                 onClick={handleOpenAddModal}
               >
                 Add Policy
               </Button>
-            </>
+            </div>
           }
         />
       ) : (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Recurring Policies &amp; Taxes — amortize annual commitments
-          </p>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end w-full">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="secondary"
               size="sm"
@@ -247,6 +249,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
             <Button
               variant="primary"
               size="sm"
+              className="flex-1 sm:flex-initial whitespace-nowrap"
               leftIcon={<Plus className="w-3.5 h-3.5 stroke-[2.5]" />}
               onClick={handleOpenAddModal}
             >
@@ -266,83 +269,41 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
 
       {/* 4 Summary Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Total Annual Outflow */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Total Annual Outflow
-            </span>
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-              <DollarSign className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            {formatSGD(totalAnnualOutflow)}
-          </p>
-          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            {inScopePolicies.length} tracked policies
-          </span>
-        </div>
+        {/* Metric 1: Annual Outflow */}
+        <StatCard
+          title="Annual Outflow"
+          value={formatSGD(totalAnnualOutflow)}
+          subtitle={`${inScopePolicies.length} tracked policies`}
+          icon={<DollarSign className="w-4 h-4" />}
+          iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+        />
 
         {/* Metric 2: Monthly Amortized Outflow */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Monthly Amortized Outflow
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <TrendingDown className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-            {formatSGD(monthlyAmortizedOutflow)}
-            <span className="text-sm font-semibold text-slate-400 ml-1">/mo</span>
-          </p>
-          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Monthly deduction impact
-          </span>
-        </div>
+        <StatCard
+          title="Monthly Amortized"
+          value={`${formatSGD(monthlyAmortizedOutflow)}/mo`}
+          subtitle="Monthly deduction impact"
+          icon={<TrendingDown className="w-4 h-4" />}
+          iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+        />
 
         {/* Metric 3: Upcoming Renewal */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Upcoming Renewal
-            </span>
-            <div className="p-2 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
-              <CalendarCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-base font-bold text-slate-900 dark:text-white truncate" title={upcomingRenewalText}>
-            {upcomingRenewalText}
-          </p>
-          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Next scheduled payment
-          </span>
-        </div>
+        <StatCard
+          title="Next Renewal"
+          value={<span className="text-base sm:text-lg truncate block" title={upcomingRenewalText}>{upcomingRenewalText}</span>}
+          subtitle={upcomingRenewalSub}
+          icon={<CalendarCheck className="w-4 h-4" />}
+          iconBg="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
+        />
 
         {/* Metric 4: Heaviest Month */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Heaviest Month
-            </span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
-              <Flame className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
-            {heaviestMonthName}
-            {heaviestMonthAmount > 0 && (
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300 ml-1.5">
-                ({formatSGD(heaviestMonthAmount)})
-              </span>
-            )}
-          </p>
-          <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-            Highest lump-sum demand
-          </span>
-        </div>
+        <StatCard
+          title="Heaviest Month"
+          value={<span className="text-base sm:text-lg text-rose-600 dark:text-rose-400 truncate block">{heaviestMonthName}</span>}
+          subtitle={heaviestMonthAmount > 0 ? `${formatSGD(heaviestMonthAmount)} total` : 'No annual policies'}
+          icon={<Flame className="w-4 h-4" />}
+          iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
+        />
       </div>
 
       {/* 12-Month Renewal Calendar */}

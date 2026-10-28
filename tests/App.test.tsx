@@ -76,7 +76,7 @@ describe("App Integration & Routing", () => {
         const { unmount: unmountGoals } = render(<App initialEntries={["/goals"]} />);
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Savings Goals & Milestones/i)).toBeInTheDocument();
+            expect(within(main).getByText(/Total Target/i)).toBeInTheDocument();
         });
         unmountGoals();
 
@@ -90,7 +90,7 @@ describe("App Integration & Routing", () => {
         const { unmount: unmountRecurring } = render(<App initialEntries={["/recurring"]} />);
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Recurring Policies & Taxes/i)).toBeInTheDocument();
+            expect(within(main).getByText(/Active Policies & Schedules/i)).toBeInTheDocument();
         });
         unmountRecurring();
     });

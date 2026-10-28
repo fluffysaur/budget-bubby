@@ -174,35 +174,28 @@ export function DailyCheckinStreakBar({
       className={`relative overflow-hidden rounded-2xl border-[1.5px] border-(--border-ink) bg-[#fffbeb] dark:bg-[#2b2413] p-4 sm:p-5 shadow-(--shadow-cute) transition-all ${className}`}
     >
       <div className="flex flex-col gap-4">
-        {/* Top Header Row: Streak Counters & Action / Checked In status */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Streaks: Personal & Couple */}
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-            {/* Personal Streak Badge */}
+        {/* Top Header Row: Streak Counters & Action status */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Streaks: Personal & Couple Chips */}
+          <div className="flex items-center gap-2">
+            {/* Personal Streak Chip */}
             <div
               data-testid="personal-streak-badge"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) px-3.5 py-1.5 shadow-(--shadow-cute-sm)"
+              title={`Personal streak: ${streak.currentStreak} days (Best: ${streak.longestStreak}d)`}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) px-2.5 py-1 text-xs font-black shadow-(--shadow-cute-sm)"
             >
               <Flame className="h-4 w-4 stroke-[2.5] text-[#b45309]" />
-              <div className="flex items-baseline gap-1.5 font-display">
-                <span className="text-sm font-black tracking-tight text-[#1a1a1a]">
-                  {streak.currentStreak}-day streak
-                </span>
-                <span className="text-[10px] font-bold text-[#78350f] hidden xs:inline">
-                  (Best: {streak.longestStreak}d)
-                </span>
-              </div>
+              <span className="font-mono-num">{streak.currentStreak}</span>
             </div>
 
-            {/* Couple Streak Badge */}
+            {/* Couple Streak Chip */}
             <div
               data-testid="couple-streak-badge"
-              title="Consecutive days where both Yi Jia and Rachel checked in!"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#fcbffa] text-[#1a1a1a] border-[1.5px] border-(--border-ink) px-3 py-1.5 text-xs font-black shadow-(--shadow-cute-sm)"
+              title={`Couple streak: ${streak.coupleStreak} consecutive days both partners checked in`}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) px-2.5 py-1 text-xs font-black shadow-(--shadow-cute-sm)"
             >
-              <span className="text-sm">👩‍❤️‍👨</span>
-              <span className="font-display">{streak.coupleStreak}-day couple streak</span>
-              <Heart className="h-3 w-3 fill-[#1a1a1a] text-[#1a1a1a] ml-0.5" />
+              <Heart className="h-3.5 w-3.5 fill-[#1a1a1a] text-[#1a1a1a]" />
+              <span className="font-mono-num">{streak.coupleStreak}</span>
             </div>
           </div>
 
@@ -211,15 +204,16 @@ export function DailyCheckinStreakBar({
             {isLoading ? (
               <div className="flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
                 <Loader2 className="h-4 w-4 animate-spin text-[#b45309]" />
-                <span>Checking status...</span>
+                <span className="hidden xs:inline">Checking status...</span>
               </div>
             ) : streak.checkedInToday ? (
               <div
                 data-testid="checked-in-today-status"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#bbf7d0] text-[#14532d] border-2 border-(--border-ink) px-3.5 py-1.5 text-xs sm:text-sm font-black shadow-(--shadow-cute-sm)"
+                title="Checked in today"
+                className="inline-flex items-center gap-1 rounded-xl bg-[#bbf7d0] text-[#14532d] border-[1.5px] border-(--border-ink) px-2 py-1 text-xs font-black shadow-(--shadow-cute-sm)"
               >
-                <Check className="h-4 w-4 text-[#14532d] stroke-3" />
-                <span>Checked in today!</span>
+                <Check className="h-3.5 w-3.5 text-[#14532d] stroke-3" />
+                <span className="hidden sm:inline">Checked in today!</span>
               </div>
             ) : (
               <button
@@ -227,17 +221,17 @@ export function DailyCheckinStreakBar({
                 data-testid="no-spend-checkin-btn"
                 onClick={handleNoSpendCheckin}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#dfc2ff] hover:bg-[#1a1a1a] hover:text-[#fbf7f1] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-4 py-2 text-xs sm:text-sm font-black transition-all cursor-pointer disabled:opacity-50 font-display"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#dfc2ff] hover:bg-[#1a1a1a] hover:text-[#fbf7f1] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-3 py-1 text-xs font-black transition-all cursor-pointer disabled:opacity-50 font-display"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-                    <span>Recording...</span>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin stroke-[2.5]" />
+                    <span>Checking in...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4 stroke-[2.5]" />
-                    <span>🎉 No Spend Today — Check In</span>
+                    <Sparkles className="h-3.5 w-3.5 stroke-[2.5]" />
+                    <span>No Spend — Check In</span>
                   </>
                 )}
               </button>
@@ -248,7 +242,7 @@ export function DailyCheckinStreakBar({
         {/* 7-Day Mini Calendar Dots */}
         <div className="pt-2 border-t-[1.5px] border-(--border-ink)/20">
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider">
+            <span className="text-[10px] font-black text-(--text-muted) uppercase tracking-wider">
               Last 7 Days
             </span>
             <TooltipPopover
@@ -262,17 +256,17 @@ export function DailyCheckinStreakBar({
 
           <div
             data-testid="streak-calendar-dots"
-            className="mt-2.5 grid grid-cols-7 gap-1.5 sm:gap-2.5"
+            className="mt-2 grid grid-cols-7 gap-1.5 sm:gap-2.5"
           >
             {miniCalendarDays.map((day, idx) => (
               <div
                 key={day.isoDate}
                 data-testid={`checkin-dot-${idx}`}
                 title={`${day.isoDate}${day.isCheckedIn ? ' (Checked in)' : ' (Not checked in)'}${day.isToday ? ' - Today' : ''}`}
-                className={`flex flex-col items-center justify-center p-1.5 rounded-xl border-[1.5px] transition-all ${
+                className={`flex flex-col items-center justify-center p-1 sm:p-1.5 rounded-xl border-[1.5px] transition-all ${
                   day.isToday
                     ? 'border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm) font-black'
-                    : 'border-transparent bg-(--bg-card)/50'
+                    : 'border-transparent bg-(--bg-card)/40'
                 }`}
               >
                 <span className="text-[10px] font-bold text-(--text-muted)">
@@ -282,20 +276,16 @@ export function DailyCheckinStreakBar({
                 <div
                   className={`mt-1 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-xs font-black border transition-all ${
                     day.isCheckedIn
-                      ? 'bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) scale-105'
+                      ? 'bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) scale-105'
                       : 'border-(--border-subtle) bg-(--bg-cream) text-(--text-muted)'
                   }`}
                 >
                   {day.isCheckedIn ? (
                     <Check className="h-3.5 w-3.5 stroke-3" />
                   ) : (
-                    <span>{day.dayNum}</span>
+                    <span className="font-mono-num">{day.dayNum}</span>
                   )}
                 </div>
-
-                <span className="mt-0.5 text-[9px] font-bold text-(--text-muted) font-mono-num">
-                  {day.isToday ? 'Today' : `${day.dayNum}`}
-                </span>
               </div>
             ))}
           </div>

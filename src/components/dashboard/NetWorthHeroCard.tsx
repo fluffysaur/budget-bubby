@@ -32,7 +32,6 @@ export function NetWorthHeroCard({
   perspective = 'household',
   perspectiveName,
   className = '',
-  onUpdateBalance,
 }: NetWorthHeroCardProps) {
   const isHousehold = perspective === 'household';
   const displayName = perspectiveName || (isHousehold ? 'Combined Household' : perspective);
@@ -130,15 +129,6 @@ export function NetWorthHeroCard({
               </div>
             </div>
           </div>
-          {onUpdateBalance && (
-            <button
-              type="button"
-              onClick={onUpdateBalance}
-              className="text-xs font-bold text-[#15803d] dark:text-[#86efac] underline underline-offset-2 hover:opacity-80 cursor-pointer"
-            >
-              Update
-            </button>
-          )}
         </div>
 
         {/* Total Liabilities Pill */}

@@ -32,12 +32,12 @@ export function SegmentedTabs<T extends string = string>({
     className = "",
     ariaLabel = "Navigation Tabs",
 }: SegmentedTabsProps<T>) {
-    const sizeStyles = size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-xs sm:text-sm";
+    const sizeStyles = size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-xs sm:text-sm";
 
     return (
         <nav
             aria-label={ariaLabel}
-            className={`inline-flex items-center gap-1 p-1 rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-subtle) ${className}`}
+            className={`flex w-full sm:w-auto overflow-x-auto no-scrollbar items-center gap-1 p-1 rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-subtle) ${className}`}
         >
             {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
@@ -48,7 +48,7 @@ export function SegmentedTabs<T extends string = string>({
                         role="tab"
                         aria-selected={isActive}
                         onClick={() => onChange(tab.id)}
-                        className={`flex items-center gap-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${sizeStyles} ${
+                        className={`flex flex-1 sm:flex-initial justify-center items-center gap-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${sizeStyles} ${
                             isActive
                                 ? accentMap[accent]
                                 : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"

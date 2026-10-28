@@ -218,10 +218,11 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
       <PageHeader
         title="Expenses"
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
-              variant="outline"
+              variant="secondary"
               aria-label="+ Bulk Log"
+              className="w-full sm:w-auto"
               leftIcon={<FileSpreadsheet className="h-4 w-4 stroke-[2.2] text-emerald-600" />}
               onClick={() => setIsBulkAddOpen(true)}
             >
@@ -230,6 +231,7 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
             <Button
               variant="primary"
               aria-label="+ Add Expense"
+              className="hidden md:inline-flex"
               leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
               onClick={() => setIsModalOpen(true)}
             >

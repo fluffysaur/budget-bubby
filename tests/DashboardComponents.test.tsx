@@ -545,10 +545,6 @@ describe('DashboardPage', () => {
     // Goals & Bills widgets are displayed
     expect(screen.getByText('HDB Down Payment')).toBeInTheDocument();
     expect(screen.getByText('Manulife - Lifeready 25 Plus')).toBeInTheDocument();
-
-    // Quick Actions
-    expect(screen.getByRole('button', { name: /\+ (quick )?add expense|add expense/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /update balance/i })).toBeInTheDocument();
   });
 
   it('settle up in DashboardPage invokes financeService and refreshes overview', async () => {
@@ -602,73 +598,24 @@ describe('DashboardPage', () => {
     expect(screen.getByText('DBS Multiplier')).toBeInTheDocument();
   });
 
-  it('opens QuickAddExpenseModal when Quick Add Expense button is clicked', async () => {
+  it('opens UpdateBalanceModal when Update button on account row is clicked in personal view', async () => {
     await act(async () => {
       render(
-        <HouseholdProvider initialPerspective="household">
+        <HouseholdProvider initialPerspective="yijia">
           <DashboardPage />
         </HouseholdProvider>
       );
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /\+ (quick )?add expense|add expense/i })).toBeInTheDocument();
+      expect(screen.getByText('DBS Multiplier')).toBeInTheDocument();
     });
 
-    const addBtn = screen.getByRole('button', { name: /\+ (quick )?add expense|add expense/i });
-    fireEvent.click(addBtn);
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/quick add expense/i)).toBeInTheDocument();
-  });
-
-  it('opens UpdateBalanceModal when Update Balance button is clicked', async () => {
-    await act(async () => {
-      render(
-        <HouseholdProvider initialPerspective="household">
-          <DashboardPage />
-        </HouseholdProvider>
-      );
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /update balance/i })).toBeInTheDocument();
-    });
-
-    const updateBtn = screen.getByRole('button', { name: /update balance/i });
-    fireEvent.click(updateBtn);
+    const updateBtns = screen.getAllByRole('button', { name: /update/i });
+    expect(updateBtns.length).toBeGreaterThan(0);
+    fireEvent.click(updateBtns[0]);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/update account balance/i)).toBeInTheDocument();
-  });
-
-  it('opens AddAccountModal with setup banner when Update Balance button is clicked and 0 accounts exist', async () => {
-    const getAccountsSpy = vi.spyOn(financeService, 'getAccounts').mockResolvedValue([]);
-
-    try {
-      await act(async () => {
-        render(
-          <HouseholdProvider initialPerspective="household">
-            <DashboardPage />
-          </HouseholdProvider>
-        );
-      });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /update balance/i })).toBeInTheDocument();
-      });
-
-      const updateBtn = screen.getByRole('button', { name: /update balance/i });
-      fireEvent.click(updateBtn);
-
-      await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
-
-      expect(screen.getByText(/add new account/i)).toBeInTheDocument();
-      expect(screen.getByText(/no accounts found yet/i)).toBeInTheDocument();
-    } finally {
-      getAccountsSpy.mockRestore();
-    }
   });
 });

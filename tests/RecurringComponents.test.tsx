@@ -485,9 +485,9 @@ describe('RecurringPage Component', () => {
 
     // Verify metric card labels
     await waitFor(() => {
-      expect(screen.getByText(/Total Annual Outflow/i)).toBeInTheDocument();
-      expect(screen.getByText(/Monthly Amortized Outflow/i)).toBeInTheDocument();
-      expect(screen.getByText(/Upcoming Renewal/i)).toBeInTheDocument();
+      expect(screen.getByText(/Annual Outflow/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Monthly Amortized/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/Next Renewal/i)).toBeInTheDocument();
       expect(screen.getByText(/Heaviest Month/i)).toBeInTheDocument();
     });
   });
