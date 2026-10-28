@@ -3,13 +3,11 @@
  * Dedicated standalone page / PWA shortcut route for 1-tap fast logging.
  */
 
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Zap } from 'lucide-react';
 import { FastLogWidget } from '../components/expenses/FastLogWidget';
 import { useHousehold } from '../context/HouseholdContext';
-import { financeService } from '../services/financeService';
-import type { Category } from '../types/finance';
+import { useCategoriesQuery } from '../hooks/useFinanceQueries';
 
 export interface FastLogPageProps {
   onNavigateTab?: (tabId: string) => void;
@@ -18,13 +16,8 @@ export interface FastLogPageProps {
 export function FastLogPage({ onNavigateTab }: FastLogPageProps) {
   const navigate = useNavigate();
   const { members, activeMember, refreshData } = useHousehold();
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    financeService.getCategories().then((cats) => {
-      if (cats && cats.length > 0) setCategories(cats);
-    }).catch(() => {});
-  }, []);
+  const { data: categoriesData } = useCategoriesQuery();
+  const categories = categoriesData || [];
 
   return (
     <div className="mx-auto max-w-md py-4 px-2 sm:px-0">

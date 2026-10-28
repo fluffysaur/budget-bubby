@@ -8,7 +8,7 @@
  * - AddPolicyModal integration
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Plus,
   DollarSign,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, Card } from '../components/ui';
+import { usePoliciesQuery } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getSingaporeDate } from '../lib/dateUtils';
@@ -49,34 +50,18 @@ const MONTH_NAMES = [
 ];
 
 export function RecurringPage({ className = '', embedded = false }: RecurringPageProps) {
-  const { perspective, activeMember, members } = useHousehold();
+  const { perspective, activeMember, members, refreshData: refreshHousehold } = useHousehold();
 
-  const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Cached Policies Query
+  const { data: policiesData, isLoading: policiesLoading, error: policiesError } = usePoliciesQuery();
+  const policies = useMemo(() => policiesData || [], [policiesData]);
+  const isLoading = policiesLoading && !policiesData;
+  const [actionError, setActionError] = useState<string | null>(null);
+  const errorMessage = actionError || (policiesError ? (policiesError as Error).message : null);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingPolicy, setEditingPolicy] = useState<RecurringPolicy | null>(null);
-
-  // Load policies
-  const loadPolicies = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      const data = await financeService.getPolicies();
-      setPolicies(data || []);
-    } catch (err: unknown) {
-      console.error('Failed to load recurring policies:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to load recurring policies');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadPolicies();
-  }, [loadPolicies]);
 
   // Perspective filtering
   const inScopePolicies = useMemo(() => {
@@ -194,11 +179,12 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
 
   const handleDeletePolicy = async (policyId: string) => {
     try {
+      setActionError(null);
       await financeService.deletePolicy(policyId);
-      await loadPolicies();
+      await refreshHousehold();
     } catch (err: unknown) {
       console.error('Failed to delete policy:', err);
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to delete policy');
+      setActionError(err instanceof Error ? err.message : 'Failed to delete policy');
     }
   };
 
@@ -208,7 +194,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
     } else {
       await financeService.addPolicy(payload);
     }
-    await loadPolicies();
+    await refreshHousehold();
   };
 
   return (
@@ -221,7 +207,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="secondary"
-                onClick={loadPolicies}
+                onClick={() => refreshHousehold()}
                 title="Refresh policies"
                 leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
               />
@@ -242,7 +228,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
             <Button
               variant="secondary"
               size="sm"
-              onClick={loadPolicies}
+              onClick={() => refreshHousehold()}
               title="Refresh policies"
               leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
             />

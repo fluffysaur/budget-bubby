@@ -34,11 +34,14 @@ import type {
   DailyCheckin,
   CheckinType,
   StreakSummary,
+  NotificationPreferences,
+  UpdateNotificationPreferencesInput,
 } from '../types/finance';
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
 import { supabaseFinanceService } from './supabaseFinanceService';
 import { offlineSyncQueue } from './offlineSyncQueue';
+import { queryClient } from '../lib/queryClient';
 
 export interface FinanceService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
@@ -96,6 +99,12 @@ export interface FinanceService {
   getDailyCheckins(memberId?: string): Promise<DailyCheckin[]>;
   recordDailyCheckin(memberId: string, date: string, type: CheckinType): Promise<DailyCheckin>;
   getStreakSummary(memberId?: string): Promise<StreakSummary>;
+  // Notification Preferences
+  getNotificationPreferences(memberId: string): Promise<NotificationPreferences>;
+  updateNotificationPreferences(
+    memberId: string,
+    updates: UpdateNotificationPreferencesInput
+  ): Promise<NotificationPreferences>;
 }
 
 export function isDemoModeActive(): boolean {
@@ -115,31 +124,76 @@ function getActiveService(): FinanceService {
   return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
 }
 
+function invalidateFinanceCache() {
+  try {
+    queryClient.invalidateQueries({ queryKey: ['finance'] });
+  } catch {
+    // In restricted test environments without QueryClient mounted, fail silently
+  }
+}
+
 export const financeService: FinanceService = {
   getHouseholdOverview: () => getActiveService().getHouseholdOverview(),
   getAccounts: (perspective) => getActiveService().getAccounts(perspective),
-  createAccount: (input) => getActiveService().createAccount(input),
-  updateAccount: (id, updates) => getActiveService().updateAccount(id, updates),
-  deleteAccount: (id) => getActiveService().deleteAccount(id),
-  updateAccountBalance: (accountId, newBalance, notes, date) =>
-    getActiveService().updateAccountBalance(accountId, newBalance, notes, date),
-  bulkUpdateAccountBalances: (updates, snapshotDate) =>
-    getActiveService().bulkUpdateAccountBalances(updates, snapshotDate),
+  createAccount: async (input) => {
+    const res = await getActiveService().createAccount(input);
+    invalidateFinanceCache();
+    return res;
+  },
+  updateAccount: async (id, updates) => {
+    const res = await getActiveService().updateAccount(id, updates);
+    invalidateFinanceCache();
+    return res;
+  },
+  deleteAccount: async (id) => {
+    await getActiveService().deleteAccount(id);
+    invalidateFinanceCache();
+  },
+  updateAccountBalance: async (accountId, newBalance, notes, date) => {
+    const res = await getActiveService().updateAccountBalance(accountId, newBalance, notes, date);
+    invalidateFinanceCache();
+    return res;
+  },
+  bulkUpdateAccountBalances: async (updates, snapshotDate) => {
+    const res = await getActiveService().bulkUpdateAccountBalances(updates, snapshotDate);
+    invalidateFinanceCache();
+    return res;
+  },
   getAccountSnapshots: (accountId) => getActiveService().getAccountSnapshots(accountId),
   getAllAccountSnapshots: (perspective) =>
     getActiveService().getAllAccountSnapshots(perspective),
   getBaseProfiles: () => getActiveService().getBaseProfiles(),
   getBaseAllocations: (profileId) => getActiveService().getBaseAllocations(profileId),
   getCategories: () => getActiveService().getCategories(),
-  addCategory: (input) => getActiveService().addCategory(input),
-  updateCategory: (id, updates) => getActiveService().updateCategory(id, updates),
-  deleteCategory: (id) => getActiveService().deleteCategory(id),
-  seedDefaultCategories: () => getActiveService().seedDefaultCategories(),
-  updateBaseProfile: (profile, allocations) =>
-    getActiveService().updateBaseProfile(profile, allocations),
+  addCategory: async (input) => {
+    const res = await getActiveService().addCategory(input);
+    invalidateFinanceCache();
+    return res;
+  },
+  updateCategory: async (id, updates) => {
+    const res = await getActiveService().updateCategory(id, updates);
+    invalidateFinanceCache();
+    return res;
+  },
+  deleteCategory: async (id) => {
+    await getActiveService().deleteCategory(id);
+    invalidateFinanceCache();
+  },
+  seedDefaultCategories: async () => {
+    const res = await getActiveService().seedDefaultCategories();
+    invalidateFinanceCache();
+    return res;
+  },
+  updateBaseProfile: async (profile, allocations) => {
+    await getActiveService().updateBaseProfile(profile, allocations);
+    invalidateFinanceCache();
+  },
   getMonthlyBudget: (month, memberId) =>
     getActiveService().getMonthlyBudget(month, memberId),
-  updateMonthlyBudget: (budget) => getActiveService().updateMonthlyBudget(budget),
+  updateMonthlyBudget: async (budget) => {
+    await getActiveService().updateMonthlyBudget(budget);
+    invalidateFinanceCache();
+  },
   getExpenses: async (filter) => {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return mockFinanceService.getExpenses(filter);
@@ -150,55 +204,118 @@ export const financeService: FinanceService = {
       return mockFinanceService.getExpenses(filter);
     }
   },
-  addExpense: (expense) => {
+  addExpense: async (expense) => {
+    let res: Expense;
     if (offlineSyncQueue.isReplaying()) {
-      return getActiveService().addExpense(expense);
+      res = await getActiveService().addExpense(expense);
+    } else {
+      res = await offlineSyncQueue.addExpense(expense);
     }
-    return offlineSyncQueue.addExpense(expense);
+    invalidateFinanceCache();
+    return res;
   },
-  updateExpense: (id, updates) => {
+  updateExpense: async (id, updates) => {
+    let res: Expense;
     if (offlineSyncQueue.isReplaying()) {
-      return getActiveService().updateExpense(id, updates);
+      res = await getActiveService().updateExpense(id, updates);
+    } else {
+      res = await offlineSyncQueue.updateExpense(id, updates);
     }
-    return offlineSyncQueue.updateExpense(id, updates);
+    invalidateFinanceCache();
+    return res;
   },
-  bulkAddExpenses: (expenses) => {
+  bulkAddExpenses: async (expenses) => {
+    let res: Expense[];
     if (offlineSyncQueue.isReplaying()) {
-      return getActiveService().bulkAddExpenses(expenses);
+      res = await getActiveService().bulkAddExpenses(expenses);
+    } else {
+      res = await offlineSyncQueue.bulkAddExpenses(expenses);
     }
-    return offlineSyncQueue.bulkAddExpenses(expenses);
+    invalidateFinanceCache();
+    return res;
   },
-  deleteExpense: (id) => {
+  deleteExpense: async (id) => {
     if (offlineSyncQueue.isReplaying()) {
-      return getActiveService().deleteExpense(id);
+      await getActiveService().deleteExpense(id);
+    } else {
+      await offlineSyncQueue.deleteExpense(id);
     }
-    return offlineSyncQueue.deleteExpense(id);
+    invalidateFinanceCache();
   },
-  settleSharedExpenses: (m1, m2) => getActiveService().settleSharedExpenses(m1, m2),
+  settleSharedExpenses: async (m1, m2) => {
+    await getActiveService().settleSharedExpenses(m1, m2);
+    invalidateFinanceCache();
+  },
   getLoans: () => getActiveService().getLoans(),
   getGoals: () => getActiveService().getGoals(),
-  addGoal: (goal) => getActiveService().addGoal(goal),
-  updateGoal: (id, updates) => getActiveService().updateGoal(id, updates),
+  addGoal: async (goal) => {
+    const res = await getActiveService().addGoal(goal);
+    invalidateFinanceCache();
+    return res;
+  },
+  updateGoal: async (id, updates) => {
+    const res = await getActiveService().updateGoal(id, updates);
+    invalidateFinanceCache();
+    return res;
+  },
   getPolicies: () => getActiveService().getPolicies(),
-  addPolicy: (policy) => getActiveService().addPolicy(policy),
-  updatePolicy: (id, updates) => getActiveService().updatePolicy(id, updates),
-  deletePolicy: (id) => getActiveService().deletePolicy(id),
+  addPolicy: async (policy) => {
+    const res = await getActiveService().addPolicy(policy);
+    invalidateFinanceCache();
+    return res;
+  },
+  updatePolicy: async (id, updates) => {
+    const res = await getActiveService().updatePolicy(id, updates);
+    invalidateFinanceCache();
+    return res;
+  },
+  deletePolicy: async (id) => {
+    await getActiveService().deletePolicy(id);
+    invalidateFinanceCache();
+  },
   // Credit Cards
   getCreditCards: () => getActiveService().getCreditCards(),
-  addCreditCard: (input) => getActiveService().addCreditCard(input),
-  updateCreditCard: (id, updates) => getActiveService().updateCreditCard(id, updates),
-  deleteCreditCard: (id) => getActiveService().deleteCreditCard(id),
+  addCreditCard: async (input) => {
+    const res = await getActiveService().addCreditCard(input);
+    invalidateFinanceCache();
+    return res;
+  },
+  updateCreditCard: async (id, updates) => {
+    const res = await getActiveService().updateCreditCard(id, updates);
+    invalidateFinanceCache();
+    return res;
+  },
+  deleteCreditCard: async (id) => {
+    await getActiveService().deleteCreditCard(id);
+    invalidateFinanceCache();
+  },
   getCreditCardStatements: (month) => getActiveService().getCreditCardStatements(month),
-  upsertCreditCardStatement: (input) => getActiveService().upsertCreditCardStatement(input),
+  upsertCreditCardStatement: async (input) => {
+    const res = await getActiveService().upsertCreditCardStatement(input);
+    invalidateFinanceCache();
+    return res;
+  },
   // Streaks & Daily Check-ins
   getDailyCheckins: (memberId) => getActiveService().getDailyCheckins(memberId),
-  recordDailyCheckin: (memberId, date, type) => {
+  recordDailyCheckin: async (memberId, date, type) => {
+    let res: DailyCheckin;
     if (offlineSyncQueue.isReplaying()) {
-      return getActiveService().recordDailyCheckin(memberId, date, type);
+      res = await getActiveService().recordDailyCheckin(memberId, date, type);
+    } else {
+      res = await offlineSyncQueue.recordDailyCheckin(memberId, date, type);
     }
-    return offlineSyncQueue.recordDailyCheckin(memberId, date, type);
+    invalidateFinanceCache();
+    return res;
   },
   getStreakSummary: (memberId) => getActiveService().getStreakSummary(memberId),
+  // Notification Preferences
+  getNotificationPreferences: (memberId) =>
+    getActiveService().getNotificationPreferences(memberId),
+  updateNotificationPreferences: async (memberId, updates) => {
+    const res = await getActiveService().updateNotificationPreferences(memberId, updates);
+    invalidateFinanceCache();
+    return res;
+  },
 };
 
 export default financeService;

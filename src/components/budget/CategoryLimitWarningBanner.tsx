@@ -11,12 +11,15 @@
  * - If it pushes across 100%, triggers playBudgetExceededSound() and shows an immediate alert toast.
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { AlertCircle, AlertTriangle, X, ShieldAlert, ArrowUpRight } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { isSpendableCategory } from '../../lib/financialFormulas';
 import { playBudgetWarningSound, playBudgetExceededSound } from '../../lib/soundEffects';
-import type { Expense, MonthlyBudgetCategoryDetail } from '../../types/finance';
+import { useOptionalHousehold } from '../../context/HouseholdContext';
+import { financeService } from '../../services/financeService';
+import { getDefaultNotificationPreferences } from '../../data/mockSeedData';
+import type { Expense, MonthlyBudgetCategoryDetail, NotificationPreferences } from '../../types/finance';
 
 export interface CategoryLimitWarningBannerProps {
   categories?: MonthlyBudgetCategoryDetail[];
@@ -36,13 +39,46 @@ export function CategoryLimitWarningBanner({
   className = '',
   onNavigateCategory,
 }: CategoryLimitWarningBannerProps) {
+    const household = useOptionalHousehold();
+    const activeMember = household?.activeMember;
+    const members = household?.members;
+    const activeMemberId = activeMember?.id || members?.[0]?.id || 'mem-00000000-0011';
+
     const [toast, setToast] = useState<ToastAlert | null>(null);
+    const [prefs, setPrefs] = useState<NotificationPreferences>(() =>
+        getDefaultNotificationPreferences(activeMemberId)
+    );
     const categoriesRef = useRef(categories);
+    const prefsRef = useRef(prefs);
+
     useEffect(() => {
         categoriesRef.current = categories;
     }, [categories]);
 
-  // Listen to window 'expenseAdded' event to detect boundary crossing (80% or 100%)
+    useEffect(() => {
+        prefsRef.current = prefs;
+    }, [prefs]);
+
+    const loadPreferences = useCallback(async () => {
+        try {
+            const data = await financeService.getNotificationPreferences(activeMemberId);
+            setPrefs(data);
+        } catch {
+            // ignore
+        }
+    }, [activeMemberId]);
+
+    useEffect(() => {
+        loadPreferences();
+    }, [loadPreferences]);
+
+    useEffect(() => {
+        const handleUpdate = () => loadPreferences();
+        window.addEventListener('notificationPreferencesUpdated', handleUpdate);
+        return () => window.removeEventListener('notificationPreferencesUpdated', handleUpdate);
+    }, [loadPreferences]);
+
+  // Listen to window 'expenseAdded' event to detect boundary crossing
   useEffect(() => {
     const handleExpenseAdded = (e: Event) => {
       const customEvent = e as CustomEvent<Expense>;
@@ -50,6 +86,7 @@ export function CategoryLimitWarningBanner({
       if (!expense) return;
 
       const currentCats = categoriesRef.current;
+      const currentPrefs = prefsRef.current;
       const targetCat = currentCats.find(
         (c) => c.category_id === expense.category_id || c.category?.id === expense.category_id
       );
@@ -68,6 +105,7 @@ export function CategoryLimitWarningBanner({
       const prevPct = (prevSpent / allocated) * 100;
       const newPct = (newSpent / allocated) * 100;
       const catName = targetCat.category?.name || 'Category';
+      const warningThreshold = currentPrefs.budget_warning_pct || 80;
 
       if (newPct >= 100 && prevPct < 100) {
         try {
@@ -75,26 +113,30 @@ export function CategoryLimitWarningBanner({
         } catch (err) {
           console.debug('Error triggering exceeded sound:', err);
         }
-        const overAmount = Math.max(0, newSpent - allocated);
-        setToast({
-          id: String(Date.now()),
-          type: 'exceeded',
-          title: 'Budget Cap Exceeded!',
-          message: `${catName} has exceeded cap by ${formatSGD(overAmount)}!`,
-        });
-      } else if (newPct >= 80 && prevPct < 80) {
+        if (currentPrefs.budget_limit_alerts) {
+          const overAmount = Math.max(0, newSpent - allocated);
+          setToast({
+            id: String(Date.now()),
+            type: 'exceeded',
+            title: 'Budget Cap Exceeded!',
+            message: `${catName} has exceeded cap by ${formatSGD(overAmount)}!`,
+          });
+        }
+      } else if (newPct >= warningThreshold && prevPct < warningThreshold) {
         try {
           playBudgetWarningSound();
         } catch (err) {
           console.debug('Error triggering warning sound:', err);
         }
-        const leftAmount = Math.max(0, allocated - newSpent);
-        setToast({
-          id: String(Date.now()),
-          type: 'warning',
-          title: 'Budget Limit Warning',
-          message: `${catName} is at ${Math.round(newPct)}% (${formatSGD(newSpent)} of ${formatSGD(allocated)}) — ${formatSGD(leftAmount)} left`,
-        });
+        if (currentPrefs.budget_limit_alerts) {
+          const leftAmount = Math.max(0, allocated - newSpent);
+          setToast({
+            id: String(Date.now()),
+            type: 'warning',
+            title: 'Budget Limit Warning',
+            message: `${catName} is at ${Math.round(newPct)}% (${formatSGD(newSpent)} of ${formatSGD(allocated)}) — ${formatSGD(leftAmount)} left`,
+          });
+        }
       }
     };
 
@@ -142,6 +184,8 @@ export function CategoryLimitWarningBanner({
       const percentage = (spent / allocated) * 100;
       const name = c.category?.name || 'Category';
 
+      const warningThreshold = prefs.budget_warning_pct || 80;
+
       if (percentage >= 100) {
         exceeded.push({
           id: c.category_id,
@@ -152,7 +196,7 @@ export function CategoryLimitWarningBanner({
           percentage: Math.round(percentage),
           color: c.category?.color,
         });
-      } else if (percentage >= 80) {
+      } else if (percentage >= warningThreshold) {
         warning.push({
           id: c.category_id,
           name,
@@ -166,7 +210,7 @@ export function CategoryLimitWarningBanner({
     }
 
     return { exceededAlerts: exceeded, warningAlerts: warning };
-  }, [categories]);
+  }, [categories, prefs.budget_warning_pct]);
 
   const hasAnyAlerts = exceededAlerts.length > 0 || warningAlerts.length > 0;
 

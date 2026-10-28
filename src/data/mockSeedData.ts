@@ -22,6 +22,7 @@ import type {
   CreditCard,
   CreditCardStatement,
   DailyCheckin,
+  NotificationPreferences,
 } from '../types/finance';
 
 export const mockHousehold: Household = {
@@ -1200,6 +1201,32 @@ export interface MockSeedDataset {
   creditCards: CreditCard[];
   creditCardStatements: CreditCardStatement[];
   dailyCheckins: DailyCheckin[];
+  notificationPreferences?: Record<string, NotificationPreferences>;
+}
+
+export function getDefaultNotificationPreferences(
+  memberId: string,
+  householdId: string = 'hh-00000000-0001'
+): NotificationPreferences {
+  return {
+    household_id: householdId,
+    member_id: memberId,
+    push_enabled: true,
+    sound_enabled: true,
+    cc_payment_due: true,
+    cc_missing_statement: true,
+    streak_and_logging: true,
+    monthly_balance_updates: true,
+    partner_shared_spend: true,
+    budget_limit_alerts: true,
+    recurring_bills_due: true,
+    goal_pacing_alerts: true,
+    monthly_budget_review: true,
+    cc_due_days_before: 5,
+    budget_warning_pct: 80,
+    settlement_threshold_sgd: 200,
+    updated_at: new Date().toISOString(),
+  };
 }
 
 export const mockSeedData: MockSeedDataset = {

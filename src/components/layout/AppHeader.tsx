@@ -7,8 +7,8 @@
  * - Theme toggle: Light / Dark mode
  */
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Sun, Moon, Plus, ChevronDown, Check, LogOut, AlertTriangle, Download } from "lucide-react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { Sun, Moon, Plus, ChevronDown, Check, LogOut, AlertTriangle, Download, Bell, RotateCw } from "lucide-react";
 import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { mockMembers } from "../../data/mockSeedData";
@@ -16,6 +16,7 @@ import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
+import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyIcon } from "../ui/BubbyIcon";
 import { AnimatedModal, ModalHeader, ModalFooter } from "../ui/AnimatedModal";
@@ -57,6 +58,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         theme,
         toggleTheme,
         isMockMode,
+        refreshData,
     } = useHousehold();
     const { signOut, isAuthenticated } = useAuth();
     const { canInstall, isInstalled, showIOSModal, setShowIOSModal, promptInstall } = usePWAInstall();
@@ -65,7 +67,25 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const handleManualRefresh = useCallback(async () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        const startTime = Date.now();
+        try {
+            await refreshData();
+        } finally {
+            // Ensure animation spins for at least 500ms for tactile feedback
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, 500 - elapsed);
+            setTimeout(() => {
+                setIsRefreshing(false);
+            }, remaining);
+        }
+    }, [refreshData, isRefreshing]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -202,6 +222,18 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                     <button
                                         type="button"
                                         onClick={() => {
+                                            setIsDropdownOpen(false);
+                                            setIsNotificationSettingsOpen(true);
+                                        }}
+                                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                    >
+                                        <Bell className="h-4 w-4 stroke-[2.2] text-[#1a1a1a] dark:text-[#dfc2ff]" />
+                                        <span>Notification Settings</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
                                             toggleTheme();
                                             setIsDropdownOpen(false);
                                         }}
@@ -278,7 +310,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 </div>
 
                 {/* Right: Badges, Quick Add & Desktop Settings */}
-                <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     {/* Quick Add Button (Desktop trigger) */}
                     {onOpenQuickAdd && (
                         <div className="hidden md:block">
@@ -308,12 +340,30 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     )}
 
                     {/* Notification Center Popover */}
-                    <NotificationCenterPopover onNavigateTab={onNavigateTab} />
+                    <NotificationCenterPopover
+                        onNavigateTab={onNavigateTab}
+                        onOpenSettings={() => setIsNotificationSettingsOpen(true)}
+                    />
+
+                    {/* Manual Refresh Button */}
+                    <button
+                        type="button"
+                        onClick={handleManualRefresh}
+                        disabled={isRefreshing}
+                        aria-label="Refresh data"
+                        title="Refresh data from database"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
+                    >
+                        <RotateCw
+                            className={`h-4 w-4 ${isRefreshing ? "animate-spin text-[#7e22ce] dark:text-[#dfc2ff]" : ""}`}
+                            strokeWidth={2.5}
+                        />
+                    </button>
 
                     {/* PWA Install Button (Desktop) */}
-                    <div className="hidden sm:block">
-                        <PWAInstallButton />
-                    </div>
+                    {canInstall && !isInstalled && (
+                        <PWAInstallButton className="hidden sm:flex" />
+                    )}
 
                     {/* Theme Toggle Button (Desktop) */}
                     <button
@@ -384,6 +434,12 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
             <IOSInstallModal
                 isOpen={showIOSModal}
                 onClose={() => setShowIOSModal(false)}
+            />
+
+            {/* Notification Preferences & Thresholds Modal */}
+            <NotificationSettingsModal
+                isOpen={isNotificationSettingsOpen}
+                onClose={() => setIsNotificationSettingsOpen(false)}
             />
         </header>
     );

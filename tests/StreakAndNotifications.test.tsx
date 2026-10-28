@@ -8,6 +8,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom';
 import { DailyCheckinStreakBar } from '../src/components/dashboard/DailyCheckinStreakBar';
 import { NotificationCenterPopover } from '../src/components/layout/NotificationCenterPopover';
+import { NotificationSettingsModal } from '../src/components/layout/NotificationSettingsModal';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { AuthProvider } from '../src/context/AuthContext';
 import { financeService } from '../src/services/financeService';
@@ -15,11 +16,35 @@ import {
   checkDailyCheckinReminder,
   checkBalanceUpdateReminder,
   checkCreditCardDueReminders,
+  checkMissingCreditCardStatements,
+  checkPartnerSharedSpendReminders,
+  checkSettlementReminder,
+  checkCoupleStreakRiskReminder,
+  checkBudgetLimitReminders,
+  checkRecurringBillsReminders,
+  checkGoalPacingReminders,
+  checkMonthlyBudgetReviewReminder,
   requestNotificationPermission,
   dispatchPWANotification,
+  dismissReminderId,
+  getDismissedReminderIds,
+  checkAndPromptInitialNotificationPermission,
 } from '../src/lib/notificationScheduler';
+import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
 import { getTodayDateString, getCurrentMonth } from '../src/lib/dateUtils';
-import type { StreakSummary, AccountSnapshot, CreditCardStatement } from '../src/types/finance';
+import type {
+  StreakSummary,
+  AccountSnapshot,
+  CreditCardStatement,
+  CreditCard,
+  Expense,
+  HouseholdMember,
+  SettlementSummary,
+  DailyCheckin,
+  MonthlyBudgetDetail,
+  RecurringPolicy,
+  SavingsGoal,
+} from '../src/types/finance';
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(
@@ -398,14 +423,464 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(recordSpy).toHaveBeenCalled();
 
       // Check CC Action button
-      const ccActionBtn = screen.queryByTestId('reminder-action-view_cc');
-      if (ccActionBtn) {
-        await act(async () => {
-          fireEvent.click(ccActionBtn);
-        });
-        expect(onNavigateTab).toHaveBeenCalledWith('expenses');
-      }
+      const ccActionBtns = screen.getAllByTestId('reminder-action-view_cc');
+      expect(ccActionBtns.length).toBeGreaterThanOrEqual(1);
+      await act(async () => {
+        fireEvent.click(ccActionBtns[0]);
+      });
+      expect(onNavigateTab).toHaveBeenCalledWith('expenses');
+    });
+
+    it('toggles to Quick Settings view inside NotificationCenterPopover and flips a preference switch', async () => {
+      renderWithProviders(<NotificationCenterPopover />);
+
+      const bellBtn = await screen.findByTestId('notification-bell-btn');
+      await act(async () => {
+        fireEvent.click(bellBtn);
+      });
+
+      // Settings toggle button
+      const settingsToggleBtn = screen.getByTestId('toggle-popover-settings-btn');
+      expect(settingsToggleBtn).toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(settingsToggleBtn);
+      });
+
+      // Quick settings view is rendered
+      expect(screen.getByTestId('popover-quick-settings-view')).toBeInTheDocument();
+      expect(screen.getByText('PWA Push Notifications')).toBeInTheDocument();
+
+      const pushSwitch = screen.getByTestId('popover-toggle-push');
+      expect(pushSwitch).toBeInTheDocument();
+
+      const updateSpy = vi.spyOn(financeService, 'updateNotificationPreferences');
+
+      await act(async () => {
+        fireEvent.click(pushSwitch);
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ push_enabled: false })
+      );
+    });
+
+    it('persists dismissed reminder IDs per member in localStorage', () => {
+      const memberId = 'mem-test-dismiss';
+      expect(getDismissedReminderIds(memberId).size).toBe(0);
+
+      dismissReminderId(memberId, 'rem-1');
+      dismissReminderId(memberId, 'rem-2');
+
+      const dismissed = getDismissedReminderIds(memberId);
+      expect(dismissed.has('rem-1')).toBe(true);
+      expect(dismissed.has('rem-2')).toBe(true);
+      expect(dismissed.has('rem-3')).toBe(false);
+    });
+
+    it('prompts initial notification permission on first launch', async () => {
+      const requestMock = vi.fn().mockResolvedValue('granted');
+      Object.defineProperty(window, 'Notification', {
+        value: {
+          permission: 'default',
+          requestPermission: requestMock,
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      const perm = await checkAndPromptInitialNotificationPermission();
+      expect(perm).toBe('granted');
+      expect(requestMock).toHaveBeenCalledTimes(1);
+
+      // Second run does not prompt again
+      requestMock.mockClear();
+      const secondPerm = await checkAndPromptInitialNotificationPermission();
+      expect(secondPerm).toBe('default');
+      expect(requestMock).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // 3. Expanded Notification Domain Checkers
+  // =========================================================================
+  describe('Expanded Notification Domain Checkers', () => {
+    it('checkMissingCreditCardStatements detects cards past billing day with no statement', () => {
+      const cards: CreditCard[] = [
+        {
+          id: 'card-1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          name: 'DBS Altitude',
+          bank: 'DBS',
+          billing_day: 10,
+          due_day: 28,
+          color: '#10B981',
+          is_active: true,
+        },
+        {
+          id: 'card-2',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          name: 'OCBC 365',
+          bank: 'OCBC',
+          billing_day: 25,
+          due_day: 15,
+          color: '#EC4899',
+          is_active: true,
+        },
+      ];
+
+      const statements: CreditCardStatement[] = [
+        {
+          id: 'stmt-1',
+          card_id: 'card-1',
+          household_id: 'hh-1',
+          month: '2026-10',
+          statement_amount: 500,
+          due_date: '2026-10-28',
+          is_paid: false,
+        },
+      ];
+
+      // On Oct 15: card-1 billing day (10) passed but has statement.
+      // card-2 billing day (25) not yet passed.
+      const r1 = checkMissingCreditCardStatements(cards, statements, new Date('2026-10-15T12:00:00'));
+      expect(r1).toHaveLength(0);
+
+      // On Oct 26: card-2 billing day (25) passed and has NO statement!
+      const r2 = checkMissingCreditCardStatements(cards, statements, new Date('2026-10-26T12:00:00'));
+      expect(r2).toHaveLength(1);
+      expect(r2[0].type).toBe('credit_card_missing_stmt');
+      expect(r2[0].message).toContain('OCBC 365');
+    });
+
+    it('checkPartnerSharedSpendReminders alerts for recent unsettled expenses paid by partner', () => {
+      const members: HouseholdMember[] = [
+        { id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' },
+        { id: 'mem-2', household_id: 'hh-1', display_name: 'Rachel', role: 'member' },
+      ];
+
+      const expenses: Expense[] = [
+        {
+          id: 'exp-1',
+          household_id: 'hh-1',
+          payer_id: 'mem-2', // Rachel paid
+          date: '2026-10-27',
+          item: 'Din Tai Fung',
+          amount: 80,
+          is_shared: true,
+          split_ratio: 0.5,
+          settled: false,
+        },
+        {
+          id: 'exp-2',
+          household_id: 'hh-1',
+          payer_id: 'mem-1', // Yi Jia paid -> don't alert Yi Jia
+          date: '2026-10-27',
+          item: 'Groceries',
+          amount: 50,
+          is_shared: true,
+          split_ratio: 0.5,
+          settled: false,
+        },
+      ];
+
+      const reminders = checkPartnerSharedSpendReminders(expenses, members, 'mem-1', '2026-10-28');
+      expect(reminders).toHaveLength(1);
+      expect(reminders[0].type).toBe('partner_shared_spend');
+      expect(reminders[0].title).toContain('Rachel Logged Shared Spend');
+      expect(reminders[0].message).toContain('Din Tai Fung');
+      expect(reminders[0].message).toContain('SGD 40.00');
+    });
+
+    it('checkSettlementReminder triggers when net balance exceeds threshold or month-end', () => {
+      const summary: SettlementSummary = {
+        netBalance: 250,
+        debtorId: 'mem-2',
+        creditorId: 'mem-1',
+        settlementText: 'Rachel owes Yi Jia S$250.00',
+        member1OwesMember2: 0,
+        member2OwesMember1: 250,
+      };
+
+      // Exceeds 200 threshold
+      const rExceed = checkSettlementReminder(summary, 200, new Date('2026-10-15T12:00:00'));
+      expect(rExceed).not.toBeNull();
+      expect(rExceed?.type).toBe('settlement_due');
+      expect(rExceed?.message).toContain('SGD 250.00');
+
+      // Below threshold and mid-month -> null
+      const summarySmall: SettlementSummary = {
+        ...summary,
+        netBalance: 50,
+      };
+      const rSmallMid = checkSettlementReminder(summarySmall, 200, new Date('2026-10-15T12:00:00'));
+      expect(rSmallMid).toBeNull();
+
+      // Below threshold but month-end (>= 27th) -> triggers reminder
+      const rSmallEnd = checkSettlementReminder(summarySmall, 200, new Date('2026-10-28T12:00:00'));
+      expect(rSmallEnd).not.toBeNull();
+      expect(rSmallEnd?.type).toBe('settlement_due');
+    });
+
+    it('checkCoupleStreakRiskReminder alerts in evening when active member checked in but partner has not', () => {
+      const members: HouseholdMember[] = [
+        { id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' },
+        { id: 'mem-2', household_id: 'hh-1', display_name: 'Rachel', role: 'member' },
+      ];
+
+      const checkins: DailyCheckin[] = [
+        {
+          id: 'chk-1',
+          household_id: 'hh-1',
+          member_id: 'mem-1',
+          checkin_date: '2026-10-28',
+          type: 'no_spend',
+        },
+      ];
+
+      // Afternoon (14:00) -> no reminder yet
+      const rAfternoon = checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 14, '2026-10-28');
+      expect(rAfternoon).toBeNull();
+
+      // Evening (19:00) -> triggers couple streak risk
+      const rEvening = checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 19, '2026-10-28');
+      expect(rEvening).not.toBeNull();
+      expect(rEvening?.type).toBe('couple_streak_risk');
+      expect(rEvening?.title).toContain('Couple Streak At Risk!');
+      expect(rEvening?.message).toContain('Rachel');
+    });
+
+    it('checkBudgetLimitReminders alerts for spendable categories nearing or exceeding cap', () => {
+      const monthlyBudget: MonthlyBudgetDetail = {
+        budget: {
+          id: 'b-1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          month: '2026-10',
+          gross_salary: 5000,
+          bonus: 0,
+          cpf_deduction: 1000,
+          taxes_deduction: 200,
+          insurance_deduction: 300,
+          after_deductions: 3500,
+          is_locked: false,
+        },
+        disposablePool: 3500,
+        totalSpent: 1500,
+        totalRemaining: 2000,
+        categories: [
+          {
+            id: 'c-1',
+            monthly_budget_id: 'b-1',
+            category_id: 'cat-groceries',
+            percentage: 0.2,
+            allocated_amount: 500,
+            actualSpent: 420, // 84% -> nearing warning
+            remaining: 80,
+            category: {
+              id: 'cat-groceries',
+              household_id: 'hh-1',
+              name: 'Groceries',
+              color: '#10B981',
+              icon: 'shopping-cart',
+              is_system: false,
+              group: 'spendable',
+            },
+          },
+          {
+            id: 'c-2',
+            monthly_budget_id: 'b-1',
+            category_id: 'cat-dining',
+            percentage: 0.2,
+            allocated_amount: 400,
+            actualSpent: 450, // 112.5% -> exceeded alert
+            remaining: -50,
+            category: {
+              id: 'cat-dining',
+              household_id: 'hh-1',
+              name: 'Dining Out',
+              color: '#F59E0B',
+              icon: 'utensils',
+              is_system: false,
+              group: 'spendable',
+            },
+          },
+        ],
+      };
+
+      const alerts = checkBudgetLimitReminders(monthlyBudget, 80);
+      expect(alerts).toHaveLength(2);
+      expect(alerts.find((a) => a.title.includes('Exceeded'))).toBeDefined();
+      expect(alerts.find((a) => a.title.includes('Nearing'))).toBeDefined();
+    });
+
+    it('checkRecurringBillsReminders alerts for annual policies due in current month', () => {
+      const policies: RecurringPolicy[] = [
+        {
+          id: 'pol-1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          type: 'insurance',
+          name: 'Manulife LifeReady Plus',
+          amount: 2400,
+          frequency: 'annually',
+          payment_month: 10, // October
+          monthly_amortized_amount: 200,
+        },
+        {
+          id: 'pol-2',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          type: 'insurance',
+          name: 'IncomeShield Plan',
+          amount: 600,
+          frequency: 'annually',
+          payment_month: 3, // March
+          monthly_amortized_amount: 50,
+        },
+      ];
+
+      const rOct = checkRecurringBillsReminders(policies, new Date('2026-10-15T12:00:00'));
+      expect(rOct).toHaveLength(1);
+      expect(rOct[0].type).toBe('recurring_bill_due');
+      expect(rOct[0].message).toContain('Manulife');
+    });
+
+    it('checkGoalPacingReminders alerts when savings goals are behind target or achieved', () => {
+      const goals: SavingsGoal[] = [
+        {
+          id: 'goal-1',
+          household_id: 'hh-1',
+          title: 'Japan Holiday',
+          target_amount: 6000,
+          saved_so_far: 2000,
+          target_date: '2026-12-31',
+          monthly_contribution: 500,
+          emoji: '✈️',
+          status: 'behind',
+        },
+        {
+          id: 'goal-2',
+          household_id: 'hh-1',
+          title: 'Emergency Fund',
+          target_amount: 10000,
+          saved_so_far: 10000,
+          target_date: '2027-01-01',
+          monthly_contribution: 1000,
+          emoji: '🛡️',
+          status: 'achieved',
+        },
+      ];
+
+      const r = checkGoalPacingReminders(goals);
+      expect(r).toHaveLength(2);
+      expect(r.some((g) => g.title.includes('Behind'))).toBe(true);
+      expect(r.some((g) => g.title.includes('Achieved'))).toBe(true);
+    });
+
+    it('checkMonthlyBudgetReviewReminder triggers on days 1-5 when budget is unlocked', () => {
+      const monthlyBudget: MonthlyBudgetDetail = {
+        budget: {
+          id: 'b-1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          month: '2026-11',
+          gross_salary: 5000,
+          bonus: 0,
+          cpf_deduction: 1000,
+          taxes_deduction: 200,
+          insurance_deduction: 300,
+          after_deductions: 3500,
+          is_locked: false,
+        },
+        disposablePool: 3500,
+        totalSpent: 0,
+        totalRemaining: 3500,
+        categories: [],
+      };
+
+      // Day 3 -> triggers
+      const rDay3 = checkMonthlyBudgetReviewReminder(monthlyBudget, new Date('2026-11-03T12:00:00'));
+      expect(rDay3).not.toBeNull();
+      expect(rDay3?.type).toBe('monthly_budget_review');
+
+      // Day 10 -> no reminder
+      const rDay10 = checkMonthlyBudgetReviewReminder(monthlyBudget, new Date('2026-11-10T12:00:00'));
+      expect(rDay10).toBeNull();
+    });
+  });
+
+  // =========================================================================
+  // 4. Notification Settings Modal
+  // =========================================================================
+  describe('NotificationSettingsModal Component', () => {
+    it('renders master channels, category toggles, custom thresholds, and updates preferences', async () => {
+      const onClose = vi.fn();
+      renderWithProviders(
+        <NotificationSettingsModal isOpen={true} onClose={onClose} memberId="mem-00000000-0011" />
+      );
+
+      expect(await screen.findByText('Notification Settings')).toBeInTheDocument();
+      expect(screen.getByText('Browser / PWA Push Notifications')).toBeInTheDocument();
+      expect(screen.getByText('Sound Effects & Audio Chimes')).toBeInTheDocument();
+
+      // Custom thresholds inputs exist
+      const ccLeadInput = screen.getByTestId('input-cc-lead-days');
+      expect(ccLeadInput).toBeInTheDocument();
+      expect(ccLeadInput).toHaveValue(5);
+
+      const budgetWarningInput = screen.getByTestId('input-budget-warning-pct');
+      expect(budgetWarningInput).toBeInTheDocument();
+      expect(budgetWarningInput).toHaveValue(80);
+
+      const updateSpy = vi.spyOn(financeService, 'updateNotificationPreferences');
+
+      // Change CC lead days
+      await act(async () => {
+        fireEvent.change(ccLeadInput, { target: { value: '7' } });
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        'mem-00000000-0011',
+        expect.objectContaining({ cc_due_days_before: 7 })
+      );
+
+      // Reset to defaults
+      const resetBtn = screen.getByTestId('reset-notification-defaults-btn');
+      await act(async () => {
+        fireEvent.click(resetBtn);
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        'mem-00000000-0011',
+        expect.objectContaining({ cc_due_days_before: 5, budget_warning_pct: 80 })
+      );
+
+      // Click Done
+      const doneBtn = screen.getByRole('button', { name: /done/i });
+      await act(async () => {
+        fireEvent.click(doneBtn);
+      });
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('isSoundEffectsEnabled respects sound_enabled preference in localStorage', () => {
+      localStorage.setItem(
+        'bb_notif_prefs_mem-00000000-0011',
+        JSON.stringify({ sound_enabled: false })
+      );
+      expect(isSoundEffectsEnabled()).toBe(false);
+
+      localStorage.setItem(
+        'bb_notif_prefs_mem-00000000-0011',
+        JSON.stringify({ sound_enabled: true })
+      );
+      expect(isSoundEffectsEnabled()).toBe(true);
     });
   });
 });
+
 

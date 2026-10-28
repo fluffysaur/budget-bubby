@@ -37,6 +37,8 @@ import type {
   DailyCheckin,
   CheckinType,
   StreakSummary,
+  NotificationPreferences,
+  UpdateNotificationPreferencesInput,
 } from '../types/finance';
 import {
   mockSeedData,
@@ -46,6 +48,7 @@ import {
   mockCreditCards,
   mockCreditCardStatements,
   mockDailyCheckins,
+  getDefaultNotificationPreferences,
   type MockSeedDataset,
 } from '../data/mockSeedData';
 import {
@@ -100,6 +103,9 @@ function loadInitialData(): MockSeedDataset {
   }
   if (!dataset.dailyCheckins) {
     dataset.dailyCheckins = cloneDeep(mockDailyCheckins);
+  }
+  if (!dataset.notificationPreferences) {
+    dataset.notificationPreferences = {};
   }
 
   return dataset;
@@ -1128,6 +1134,64 @@ class MockFinanceServiceImpl implements FinanceService {
       lastCheckinDate: targetMemberCheckins[0]?.checkin_date || null,
       coupleStreak,
     };
+  }
+
+  // Notification Preferences
+  public async getNotificationPreferences(memberId: string): Promise<NotificationPreferences> {
+    if (!this.state.notificationPreferences) {
+      this.state.notificationPreferences = {};
+    }
+    const cacheKey = `bb_notif_prefs_${memberId}`;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const cached = window.localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          this.state.notificationPreferences[memberId] = parsed;
+          return cloneDeep(parsed);
+        } catch {
+          // ignore parsing error
+        }
+      }
+    }
+    if (!this.state.notificationPreferences[memberId]) {
+      this.state.notificationPreferences[memberId] = getDefaultNotificationPreferences(
+        memberId,
+        this.state.household.id
+      );
+      this.persist();
+    }
+    const prefs = this.state.notificationPreferences[memberId];
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(cacheKey, JSON.stringify(prefs));
+    }
+    return cloneDeep(prefs);
+  }
+
+  public async updateNotificationPreferences(
+    memberId: string,
+    updates: UpdateNotificationPreferencesInput
+  ): Promise<NotificationPreferences> {
+    const existing = await this.getNotificationPreferences(memberId);
+    const updated: NotificationPreferences = {
+      ...existing,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+    if (!this.state.notificationPreferences) {
+      this.state.notificationPreferences = {};
+    }
+    this.state.notificationPreferences[memberId] = updated;
+    this.persist();
+
+    const cacheKey = `bb_notif_prefs_${memberId}`;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(cacheKey, JSON.stringify(updated));
+      window.dispatchEvent(
+        new CustomEvent('notificationPreferencesUpdated', { detail: { memberId, preferences: updated } })
+      );
+    }
+    return cloneDeep(updated);
   }
 }
 

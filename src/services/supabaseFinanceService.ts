@@ -37,7 +37,10 @@ import type {
   DailyCheckin,
   CheckinType,
   StreakSummary,
+  NotificationPreferences,
+  UpdateNotificationPreferencesInput,
 } from '../types/finance';
+import { getDefaultNotificationPreferences } from '../data/mockSeedData';
 import { supabase } from './supabaseClient';
 import {
   calculateSharedExpenseSettlement,
@@ -1380,6 +1383,95 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       lastCheckinDate: targetMemberCheckins[0]?.checkin_date || null,
       coupleStreak,
     };
+  }
+
+  // Notification Preferences
+  public async getNotificationPreferences(memberId: string): Promise<NotificationPreferences> {
+    const cacheKey = `bb_notif_prefs_${memberId}`;
+    try {
+      const client = getClient();
+      const householdId = await this.getHouseholdId();
+      const { data, error } = await client
+        .from('notification_preferences')
+        .select('*')
+        .eq('member_id', memberId)
+        .maybeSingle();
+
+      if (!error && data) {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(cacheKey, JSON.stringify(data));
+        }
+        return data as NotificationPreferences;
+      }
+
+      // If no row exists yet, insert defaults
+      const defaults = getDefaultNotificationPreferences(memberId, householdId);
+      const { data: inserted, error: insertError } = await client
+        .from('notification_preferences')
+        .upsert(defaults, { onConflict: 'member_id' })
+        .select()
+        .single();
+
+      if (!insertError && inserted) {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(cacheKey, JSON.stringify(inserted));
+        }
+        return inserted as NotificationPreferences;
+      }
+    } catch (err) {
+      console.debug('Failed to fetch notification preferences from Supabase, checking cache:', err);
+    }
+
+    // Cache fallback
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const cached = window.localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {
+          // ignore parsing error
+        }
+      }
+    }
+    return getDefaultNotificationPreferences(memberId);
+  }
+
+  public async updateNotificationPreferences(
+    memberId: string,
+    updates: UpdateNotificationPreferencesInput
+  ): Promise<NotificationPreferences> {
+    const cacheKey = `bb_notif_prefs_${memberId}`;
+    const householdId = await this.getHouseholdId().catch(() => 'hh-00000000-0001');
+    const existing = await this.getNotificationPreferences(memberId);
+    const updated: NotificationPreferences = {
+      ...existing,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    try {
+      const client = getClient();
+      await client
+        .from('notification_preferences')
+        .upsert(
+          {
+            ...updated,
+            household_id: householdId,
+            member_id: memberId,
+          },
+          { onConflict: 'member_id' }
+        );
+    } catch (err) {
+      console.debug('Failed to update notification preferences in Supabase:', err);
+    }
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(cacheKey, JSON.stringify(updated));
+      window.dispatchEvent(
+        new CustomEvent('notificationPreferencesUpdated', { detail: { memberId, preferences: updated } })
+      );
+    }
+    return updated;
   }
 }
 

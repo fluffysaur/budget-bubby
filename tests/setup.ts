@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import { vi, afterEach } from 'vitest';
+import { queryClient } from '../src/lib/queryClient';
+
+afterEach(() => {
+  queryClient.clear();
+});
 
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: () => ({

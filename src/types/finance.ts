@@ -535,3 +535,32 @@ export interface BonusAllocationResult {
     color: string;
   }>;
 }
+
+export interface NotificationPreferences {
+    id?: string;
+    household_id: string;
+    member_id: string;
+    // Master channels
+    push_enabled: boolean;
+    sound_enabled: boolean;
+    // Category toggles
+    cc_payment_due: boolean;
+    cc_missing_statement: boolean;
+    streak_and_logging: boolean;
+    monthly_balance_updates: boolean;
+    partner_shared_spend: boolean;
+    budget_limit_alerts: boolean;
+    recurring_bills_due: boolean;
+    goal_pacing_alerts: boolean;
+    monthly_budget_review: boolean;
+    // Custom thresholds
+    cc_due_days_before: number; // default: 5
+    budget_warning_pct: number; // default: 80
+    settlement_threshold_sgd: number; // default: 200
+    updated_at?: string;
+}
+
+export type UpdateNotificationPreferencesInput = Partial<
+    Omit<NotificationPreferences, "id" | "household_id" | "member_id" | "updated_at">
+>;
+

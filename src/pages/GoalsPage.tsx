@@ -9,7 +9,7 @@
  * - Auto-refresh on data mutation
  */
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
     Target,
     Plus,
@@ -19,14 +19,24 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, Button, StatCard, LoadingCard, EmptyStateCard } from "../components/ui";
-import { financeService } from "../services/financeService";
+import {
+    PageHeader,
+    Button,
+    StatCard,
+    LoadingCard,
+    EmptyStateCard,
+} from "../components/ui";
+import {
+    useGoalsQuery,
+    useExpensesQuery,
+    useCategoriesQuery,
+} from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
 import { GoalCard } from "../components/goals/GoalCard";
 import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
 import { QuickDepositModal } from "../components/goals/QuickDepositModal";
 import { SpendFromGoalModal } from "../components/goals/SpendFromGoalModal";
-import type { SavingsGoal, Expense, Category } from "../types/finance";
+import type { SavingsGoal, Expense } from "../types/finance";
 
 export interface GoalsPageProps {
     className?: string;
@@ -47,11 +57,20 @@ export function GoalsPage({
         refreshData: refreshHousehold,
     } = useHousehold();
 
-    const [goals, setGoals] = useState<SavingsGoal[]>([]);
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    // Cached TanStack Queries
+    const {
+        data: goalsData,
+        isLoading: goalsLoading,
+        error: goalsError,
+    } = useGoalsQuery();
+    const { data: expensesData } = useExpensesQuery();
+    const { data: categoriesData } = useCategoriesQuery();
+
+    const goals = useMemo(() => goalsData || [], [goalsData]);
+    const expenses = useMemo(() => expensesData || [], [expensesData]);
+    const categories = useMemo(() => categoriesData || [], [categoriesData]);
+    const isLoading = goalsLoading && !goalsData;
+    const errorMessage = goalsError ? (goalsError as Error).message : null;
     const [activeTab, setActiveTab] = useState<GoalFilterTab>("all");
 
     // Modal states
@@ -61,37 +80,6 @@ export function GoalsPage({
     const [depositGoal, setDepositGoal] = useState<SavingsGoal | null>(null);
     const [isSpendOpen, setIsSpendOpen] = useState<boolean>(false);
     const [spendGoal, setSpendGoal] = useState<SavingsGoal | null>(null);
-
-    // Load goals, expenses, and categories from service
-    const loadData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setErrorMessage(null);
-            const [goalsData, expensesData, categoriesData] = await Promise.all(
-                [
-                    financeService.getGoals(),
-                    financeService.getExpenses(),
-                    financeService.getCategories(),
-                ],
-            );
-            setGoals(goalsData || []);
-            setExpenses(expensesData || []);
-            setCategories(categoriesData || []);
-        } catch (err: unknown) {
-            console.error("Failed to load savings goals:", err);
-            setErrorMessage(
-                err instanceof Error
-                    ? err.message
-                    : "Failed to load savings goals",
-            );
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
 
     // Map expenses linked to each goal
     const goalExpensesMap = useMemo(() => {
@@ -185,17 +173,14 @@ export function GoalsPage({
     };
 
     const handleGoalSaved = async () => {
-        await loadData();
         await refreshHousehold();
     };
 
     const handleDepositSaved = async () => {
-        await loadData();
         await refreshHousehold();
     };
 
     const handleSpendSaved = async () => {
-        await loadData();
         await refreshHousehold();
     };
 

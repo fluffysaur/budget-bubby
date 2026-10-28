@@ -18,6 +18,8 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import {
   HouseholdProvider,
   useHousehold,
@@ -26,7 +28,7 @@ import {
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PinLoginScreen } from './components/auth/PinLoginScreen';
 import { isSupabaseConfigured } from './services/supabaseClient';
-import { financeService } from './services/financeService';
+import { useCategoriesQuery } from './hooks/useFinanceQueries';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
@@ -34,7 +36,7 @@ import { QuickAddExpenseModal } from './components/expenses/QuickAddExpenseModal
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
-import type { Expense, Category } from './types/finance';
+import type { Expense } from './types/finance';
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -88,13 +90,8 @@ function AppLayoutInner() {
   const { refreshData, members } = useHousehold();
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    financeService.getCategories().then((cats) => {
-      if (cats && cats.length > 0) setCategories(cats);
-    }).catch(() => {});
-  }, []);
+  const { data: categoriesData } = useCategoriesQuery();
+  const categories = categoriesData || [];
 
   // Extract active tab id from route path
   const activeTab = useMemo(() => {
@@ -278,11 +275,13 @@ export function App({ initialEntries, initialAuthenticated }: AppProps = {}) {
   const routerProps = initialEntries ? { initialEntries } : {};
 
   return (
-    <AuthProvider initialAuthenticated={initialAuthenticated}>
-      <RouterComponent {...routerProps}>
-        <AppShell />
-      </RouterComponent>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider initialAuthenticated={initialAuthenticated}>
+        <RouterComponent {...routerProps}>
+          <AppShell />
+        </RouterComponent>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

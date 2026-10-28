@@ -12,7 +12,8 @@
  * - Base profile editor modal
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Settings,
   DollarSign,
@@ -25,6 +26,11 @@ import {
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, LoadingCard } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
+import {
+  useCategoriesQuery,
+  useBaseProfilesQuery,
+  useBaseAllocationsQuery,
+} from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
@@ -40,8 +46,6 @@ import { CategoryLimitWarningBanner } from '../components/budget/CategoryLimitWa
 import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCard';
 import type {
   BaseBudgetProfile,
-  BaseProfileAllocation,
-  Category,
   MonthlyBudget,
   MonthlyBudgetCategoryDetail,
   MonthlyBudgetDetail,
@@ -56,11 +60,26 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
 
   // State
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
-  const [budgetDetail, setBudgetDetail] = useState<MonthlyBudgetDetail | null>(null);
-  const [categories, setCategories] = useState<Category[]>(() => isMockMode ? mockCategories : []);
-  const [baseProfiles, setBaseProfiles] = useState<BaseBudgetProfile[]>(() => isMockMode ? mockBaseProfiles : []);
-  const [baseAllocations, setBaseAllocations] = useState<BaseProfileAllocation[]>(() => isMockMode ? mockBaseAllocations : []);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Cached Metadata Queries
+  const { data: categoriesData } = useCategoriesQuery();
+  const { data: baseProfilesData } = useBaseProfilesQuery();
+  const { data: baseAllocationsData } = useBaseAllocationsQuery();
+
+  const categories = useMemo(() => {
+    if (categoriesData && categoriesData.length > 0) return categoriesData;
+    return isMockMode ? mockCategories : [];
+  }, [categoriesData, isMockMode]);
+
+  const baseProfiles = useMemo(() => {
+    if (baseProfilesData && baseProfilesData.length > 0) return baseProfilesData;
+    return isMockMode ? mockBaseProfiles : [];
+  }, [baseProfilesData, isMockMode]);
+
+  const baseAllocations = useMemo(() => {
+    if (baseAllocationsData && baseAllocationsData.length > 0) return baseAllocationsData;
+    return isMockMode ? mockBaseAllocations : [];
+  }, [baseAllocationsData, isMockMode]);
 
   // Modal State
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
@@ -76,34 +95,10 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
     return perspective;
   }, [perspective, activeMember]);
 
-  // Load Categories & Base Profiles once
-  useEffect(() => {
-    async function loadMeta() {
-      try {
-        const [cats, profs, allocs] = await Promise.all([
-          financeService.getCategories(),
-          financeService.getBaseProfiles(),
-          financeService.getBaseAllocations(),
-        ]);
-        if (cats && cats.length > 0) {
-          setCategories(cats);
-        } else if (isMockMode) {
-          setCategories(mockCategories);
-        }
-        if (profs) setBaseProfiles(profs);
-        if (allocs) setBaseAllocations(allocs);
-      } catch (err) {
-        console.error('Failed to load budget metadata:', err);
-      }
-    }
-    loadMeta();
-  }, [isMockMode]);
-
-  // Fetch Monthly Budget Detail based on selected month & active perspective
-  const loadBudget = useCallback(async () => {
-    try {
-      setIsLoading(true);
-
+  // Cached Monthly Budget Detail Query (Calculates combined or single-member dynamically)
+  const { data: budgetDetailData, isLoading: budgetLoading } = useQuery<MonthlyBudgetDetail | null>({
+    queryKey: ['finance', 'budget-detail', selectedMonth, perspective, activeMember?.id],
+    queryFn: async () => {
       if (perspective === 'household' && members.length > 0) {
         // Combined household view: fetch budgets for all members and combine dynamically
         const memberBudgets = await Promise.all(
@@ -176,31 +171,24 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
           ) / 100;
           const totalRemaining = Math.round((combinedAfter - totalSpent) * 100) / 100;
 
-          setBudgetDetail({
+          return {
             budget: combinedBudget,
             categories: combinedCategories,
             disposablePool: combinedAfter,
             totalSpent,
             totalRemaining,
-          });
-          return;
+          };
         }
       }
 
       // Single member perspective
       const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
-      const detail = await financeService.getMonthlyBudget(selectedMonth, targetMemberId);
-      setBudgetDetail(detail);
-    } catch (err) {
-      console.error('Failed to load monthly budget:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedMonth, perspective, activeMember, members]);
+      return financeService.getMonthlyBudget(selectedMonth, targetMemberId);
+    },
+  });
 
-  useEffect(() => {
-    loadBudget();
-  }, [loadBudget]);
+  const budgetDetail = budgetDetailData ?? null;
+  const isLoading = budgetLoading && !budgetDetailData;
 
   // Handle opening editor
   const handleOpenEditor = (memberId?: string) => {
@@ -266,34 +254,10 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
   }, [baseAllocations, activeProfile, categories]);
 
   const handleProfileSaved = async () => {
-    try {
-      const [profs, allocs] = await Promise.all([
-        financeService.getBaseProfiles(),
-        financeService.getBaseAllocations(),
-      ]);
-      setBaseProfiles(profs);
-      setBaseAllocations(allocs);
-    } catch (err) {
-      console.error('Failed to reload base profiles after edit:', err);
-    }
-    await loadBudget();
     await refreshHousehold();
   };
 
   const handleCategoriesChanged = async () => {
-    try {
-      const [cats, profs, allocs] = await Promise.all([
-        financeService.getCategories(),
-        financeService.getBaseProfiles(),
-        financeService.getBaseAllocations(),
-      ]);
-      setCategories(cats || []);
-      if (profs) setBaseProfiles(profs);
-      if (allocs) setBaseAllocations(allocs);
-    } catch (err) {
-      console.error('Failed to reload metadata after category changes:', err);
-    }
-    await loadBudget();
     await refreshHousehold();
   };
 

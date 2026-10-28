@@ -8,7 +8,7 @@
  * - Quick Actions: Quick Add Expense, Update Account Balance
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
     Plus,
     PieChart,
@@ -20,7 +20,15 @@ import {
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
 import { PageHeader, TruncatedText, LoadingCard } from "../components/ui";
-import { financeService } from "../services/financeService";
+import {
+    useAccountsQuery,
+    useLoansQuery,
+    useGoalsQuery,
+    usePoliciesQuery,
+    useExpensesQuery,
+    useMonthlyBudgetQuery,
+    useCategoriesQuery,
+} from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
 import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
 import { mockCategories, mockMembers } from "../data/mockSeedData";
@@ -34,15 +42,7 @@ import { QuickAddExpenseModal } from "../components/expenses/QuickAddExpenseModa
 import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
 import { AddAccountModal } from "../components/accounts/AddAccountModal";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
-import type {
-    Account,
-    Category,
-    Expense,
-    Loan,
-    MonthlyBudgetDetail,
-    RecurringPolicy,
-    SavingsGoal,
-} from "../types/finance";
+import type { Account } from "../types/finance";
 
 export interface DashboardPageProps {
     className?: string;
@@ -65,16 +65,31 @@ export function DashboardPage({
         ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
     const isHousehold = perspective === "household";
 
-    // Data States
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [loans, setLoans] = useState<Loan[]>([]);
-    const [goals, setGoals] = useState<SavingsGoal[]>([]);
-    const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-    const [monthlyBudget, setMonthlyBudget] =
-        useState<MonthlyBudgetDetail | null>(null);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const currentMonth = getCurrentMonth();
+    const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
+
+    // TanStack Query Cached Data Hooks
+    const { data: accountsData, isLoading: accountsLoading } = useAccountsQuery(perspective);
+    const { data: loansData } = useLoansQuery();
+    const { data: goalsData } = useGoalsQuery();
+    const { data: policiesData } = usePoliciesQuery();
+    const { data: expensesData } = useExpensesQuery();
+    const { data: budgetData } = useMonthlyBudgetQuery(
+        currentMonth,
+        targetMemberId,
+    );
+    const { data: categoriesData } = useCategoriesQuery();
+
+    const accounts = useMemo(() => accountsData || [], [accountsData]);
+    const loans = useMemo(() => loansData || [], [loansData]);
+    const goals = useMemo(() => goalsData || [], [goalsData]);
+    const policies = useMemo(() => policiesData || [], [policiesData]);
+    const expenses = useMemo(() => expensesData || [], [expensesData]);
+    const monthlyBudget = budgetData || null;
+    const categories = useMemo(() => categoriesData || [], [categoriesData]);
+
+    // Only show loading spinner on initial cold load if primary data has not arrived yet
+    const isLoading = accountsLoading && !accountsData;
 
     // Modal States
     const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
@@ -93,51 +108,6 @@ export function DashboardPage({
         if (clean.includes("rachel")) return "Rachel";
         return perspective;
     }, [isHousehold, activeMember, perspective]);
-
-    // Load all dashboard data
-    const loadDashboardData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const currentMonth = getCurrentMonth();
-            const targetMemberId = activeMember
-                ? activeMember.id
-                : members[0]?.id;
-
-            const [
-                accountsData,
-                loansData,
-                goalsData,
-                policiesData,
-                expensesData,
-                budgetData,
-                categoriesData,
-            ] = await Promise.all([
-                financeService.getAccounts(perspective),
-                financeService.getLoans(),
-                financeService.getGoals(),
-                financeService.getPolicies(),
-                financeService.getExpenses(),
-                financeService.getMonthlyBudget(currentMonth, targetMemberId),
-                financeService.getCategories(),
-            ]);
-
-            setAccounts(accountsData || []);
-            setLoans(loansData || []);
-            setGoals(goalsData || []);
-            setPolicies(policiesData || []);
-            setExpenses(expensesData || []);
-            setMonthlyBudget(budgetData || null);
-            setCategories(categoriesData || []);
-        } catch (err) {
-            console.error("Failed to load dashboard data:", err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [perspective, activeMember, members]);
-
-    useEffect(() => {
-        loadDashboardData();
-    }, [loadDashboardData]);
 
     // Net Worth Calculations
     const totalAssets = useMemo(() => {
@@ -240,17 +210,14 @@ export function DashboardPage({
     };
 
     const handleExpenseAdded = async () => {
-        await loadDashboardData();
         await refreshHousehold();
     };
 
     const handleBalanceUpdated = async () => {
-        await loadDashboardData();
         await refreshHousehold();
     };
 
     const handleSettled = async () => {
-        await loadDashboardData();
         await refreshHousehold();
     };
 
@@ -736,7 +703,6 @@ export function DashboardPage({
                 defaultOwnerId={activeMember?.id}
                 isInitialSetup={accounts.length === 0}
                 onAccountCreated={async () => {
-                    await loadDashboardData();
                     await refreshHousehold();
                 }}
             />

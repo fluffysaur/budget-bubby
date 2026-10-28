@@ -9,7 +9,7 @@
  * - Quick individual balance update modal (UpdateBalanceModal)
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
     Wallet,
     CreditCard,
@@ -26,6 +26,7 @@ import {
     SegmentedTabs,
     LoadingCard,
 } from "../components/ui";
+import { useAccountsQuery, useLoansQuery } from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { AccountGroupList } from "../components/accounts/AccountGroupList";
@@ -35,7 +36,7 @@ import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { DeleteAccountModal } from "../components/accounts/DeleteAccountModal";
 import { NetWorthChart } from "../components/accounts/NetWorthChart";
 import { CreditCardTrackerSection } from "../components/accounts/CreditCardTrackerSection";
-import type { Account, Loan } from "../types/finance";
+import type { Account } from "../types/finance";
 
 export interface AccountsPageProps {
     className?: string;
@@ -56,9 +57,15 @@ export function AccountsPage({
     const [activeTab, setActiveTab] = useState<"accounts" | "credit_cards">(
         defaultTab,
     );
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [loans, setLoans] = useState<Loan[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    // TanStack Query Cached Data Hooks
+    const { data: accountsData, isLoading: accountsLoading } =
+        useAccountsQuery(perspective);
+    const { data: loansData } = useLoansQuery();
+
+    const accounts = useMemo(() => accountsData || [], [accountsData]);
+    const loans = useMemo(() => loansData || [], [loansData]);
+    const isLoading = accountsLoading && !accountsData;
 
     // Modal States
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
@@ -73,27 +80,6 @@ export function AccountsPage({
         null,
     );
 
-    // Load accounts and loans for current perspective
-    const loadData = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            const [accountsData, loansData] = await Promise.all([
-                financeService.getAccounts(perspective),
-                financeService.getLoans(),
-            ]);
-            setAccounts(accountsData || []);
-            setLoans(loansData || []);
-        } catch (err) {
-            console.error("Failed to load accounts or loans:", err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [perspective]);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
     // Handlers for individual balance update modal
     const handleOpenUpdateModal = (account: Account) => {
         setSelectedAccount(account);
@@ -106,7 +92,6 @@ export function AccountsPage({
     };
 
     const handleBalanceUpdated = async () => {
-        await loadData();
         await refreshHousehold();
     };
 
@@ -117,7 +102,6 @@ export function AccountsPage({
     ) => {
         try {
             await financeService.updateAccountBalance(accountId, newBalance);
-            await loadData();
             await refreshHousehold();
         } catch (err) {
             console.error("Failed to update inline balance:", err);
@@ -299,7 +283,6 @@ export function AccountsPage({
                 defaultOwnerId={activeMember?.id}
                 isInitialSetup={accounts.length === 0}
                 onAccountCreated={async () => {
-                    await loadData();
                     await refreshHousehold();
                 }}
             />
@@ -314,7 +297,6 @@ export function AccountsPage({
                 account={accountToEdit}
                 members={members}
                 onAccountUpdated={async () => {
-                    await loadData();
                     await refreshHousehold();
                 }}
             />
@@ -328,7 +310,6 @@ export function AccountsPage({
                 }}
                 account={accountToDelete}
                 onAccountDeleted={async () => {
-                    await loadData();
                     await refreshHousehold();
                 }}
             />

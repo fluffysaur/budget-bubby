@@ -63,9 +63,34 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * Check if sound effects are enabled in user notification preferences.
+ */
+export function isSoundEffectsEnabled(): boolean {
+  if (typeof window === 'undefined' || !window.localStorage) return true;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('bb_notif_prefs_')) {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const parsed = JSON.parse(item);
+          if (parsed && typeof parsed.sound_enabled === 'boolean') {
+            return parsed.sound_enabled;
+          }
+        }
+      }
+    }
+  } catch {
+    // fallback to enabled
+  }
+  return true;
+}
+
+/**
  * Play pleasant "cha-ching" celebratory cash chime.
  */
 export function playChaChingSound(): void {
+  if (!isSoundEffectsEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 
@@ -109,6 +134,7 @@ export function playChaChingSound(): void {
  * Play budget warning chime (gentle two-tone ascending alert for nearing 80% limit).
  */
 export function playBudgetWarningSound(): void {
+  if (!isSoundEffectsEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 
@@ -151,6 +177,7 @@ export function playBudgetWarningSound(): void {
  * Play budget exceeded alert (distinct descending alert for >= 100% cap).
  */
 export function playBudgetExceededSound(): void {
+  if (!isSoundEffectsEnabled()) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 

@@ -7,7 +7,7 @@
  * - Collapsible Spend Trends & Tags drawers below the ledger
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Receipt,
   Plus,
@@ -23,6 +23,13 @@ import {
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, CollapsibleSection } from '../components/ui';
+import {
+  useExpensesQuery,
+  useAllExpensesQuery,
+  usePoliciesQuery,
+  useCategoriesQuery,
+  useGoalsQuery,
+} from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
@@ -37,7 +44,7 @@ import { ExpenseFilterBar } from '../components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
 import { SpendTagsOverviewCard } from '../components/expenses/SpendTagsOverviewCard';
-import type { Expense, ExpenseFilter, RecurringPolicy, Category, SavingsGoal } from '../types/finance';
+import type { ExpenseFilter } from '../types/finance';
 
 export interface ExpensesPageProps {
   className?: string;
@@ -53,7 +60,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   } = useHousehold();
 
   const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
 
   // Filter State
   const [filter, setFilter] = useState<ExpenseFilter>({
@@ -64,15 +70,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     isShared: undefined,
   });
 
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
-  const [policies, setPolicies] = useState<RecurringPolicy[]>([]);
-  const [goals, setGoals] = useState<SavingsGoal[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
-
   // Synchronize perspective filter if active member changes
   useEffect(() => {
     if (activeMember) {
@@ -82,46 +79,29 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
     }
   }, [activeMember]);
 
-  // Load expenses matching current filter and policies for trends
-  const loadExpenses = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const [data, fullData, policiesData, categoriesData, goalsData] = await Promise.all([
-        financeService.getExpenses(filter),
-        financeService.getExpenses(),
-        financeService.getPolicies(),
-        financeService.getCategories(),
-        financeService.getGoals(),
-      ]);
-      setExpenses(data || []);
-      setAllExpenses(fullData || data || []);
-      setPolicies(policiesData || []);
-      setGoals(goalsData || []);
-      if (categoriesData && categoriesData.length > 0) {
-        setCategories(categoriesData);
-      }
-    } catch (err) {
-      console.error('Failed to load expenses:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filter]);
+  // TanStack Query Cached Data Hooks
+  const { data: expensesData, isLoading: expensesLoading } = useExpensesQuery(filter);
+  const { data: allExpensesData } = useAllExpensesQuery();
+  const { data: policiesData } = usePoliciesQuery();
+  const { data: categoriesData } = useCategoriesQuery();
+  const { data: goalsData } = useGoalsQuery();
 
-  useEffect(() => {
-    loadExpenses();
-  }, [loadExpenses]);
+  const expenses = useMemo(() => expensesData || [], [expensesData]);
+  const allExpenses = useMemo(() => allExpensesData || expensesData || [], [allExpensesData, expensesData]);
+  const policies = useMemo(() => policiesData || [], [policiesData]);
+  const categories = useMemo(
+    () => (categoriesData && categoriesData.length > 0 ? categoriesData : mockCategories),
+    [categoriesData],
+  );
+  const goals = useMemo(() => goalsData || [], [goalsData]);
+  const isLoading = expensesLoading && !expensesData;
 
-  useEffect(() => {
-    const handleExpenseAddedEvent = () => {
-      loadExpenses();
-    };
-    window.addEventListener('expenseAdded', handleExpenseAddedEvent);
-    return () => window.removeEventListener('expenseAdded', handleExpenseAddedEvent);
-  }, [loadExpenses]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
   // Handle adding an expense
   const handleExpenseAdded = async () => {
-    await loadExpenses();
     await refreshHousehold();
   };
 
@@ -129,7 +109,6 @@ export function ExpensesPage({ className = '' }: ExpensesPageProps) {
   const handleDeleteExpense = async (id: string) => {
     try {
       await financeService.deleteExpense(id);
-      await loadExpenses();
       await refreshHousehold();
     } catch (err) {
       console.error('Failed to delete expense:', err);

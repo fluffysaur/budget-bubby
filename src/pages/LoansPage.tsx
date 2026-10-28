@@ -10,19 +10,19 @@
  * - Supports household & individual perspective view
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   CreditCard,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, LoadingCard, EmptyStateCard } from '../components/ui';
-import { financeService } from '../services/financeService';
+import { useLoansQuery } from '../hooks/useFinanceQueries';
 import { calculateLoanAmortization } from '../lib/financialFormulas';
 import { LoanSummaryCard } from '../components/loans/LoanSummaryCard';
 import { PrepaymentSimulator } from '../components/loans/PrepaymentSimulator';
 import { AmortizationChart } from '../components/loans/AmortizationChart';
 import { AmortizationTable } from '../components/loans/AmortizationTable';
-import type { Loan, AmortizationResult } from '../types/finance';
+import type { AmortizationResult } from '../types/finance';
 
 export interface LoansPageProps {
   className?: string;
@@ -32,39 +32,25 @@ export interface LoansPageProps {
 export function LoansPage({ className = '', embedded = false }: LoansPageProps) {
   const { perspective, activeMember } = useHousehold();
 
-  const [loans, setLoans] = useState<Loan[]>([]);
+  // Cached Loans Query
+  const { data: loansData, isLoading: loansLoading } = useLoansQuery();
+  const loans = useMemo(() => loansData || [], [loansData]);
+  const isLoading = loansLoading && !loansData;
+
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Prepayment simulation state
   const [extraMonthly, setExtraMonthly] = useState<number>(0);
   const [lumpSum, setLumpSum] = useState<number>(0);
   const [scheduleView, setScheduleView] = useState<'simulated' | 'baseline'>('simulated');
 
-  // Load loans
-  const loadLoans = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await financeService.getLoans();
-      setLoans(data || []);
-
-      if (data && data.length > 0) {
-        // Default to HDB loan or the first loan
-        const hdb = data.find((l) => l.name.toLowerCase().includes('hdb'));
-        setSelectedLoanId(hdb ? hdb.id : data[0].id);
-      } else {
-        setSelectedLoanId(null);
-      }
-    } catch (err) {
-      console.error('Failed to load loans:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
+  // Initialize selected loan once loans arrive
   useEffect(() => {
-    loadLoans();
-  }, [loadLoans]);
+    if (loans.length > 0 && !selectedLoanId) {
+      const hdb = loans.find((l) => l.name.toLowerCase().includes('hdb'));
+      setSelectedLoanId(hdb ? hdb.id : loans[0].id);
+    }
+  }, [loans, selectedLoanId]);
 
   // Filter loans according to perspective if relevant
   const displayedLoans = useMemo(() => {

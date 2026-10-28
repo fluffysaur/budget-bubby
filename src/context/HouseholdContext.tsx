@@ -15,8 +15,11 @@ import React, {
 import type { HouseholdMember, HouseholdOverview, Perspective } from '../types/finance';
 export type { Perspective, Perspective as PerspectiveType };
 import { mockMembers } from '../data/mockSeedData';
-import { financeService, isDemoModeActive } from '../services/financeService';
+import { isDemoModeActive } from '../services/financeService';
 import { isSupabaseConfigured } from '../services/supabaseClient';
+import { useHouseholdOverviewQuery } from '../hooks/useFinanceQueries';
+import { useQueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../lib/queryClient';
 
 export interface HouseholdContextValue {
   perspective: Perspective;
@@ -42,7 +45,7 @@ export interface HouseholdProviderProps {
 
 const THEME_STORAGE_KEY = 'budget_buddy_theme';
 
-export function HouseholdProvider({
+function HouseholdProviderInner({
   children,
   initialPerspective = 'household',
   initialTheme,
@@ -51,9 +54,6 @@ export function HouseholdProvider({
   const [perspective, setPerspective] = useState<Perspective>(
     defaultPerspective || initialPerspective
   );
-  const [members, setMembers] = useState<HouseholdMember[]>(mockMembers);
-  const [overview, setOverview] = useState<HouseholdOverview | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (defaultPerspective) {
@@ -94,26 +94,24 @@ export function HouseholdProvider({
 
   // Determine whether running in mock demo mode
   const isMockMode = useMemo(() => !isSupabaseConfigured() || isDemoModeActive(), []);
+  const queryClient = useQueryClient();
 
-  // Fetch household overview and members
-  const refreshData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await financeService.getHouseholdOverview();
-      setOverview(data);
-      if (data.members && data.members.length > 0) {
-        setMembers(data.members);
-      }
-    } catch (err) {
-      console.error('Failed to load household data:', err);
-    } finally {
-      setLoading(false);
+  // Query household overview through TanStack Query
+  const { data: overviewData, isLoading: loading, refetch } = useHouseholdOverviewQuery();
+
+  const overview = overviewData ?? null;
+  const members = useMemo(() => {
+    if (overviewData?.members && overviewData.members.length > 0) {
+      return overviewData.members;
     }
-  }, []);
+    return mockMembers;
+  }, [overviewData]);
 
-  useEffect(() => {
-    refreshData();
-  }, [refreshData]);
+  // Global refresh function: invalidates all finance queries and refetches active ones
+  const refreshData = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['finance'] });
+    await refetch();
+  }, [queryClient, refetch]);
 
   // Resolve active member based on current perspective
   const activeMember = useMemo<HouseholdMember | null>(() => {
@@ -155,6 +153,14 @@ export function HouseholdProvider({
     <HouseholdContext.Provider value={contextValue}>
       {children}
     </HouseholdContext.Provider>
+  );
+}
+
+export function HouseholdProvider(props: HouseholdProviderProps) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HouseholdProviderInner {...props} />
+    </QueryClientProvider>
   );
 }
 
