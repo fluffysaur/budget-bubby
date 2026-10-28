@@ -289,13 +289,14 @@ export function BudgetPage({ className = '' }: BudgetPageProps) {
       <PageHeader
         title="Monthly Budget"
         actions={
-          <div className="flex items-center flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
             <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
 
             <Button
               variant="secondary"
               leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
               onClick={() => handleOpenEditor()}
+              className="w-full sm:w-auto justify-center"
             >
               Edit Budget
             </Button>

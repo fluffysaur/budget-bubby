@@ -421,9 +421,8 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
         />
       );
 
-      // Verify "Set Goal for All" dropdown is present
-      const batchGoalSelect = screen.getByLabelText(/Set savings goal for all expenses/i);
-      expect(batchGoalSelect).toBeInTheDocument();
+      // Verify "Set Goal for All" dropdown is NOT present (removed to save space)
+      expect(screen.queryByLabelText(/Set savings goal for all expenses/i)).toBeNull();
 
       // Enter amount & description for first row
       const amountInputs = screen.getAllByPlaceholderText('0.00');
@@ -458,30 +457,71 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
       });
     });
 
-    it('updates all rows when Set Goal for All is changed in top toolbar', async () => {
+    it('defaults rows to 50/50 in combined view, Solo in member view, and sets payer appropriately', () => {
+      // 1. Render in Combined view (defaultShared = true)
+      const { unmount } = render(
+        <BulkAddExpenseModal
+          isOpen={true}
+          onClose={vi.fn()}
+          categories={mockCategories}
+          members={mockMembers}
+          defaultPayerId={mockMembers[0].id}
+          defaultShared={true}
+        />
+      );
+
+      // Verify payer dropdown is selected to member 0
+      const payerSelect = screen.getByLabelText(/Payer for all expenses/i);
+      expect(payerSelect).toHaveValue(mockMembers[0].id);
+
+      // In Combined view, rows should default to "50/50"
+      const sharedButtons = screen.getAllByRole('button', { name: /50\/50/i });
+      expect(sharedButtons.length).toBeGreaterThanOrEqual(3);
+
+      // Add a new row and verify it also defaults to 50/50
+      const addRowBtn = screen.getByRole('button', { name: /\+ Add Row/i });
+      fireEvent.click(addRowBtn);
+      const updatedSharedButtons = screen.getAllByRole('button', { name: /50\/50/i });
+      expect(updatedSharedButtons.length).toBe(sharedButtons.length + 1);
+
+      unmount();
+
+      // 2. Render in Member view (defaultShared = false)
       render(
         <BulkAddExpenseModal
           isOpen={true}
           onClose={vi.fn()}
           categories={mockCategories}
           members={mockMembers}
-          goals={mockGoals}
+          defaultPayerId={mockMembers[1].id}
+          defaultShared={false}
         />
       );
 
-      // Select Japan Trip for all rows
-      const batchGoalSelect = screen.getByLabelText(/Set savings goal for all expenses/i);
-      fireEvent.change(batchGoalSelect, { target: { value: 'goal-japan-2' } });
+      // Payer dropdown should reflect Rachel
+      expect(screen.getByLabelText(/Payer for all expenses/i)).toHaveValue(mockMembers[1].id);
 
-      // Check that all Category or Goal selects in rows reflect Japan Trip
-      const catOrGoalSelects = screen.getAllByLabelText(/Category or Goal for row/i);
-      expect(catOrGoalSelects[0]).toHaveValue('goal:goal-japan-2');
-      expect(catOrGoalSelects[1]).toHaveValue('goal:goal-japan-2');
-      expect(catOrGoalSelects[2]).toHaveValue('goal:goal-japan-2');
+      // Rows should display "Solo"
+      const soloButtons = screen.getAllByRole('button', { name: /Solo/i });
+      expect(soloButtons.length).toBeGreaterThanOrEqual(3);
+    });
 
-      // Reset back to None
-      fireEvent.change(batchGoalSelect, { target: { value: '' } });
-      expect(catOrGoalSelects[0]).toHaveValue(`cat:${mockCategories[0].id}`);
+    it('parseBulkExpenseText respects defaultShared and tags (#solo / #shared)', () => {
+      const text = `12.50 Default item
+15.00 Personal treat #solo
+25.00 Shared dinner #shared`;
+
+      // When defaultShared = true
+      const parsedSharedDefault = parseBulkExpenseText(text, '2026-10-27', mockCategories, mockGoals, true);
+      expect(parsedSharedDefault[0].isShared).toBe(true);
+      expect(parsedSharedDefault[1].isShared).toBe(false);
+      expect(parsedSharedDefault[2].isShared).toBe(true);
+
+      // When defaultShared = false
+      const parsedSoloDefault = parseBulkExpenseText(text, '2026-10-27', mockCategories, mockGoals, false);
+      expect(parsedSoloDefault[0].isShared).toBe(false);
+      expect(parsedSoloDefault[1].isShared).toBe(false);
+      expect(parsedSoloDefault[2].isShared).toBe(true);
     });
   });
 

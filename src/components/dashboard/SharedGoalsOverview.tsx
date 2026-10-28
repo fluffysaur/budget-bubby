@@ -56,11 +56,11 @@ export function SharedGoalsOverview({
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fcbffa] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-            <Target className="h-5 w-5 stroke-[2.5]" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fcbffa] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+            <Target className="h-5 w-5" strokeWidth={2.5} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
               Milestone Goals
             </h3>
@@ -74,10 +74,10 @@ export function SharedGoalsOverview({
           <button
             type="button"
             onClick={onViewAll}
-            className="inline-flex items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
             <span>View All</span>
-            <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
           </button>
         )}
       </div>
@@ -125,7 +125,7 @@ export function SharedGoalsOverview({
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 text-xs text-(--text-muted)">
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 stroke-[2.5]" />
+                            <Calendar className="h-3 w-3" strokeWidth={2.5} />
                             <span>Target: {formatDisplayDate(goal.target_date)}</span>
                           </span>
                         </div>

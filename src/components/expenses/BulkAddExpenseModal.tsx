@@ -9,7 +9,7 @@
  * - Audio celebration on completion
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Plus,
   Trash2,
@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from '../../services/financeService';
+import { useOptionalHousehold } from '../../context/HouseholdContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   SUPPORTED_CURRENCIES,
   convertToSGD,
@@ -53,6 +55,7 @@ export interface BulkAddExpenseModalProps {
   members?: HouseholdMember[];
   goals?: SavingsGoal[];
   defaultPayerId?: string;
+  defaultShared?: boolean;
 }
 
 /**
@@ -63,7 +66,7 @@ export function parseBulkExpenseText(
   defaultDate: string,
   categories: Category[] = [],
   goals: SavingsGoal[] = [],
-  batchGoalId?: string | null
+  defaultShared: boolean = true
 ): BulkExpenseDraftRow[] {
   const lines = text
     .split('\n')
@@ -180,7 +183,7 @@ export function parseBulkExpenseText(
       findGoalByKeyword(tags.join(' ')) ||
       findGoalByKeyword(item);
 
-    const goalId = detectedGoal ? detectedGoal.id : (batchGoalId || null);
+    const goalId = detectedGoal ? detectedGoal.id : null;
 
     let categoryId = '';
     if (!goalId) {
@@ -188,6 +191,15 @@ export function parseBulkExpenseText(
         findCategoryByKeyword(item) ||
         findCategoryByKeyword(tags.join(' '));
       categoryId = detectedCat ? detectedCat.id : defaultCategory;
+    }
+
+    // Determine shared status: check tags first (#shared, #5050, #solo, #personal)
+    let isShared = defaultShared;
+    const lowerTags = tags.map((t) => t.toLowerCase());
+    if (lowerTags.includes('shared') || lowerTags.includes('5050')) {
+      isShared = true;
+    } else if (lowerTags.includes('solo') || lowerTags.includes('personal')) {
+      isShared = false;
     }
 
     return {
@@ -199,7 +211,7 @@ export function parseBulkExpenseText(
       categoryId,
       goalId,
       item,
-      isShared: true,
+      isShared,
       tags,
     };
   });
@@ -213,12 +225,37 @@ export function BulkAddExpenseModal({
   members: propMembers,
   goals: propGoals,
   defaultPayerId,
+  defaultShared,
 }: BulkAddExpenseModalProps) {
   const categories = propCategories && propCategories.length > 0 ? propCategories : mockCategories;
   const members = propMembers && propMembers.length > 0 ? propMembers : mockMembers;
 
+  const household = useOptionalHousehold();
+  const { loggedInPartner } = useAuth();
+
+  const perspective = household?.perspective ?? 'household';
+  const activeMember = household?.activeMember ?? null;
+
+  // Resolve default shared behavior: 50/50 in combined view, Solo in member view
+  const isSharedDefault = useMemo(() => {
+    if (defaultShared !== undefined) return defaultShared;
+    return perspective === 'household';
+  }, [defaultShared, perspective]);
+
+  // Resolve default payer: active member on member view, logged in partner on combined view, or first member
+  const resolvedDefaultPayerId = useMemo(() => {
+    if (defaultPayerId) return defaultPayerId;
+    if (activeMember) return activeMember.id;
+    if (loggedInPartner) {
+      const match = members.find((m) =>
+        m.display_name.toLowerCase().includes(loggedInPartner.toLowerCase())
+      );
+      if (match) return match.id;
+    }
+    return members[0]?.id || '';
+  }, [defaultPayerId, activeMember, loggedInPartner, members]);
+
   const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(propGoals || []);
-  const [batchGoalId, setBatchGoalId] = useState<string>('');
 
   // Load active goals if not provided in props
   useEffect(() => {
@@ -240,7 +277,7 @@ export function BulkAddExpenseModal({
   const defaultCategory = categories[0]?.id || '';
 
   const [activeTab, setActiveTab] = useState<'grid' | 'paste'>('grid');
-  const [payerId, setPayerId] = useState<string>(defaultPayerId || members[0]?.id || '');
+  const [payerId, setPayerId] = useState<string>(resolvedDefaultPayerId);
   const [pasteText, setPasteText] = useState<string>(
     `12.50 Lunch at Maxwell
 4.20 Iced White Coffee #Coffee
@@ -248,89 +285,56 @@ export function BulkAddExpenseModal({
 62.40 NTUC FairPrice Groceries #Groceries`
   );
 
-  const [rows, setRows] = useState<BulkExpenseDraftRow[]>(() => {
-    const defaultTime = getCurrentSingaporeTime();
-    return [
-      {
-        id: `row-1`,
-        date: today,
-        time: defaultTime,
-        amount: '',
-        currency: 'SGD',
-        categoryId: defaultCategory,
-        goalId: null,
-        item: '',
-        isShared: true,
-        tags: [],
-      },
-      {
-        id: `row-2`,
-        date: today,
-        time: defaultTime,
-        amount: '',
-        currency: 'SGD',
-        categoryId: defaultCategory,
-        goalId: null,
-        item: '',
-        isShared: true,
-        tags: [],
-      },
-      {
-        id: `row-3`,
-        date: today,
-        time: defaultTime,
-        amount: '',
-        currency: 'SGD',
-        categoryId: defaultCategory,
-        goalId: null,
-        item: '',
-        isShared: true,
-        tags: [],
-      },
-    ];
+  const createDefaultRow = (id: string, shared: boolean): BulkExpenseDraftRow => ({
+    id,
+    date: today,
+    time: getCurrentSingaporeTime(),
+    amount: '',
+    currency: 'SGD',
+    categoryId: defaultCategory,
+    goalId: null,
+    item: '',
+    isShared: shared,
+    tags: [],
   });
+
+  const [rows, setRows] = useState<BulkExpenseDraftRow[]>(() => [
+    createDefaultRow('row-1', isSharedDefault),
+    createDefaultRow('row-2', isSharedDefault),
+    createDefaultRow('row-3', isSharedDefault),
+  ]);
+
+  const prevIsOpenRef = useRef(false);
+  const prevPayerIdPropRef = useRef(defaultPayerId);
+  const prevSharedPropRef = useRef(defaultShared);
+
+  useEffect(() => {
+    const justOpened = isOpen && !prevIsOpenRef.current;
+    const payerPropChanged = defaultPayerId !== prevPayerIdPropRef.current;
+    const sharedPropChanged = defaultShared !== prevSharedPropRef.current;
+
+    if (justOpened || (isOpen && (payerPropChanged || sharedPropChanged))) {
+      setPayerId(resolvedDefaultPayerId);
+      setRows([
+        createDefaultRow('row-1', isSharedDefault),
+        createDefaultRow('row-2', isSharedDefault),
+        createDefaultRow('row-3', isSharedDefault),
+      ]);
+      setErrorMessage(null);
+    }
+    prevIsOpenRef.current = isOpen;
+    prevPayerIdPropRef.current = defaultPayerId;
+    prevSharedPropRef.current = defaultShared;
+  }, [isOpen, defaultPayerId, defaultShared, resolvedDefaultPayerId, isSharedDefault]);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Apply batch goal to all rows
-  const handleBatchGoalChange = (newGoalId: string) => {
-    setBatchGoalId(newGoalId);
-    if (newGoalId) {
-      setRows((prev) =>
-        prev.map((r) => ({
-          ...r,
-          goalId: newGoalId,
-          categoryId: '',
-        }))
-      );
-    } else {
-      setRows((prev) =>
-        prev.map((r) => ({
-          ...r,
-          goalId: null,
-          categoryId: r.categoryId || defaultCategory,
-        }))
-      );
-    }
-  };
 
   // Add an empty row
   const handleAddRow = () => {
     setRows((prev) => [
       ...prev,
-      {
-        id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        date: today,
-        time: getCurrentSingaporeTime(),
-        amount: '',
-        currency: 'SGD',
-        categoryId: batchGoalId ? '' : defaultCategory,
-        goalId: batchGoalId ? batchGoalId : null,
-        item: '',
-        isShared: true,
-        tags: [],
-      },
+      createDefaultRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, isSharedDefault),
     ]);
   };
 
@@ -359,7 +363,7 @@ export function BulkAddExpenseModal({
 
   // Parse text into grid rows
   const handleApplyPasteText = () => {
-    const parsed = parseBulkExpenseText(pasteText, today, categories, activeGoals, batchGoalId);
+    const parsed = parseBulkExpenseText(pasteText, today, categories, activeGoals, isSharedDefault);
     if (parsed.length > 0) {
       setRows(parsed);
       setActiveTab('grid');
@@ -525,38 +529,7 @@ export function BulkAddExpenseModal({
                             </div>
                         </div>
 
-                        {/* Batch Goal Selector */}
-                        {activeGoals.length > 0 && (
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-[11px] uppercase tracking-wider text-(--text-muted) flex items-center gap-1">
-                                    <Target className="h-3 w-3 text-(--text-muted)" />
-                                    <span>Set Goal for All:</span>
-                                </span>
-                                <div className="relative flex items-center">
-                                    <select
-                                        aria-label="Set savings goal for all expenses"
-                                        value={batchGoalId}
-                                        onChange={(e) => handleBatchGoalChange(e.target.value)}
-                                        className={`appearance-none rounded-xl border pl-3 pr-8 py-1 text-xs font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) ${
-                                            batchGoalId
-                                                ? "border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200"
-                                                : "border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"
-                                        }`}
-                                    >
-                                        <option value="">None (Use Categories)</option>
-                                        {activeGoals.map((g) => (
-                                            <option key={g.id} value={g.id}>
-                                                {g.emoji || "🎯"} {g.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
-                                        strokeWidth={2.5}
-                                    />
-                                </div>
-                            </div>
-                        )}
+
                     </div>
                 </div>
 

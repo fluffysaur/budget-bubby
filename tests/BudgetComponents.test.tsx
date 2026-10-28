@@ -97,15 +97,88 @@ describe('MonthPicker', () => {
     expect(onChange).toHaveBeenCalledWith('2026-10');
   });
 
-  it('shows jump to current month button when not on current month and triggers jump', () => {
+  it('keeps outer toolbar clean without redundant current month button', () => {
     const onChange = vi.fn();
     render(<MonthPicker selectedMonth="2024-01" onChangeMonth={onChange} />);
 
-    const jumpButton = screen.getByRole('button', { name: /current|today/i });
-    expect(jumpButton).toBeInTheDocument();
+    // Outer toolbar has prev, month pill, and next buttons only
+    expect(screen.queryByRole('button', { name: /jump to current month/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/current month/i)).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(jumpButton);
+  it('renders with border-2 and shadow-(--shadow-cute-sm) tokens', () => {
+    const onChange = vi.fn();
+    const { container } = render(<MonthPicker selectedMonth="2026-09" onChangeMonth={onChange} />);
+
+    const rootDiv = container.firstChild as HTMLElement;
+    expect(rootDiv).toHaveClass('border-2');
+    expect(rootDiv).toHaveClass('border-(--border-ink)');
+    expect(rootDiv).toHaveClass('shadow-(--shadow-cute-sm)');
+  });
+
+  it('opens month selector popover when tapping the month display pill', () => {
+    const onChange = vi.fn();
+    render(<MonthPicker selectedMonth="2026-09" onChangeMonth={onChange} />);
+
+    const triggerButton = screen.getByRole('button', { name: /choose month/i });
+    expect(triggerButton).toBeInTheDocument();
+
+    fireEvent.click(triggerButton);
+
+    // Popover contains year display and month options
+    expect(screen.getByText('2026')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /select sep 2026/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /select jan 2026/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /select dec 2026/i })).toBeInTheDocument();
+  });
+
+  it('navigates years and selects a month from the popover', () => {
+    const onChange = vi.fn();
+    render(<MonthPicker selectedMonth="2026-09" onChangeMonth={onChange} />);
+
+    // Open popover
+    fireEvent.click(screen.getByRole('button', { name: /choose month/i }));
+
+    // Click next year
+    const nextYearBtn = screen.getByRole('button', { name: /next year/i });
+    fireEvent.click(nextYearBtn);
+
+    expect(screen.getByText('2027')).toBeInTheDocument();
+
+    // Select March 2027
+    const marBtn = screen.getByRole('button', { name: /select mar 2027/i });
+    fireEvent.click(marBtn);
+
+    expect(onChange).toHaveBeenCalledWith('2027-03');
+    // Popover should close
+    expect(screen.queryByRole('button', { name: /select mar 2027/i })).not.toBeInTheDocument();
+  });
+
+  it('jumps to current month from inside the popover', () => {
+    const onChange = vi.fn();
+    render(<MonthPicker selectedMonth="2024-01" onChangeMonth={onChange} />);
+
+    // Open popover
+    fireEvent.click(screen.getByRole('button', { name: /choose month/i }));
+
+    const jumpInPopover = screen.getByRole('button', { name: /jump to current month from picker/i });
+    fireEvent.click(jumpInPopover);
+
     expect(onChange).toHaveBeenCalledWith(getCurrentMonth());
+    expect(screen.queryByRole('button', { name: /jump to current month from picker/i })).not.toBeInTheDocument();
+  });
+
+  it('closes popover when close button is clicked', () => {
+    const onChange = vi.fn();
+    render(<MonthPicker selectedMonth="2026-09" onChangeMonth={onChange} />);
+
+    // Open popover
+    fireEvent.click(screen.getByRole('button', { name: /choose month/i }));
+    expect(screen.getByRole('button', { name: /close month picker/i })).toBeInTheDocument();
+
+    // Close
+    fireEvent.click(screen.getByRole('button', { name: /close month picker/i }));
+    expect(screen.queryByRole('button', { name: /close month picker/i })).not.toBeInTheDocument();
   });
 });
 
