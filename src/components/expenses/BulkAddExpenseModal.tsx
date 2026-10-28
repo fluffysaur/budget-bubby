@@ -27,7 +27,7 @@ import {
   convertToSGD,
 } from '../../lib/currencyConverter';
 import { formatSGD } from '../../lib/currency';
-import { getTodayDateString } from '../../lib/dateUtils';
+import { getTodayDateString, getCurrentSingaporeTime } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import type { Expense, Category, HouseholdMember, CreateExpenseInput } from '../../types/finance';
 
@@ -296,6 +296,7 @@ export function BulkAddExpenseModal({
           payer_id: payerId,
           category_id: r.categoryId || null,
           date: r.date || today,
+          time: getCurrentSingaporeTime(),
           item: r.item.trim(),
           amount: amountInSGD,
           original_amount: r.currency !== 'SGD' ? num : null,

@@ -49,7 +49,7 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
-import { getTodayDateString, addMonths, formatISODate } from '../lib/dateUtils';
+import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import type { FinanceService } from './financeService';
 
@@ -842,7 +842,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (sortBy === 'amount') {
       query = query.order('amount', { ascending });
     } else {
-      query = query.order('date', { ascending });
+      query = query
+        .order('date', { ascending })
+        .order('time', { ascending, nullsFirst: false })
+        .order('created_at', { ascending });
     }
 
     if (filter?.month) {
@@ -923,6 +926,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       household_id: householdId,
       category_id: resolvedCategoryId,
       date: input.date,
+      time: input.time || getCurrentSingaporeTime(),
       item: input.item,
       amount: input.amount,
       remarks: input.remarks || null,
@@ -957,6 +961,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         payer_id: resolvedPayerId,
         category_id: resolvedCategoryId,
         date: input.date,
+        time: input.time || getCurrentSingaporeTime(),
         item: input.item,
         amount: input.amount,
         remarks: input.remarks || null,

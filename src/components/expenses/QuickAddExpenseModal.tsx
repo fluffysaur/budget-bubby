@@ -17,7 +17,7 @@ import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Plus, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
-import { getTodayDateString, getSingaporeDate, formatISODate } from "../../lib/dateUtils";
+import { getTodayDateString, getSingaporeDate, formatISODate, getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { isSpendableCategory } from "../../lib/financialFormulas";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import {
@@ -171,8 +171,9 @@ export function QuickAddExpenseModal({
     });
     const [isShared, setIsShared] = useState<boolean>(resolvedDefaultShared);
 
-    // Date & Notes State
+    // Date, Time & Notes State
     const [date, setDate] = useState<string>(getTodayDateString());
+    const [time, setTime] = useState<string>(() => getCurrentSingaporeTime());
     const [remarks, setRemarks] = useState<string>("");
 
     // Tags State
@@ -226,6 +227,7 @@ export function QuickAddExpenseModal({
             setPayerId(defaultPayerId || (activeMember ? activeMember.id : members[0]?.id || ""));
             setIsShared(defaultShared !== undefined ? defaultShared : perspective === "household");
             setDate(getTodayDateString());
+            setTime(getCurrentSingaporeTime());
             setRemarks("");
             setTags([]);
             setNewTagInput("");
@@ -364,6 +366,7 @@ export function QuickAddExpenseModal({
                 payer_id: payerId,
                 category_id: isGoalSpend ? null : (categoryId || null),
                 date: date || todayStr,
+                time: time || getCurrentSingaporeTime(),
                 item: item.trim(),
                 amount: finalAmountInSGD,
                 remarks: remarks.trim() ? remarks.trim() : null,
@@ -760,19 +763,22 @@ export function QuickAddExpenseModal({
                         </div>
                     </div>
 
-                    {/* 1-Tap Date Chips + Compact Date Picker */}
-                    <div>
+                    {/* 1-Tap Date Chips + Compact Date & Time Pickers */}
+                    <div className="space-y-1.5">
                         <label
                             htmlFor="expense-date"
-                            className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)"
                         >
-                            Date
+                            Date & Time
                         </label>
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <button
                                 type="button"
                                 aria-pressed={date === todayStr}
-                                onClick={() => setDate(todayStr)}
+                                onClick={() => {
+                                    setDate(todayStr);
+                                    setTime(getCurrentSingaporeTime());
+                                }}
                                 className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                     date === todayStr
                                         ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
@@ -805,7 +811,9 @@ export function QuickAddExpenseModal({
                             >
                                 2d ago
                             </button>
-                            <div className="relative flex items-center">
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                            <div className="relative flex items-center flex-1 min-w-32">
                                 <input
                                     id="expense-date"
                                     type="date"
@@ -813,8 +821,26 @@ export function QuickAddExpenseModal({
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
                                     required
+                                    className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                />
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <input
+                                    id="expense-time"
+                                    type="time"
+                                    aria-label="Expense Time"
+                                    value={time}
+                                    onChange={(e) => setTime(e.target.value)}
                                     className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setTime(getCurrentSingaporeTime())}
+                                    className="rounded-lg px-2 py-1 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border border-(--border-subtle) transition-all cursor-pointer"
+                                    title="Reset to current time"
+                                >
+                                    Now
+                                </button>
                             </div>
                         </div>
                     </div>

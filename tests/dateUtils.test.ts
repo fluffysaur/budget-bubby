@@ -8,6 +8,8 @@ import {
   formatDisplayDate,
   addMonths,
   monthsBetween,
+  formatTime12h,
+  extractTimeFromISO,
 } from '../src/lib/dateUtils';
 
 describe('dateUtils', () => {
@@ -43,5 +45,24 @@ describe('dateUtils', () => {
   it('returns valid current month and today string', () => {
     expect(getCurrentMonth()).toMatch(/^\d{4}-\d{2}$/);
     expect(getTodayDateString()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('formats time to 12-hour am/pm strings correctly', () => {
+    expect(formatTime12h('14:30')).toBe('2:30 PM');
+    expect(formatTime12h('14:30:00')).toBe('2:30 PM');
+    expect(formatTime12h('09:05')).toBe('9:05 AM');
+    expect(formatTime12h('00:00')).toBe('12:00 AM');
+    expect(formatTime12h('12:00')).toBe('12:00 PM');
+    expect(formatTime12h('23:59')).toBe('11:59 PM');
+    expect(formatTime12h(null)).toBe('');
+    expect(formatTime12h(undefined)).toBe('');
+  });
+
+  it('extracts time from ISO timestamp in Singapore context', () => {
+    // 2026-10-29T06:30:00.000Z in UTC is 14:30:00 in UTC+8
+    const isoUtc = '2026-10-29T06:30:00.000Z';
+    expect(extractTimeFromISO(isoUtc)).toBe('14:30');
+    expect(extractTimeFromISO('')).toBe('');
+    expect(extractTimeFromISO(null)).toBe('');
   });
 });

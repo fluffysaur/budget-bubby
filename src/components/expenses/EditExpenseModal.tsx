@@ -27,6 +27,7 @@ import {
     convertToSGD,
 } from "../../lib/currencyConverter";
 import { formatSGD } from "../../lib/currency";
+import { getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import type { Expense, Category, HouseholdMember, UpdateExpenseInput, SavingsGoal } from "../../types/finance";
 
@@ -70,6 +71,7 @@ export function EditExpenseModal({
     const [categoryId, setCategoryId] = useState<string>("");
     const [payerId, setPayerId] = useState<string>("");
     const [date, setDate] = useState<string>("");
+    const [time, setTime] = useState<string>("");
     const [remarks, setRemarks] = useState<string>("");
     const [isShared, setIsShared] = useState<boolean>(true);
     const [splitRatio, setSplitRatio] = useState<number>(0.5);
@@ -106,6 +108,7 @@ export function EditExpenseModal({
             setCategoryId(expense.category_id || "");
             setPayerId(expense.payer_id || members[0]?.id || "");
             setDate(expense.date);
+            setTime(expense.time || "");
             setRemarks(expense.remarks || "");
             setIsShared(expense.is_shared);
             setSplitRatio(expense.split_ratio ?? 0.5);
@@ -167,6 +170,7 @@ export function EditExpenseModal({
                 payer_id: payerId,
                 category_id: goalId ? null : (categoryId || null),
                 date,
+                time: time || null,
                 item: item.trim(),
                 amount: amountInSGD,
                 original_amount: currency !== "SGD" ? amount : null,
@@ -332,23 +336,43 @@ export function EditExpenseModal({
                             </div>
                         </div>
 
-                        {/* Date */}
-                        <div>
+                        {/* Date & Time */}
+                        <div className="space-y-1.5">
                             <label
                                 htmlFor="edit-expense-date"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted)"
                             >
-                                Date
+                                Date & Time
                             </label>
-                            <div className="relative">
-                                <input
-                                    id="edit-expense-date"
-                                    type="date"
-                                    required
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-xs font-mono-num font-semibold text-(--text-ink)"
-                                />
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <div className="relative flex items-center flex-1 min-w-32">
+                                    <input
+                                        id="edit-expense-date"
+                                        type="date"
+                                        required
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                        className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <input
+                                        id="edit-expense-time"
+                                        type="time"
+                                        aria-label="Expense Time"
+                                        value={time}
+                                        onChange={(e) => setTime(e.target.value)}
+                                        className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-2 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setTime(getCurrentSingaporeTime())}
+                                        className="rounded-xl px-2.5 py-2 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border-2 border-(--border-ink) transition-all cursor-pointer"
+                                        title="Set to current time"
+                                    >
+                                        Now
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

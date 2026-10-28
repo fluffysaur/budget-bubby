@@ -163,6 +163,7 @@ export interface Expense {
   payer_id: string;
   category_id?: string | null;
   date: string; // 'YYYY-MM-DD'
+  time?: string | null; // 'HH:mm' or 'HH:mm:ss'
   item: string;
   amount: number;
   remarks?: string | null;
@@ -182,6 +183,7 @@ export interface CreateExpenseInput {
   payer_id: string;
   category_id?: string | null;
   date: string;
+  time?: string | null;
   item: string;
   amount: number;
   remarks?: string | null;
@@ -198,6 +200,7 @@ export interface UpdateExpenseInput {
   payer_id?: string;
   category_id?: string | null;
   date?: string;
+  time?: string | null;
   item?: string;
   amount?: number;
   remarks?: string | null;

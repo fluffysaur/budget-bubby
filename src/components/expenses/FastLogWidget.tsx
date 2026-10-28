@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { formatSGD } from '../../lib/currency';
-import { getTodayDateString } from '../../lib/dateUtils';
+import { getTodayDateString, getCurrentSingaporeTime } from '../../lib/dateUtils';
 import { playChaChingSound } from '../../lib/soundEffects';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import type { Expense, Category, HouseholdMember } from '../../types/finance';
@@ -119,6 +119,7 @@ export function FastLogWidget({
         payer_id: payerId,
         category_id: currentCategoryObj?.id || null,
         date: getTodayDateString(),
+        time: getCurrentSingaporeTime(),
         item: itemTitle,
         amount,
         is_shared: isShared,

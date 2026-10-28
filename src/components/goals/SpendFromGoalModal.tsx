@@ -12,7 +12,7 @@ import { ShoppingBag, Calendar, DollarSign, Tag, User, Layers } from "lucide-rea
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
 import { financeService } from "../../services/financeService";
-import { getTodayDateString } from "../../lib/dateUtils";
+import { getTodayDateString, getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { formatSGD } from "../../lib/currency";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import type { SavingsGoal, Category, HouseholdMember, CreateExpenseInput } from "../../types/finance";
@@ -98,6 +98,7 @@ export function SpendFromGoalModal({
                 payer_id: payerId,
                 category_id: categoryId || null,
                 date: date || getTodayDateString(),
+                time: getCurrentSingaporeTime(),
                 item: item.trim(),
                 amount: numericAmount,
                 remarks: remarks.trim() || null,

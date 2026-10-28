@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { formatForeignAmount } from '../../lib/currencyConverter';
-import { formatDisplayDate } from '../../lib/dateUtils';
+import { formatDisplayDate, formatTime12h, extractTimeFromISO } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import { EditExpenseModal } from './EditExpenseModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
@@ -174,6 +174,14 @@ export function ExpenseListTable({
       let comparison = 0;
       if (activeSortBy === 'date') {
         comparison = a.date.localeCompare(b.date);
+        if (comparison === 0) {
+          const timeA = a.time || (a.created_at ? extractTimeFromISO(a.created_at) : '');
+          const timeB = b.time || (b.created_at ? extractTimeFromISO(b.created_at) : '');
+          comparison = timeA.localeCompare(timeB);
+        }
+        if (comparison === 0 && a.created_at && b.created_at) {
+          comparison = a.created_at.localeCompare(b.created_at);
+        }
       } else if (activeSortBy === 'amount') {
         comparison = a.amount - b.amount;
       } else if (activeSortBy === 'category') {
@@ -332,15 +340,23 @@ export function ExpenseListTable({
                   expense.original_currency &&
                   expense.original_currency !== 'SGD' &&
                   expense.original_amount;
+                const displayTime = expense.time || (expense.created_at ? extractTimeFromISO(expense.created_at) : null);
 
                 return (
                   <tr
                     key={expense.id}
                     className="flex flex-wrap items-center sm:table-row p-3 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
                   >
-                    {/* Date */}
+                    {/* Date & Time */}
                     <td className="order-1 py-0 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 flex-1 sm:flex-initial sm:table-cell whitespace-nowrap font-mono-num font-bold sm:font-semibold text-[11px] sm:text-xs text-(--text-muted) sm:text-(--text-ink)">
-                      <span>{formatDisplayDate(expense.date)}</span>
+                      <div className="flex flex-row sm:flex-col items-center sm:items-start gap-1.5 sm:gap-0.5">
+                        <span>{formatDisplayDate(expense.date)}</span>
+                        {displayTime && (
+                          <span className="text-[10px] sm:text-[11px] font-mono-num font-normal text-(--text-muted)">
+                            {formatTime12h(displayTime)}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Formatted SGD Amount */}

@@ -169,3 +169,43 @@ export function getPastMonthsList(endMonth: string, count: number = 6): string[]
   }
   return list;
 }
+
+/**
+ * Returns the current time in Singapore (UTC+8) in 'HH:mm' 24-hour format.
+ */
+export function getCurrentSingaporeTime(): string {
+  const d = getSingaporeDate();
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/**
+ * Formats a 24-hour time string ('HH:mm' or 'HH:mm:ss') to 12-hour format e.g. '2:30 PM'.
+ */
+export function formatTime12h(timeStr?: string | null): string {
+  if (!timeStr) return '';
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return timeStr;
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 becomes 12
+  return `${hours}:${minutes} ${ampm}`;
+}
+
+/**
+ * Extracts 'HH:mm' in Singapore time from an ISO timestamp (e.g. created_at).
+ */
+export function extractTimeFromISO(isoString?: string | null): string {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  const sgTimeString = date.toLocaleString('en-US', { timeZone: 'Asia/Singapore' });
+  const sgDate = new Date(sgTimeString);
+  const h = String(sgDate.getHours()).padStart(2, '0');
+  const m = String(sgDate.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+

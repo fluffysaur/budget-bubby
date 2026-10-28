@@ -815,6 +815,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-09-02',
+    time: '18:30',
     item: 'FairPrice Finest Groceries',
     amount: 128.45,
     remarks: 'Weekly groceries for meal prep',
@@ -829,6 +830,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0012',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-09-05',
+    time: '19:45',
     item: 'Dinner at Din Tai Fung',
     amount: 86.5,
     remarks: 'Weekend couple dinner',
@@ -843,6 +845,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0103', // Transport
     date: '2026-09-07',
+    time: '08:15',
     item: 'Grab Ride to Changi',
     amount: 34.2,
     remarks: 'Airport drop-off',
@@ -857,6 +860,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-09-09',
+    time: '14:20',
     item: 'Tech Gadgets & Cables',
     amount: 45.0,
     remarks: 'Personal desk setup',
@@ -871,6 +875,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0012',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-09-11',
+    time: '16:00',
     item: 'Books & Stationery',
     amount: 32.0,
     remarks: 'Personal reading books',
@@ -885,6 +890,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-09-14',
+    time: '09:10',
     item: 'Coffee & Kaya Toast',
     amount: 14.8,
     remarks: 'Sunday breakfast',
@@ -900,6 +906,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-10-05',
+    time: '11:00',
     item: 'FairPrice Groceries & Produce',
     amount: 142.6,
     remarks: 'October weekly groceries',
@@ -914,6 +921,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0103', // Transport
     date: '2026-10-08',
+    time: '09:00',
     item: 'SimplyGo MRT & Bus',
     amount: 68.4,
     remarks: 'Monthly commute card',
@@ -928,6 +936,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0012',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-10-12',
+    time: '20:00',
     item: 'Weekend Brunch & Movie',
     amount: 94.0,
     remarks: 'Date night',
@@ -942,6 +951,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-08-18',
+    time: '12:00',
     item: 'August Groceries & Hawker',
     amount: 420.0,
     remarks: 'Monthly food spend',
@@ -956,6 +966,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-08-22',
+    time: '15:00',
     item: 'Uniqlo & Weekend Outing',
     amount: 210.0,
     remarks: 'August lifestyle',
@@ -970,6 +981,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0103', // Transport
     date: '2026-08-25',
+    time: '18:00',
     item: 'MRT & Grab Rides',
     amount: 115.0,
     remarks: 'August transport',
@@ -984,6 +996,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-07-20',
+    time: '12:00',
     item: 'July Groceries & Dining',
     amount: 460.0,
     remarks: 'July food spend',
@@ -998,6 +1011,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-07-24',
+    time: '19:00',
     item: 'Birthday Gift & Concert',
     amount: 280.0,
     remarks: 'July lifestyle',
@@ -1012,6 +1026,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-06-19',
+    time: '12:00',
     item: 'June Groceries & Meals',
     amount: 395.0,
     remarks: 'June food spend',
@@ -1027,6 +1042,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-10-15',
+    time: '14:00',
     item: 'Grand Ballroom Wedding Banquet Deposit',
     amount: 5000.0,
     remarks: 'Wedding banquet first deposit',
@@ -1043,6 +1059,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0012',
     category_id: 'cat-00000000-0103', // Transport
     date: '2026-10-18',
+    time: '10:00',
     item: 'Singapore Airlines Flight to Da Nang',
     amount: 980.0,
     remarks: 'Couples holiday flights',
@@ -1058,6 +1075,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0101', // Food
     date: '2026-10-22',
+    time: '20:30',
     item: 'Hoi An Ancient Town Dining & Cafe Tour',
     amount: 145.5,
     remarks: 'Trip street food and dinner',
@@ -1073,6 +1091,7 @@ export const mockExpenses: Expense[] = [
     payer_id: 'mem-00000000-0011',
     category_id: 'cat-00000000-0102', // Lifestyle
     date: '2026-10-24',
+    time: '11:30',
     item: 'Interior Designer 3D Render & Consultation',
     amount: 800.0,
     remarks: 'Initial deposit for kitchen & living carpentry',

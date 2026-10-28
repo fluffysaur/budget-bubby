@@ -58,7 +58,7 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
-import { getTodayDateString, formatISODate } from '../lib/dateUtils';
+import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 
 const STORAGE_KEY = 'budget_buddy_mock_dataset_v1';
@@ -693,6 +693,14 @@ class MockFinanceServiceImpl implements FinanceService {
       let comparison = 0;
       if (sortBy === 'date') {
         comparison = a.date.localeCompare(b.date);
+        if (comparison === 0) {
+          const timeA = a.time || (a.created_at ? extractTimeFromISO(a.created_at) : '');
+          const timeB = b.time || (b.created_at ? extractTimeFromISO(b.created_at) : '');
+          comparison = timeA.localeCompare(timeB);
+        }
+        if (comparison === 0 && a.created_at && b.created_at) {
+          comparison = a.created_at.localeCompare(b.created_at);
+        }
       } else if (sortBy === 'amount') {
         comparison = a.amount - b.amount;
       } else if (sortBy === 'category') {
@@ -721,6 +729,7 @@ class MockFinanceServiceImpl implements FinanceService {
       payer_id: input.payer_id,
       category_id: input.category_id || null,
       date: input.date,
+      time: input.time || getCurrentSingaporeTime(),
       item: input.item,
       amount: Math.round(input.amount * 100) / 100,
       remarks: input.remarks || null,
