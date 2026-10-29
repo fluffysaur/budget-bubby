@@ -305,7 +305,7 @@ export function CreditCardTrackerSection({
 
     return (
         <div
-            className={`space-y-6 ${className}`}
+            className={`space-y-5 ${className}`}
             data-testid="credit-card-tracker-section"
         >
             {/* Month Navigation & Add Card Action */}

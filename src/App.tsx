@@ -36,6 +36,7 @@ import { QuickAddExpenseModal } from './components/expenses/QuickAddExpenseModal
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
+import { PullToRefresh } from './components/ui/PullToRefresh';
 import type { Expense } from './types/finance';
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -179,8 +180,12 @@ function AppLayoutInner() {
           onNavigateTab={handleSelectTab}
         />
 
-        {/* Scrollable Viewport / Route Container (Constrained width on desktop) */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 pb-24 md:pb-10">
+        {/* Scrollable Viewport / Route Container with Mobile Swipe-Down-To-Refresh */}
+        <PullToRefresh
+          as="main"
+          onRefresh={refreshData}
+          className="px-4 sm:px-6 py-6 pb-24 md:pb-10"
+        >
           <div className="mx-auto w-full max-w-5xl">
             <Suspense fallback={<RouteSkeletonLoader />}>
               <Routes>
@@ -199,7 +204,7 @@ function AppLayoutInner() {
               </Routes>
             </Suspense>
           </div>
-        </main>
+        </PullToRefresh>
       </div>
 
       {/* Mobile Fixed Bottom Navigation */}

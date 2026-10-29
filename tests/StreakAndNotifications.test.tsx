@@ -431,7 +431,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(onNavigateTab).toHaveBeenCalledWith('expenses');
     });
 
-    it('toggles to Quick Settings view inside NotificationCenterPopover and flips a preference switch', async () => {
+    it('renders mobile full-screen notification overlay on mobile viewports, does NOT close when clicking inside, and allows closing via close button', async () => {
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(375);
       renderWithProviders(<NotificationCenterPopover />);
 
       const bellBtn = await screen.findByTestId('notification-bell-btn');
@@ -439,31 +440,24 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         fireEvent.click(bellBtn);
       });
 
-      // Settings toggle button
-      const settingsToggleBtn = screen.getByTestId('toggle-popover-settings-btn');
-      expect(settingsToggleBtn).toBeInTheDocument();
+      const overlay = screen.getByTestId('notification-center-mobile-overlay');
+      expect(overlay).toBeInTheDocument();
+
+      // Clicking anywhere inside the overlay must NOT close it
+      await act(async () => {
+        fireEvent.mouseDown(overlay);
+        fireEvent.click(overlay);
+      });
+      expect(screen.getByTestId('notification-center-mobile-overlay')).toBeInTheDocument();
+
+      const closeBtn = screen.getByTestId('close-notification-overlay-btn');
+      expect(closeBtn).toBeInTheDocument();
 
       await act(async () => {
-        fireEvent.click(settingsToggleBtn);
+        fireEvent.click(closeBtn);
       });
 
-      // Quick settings view is rendered
-      expect(screen.getByTestId('popover-quick-settings-view')).toBeInTheDocument();
-      expect(screen.getByText('PWA Push Notifications')).toBeInTheDocument();
-
-      const pushSwitch = screen.getByTestId('popover-toggle-push');
-      expect(pushSwitch).toBeInTheDocument();
-
-      const updateSpy = vi.spyOn(financeService, 'updateNotificationPreferences');
-
-      await act(async () => {
-        fireEvent.click(pushSwitch);
-      });
-
-      expect(updateSpy).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ push_enabled: false })
-      );
+      expect(screen.queryByTestId('notification-center-mobile-overlay')).not.toBeInTheDocument();
     });
 
     it('persists dismissed reminder IDs per member in localStorage', () => {
@@ -823,9 +817,9 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         <NotificationSettingsModal isOpen={true} onClose={onClose} memberId="mem-00000000-0011" />
       );
 
-      expect(await screen.findByText('Notification Settings')).toBeInTheDocument();
-      expect(screen.getByText('Browser / PWA Push Notifications')).toBeInTheDocument();
-      expect(screen.getByText('Sound Effects & Audio Chimes')).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByText('Push Notifications')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Sound Effects' })).toBeInTheDocument();
 
       // Custom thresholds inputs exist
       const ccLeadInput = screen.getByTestId('input-cc-lead-days');
@@ -865,6 +859,28 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         fireEvent.click(doneBtn);
       });
       expect(onClose).toHaveBeenCalled();
+    });
+
+    it('hides notification types and custom thresholds when push_enabled is toggled off', async () => {
+      const onClose = vi.fn();
+      renderWithProviders(
+        <NotificationSettingsModal isOpen={true} onClose={onClose} memberId="mem-00000000-0011" />
+      );
+
+      expect(await screen.findByText('Notification Types')).toBeInTheDocument();
+      expect(screen.getByText('Custom Thresholds')).toBeInTheDocument();
+
+      const pushToggle = screen.getByTestId('toggle-push-enabled');
+      await act(async () => {
+        fireEvent.click(pushToggle);
+      });
+
+      expect(screen.queryByText('Notification Types')).not.toBeInTheDocument();
+      expect(screen.queryByText('Custom Thresholds')).not.toBeInTheDocument();
+      expect(screen.getByText(/Push notifications are turned off/i)).toBeInTheDocument();
+
+      // Sound Effects section remains accessible in its own category
+      expect(screen.getByRole('heading', { name: 'Sound Effects' })).toBeInTheDocument();
     });
 
     it('isSoundEffectsEnabled respects sound_enabled preference in localStorage', () => {

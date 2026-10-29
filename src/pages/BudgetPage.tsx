@@ -285,7 +285,7 @@ export function BudgetPage({ className = '', embedded = false }: BudgetPageProps
   const spendableRemaining = spendableAllocated - spendableSpent;
 
   return (
-    <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
+    <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
       {/* Top Header Section */}
       {!embedded ? (
         <PageHeader

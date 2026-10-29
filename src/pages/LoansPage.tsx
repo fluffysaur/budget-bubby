@@ -168,7 +168,7 @@ export function LoansPage({ className = '', embedded = false }: LoansPageProps) 
   }
 
   return (
-    <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+    <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
       {/* Page Header (Hidden if embedded in Plan Hub) */}
       {!embedded && (
         <PageHeader

@@ -138,7 +138,7 @@ export function AccountsPage({
     }, [totalAssets, totalLiabilities]);
 
     return (
-        <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+        <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
             {/* Page Header */}
             <PageHeader title="Accounts & Net Worth" />
 
@@ -162,100 +162,103 @@ export function AccountsPage({
                 }
             />
 
-            {activeTab === "credit_cards" ? (
-                <CreditCardTrackerSection
-                    members={members}
-                    perspective={perspective}
-                    activeMemberId={activeMember?.id}
-                />
-            ) : (
-                <>
-                    {/* Action Buttons Row */}
-                    <div className="flex items-center justify-end gap-2">
-                        <Button
-                            variant="secondary"
-                            aria-label="Add Account"
-                            className="flex-1 sm:flex-initial"
-                            leftIcon={
-                                <Plus className="h-4 w-4" strokeWidth={2.5} />
-                            }
-                            onClick={() => setIsAddModalOpen(true)}
-                        >
-                            Add Account
-                        </Button>
-                        <Button
-                            variant="primary"
-                            aria-label="Update Balances"
-                            className="flex-1 sm:flex-initial"
-                            leftIcon={
-                                <CalendarCheck className="h-4 w-4" strokeWidth={2.5} />
-                            }
-                            onClick={() => {
-                                setSelectedAccount(null);
-                                setIsUpdateModalOpen(true);
-                            }}
-                        >
-                            Update Balances
-                        </Button>
-                    </div>
-                    {/* High-Level Metric Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                        {/* Card 1: Net Worth */}
-                        <StatCard
-                            title="Net Worth"
-                            value={formatSGD(trueNetWorth)}
-                            tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
-                            icon={<TrendingUp className="h-4 w-4 text-white" />}
-                            iconBg="bg-indigo-600"
-                            className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"
-                        />
-
-                        {/* Card 2: Total Assets */}
-                        <StatCard
-                            title="Total Assets"
-                            value={formatSGD(totalAssets)}
-                            subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
-                            icon={<Wallet className="h-4 w-4" />}
-                            iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                        />
-
-                        {/* Card 3: Total Liabilities / Loans */}
-                        <StatCard
-                            title="Total Liabilities / Loans"
-                            value={formatSGD(totalLiabilities)}
-                            subtitle={`${loans.length} active loan${loans.length === 1 ? "" : "s"}`}
-                            icon={<CreditCard className="h-4 w-4" />}
-                            iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                        />
-                    </div>
-
-                    {/* Loading Indicator */}
-                    {isLoading ? (
-                        <LoadingCard message="Loading account balances & net worth..." />
-                    ) : (
-                        <>
-                            {/* Net Worth Progression Area Chart */}
-                            <NetWorthChart accounts={accounts} loans={loans} />
-
-                            {/* Grouped Accounts Listing with Table / Card view */}
-                            <AccountGroupList
-                                accounts={accounts}
-                                onUpdateBalance={handleOpenUpdateModal}
-                                onQuickSaveBalance={handleInlineUpdateBalance}
-                                onEditAccount={(acc) => {
-                                    setAccountToEdit(acc);
-                                    setIsEditModalOpen(true);
+            {/* Embedded Sub-Tab Content */}
+            <div className="pt-1">
+                {activeTab === "credit_cards" ? (
+                    <CreditCardTrackerSection
+                        members={members}
+                        perspective={perspective}
+                        activeMemberId={activeMember?.id}
+                    />
+                ) : (
+                    <div className="space-y-5">
+                        {/* Action Buttons Row */}
+                        <div className="flex items-center justify-end gap-2">
+                            <Button
+                                variant="secondary"
+                                aria-label="Add Account"
+                                className="flex-1 sm:flex-initial"
+                                leftIcon={
+                                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                                }
+                                onClick={() => setIsAddModalOpen(true)}
+                            >
+                                Add Account
+                            </Button>
+                            <Button
+                                variant="primary"
+                                aria-label="Update Balances"
+                                className="flex-1 sm:flex-initial"
+                                leftIcon={
+                                    <CalendarCheck className="h-4 w-4" strokeWidth={2.5} />
+                                }
+                                onClick={() => {
+                                    setSelectedAccount(null);
+                                    setIsUpdateModalOpen(true);
                                 }}
-                                onDeleteAccount={(acc) => {
-                                    setAccountToDelete(acc);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                                onAddAccount={() => setIsAddModalOpen(true)}
+                            >
+                                Update Balances
+                            </Button>
+                        </div>
+                        {/* High-Level Metric Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                            {/* Card 1: Net Worth */}
+                            <StatCard
+                                title="Net Worth"
+                                value={formatSGD(trueNetWorth)}
+                                tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
+                                icon={<TrendingUp className="h-4 w-4 text-white" />}
+                                iconBg="bg-indigo-600"
+                                className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"
                             />
-                        </>
-                    )}
-                </>
-            )}
+
+                            {/* Card 2: Total Assets */}
+                            <StatCard
+                                title="Total Assets"
+                                value={formatSGD(totalAssets)}
+                                subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
+                                icon={<Wallet className="h-4 w-4" />}
+                                iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                            />
+
+                            {/* Card 3: Total Liabilities / Loans */}
+                            <StatCard
+                                title="Total Liabilities / Loans"
+                                value={formatSGD(totalLiabilities)}
+                                subtitle={`${loans.length} active loan${loans.length === 1 ? "" : "s"}`}
+                                icon={<CreditCard className="h-4 w-4" />}
+                                iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                            />
+                        </div>
+
+                        {/* Loading Indicator */}
+                        {isLoading ? (
+                            <LoadingCard message="Loading account balances & net worth..." />
+                        ) : (
+                            <>
+                                {/* Net Worth Progression Area Chart */}
+                                <NetWorthChart accounts={accounts} loans={loans} />
+
+                                {/* Grouped Accounts Listing with Table / Card view */}
+                                <AccountGroupList
+                                    accounts={accounts}
+                                    onUpdateBalance={handleOpenUpdateModal}
+                                    onQuickSaveBalance={handleInlineUpdateBalance}
+                                    onEditAccount={(acc) => {
+                                        setAccountToEdit(acc);
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    onDeleteAccount={(acc) => {
+                                        setAccountToDelete(acc);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                    onAddAccount={() => setIsAddModalOpen(true)}
+                                />
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Individual & Multi Account Balance Modal */}
             <UpdateBalanceModal

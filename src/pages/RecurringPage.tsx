@@ -198,7 +198,7 @@ export function RecurringPage({ className = '', embedded = false }: RecurringPag
   };
 
   return (
-    <div className={`space-y-6 pb-20 md:pb-12 ${className}`}>
+    <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
       {/* Page Title & Actions (Compact if embedded) */}
       {!embedded ? (
         <PageHeader

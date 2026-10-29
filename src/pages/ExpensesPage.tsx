@@ -281,7 +281,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
     (!filter.month || filter.month === getCurrentMonth());
 
   return (
-    <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
+    <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
       {/* Header Section */}
       {!embedded ? (
         <PageHeader

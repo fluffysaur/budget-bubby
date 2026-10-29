@@ -8,8 +8,22 @@
  */
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Sun, Moon, Plus, ChevronDown, Check, LogOut, AlertTriangle, Download, Bell, RotateCw } from "lucide-react";
-import { useHousehold, type PerspectiveType } from "../../context/HouseholdContext";
+import {
+    Sun,
+    Moon,
+    Plus,
+    ChevronDown,
+    Check,
+    LogOut,
+    AlertTriangle,
+    Download,
+    RotateCw,
+    Settings,
+} from "lucide-react";
+import {
+    useHousehold,
+    type PerspectiveType,
+} from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { mockMembers } from "../../data/mockSeedData";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
@@ -29,27 +43,38 @@ export interface AppHeaderProps {
 
 const MEMBER_COLOR_PALETTE = [
     {
-        activeBg: "bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+        activeBg:
+            "bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        activeBg: "bg-[#fcbffa] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+        activeBg:
+            "bg-[#fcbffa] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        activeBg: "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+        activeBg:
+            "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
-        activeBg: "bg-[#bbf7d0] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+        activeBg:
+            "bg-[#bbf7d0] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
 ];
 
-function getPerspectiveKeyForMember(displayName: string, id: string): PerspectiveType {
+function getPerspectiveKeyForMember(
+    displayName: string,
+    id: string,
+): PerspectiveType {
     const clean = displayName.toLowerCase().replace(/\s+/g, "");
     if (clean.includes("yijia")) return "yijia";
     if (clean.includes("rachel")) return "rachel";
     return id;
 }
 
-export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: AppHeaderProps) {
+export function AppHeader({
+    className = "",
+    onOpenQuickAdd,
+    onNavigateTab,
+}: AppHeaderProps) {
     const {
         perspective,
         setPerspective,
@@ -61,13 +86,20 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         refreshData,
     } = useHousehold();
     const { signOut, isAuthenticated } = useAuth();
-    const { canInstall, isInstalled, showIOSModal, setShowIOSModal, promptInstall } = usePWAInstall();
+    const {
+        canInstall,
+        isInstalled,
+        showIOSModal,
+        setShowIOSModal,
+        promptInstall,
+    } = usePWAInstall();
 
-    const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
+    const members =
+        ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-    const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +122,10 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
     // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
                 setIsDropdownOpen(false);
             }
         }
@@ -120,12 +155,14 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 key: "household" as PerspectiveType,
                 memberId: null as string | null,
                 label: "Combined",
-                activeBg: "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+                activeBg:
+                    "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
             },
         ];
 
         members.forEach((m, idx) => {
-            const palette = MEMBER_COLOR_PALETTE[idx % MEMBER_COLOR_PALETTE.length];
+            const palette =
+                MEMBER_COLOR_PALETTE[idx % MEMBER_COLOR_PALETTE.length];
             list.push({
                 key: getPerspectiveKeyForMember(m.display_name, m.id),
                 memberId: m.id,
@@ -141,7 +178,9 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
         if (perspective === "household") return perspectiveOptions[0];
         return (
             perspectiveOptions.find(
-                (opt) => opt.key === perspective || (activeMember && opt.memberId === activeMember.id),
+                (opt) =>
+                    opt.key === perspective ||
+                    (activeMember && opt.memberId === activeMember.id),
             ) || perspectiveOptions[0]
         );
     }, [perspective, activeMember, perspectiveOptions]);
@@ -162,10 +201,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                         <BubbyIcon className="h-7 w-7" />
                     </div>
                     {/* Mobile Perspective Dropdown */}
-                    <div
-                        className="relative sm:hidden"
-                        ref={dropdownRef}
-                    >
+                    <div className="relative sm:hidden" ref={dropdownRef}>
                         <button
                             type="button"
                             onClick={() => setIsDropdownOpen((prev) => !prev)}
@@ -193,21 +229,26 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                     Perspectives
                                 </div>
                                 {perspectiveOptions.map((opt) => {
-                                    const isSelected = currentOption.key === opt.key;
+                                    const isSelected =
+                                        currentOption.key === opt.key;
                                     return (
                                         <button
                                             key={opt.key}
                                             type="button"
                                             role="option"
                                             aria-selected={isSelected}
-                                            onClick={() => handleSelectPerspective(opt.key)}
+                                            onClick={() =>
+                                                handleSelectPerspective(opt.key)
+                                            }
                                             className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors cursor-pointer ${
                                                 isSelected
                                                     ? opt.activeBg
                                                     : "text-(--text-ink) hover:bg-(--bg-cream)"
                                             }`}
                                         >
-                                            <span className="truncate">{opt.label}</span>
+                                            <span className="truncate">
+                                                {opt.label}
+                                            </span>
                                             {isSelected && (
                                                 <Check className="h-3.5 w-3.5 shrink-0 stroke-3" />
                                             )}
@@ -218,18 +259,45 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                 {/* Mobile Settings & Utilities section */}
                                 <div className="mt-2 pt-2 border-t-[1.5px] border-(--border-subtle) space-y-1">
                                     <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
-                                        Settings
+                                        Settings &amp; Tools
                                     </div>
                                     <button
                                         type="button"
+                                        data-testid="mobile-settings-btn"
                                         onClick={() => {
                                             setIsDropdownOpen(false);
-                                            setIsNotificationSettingsOpen(true);
+                                            setIsSettingsOpen(true);
                                         }}
                                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                                     >
-                                        <Bell className="h-4 w-4 stroke-[2.2] text-[#1a1a1a] dark:text-[#dfc2ff]" />
-                                        <span>Notification Settings</span>
+                                        <Settings className="h-4 w-4 stroke-[2.2] text-[#1a1a1a] dark:text-[#dfc2ff]" />
+                                        <span>Settings</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        data-testid="mobile-refresh-btn"
+                                        onClick={() => {
+                                            setIsDropdownOpen(false);
+                                            handleManualRefresh();
+                                        }}
+                                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <RotateCw
+                                                className={`h-4 w-4 stroke-[2.2] ${
+                                                    isRefreshing
+                                                        ? "animate-spin text-[#7e22ce] dark:text-[#dfc2ff]"
+                                                        : "text-[#1a1a1a] dark:text-[#dfc2ff]"
+                                                }`}
+                                            />
+                                            <span>Refresh</span>
+                                        </div>
+                                        {isRefreshing && (
+                                            <span className="text-[10px] text-(--text-muted) animate-pulse font-mono-num">
+                                                Refreshing...
+                                            </span>
+                                        )}
                                     </button>
 
                                     <button
@@ -246,7 +314,11 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                             ) : (
                                                 <Moon className="h-4 w-4 text-[#1a1a1a]" />
                                             )}
-                                            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                                            <span>
+                                                {theme === "dark"
+                                                    ? "Light Mode"
+                                                    : "Dark Mode"}
+                                            </span>
                                         </div>
                                     </button>
 
@@ -274,7 +346,7 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#9a1b1b] dark:text-rose-400 hover:bg-[#fff1ee] dark:hover:bg-[#3d1c1a] transition-colors cursor-pointer"
                                         >
                                             <LogOut className="h-4 w-4 stroke-[2.5]" />
-                                            <span>Lock / Sign Out</span>
+                                            <span>Sign Out</span>
                                         </button>
                                     )}
                                 </div>
@@ -293,9 +365,15 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                 <button
                                     key={opt.key}
                                     type="button"
-                                    onClick={() => handleSelectPerspective(opt.key)}
+                                    onClick={() =>
+                                        handleSelectPerspective(opt.key)
+                                    }
                                     aria-pressed={isSelected}
-                                    aria-label={opt.label === "Combined" ? "Combined Household" : opt.label}
+                                    aria-label={
+                                        opt.label === "Combined"
+                                            ? "Combined Household"
+                                            : opt.label
+                                    }
                                     className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all sm:text-xs cursor-pointer ${
                                         isSelected
                                             ? opt.activeBg
@@ -303,7 +381,11 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                     }`}
                                 >
                                     <span>{opt.label}</span>
-                                    {opt.label === "Combined" && <span className="sr-only">Household</span>}
+                                    {opt.label === "Combined" && (
+                                        <span className="sr-only">
+                                            Household
+                                        </span>
+                                    )}
                                 </button>
                             );
                         })}
@@ -321,7 +403,9 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                                 onClick={onOpenQuickAdd}
                                 aria-label="Quick Add"
                                 className="hidden md:inline-flex"
-                                leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+                                leftIcon={
+                                    <Plus className="h-4 w-4 stroke-[2.5]" />
+                                }
                             >
                                 Add Expense
                             </Button>
@@ -341,19 +425,16 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     )}
 
                     {/* Notification Center Popover */}
-                    <NotificationCenterPopover
-                        onNavigateTab={onNavigateTab}
-                        onOpenSettings={() => setIsNotificationSettingsOpen(true)}
-                    />
+                    <NotificationCenterPopover onNavigateTab={onNavigateTab} />
 
-                    {/* Manual Refresh Button */}
+                    {/* Manual Refresh Button (Desktop only; Mobile uses swipe-down to refresh or dropdown menu) */}
                     <button
                         type="button"
                         onClick={handleManualRefresh}
                         disabled={isRefreshing}
-                        aria-label="Refresh data"
+                        aria-label="Refresh"
                         title="Refresh data from database"
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
+                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
                     >
                         <RotateCw
                             className={`h-4 w-4 ${isRefreshing ? "animate-spin text-[#7e22ce] dark:text-[#dfc2ff]" : ""}`}
@@ -365,6 +446,17 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     {canInstall && !isInstalled && (
                         <PWAInstallButton className="hidden sm:flex" />
                     )}
+
+                    {/* Settings Button (Desktop) */}
+                    <button
+                        type="button"
+                        onClick={() => setIsSettingsOpen(true)}
+                        aria-label="Settings"
+                        title="Settings"
+                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                    >
+                        <Settings className="h-4 w-4 stroke-[2.2]" />
+                    </button>
 
                     {/* Theme Toggle Button (Desktop) */}
                     <button
@@ -405,7 +497,9 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                     <ModalHeader
                         title="Lock & Sign Out?"
                         subtitle="You will need your 6-digit PIN to unlock again."
-                        icon={<AlertTriangle className="h-5 w-5 stroke-[2.5] text-rose-700" />}
+                        icon={
+                            <AlertTriangle className="h-5 w-5 stroke-[2.5] text-rose-700" />
+                        }
                         iconBgColor="bg-rose-100"
                         onClose={() => setIsLogoutConfirmOpen(false)}
                     />
@@ -437,10 +531,10 @@ export function AppHeader({ className = "", onOpenQuickAdd, onNavigateTab }: App
                 onClose={() => setShowIOSModal(false)}
             />
 
-            {/* Notification Preferences & Thresholds Modal */}
+            {/* Notification & App Settings Modal */}
             <NotificationSettingsModal
-                isOpen={isNotificationSettingsOpen}
-                onClose={() => setIsNotificationSettingsOpen(false)}
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
             />
         </header>
     );

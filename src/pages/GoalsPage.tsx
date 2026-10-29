@@ -185,7 +185,7 @@ export function GoalsPage({
     };
 
     return (
-        <div className={`space-y-6 ${className}`}>
+        <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
             {/* Page Header (Compact if embedded) */}
             {!embedded ? (
                 <PageHeader
