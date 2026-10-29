@@ -294,32 +294,38 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         <PageHeader
           title="Monthly Budget"
           actions={
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-              <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex-1 sm:flex-initial">
+                <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+              </div>
 
               <Button
                 variant="secondary"
                 leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
                 onClick={() => handleOpenEditor()}
-                className="w-full sm:w-auto justify-center"
+                className="shrink-0 justify-center"
               >
-                Edit Budget
+                <span className="hidden sm:inline">Edit Budget</span>
+                <span className="sm:hidden">Edit</span>
               </Button>
             </div>
           }
         />
       ) : (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 sm:flex-initial">
+            <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
+          </div>
 
           <Button
             variant="secondary"
             size="sm"
             leftIcon={<Settings className="h-3.5 w-3.5 stroke-[2.2] text-slate-500" />}
             onClick={() => handleOpenEditor()}
-            className="w-full sm:w-auto justify-center"
+            className="shrink-0 justify-center"
           >
-            Edit Budget
+            <span className="hidden sm:inline">Edit Budget</span>
+            <span className="sm:hidden">Edit</span>
           </Button>
         </div>
       )}
@@ -327,12 +333,12 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
       {/* Category Limit Warning Banner (Guardrails) */}
       <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />
 
-      {/* High-Level Financial Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* High-Level Financial Metric Cards (2x2 on mobile, 4-col on desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Gross Salary */}
         <StatCard
-          title="Gross Pay"
-          value={formatSGD(totalGross)}
+          title="Gross"
+          value={formatSGD(totalGross, { showCents: false })}
           tooltip="Base salary plus any monthly bonus before deductions."
           icon={<DollarSign className="h-4 w-4" />}
           iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
@@ -341,7 +347,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 2: Total Deductions */}
         <StatCard
           title="Deductions"
-          value={<span className="text-rose-600 dark:text-rose-400">-{formatSGD(totalDeductions)}</span>}
+          value={<span className="text-rose-600 dark:text-rose-400">-{formatSGD(totalDeductions, { showCents: false })}</span>}
           tooltip="Employee CPF contribution (20%) + amortized monthly Taxes & Insurance."
           icon={<TrendingDown className="h-4 w-4" />}
           iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
@@ -349,18 +355,17 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
         {/* Card 3: Disposable Pool */}
         <StatCard
-          title="Disposable Pool"
-          value={<span className="text-emerald-900 dark:text-emerald-100">{formatSGD(disposablePool)}</span>}
+          title="Take-Home"
+          value={formatSGD(disposablePool, { showCents: false })}
           tooltip="Net take-home pay after CPF, taxes, and insurance available for category allocations."
-          icon={<Wallet className="h-4 w-4 text-white" />}
-          iconBg="bg-emerald-600"
-          className="border-2 border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-950/20"
+          icon={<Wallet className="h-4 w-4" />}
+          iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
         />
 
         {/* Card 4: Actual Spent & Remaining */}
         <StatCard
           title="Spent"
-          value={formatSGD(totalSpent)}
+          value={formatSGD(totalSpent, { showCents: false })}
           subtitle={
             <span
               className={`font-bold ${
@@ -370,7 +375,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
               }`}
             >
               {totalRemaining < 0 ? 'Over ' : 'Left '}
-              {formatSGD(Math.abs(totalRemaining))}
+              {formatSGD(Math.abs(totalRemaining), { showCents: false })}
             </span>
           }
           icon={<Receipt className="h-4 w-4" />}
@@ -439,9 +444,9 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
           {allocationCats.length > 0 && (
             <CollapsibleSection
-              title="Wealth & Fixed Allocations"
-              badge={`${formatSGD(allocationCats.reduce((s, c) => s + c.allocated_amount, 0))}/mo`}
-              icon={<PiggyBank className="h-4 w-4" />}
+              title="Investments & Savings"
+              subtitle={`${formatSGD(allocationCats.reduce((s, c) => s + c.allocated_amount, 0), { showCents: false })}/mo allocated`}
+              icon={<PiggyBank className="h-5 w-5 text-purple-700 dark:text-purple-300" />}
               defaultOpen={false}
             >
               <CategoryProgressList categories={allocationCats} compact />
@@ -450,9 +455,9 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
           {/* Collapsible: Budget Waterfall Breakdown */}
           <CollapsibleSection
-            title="Monthly CPF & Take-Home Flow"
-            badge={perspectiveDisplayName}
-            icon={<DollarSign className="h-4 w-4" />}
+            title="Salary & CPF Flow"
+            subtitle="Take-home pay & CPF breakdown"
+            icon={<DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />}
             defaultOpen={true}
           >
             <BudgetWaterfall

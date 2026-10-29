@@ -7,22 +7,23 @@
  */
 
 /**
- * Formats a number as Singapore Dollars (S$X,XXX.XX).
+ * Formats a number as Singapore Dollars (S$X,XXX.XX or S$X,XXX).
  * Negative values are formatted with a preceding minus sign: -S$XX.XX.
  */
-export function formatSGD(amount: number): string {
+export function formatSGD(amount: number, options?: { showCents?: boolean }): string {
   if (isNaN(amount) || !isFinite(amount)) {
-    return 'S$0.00';
+    return options?.showCents === false ? 'S$0' : 'S$0.00';
   }
 
-  // Round to 2 decimal places to avoid -0.00 or floating point artifacts
-  const rounded = Math.round(amount * 100) / 100;
+  const showCents = options?.showCents ?? true;
+  // Round according to decimal precision to avoid -0.00 or floating point artifacts
+  const rounded = Math.round(amount * (showCents ? 100 : 1)) / (showCents ? 100 : 1);
   const isNegative = rounded < 0;
   const absAmount = Math.abs(rounded);
 
   const formattedAbs = absAmount.toLocaleString('en-SG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: showCents ? 2 : 0,
+    maximumFractionDigits: showCents ? 2 : 0,
   });
 
   return `${isNegative ? '-' : ''}S$${formattedAbs}`;

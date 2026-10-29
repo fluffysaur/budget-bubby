@@ -40,6 +40,6 @@ describe('PlanPage Component', () => {
     fireEvent.click(bonusTab);
 
     expect(bonusTab).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText(/Bonus Allocation Calculator/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bonus Allocator/i)).toBeInTheDocument();
   });
 });

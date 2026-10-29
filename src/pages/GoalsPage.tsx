@@ -332,7 +332,7 @@ export function GoalsPage({
             )}
 
             {/* 4 Summary Metric Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Card 1: Total Target */}
                 <StatCard
                     title="Total Target"

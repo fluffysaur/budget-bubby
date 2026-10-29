@@ -34,17 +34,16 @@ export function BonusAllocationCollapsible({
 
   return (
     <CollapsibleSection
-      title="Bonus Allocation Calculator"
-      subtitle="Split AWS / performance bonuses after 20% CPF into Tithing, Goals, Savings, Investments & Lifestyle"
-      badge={`Net ${formatSGD(result.afterCpf)}`}
-      icon={<Sparkles className="h-4 w-4" />}
+      title="Bonus Allocator"
+      subtitle={`Net ${formatSGD(result.afterCpf, { showCents: false })} · AWS & bonus split`}
+      icon={<Sparkles className="h-5 w-5 text-amber-500" />}
       defaultOpen={defaultOpen}
       className={className}
     >
       <div className="space-y-4">
         {/* Top Row: Gross Bonus Input -> CPF -> After CPF */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm">
+          <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm">
             <label
               htmlFor="bonus-gross-input"
               className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
@@ -58,11 +57,11 @@ export function BonusAllocationCollapsible({
               min="0"
               value={grossInput}
               onChange={(e) => setGrossInput(e.target.value)}
-              className="w-full rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) px-3 py-1.5 font-mono-num text-base font-black text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+              className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-card) px-3 py-1.5 font-mono-num text-base font-black text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
             />
           </div>
 
-          <div className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm flex flex-col justify-center">
+          <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm flex flex-col justify-center">
             <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
               Employee CPF ({Math.round(cpfRate * 100)}%)
             </span>
@@ -71,7 +70,7 @@ export function BonusAllocationCollapsible({
             </span>
           </div>
 
-          <div className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-cute-sm flex flex-col justify-center">
+          <div className="rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-cute-sm flex flex-col justify-center">
             <span className="text-[11px] font-black uppercase tracking-wider text-(--text-ink)">
               After CPF Take-Home Bonus
             </span>
@@ -86,7 +85,7 @@ export function BonusAllocationCollapsible({
           {result.allocations.map((bucket) => (
             <div
               key={bucket.name}
-              className="rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-3 flex flex-col justify-between shadow-cute-sm"
+              className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 flex flex-col justify-between shadow-cute-sm"
             >
               <div className="flex items-center justify-between gap-1">
                 <span className="text-xs font-bold text-(--text-ink)">

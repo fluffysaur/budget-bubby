@@ -26,6 +26,14 @@ describe('currency utilities', () => {
       expect(formatSGD(0.004)).toBe('S$0.00');
       expect(formatSGD(-0)).toBe('S$0.00');
     });
+
+    it('formats without cents when showCents is false', () => {
+      expect(formatSGD(1234.5, { showCents: false })).toBe('S$1,235');
+      expect(formatSGD(5000, { showCents: false })).toBe('S$5,000');
+      expect(formatSGD(0, { showCents: false })).toBe('S$0');
+      expect(formatSGD(-50, { showCents: false })).toBe('-S$50');
+      expect(formatSGD(-1234.56, { showCents: false })).toBe('-S$1,235');
+    });
   });
 
   describe('parseSGD', () => {

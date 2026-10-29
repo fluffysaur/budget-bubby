@@ -58,5 +58,32 @@ describe("TooltipPopover Component", () => {
 
         expect(screen.getByText("Custom Trigger")).toBeInTheDocument();
     });
+
+    it("supports renderTrigger and triggerOnClick={false}", () => {
+        render(
+            <TooltipPopover
+                title="Category Lock"
+                triggerOnClick={false}
+                renderTrigger={(triggerProps) => (
+                    <button
+                        {...triggerProps}
+                        type="button"
+                        data-testid="lock-button"
+                    >
+                        Lock
+                    </button>
+                )}
+            >
+                Locked categories keep their exact amount when you click Auto-Balance.
+            </TooltipPopover>,
+        );
+
+        const lockBtn = screen.getByTestId("lock-button");
+        expect(lockBtn).toBeInTheDocument();
+
+        // Clicking when triggerOnClick is false does not open the popover
+        fireEvent.click(lockBtn);
+        expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    });
 });
 

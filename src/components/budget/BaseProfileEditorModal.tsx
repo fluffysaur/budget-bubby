@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { financeService } from "../../services/financeService";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { TooltipPopover } from "../ui/TooltipPopover";
 import { mockCategories } from "../../data/mockSeedData";
 import {
     calculateCPFAndNetPay,
@@ -856,6 +857,12 @@ export function BaseProfileEditorModal({
                                         <Scale className="h-3.5 w-3.5" />
                                         <span>Auto-Balance to 100%</span>
                                     </button>
+                                    <TooltipPopover
+                                        title="Category Lock"
+                                        ariaLabel="Category lock explanation"
+                                    >
+                                        Locked categories keep their exact amount when you click Auto-Balance.
+                                    </TooltipPopover>
                                 </div>
                             </div>
 
@@ -1014,7 +1021,7 @@ export function BaseProfileEditorModal({
                                                             title={isLocked ? `Unlock ${cat.name}` : `Lock ${cat.name}`}
                                                             aria-label={isLocked ? "Unlock category" : "Lock category"}
                                                             data-testid={`lock-${cat.id}`}
-                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer shrink-0 ${
                                                                 isLocked
                                                                     ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
                                                                     : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"
@@ -1038,9 +1045,22 @@ export function BaseProfileEditorModal({
                                                             {cat.name}
                                                         </label>
                                                         {isLocked && (
-                                                            <span className="text-[10px] font-bold text-(--text-ink) bg-(--pastel-butter) px-2 py-0.5 rounded-full border border-(--border-ink)">
-                                                                Locked
-                                                            </span>
+                                                            <TooltipPopover
+                                                                title="Category Lock"
+                                                                align="left"
+                                                                ariaLabel="Category is locked"
+                                                                renderTrigger={(triggerProps) => (
+                                                                    <button
+                                                                        {...triggerProps}
+                                                                        type="button"
+                                                                        className="text-[10px] font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-cute-sm cursor-pointer transition-colors"
+                                                                    >
+                                                                        Locked
+                                                                    </button>
+                                                                )}
+                                                            >
+                                                                Locked categories keep their exact amount when you click Auto-Balance.
+                                                            </TooltipPopover>
                                                         )}
 
                                                         {/* Inline Edit / Delete Category Actions */}

@@ -207,9 +207,8 @@ export function AccountsPage({
                                 title="Net Worth"
                                 value={formatSGD(trueNetWorth)}
                                 tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
-                                icon={<TrendingUp className="h-4 w-4 text-white" />}
-                                iconBg="bg-indigo-600"
-                                className="border-2 border-indigo-500/40 bg-indigo-50/20 dark:bg-indigo-950/20"
+                                icon={<TrendingUp className="h-4 w-4" />}
+                                iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                             />
 
                             {/* Card 2: Total Assets */}

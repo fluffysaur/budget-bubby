@@ -43,15 +43,16 @@ export function StatCard({
             <Component
                 type={onClick ? "button" : undefined}
                 onClick={onClick}
-                className={`w-full p-4 sm:p-5 text-left block ${onClick ? "cursor-pointer" : ""}`}
+                className={`w-full p-3 sm:p-5 text-left block ${onClick ? "cursor-pointer" : ""}`}
             >
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted) line-clamp-2 wrap-break-word">
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+                        <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted) truncate sm:line-clamp-2">
                             {title}
                         </span>
                         {tooltip && (
                             <TooltipPopover
+                                className="shrink-0"
                                 title={
                                     tooltipTitle ||
                                     (typeof title === "string"
@@ -67,22 +68,22 @@ export function StatCard({
                     </div>
                     {icon && (
                         <div
-                            className={`p-2 rounded-xl border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${iconBg}`}
+                            className={`p-1.5 sm:p-2 rounded-xl border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${iconBg}`}
                         >
                             {icon}
                         </div>
                     )}
                 </div>
 
-                <div className="mt-2.5 flex items-baseline justify-between gap-2 flex-wrap min-w-0">
-                    <div className="text-lg sm:text-xl xl:text-2xl font-black text-(--text-ink) tracking-tight font-mono-num">
+                <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between gap-1 sm:gap-2 flex-wrap min-w-0">
+                    <div className="text-base sm:text-xl xl:text-2xl font-black text-(--text-ink) tracking-tight font-mono-num">
                         {value}
                     </div>
                     {badge && <div className="shrink-0">{badge}</div>}
                 </div>
 
                 {subtitle && (
-                    <div className="mt-1.5 text-xs font-medium text-(--text-muted) line-clamp-2 wrap-break-word">
+                    <div className="mt-1 text-[11px] sm:text-xs font-medium text-(--text-muted) truncate sm:line-clamp-2">
                         {subtitle}
                     </div>
                 )}

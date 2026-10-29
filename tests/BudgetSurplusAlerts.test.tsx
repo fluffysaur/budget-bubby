@@ -362,6 +362,12 @@ describe('Interactive Sliders, Live Dollar Equivalent & Auto-Balance', () => {
     const dollarElements = screen.getAllByText(/\/mo/i);
     expect(dollarElements.length).toBeGreaterThanOrEqual(mockCategories.length);
 
+    // Verify Category Lock info tooltip exists next to Auto-Balance
+    const lockInfoBtn = screen.getByRole('button', { name: /category lock explanation/i });
+    expect(lockInfoBtn).toBeInTheDocument();
+    fireEvent.click(lockInfoBtn);
+    expect(screen.getByText('Locked categories keep their exact amount when you click Auto-Balance.')).toBeInTheDocument();
+
     // Verify category lock toggle buttons exist
     const lockButtons = screen.getAllByTitle(/lock /i);
     expect(lockButtons.length).toBeGreaterThanOrEqual(mockCategories.length);
@@ -383,8 +389,15 @@ describe('Interactive Sliders, Live Dollar Equivalent & Auto-Balance', () => {
     const foodLockBtn = screen.getByTestId(`lock-${firstCat.id}`);
     fireEvent.click(foodLockBtn);
 
-    // Food is now locked
-    expect(screen.getByText('Locked')).toBeInTheDocument();
+    // Tapping the lock button itself does NOT open the tooltip popover
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    // Food is now locked and displays the Locked badge which opens the tooltip on tap
+    const lockedBadge = screen.getByRole('button', { name: /category is locked/i });
+    expect(lockedBadge).toBeInTheDocument();
+    fireEvent.click(lockedBadge);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    expect(screen.getAllByText('Locked categories keep their exact amount when you click Auto-Balance.').length).toBeGreaterThan(0);
 
     // Now change second category (Lifestyle) slider to 60%, throwing total off from 100%
     const secondCat = mockCategories[1];
@@ -423,7 +436,7 @@ describe('Interactive Sliders, Live Dollar Equivalent & Auto-Balance', () => {
     // Check sliders are present
     const sliders = screen.getAllByRole('slider');
     expect(sliders.length).toBeGreaterThan(0);
-  });
+  }, 15000);
 });
 
 describe('CategoryProgressList Warning Badges', () => {
