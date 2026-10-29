@@ -15,6 +15,7 @@ import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
+import { haptics } from "../../lib/haptics";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import type { Expense, Category, HouseholdMember } from "../../types/finance";
 
@@ -52,6 +53,7 @@ export function DeleteExpenseModal({
         try {
             setIsDeleting(true);
             setErrorMessage(null);
+            haptics.destructive();
             onDeleted?.(expense.id);
             await financeService.deleteExpense(expense.id);
             onClose();

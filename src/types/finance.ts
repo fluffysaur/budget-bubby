@@ -559,6 +559,7 @@ export interface NotificationPreferences {
     // Master channels
     push_enabled: boolean;
     sound_enabled: boolean;
+    haptics_enabled: boolean;
     // Category toggles
     cc_payment_due: boolean;
     cc_missing_statement: boolean;

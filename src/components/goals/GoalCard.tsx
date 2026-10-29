@@ -38,6 +38,7 @@ export interface GoalCardProps {
     onEdit?: (goal: SavingsGoal) => void;
     onQuickDeposit?: (goal: SavingsGoal) => void;
     onSpendFromGoal?: (goal: SavingsGoal) => void;
+    isHighlighted?: boolean;
     className?: string;
 }
 
@@ -47,6 +48,7 @@ export function GoalCard({
     onEdit,
     onQuickDeposit,
     onSpendFromGoal,
+    isHighlighted = false,
     className = "",
 }: GoalCardProps) {
     const [showExpenses, setShowExpenses] = useState<boolean>(true);
@@ -108,9 +110,17 @@ export function GoalCard({
 
     return (
         <div
+            id={`goal-card-${goal.id}`}
             data-testid={`goal-card-${goal.id}`}
             className={`relative flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-(--shadow-cute) transition-all ${className}`}
         >
+            {isHighlighted && (
+                <div
+                    data-testid="goal-card-highlight-ring"
+                    className="pointer-events-none absolute -inset-1 rounded-2xl ring-4 ring-amber-400 dark:ring-amber-300 animate-pulse transition-opacity duration-500 z-10"
+                    aria-hidden="true"
+                />
+            )}
             <div>
                 {/* Header: Emoji, Title, Status Badge */}
                 <div className="flex items-start justify-between gap-2.5">

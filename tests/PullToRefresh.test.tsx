@@ -73,4 +73,79 @@ describe("PullToRefresh Component", () => {
 
         expect(onRefresh).not.toHaveBeenCalled();
     });
+
+    it("applies overscroll-y-contain to prevent browser overscroll chaining", () => {
+        const { container } = render(
+            <PullToRefresh onRefresh={async () => {}}>
+                <div>Content</div>
+            </PullToRefresh>,
+        );
+
+        const scrollContainer = container.querySelector("main") || container.firstChild;
+        expect(scrollContainer).toHaveClass("overscroll-y-contain");
+    });
+
+    it("ignores gestures that are primarily horizontal (swiping carousels or tabs)", async () => {
+        const onRefresh = vi.fn().mockResolvedValue(undefined);
+        const { container } = render(
+            <PullToRefresh onRefresh={onRefresh} threshold={50}>
+                <div>Horizontal Swipe Area</div>
+            </PullToRefresh>,
+        );
+
+        const scrollContainer = container.querySelector("main") || container.firstChild;
+
+        // Touch start
+        fireEvent.touchStart(scrollContainer!, {
+            touches: [{ clientX: 50, clientY: 100 }],
+        });
+
+        // Swipe primarily sideways (diffX = 120, diffY = 20)
+        fireEvent.touchMove(scrollContainer!, {
+            touches: [{ clientX: 170, clientY: 120 }],
+        });
+
+        // Should not show indicator
+        expect(screen.queryByText("Pull down to refresh")).not.toBeInTheDocument();
+        expect(screen.queryByText("Release to refresh")).not.toBeInTheDocument();
+
+        await act(async () => {
+            fireEvent.touchEnd(scrollContainer!);
+        });
+
+        expect(onRefresh).not.toHaveBeenCalled();
+    });
+
+    it("prevents browser default scroll behavior on cancelable vertical pull-down", () => {
+        const onRefresh = vi.fn().mockResolvedValue(undefined);
+        const { container } = render(
+            <PullToRefresh onRefresh={onRefresh} threshold={50}>
+                <div>Pull Area</div>
+            </PullToRefresh>,
+        );
+
+        const scrollContainer = container.querySelector("main") || container.firstChild;
+
+        fireEvent.touchStart(scrollContainer!, {
+            touches: [{ clientX: 50, clientY: 100 }],
+        });
+
+        const touchMoveEvent = new TouchEvent("touchmove", {
+            cancelable: true,
+            bubbles: true,
+            touches: [
+                {
+                    clientX: 50,
+                    clientY: 180,
+                } as unknown as Touch,
+            ],
+        });
+
+        const preventDefaultSpy = vi.spyOn(touchMoveEvent, "preventDefault");
+        act(() => {
+            scrollContainer!.dispatchEvent(touchMoveEvent);
+        });
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+    });
 });

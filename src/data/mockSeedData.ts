@@ -1232,6 +1232,7 @@ export function getDefaultNotificationPreferences(
     member_id: memberId,
     push_enabled: true,
     sound_enabled: true,
+    haptics_enabled: true,
     cc_payment_due: true,
     cc_missing_statement: true,
     streak_and_logging: true,

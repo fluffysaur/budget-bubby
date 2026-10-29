@@ -14,6 +14,7 @@ import { Coins, AlertCircle } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
+import { haptics } from "../../lib/haptics";
 import type { SavingsGoal } from "../../types/finance";
 
 export interface QuickDepositModalProps {
@@ -72,6 +73,7 @@ export function QuickDepositModal({
             const updated = await financeService.updateGoal(goal.id, {
                 saved_so_far: Math.round(newSavedSoFar * 100) / 100,
             });
+            haptics.goalMilestone();
             onDepositSaved?.(updated);
             onClose();
         } catch (err: unknown) {

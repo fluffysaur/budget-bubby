@@ -8,6 +8,7 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { GoalCard } from '../src/components/goals/GoalCard';
 import { AddEditGoalModal } from '../src/components/goals/AddEditGoalModal';
@@ -337,9 +338,11 @@ describe('GoalsPage Integration', () => {
 
   it('loads goals and renders 4 summary metric cards', async () => {
     render(
-      <HouseholdProvider>
-        <GoalsPage />
-      </HouseholdProvider>
+      <MemoryRouter>
+        <HouseholdProvider>
+          <GoalsPage />
+        </HouseholdProvider>
+      </MemoryRouter>
     );
 
     // Wait for data load
@@ -362,9 +365,11 @@ describe('GoalsPage Integration', () => {
 
   it('filters goals using All Goals, In Progress, and Achieved tabs', async () => {
     render(
-      <HouseholdProvider>
-        <GoalsPage />
-      </HouseholdProvider>
+      <MemoryRouter>
+        <HouseholdProvider>
+          <GoalsPage />
+        </HouseholdProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -412,9 +417,11 @@ describe('GoalsPage Integration', () => {
     const getGoalsSpy = vi.spyOn(financeService, 'getGoals');
 
     render(
-      <HouseholdProvider>
-        <GoalsPage />
-      </HouseholdProvider>
+      <MemoryRouter>
+        <HouseholdProvider>
+          <GoalsPage />
+        </HouseholdProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -450,9 +457,11 @@ describe('GoalsPage Integration', () => {
     const getGoalsSpy = vi.spyOn(financeService, 'getGoals');
 
     render(
-      <HouseholdProvider>
-        <GoalsPage />
-      </HouseholdProvider>
+      <MemoryRouter>
+        <HouseholdProvider>
+          <GoalsPage />
+        </HouseholdProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -490,9 +499,11 @@ describe('GoalsPage Integration', () => {
     vi.spyOn(financeService, 'getGoals').mockResolvedValueOnce([]);
 
     render(
-      <HouseholdProvider>
-        <GoalsPage />
-      </HouseholdProvider>
+      <MemoryRouter>
+        <HouseholdProvider>
+          <GoalsPage />
+        </HouseholdProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {

@@ -16,6 +16,7 @@ import { AlertCircle, AlertTriangle, X, ShieldAlert, ArrowUpRight } from 'lucide
 import { formatSGD } from '../../lib/currency';
 import { isSpendableCategory } from '../../lib/financialFormulas';
 import { playBudgetWarningSound, playBudgetExceededSound } from '../../lib/soundEffects';
+import { haptics } from '../../lib/haptics';
 import { useOptionalHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
 import { getDefaultNotificationPreferences } from '../../data/mockSeedData';
@@ -110,8 +111,9 @@ export function CategoryLimitWarningBanner({
       if (newPct >= 100 && prevPct < 100) {
         try {
           playBudgetExceededSound();
+          haptics.alert();
         } catch (err) {
-          console.debug('Error triggering exceeded sound:', err);
+          console.debug('Error triggering exceeded sound/haptic:', err);
         }
         if (currentPrefs.budget_limit_alerts) {
           const overAmount = Math.max(0, newSpent - allocated);
@@ -125,8 +127,9 @@ export function CategoryLimitWarningBanner({
       } else if (newPct >= warningThreshold && prevPct < warningThreshold) {
         try {
           playBudgetWarningSound();
+          haptics.warning();
         } catch (err) {
-          console.debug('Error triggering warning sound:', err);
+          console.debug('Error triggering warning sound/haptic:', err);
         }
         if (currentPrefs.budget_limit_alerts) {
           const leftAmount = Math.max(0, allocated - newSpent);

@@ -133,11 +133,13 @@ describe("PIN Authentication & Access Control", () => {
 
     it("Lock/Sign Out button renders in AppHeader and triggers signOut via modal portal", async () => {
         render(
-            <AuthProvider initialAuthenticated={true}>
-                <HouseholdProvider>
-                    <AppHeader />
-                </HouseholdProvider>
-            </AuthProvider>,
+            <MemoryRouter>
+                <AuthProvider initialAuthenticated={true}>
+                    <HouseholdProvider>
+                        <AppHeader />
+                    </HouseholdProvider>
+                </AuthProvider>
+            </MemoryRouter>,
         );
 
         const lockBtn = screen.getByRole("button", { name: /lock budget bubby/i });

@@ -4,8 +4,9 @@
  * Shows a tactile neo-brutalist pill indicator and triggers onRefresh when pulled past threshold.
  */
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { RotateCw, ArrowDown } from "lucide-react";
+import { haptics } from "../../lib/haptics";
 
 export interface PullToRefreshProps {
     onRefresh: () => Promise<void>;
@@ -33,107 +34,171 @@ export function PullToRefresh({
 
     const containerRef = useRef<HTMLDivElement>(null);
     const touchStartY = useRef<number | null>(null);
+    const touchStartX = useRef<number | null>(null);
     const isReadyRef = useRef<boolean>(false);
+    const isPullingRef = useRef<boolean>(false);
+    const pullDistanceRef = useRef<number>(0);
+    const isRefreshingRef = useRef<boolean>(false);
 
-    // Clean up if unmounted while pulling
+    // Keep latest props in refs to avoid re-binding native DOM touch listeners
+    const onRefreshRef = useRef(onRefresh);
     useEffect(() => {
-        return () => {
-            touchStartY.current = null;
-        };
-    }, []);
+        onRefreshRef.current = onRefresh;
+    }, [onRefresh]);
 
-    const handleTouchStart = useCallback(
-        (e: React.TouchEvent) => {
-            if (disabled || isRefreshing) return;
+    const disabledRef = useRef(disabled);
+    useEffect(() => {
+        disabledRef.current = disabled;
+    }, [disabled]);
 
-            const target = containerRef.current;
-            // Only initiate pull-to-refresh when the container is scrolled to the very top
-            if (target && target.scrollTop <= 0) {
-                touchStartY.current = e.touches[0].clientY;
+    const thresholdRef = useRef(threshold);
+    useEffect(() => {
+        thresholdRef.current = threshold;
+    }, [threshold]);
+
+    // Attach non-passive touch listeners directly to DOM container.
+    // React synthetic touchmove is passive by default, which prevents calling e.preventDefault()
+    // and causes mobile browsers (Chrome / Safari) to trigger their native pull-to-refresh.
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleStart = (clientX?: number, clientY?: number) => {
+            if (disabledRef.current || isRefreshingRef.current) return;
+            // Only initiate pull-to-refresh when container is at the very top
+            if (container.scrollTop <= 0 && clientY !== undefined) {
+                touchStartY.current = clientY;
+                touchStartX.current = clientX ?? 0;
                 isReadyRef.current = true;
+                isPullingRef.current = false;
             } else {
                 isReadyRef.current = false;
             }
-        },
-        [disabled, isRefreshing],
-    );
+        };
 
-    const handleTouchMove = useCallback(
-        (e: React.TouchEvent) => {
-            if (disabled || isRefreshing || !isReadyRef.current || touchStartY.current === null) {
+        const handleMove = (clientX: number | undefined, clientY: number | undefined, e: TouchEvent) => {
+            if (
+                disabledRef.current ||
+                isRefreshingRef.current ||
+                !isReadyRef.current ||
+                touchStartY.current === null ||
+                clientY === undefined
+            ) {
                 return;
             }
 
-            const currentY = e.touches[0].clientY;
-            const diffY = currentY - touchStartY.current;
+            const currentX = clientX ?? 0;
+            const diffY = clientY - touchStartY.current;
+            const diffX = currentX - (touchStartX.current ?? 0);
 
-            // Only track downward pull
-            if (diffY > 0) {
-                const target = containerRef.current;
-                if (target && target.scrollTop <= 0) {
-                    // Logarithmic / exponential damping for elastic feel
-                    const damped = Math.min(
-                        Math.pow(diffY, 0.85) * 1.5,
-                        MAX_PULL_DISTANCE,
-                    );
-                    setPullDistance(damped);
-                    setIsPulling(true);
+            // Disambiguate horizontal swipes (carousels, tabs) from vertical pull
+            if (!isPullingRef.current && Math.abs(diffX) > Math.abs(diffY) * 0.8) {
+                isReadyRef.current = false;
+                return;
+            }
 
-                    // Prevent overscroll browser behavior if available
-                    if (e.cancelable && damped > 10) {
-                        e.preventDefault();
-                    }
-                } else {
-                    setPullDistance(0);
-                    setIsPulling(false);
+            if (diffY > 0 && container.scrollTop <= 0) {
+                // Prevent browser native pull-to-refresh and overscroll bounce
+                if (e.cancelable) {
+                    e.preventDefault();
+                }
+
+                // Logarithmic / exponential damping for elastic feel
+                const damped = Math.min(
+                    Math.pow(diffY, 0.85) * 1.5,
+                    MAX_PULL_DISTANCE,
+                );
+                pullDistanceRef.current = damped;
+                setPullDistance(damped);
+                setIsPulling(true);
+                isPullingRef.current = true;
+            } else if (isPullingRef.current) {
+                pullDistanceRef.current = 0;
+                setPullDistance(0);
+                setIsPulling(false);
+                isPullingRef.current = false;
+            }
+        };
+
+        const handleEnd = async () => {
+            if (!isPullingRef.current || isRefreshingRef.current) {
+                touchStartY.current = null;
+                touchStartX.current = null;
+                isReadyRef.current = false;
+                isPullingRef.current = false;
+                pullDistanceRef.current = 0;
+                setPullDistance(0);
+                setIsPulling(false);
+                return;
+            }
+
+            const currentDist = pullDistanceRef.current;
+            const currentThreshold = thresholdRef.current;
+            const shouldRefresh = currentDist >= currentThreshold;
+
+            touchStartY.current = null;
+            touchStartX.current = null;
+            isReadyRef.current = false;
+            isPullingRef.current = false;
+
+            if (shouldRefresh) {
+                setIsRefreshing(true);
+                isRefreshingRef.current = true;
+                setPullDistance(currentThreshold * 0.8);
+                pullDistanceRef.current = currentThreshold * 0.8;
+                const startTime = Date.now();
+
+                try {
+                    haptics.lightTap();
+                    await onRefreshRef.current();
+                } finally {
+                    const elapsed = Date.now() - startTime;
+                    const remaining = Math.max(0, 400 - elapsed);
+                    setTimeout(() => {
+                        setIsRefreshing(false);
+                        isRefreshingRef.current = false;
+                        setPullDistance(0);
+                        pullDistanceRef.current = 0;
+                        setIsPulling(false);
+                    }, remaining);
                 }
             } else {
+                pullDistanceRef.current = 0;
                 setPullDistance(0);
                 setIsPulling(false);
             }
-        },
-        [disabled, isRefreshing],
-    );
+        };
 
-    const handleTouchEnd = useCallback(async () => {
-        if (!isPulling || isRefreshing) {
+        const onTouchStart = (e: TouchEvent) => {
+            if (!e.touches || e.touches.length === 0) return;
+            handleStart(e.touches[0].clientX, e.touches[0].clientY);
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+            if (!e.touches || e.touches.length === 0) return;
+            handleMove(e.touches[0].clientX, e.touches[0].clientY, e);
+        };
+
+        const onTouchEnd = () => {
+            handleEnd();
+        };
+
+        container.addEventListener("touchstart", onTouchStart, { passive: true });
+        container.addEventListener("touchmove", onTouchMove, { passive: false });
+        container.addEventListener("touchend", onTouchEnd, { passive: true });
+        container.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+        return () => {
+            container.removeEventListener("touchstart", onTouchStart);
+            container.removeEventListener("touchmove", onTouchMove);
+            container.removeEventListener("touchend", onTouchEnd);
+            container.removeEventListener("touchcancel", onTouchEnd);
             touchStartY.current = null;
+            touchStartX.current = null;
             isReadyRef.current = false;
-            setPullDistance(0);
-            setIsPulling(false);
-            return;
-        }
-
-        const shouldRefresh = pullDistance >= threshold;
-        touchStartY.current = null;
-        isReadyRef.current = false;
-
-        if (shouldRefresh) {
-            setIsRefreshing(true);
-            setPullDistance(threshold * 0.8); // Hold indicator in view while refreshing
-            const startTime = Date.now();
-
-            try {
-                // Tactile haptic feedback on devices supporting it
-                if (typeof window !== "undefined" && "navigator" in window && navigator.vibrate) {
-                    navigator.vibrate(15);
-                }
-                await onRefresh();
-            } finally {
-                // Keep spinning for at least 400ms for clean visual feedback
-                const elapsed = Date.now() - startTime;
-                const remaining = Math.max(0, 400 - elapsed);
-                setTimeout(() => {
-                    setIsRefreshing(false);
-                    setPullDistance(0);
-                    setIsPulling(false);
-                }, remaining);
-            }
-        } else {
-            setPullDistance(0);
-            setIsPulling(false);
-        }
-    }, [isPulling, isRefreshing, pullDistance, threshold, onRefresh]);
+            isPullingRef.current = false;
+        };
+    }, []);
 
     const isPastThreshold = pullDistance >= threshold;
     const progress = Math.min(pullDistance / threshold, 1);
@@ -141,10 +206,7 @@ export function PullToRefresh({
     return (
         <Component
             ref={containerRef as unknown as React.RefObject<HTMLDivElement>}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            className={`relative flex-1 overflow-y-auto ${className}`}
+            className={`relative flex-1 overflow-y-auto overscroll-y-contain ${className}`}
         >
             {/* Visual Pull Indicator Pill (Visible during pull or refresh) */}
             {(isPulling || isRefreshing) && (

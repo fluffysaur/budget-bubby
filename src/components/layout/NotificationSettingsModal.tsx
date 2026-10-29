@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
     Bell,
     Volume2,
+    Vibrate,
     CreditCard,
     CalendarClock,
     Flame,
@@ -36,6 +37,7 @@ import {
     dispatchPWANotification,
 } from "../../lib/notificationScheduler";
 import { playChaChingSound } from "../../lib/soundEffects";
+import { haptics } from "../../lib/haptics";
 import { getDefaultNotificationPreferences } from "../../data/mockSeedData";
 import type { NotificationPreferences, UpdateNotificationPreferencesInput } from "../../types/finance";
 
@@ -131,6 +133,11 @@ export function NotificationSettingsModal({
         playChaChingSound();
     };
 
+    // Test Haptics
+    const handleTestHaptic = () => {
+        haptics.celebrate();
+    };
+
     return (
         <AnimatedModal
             isOpen={isOpen}
@@ -193,6 +200,59 @@ export function NotificationSettingsModal({
                                     <span
                                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
                                             prefs.sound_enabled ? "translate-x-5" : "translate-x-0"
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Haptic Feedback Section */}
+                    <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-(--text-muted) mb-3 font-display">
+                            Haptic Feedback
+                        </h4>
+
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                    <Vibrate className="h-4 w-4 stroke-[2.5]" />
+                                </div>
+                                <div>
+                                    <span className="text-xs font-bold text-(--text-ink)">
+                                        Haptic Feedback
+                                    </span>
+                                    <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
+                                        Tactile vibration for pulls, streaks, sweeps, logs &amp; alerts
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleTestHaptic}
+                                    title="Test haptic vibration"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-[1.5px] border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                >
+                                    <Vibrate className="h-3 w-3 stroke-[2.5]" />
+                                    <span>Vibrate</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={prefs.haptics_enabled ?? true}
+                                    aria-label="Toggle haptic feedback"
+                                    data-testid="toggle-haptics-enabled"
+                                    onClick={() => handleUpdate({ haptics_enabled: !(prefs.haptics_enabled ?? true) })}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-[1.5px] border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        (prefs.haptics_enabled ?? true) ? "bg-[#dfc2ff]" : "bg-(--bg-card)"
+                                    }`}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
+                                            (prefs.haptics_enabled ?? true) ? "translate-x-5" : "translate-x-0"
                                         }`}
                                     />
                                 </button>

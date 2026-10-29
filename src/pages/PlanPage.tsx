@@ -6,20 +6,21 @@
  * - Eliminates scattered sidebar links while preserving route compatibility
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Target,
   CreditCard,
   CalendarClock,
   Sparkles,
-} from 'lucide-react';
-import { PageHeader, SegmentedTabs } from '../components/ui';
-import { GoalsPage } from './GoalsPage';
-import { LoansPage } from './LoansPage';
-import { RecurringPage } from './RecurringPage';
-import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
+} from "lucide-react";
+import { PageHeader, SegmentedTabs } from "../components/ui";
+import { GoalsPage } from "./GoalsPage";
+import { LoansPage } from "./LoansPage";
+import { RecurringPage } from "./RecurringPage";
+import { BonusAllocationCollapsible } from "../components/budget/BonusAllocationCollapsible";
 
-export type PlanSubTab = 'goals' | 'loans' | 'recurring' | 'bonus';
+export type PlanSubTab = "goals" | "loans" | "recurring" | "bonus";
 
 export interface PlanPageProps {
   initialTab?: PlanSubTab;
@@ -28,20 +29,31 @@ export interface PlanPageProps {
 }
 
 const SUB_TABS: { id: PlanSubTab; label: string; icon: typeof Target }[] = [
-  { id: 'goals', label: 'Goals', icon: Target },
-  { id: 'loans', label: 'Loans', icon: CreditCard },
-  { id: 'recurring', label: 'Recurring', icon: CalendarClock },
-  { id: 'bonus', label: 'Bonus', icon: Sparkles },
+  { id: "goals", label: "Goals", icon: Target },
+  { id: "loans", label: "Loans", icon: CreditCard },
+  { id: "recurring", label: "Recurring", icon: CalendarClock },
+  { id: "bonus", label: "Bonus", icon: Sparkles },
 ];
 
-export function PlanPage({ initialTab = 'goals', className = '' }: PlanPageProps) {
-  const [activeTab, setActiveTab] = useState<PlanSubTab>(initialTab);
+export function PlanPage({ initialTab = "goals", className = "" }: PlanPageProps) {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") as PlanSubTab | null;
+  const goalIdParam = searchParams.get("goalId");
+  const validTab = tabParam && SUB_TABS.some((t) => t.id === tabParam) ? tabParam : null;
+
+  const [activeTab, setActiveTab] = useState<PlanSubTab>(
+    goalIdParam ? "goals" : validTab || initialTab
+  );
 
   useEffect(() => {
-    if (initialTab) {
+    if (goalIdParam) {
+      setActiveTab("goals");
+    } else if (validTab) {
+      setActiveTab(validTab);
+    } else if (initialTab) {
       setActiveTab(initialTab);
     }
-  }, [initialTab]);
+  }, [goalIdParam, validTab, initialTab]);
 
   return (
     <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>

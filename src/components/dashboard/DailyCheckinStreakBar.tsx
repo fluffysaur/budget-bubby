@@ -16,6 +16,7 @@ import { useHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
 import { getTodayDateString, formatISODate } from '../../lib/dateUtils';
 import { playChaChingSound } from '../../lib/soundEffects';
+import { haptics } from '../../lib/haptics';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import type { DailyCheckin, StreakSummary } from '../../types/finance';
 
@@ -92,8 +93,9 @@ export function DailyCheckinStreakBar({
         'no_spend'
       );
 
-      // Audio celebration
+      // Audio & haptic celebration
       playChaChingSound();
+      haptics.celebrate();
 
       // Optimistic update
       setStreak((prev) => ({

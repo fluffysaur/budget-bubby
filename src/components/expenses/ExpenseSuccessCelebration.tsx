@@ -11,6 +11,7 @@ import { Sparkles, Coins, X } from "lucide-react";
 import type { Expense } from "../../types/finance";
 import { formatSGD } from "../../lib/currency";
 import { playChaChingSound } from "../../lib/soundEffects";
+import { haptics } from "../../lib/haptics";
 
 export interface ExpenseSuccessCelebrationProps {
     expense?: Expense | null;
@@ -43,8 +44,9 @@ export function ExpenseSuccessCelebration({
             setActiveExpense(exp);
             try {
                 playChaChingSound();
+                haptics.success();
             } catch (err) {
-                console.debug("Celebration sound skipped:", err);
+                console.debug("Celebration sound/haptic skipped:", err);
             }
 
             dismissTimerRef.current = setTimeout(() => {

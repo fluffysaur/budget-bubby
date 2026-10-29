@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Bell,
     Flame,
@@ -72,6 +73,7 @@ export function NotificationCenterPopover({
     onNavigateTab,
     onOpenUpdateBalances,
 }: NotificationCenterPopoverProps) {
+    const navigate = useNavigate();
     const { activeMember, members, refreshData } = useHousehold();
     const isMobile = useIsMobile();
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -230,10 +232,18 @@ export function NotificationCenterPopover({
                 if (onNavigateTab) {
                     onNavigateTab("budget");
                 }
-            } else if (reminder.actionType === "view_recurring" || reminder.actionType === "view_goals") {
+            } else if (reminder.actionType === "view_recurring") {
                 setIsOpen(false);
                 if (onNavigateTab) {
                     onNavigateTab("plan");
+                }
+            } else if (reminder.actionType === "view_goals") {
+                setIsOpen(false);
+                const goalId = typeof reminder.data?.goalId === "string" ? reminder.data.goalId : undefined;
+                const query = goalId ? `?goalId=${encodeURIComponent(goalId)}` : "";
+                navigate(`/goals${query}`);
+                if (onNavigateTab) {
+                    onNavigateTab(`goals${query}`);
                 }
             }
         } catch (err) {

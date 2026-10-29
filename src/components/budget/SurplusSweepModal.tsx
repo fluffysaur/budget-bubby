@@ -12,6 +12,7 @@ import {
 import { formatSGD } from "../../lib/currency";
 import { formatDisplayMonth } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
+import { haptics } from "../../lib/haptics";
 import type { SavingsGoal } from "../../types/finance";
 
 export interface SurplusSweepAllocation {
@@ -203,6 +204,7 @@ export function SurplusSweepModal({
             setErrorMessage(null);
             await onSweepComplete(payload);
             playChaChingSound();
+            haptics.sweep();
             onClose();
         } catch (err: unknown) {
             setErrorMessage(

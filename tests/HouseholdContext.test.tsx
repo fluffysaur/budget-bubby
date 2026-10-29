@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import {
     HouseholdProvider,
     useHousehold,
@@ -152,9 +153,11 @@ describe("Layout Components", () => {
         it("renders unified perspective dropdown, currency badge, mock status, and theme toggle", async () => {
             await act(async () => {
                 render(
-                    <HouseholdProvider>
-                        <AppHeader />
-                    </HouseholdProvider>,
+                    <MemoryRouter>
+                        <HouseholdProvider>
+                            <AppHeader />
+                        </HouseholdProvider>
+                    </MemoryRouter>,
                 );
             });
 
@@ -206,9 +209,11 @@ describe("Layout Components", () => {
             const handleOpenQuickAdd = vi.fn();
             await act(async () => {
                 render(
-                    <HouseholdProvider>
-                        <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
-                    </HouseholdProvider>,
+                    <MemoryRouter>
+                        <HouseholdProvider>
+                            <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
+                        </HouseholdProvider>
+                    </MemoryRouter>,
                 );
             });
 
@@ -232,9 +237,11 @@ describe("Layout Components", () => {
         it("renders Settings and Refresh in mobile perspective dropdown and hides manual refresh icon on mobile", async () => {
             await act(async () => {
                 render(
-                    <HouseholdProvider>
-                        <AppHeader />
-                    </HouseholdProvider>,
+                    <MemoryRouter>
+                        <HouseholdProvider>
+                            <AppHeader />
+                        </HouseholdProvider>
+                    </MemoryRouter>,
                 );
             });
 

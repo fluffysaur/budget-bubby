@@ -9,7 +9,8 @@
  * - Auto-refresh on data mutation
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
     Target,
     Plus,
@@ -51,6 +52,7 @@ export function GoalsPage({
 }: GoalsPageProps) {
     const {
         perspective,
+        setPerspective,
         activeMember,
         overview,
         members: ctxMembers,
@@ -66,12 +68,20 @@ export function GoalsPage({
     const { data: expensesData } = useExpensesQuery();
     const { data: categoriesData } = useCategoriesQuery();
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    const targetGoalId = searchParams.get("goalId");
+
     const goals = useMemo(() => goalsData || [], [goalsData]);
     const expenses = useMemo(() => expensesData || [], [expensesData]);
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = goalsLoading && !goalsData;
     const errorMessage = goalsError ? (goalsError as Error).message : null;
     const [activeTab, setActiveTab] = useState<GoalFilterTab>("all");
+    const [highlightedGoalId, setHighlightedGoalId] = useState<string | null>(null);
+
+    const processedGoalIdRef = useRef<string | null>(null);
+    const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Modal states
     const [isAddEditOpen, setIsAddEditOpen] = useState<boolean>(false);
@@ -150,6 +160,102 @@ export function GoalsPage({
         if (activeTab === "achieved") return achievedGoals;
         return perspectiveGoals;
     }, [perspectiveGoals, activeTab, inProgressGoals, achievedGoals]);
+
+    // Handle deep-link scrolling and highlighting from notifications (?goalId=...)
+    useEffect(() => {
+        if (!targetGoalId || goalsLoading || !goalsData) return;
+        if (processedGoalIdRef.current === targetGoalId) return;
+
+        const targetGoal = goals.find((g) => g.id === targetGoalId);
+        if (!targetGoal) {
+            processedGoalIdRef.current = targetGoalId;
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete("goalId");
+            setSearchParams(newParams, { replace: true });
+            return;
+        }
+
+        processedGoalIdRef.current = targetGoalId;
+
+        // 1. Perspective check: if target goal is hidden by member perspective, switch to household
+        if (
+            perspective !== "household" &&
+            targetGoal.owner_id &&
+            targetGoal.owner_id !== activeMember?.id
+        ) {
+            setPerspective("household");
+        }
+
+        // 2. Filter check: if target goal is hidden by active filter tab, switch to 'all'
+        const isGoalAchieved =
+            targetGoal.saved_so_far >= targetGoal.target_amount ||
+            targetGoal.status === "achieved";
+        if (
+            (activeTab === "in_progress" && isGoalAchieved) ||
+            (activeTab === "achieved" && !isGoalAchieved)
+        ) {
+            setActiveTab("all");
+        }
+
+        // 3. Highlight the goal card
+        setHighlightedGoalId(targetGoalId);
+
+        // 4. Clean up query param from URL so page refreshes don't re-trigger it
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("goalId");
+        setSearchParams(newParams, { replace: true });
+
+        // 5. Scroll into view after DOM paint
+        if (scrollTimerRef.current) {
+            clearTimeout(scrollTimerRef.current);
+        }
+        scrollTimerRef.current = setTimeout(() => {
+            const el = document.getElementById(`goal-card-${targetGoalId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+            scrollTimerRef.current = null;
+        }, 100);
+
+        // 6. Gracefully fade out highlight after 3 seconds
+        if (highlightTimerRef.current) {
+            clearTimeout(highlightTimerRef.current);
+        }
+        highlightTimerRef.current = setTimeout(() => {
+            setHighlightedGoalId((curr) => (curr === targetGoalId ? null : curr));
+            highlightTimerRef.current = null;
+        }, 3000);
+    }, [
+        targetGoalId,
+        goals,
+        goalsLoading,
+        goalsData,
+        perspective,
+        activeMember,
+        activeTab,
+        searchParams,
+        setSearchParams,
+        setPerspective,
+    ]);
+
+    // Reset processed ref when query param is cleared, allowing re-navigation later
+    useEffect(() => {
+        if (!targetGoalId) {
+            processedGoalIdRef.current = null;
+        }
+    }, [targetGoalId]);
+
+    // Cleanup timers on unmount
+    useEffect(() => {
+        return () => {
+            if (scrollTimerRef.current) {
+                clearTimeout(scrollTimerRef.current);
+            }
+            if (highlightTimerRef.current) {
+                clearTimeout(highlightTimerRef.current);
+            }
+        };
+    }, []);
 
     // Handlers
     const handleOpenCreateModal = () => {
@@ -362,6 +468,7 @@ export function GoalsPage({
                             onEdit={handleOpenEditModal}
                             onQuickDeposit={handleOpenDepositModal}
                             onSpendFromGoal={handleOpenSpendModal}
+                            isHighlighted={highlightedGoalId === goal.id}
                         />
                     ))}
                 </div>
