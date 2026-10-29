@@ -7,7 +7,7 @@
  * - Category Percentage Allocations (validated to sum to 100%) with inline Category Add/Edit/Delete & Preset Restore
  */
 
-import { useState, useEffect, useMemo, useId } from "react";
+import { useState, useEffect, useMemo, useRef, useId } from "react";
 import {
     CheckCircle2,
     AlertCircle,
@@ -38,12 +38,20 @@ import {
     Tag,
     Gift,
     User,
+    Sliders,
+    ArrowUpRight,
 } from "lucide-react";
-import { Sliders } from "lucide-react";
 import { financeService } from "../../services/financeService";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { mockCategories } from "../../data/mockSeedData";
-import { calculateCPFAndNetPay, calculateDisposableBudget, isSpendableCategory } from "../../lib/financialFormulas";
+import {
+    calculateCPFAndNetPay,
+    calculateDisposableBudget,
+    calculateMemberPolicyDeductions,
+    dollarToPercentage,
+    parseAllocationInput,
+    isSpendableCategory,
+} from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
 import { isValidUuid } from "../../lib/uuid";
 import type {
@@ -52,6 +60,7 @@ import type {
     Category,
     CategoryGroup,
     HouseholdMember,
+    RecurringPolicy,
 } from "../../types/finance";
 
 const PRESET_COLORS = [
@@ -91,6 +100,7 @@ export interface BaseProfileEditorModalProps {
     allocations: BaseProfileAllocation[];
     categories?: Category[];
     members?: HouseholdMember[];
+    policies?: RecurringPolicy[];
     initialTaxes?: number;
     initialInsurance?: number;
     monthlyBudgetId?: string;
@@ -99,6 +109,7 @@ export interface BaseProfileEditorModalProps {
     onManageCategories?: () => void;
     onCategoriesChanged?: () => void | Promise<void>;
     onSelectMember?: (memberId: string) => void;
+    onManagePolicies?: () => void;
     className?: string;
 }
 
@@ -109,6 +120,7 @@ export function BaseProfileEditorModal({
     allocations,
     categories = mockCategories,
     members = [],
+    policies,
     initialTaxes = 0,
     initialInsurance = 0,
     monthlyBudgetId,
@@ -117,28 +129,49 @@ export function BaseProfileEditorModal({
     onManageCategories,
     onCategoriesChanged,
     onSelectMember,
+    onManagePolicies,
     className = "",
 }: BaseProfileEditorModalProps) {
     const titleId = useId();
 
-    // Local categories list synced with prop so inline add/edit/delete updates immediately
+    // Local categories list synced with prop
     const [localCategories, setLocalCategories] = useState<Category[]>(categories);
-    useEffect(() => {
-        setLocalCategories(categories);
-    }, [categories]);
 
-    // Form State
+    // Form State (stored as strings to allow typing decimals and erasing to empty "")
     const [grossSalary, setGrossSalary] = useState<string>(String(profile?.gross_salary ?? 5000));
-    const [cpfRate, setCpfRate] = useState<string>(String(Math.round((profile?.cpf_employee_rate ?? 0.2) * 100)));
-    const [taxes, setTaxes] = useState<string>(String(initialTaxes));
-    const [insurance, setInsurance] = useState<string>(String(initialInsurance));
+    const [cpfRate, setCpfRate] = useState<string>(
+        String(profile?.cpf_employee_rate != null ? parseFloat((profile.cpf_employee_rate * 100).toFixed(4)) : 20)
+    );
 
-    // Category percentages mapped by categoryId: number (0-100)
-    const [categoryPercentages, setCategoryPercentages] = useState<Record<string, number>>({});
+    // Compute effective Monthly Taxes and Insurance strictly derived from policies
+    const { effectiveTaxes, effectiveInsurance } = useMemo(() => {
+        if (policies !== undefined && policies.length > 0) {
+            const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
+                policies,
+                profile?.owner_id,
+            );
+            return { effectiveTaxes: taxesMonthly, effectiveInsurance: insuranceMonthly };
+        }
+        return {
+            effectiveTaxes: Number(initialTaxes) || 0,
+            effectiveInsurance: Number(initialInsurance) || 0,
+        };
+    }, [policies, profile?.owner_id, initialTaxes, initialInsurance]);
+
+    // Category percentages mapped by categoryId: string (e.g. "15", "6.9633", "")
+    const [categoryPercentages, setCategoryPercentages] = useState<Record<string, string>>({});
+    // Explicit dollar amounts when set via $ (e.g. "300") so they stay fixed across disposable pool updates
+    const [categoryDollarOverrides, setCategoryDollarOverrides] = useState<Record<string, string>>({});
+    // Raw inputs while typing with $ prefix
+    const [rawPercentText, setRawPercentText] = useState<Record<string, string>>({});
     // Locked category state for auto-balancing
     const [lockedCategories, setLockedCategories] = useState<Record<string, boolean>>({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Track previous open state and profile owner to prevent unwanted resets while typing
+    const prevIsOpenRef = useRef(false);
+    const prevProfileIdRef = useRef<string | null>(null);
 
     // Inline category form state
     const [catFormMode, setCatFormMode] = useState<"create" | "edit" | null>(null);
@@ -150,15 +183,65 @@ export function BaseProfileEditorModal({
     const [isCatSaving, setIsCatSaving] = useState<boolean>(false);
     const [deletingCatId, setDeletingCatId] = useState<string | null>(null);
 
-    // Live disposable pool calculation based on current form inputs
+    // Synchronize initial state ONLY when modal opens or when profile/member changes
+    useEffect(() => {
+        const isJustOpening = isOpen && !prevIsOpenRef.current;
+        const isProfileChanged = profile && profile.id !== prevProfileIdRef.current;
+
+        if (isJustOpening || isProfileChanged) {
+            setLocalCategories(categories);
+            if (profile) {
+                setGrossSalary(String(profile.gross_salary));
+                setCpfRate(String(parseFloat((profile.cpf_employee_rate * 100).toFixed(4))));
+            }
+
+            const pctMap: Record<string, string> = {};
+            for (const cat of categories) {
+                const existing = allocations.find((a) => a.category_id === cat.id);
+                pctMap[cat.id] = existing ? String(parseFloat((existing.target_percentage * 100).toFixed(4))) : "0";
+            }
+            setCategoryPercentages(pctMap);
+            setCategoryDollarOverrides({});
+            setRawPercentText({});
+            setLockedCategories({});
+            setCatFormMode(null);
+            setEditingCat(null);
+            setDeletingCatId(null);
+            setErrorMessage(null);
+
+            prevProfileIdRef.current = profile?.id ?? null;
+        }
+
+        prevIsOpenRef.current = isOpen;
+    }, [isOpen, profile, allocations, categories]);
+
+    // Live disposable pool calculation based on current form inputs and policy deductions
     const currentDisposablePool = useMemo(() => {
         const gross = Math.max(0, parseFloat(grossSalary) || 0);
         const rate = (parseFloat(cpfRate) || 0) / 100;
-        const tax = parseFloat(taxes) || 0;
-        const ins = parseFloat(insurance) || 0;
         const net = calculateCPFAndNetPay(gross, rate).takeHomePay;
-        return calculateDisposableBudget(net, tax, ins);
-    }, [grossSalary, cpfRate, taxes, insurance]);
+        return calculateDisposableBudget(net, effectiveTaxes, effectiveInsurance);
+    }, [grossSalary, cpfRate, effectiveTaxes, effectiveInsurance]);
+
+    // When disposable pool changes, automatically keep fixed dollar categories synchronized
+    useEffect(() => {
+        if (currentDisposablePool <= 0) return;
+        setCategoryPercentages((prev) => {
+            let hasChanged = false;
+            const updated = { ...prev };
+            for (const [catId, dollarStr] of Object.entries(categoryDollarOverrides)) {
+                const dollarNum = parseFloat(dollarStr);
+                if (!isNaN(dollarNum) && dollarNum > 0) {
+                    const nextPct = String(dollarToPercentage(dollarNum, currentDisposablePool));
+                    if (updated[catId] !== nextPct) {
+                        updated[catId] = nextPct;
+                        hasChanged = true;
+                    }
+                }
+            }
+            return hasChanged ? updated : prev;
+        });
+    }, [currentDisposablePool, categoryDollarOverrides]);
 
     const toggleCategoryLock = (categoryId: string) => {
         setLockedCategories((prev) => ({
@@ -177,66 +260,59 @@ export function BaseProfileEditorModal({
 
         const lockedSum = localCategories
             .filter((c) => lockedCategories[c.id])
-            .reduce((sum, c) => sum + (categoryPercentages[c.id] || 0), 0);
+            .reduce((sum, c) => sum + (parseFloat(categoryPercentages[c.id] || "0") || 0), 0);
 
-        const targetUnlockedSum = Math.max(0, 100 - lockedSum);
-        const currentUnlockedSum = unlockedCats.reduce((sum, c) => sum + (categoryPercentages[c.id] || 0), 0);
+        const targetUnlockedSum = Math.max(0, Math.round((100 - lockedSum) * 10000) / 10000);
+        const currentUnlockedSum = unlockedCats.reduce(
+            (sum, c) => sum + (parseFloat(categoryPercentages[c.id] || "0") || 0),
+            0
+        );
 
-        const updated: Record<string, number> = { ...categoryPercentages };
+        const updated: Record<string, string> = { ...categoryPercentages };
 
         if (currentUnlockedSum <= 0) {
-            const baseShare = Math.floor(targetUnlockedSum / unlockedCats.length);
-            const remainder = targetUnlockedSum - baseShare * unlockedCats.length;
+            const baseShare = Math.floor((targetUnlockedSum / unlockedCats.length) * 100) / 100;
+            let runningSum = 0;
 
             unlockedCats.forEach((c, idx) => {
-                updated[c.id] = baseShare + (idx < remainder ? 1 : 0);
+                if (idx === unlockedCats.length - 1) {
+                    const finalShare = Math.round((targetUnlockedSum - runningSum) * 100) / 100;
+                    updated[c.id] = String(finalShare);
+                } else {
+                    updated[c.id] = String(baseShare);
+                    runningSum += baseShare;
+                }
+                // Clear dollar override on auto-balance for unlocked cats
+                setCategoryDollarOverrides((prev) => {
+                    const next = { ...prev };
+                    delete next[c.id];
+                    return next;
+                });
             });
         } else {
             let runningAllocated = 0;
-            unlockedCats.forEach((c) => {
-                const current = categoryPercentages[c.id] || 0;
-                const proportion = current / currentUnlockedSum;
-                const allocated = Math.round(targetUnlockedSum * proportion);
-                updated[c.id] = allocated;
-                runningAllocated += allocated;
-            });
-
-            const diff = targetUnlockedSum - runningAllocated;
-            if (diff !== 0 && unlockedCats.length > 0) {
-                let bestCat = unlockedCats[0];
-                for (const c of unlockedCats) {
-                    if ((updated[c.id] || 0) > (updated[bestCat.id] || 0)) {
-                        bestCat = c;
-                    }
+            unlockedCats.forEach((c, idx) => {
+                if (idx === unlockedCats.length - 1) {
+                    const finalShare = Math.round((targetUnlockedSum - runningAllocated) * 100) / 100;
+                    updated[c.id] = String(Math.max(0, finalShare));
+                } else {
+                    const current = parseFloat(categoryPercentages[c.id] || "0") || 0;
+                    const proportion = current / currentUnlockedSum;
+                    const allocated = Math.round(targetUnlockedSum * proportion * 100) / 100;
+                    updated[c.id] = String(allocated);
+                    runningAllocated += allocated;
                 }
-                updated[bestCat.id] = Math.max(0, (updated[bestCat.id] || 0) + diff);
-            }
+                setCategoryDollarOverrides((prev) => {
+                    const next = { ...prev };
+                    delete next[c.id];
+                    return next;
+                });
+            });
         }
 
         setCategoryPercentages(updated);
         setErrorMessage(null);
     };
-
-    // Synchronize initial state when modal opens or profile/allocations change
-    useEffect(() => {
-        if (profile) {
-            setGrossSalary(String(profile.gross_salary));
-            setCpfRate(String(Math.round(profile.cpf_employee_rate * 100)));
-        }
-        setTaxes(String(initialTaxes));
-        setInsurance(String(initialInsurance));
-
-        const pctMap: Record<string, number> = {};
-        for (const cat of categories) {
-            const existing = allocations.find((a) => a.category_id === cat.id);
-            pctMap[cat.id] = existing ? Math.round(existing.target_percentage * 100) : 0;
-        }
-        setCategoryPercentages(pctMap);
-        setCatFormMode(null);
-        setEditingCat(null);
-        setDeletingCatId(null);
-        setErrorMessage(null);
-    }, [profile, allocations, categories, initialTaxes, initialInsurance, isOpen]);
 
     // Handle ESC key to close
     useEffect(() => {
@@ -257,32 +333,121 @@ export function BaseProfileEditorModal({
 
     // Calculate sum of percentages across active localCategories
     const totalPercentage = useMemo(() => {
-        return localCategories.reduce((sum, cat) => sum + (Number(categoryPercentages[cat.id]) || 0), 0);
+        const sum = localCategories.reduce((acc, cat) => {
+            const raw = categoryPercentages[cat.id];
+            const parsed = raw === undefined || raw === "" ? 0 : parseFloat(raw);
+            return acc + (isNaN(parsed) ? 0 : parsed);
+        }, 0);
+        return Math.round(sum * 1000) / 1000;
     }, [localCategories, categoryPercentages]);
 
-    const isValidTotal = Math.abs(totalPercentage - 100) < 0.001;
+    const isValidTotal = Math.abs(totalPercentage - 100) < 0.01;
 
-    const handlePercentageChange = (categoryId: string, rawVal: string) => {
-        const val = rawVal === "" ? 0 : parseFloat(rawVal);
+    // Handle editing directly in S$/mo box
+    const handleDollarChange = (categoryId: string, rawDollarVal: string) => {
+        setCategoryDollarOverrides((prev) => ({
+            ...prev,
+            [categoryId]: rawDollarVal,
+        }));
+        setRawPercentText((prev) => {
+            const next = { ...prev };
+            delete next[categoryId];
+            return next;
+        });
+
+        const parsedDollar = parseFloat(rawDollarVal);
+        const safeDollar = isNaN(parsedDollar) ? 0 : Math.max(0, parsedDollar);
+        const nextPct = dollarToPercentage(safeDollar, currentDisposablePool);
+
         setCategoryPercentages((prev) => ({
             ...prev,
-            [categoryId]: isNaN(val) ? 0 : val,
+            [categoryId]: String(nextPct),
         }));
+
+        // Auto-lock category when a dollar target is entered so auto-balance preserves it
+        setLockedCategories((prev) => ({
+            ...prev,
+            [categoryId]: true,
+        }));
+    };
+
+    // Handle editing in % box (with smart "$" detection)
+    const handlePercentageChange = (categoryId: string, rawVal: string, isFocused = false) => {
+        const parsed = parseAllocationInput(rawVal, currentDisposablePool);
+
+        if (parsed.isDollar) {
+            // Keep raw text while focused with $ so keystrokes aren't hijacked
+            if (isFocused) {
+                setRawPercentText((prev) => ({ ...prev, [categoryId]: rawVal }));
+            } else {
+                setRawPercentText((prev) => {
+                    const next = { ...prev };
+                    delete next[categoryId];
+                    return next;
+                });
+            }
+
+            if (parsed.dollarAmount !== undefined) {
+                setCategoryDollarOverrides((prev) => ({
+                    ...prev,
+                    [categoryId]: String(parsed.dollarAmount),
+                }));
+            }
+
+            setCategoryPercentages((prev) => ({
+                ...prev,
+                [categoryId]: String(parsed.percentage),
+            }));
+
+            // Auto-lock when dollar amount is specified
+            setLockedCategories((prev) => ({
+                ...prev,
+                [categoryId]: true,
+            }));
+        } else {
+            if (isFocused) {
+                setRawPercentText((prev) => ({ ...prev, [categoryId]: rawVal }));
+            } else {
+                setRawPercentText((prev) => {
+                    const next = { ...prev };
+                    delete next[categoryId];
+                    return next;
+                });
+            }
+            setCategoryDollarOverrides((prev) => {
+                const next = { ...prev };
+                delete next[categoryId];
+                return next;
+            });
+            setCategoryPercentages((prev) => ({
+                ...prev,
+                [categoryId]: rawVal,
+            }));
+        }
+    };
+
+    const handlePercentBlur = (categoryId: string) => {
+        setRawPercentText((prev) => {
+            const next = { ...prev };
+            delete next[categoryId];
+            return next;
+        });
     };
 
     const handleReset = () => {
         if (profile) {
             setGrossSalary(String(profile.gross_salary));
-            setCpfRate(String(Math.round(profile.cpf_employee_rate * 100)));
+            setCpfRate(String(parseFloat((profile.cpf_employee_rate * 100).toFixed(4))));
         }
-        setTaxes(String(initialTaxes));
-        setInsurance(String(initialInsurance));
-        const pctMap: Record<string, number> = {};
+        const pctMap: Record<string, string> = {};
         for (const cat of localCategories) {
             const existing = allocations.find((a) => a.category_id === cat.id);
-            pctMap[cat.id] = existing ? Math.round(existing.target_percentage * 100) : 0;
+            pctMap[cat.id] = existing ? String(parseFloat((existing.target_percentage * 100).toFixed(4))) : "0";
         }
         setCategoryPercentages(pctMap);
+        setCategoryDollarOverrides({});
+        setRawPercentText({});
+        setLockedCategories({});
         setErrorMessage(null);
     };
 
@@ -292,9 +457,9 @@ export function BaseProfileEditorModal({
         if (refreshed && refreshed.length > 0) {
             setLocalCategories(refreshed);
             setCategoryPercentages((prev) => {
-                const next: Record<string, number> = {};
+                const next: Record<string, string> = {};
                 for (const c of refreshed) {
-                    next[c.id] = prev[c.id] ?? 0;
+                    next[c.id] = prev[c.id] ?? "0";
                 }
                 return next;
             });
@@ -344,7 +509,7 @@ export function BaseProfileEditorModal({
                     group: catGroup,
                 });
                 setLocalCategories((prev) => [...prev, created]);
-                setCategoryPercentages((prev) => ({ ...prev, [created.id]: 0 }));
+                setCategoryPercentages((prev) => ({ ...prev, [created.id]: "0" }));
             } else if (catFormMode === "edit" && editingCat) {
                 await financeService.updateCategory(editingCat.id, {
                     name: catName.trim(),
@@ -408,8 +573,8 @@ export function BaseProfileEditorModal({
         }
 
         const parsedCpf = (parseFloat(cpfRate) || 0) / 100;
-        const parsedTaxes = parseFloat(taxes) || 0;
-        const parsedInsurance = parseFloat(insurance) || 0;
+        const parsedTaxes = effectiveTaxes;
+        const parsedInsurance = effectiveInsurance;
 
         try {
             setIsSubmitting(true);
@@ -424,7 +589,7 @@ export function BaseProfileEditorModal({
 
             const updatedAllocations: BaseProfileAllocation[] = localCategories.map((cat) => {
                 const existing = allocations.find((a) => a.category_id === cat.id);
-                const targetPct = (categoryPercentages[cat.id] || 0) / 100;
+                const targetPct = (parseFloat(categoryPercentages[cat.id] || "0") || 0) / 100;
                 let allocId: string;
                 if (existing?.id && isValidUuid(existing.id)) {
                     allocId = existing.id;
@@ -484,7 +649,7 @@ export function BaseProfileEditorModal({
     const profileMember = members?.find((m) => m.id === profile.owner_id);
 
     return (
-        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
             <div
                 className={`flex flex-col min-h-0 flex-1 overflow-hidden ${className}`}
                 onClick={(e) => e.stopPropagation()}
@@ -501,7 +666,7 @@ export function BaseProfileEditorModal({
 
                 {/* Member Switcher Bar (when multiple household members exist) */}
                 {members.length > 1 && (
-                    <div className="flex items-center gap-1.5 p-2 bg-(--bg-canvas) border-b border-(--border-subtle) overflow-x-auto shrink-0">
+                    <div className="flex items-center gap-1.5 p-2 bg-(--bg-canvas) border-b-2 border-(--border-ink) overflow-x-auto shrink-0">
                         {members.map((m) => {
                             const isSelected = m.id === profile.owner_id;
                             return (
@@ -511,8 +676,8 @@ export function BaseProfileEditorModal({
                                     onClick={() => onSelectMember?.(m.id)}
                                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                                         isSelected
-                                            ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
-                                            : "text-(--text-muted) hover:text-(--text-ink)"
+                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                            : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
                                     }`}
                                 >
                                     <User className="h-3.5 w-3.5 shrink-0" />
@@ -528,468 +693,513 @@ export function BaseProfileEditorModal({
                     onSubmit={handleSubmit}
                     className="flex flex-col min-h-0 flex-1 overflow-hidden"
                 >
-                    <ModalBody className="p-4 sm:p-5 space-y-5">
-                    {errorMessage && (
-                        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300">
-                            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                            <span>{errorMessage}</span>
-                        </div>
-                    )}
-
-                    {/* Section 1: Income & CPF */}
-                    <div className="space-y-2.5">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                            <DollarSign className="h-3.5 w-3.5" />
-                            Income &amp; CPF
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label
-                                    htmlFor="gross-salary-input"
-                                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                                >
-                                    Gross Salary (SGD)
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">S$</span>
-                                    <input
-                                        id="gross-salary-input"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        required
-                                        value={grossSalary}
-                                        onChange={(e) => setGrossSalary(e.target.value)}
-                                        aria-label="Gross Salary"
-                                        className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-hidden"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="cpf-rate-input"
-                                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                                >
-                                    CPF Employee Rate (%)
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        id="cpf-rate-input"
-                                        type="number"
-                                        step="1"
-                                        min="0"
-                                        max="100"
-                                        required
-                                        value={cpfRate}
-                                        onChange={(e) => setCpfRate(e.target.value)}
-                                        aria-label="CPF Employee Rate"
-                                        className="w-full px-3 py-2 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-hidden"
-                                    />
-                                    <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-400">%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Section 2: Fixed Monthly Deductions */}
-                    <div className="space-y-2.5">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                            Fixed Monthly Deductions
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label
-                                    htmlFor="monthly-taxes-input"
-                                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                                >
-                                    Monthly Taxes (SGD)
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">S$</span>
-                                    <input
-                                        id="monthly-taxes-input"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={taxes}
-                                        onChange={(e) => setTaxes(e.target.value)}
-                                        aria-label="Monthly Taxes"
-                                        className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-hidden"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="monthly-insurance-input"
-                                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                                >
-                                    Monthly Insurance (SGD)
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">S$</span>
-                                    <input
-                                        id="monthly-insurance-input"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={insurance}
-                                        onChange={(e) => setInsurance(e.target.value)}
-                                        aria-label="Monthly Insurance"
-                                        className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-hidden"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Section 3: Categories & Percentage Allocations */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                                    <Percent className="h-3.5 w-3.5" />
-                                    Categories &amp; Allocations (100%)
-                                </h3>
-                                <button
-                                    type="button"
-                                    onClick={handleOpenCreateCategory}
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 border border-emerald-200/70 dark:border-emerald-800 transition-colors cursor-pointer"
-                                >
-                                    <Plus className="h-3 w-3" />
-                                    <span>Add Category</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleRestorePresetsInline}
-                                    disabled={isCatSaving}
-                                    title="Restore preset categories"
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-                                >
-                                    <RotateCcw className="h-2.5 w-2.5" />
-                                    <span>Presets</span>
-                                </button>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {/* Auto-Balance to 100% Button */}
-                                <button
-                                    type="button"
-                                    onClick={handleAutoBalance}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
-                                    title="Proportionally auto-adjust unlocked categories to reach 100%"
-                                >
-                                    <Scale className="h-3.5 w-3.5" />
-                                    <span>Auto-Balance to 100%</span>
-                                </button>
-
-                                {/* Total Percentage Indicator */}
-                                <div
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
-                                        isValidTotal
-                                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800"
-                                    }`}
-                                >
-                                    {isValidTotal ? (
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                    ) : (
-                                        <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
-                                    )}
-                                    <span>Total: {totalPercentage}%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Inline Add / Edit Category Drawer */}
-                        {catFormMode && (
-                            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/30 dark:bg-emerald-950/20 p-3.5 space-y-3 animate-in fade-in duration-150">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-slate-900 dark:text-white">
-                                        {catFormMode === "create"
-                                            ? "New Category"
-                                            : `Edit Category: ${editingCat?.name}`}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setCatFormMode(null)}
-                                        className="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    <div>
-                                        <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                                            Category Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={catName}
-                                            onChange={(e) => setCatName(e.target.value)}
-                                            placeholder="e.g. Groceries, Pet, Gym"
-                                            className="w-full px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/40 outline-hidden"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                                            Group
-                                        </label>
-                                        <div className="grid grid-cols-2 gap-1.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => setCatGroup("spendable")}
-                                                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                                    catGroup === "spendable"
-                                                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300"
-                                                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                                                }`}
-                                            >
-                                                Spendable
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setCatGroup("allocation")}
-                                                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                                    catGroup === "allocation"
-                                                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
-                                                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                                                }`}
-                                            >
-                                                Wealth / Fixed
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Color & Icon Compact Row */}
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {PRESET_COLORS.map((c) => (
-                                            <button
-                                                key={c}
-                                                type="button"
-                                                onClick={() => setCatColor(c)}
-                                                className="h-5 w-5 rounded-full border flex items-center justify-center transition-transform cursor-pointer"
-                                                style={{
-                                                    backgroundColor: c,
-                                                    borderColor: catColor === c ? "#ffffff" : "transparent",
-                                                    transform: catColor === c ? "scale(1.15)" : "scale(1)",
-                                                }}
-                                            >
-                                                {catColor === c && <Check className="h-3 w-3 text-white stroke-3" />}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex items-center gap-1 flex-wrap">
-                                        {PRESET_ICONS.slice(0, 8).map((item) => {
-                                            const IconComp = item.Icon;
-                                            const isSelected = catIcon === item.id;
-                                            return (
-                                                <button
-                                                    key={item.id}
-                                                    type="button"
-                                                    onClick={() => setCatIcon(item.id)}
-                                                    title={item.label}
-                                                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                                                        isSelected
-                                                            ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
-                                                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500"
-                                                    }`}
-                                                >
-                                                    <IconComp className="h-3.5 w-3.5" />
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={handleSaveCategoryInline}
-                                        disabled={isCatSaving}
-                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 cursor-pointer"
-                                    >
-                                        <Check className="h-3.5 w-3.5" />
-                                        <span>{catFormMode === "create" ? "Create Category" : "Update Category"}</span>
-                                    </button>
-                                </div>
+                    <ModalBody className="p-4 sm:p-5 space-y-5 bg-(--bg-card)">
+                        {errorMessage && (
+                            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-xs font-bold text-(--text-ink) shadow-cute-sm">
+                                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                                <span>{errorMessage}</span>
                             </div>
                         )}
 
-                        <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-3 sm:p-4">
-                            {localCategories.length === 0 ? (
-                                <div className="text-center py-6">
-                                    <p className="text-xs text-slate-500 mb-2">No categories configured yet.</p>
+                        {/* Section 1: Income & CPF */}
+                        <div className="space-y-2.5">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
+                                <DollarSign className="h-3.5 w-3.5" />
+                                Income &amp; CPF
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label
+                                        htmlFor="gross-salary-input"
+                                        className="block text-xs font-bold text-(--text-ink) mb-1"
+                                    >
+                                        Gross Salary (SGD)
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-2.5 text-xs font-bold text-(--text-muted)">S$</span>
+                                        <input
+                                            id="gross-salary-input"
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            required
+                                            value={grossSalary}
+                                            onChange={(e) => setGrossSalary(e.target.value)}
+                                            aria-label="Gross Salary"
+                                            className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="cpf-rate-input"
+                                        className="block text-xs font-bold text-(--text-ink) mb-1"
+                                    >
+                                        CPF Employee Rate (%)
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="cpf-rate-input"
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            max="100"
+                                            required
+                                            value={cpfRate}
+                                            onChange={(e) => setCpfRate(e.target.value)}
+                                            aria-label="CPF Employee Rate"
+                                            className="w-full pl-3 pr-8 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                        />
+                                        <span className="absolute right-3 top-2.5 text-xs font-bold text-(--text-muted)">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Fixed Monthly Deductions (Managed in Policies) */}
+                        <div className="space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
+                                    <ShieldCheck className="h-3.5 w-3.5" />
+                                    Fixed Monthly Deductions
+                                </h3>
+                                <button
+                                    type="button"
+                                    data-testid="manage-policies-link"
+                                    onClick={() => {
+                                        onClose();
+                                        onManagePolicies?.();
+                                    }}
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) hover:underline transition-colors cursor-pointer"
+                                >
+                                    <span>Manage in Policies</span>
+                                    <ArrowUpRight className="h-3 w-3" />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div
+                                    data-testid="readonly-monthly-taxes"
+                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm"
+                                >
+                                    <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
+                                        Monthly Taxes
+                                    </span>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-base sm:text-lg font-mono-num font-black text-(--text-ink)">
+                                            {formatSGD(effectiveTaxes)}
+                                        </span>
+                                        <span className="text-[11px] font-bold text-(--text-muted)">/mo</span>
+                                    </div>
+                                    <span className="block text-[10px] text-(--text-muted) mt-1">
+                                        From active tax policies
+                                    </span>
+                                </div>
+
+                                <div
+                                    data-testid="readonly-monthly-insurance"
+                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm"
+                                >
+                                    <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
+                                        Monthly Insurance
+                                    </span>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-base sm:text-lg font-mono-num font-black text-(--text-ink)">
+                                            {formatSGD(effectiveInsurance)}
+                                        </span>
+                                        <span className="text-[11px] font-bold text-(--text-muted)">/mo</span>
+                                    </div>
+                                    <span className="block text-[10px] text-(--text-muted) mt-1">
+                                        From active insurance policies
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 3: Categories & Percentage Allocations */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
+                                        <Percent className="h-3.5 w-3.5 text-(--text-muted)" />
+                                        Categories &amp; Allocations
+                                    </h3>
                                     <button
                                         type="button"
                                         onClick={handleOpenCreateCategory}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm transition-all cursor-pointer"
                                     >
                                         <Plus className="h-3 w-3" />
-                                        <span>Add Categories</span>
+                                        <span>Add Category</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleRestorePresetsInline}
+                                        disabled={isCatSaving}
+                                        title="Restore preset categories"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-muted) hover:text-(--text-ink) bg-(--bg-card) hover:bg-(--bg-cream) border border-(--border-ink) transition-colors cursor-pointer"
+                                    >
+                                        <RotateCcw className="h-2.5 w-2.5" />
+                                        <span>Presets</span>
                                     </button>
                                 </div>
-                            ) : (
-                                localCategories.map((cat) => {
-                                    const currentPct = categoryPercentages[cat.id] ?? 0;
-                                    const isLocked = Boolean(lockedCategories[cat.id]);
-                                    const dollarEquivalent =
-                                        Math.round(currentDisposablePool * ((currentPct || 0) / 100) * 100) / 100;
-                                    const isDeleting = deletingCatId === cat.id;
 
-                                    return (
-                                        <div
-                                            key={cat.id}
-                                            className="p-2.5 sm:p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-2"
+                                <div className="flex items-center gap-2">
+                                    {/* Auto-Balance to 100% Button */}
+                                    <button
+                                        type="button"
+                                        onClick={handleAutoBalance}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                        title="Proportionally auto-adjust unlocked categories to reach 100%"
+                                    >
+                                        <Scale className="h-3.5 w-3.5" />
+                                        <span>Auto-Balance to 100%</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Inline Add / Edit Category Drawer */}
+                            {catFormMode && (
+                                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 space-y-3 shadow-cute-sm animate-in fade-in duration-150">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-(--text-ink)">
+                                            {catFormMode === "create"
+                                                ? "New Category"
+                                                : `Edit Category: ${editingCat?.name}`}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCatFormMode(null)}
+                                            className="text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                                         >
-                                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                <div className="flex items-center gap-1.5 min-w-0">
-                                                    {/* Category Lock Toggle */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleCategoryLock(cat.id)}
-                                                        title={isLocked ? `Unlock ${cat.name}` : `Lock ${cat.name}`}
-                                                        aria-label={isLocked ? `Unlock category` : `Lock category`}
-                                                        data-testid={`lock-${cat.id}`}
-                                                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                                                            isLocked
-                                                                ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-600 dark:text-amber-400"
-                                                                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                                                        }`}
-                                                    >
-                                                        {isLocked ? (
-                                                            <Lock className="h-3.5 w-3.5" />
-                                                        ) : (
-                                                            <Unlock className="h-3.5 w-3.5" />
-                                                        )}
-                                                    </button>
+                                            Cancel
+                                        </button>
+                                    </div>
 
-                                                    <span
-                                                        className="h-2.5 w-2.5 rounded-full shrink-0"
-                                                        style={{ backgroundColor: cat.color }}
-                                                    />
-                                                    <label
-                                                        htmlFor={`cat-alloc-${cat.id}`}
-                                                        className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate cursor-pointer"
-                                                    >
-                                                        {cat.name}
-                                                    </label>
-                                                    {isLocked && (
-                                                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800/60">
-                                                            Locked
-                                                        </span>
-                                                    )}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-(--text-muted) mb-1">
+                                                Category Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={catName}
+                                                onChange={(e) => setCatName(e.target.value)}
+                                                placeholder="e.g. Groceries, Pet, Gym"
+                                                className="w-full px-3 py-1.5 text-xs font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                            />
+                                        </div>
 
-                                                    {/* Inline Edit / Delete Category Actions */}
-                                                    {isDeleting ? (
-                                                        <div className="inline-flex items-center gap-1 ml-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleDeleteCategoryInline(cat.id)}
-                                                                disabled={isCatSaving}
-                                                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white hover:bg-rose-700 cursor-pointer"
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeletingCatId(null)}
-                                                                className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-0.5 ml-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleOpenEditCategory(cat)}
-                                                                title={`Edit ${cat.name}`}
-                                                                aria-label="Edit category"
-                                                                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                                            >
-                                                                <Pencil className="h-3 w-3" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeletingCatId(cat.id)}
-                                                                title={`Delete ${cat.name}`}
-                                                                aria-label="Delete category"
-                                                                className="p-1 rounded-md text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                                                            >
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Live Dollar Equivalent & Numeric Input */}
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span
-                                                        data-testid={`cat-dollar-${cat.id}`}
-                                                        className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-mono"
-                                                    >
-                                                        {formatSGD(dollarEquivalent)}/mo
-                                                    </span>
-                                                    <div className="relative w-20">
-                                                        <input
-                                                            id={`cat-alloc-${cat.id}`}
-                                                            type="number"
-                                                            step="any"
-                                                            min="0"
-                                                            max="100"
-                                                            value={currentPct}
-                                                            onChange={(e) =>
-                                                                handlePercentageChange(cat.id, e.target.value)
-                                                            }
-                                                            className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
-                                                        />
-                                                        <span className="absolute right-1.5 top-1.5 text-[11px] text-slate-400">
-                                                            %
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Interactive Range Slider */}
-                                            <div className="pt-0.5">
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max="100"
-                                                    step="1"
-                                                    aria-label={`Allocation slider`}
-                                                    data-testid={`slider-${cat.id}`}
-                                                    value={currentPct}
-                                                    onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
-                                                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                                                />
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-(--text-muted) mb-1">
+                                                Group
+                                            </label>
+                                            <div className="grid grid-cols-2 gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCatGroup("spendable")}
+                                                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                        catGroup === "spendable"
+                                                            ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
+                                                            : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
+                                                    }`}
+                                                >
+                                                    Spendable
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCatGroup("allocation")}
+                                                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                        catGroup === "allocation"
+                                                            ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                                            : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
+                                                    }`}
+                                                >
+                                                    Wealth / Fixed
+                                                </button>
                                             </div>
                                         </div>
-                                    );
-                                })
+                                    </div>
+
+                                    {/* Color & Icon Compact Row */}
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {PRESET_COLORS.map((c) => (
+                                                <button
+                                                    key={c}
+                                                    type="button"
+                                                    onClick={() => setCatColor(c)}
+                                                    className="h-5 w-5 rounded-full border-2 border-(--border-ink) flex items-center justify-center transition-transform cursor-pointer"
+                                                    style={{
+                                                        backgroundColor: c,
+                                                        transform: catColor === c ? "scale(1.15)" : "scale(1)",
+                                                    }}
+                                                >
+                                                    {catColor === c && <Check className="h-3 w-3 text-white stroke-3" />}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                            {PRESET_ICONS.slice(0, 8).map((item) => {
+                                                const IconComp = item.Icon;
+                                                const isSelected = catIcon === item.id;
+                                                return (
+                                                    <button
+                                                        key={item.id}
+                                                        type="button"
+                                                        onClick={() => setCatIcon(item.id)}
+                                                        title={item.label}
+                                                        className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                            isSelected
+                                                                ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
+                                                                : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
+                                                        }`}
+                                                    >
+                                                        <IconComp className="h-3.5 w-3.5" />
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveCategoryInline}
+                                            disabled={isCatSaving}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 cursor-pointer"
+                                        >
+                                            <Check className="h-3.5 w-3.5" />
+                                            <span>{catFormMode === "create" ? "Create Category" : "Update Category"}</span>
+                                        </button>
+                                    </div>
+                                </div>
                             )}
+
+                            <div className="space-y-2.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 sm:p-4 shadow-cute-sm">
+                                {localCategories.length === 0 ? (
+                                    <div className="text-center py-6">
+                                        <p className="text-xs text-(--text-muted) mb-2">No categories configured yet.</p>
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenCreateCategory}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer"
+                                        >
+                                            <Plus className="h-3 w-3" />
+                                            <span>Add Categories</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    localCategories.map((cat) => {
+                                        const rawVal = categoryPercentages[cat.id];
+                                        const currentPct = rawVal === undefined || rawVal === "" ? 0 : parseFloat(rawVal) || 0;
+                                        const isLocked = Boolean(lockedCategories[cat.id]);
+                                        const dollarEquivalent =
+                                            Math.round(currentDisposablePool * (currentPct / 100) * 100) / 100;
+                                        const isDeleting = deletingCatId === cat.id;
+
+                                        return (
+                                            <div
+                                                key={cat.id}
+                                                className="p-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm space-y-2"
+                                            >
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        {/* Category Lock Toggle */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleCategoryLock(cat.id)}
+                                                            title={isLocked ? `Unlock ${cat.name}` : `Lock ${cat.name}`}
+                                                            aria-label={isLocked ? "Unlock category" : "Lock category"}
+                                                            data-testid={`lock-${cat.id}`}
+                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                                isLocked
+                                                                    ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                                                    : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"
+                                                            }`}
+                                                        >
+                                                            {isLocked ? (
+                                                                <Lock className="h-3.5 w-3.5" />
+                                                            ) : (
+                                                                <Unlock className="h-3.5 w-3.5" />
+                                                            )}
+                                                        </button>
+
+                                                        <span
+                                                            className="h-2.5 w-2.5 rounded-full shrink-0 border border-(--border-ink)"
+                                                            style={{ backgroundColor: cat.color }}
+                                                        />
+                                                        <label
+                                                            htmlFor={`cat-alloc-${cat.id}`}
+                                                            className="text-xs font-black text-(--text-ink) truncate cursor-pointer"
+                                                        >
+                                                            {cat.name}
+                                                        </label>
+                                                        {isLocked && (
+                                                            <span className="text-[10px] font-bold text-(--text-ink) bg-(--pastel-butter) px-2 py-0.5 rounded-full border border-(--border-ink)">
+                                                                Locked
+                                                            </span>
+                                                        )}
+
+                                                        {/* Inline Edit / Delete Category Actions */}
+                                                        {isDeleting ? (
+                                                            <div className="inline-flex items-center gap-1 ml-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteCategoryInline(cat.id)}
+                                                                    disabled={isCatSaving}
+                                                                    className="px-2 py-0.5 rounded text-[10px] font-bold bg-(--pastel-coral-light) text-rose-800 border border-(--border-ink) hover:bg-rose-200 cursor-pointer"
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDeletingCatId(null)}
+                                                                    className="px-2 py-0.5 rounded text-[10px] font-semibold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="inline-flex items-center gap-0.5 ml-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenEditCategory(cat)}
+                                                                    title={`Edit ${cat.name}`}
+                                                                    aria-label="Edit category"
+                                                                    className="p-1 rounded-md text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                                                >
+                                                                    <Pencil className="h-3 w-3" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setDeletingCatId(cat.id)}
+                                                                    title={`Delete ${cat.name}`}
+                                                                    aria-label="Delete category"
+                                                                    className="p-1 rounded-md text-(--text-muted) hover:text-rose-600 hover:bg-(--pastel-coral-light) transition-colors cursor-pointer"
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Live Dollar Equivalent & Numeric Input */}
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        {/* Editable Dollar Input */}
+                                                        <div
+                                                            data-testid={`cat-dollar-${cat.id}`}
+                                                            className="flex items-center gap-0.5 rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-1.5 py-0.5 shadow-cute-sm"
+                                                        >
+                                                            <span className="text-[11px] font-bold text-(--text-muted)">S$</span>
+                                                            <input
+                                                                id={`cat-dollar-input-${cat.id}`}
+                                                                data-testid={`cat-dollar-input-${cat.id}`}
+                                                                type="number"
+                                                                step="any"
+                                                                min="0"
+                                                                placeholder="0"
+                                                                value={
+                                                                    categoryDollarOverrides[cat.id] !== undefined
+                                                                        ? categoryDollarOverrides[cat.id]
+                                                                        : dollarEquivalent === 0
+                                                                        ? "0"
+                                                                        : String(dollarEquivalent)
+                                                                }
+                                                                onChange={(e) => handleDollarChange(cat.id, e.target.value)}
+                                                                aria-label="Monthly dollar amount"
+                                                                title={`Monthly dollar amount for ${cat.name}`}
+                                                                className="w-16 text-right text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
+                                                            />
+                                                            <span className="text-[10px] font-bold text-(--text-muted)">/mo</span>
+                                                        </div>
+
+                                                        {/* Smart Percentage Input (Supports "$300" or "15%") */}
+                                                        <div className="relative w-20">
+                                                            <input
+                                                                id={`cat-alloc-${cat.id}`}
+                                                                type="text"
+                                                                inputMode="decimal"
+                                                                placeholder="0"
+                                                                value={
+                                                                    rawPercentText[cat.id] !== undefined
+                                                                        ? rawPercentText[cat.id]
+                                                                        : categoryPercentages[cat.id] === ""
+                                                                        ? ""
+                                                                        : categoryPercentages[cat.id] !== undefined
+                                                                        ? String(parseFloat(parseFloat(categoryPercentages[cat.id]).toFixed(2)))
+                                                                        : "0"
+                                                                }
+                                                                onChange={(e) =>
+                                                                    handlePercentageChange(cat.id, e.target.value, true)
+                                                                }
+                                                                onBlur={() => handlePercentBlur(cat.id)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter") {
+                                                                        handlePercentBlur(cat.id);
+                                                                    }
+                                                                }}
+                                                                className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                                            />
+                                                            <span className="absolute right-1.5 top-1 text-[11px] font-bold text-(--text-muted)">
+                                                                %
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Interactive Range Slider */}
+                                                <div className="pt-0.5">
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.1"
+                                                        aria-label="Allocation slider"
+                                                        data-testid={`slider-${cat.id}`}
+                                                        value={currentPct}
+                                                        onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
+                                                        className="w-full h-1.5 bg-(--bg-cream) border border-(--border-ink) rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
-                    </div>
                     </ModalBody>
 
-                    {/* Footer Actions */}
-                    <ModalFooter className="justify-between">
-                        <button
-                            type="button"
-                            onClick={handleReset}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
-                        >
-                            <RotateCcw className="h-3.5 w-3.5" />
-                            <span>Reset</span>
-                        </button>
+                    {/* Footer Actions with Sticky Total % */}
+                    <ModalFooter className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            {/* Sticky Total Percentage Indicator */}
+                            <div
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 border-(--border-ink) shadow-cute-sm ${
+                                    isValidTotal
+                                        ? "bg-(--pastel-mint) text-(--text-ink)"
+                                        : "bg-(--pastel-coral-light) text-(--text-ink)"
+                                }`}
+                            >
+                                {isValidTotal ? (
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" />
+                                ) : (
+                                    <AlertCircle className="h-3.5 w-3.5 text-rose-700" />
+                                )}
+                                <span>Total: {totalPercentage}%</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) rounded-lg hover:bg-(--pastel-cream) transition-colors cursor-pointer"
+                            >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                <span>Reset</span>
+                            </button>
+                        </div>
 
                         <div className="flex items-center gap-2">
                             <button
@@ -1002,7 +1212,7 @@ export function BaseProfileEditorModal({
                             <button
                                 type="submit"
                                 disabled={!isValidTotal || isSubmitting}
-                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                             >
                                 <Save className="h-3.5 w-3.5" />
                                 <span>{isSubmitting ? "Saving..." : "Save Budget"}</span>

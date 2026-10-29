@@ -24,6 +24,8 @@ import {
   checkRecurringBillsReminders,
   checkGoalPacingReminders,
   checkMonthlyBudgetReviewReminder,
+  evaluateAndDispatchReminders,
+  clearInFlightDispatches,
   requestNotificationPermission,
   dispatchPWANotification,
   dismissReminderId,
@@ -67,6 +69,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   // =========================================================================
@@ -166,7 +169,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
   // 2. Notification Scheduler & NotificationCenterPopover
   // =========================================================================
   describe('Notification Engine & NotificationCenterPopover', () => {
-    it('creates daily spend checkin reminder when user has not checked in today', () => {
+    it('creates daily spend checkin reminder only nearing end of day (>= 18:00) when user has not checked in', () => {
+      // Daytime (hour < 18) -> no reminder yet
       const reminderDay = checkDailyCheckinReminder(
         {
           currentStreak: 2,
@@ -176,11 +180,9 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         },
         14 // afternoon
       );
-      expect(reminderDay).not.toBeNull();
-      expect(reminderDay?.type).toBe('daily_checkin');
-      expect(reminderDay?.actionLabel).toBe('Check In Now');
+      expect(reminderDay).toBeNull();
 
-      // Evening reminder (hour >= 18)
+      // Evening (hour >= 18) -> reminder generated
       const reminderEvening = checkDailyCheckinReminder(
         {
           currentStreak: 2,
@@ -188,11 +190,14 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
           checkedInToday: false,
           coupleStreak: 1,
         },
-        19
+        19 // evening
       );
+      expect(reminderEvening).not.toBeNull();
+      expect(reminderEvening?.type).toBe('daily_checkin');
       expect(reminderEvening?.title).toContain('Evening');
+      expect(reminderEvening?.actionLabel).toBe('Check In Now');
 
-      // Checked in today -> no reminder
+      // Checked in today -> no reminder even in evening
       const reminderNone = checkDailyCheckinReminder(
         {
           currentStreak: 3,
@@ -348,6 +353,9 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
     });
 
     it('renders notification bell with badge count in NotificationCenterPopover and handles quick actions', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date('2026-10-29T19:00:00+08:00'));
+
       // Mock active reminders via computeActiveReminders
       const mockStreak: StreakSummary = {
         currentStreak: 2,
@@ -897,6 +905,307 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(isSoundEffectsEnabled()).toBe(true);
     });
   });
+
+  // =========================================================================
+  // 5. Double-Firing Prevention & Member Scoping
+  // =========================================================================
+  describe('Double-Firing Prevention & Member Scoping', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      localStorage.clear();
+      clearInFlightDispatches();
+    });
+
+    it('prevents double-firing when evaluateAndDispatchReminders is called concurrently', async () => {
+      const showNotificationMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(window, 'Notification', {
+        value: class MockNotification {
+          static permission = 'granted';
+          static requestPermission = vi.fn().mockResolvedValue('granted');
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      Object.defineProperty(navigator, 'serviceWorker', {
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({
+            showNotification: showNotificationMock,
+          }),
+        },
+        configurable: true,
+      });
+
+      vi.spyOn(financeService, 'getStreakSummary').mockResolvedValue({
+        currentStreak: 2,
+        longestStreak: 5,
+        checkedInToday: false,
+        coupleStreak: 1,
+      });
+      vi.spyOn(financeService, 'getAllAccountSnapshots').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getCreditCardStatements').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getCreditCards').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getExpenses').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getPolicies').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getGoals').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue({
+        budget: {
+          id: 'b-1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          month: '2026-10',
+          gross_salary: 5000,
+          bonus: 0,
+          cpf_deduction: 1000,
+          taxes_deduction: 200,
+          insurance_deduction: 300,
+          after_deductions: 3500,
+          is_locked: true,
+        },
+        disposablePool: 3500,
+        totalSpent: 0,
+        totalRemaining: 3500,
+        categories: [],
+      });
+      vi.spyOn(financeService, 'getNotificationPreferences').mockResolvedValue({
+        household_id: 'hh-1',
+        member_id: 'mem-1',
+        push_enabled: true,
+        sound_enabled: true,
+        haptics_enabled: true,
+        streak_and_logging: true,
+        monthly_balance_updates: false,
+        cc_payment_due: false,
+        cc_missing_statement: false,
+        partner_shared_spend: false,
+        budget_limit_alerts: false,
+        recurring_bills_due: false,
+        goal_pacing_alerts: false,
+        monthly_budget_review: false,
+        cc_due_days_before: 5,
+        budget_warning_pct: 80,
+        settlement_threshold_sgd: 200,
+      });
+
+      // Fire twice simultaneously during evening (currentHour: 19)
+      await Promise.all([
+        evaluateAndDispatchReminders({ memberId: 'mem-1', currentHour: 19 }),
+        evaluateAndDispatchReminders({ memberId: 'mem-1', currentHour: 19 }),
+      ]);
+
+      // Daily check-in notification should have fired EXACTLY ONCE
+      expect(showNotificationMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('strictly scopes credit card due reminders to active member', () => {
+      const today = '2026-10-25';
+      const statements: CreditCardStatement[] = [
+        {
+          id: 'stmt-mem1',
+          household_id: 'hh-1',
+          card_id: 'card-mem1',
+          month: '2026-10',
+          statement_amount: 1200,
+          due_date: '2026-10-28',
+          is_paid: false,
+          card: {
+            id: 'card-mem1',
+            household_id: 'hh-1',
+            owner_id: 'mem-1',
+            name: 'Yi Jia Card',
+            bank: 'DBS',
+            billing_day: 1,
+            due_day: 28,
+            color: '#10B981',
+            is_active: true,
+          },
+        },
+        {
+          id: 'stmt-mem2',
+          household_id: 'hh-1',
+          card_id: 'card-mem2',
+          month: '2026-10',
+          statement_amount: 800,
+          due_date: '2026-10-28',
+          is_paid: false,
+          card: {
+            id: 'card-mem2',
+            household_id: 'hh-1',
+            owner_id: 'mem-2',
+            name: 'Rachel Card',
+            bank: 'UOB',
+            billing_day: 1,
+            due_day: 28,
+            color: '#EC4899',
+            is_active: true,
+          },
+        },
+      ];
+
+      // For mem-1: only mem-1's card
+      const alertsMem1 = checkCreditCardDueReminders(statements, today, 5, 'mem-1');
+      expect(alertsMem1).toHaveLength(1);
+      expect(alertsMem1[0].message).toContain('Yi Jia Card');
+
+      // For mem-2: only mem-2's card
+      const alertsMem2 = checkCreditCardDueReminders(statements, today, 5, 'mem-2');
+      expect(alertsMem2).toHaveLength(1);
+      expect(alertsMem2[0].message).toContain('Rachel Card');
+    });
+
+    it('strictly scopes missing credit card statements to active member', () => {
+      const cards: CreditCard[] = [
+        {
+          id: 'card-mem1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          name: 'Yi Jia Card',
+          bank: 'DBS',
+          billing_day: 10,
+          due_day: 28,
+          color: '#10B981',
+          is_active: true,
+        },
+        {
+          id: 'card-mem2',
+          household_id: 'hh-1',
+          owner_id: 'mem-2',
+          name: 'Rachel Card',
+          bank: 'OCBC',
+          billing_day: 10,
+          due_day: 28,
+          color: '#EC4899',
+          is_active: true,
+        },
+      ];
+
+      const statements: CreditCardStatement[] = [];
+      const testDate = new Date('2026-10-15T12:00:00');
+
+      const alertsMem1 = checkMissingCreditCardStatements(cards, statements, testDate, 'mem-1');
+      expect(alertsMem1).toHaveLength(1);
+      expect(alertsMem1[0].message).toContain('Yi Jia Card');
+
+      const alertsMem2 = checkMissingCreditCardStatements(cards, statements, testDate, 'mem-2');
+      expect(alertsMem2).toHaveLength(1);
+      expect(alertsMem2[0].message).toContain('Rachel Card');
+    });
+
+    it('strictly scopes recurring bills to active member', () => {
+      const policies: RecurringPolicy[] = [
+        {
+          id: 'pol-mem1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          type: 'insurance',
+          name: 'Yi Jia Life Insurance',
+          amount: 1500,
+          frequency: 'annually',
+          payment_month: 10,
+          monthly_amortized_amount: 125,
+        },
+        {
+          id: 'pol-mem2',
+          household_id: 'hh-1',
+          owner_id: 'mem-2',
+          type: 'insurance',
+          name: 'Rachel Health Insurance',
+          amount: 800,
+          frequency: 'annually',
+          payment_month: 10,
+          monthly_amortized_amount: 66.67,
+        },
+      ];
+
+      const testDate = new Date('2026-10-15T12:00:00');
+      const alertsMem1 = checkRecurringBillsReminders(policies, testDate, 'mem-1');
+      expect(alertsMem1).toHaveLength(1);
+      expect(alertsMem1[0].message).toContain('Yi Jia Life Insurance');
+
+      const alertsMem2 = checkRecurringBillsReminders(policies, testDate, 'mem-2');
+      expect(alertsMem2).toHaveLength(1);
+      expect(alertsMem2[0].message).toContain('Rachel Health Insurance');
+    });
+
+    it('surfaces goal pacing reminders across household goals to keep both partners aligned', () => {
+      const goals: SavingsGoal[] = [
+        {
+          id: 'goal-mem1',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          title: 'Yi Jia Tech Upgrade',
+          target_amount: 3000,
+          saved_so_far: 1000,
+          target_date: '2026-12-31',
+          monthly_contribution: 500,
+          emoji: '💻',
+          status: 'behind',
+        },
+        {
+          id: 'goal-joint',
+          household_id: 'hh-1',
+          owner_id: null,
+          title: 'Couple Vacation',
+          target_amount: 6000,
+          saved_so_far: 2000,
+          target_date: '2026-12-31',
+          monthly_contribution: 1000,
+          emoji: '🏖️',
+          status: 'behind',
+        },
+      ];
+
+      const alerts = checkGoalPacingReminders(goals);
+      expect(alerts).toHaveLength(2);
+      expect(alerts.some((g) => g.title.includes('Yi Jia Tech Upgrade'))).toBe(true);
+      expect(alerts.some((g) => g.title.includes('Couple Vacation'))).toBe(true);
+    });
+
+    it('provides directional settlement notifications for debtor vs creditor', () => {
+      const summary: SettlementSummary = {
+        netBalance: 250,
+        debtorId: 'mem-2',
+        creditorId: 'mem-1',
+        debtorName: 'Rachel',
+        creditorName: 'Yi Jia',
+        settlementText: 'Rachel owes Yi Jia S$250.00',
+        member1OwesMember2: 0,
+        member2OwesMember1: 250,
+      };
+
+      const testDate = new Date('2026-10-15T12:00:00');
+
+      // Debtor (mem-2) sees "You owe Yi Jia SGD 250.00"
+      const debtorReminder = checkSettlementReminder(summary, 200, testDate, 'mem-2');
+      expect(debtorReminder).not.toBeNull();
+      expect(debtorReminder?.message).toContain('You owe Yi Jia SGD 250.00');
+      expect(debtorReminder?.actionLabel).toBe('Settle Up');
+
+      // Creditor (mem-1) sees "Rachel owes you SGD 250.00"
+      const creditorReminder = checkSettlementReminder(summary, 200, testDate, 'mem-1');
+      expect(creditorReminder).not.toBeNull();
+      expect(creditorReminder?.message).toContain('Rachel owes you SGD 250.00');
+      expect(creditorReminder?.actionLabel).toBe('View Settlement');
+    });
+
+    it('scopes reminder IDs with memberId to prevent cross-member collisions', () => {
+      const streak: StreakSummary = {
+        currentStreak: 3,
+        longestStreak: 5,
+        checkedInToday: false,
+        coupleStreak: 2,
+      };
+
+      const r1 = checkDailyCheckinReminder(streak, 19, 'mem-1');
+      const r2 = checkDailyCheckinReminder(streak, 19, 'mem-2');
+
+      expect(r1?.id).toContain('mem-1');
+      expect(r2?.id).toContain('mem-2');
+      expect(r1?.id).not.toBe(r2?.id);
+    });
+  });
 });
+
 
 

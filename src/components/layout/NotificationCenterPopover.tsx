@@ -94,12 +94,7 @@ export function NotificationCenterPopover({
         }
     }, []);
 
-    // Sync initial dismissed IDs from localStorage
-    useEffect(() => {
-        setDismissedIds(getDismissedReminderIds(activeMemberId));
-    }, [activeMemberId]);
-
-    // Load reminders
+    // Load active reminders for current member
     const loadReminders = useCallback(async () => {
         try {
             const active = await computeActiveReminders({ memberId: activeMemberId });
@@ -109,16 +104,31 @@ export function NotificationCenterPopover({
         }
     }, [activeMemberId]);
 
+    // Load reminders and dispatch push notifications cleanly for active member without double-firing
     useEffect(() => {
-        loadReminders();
-    }, [loadReminders]);
+        let isMounted = true;
 
-    // First-launch prompt and dispatch on mount
-    useEffect(() => {
+        // Reset reminders on active member change to prevent cross-user leak
+        setReminders([]);
+        setDismissedIds(getDismissedReminderIds(activeMemberId));
+
         checkAndPromptInitialNotificationPermission().then((res) => {
-            if (res) setPermission(res);
+            if (res && isMounted) setPermission(res);
         });
-        evaluateAndDispatchReminders({ memberId: activeMemberId });
+
+        evaluateAndDispatchReminders({ memberId: activeMemberId })
+            .then((active) => {
+                if (isMounted) {
+                    setReminders(active);
+                }
+            })
+            .catch((err) => {
+                console.error("Failed to load reminders:", err);
+            });
+
+        return () => {
+            isMounted = false;
+        };
     }, [activeMemberId]);
 
     // Listen for global notification preference updates

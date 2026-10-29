@@ -17,6 +17,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
+import { formatAllocationPercent } from "../../lib/financialFormulas";
 import { TruncatedText } from "../ui/TruncatedText";
 import type { MonthlyBudget, MonthlyBudgetCategoryDetail } from "../../types/finance";
 
@@ -200,7 +201,7 @@ export function BudgetWaterfall({
                         {categories.map((catDetail) => {
                             const name = catDetail.category?.name || "Category";
                             const color = catDetail.category?.color || "#dfc2ff";
-                            const percentDisplay = `${Math.round(catDetail.percentage * 100)}%`;
+                            const percentDisplay = `${formatAllocationPercent(catDetail.percentage * 100)}%`;
 
                             return (
                                 <div

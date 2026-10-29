@@ -27,6 +27,7 @@ import {
   Repeat,
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
+import { formatAllocationPercent } from '../../lib/financialFormulas';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { TruncatedText } from '../ui/TruncatedText';
 import { EmptyStateCard } from '../ui/EmptyStateCard';
@@ -158,7 +159,7 @@ export function CategoryProgressList({
                         className="font-display font-black text-sm text-(--text-ink)"
                       />
                       <span className="text-[10px] font-mono-num font-bold text-(--text-muted) shrink-0">
-                        ({Math.round(catDetail.percentage * 100)}%)
+                        ({formatAllocationPercent(catDetail.percentage * 100)}%)
                       </span>
                       {subSpent > 0 && (
                         <TooltipPopover
@@ -272,12 +273,6 @@ export function CategoryProgressList({
                     <span className="flex items-center gap-1 font-mono-num">
                       <AlertTriangle className="h-3 w-3" />
                       {formatSGD(remaining)} remaining
-                    </span>
-                    <span
-                      data-testid={`badge-amber-${catDetail.category_id}`}
-                      className="px-2 py-0.5 rounded-full bg-(--pastel-butter) text-amber-900 font-bold text-[10px] border border-(--border-ink) shadow-cute-sm"
-                    >
-                      Amber Guardrail
                     </span>
                   </div>
                 ) : null}

@@ -360,7 +360,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<Flame className="h-4 w-4 text-amber-500 shrink-0" />}
                                         title="Daily Streak &amp; Spend Check-in"
-                                        description="Daily reminder (and evening nudge) to log spend and keep your streak"
+                                        description="Evening reminder (from 6:00 PM) to log spend and keep your streak"
                                         isChecked={prefs.streak_and_logging}
                                         testId="toggle-streak-logging"
                                         onChange={(val) => handleUpdate({ streak_and_logging: val })}

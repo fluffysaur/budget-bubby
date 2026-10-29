@@ -27,7 +27,7 @@ const SUB_TABS: { id: SpendSubTab; label: string; icon: typeof Receipt }[] = [
     { id: "budget", label: "Budget", icon: PieChart },
 ];
 
-export function SpendPage({ initialTab = "expenses", className = "" }: SpendPageProps) {
+export function SpendPage({ initialTab = "expenses", onNavigateTab, className = "" }: SpendPageProps) {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get("tab") as SpendSubTab | null;
     const validTab = tabParam === "expenses" || tabParam === "budget" ? tabParam : null;
@@ -74,7 +74,7 @@ export function SpendPage({ initialTab = "expenses", className = "" }: SpendPage
             {/* Embedded Sub-Tab Content */}
             <div className="pt-1">
                 {activeTab === "expenses" && <ExpensesPage embedded={true} />}
-                {activeTab === "budget" && <BudgetPage embedded={true} />}
+                {activeTab === "budget" && <BudgetPage embedded={true} onNavigateTab={onNavigateTab} />}
             </div>
         </div>
     );

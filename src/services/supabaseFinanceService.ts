@@ -46,6 +46,7 @@ import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateCPFAndNetPay,
+  calculateMemberPolicyDeductions,
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
@@ -681,17 +682,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       const rate = baseProfile ? Number(baseProfile.cpf_employee_rate) : 0.2;
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
-      const memberPolicies = policies.filter((p) => p.owner_id === ownerId);
-      const taxesDeduction = Math.round(
-        memberPolicies
-          .filter((p) => p.type === 'tax')
-          .reduce((s, p) => s + Number(p.monthly_amortized_amount || 0), 0) * 100
-      ) / 100;
-      const insuranceDeduction = Math.round(
-        memberPolicies
-          .filter((p) => p.type === 'insurance')
-          .reduce((s, p) => s + Number(p.monthly_amortized_amount || 0), 0) * 100
-      ) / 100;
+      const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
+        calculateMemberPolicyDeductions(policies, ownerId);
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
       ) / 100;
@@ -737,6 +729,37 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (expError) throw expError;
 
     const expenses = (expensesData || []) as Expense[];
+    if (budgetData && !budget.is_locked && policies && policies.length > 0) {
+      const hasTaxOrInsPolicies = policies.some(
+        (p) =>
+          (p.type === 'tax' || p.type === 'insurance') &&
+          (!budget.owner_id || p.owner_id === budget.owner_id || p.owner_id === 'joint')
+      );
+      if (hasTaxOrInsPolicies) {
+        const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
+          policies,
+          budget.owner_id
+        );
+        budget = {
+          ...budget,
+          taxes_deduction: taxesMonthly,
+          insurance_deduction: insuranceMonthly,
+          after_deductions: Math.round(
+            (Number(budget.gross_salary) -
+              Number(budget.cpf_deduction) +
+              Number(budget.bonus || 0) -
+              taxesMonthly -
+              insuranceMonthly) *
+              100
+          ) / 100,
+        };
+        catAllocData = catAllocData.map((row) => ({
+          ...row,
+          allocated_amount:
+            Math.round(budget.after_deductions * Number(row.percentage) * 100) / 100,
+        }));
+      }
+    }
     const subscriptionItems = (policies || []).filter(
       (p) =>
         p.type === 'subscription' &&

@@ -30,6 +30,7 @@ import {
   useCategoriesQuery,
   useBaseProfilesQuery,
   useBaseAllocationsQuery,
+  usePoliciesQuery,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -54,9 +55,10 @@ import type {
 export interface BudgetPageProps {
   className?: string;
   embedded?: boolean;
+  onNavigateTab?: (tab: string) => void;
 }
 
-export function BudgetPage({ className = '', embedded = false }: BudgetPageProps) {
+export function BudgetPage({ className = '', embedded = false, onNavigateTab }: BudgetPageProps) {
   const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
 
   // State
@@ -66,6 +68,7 @@ export function BudgetPage({ className = '', embedded = false }: BudgetPageProps
   const { data: categoriesData } = useCategoriesQuery();
   const { data: baseProfilesData } = useBaseProfilesQuery();
   const { data: baseAllocationsData } = useBaseAllocationsQuery();
+  const { data: policiesData } = usePoliciesQuery();
 
   const categories = useMemo(() => {
     if (categoriesData && categoriesData.length > 0) return categoriesData;
@@ -478,6 +481,14 @@ export function BudgetPage({ className = '', embedded = false }: BudgetPageProps
           allocations={activeAllocations}
           categories={categories}
           members={members}
+          policies={policiesData || []}
+          onManagePolicies={() =>
+            onNavigateTab
+              ? onNavigateTab('recurring')
+              : typeof window !== 'undefined'
+                ? window.location.assign('/plan?tab=recurring')
+                : undefined
+          }
           initialTaxes={budgetDetail?.budget.taxes_deduction}
           initialInsurance={budgetDetail?.budget.insurance_deduction}
           monthlyBudgetId={

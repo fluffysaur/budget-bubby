@@ -303,6 +303,8 @@ export function BulkAddExpenseModal({
     createDefaultRow('row-2', isSharedDefault),
     createDefaultRow('row-3', isSharedDefault),
   ]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const prevIsOpenRef = useRef(false);
   const prevPayerIdPropRef = useRef(defaultPayerId);
@@ -326,9 +328,6 @@ export function BulkAddExpenseModal({
     prevPayerIdPropRef.current = defaultPayerId;
     prevSharedPropRef.current = defaultShared;
   }, [isOpen, defaultPayerId, defaultShared, resolvedDefaultPayerId, isSharedDefault]);
-
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Add an empty row
   const handleAddRow = () => {

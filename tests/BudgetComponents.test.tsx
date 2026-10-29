@@ -374,6 +374,181 @@ describe('BaseProfileEditorModal', () => {
       expect(onClose).toHaveBeenCalled();
     });
   });
+
+  it('preserves form edits and does not reset state when categories or allocations props re-render while open', async () => {
+    const { rerender } = render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+      />
+    );
+
+    const salaryInput = screen.getByLabelText(/gross salary/i);
+    fireEvent.change(salaryInput, { target: { value: '8888' } });
+    expect((salaryInput as HTMLInputElement).value).toBe('8888');
+
+    // Rerender with new array references (e.g. from parent re-render or query re-fetch)
+    rerender(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={{ ...profile }}
+        allocations={[...allocations]}
+        categories={[...mockCategories]}
+      />
+    );
+
+    // Form value must remain intact
+    expect((salaryInput as HTMLInputElement).value).toBe('8888');
+  });
+
+  it('allows erasing category percentage input to empty string and entering decimals', () => {
+    render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+      />
+    );
+
+    const foodInput = screen.getByLabelText(/food/i);
+
+    // Erase completely to empty string
+    fireEvent.change(foodInput, { target: { value: '' } });
+    expect((foodInput as HTMLInputElement).value).toBe('');
+
+    // Enter a decimal percentage
+    fireEvent.change(foodInput, { target: { value: '15.5' } });
+    expect((foodInput as HTMLInputElement).value).toBe('15.5');
+  });
+
+  it('renders sticky total % in footer next to reset button', () => {
+    render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+      />
+    );
+
+    const totalBadge = screen.getByText(/total:\s*100%/i);
+    expect(totalBadge).toBeInTheDocument();
+    const resetBtn = screen.getByRole('button', { name: /^reset$/i });
+    expect(resetBtn).toBeInTheDocument();
+  });
+
+  it('converts smart dollar input "$300" in percentage field to percentage and auto-locks category', () => {
+    render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+      />
+    );
+
+    // Food category percentage input
+    const foodAllocInput = screen.getByLabelText(/food/i) as HTMLInputElement;
+    const foodCat = mockCategories.find((c) => c.name.toLowerCase() === 'food')!;
+    const lockBtn = screen.getByTestId(`lock-${foodCat.id}`);
+
+    // Enter "$300" in the percentage field
+    fireEvent.change(foodAllocInput, { target: { value: '$300' } });
+
+    // With gross 6000, 20% CPF -> 4800 disposable: 300 / 4800 = 6.25%
+    expect(foodAllocInput.value).toBe('$300');
+    // On blur, formats to allocation percent
+    fireEvent.blur(foodAllocInput);
+    expect(foodAllocInput.value).toBe('6.25');
+
+    // Category should be automatically locked
+    expect(lockBtn).toHaveAttribute('title', expect.stringMatching(/unlock/i));
+  });
+
+  it('converts value in editable S$/mo input to percentage and auto-locks category', () => {
+    render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+      />
+    );
+
+    const foodCat = mockCategories.find((c) => c.name.toLowerCase() === 'food')!;
+    const foodDollarInput = screen.getByTestId(`cat-dollar-input-${foodCat.id}`) as HTMLInputElement;
+    const foodAllocInput = screen.getByLabelText(/food/i) as HTMLInputElement;
+    const lockBtn = screen.getByTestId(`lock-${foodCat.id}`);
+
+    // Change dollar input to 480 (480 / 4800 = 10%)
+    fireEvent.change(foodDollarInput, { target: { value: '480' } });
+
+    expect(foodAllocInput.value).toBe('10');
+    expect(lockBtn).toHaveAttribute('title', expect.stringMatching(/unlock/i));
+  });
+
+  it('displays read-only monthly taxes and insurance cards with Manage in Policies button', () => {
+    const onManagePolicies = vi.fn();
+    render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+        initialTaxes={150}
+        initialInsurance={350}
+        onManagePolicies={onManagePolicies}
+      />
+    );
+
+    expect(screen.getByTestId('readonly-monthly-taxes')).toHaveTextContent(/150\.00/);
+    expect(screen.getByTestId('readonly-monthly-insurance')).toHaveTextContent(/350\.00/);
+
+    const manageBtn = screen.getByRole('button', { name: /manage in policies/i });
+    expect(manageBtn).toBeInTheDocument();
+    fireEvent.click(manageBtn);
+    expect(onManagePolicies).toHaveBeenCalled();
+  });
+
+  it('auto-balances unlocked categories to 100% while keeping dollar-locked category fixed', () => {
+    render(
+      <BaseProfileEditorModal
+        isOpen={true}
+        onClose={vi.fn()}
+        profile={profile}
+        allocations={allocations}
+        categories={mockCategories}
+      />
+    );
+
+    const foodCat = mockCategories.find((c) => c.name.toLowerCase() === 'food')!;
+    const foodDollarInput = screen.getByTestId(`cat-dollar-input-${foodCat.id}`) as HTMLInputElement;
+    const foodAllocInput = screen.getByLabelText(/food/i) as HTMLInputElement;
+
+    // Set Food to $480 (10%) which auto-locks it
+    fireEvent.change(foodDollarInput, { target: { value: '480' } });
+    expect(foodAllocInput.value).toBe('10');
+
+    // Click Auto-Balance to 100%
+    const autoBalanceBtn = screen.getByRole('button', { name: /auto-balance to 100%/i });
+    fireEvent.click(autoBalanceBtn);
+
+    // Food remains 10% because it was locked
+    expect(foodAllocInput.value).toBe('10');
+
+    // Total should now be 100%
+    expect(screen.getByText(/total:\s*100%/i)).toBeInTheDocument();
+  });
 });
 
 describe('BudgetPage', () => {

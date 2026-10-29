@@ -108,25 +108,32 @@ export function clearDismissedReminders(memberId: string): void {
 // Reminder Checker Functions
 // =============================================================================
 
+// In-flight concurrency lock to prevent double-firing in async execution / Strict Mode
+const inFlightDispatches = new Set<string>();
+
+export function clearInFlightDispatches(): void {
+  inFlightDispatches.clear();
+}
+
 /**
- * 1. Checks if a daily spend check-in reminder should be issued.
+ * 1. Checks if a daily spend check-in reminder should be issued nearing end of day (>= 18:00).
  */
 export function checkDailyCheckinReminder(
   streak: StreakSummary,
-  currentHour?: number
+  currentHour?: number,
+  memberId?: string
 ): AppReminder | null {
   if (streak.checkedInToday) return null;
 
   const hour = currentHour !== undefined ? currentHour : getSingaporeDate().getHours();
-  const isEvening = hour >= 18;
+  // Only trigger nearing end of day (>= 18:00) if not yet done
+  if (hour < 18) return null;
 
   return {
-    id: `reminder-daily-checkin-${getTodayDateString()}`,
+    id: `reminder-daily-checkin-${memberId ? `${memberId}-` : ''}${getTodayDateString()}`,
     type: 'daily_checkin',
-    title: isEvening ? 'Daily Spend Check-in (Evening)' : 'Daily Spend Check-in',
-    message: isEvening
-      ? "You haven't logged today's spend or checked in yet. Keep your streak alive tonight! 🔥"
-      : "You haven't checked in or logged today's spend yet. Keep your streak going! 🔥",
+    title: 'Daily Spend Check-in (Evening)',
+    message: "You haven't logged today's spend or checked in yet. Keep your streak alive tonight! 🔥",
     severity: 'warning',
     actionLabel: 'Check In Now',
     actionType: 'check_in',
@@ -139,7 +146,8 @@ export function checkDailyCheckinReminder(
  */
 export function checkBalanceUpdateReminder(
   snapshots: AccountSnapshot[],
-  referenceDate?: Date
+  referenceDate?: Date,
+  memberId?: string
 ): AppReminder | null {
   const d = referenceDate || getSingaporeDate();
   const day = d.getDate();
@@ -157,7 +165,7 @@ export function checkBalanceUpdateReminder(
   if (hasSnapshotThisMonth) return null;
 
   return {
-    id: `reminder-balance-update-${currentMonth}`,
+    id: `reminder-balance-update-${memberId ? `${memberId}-` : ''}${currentMonth}`,
     type: 'balance_update',
     title: 'Monthly Balance Update',
     message: `Account snapshots haven't been updated for ${currentMonth}. Update now to keep net worth accurate!`,
@@ -174,7 +182,8 @@ export function checkBalanceUpdateReminder(
 export function checkCreditCardDueReminders(
   statements: CreditCardStatement[],
   todayStr?: string,
-  dueDaysBefore: number = 5
+  dueDaysBefore: number = 5,
+  memberId?: string
 ): AppReminder[] {
   const today = todayStr || getTodayDateString();
   const todayMs = new Date(today + 'T12:00:00').getTime();
@@ -182,6 +191,10 @@ export function checkCreditCardDueReminders(
 
   for (const stmt of statements) {
     if (stmt.is_paid || !stmt.due_date) continue;
+    // Strict member scoping: if memberId is given and card has an owner, must match active user
+    if (memberId && stmt.card?.owner_id && stmt.card.owner_id !== memberId) {
+      continue;
+    }
 
     const dueMs = new Date(stmt.due_date + 'T12:00:00').getTime();
     const diffDays = Math.ceil((dueMs - todayMs) / (1000 * 60 * 60 * 24));
@@ -224,7 +237,8 @@ export function checkCreditCardDueReminders(
 export function checkMissingCreditCardStatements(
   cards: CreditCard[],
   statements: CreditCardStatement[],
-  referenceDate?: Date
+  referenceDate?: Date,
+  memberId?: string
 ): AppReminder[] {
   const d = referenceDate || getSingaporeDate();
   const day = d.getDate();
@@ -233,6 +247,10 @@ export function checkMissingCreditCardStatements(
 
   for (const card of cards) {
     if (!card.is_active) continue;
+    // Strict member scoping: cards must belong to active user
+    if (memberId && card.owner_id && card.owner_id !== memberId) {
+      continue;
+    }
 
     // Billing day has passed or is today in current month
     if (day >= card.billing_day) {
@@ -288,7 +306,7 @@ export function checkPartnerSharedSpendReminders(
       const yourShare = exp.amount * (1 - (exp.split_ratio ?? 0.5));
 
       reminders.push({
-        id: `reminder-partner-spend-${exp.id}`,
+        id: `reminder-partner-spend-${activeMemberId}-${exp.id}`,
         type: 'partner_shared_spend',
         title: `${partnerName} Logged Shared Spend`,
         message: `${partnerName} paid SGD ${exp.amount.toFixed(2)} for ${exp.item} (your share: SGD ${yourShare.toFixed(2)}).`,
@@ -306,11 +324,13 @@ export function checkPartnerSharedSpendReminders(
 
 /**
  * 6. Checks if running settlement balance exceeds threshold or month-end is approaching.
+ * Notifies both members with directional context (debtor vs creditor).
  */
 export function checkSettlementReminder(
   settlementSummary: SettlementSummary,
   thresholdSgd: number = 200,
-  referenceDate?: Date
+  referenceDate?: Date,
+  activeMemberId?: string
 ): AppReminder | null {
   if (settlementSummary.netBalance <= 0) return null;
 
@@ -322,13 +342,28 @@ export function checkSettlementReminder(
 
   const currentMonth = referenceDate ? referenceDate.toISOString().slice(0, 7) : getCurrentMonth();
 
+  let message: string;
+  let actionLabel: string = 'Settle Up';
+
+  if (activeMemberId && settlementSummary.debtorId && activeMemberId === settlementSummary.debtorId) {
+    const creditorName = settlementSummary.creditorName || 'your partner';
+    message = `You owe ${creditorName} SGD ${settlementSummary.netBalance.toFixed(2)}. Time to settle up!`;
+    actionLabel = 'Settle Up';
+  } else if (activeMemberId && settlementSummary.creditorId && activeMemberId === settlementSummary.creditorId) {
+    const debtorName = settlementSummary.debtorName || 'Your partner';
+    message = `${debtorName} owes you SGD ${settlementSummary.netBalance.toFixed(2)}. Time to settle up!`;
+    actionLabel = 'View Settlement';
+  } else {
+    message = `${settlementSummary.settlementText}. Net balance is SGD ${settlementSummary.netBalance.toFixed(2)}. Time to settle up!`;
+  }
+
   return {
-    id: `reminder-settlement-${currentMonth}-${Math.floor(settlementSummary.netBalance)}`,
+    id: `reminder-settlement-${activeMemberId ? `${activeMemberId}-` : ''}${currentMonth}-${Math.floor(settlementSummary.netBalance)}`,
     type: 'settlement_due',
     title: 'Shared Spend Settlement',
-    message: `${settlementSummary.settlementText}. Net balance is SGD ${settlementSummary.netBalance.toFixed(2)}. Time to settle up!`,
+    message,
     severity: exceeds ? 'warning' : 'info',
-    actionLabel: 'Settle Up',
+    actionLabel,
     actionType: 'view_settlement',
     createdAt: new Date().toISOString(),
   };
@@ -362,7 +397,7 @@ export function checkCoupleStreakRiskReminder(
 
   if (activeCheckedIn && !partnerCheckedIn) {
     return {
-      id: `reminder-couple-streak-risk-${today}`,
+      id: `reminder-couple-streak-risk-${activeMemberId}-${today}`,
       type: 'couple_streak_risk',
       title: 'Couple Streak At Risk! 🔥',
       message: `You've checked in today, but ${partner.display_name} hasn't yet! Nudge them before midnight to keep your couple streak alive.`,
@@ -381,7 +416,8 @@ export function checkCoupleStreakRiskReminder(
  */
 export function checkBudgetLimitReminders(
   monthlyBudgetDetail: MonthlyBudgetDetail,
-  warningPct: number = 80
+  warningPct: number = 80,
+  memberId?: string
 ): AppReminder[] {
   const reminders: AppReminder[] = [];
   const month = monthlyBudgetDetail.budget.month;
@@ -397,7 +433,7 @@ export function checkBudgetLimitReminders(
 
     if (percentage >= 100) {
       reminders.push({
-        id: `reminder-budget-exceeded-${c.category_id}-${month}`,
+        id: `reminder-budget-exceeded-${memberId ? `${memberId}-` : ''}${c.category_id}-${month}`,
         type: 'budget_limit',
         title: `${catName} Budget Exceeded!`,
         message: `${catName} has exceeded its cap (${Math.round(percentage)}% spent, SGD ${(spent - allocated).toFixed(2)} over).`,
@@ -409,7 +445,7 @@ export function checkBudgetLimitReminders(
       });
     } else if (percentage >= warningPct) {
       reminders.push({
-        id: `reminder-budget-nearing-${c.category_id}-${month}`,
+        id: `reminder-budget-nearing-${memberId ? `${memberId}-` : ''}${c.category_id}-${month}`,
         type: 'budget_limit',
         title: `${catName} Nearing Cap`,
         message: `${catName} is at ${Math.round(percentage)}% of cap (SGD ${(allocated - spent).toFixed(2)} left).`,
@@ -430,13 +466,19 @@ export function checkBudgetLimitReminders(
  */
 export function checkRecurringBillsReminders(
   policies: RecurringPolicy[],
-  referenceDate?: Date
+  referenceDate?: Date,
+  memberId?: string
 ): AppReminder[] {
   const d = referenceDate || getSingaporeDate();
   const currentMonthNum = d.getMonth() + 1;
   const reminders: AppReminder[] = [];
 
   for (const p of policies) {
+    // Strict member scoping: policies must belong to active user
+    if (memberId && p.owner_id && p.owner_id !== memberId) {
+      continue;
+    }
+
     if (p.frequency === 'annually' && p.payment_month === currentMonthNum) {
       reminders.push({
         id: `reminder-recurring-${p.id}-${d.getFullYear()}-${currentMonthNum}`,
@@ -457,6 +499,7 @@ export function checkRecurringBillsReminders(
 
 /**
  * 10. Checks savings goals pacing (behind schedule or achieved).
+ * Shared across the household so both partners can celebrate or track progress.
  */
 export function checkGoalPacingReminders(goals: SavingsGoal[]): AppReminder[] {
   const reminders: AppReminder[] = [];
@@ -497,7 +540,8 @@ export function checkGoalPacingReminders(goals: SavingsGoal[]): AppReminder[] {
  */
 export function checkMonthlyBudgetReviewReminder(
   monthlyBudgetDetail: MonthlyBudgetDetail,
-  referenceDate?: Date
+  referenceDate?: Date,
+  memberId?: string
 ): AppReminder | null {
   const d = referenceDate || getSingaporeDate();
   if (d.getDate() > 5 || monthlyBudgetDetail.budget.is_locked) return null;
@@ -505,7 +549,7 @@ export function checkMonthlyBudgetReviewReminder(
   const month = monthlyBudgetDetail.budget.month;
 
   return {
-    id: `reminder-budget-review-${month}`,
+    id: `reminder-budget-review-${memberId ? `${memberId}-` : ''}${month}`,
     type: 'monthly_budget_review',
     title: 'Monthly Budget Review',
     message: `Plan your spending for ${month}! Review category allocations and lock in your targets.`,
@@ -557,7 +601,7 @@ export async function computeActiveReminders(
     ] = await Promise.all([
       financeService.getNotificationPreferences(memberId),
       financeService.getStreakSummary(memberId),
-      financeService.getAllAccountSnapshots('household'),
+      financeService.getAllAccountSnapshots(memberId),
       financeService.getCreditCardStatements(),
       financeService.getCreditCards(),
       financeService.getHouseholdOverview(),
@@ -573,7 +617,7 @@ export async function computeActiveReminders(
 
     // 1. Daily Spend Check-in
     if (prefs.streak_and_logging) {
-      const dailyReminder = checkDailyCheckinReminder(streak, options?.currentHour);
+      const dailyReminder = checkDailyCheckinReminder(streak, options?.currentHour, memberId);
       if (dailyReminder && !dismissedIds.has(dailyReminder.id)) {
         reminders.push(dailyReminder);
       }
@@ -581,7 +625,7 @@ export async function computeActiveReminders(
 
     // 2. Monthly Balance Update
     if (prefs.monthly_balance_updates) {
-      const balanceReminder = checkBalanceUpdateReminder(snapshots, options?.referenceDate);
+      const balanceReminder = checkBalanceUpdateReminder(snapshots, options?.referenceDate, memberId);
       if (balanceReminder && !dismissedIds.has(balanceReminder.id)) {
         reminders.push(balanceReminder);
       }
@@ -592,7 +636,8 @@ export async function computeActiveReminders(
       const ccReminders = checkCreditCardDueReminders(
         statements,
         todayStr,
-        prefs.cc_due_days_before || 5
+        prefs.cc_due_days_before || 5,
+        memberId
       );
       for (const r of ccReminders) {
         if (!dismissedIds.has(r.id)) reminders.push(r);
@@ -604,7 +649,8 @@ export async function computeActiveReminders(
       const missingCcReminders = checkMissingCreditCardStatements(
         cards,
         statements,
-        options?.referenceDate
+        options?.referenceDate,
+        memberId
       );
       for (const r of missingCcReminders) {
         if (!dismissedIds.has(r.id)) reminders.push(r);
@@ -627,7 +673,8 @@ export async function computeActiveReminders(
       const settlementReminder = checkSettlementReminder(
         overview.settlementSummary,
         prefs.settlement_threshold_sgd || 200,
-        options?.referenceDate
+        options?.referenceDate,
+        memberId
       );
       if (settlementReminder && !dismissedIds.has(settlementReminder.id)) {
         reminders.push(settlementReminder);
@@ -649,7 +696,8 @@ export async function computeActiveReminders(
     if (prefs.budget_limit_alerts) {
       const budgetReminders = checkBudgetLimitReminders(
         monthlyBudget,
-        prefs.budget_warning_pct || 80
+        prefs.budget_warning_pct || 80,
+        memberId
       );
       for (const r of budgetReminders) {
         if (!dismissedIds.has(r.id)) reminders.push(r);
@@ -658,7 +706,7 @@ export async function computeActiveReminders(
 
     // 7. Recurring Bills & Renewals Due
     if (prefs.recurring_bills_due) {
-      const billReminders = checkRecurringBillsReminders(policies, options?.referenceDate);
+      const billReminders = checkRecurringBillsReminders(policies, options?.referenceDate, memberId);
       for (const r of billReminders) {
         if (!dismissedIds.has(r.id)) reminders.push(r);
       }
@@ -674,7 +722,7 @@ export async function computeActiveReminders(
 
     // 9. Monthly Budget Review
     if (prefs.monthly_budget_review) {
-      const reviewReminder = checkMonthlyBudgetReviewReminder(monthlyBudget, options?.referenceDate);
+      const reviewReminder = checkMonthlyBudgetReviewReminder(monthlyBudget, options?.referenceDate, memberId);
       if (reviewReminder && !dismissedIds.has(reviewReminder.id)) {
         reminders.push(reviewReminder);
       }
@@ -793,13 +841,22 @@ export async function evaluateAndDispatchReminders(options?: ComputeRemindersOpt
     Notification.permission === 'granted'
   ) {
     for (const reminder of reminders) {
-      const sessionKey = `bb_notif_dispatched_${reminder.id}`;
-      if (!window.sessionStorage.getItem(sessionKey)) {
+      const sessionKey = `bb_notif_dispatched_${memberId}_${reminder.id}`;
+      if (inFlightDispatches.has(sessionKey) || window.sessionStorage.getItem(sessionKey)) {
+        continue;
+      }
+      // Immediately claim lock and record in sessionStorage before awaiting async dispatch
+      inFlightDispatches.add(sessionKey);
+      window.sessionStorage.setItem(sessionKey, '1');
+      try {
         await dispatchPWANotification(reminder.title, {
           body: reminder.message,
-          tag: reminder.id,
+          tag: `${memberId}-${reminder.id}`,
         });
-        window.sessionStorage.setItem(sessionKey, '1');
+      } catch (err) {
+        console.debug('Failed to dispatch notification:', err);
+      } finally {
+        inFlightDispatches.delete(sessionKey);
       }
     }
   }

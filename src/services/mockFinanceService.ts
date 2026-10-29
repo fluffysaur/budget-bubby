@@ -55,6 +55,7 @@ import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateCPFAndNetPay,
+  calculateMemberPolicyDeductions,
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
@@ -451,6 +452,57 @@ class MockFinanceServiceImpl implements FinanceService {
     return cloneDeep(this.state.categories);
   }
 
+  private syncUnlockedBudgetsForOwner(ownerId?: string): void {
+    for (const budget of this.state.monthlyBudgets) {
+      if (budget.is_locked) continue;
+      if (ownerId && ownerId !== 'joint' && budget.owner_id !== ownerId) continue;
+
+      const baseProfile = this.state.baseProfiles.find((p) => p.owner_id === budget.owner_id);
+      if (baseProfile) {
+        budget.gross_salary = baseProfile.gross_salary;
+        budget.cpf_deduction = calculateCPFAndNetPay(
+          baseProfile.gross_salary,
+          baseProfile.cpf_employee_rate
+        ).cpfDeduction;
+      }
+
+      const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
+        this.state.recurringPolicies,
+        budget.owner_id
+      );
+      budget.taxes_deduction = taxesMonthly;
+      budget.insurance_deduction = insuranceMonthly;
+      budget.after_deductions = Math.round(
+        (budget.gross_salary -
+          budget.cpf_deduction +
+          (budget.bonus || 0) -
+          budget.taxes_deduction -
+          budget.insurance_deduction) *
+          100
+      ) / 100;
+
+      if (baseProfile) {
+        const profAllocs = this.state.baseAllocations.filter(
+          (a) => a.profile_id === baseProfile.id
+        );
+        if (profAllocs.length > 0) {
+          this.state.monthlyBudgetCategories = this.state.monthlyBudgetCategories.filter(
+            (c) => c.monthly_budget_id !== budget.id
+          );
+          const regenerated = profAllocs.map((alloc, idx) => ({
+            id: `mbc-${budget.id}-${idx}`,
+            monthly_budget_id: budget.id,
+            category_id: alloc.category_id,
+            percentage: alloc.target_percentage,
+            allocated_amount:
+              Math.round(budget.after_deductions * alloc.target_percentage * 100) / 100,
+          }));
+          this.state.monthlyBudgetCategories.push(...regenerated);
+        }
+      }
+    }
+  }
+
   public async updateBaseProfile(
     profile: BaseBudgetProfile,
     allocations: BaseProfileAllocation[]
@@ -467,6 +519,9 @@ class MockFinanceServiceImpl implements FinanceService {
       (a) => a.profile_id !== profile.id
     );
     this.state.baseAllocations.push(...cloneDeep(allocations));
+
+    // Sync unlocked monthly budgets & category allocations for this member
+    this.syncUnlockedBudgetsForOwner(profile.owner_id);
 
     this.persist();
   }
@@ -492,19 +547,8 @@ class MockFinanceServiceImpl implements FinanceService {
       const rate = baseProfile ? baseProfile.cpf_employee_rate : 0.20;
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
-      const memberPolicies = this.state.recurringPolicies.filter(
-        (p) => p.owner_id === ownerId
-      );
-      const taxesDeduction = Math.round(
-        memberPolicies
-          .filter((p) => p.type === 'tax')
-          .reduce((s, p) => s + (p.monthly_amortized_amount || 0), 0) * 100
-      ) / 100;
-      const insuranceDeduction = Math.round(
-        memberPolicies
-          .filter((p) => p.type === 'insurance')
-          .reduce((s, p) => s + (p.monthly_amortized_amount || 0), 0) * 100
-      ) / 100;
+      const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
+        calculateMemberPolicyDeductions(this.state.recurringPolicies, ownerId);
 
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
@@ -878,6 +922,7 @@ class MockFinanceServiceImpl implements FinanceService {
     };
 
     this.state.recurringPolicies.push(newPolicy);
+    this.syncUnlockedBudgetsForOwner(newPolicy.owner_id);
     this.persist();
     return cloneDeep(newPolicy);
   }
@@ -901,12 +946,14 @@ class MockFinanceServiceImpl implements FinanceService {
           : Math.round(policy.amount * 100) / 100;
     }
 
+    this.syncUnlockedBudgetsForOwner();
     this.persist();
     return cloneDeep(policy);
   }
 
   public async deletePolicy(id: string): Promise<void> {
     this.state.recurringPolicies = this.state.recurringPolicies.filter((p) => p.id !== id);
+    this.syncUnlockedBudgetsForOwner();
     this.persist();
   }
 

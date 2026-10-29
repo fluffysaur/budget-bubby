@@ -42,7 +42,15 @@ import {
 import { financeService } from "../../services/financeService";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
 import type { Category, CategoryGroup, BaseBudgetProfile, BaseProfileAllocation } from "../../types/finance";
-import { isSpendableCategory, calculateCPFAndNetPay, calculateDisposableBudget } from "../../lib/financialFormulas";
+import {
+    isSpendableCategory,
+    calculateCPFAndNetPay,
+    calculateDisposableBudget,
+    dollarToPercentage,
+    parseAllocationInput,
+    formatAllocationPercent,
+    calculateMemberPolicyDeductions,
+} from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
 
 export interface ManageCategoriesModalProps {
@@ -115,6 +123,8 @@ export function ManageCategoriesModal({
     const [baseProfiles, setBaseProfiles] = useState<BaseBudgetProfile[]>([]);
     const [baseAllocations, setBaseAllocations] = useState<BaseProfileAllocation[]>([]);
     const [categoryPercentages, setCategoryPercentages] = useState<Record<string, number>>({});
+    const [categoryDollarOverrides, setCategoryDollarOverrides] = useState<Record<string, string>>({});
+    const [rawPercentText, setRawPercentText] = useState<Record<string, string>>({});
     const [lockedCategories, setLockedCategories] = useState<Record<string, boolean>>({});
     const [disposablePool, setDisposablePool] = useState<number>(3600);
 
@@ -124,10 +134,11 @@ export function ManageCategoriesModal({
     const loadCategories = async () => {
         try {
             setLoading(true);
-            const [data, profs, allocs] = await Promise.all([
+            const [data, profs, allocs, policies] = await Promise.all([
                 financeService.getCategories(),
                 financeService.getBaseProfiles(),
                 financeService.getBaseAllocations(),
+                financeService.getPolicies(),
             ]);
             setCategories(data || []);
             setBaseProfiles(profs || []);
@@ -137,16 +148,22 @@ export function ManageCategoriesModal({
             if (activeProf) {
                 const gross = activeProf.gross_salary || 5000;
                 const cpf = calculateCPFAndNetPay(gross, activeProf.cpf_employee_rate || 0.2).cpfDeduction;
-                const disp = calculateDisposableBudget(gross - cpf, 0, 0);
+                const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
+                    policies || [],
+                    activeProf.owner_id,
+                );
+                const disp = calculateDisposableBudget(gross - cpf, taxesMonthly, insuranceMonthly);
                 setDisposablePool(disp);
 
                 const currentAllocs = (allocs || []).filter((a) => a.profile_id === activeProf.id);
                 const pctMap: Record<string, number> = {};
                 for (const cat of data || []) {
                     const found = currentAllocs.find((a) => a.category_id === cat.id);
-                    pctMap[cat.id] = found ? Math.round(found.target_percentage * 100) : 0;
+                    pctMap[cat.id] = found ? Math.round(found.target_percentage * 10000) / 100 : 0;
                 }
                 setCategoryPercentages(pctMap);
+                setCategoryDollarOverrides({});
+                setRawPercentText({});
             }
         } catch (err: unknown) {
             console.error("Failed to load categories:", err);
@@ -163,11 +180,48 @@ export function ManageCategoriesModal({
         }));
     };
 
-    const handlePercentageChange = (categoryId: string, rawVal: string) => {
-        const val = rawVal === "" ? 0 : parseFloat(rawVal);
-        setCategoryPercentages((prev) => ({
+    const handleDollarChange = (catId: string, valStr: string) => {
+        setCategoryDollarOverrides((prev) => ({ ...prev, [catId]: valStr }));
+        const parsedDollar = parseFloat(valStr.replace(/[^0-9.]/g, ""));
+        if (!isNaN(parsedDollar) && disposablePool > 0) {
+            const pct = dollarToPercentage(parsedDollar, disposablePool);
+            setCategoryPercentages((prev) => ({ ...prev, [catId]: pct }));
+            setRawPercentText((prev) => ({ ...prev, [catId]: formatAllocationPercent(pct) }));
+            // Automatically lock the category when setting a fixed dollar amount
+            setLockedCategories((prev) => ({ ...prev, [catId]: true }));
+        } else if (valStr === "") {
+            setCategoryPercentages((prev) => ({ ...prev, [catId]: 0 }));
+            setRawPercentText((prev) => ({ ...prev, [catId]: "0" }));
+        }
+    };
+
+    const handlePercentageChange = (categoryId: string, inputVal: string) => {
+        setRawPercentText((prev) => ({ ...prev, [categoryId]: inputVal }));
+        const parsed = parseAllocationInput(inputVal, disposablePool);
+        if (parsed.isDollar) {
+            setCategoryPercentages((prev) => ({ ...prev, [categoryId]: parsed.percentage }));
+            if (parsed.dollarAmount !== undefined) {
+                setCategoryDollarOverrides((prev) => ({
+                    ...prev,
+                    [categoryId]: String(parsed.dollarAmount),
+                }));
+            }
+            setLockedCategories((prev) => ({ ...prev, [categoryId]: true }));
+        } else {
+            setCategoryPercentages((prev) => ({ ...prev, [categoryId]: parsed.percentage }));
+            setCategoryDollarOverrides((prev) => {
+                const next = { ...prev };
+                delete next[categoryId];
+                return next;
+            });
+        }
+    };
+
+    const handlePercentBlur = (categoryId: string) => {
+        const current = categoryPercentages[categoryId] ?? 0;
+        setRawPercentText((prev) => ({
             ...prev,
-            [categoryId]: isNaN(val) ? 0 : val,
+            [categoryId]: formatAllocationPercent(current),
         }));
     };
 
@@ -220,6 +274,20 @@ export function ManageCategoriesModal({
             }
         }
         setCategoryPercentages(updated);
+        setCategoryDollarOverrides((prev) => {
+            const next = { ...prev };
+            unlockedCats.forEach((c) => {
+                delete next[c.id];
+            });
+            return next;
+        });
+        setRawPercentText((prev) => {
+            const next = { ...prev };
+            unlockedCats.forEach((c) => {
+                delete next[c.id];
+            });
+            return next;
+        });
         setErrorMessage(null);
     };
 
@@ -246,7 +314,7 @@ export function ManageCategoriesModal({
                         (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `alloc-${cat.id}`),
                     profile_id: activeProf.id,
                     category_id: cat.id,
-                    target_percentage: (categoryPercentages[cat.id] || 0) / 100,
+                    target_percentage: Math.round(((categoryPercentages[cat.id] || 0) / 100) * 10000) / 10000,
                 };
             });
             await financeService.updateBaseProfile(activeProf, updatedAllocs);
@@ -527,21 +595,40 @@ export function ManageCategoriesModal({
                                             </div>
 
                                             <div className="flex items-center gap-2.5 shrink-0">
-                                                <span
-                                                    data-testid={`manage-cat-dollar-${cat.id}`}
-                                                    className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-mono"
-                                                >
-                                                    {formatSGD(dollarEquivalent)}/mo
-                                                </span>
+                                                <div className="relative w-28">
+                                                    <span className="absolute left-2 top-1.5 text-xs text-slate-400 font-mono pointer-events-none">
+                                                        S$
+                                                    </span>
+                                                    <input
+                                                        id={`manage-cat-dollar-input-${cat.id}`}
+                                                        data-testid={`manage-cat-dollar-${cat.id}`}
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        placeholder="0"
+                                                        value={
+                                                            categoryDollarOverrides[cat.id] !== undefined
+                                                                ? categoryDollarOverrides[cat.id]
+                                                                : dollarEquivalent === 0
+                                                                  ? ""
+                                                                  : dollarEquivalent.toFixed(2)
+                                                        }
+                                                        onChange={(e) => handleDollarChange(cat.id, e.target.value)}
+                                                        className="w-full pl-7 pr-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden font-mono"
+                                                        title="Set fixed monthly dollar amount (auto-converts to %)"
+                                                    />
+                                                </div>
                                                 <div className="relative w-20">
                                                     <input
                                                         id={`manage-cat-alloc-${cat.id}`}
-                                                        type="number"
-                                                        step="any"
-                                                        min="0"
-                                                        max="100"
-                                                        value={currentPct}
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        value={
+                                                            rawPercentText[cat.id] !== undefined
+                                                                ? rawPercentText[cat.id]
+                                                                : formatAllocationPercent(currentPct)
+                                                        }
                                                         onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
+                                                        onBlur={() => handlePercentBlur(cat.id)}
                                                         className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
                                                     />
                                                     <span className="absolute right-1.5 top-1.5 text-[11px] text-slate-400">

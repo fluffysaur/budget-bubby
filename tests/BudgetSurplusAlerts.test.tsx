@@ -453,9 +453,9 @@ describe('CategoryProgressList Warning Badges', () => {
 
     render(<CategoryProgressList categories={categories} />);
 
-    // Amber warning badge on progress bar
-    expect(screen.getByTestId('badge-amber-cat-food')).toBeInTheDocument();
-    expect(screen.getByText('Amber Guardrail')).toBeInTheDocument();
+    // Amber warning text on progress bar (amber chip removed)
+    expect(screen.getByText(/S\$80\.00 remaining/i)).toBeInTheDocument();
+    expect(screen.queryByText('Amber Guardrail')).not.toBeInTheDocument();
 
     // Rose cap exceeded badge on progress bar
     expect(screen.getByTestId('badge-rose-cat-lifestyle')).toBeInTheDocument();

@@ -143,7 +143,9 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
     setDismissedSweepMonth(month);
     try {
       localStorage.setItem('budget_bubby_dismissed_sweep', month);
-    } catch {}
+    } catch {
+      // Ignore storage errors in restricted contexts
+    }
   };
 
   const handleConfirmBankSurplus = () => {

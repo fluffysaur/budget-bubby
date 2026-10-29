@@ -802,7 +802,7 @@ export function calculateSpendablePacing({
   monthlyBudget,
 }: CalculateSpendablePacingOptions): SpendablePacingResult {
   // Determine monthly spendable allocated
-  let cap = 0;
+  let cap: number;
   if (monthlyCap !== undefined && monthlyCap > 0) {
     cap = monthlyCap;
   } else if (monthlyBudget?.spendableAllocated && monthlyBudget.spendableAllocated > 0) {
@@ -865,9 +865,9 @@ export function calculateSpendablePacing({
   const currentMonthStr = todayStr.slice(0, 7);
   const isCurrentMonth = month === currentMonthStr;
 
-  let dayOfMonth = 0;
-  let daysRemaining = 0;
-  let dynamicDailyPace = 0;
+  let dayOfMonth: number;
+  let daysRemaining: number;
+  let dynamicDailyPace: number;
 
   if (isCurrentMonth) {
     dayOfMonth = parseInt(todayStr.slice(8, 10), 10) || 1;
@@ -956,3 +956,90 @@ export function detectUnspentMonthEndSurplus({
     lastMonth: targetLastMonth,
   };
 }
+
+/**
+ * 16. Converts a monthly dollar target into a percentage (0-100) of the disposable pool,
+ * rounded to 4 decimal places so fixed dollar amounts reconstruct to the exact cent.
+ */
+export function dollarToPercentage(dollarAmount: number, disposablePool: number): number {
+  if (disposablePool <= 0 || dollarAmount <= 0 || isNaN(dollarAmount)) {
+    return 0;
+  }
+  const rawPct = (dollarAmount / disposablePool) * 100;
+  return Math.min(100, Math.max(0, Math.round(rawPct * 10000) / 10000));
+}
+
+/**
+ * 17. Parses an allocation input string that may be a dollar value ("$300", "S$300")
+ * or a percentage value ("15", "15.5%").
+ */
+export function parseAllocationInput(
+  rawInput: string,
+  disposablePool: number
+): { isDollar: boolean; percentage: number; dollarAmount?: number } {
+  const trimmed = (rawInput || '').trim();
+  const isDollar = /^(s?\$)/i.test(trimmed) || /\$$/.test(trimmed);
+  const cleanNumStr = trimmed.replace(/^(s?\$)/i, '').replace(/[$%,\s]/g, '');
+  const parsed = cleanNumStr === '' ? 0 : parseFloat(cleanNumStr);
+  const safeVal = isNaN(parsed) ? 0 : Math.max(0, parsed);
+
+  if (isDollar) {
+    return {
+      isDollar: true,
+      dollarAmount: Math.round(safeVal * 100) / 100,
+      percentage: dollarToPercentage(safeVal, disposablePool),
+    };
+  }
+
+  return {
+    isDollar: false,
+    percentage: Math.min(100, Math.round(safeVal * 10000) / 10000),
+  };
+}
+
+/**
+ * 18. Formats a percentage value (0-100) cleanly with up to 2 decimal places
+ * (e.g., 15 -> "15%", 6.963 -> "6.96%").
+ */
+export function formatAllocationPercent(pct: number): string {
+  const safe = isNaN(pct) ? 0 : Math.round(pct * 100) / 100;
+  return `${Number(safe.toFixed(2))}%`;
+}
+
+/**
+ * 19. Computes a member's monthly amortized Taxes and Insurance deductions from active policies.
+ */
+export function calculateMemberPolicyDeductions(
+  policies: RecurringPolicy[] = [],
+  memberId?: string
+): { taxesMonthly: number; insuranceMonthly: number } {
+  const inScope = (policies || []).filter((p) => {
+    if (!memberId || memberId === 'household') return true;
+    return p.owner_id === memberId || p.owner_id === 'joint';
+  });
+
+  const getMonthlyAmount = (p: RecurringPolicy): number => {
+    if (p.monthly_amortized_amount !== undefined && p.monthly_amortized_amount !== null) {
+      return Number(p.monthly_amortized_amount) || 0;
+    }
+    const amt = Number(p.amount) || 0;
+    return p.frequency === 'annually' ? amt / 12 : amt;
+  };
+
+  const taxesMonthly =
+    Math.round(
+      inScope
+        .filter((p) => p.type === 'tax')
+        .reduce((sum, p) => sum + getMonthlyAmount(p), 0) * 100
+    ) / 100;
+
+  const insuranceMonthly =
+    Math.round(
+      inScope
+        .filter((p) => p.type === 'insurance')
+        .reduce((sum, p) => sum + getMonthlyAmount(p), 0) * 100
+    ) / 100;
+
+  return { taxesMonthly, insuranceMonthly };
+}
+
