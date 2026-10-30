@@ -85,7 +85,7 @@ export function DeleteExpenseModal({
                     title="Delete Expense?"
                     subtitle="This transaction will be permanently removed."
                     icon={
-                        <Trash2 className="h-4.5 w-4.5 stroke-[2.2] text-rose-600" />
+                        <Trash2 className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />
                     }
                     iconBgColor="bg-(--pastel-coral-light)"
                     onClose={onClose}
@@ -157,7 +157,7 @@ export function DeleteExpenseModal({
                                 variant="warning"
                                 title="Savings Goal Balance Restored:"
                                 icon={
-                                    <Target className="h-4 w-4 stroke-[2.2] text-amber-700" />
+                                    <Target className="h-4 w-4 text-amber-700" strokeWidth={2.5} />
                                 }
                             >
                                 Deleting this expense will return{" "}
@@ -173,7 +173,7 @@ export function DeleteExpenseModal({
                                 variant="info"
                                 title="Couple Settlement Adjusted:"
                                 icon={
-                                    <ArrowRightLeft className="h-4 w-4 stroke-[2.2] text-purple-700" />
+                                    <ArrowRightLeft className="h-4 w-4 text-purple-700" strokeWidth={2.5} />
                                 }
                             >
                                 This was logged as a shared expense. Deleting it

@@ -44,19 +44,19 @@ export interface AppHeaderProps {
 const MEMBER_COLOR_PALETTE = [
     {
         activeBg:
-            "bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
         activeBg:
-            "bg-[#fcbffa] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-pink) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
         activeBg:
-            "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
     {
         activeBg:
-            "bg-[#bbf7d0] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
     },
 ];
 
@@ -156,7 +156,7 @@ export function AppHeader({
                 memberId: null as string | null,
                 label: "Combined",
                 activeBg:
-                    "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+                    "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
             },
         ];
 
@@ -192,7 +192,7 @@ export function AppHeader({
 
     return (
         <header
-            className={`sticky top-0 z-40 w-full border-b-[1.5px] border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
+            className={`sticky top-0 z-40 w-full border-b-2 border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
         >
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
                 {/* Left: Brand Icon (Mobile) + Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
@@ -223,7 +223,7 @@ export function AppHeader({
                             <div
                                 role="listbox"
                                 aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-2 w-52 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-lg) transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
+                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-lg) transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
                             >
                                 <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                     Perspectives
@@ -257,7 +257,7 @@ export function AppHeader({
                                 })}
 
                                 {/* Mobile Settings & Utilities section */}
-                                <div className="mt-2 pt-2 border-t-[1.5px] border-(--border-subtle) space-y-1">
+                                <div className="mt-2 pt-2 border-t-2 border-(--border-subtle) space-y-1">
                                     <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                         Settings &amp; Tools
                                     </div>
@@ -270,7 +270,7 @@ export function AppHeader({
                                         }}
                                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                                     >
-                                        <Settings className="h-4 w-4 stroke-[2.2] text-[#1a1a1a] dark:text-[#dfc2ff]" />
+                                        <Settings className="h-4 w-4 text-(--text-ink) dark:text-(--pastel-lilac)" strokeWidth={2.5} />
                                         <span>Settings</span>
                                     </button>
 
@@ -285,10 +285,11 @@ export function AppHeader({
                                     >
                                         <div className="flex items-center gap-2">
                                             <RotateCw
-                                                className={`h-4 w-4 stroke-[2.2] ${
+                                                strokeWidth={2.5}
+                                                className={`h-4 w-4 ${
                                                     isRefreshing
-                                                        ? "animate-spin text-[#7e22ce] dark:text-[#dfc2ff]"
-                                                        : "text-[#1a1a1a] dark:text-[#dfc2ff]"
+                                                        ? "animate-spin text-purple-700 dark:text-(--pastel-lilac)"
+                                                        : "text-(--text-ink) dark:text-(--pastel-lilac)"
                                                 }`}
                                             />
                                             <span>Refresh</span>
@@ -310,9 +311,9 @@ export function AppHeader({
                                     >
                                         <div className="flex items-center gap-2">
                                             {theme === "dark" ? (
-                                                <Sun className="h-4 w-4 text-[#ffe999]" />
+                                                <Sun className="h-4 w-4 text-(--pastel-butter)" strokeWidth={2.5} />
                                             ) : (
-                                                <Moon className="h-4 w-4 text-[#1a1a1a]" />
+                                                <Moon className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
                                             )}
                                             <span>
                                                 {theme === "dark"
@@ -329,9 +330,9 @@ export function AppHeader({
                                                 promptInstall();
                                                 setIsDropdownOpen(false);
                                             }}
-                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#14532d] dark:text-[#86efac] hover:bg-[#bbf7d0]/30 transition-colors cursor-pointer"
+                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-(--pastel-mint)/30 transition-colors cursor-pointer"
                                         >
-                                            <Download className="h-4 w-4 stroke-[2.5]" />
+                                            <Download className="h-4 w-4" strokeWidth={2.5} />
                                             <span>Install App</span>
                                         </button>
                                     )}
@@ -343,9 +344,9 @@ export function AppHeader({
                                                 setIsDropdownOpen(false);
                                                 setIsLogoutConfirmOpen(true);
                                             }}
-                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#9a1b1b] dark:text-rose-400 hover:bg-[#fff1ee] dark:hover:bg-[#3d1c1a] transition-colors cursor-pointer"
+                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-rose-800 dark:text-rose-300 hover:bg-(--pastel-coral-light) dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                                         >
-                                            <LogOut className="h-4 w-4 stroke-[2.5]" />
+                                            <LogOut className="h-4 w-4" strokeWidth={2.5} />
                                             <span>Sign Out</span>
                                         </button>
                                     )}
@@ -357,7 +358,7 @@ export function AppHeader({
                     {/* Desktop Perspective Switcher Pills */}
                     <nav
                         aria-label="Perspective Switcher"
-                        className="hidden sm:flex items-center rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-subtle) p-1"
+                        className="hidden sm:flex items-center rounded-2xl bg-(--bg-cream) border-2 border-(--border-subtle) p-1"
                     >
                         {perspectiveOptions.map((opt) => {
                             const isSelected = perspective === opt.key;
@@ -404,7 +405,7 @@ export function AppHeader({
                                 aria-label="Quick Add"
                                 className="hidden md:inline-flex"
                                 leftIcon={
-                                    <Plus className="h-4 w-4 stroke-[2.5]" />
+                                    <Plus className="h-4 w-4" strokeWidth={2.5} />
                                 }
                             >
                                 Add Expense
@@ -416,9 +417,9 @@ export function AppHeader({
                     {isMockMode && (
                         <div
                             title="Running in local Demo Mode with sample seed data"
-                            className="flex items-center gap-1.5 rounded-xl border-[1.5px] border-(--border-ink) bg-[#ffe999] px-2.5 py-1 text-xs font-bold text-[#1a1a1a] shadow-(--shadow-cute-sm)"
+                            className="flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter) px-2.5 py-1 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm)"
                         >
-                            <span className="h-2 w-2 rounded-full bg-[#f59e0b] animate-pulse border border-[#1a1a1a]" />
+                            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse border border-(--border-ink)" />
                             <span className="hidden xs:inline">Demo Mode</span>
                             <span className="xs:hidden">Demo</span>
                         </div>
@@ -437,7 +438,7 @@ export function AppHeader({
                         className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
                     >
                         <RotateCw
-                            className={`h-4 w-4 ${isRefreshing ? "animate-spin text-[#7e22ce] dark:text-[#dfc2ff]" : ""}`}
+                            className={`h-4 w-4 ${isRefreshing ? "animate-spin text-purple-700 dark:text-(--pastel-lilac)" : ""}`}
                             strokeWidth={2.5}
                         />
                     </button>
@@ -453,9 +454,9 @@ export function AppHeader({
                         onClick={() => setIsSettingsOpen(true)}
                         aria-label="Settings"
                         title="Settings"
-                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                     >
-                        <Settings className="h-4 w-4 stroke-[2.2]" />
+                        <Settings className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
                     </button>
 
                     {/* Theme Toggle Button (Desktop) */}
@@ -463,12 +464,12 @@ export function AppHeader({
                         type="button"
                         onClick={toggleTheme}
                         aria-label={`Toggle theme (currently ${theme})`}
-                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                     >
                         {theme === "dark" ? (
-                            <Sun className="h-4 w-4 text-[#ffe999]" />
+                            <Sun className="h-4 w-4 text-(--pastel-butter)" strokeWidth={2.5} />
                         ) : (
-                            <Moon className="h-4 w-4 text-[#1a1a1a]" />
+                            <Moon className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
                         )}
                     </button>
 
@@ -479,9 +480,9 @@ export function AppHeader({
                             onClick={() => setIsLogoutConfirmOpen(true)}
                             aria-label="Lock Budget Bubby"
                             title="Lock / Sign Out"
-                            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-(--shadow-cute-sm) transition-all hover:bg-[#fff1ee] hover:text-[#9a1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-(--shadow-cute-sm) transition-all hover:bg-(--pastel-coral-light) hover:text-rose-800 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                         >
-                            <LogOut className="h-4 w-4 stroke-[2.5]" />
+                            <LogOut className="h-4 w-4" strokeWidth={2.5} />
                         </button>
                     )}
                 </div>
@@ -498,7 +499,7 @@ export function AppHeader({
                         title="Lock & Sign Out?"
                         subtitle="You will need your 6-digit PIN to unlock again."
                         icon={
-                            <AlertTriangle className="h-5 w-5 stroke-[2.5] text-rose-700" />
+                            <AlertTriangle className="h-5 w-5 text-rose-700" strokeWidth={2.5} />
                         }
                         iconBgColor="bg-rose-100"
                         onClose={() => setIsLogoutConfirmOpen(false)}

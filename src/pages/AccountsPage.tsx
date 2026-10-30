@@ -140,7 +140,7 @@ export function AccountsPage({
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
             {/* Page Header */}
-            <PageHeader title="Accounts & Net Worth" />
+            <PageHeader title="Accounts" />
 
             {/* Sub-Tab Navigation Bar */}
             <SegmentedTabs
@@ -213,7 +213,7 @@ export function AccountsPage({
 
                             {/* Card 2: Total Assets */}
                             <StatCard
-                                title="Total Assets"
+                                title="Assets"
                                 value={formatSGD(totalAssets)}
                                 subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
                                 icon={<Wallet className="h-4 w-4" />}
@@ -222,7 +222,7 @@ export function AccountsPage({
 
                             {/* Card 3: Total Liabilities / Loans */}
                             <StatCard
-                                title="Total Liabilities / Loans"
+                                title="Liabilities"
                                 value={formatSGD(totalLiabilities)}
                                 subtitle={`${loans.length} active loan${loans.length === 1 ? "" : "s"}`}
                                 icon={<CreditCard className="h-4 w-4" />}

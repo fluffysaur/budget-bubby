@@ -131,7 +131,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         const splitEvenlyBtn = screen.getByRole("button", { name: /split evenly/i });
         fireEvent.click(splitEvenlyBtn);
 
-        const sweepSubmitBtn = screen.getByRole("button", { name: /deposit .* into goals/i });
+        const sweepSubmitBtn = screen.getByRole("button", { name: /sweep /i });
         await act(async () => {
             fireEvent.click(sweepSubmitBtn);
         });

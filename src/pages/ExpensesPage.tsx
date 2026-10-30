@@ -294,7 +294,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
                 variant="secondary"
                 aria-label="+ Bulk Log"
                 className="w-full sm:w-auto"
-                leftIcon={<FileSpreadsheet className="h-4 w-4 stroke-[2.2] text-emerald-600" />}
+                leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" strokeWidth={2.5} />}
                 onClick={() => setIsBulkAddOpen(true)}
               >
                 Bulk Log
@@ -303,7 +303,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
                 variant="primary"
                 aria-label="+ Add Expense"
                 className="hidden md:inline-flex"
-                leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+                leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
                 onClick={() => setIsModalOpen(true)}
               >
                 Add Expense
@@ -318,7 +318,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
             size="sm"
             aria-label="+ Bulk Log"
             className="w-full sm:w-auto"
-            leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 stroke-[2.2] text-emerald-600" />}
+            leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />}
             onClick={() => setIsBulkAddOpen(true)}
           >
             Bulk Log
@@ -328,7 +328,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
             size="sm"
             aria-label="+ Add Expense"
             className="hidden md:inline-flex"
-            leftIcon={<Plus className="h-3.5 w-3.5 stroke-[2.5]" />}
+            leftIcon={<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
             onClick={() => setIsModalOpen(true)}
           >
             Add Expense
@@ -360,14 +360,14 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Spendable Remaining (Primary Card) */}
         <StatCard
-          title="Spendable Remaining"
+          title="Spendable"
           value={formatSGD(spendablePacing.spendableRemaining)}
           subtitle={
             spendablePacing.isCurrentMonth
-              ? `${formatSGD(spendablePacing.dynamicDailyPace)}/day (${spendablePacing.daysRemaining} days left)`
+              ? `${formatSGD(spendablePacing.dynamicDailyPace)}/day · ${spendablePacing.daysRemaining}d left`
               : spendablePacing.spendableRemaining >= 0
-              ? `Ended with +${formatSGD(spendablePacing.spendableRemaining)} surplus`
-              : `Ended with -${formatSGD(Math.abs(spendablePacing.spendableRemaining))} deficit`
+              ? `+${formatSGD(spendablePacing.spendableRemaining)} surplus`
+              : `-${formatSGD(Math.abs(spendablePacing.spendableRemaining))} deficit`
           }
           tooltip="Remaining allowance for day-to-day spendable categories (Food, Lifestyle, Transport, Buffer). Excludes goal-funded purchases. In personal view, shared expenses count at your 50% share."
           icon={<PiggyBank className="h-4 w-4" />}
@@ -407,7 +407,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
                   }
                   className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1 cursor-pointer pt-0.5"
                 >
-                  <span>Sweep {formatSGD(spendablePacing.spendableRemaining)} to Goals →</span>
+                  <span>Sweep {formatSGD(spendablePacing.spendableRemaining)} →</span>
                 </button>
               )}
             </div>
@@ -416,7 +416,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
 
         {/* Card 2: Total Spent */}
         <StatCard
-          title="Total Spent"
+          title="Spent"
           value={formatSGD(totalSpent)}
           subtitle={`${expenses.length} transaction${expenses.length === 1 ? '' : 's'}`}
           icon={<Receipt className="h-4 w-4" />}
@@ -425,7 +425,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
 
         {/* Card 3: Shared Spending */}
         <StatCard
-          title="Shared Spending"
+          title="Shared"
           value={formatSGD(totalShared)}
           tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
           icon={<ArrowRightLeft className="h-4 w-4" />}
@@ -434,7 +434,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
 
         {/* Card 4: Unsettled Balance (Who Owes Whom) */}
         <StatCard
-          title="Unsettled Balance"
+          title="Unsettled"
           value={formatSGD(settlement.netBalance)}
           subtitle={settlement.settlementText}
           icon={settlement.netBalance === 0 ? <CheckCircle2 className="h-4 w-4" /> : <Scale className="h-4 w-4" />}
@@ -463,7 +463,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
       <div className="space-y-3 pt-2">
         <CollapsibleSection
-          title="Monthly Spend Trends & Averages"
+          title="Spend Trends"
           summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
           icon={<BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
           defaultOpen={false}
@@ -479,7 +479,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         </CollapsibleSection>
 
         <CollapsibleSection
-          title="Spend Tags & Trip Breakdown"
+          title="Tags & Trips"
           badge={
             filter.tag ? (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">

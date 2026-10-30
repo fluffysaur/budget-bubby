@@ -240,12 +240,12 @@ export function CumulativeSurplusCard({
     return (
         <div
             data-testid="cumulative-surplus-card"
-            className={`rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-cute transition-colors space-y-4 ${className}`}
+            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors space-y-4 ${className}`}
         >
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-(--shadow-(--shadow-cute)-sm)">
                         <PiggyBank className="h-4 w-4" />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -280,7 +280,7 @@ export function CumulativeSurplusCard({
                             Sweep to Goals
                         </Button>
                     )}
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) shadow-cute-sm">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) shadow-(--shadow-(--shadow-cute)-sm)">
                         <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
                         <span>{formatShortMonth(selectedMonth)}</span>
                     </div>
@@ -292,7 +292,7 @@ export function CumulativeSurplusCard({
                 {/* Metric 1: Current Month Surplus/Deficit */}
                 <div
                     data-testid="current-month-surplus-badge"
-                    className={`p-4 rounded-xl border-[1.5px] border-(--border-ink) shadow-cute-sm flex items-center justify-between ${
+                    className={`p-4 rounded-xl border-2 border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) flex items-center justify-between ${
                         isCurrentSurplusPositive
                             ? "bg-(--pastel-mint-light) text-(--text-ink)"
                             : "bg-(--pastel-coral-light) text-(--text-ink)"
@@ -314,16 +314,16 @@ export function CumulativeSurplusCard({
                     </div>
 
                     <div
-                        className={`p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm ${
+                        className={`p-2.5 rounded-xl border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) ${
                             isCurrentSurplusPositive
                                 ? "bg-(--pastel-mint) text-emerald-900"
                                 : "bg-(--pastel-coral) text-white"
                         }`}
                     >
                         {isCurrentSurplusPositive ? (
-                            <TrendingUp className="h-5 w-5 stroke-[2.5]" />
+                            <TrendingUp className="h-5 w-5" strokeWidth={2.5} />
                         ) : (
-                            <TrendingDown className="h-5 w-5 stroke-[2.5]" />
+                            <TrendingDown className="h-5 w-5" strokeWidth={2.5} />
                         )}
                     </div>
                 </div>
@@ -331,7 +331,7 @@ export function CumulativeSurplusCard({
                 {/* Metric 2: Total Banked Surplus */}
                 <div
                     data-testid="total-banked-surplus-badge"
-                    className="p-4 rounded-xl border-[1.5px] border-(--border-ink) shadow-cute-sm bg-(--pastel-butter-light) text-(--text-ink) flex items-center justify-between"
+                    className="p-4 rounded-xl border-2 border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) bg-(--pastel-butter-light) text-(--text-ink) flex items-center justify-between"
                 >
                     <div>
                         <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
@@ -347,7 +347,7 @@ export function CumulativeSurplusCard({
                         </span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm bg-(--pastel-butter) text-(--text-ink)">
+                    <div className="p-2.5 rounded-xl border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) bg-(--pastel-butter) text-(--text-ink)">
                         <Sparkles className="h-5 w-5" />
                     </div>
                 </div>
@@ -379,9 +379,9 @@ export function CumulativeSurplusCard({
                         return (
                             <div
                                 key={point.month}
-                                className={`p-3 rounded-xl border-[1.5px] flex flex-col justify-between transition-all ${
+                                className={`p-3 rounded-xl border-2 flex flex-col justify-between transition-all ${
                                     isSelected
-                                        ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
+                                        ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-(--shadow-(--shadow-cute)-sm)"
                                         : "border-(--border-subtle) bg-(--bg-canvas)"
                                 }`}
                             >

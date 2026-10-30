@@ -208,8 +208,8 @@ describe("Task 9: Loans & Debt Freedom Engine", () => {
             );
 
             // Trajectory view is active by default
-            expect(screen.getByRole("button", { name: /Balance Trajectory/i })).toBeInTheDocument();
-            const breakdownBtn = screen.getByRole("button", { name: /Principal vs Interest/i });
+            expect(screen.getByRole("tab", { name: /Balance Trajectory/i })).toBeInTheDocument();
+            const breakdownBtn = screen.getByRole("tab", { name: /Principal vs Interest/i });
             expect(breakdownBtn).toBeInTheDocument();
 
             fireEvent.click(breakdownBtn);
@@ -352,7 +352,7 @@ describe("Task 9: Loans & Debt Freedom Engine", () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText(/No active loans found/i)).toBeInTheDocument();
+                expect(screen.getByText(/No Loans/i)).toBeInTheDocument();
             });
         });
     });

@@ -292,7 +292,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
       {/* Top Header Section */}
       {!embedded ? (
         <PageHeader
-          title="Monthly Budget"
+          title="Budget"
           actions={
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <div className="flex-1 sm:flex-initial">
@@ -301,7 +301,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
               <Button
                 variant="secondary"
-                leftIcon={<Settings className="h-4 w-4 stroke-[2.2] text-slate-500" />}
+                leftIcon={<Settings className="h-4 w-4 text-slate-500" strokeWidth={2.5} />}
                 onClick={() => handleOpenEditor()}
                 className="shrink-0 justify-center"
               >
@@ -320,7 +320,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           <Button
             variant="secondary"
             size="sm"
-            leftIcon={<Settings className="h-3.5 w-3.5 stroke-[2.2] text-slate-500" />}
+            leftIcon={<Settings className="h-3.5 w-3.5 text-slate-500" strokeWidth={2.5} />}
             onClick={() => handleOpenEditor()}
             className="shrink-0 justify-center"
           >
@@ -392,7 +392,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           <div className="space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                Category Spending Meters
+                Categories
               </h2>
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                 {formatSGD(spendableRemaining)} left of {formatSGD(spendableAllocated)} cap
@@ -405,8 +405,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                   <Tag className="h-5 w-5" />
                 </div>
                 <h3 className="mt-2.5 text-sm font-bold text-slate-800 dark:text-slate-200">
-                  No Categories Configured
+                  No Categories
                 </h3>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Add categories or restore presets to start tracking.
+                </p>
                 <div className="mt-3 flex items-center justify-center gap-2.5">
                   <Button
                     variant="secondary"
@@ -416,7 +419,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                       await handleCategoriesChanged();
                     }}
                   >
-                    Restore Presets
+                    Presets
                   </Button>
                   <Button
                     variant="primary"
@@ -444,8 +447,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
           {allocationCats.length > 0 && (
             <CollapsibleSection
-              title="Investments & Savings"
-              subtitle={`${formatSGD(allocationCats.reduce((s, c) => s + c.allocated_amount, 0), { showCents: false })}/mo allocated`}
+              title="Allocations"
+              subtitle={`${formatSGD(allocationCats.reduce((s, c) => s + c.allocated_amount, 0), { showCents: false })}/mo`}
               icon={<PiggyBank className="h-5 w-5 text-purple-700 dark:text-purple-300" />}
               defaultOpen={false}
             >
@@ -455,8 +458,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
           {/* Collapsible: Budget Waterfall Breakdown */}
           <CollapsibleSection
-            title="Salary & CPF Flow"
-            subtitle="Take-home pay & CPF breakdown"
+            title="Income Flow"
+            subtitle="Take-home pay & CPF"
             icon={<DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />}
             defaultOpen={true}
           >

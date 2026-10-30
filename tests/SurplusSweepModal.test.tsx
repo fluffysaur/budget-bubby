@@ -41,7 +41,7 @@ describe('SurplusSweepModal', () => {
             />
         );
 
-        expect(screen.getByText(/Sweep Unspent Surplus/i)).toBeInTheDocument();
+        expect(screen.getByText(/Sweep Surplus/i)).toBeInTheDocument();
         expect(screen.getByText(/Wedding Fund/i)).toBeInTheDocument();
         expect(screen.getByText(/Emergency Reserve/i)).toBeInTheDocument();
     });
@@ -84,7 +84,7 @@ describe('SurplusSweepModal', () => {
         // Click Split Evenly => 200 each
         fireEvent.click(screen.getByRole('button', { name: /split evenly/i }));
 
-        const submitBtn = screen.getByRole('button', { name: /deposit/i });
+        const submitBtn = screen.getByRole('button', { name: /sweep/i });
         fireEvent.click(submitBtn);
 
         await waitFor(() => {
@@ -111,7 +111,7 @@ describe('SurplusSweepModal', () => {
         // Set first input to 500 (greater than 300)
         fireEvent.change(inputs[0], { target: { value: '500' } });
 
-        const submitBtn = screen.getByRole('button', { name: /deposit/i });
+        const submitBtn = screen.getByRole('button', { name: /sweep/i });
         expect(submitBtn).toBeDisabled();
     });
 });

@@ -13,7 +13,7 @@ import { BubbyIcon } from "../ui/BubbyIcon";
 export interface NavItem {
     id: string;
     label: string;
-    icon: ComponentType<{ className?: string }>;
+    icon: ComponentType<{ className?: string; strokeWidth?: number | string }>;
     description?: string;
     section?: "core" | "plan";
 }
@@ -76,13 +76,14 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
                 onClick={() => onSelectTab?.(item.id)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                     isActive
-                        ? "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) font-extrabold"
+                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-extrabold"
                         : "text-(--text-muted) hover:bg-(--bg-cream) hover:text-(--text-ink)"
                 }`}
             >
                 <Icon
-                    className={`h-4 w-4 shrink-0 stroke-[2.5] ${
-                        isActive ? "text-[#1a1a1a]" : "text-(--text-muted)"
+                    strokeWidth={2.5}
+                    className={`h-4 w-4 shrink-0 ${
+                        isActive ? "text-(--text-ink)" : "text-(--text-muted)"
                     }`}
                 />
                 <div className="flex flex-col text-left truncate">
@@ -94,17 +95,17 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
 
     return (
         <aside
-            className={`hidden md:flex flex-col w-60 lg:w-64 bg-(--bg-card) border-r-[1.5px] border-(--border-ink) shrink-0 transition-colors duration-200 ${className}`}
+            className={`hidden md:flex flex-col w-60 lg:w-64 bg-(--bg-card) border-r-2 border-(--border-ink) shrink-0 transition-colors duration-200 ${className}`}
         >
             {/* Brand Header */}
-            <div className="h-16 flex items-center px-5 border-b-[1.5px] border-(--border-ink) gap-3 bg-(--bg-cream)">
+            <div className="h-16 flex items-center px-5 border-b-2 border-(--border-ink) gap-3 bg-(--bg-cream)">
                 <div className="flex h-9 w-9 items-end justify-center rounded-xl bg-(--accent-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0 pt-0.5">
                     <BubbyIcon className="h-8 w-8" />
                 </div>
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5 font-black text-(--text-ink) tracking-tight text-sm font-display">
                         <span>Budget Bubby</span>
-                        <Heart className="h-3.5 w-3.5 text-[#fcbffa] fill-[#fcbffa] stroke-[#1a1a1a] stroke-[1.5]" />
+                        <Heart className="h-3.5 w-3.5 text-(--pastel-pink) fill-(--pastel-pink) stroke-(--border-ink) strokeWidth={1.5}" />
                     </div>
                     <span className="text-[11px] font-semibold text-(--text-muted) truncate max-w-[140px]">
                         {subtitleText}

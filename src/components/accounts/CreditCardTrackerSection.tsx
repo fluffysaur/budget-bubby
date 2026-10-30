@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { StatCard } from "../ui/StatCard";
+import { TruncatedText } from "../ui/TruncatedText";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
@@ -309,7 +310,7 @@ export function CreditCardTrackerSection({
             data-testid="credit-card-tracker-section"
         >
             {/* Month Navigation & Add Card Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute)">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink)">
                         <ReceiptText className="h-5 w-5" />
@@ -327,7 +328,7 @@ export function CreditCardTrackerSection({
 
                 <div className="flex items-center gap-2 self-end sm:self-auto">
                     {/* Month Stepper */}
-                    <div className="flex items-center gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-cute-sm">
+                    <div className="flex items-center gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-(--shadow-(--shadow-cute)-sm)">
                         <button
                             type="button"
                             aria-label="Previous Month"
@@ -453,7 +454,7 @@ export function CreditCardTrackerSection({
                             <div
                                 key={card.id}
                                 data-testid={`credit-card-card-${card.id}`}
-                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-all relative overflow-hidden"
+                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-(--shadow-(--shadow-cute)-sm) hover:shadow-(--shadow-cute) transition-all relative overflow-hidden"
                             >
                                 {/* Color Top Stripe */}
                                 <div
@@ -469,7 +470,7 @@ export function CreditCardTrackerSection({
                                     <div className="flex items-start justify-between gap-2 mt-1">
                                         <div className="flex items-center gap-2.5">
                                             <div
-                                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
+                                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-(--shadow-(--shadow-cute)-sm) shrink-0 border border-(--border-ink)"
                                                 style={{
                                                     backgroundColor:
                                                         card.color || "#dfc2ff",
@@ -477,12 +478,9 @@ export function CreditCardTrackerSection({
                                             >
                                                 {card.bank.slice(0, 4)}
                                             </div>
-                                            <div>
-                                                <h4
-                                                    className="font-display font-black text-sm text-(--text-ink) line-clamp-1"
-                                                    title={card.name}
-                                                >
-                                                    {card.name}
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="font-display font-black text-sm text-(--text-ink) truncate">
+                                                    <TruncatedText text={card.name} />
                                                 </h4>
                                                 <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5">
                                                     {card.last4 && (
@@ -515,7 +513,7 @@ export function CreditCardTrackerSection({
                                                     setCardToEdit(card);
                                                     setIsAddEditCardOpen(true);
                                                 }}
-                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-(--shadow-(--shadow-cute)-sm) active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
                                             </button>
@@ -525,7 +523,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     setCardToDelete(card)
                                                 }
-                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-(--shadow-(--shadow-cute)-sm) active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
@@ -533,7 +531,7 @@ export function CreditCardTrackerSection({
                                     </div>
 
                                     {/* Card Configuration Specs */}
-                                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 text-center text-xs shadow-cute-sm">
+                                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 text-center text-xs shadow-(--shadow-(--shadow-cute)-sm)">
                                         <div>
                                             <span className="text-xs uppercase font-bold text-(--text-muted) block">
                                                 Statement Day
@@ -593,7 +591,7 @@ export function CreditCardTrackerSection({
 
                                                     {dueStatus && (
                                                         <span
-                                                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shadow-cute-sm ${
+                                                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) ${
                                                                 stmt.is_paid
                                                                     ? "bg-(--pastel-mint) text-(--text-ink)"
                                                                     : dueStatus.isOverdue
@@ -651,7 +649,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     handleTogglePaid(stmt)
                                                 }
-                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-all cursor-pointer ${
+                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) transition-all cursor-pointer ${
                                                     stmt.is_paid
                                                         ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
                                                         : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
@@ -671,7 +669,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     handleOpenLogStatement(card)
                                                 }
-                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
+                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) transition-colors cursor-pointer shrink-0"
                                             >
                                                 Edit
                                             </button>
@@ -683,7 +681,7 @@ export function CreditCardTrackerSection({
                                             onClick={() =>
                                                 handleOpenLogStatement(card)
                                             }
-                                            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer"
+                                            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) transition-colors cursor-pointer"
                                         >
                                             <Plus className="h-3.5 w-3.5 stroke-3" />
                                             <span>Log Statement</span>
@@ -719,7 +717,7 @@ export function CreditCardTrackerSection({
                     <ModalHeader
                         title={existingStatement ? "Edit Statement" : "Log Monthly Statement"}
                         subtitle={`${statementCard?.name || ""} • ${formatDisplayMonth(selectedMonth)}`}
-                        icon={<ReceiptText className="h-5 w-5 stroke-[2.5]" />}
+                        icon={<ReceiptText className="h-5 w-5" strokeWidth={2.5} />}
                         iconBgColor="bg-(--pastel-lilac)"
                         onClose={() => setIsLogStatementOpen(false)}
                     />
@@ -825,7 +823,7 @@ export function CreditCardTrackerSection({
                         <ModalHeader
                             title="Delete Credit Card"
                             subtitle="This action cannot be undone."
-                            icon={<Trash2 className="h-5 w-5 stroke-[2.5] text-rose-700" />}
+                            icon={<Trash2 className="h-5 w-5 text-rose-700" strokeWidth={2.5} />}
                             iconBgColor="bg-rose-100"
                             onClose={() => setCardToDelete(null)}
                         />

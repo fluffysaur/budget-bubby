@@ -212,6 +212,18 @@ budget-bubby/
 
 ---
 
+## Developer Guidelines & UX Microcopy Standards
+
+All code and interface additions must strictly adhere to [`AGENTS.md`](./AGENTS.md):
+- **Concise Copy Invariant**:
+  - **Headers & Action Buttons**: 1–3 punchy words (e.g. `Sweep Surplus`, `Add Goal`, `Bonus Splitter`). Avoid conversational fillers (`"Let's get started"`, `"Overview & Breakdown"`).
+  - **StatCard Subtitles**: Metric- or formula-first format (e.g. `20% of net`, `S$5,200 net target`) instead of verbose narrative explanations. Long explanations belong inside floating popovers (`<TooltipPopover>`).
+  - **Empty States Formula**: Exactly `[2-Word Title] + [1-Sentence Action Prompt] + [Primary CTA Button]` (e.g. `No Goals` / `Add a goal to start tracking progress.` / `+ Add Goal`).
+  - **Zero ESLint Warnings**: `npm run lint` must stay at 0 errors and 0 warnings at all times.
+
+
+---
+
 ## Local Development Quickstart
 
 ### 1. Prerequisites

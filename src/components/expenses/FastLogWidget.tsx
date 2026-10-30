@@ -156,7 +156,7 @@ export function FastLogWidget({
 
   return (
     <div
-      className={`rounded-3xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-cute transition-all ${className}`}
+      className={`rounded-3xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-(--shadow-cute) transition-all ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -183,7 +183,7 @@ export function FastLogWidget({
               onClick={() => setPayerId(m.id)}
               className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                 payerId === m.id
-                  ? 'bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm'
+                  ? 'bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm)'
                   : 'text-(--text-muted) hover:text-(--text-ink)'
               }`}
             >
@@ -196,14 +196,14 @@ export function FastLogWidget({
 
       {/* Success Banner */}
       {justLoggedMessage && (
-        <div className="mb-4 flex items-center gap-2 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--pastel-mint) px-4 py-3 text-xs font-bold text-(--text-ink) shadow-cute-sm animate-in fade-in slide-in-from-top duration-200">
+        <div className="mb-4 flex items-center gap-2 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-mint) px-4 py-3 text-xs font-bold text-(--text-ink) shadow-(--shadow-(--shadow-cute)-sm) animate-in fade-in slide-in-from-top duration-200">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-800" />
           <span>{justLoggedMessage}</span>
         </div>
       )}
 
       {/* Prominent Amount Display */}
-      <div className="relative mb-3 flex flex-col items-center justify-center rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-canvas) p-4 shadow-cute-sm">
+      <div className="relative mb-3 flex flex-col items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-4 shadow-(--shadow-(--shadow-cute)-sm)">
         <div className="flex items-baseline justify-center">
           <span className="font-mono-num text-2xl font-bold text-(--text-muted) mr-1.5 select-none">
             S$
@@ -232,7 +232,7 @@ export function FastLogWidget({
             key={preset}
             type="button"
             onClick={() => addPresetAmount(preset)}
-            className="flex-1 rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) py-1.5 text-center text-xs font-mono-num font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            className="flex-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) py-1.5 text-center text-xs font-mono-num font-bold text-(--text-ink) shadow-(--shadow-(--shadow-cute)-sm) hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
             +{preset}
           </button>
@@ -264,7 +264,7 @@ export function FastLogWidget({
                 onClick={() => handleSelectCategory(catKey)}
                 className={`flex flex-col items-center justify-center rounded-2xl py-2 px-1 text-xs font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm font-black'
+                    ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) font-black'
                     : 'bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink)'
                 }`}
               >
@@ -294,7 +294,7 @@ export function FastLogWidget({
                 }}
                 className={`rounded-xl px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-(--pastel-butter) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm'
+                    ? 'bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm)'
                     : 'bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink)'
                 }`}
               >
@@ -312,7 +312,7 @@ export function FastLogWidget({
             key={digit}
             type="button"
             onClick={() => pushDigit(digit)}
-            className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-lg font-mono-num font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
+            className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-lg font-mono-num font-bold text-(--text-ink) shadow-(--shadow-(--shadow-cute)-sm) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
           >
             {digit}
           </button>
@@ -322,14 +322,14 @@ export function FastLogWidget({
           onClick={() => {
             if (cents > 0 && cents < 999999) setCents((prev) => prev * 100);
           }}
-          className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-sm font-mono-num font-bold text-(--text-muted) shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
+          className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-sm font-mono-num font-bold text-(--text-muted) shadow-(--shadow-(--shadow-cute)-sm) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
         >
           00
         </button>
         <button
           type="button"
           onClick={() => pushDigit(0)}
-          className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-lg font-mono-num font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
+          className="flex h-11 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-lg font-mono-num font-bold text-(--text-ink) shadow-(--shadow-(--shadow-cute)-sm) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
         >
           0
         </button>
@@ -337,7 +337,7 @@ export function FastLogWidget({
           type="button"
           onClick={popDigit}
           aria-label="Backspace"
-          className="flex h-11 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-[1.5px] border-(--border-ink) text-rose-700 shadow-cute-sm hover:bg-(--pastel-coral) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
+          className="flex h-11 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-rose-700 shadow-(--shadow-(--shadow-cute)-sm) hover:bg-(--pastel-coral) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-transform"
         >
           <Delete className="h-4 w-4" />
         </button>
@@ -349,7 +349,7 @@ export function FastLogWidget({
         onClick={handleLogExpense}
         disabled={amount <= 0 || isLogging}
         aria-label={`Log ${formatSGD(amount)}`}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) py-3.5 px-4 text-sm font-black shadow-cute hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) py-3.5 px-4 text-sm font-black shadow-(--shadow-cute) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
       >
         <Sparkles className="h-4 w-4" />
         <span>

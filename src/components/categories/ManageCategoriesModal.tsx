@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { financeService } from "../../services/financeService";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
+import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { Alert } from "../ui/Alert";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import type {
@@ -472,44 +474,34 @@ export function ManageCategoriesModal({
                 <ModalHeader
                     id={titleId}
                     title="Manage Categories"
-                    subtitle="Customize your spendable meters and wealth allocations"
-                    icon={<Tag className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    subtitle="Spendable caps & wealth allocations"
+                    icon={<Tag className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
                 />
 
                 <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
                     {/* View Switcher Tabs */}
-                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl my-3">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveView("categories");
+                    <div className="my-3">
+                        <SegmentedTabs
+                            tabs={[
+                                {
+                                    id: "categories",
+                                    label: `Categories (${categories.length})`,
+                                },
+                                {
+                                    id: "allocations",
+                                    label: "Allocations (%)",
+                                    icon: <Sliders className="h-3 w-3" />,
+                                },
+                            ]}
+                            activeTab={activeView}
+                            onChange={(tabId) => {
+                                setActiveView(tabId as "categories" | "allocations");
                                 setFormMode(null);
                             }}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                activeView === "categories"
-                                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                            }`}
-                        >
-                            Categories ({categories.length})
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveView("allocations");
-                                setFormMode(null);
-                            }}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                                activeView === "allocations"
-                                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs"
-                                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                            }`}
-                        >
-                            <Sliders className="h-3 w-3" />
-                            <span>Budget Allocations (%)</span>
-                        </button>
+                            size="sm"
+                        />
                     </div>
 
                     {/* Global Error Banner */}
@@ -731,20 +723,19 @@ export function ManageCategoriesModal({
                                 })}
                             </div>
 
-                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                                <button
+                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-(--border-subtle)">
+                                <Button
+                                    variant="primary"
                                     type="button"
                                     onClick={handleSaveAllocations}
                                     disabled={!isValidTotal || isSubmitting}
-                                    className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                                    isLoading={isSubmitting}
+                                    leftIcon={<Save className="h-3.5 w-3.5" />}
                                 >
-                                    <Save className="h-3.5 w-3.5" />
-                                    <span>
-                                        {isSubmitting
-                                            ? "Saving..."
-                                            : "Save Allocations"}
-                                    </span>
-                                </button>
+                                    {isSubmitting
+                                        ? "Saving..."
+                                        : "Save Allocations"}
+                                </Button>
                             </div>
                         </div>
                     ) : (
@@ -901,23 +892,24 @@ export function ManageCategoriesModal({
                                     </div>
 
                                     {/* Form Actions */}
-                                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                                        <button
+                                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-(--border-subtle)">
+                                        <Button
+                                            variant="ghost"
                                             type="button"
                                             onClick={() => setFormMode(null)}
-                                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                         >
                                             Cancel
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
+                                            variant="primary"
                                             type="submit"
                                             disabled={isSubmitting}
-                                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                                            isLoading={isSubmitting}
                                         >
                                             {formMode === "create"
                                                 ? "Create Category"
                                                 : "Save Changes"}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </form>
                             ) : (
@@ -925,7 +917,7 @@ export function ManageCategoriesModal({
                                 <div className="mt-4 space-y-5 max-h-[60vh] overflow-y-auto pr-1">
                                     {/* Top Action Row */}
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        <span className="text-xs font-semibold text-(--text-muted)">
                                             {categories.length}{" "}
                                             {categories.length === 1
                                                 ? "Category"
@@ -933,23 +925,25 @@ export function ManageCategoriesModal({
                                             Configured
                                         </span>
                                         <div className="flex items-center gap-2">
-                                            <button
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
                                                 type="button"
                                                 onClick={handleRestorePresets}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 transition-colors cursor-pointer"
+                                                leftIcon={<RotateCcw className="h-3 w-3" />}
                                                 title="Restore standard recommended Singapore categories"
                                             >
-                                                <RotateCcw className="h-3 w-3" />
-                                                <span>Restore Presets</span>
-                                            </button>
-                                            <button
+                                                Restore Presets
+                                            </Button>
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
                                                 type="button"
                                                 onClick={handleOpenCreate}
-                                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
+                                                leftIcon={<Plus className="h-3.5 w-3.5" />}
                                             >
-                                                <Plus className="h-3.5 w-3.5" />
-                                                <span>Add Category</span>
-                                            </button>
+                                                Add Category
+                                            </Button>
                                         </div>
                                     </div>
 
@@ -970,22 +964,25 @@ export function ManageCategoriesModal({
                                                 recommended presets.
                                             </p>
                                             <div className="mt-4 flex items-center justify-center gap-3">
-                                                <button
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
                                                     type="button"
                                                     onClick={
                                                         handleRestorePresets
                                                     }
-                                                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 cursor-pointer"
                                                 >
                                                     Restore Presets
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
                                                     type="button"
                                                     onClick={handleOpenCreate}
-                                                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                                                    leftIcon={<Plus className="h-3.5 w-3.5" />}
                                                 >
-                                                    + Add Category
-                                                </button>
+                                                    Add Category
+                                                </Button>
                                             </div>
                                         </div>
                                     ) : (

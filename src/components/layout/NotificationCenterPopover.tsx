@@ -295,7 +295,7 @@ export function NotificationCenterPopover({
         <>
             {/* Browser Permission Prompt Banner */}
             {permission === "default" && (
-                <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#bbf7d0]/40 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
+                <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-(--pastel-mint)/40 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                     <div className="text-[11px] text-[#14532d] dark:text-[#86efac] font-bold">
                         Enable PWA reminders on this device?
                     </div>
@@ -313,8 +313,8 @@ export function NotificationCenterPopover({
             {/* Empty State */}
             {visibleReminders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#bbf7d0] text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) mb-2.5">
-                        <CheckCircle2 className="h-6 w-6 stroke-[2.2]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--pastel-mint) text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) mb-2.5">
+                        <CheckCircle2 className="h-6 w-6" strokeWidth={2.5} />
                     </div>
                     <p className="text-sm font-black text-(--text-ink)">
                         All caught up!
@@ -360,10 +360,10 @@ export function NotificationCenterPopover({
                                     data-testid={`reminder-action-${reminder.actionType}`}
                                     disabled={isProcessing}
                                     onClick={() => handleAction(reminder)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-xs font-black transition-all cursor-pointer disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-xs font-black transition-all cursor-pointer disabled:opacity-50"
                                 >
                                     <span>{reminder.actionLabel}</span>
-                                    <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                                    <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
                                 </button>
                             </div>
                         </div>
@@ -382,9 +382,9 @@ export function NotificationCenterPopover({
                 aria-label={`Notifications and reminders (${count} active)`}
                 aria-expanded={isOpen}
                 onClick={() => setIsOpen((prev) => !prev)}
-                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
             >
-                <Bell className="h-4 w-4 stroke-[2.2]" />
+                <Bell className="h-4 w-4" strokeWidth={2.5} />
 
                 {count > 0 && (
                     <span
@@ -406,14 +406,14 @@ export function NotificationCenterPopover({
                     className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-(--shadow-cute-lg) z-50 animate-in fade-in-50 zoom-in-95 duration-150"
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between pb-3 border-b-[1.5px] border-(--border-subtle)">
+                    <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
                         <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                <Bell className="h-4 w-4 stroke-[2.2]" />
+                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                <Bell className="h-4 w-4" strokeWidth={2.5} />
                             </div>
 
                             <h3 className="text-xs font-black text-(--text-ink) font-display">
-                                Notifications &amp; Reminders
+                                Notifications & Reminders
                             </h3>
 
                             {count > 0 && (
@@ -456,12 +456,12 @@ export function NotificationCenterPopover({
                         {/* Mobile Sticky Header */}
                         <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-(--shadow-cute-sm)">
                             <div className="flex items-center gap-2.5">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                    <Bell className="h-4 w-4 stroke-[2.2]" />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                    <Bell className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-sm font-black text-(--text-ink) font-display">
-                                        Notifications &amp; Reminders
+                                        Notifications & Reminders
                                     </h2>
                                     {count > 0 && (
                                         <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
@@ -478,7 +478,7 @@ export function NotificationCenterPopover({
                                 onClick={() => setIsOpen(false)}
                                 className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                             >
-                                <X className="h-4 w-4 stroke-[2.5]" />
+                                <X className="h-4 w-4" strokeWidth={2.5} />
                             </button>
                         </div>
 

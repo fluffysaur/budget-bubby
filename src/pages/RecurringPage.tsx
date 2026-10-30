@@ -221,13 +221,13 @@ export function RecurringPage({
             {/* Page Title & Actions (Compact if embedded) */}
             {!embedded ? (
                 <PageHeader
-                    title="Recurring Policies & Taxes"
+                    title="Recurring"
                     actions={
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button
                                 variant="secondary"
                                 onClick={() => refreshHousehold()}
-                                title="Refresh policies"
+                                title="Refresh"
                                 leftIcon={
                                     <RefreshCw
                                         className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
@@ -238,7 +238,7 @@ export function RecurringPage({
                                 variant="primary"
                                 className="w-full sm:w-auto"
                                 leftIcon={
-                                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                                    <Plus className="w-4 h-4" strokeWidth={2.5} />
                                 }
                                 onClick={handleOpenAddModal}
                             >
@@ -254,7 +254,7 @@ export function RecurringPage({
                             variant="secondary"
                             size="sm"
                             onClick={() => refreshHousehold()}
-                            title="Refresh policies"
+                            title="Refresh"
                             leftIcon={
                                 <RefreshCw
                                     className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`}
@@ -266,7 +266,7 @@ export function RecurringPage({
                             size="sm"
                             className="flex-1 sm:flex-initial whitespace-nowrap"
                             leftIcon={
-                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
                             }
                             onClick={handleOpenAddModal}
                         >

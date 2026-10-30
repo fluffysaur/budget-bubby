@@ -34,6 +34,7 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Alert } from "../ui/Alert";
 import { mockCategories } from "../../data/mockSeedData";
@@ -690,13 +691,13 @@ export function BaseProfileEditorModal({
                 {/* Header */}
                 <ModalHeader
                     id={titleId}
-                    title="Edit Budget & Categories"
+                    title="Edit Budget"
                     subtitle={
                         profileMember && members.length <= 1
                             ? profileMember.display_name
                             : undefined
                     }
-                    icon={<Sliders className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Sliders className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
                 />
@@ -713,7 +714,7 @@ export function BaseProfileEditorModal({
                                     onClick={() => onSelectMember?.(m.id)}
                                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                                         isSelected
-                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
                                     }`}
                                 >
@@ -764,7 +765,7 @@ export function BaseProfileEditorModal({
                                                 setGrossSalary(e.target.value)
                                             }
                                             aria-label="Gross Salary"
-                                            className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                            className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                         />
                                     </div>
                                 </div>
@@ -789,7 +790,7 @@ export function BaseProfileEditorModal({
                                                 setCpfRate(e.target.value)
                                             }
                                             aria-label="CPF Employee Rate"
-                                            className="w-full pl-3 pr-8 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                            className="w-full pl-3 pr-8 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                         />
                                         <span className="absolute right-3 top-2.5 text-xs font-bold text-(--text-muted)">
                                             %
@@ -823,7 +824,7 @@ export function BaseProfileEditorModal({
                             <div className="grid grid-cols-2 gap-3">
                                 <div
                                     data-testid="readonly-monthly-taxes"
-                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm"
+                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-(--shadow-cute-sm)"
                                 >
                                     <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                                         Monthly Taxes
@@ -843,7 +844,7 @@ export function BaseProfileEditorModal({
 
                                 <div
                                     data-testid="readonly-monthly-insurance"
-                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm"
+                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-(--shadow-cute-sm)"
                                 >
                                     <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                                         Monthly Insurance
@@ -869,12 +870,12 @@ export function BaseProfileEditorModal({
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
                                         <Percent className="h-3.5 w-3.5 text-(--text-muted)" />
-                                        Categories &amp; Allocations
+                                        Allocations
                                     </h3>
                                     <button
                                         type="button"
                                         onClick={handleOpenCreateCategory}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm transition-all cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-(--shadow-cute-sm) transition-all cursor-pointer"
                                     >
                                         <Plus className="h-3 w-3" />
                                         <span>Add Category</span>
@@ -883,7 +884,7 @@ export function BaseProfileEditorModal({
                                         type="button"
                                         onClick={handleRestorePresetsInline}
                                         disabled={isCatSaving}
-                                        title="Restore preset categories"
+                                        title="Restore presets"
                                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-muted) hover:text-(--text-ink) bg-(--bg-card) hover:bg-(--bg-cream) border border-(--border-ink) transition-colors cursor-pointer"
                                     >
                                         <RotateCcw className="h-2.5 w-2.5" />
@@ -896,8 +897,8 @@ export function BaseProfileEditorModal({
                                     <button
                                         type="button"
                                         onClick={handleAutoBalance}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-                                        title="Proportionally auto-adjust unlocked categories to reach 100%"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                        title="Auto-adjust unlocked categories to 100%"
                                     >
                                         <Scale className="h-3.5 w-3.5" />
                                         <span>Auto-Balance to 100%</span>
@@ -914,7 +915,7 @@ export function BaseProfileEditorModal({
 
                             {/* Inline Add / Edit Category Drawer */}
                             {catFormMode && (
-                                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 space-y-3 shadow-cute-sm animate-in fade-in duration-150">
+                                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 space-y-3 shadow-(--shadow-cute-sm) animate-in fade-in duration-150">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-(--text-ink)">
                                             {catFormMode === "create"
@@ -958,7 +959,7 @@ export function BaseProfileEditorModal({
                                                     }
                                                     className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
                                                         catGroup === "spendable"
-                                                            ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
+                                                            ? "bg-(--pastel-mint) text-(--text-ink) shadow-(--shadow-cute-sm)"
                                                             : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
                                                     }`}
                                                 >
@@ -974,7 +975,7 @@ export function BaseProfileEditorModal({
                                                     className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
                                                         catGroup ===
                                                         "allocation"
-                                                            ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                                            ? "bg-(--pastel-lilac) text-(--text-ink) shadow-(--shadow-cute-sm)"
                                                             : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
                                                     }`}
                                                 >
@@ -1028,7 +1029,7 @@ export function BaseProfileEditorModal({
                                                             title={item.label}
                                                             className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
                                                                 isSelected
-                                                                    ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
+                                                                    ? "bg-(--pastel-mint) text-(--text-ink) shadow-(--shadow-cute-sm)"
                                                                     : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
                                                             }`}
                                                         >
@@ -1045,7 +1046,7 @@ export function BaseProfileEditorModal({
                                             type="button"
                                             onClick={handleSaveCategoryInline}
                                             disabled={isCatSaving}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 cursor-pointer"
                                         >
                                             <Check className="h-3.5 w-3.5" />
                                             <span>
@@ -1058,7 +1059,7 @@ export function BaseProfileEditorModal({
                                 </div>
                             )}
 
-                            <div className="space-y-2.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 sm:p-4 shadow-cute-sm">
+                            <div className="space-y-2.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 sm:p-4 shadow-(--shadow-cute-sm)">
                                 {localCategories.length === 0 ? (
                                     <div className="text-center py-6">
                                         <p className="text-xs text-(--text-muted) mb-2">
@@ -1067,7 +1068,7 @@ export function BaseProfileEditorModal({
                                         <button
                                             type="button"
                                             onClick={handleOpenCreateCategory}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) cursor-pointer"
                                         >
                                             <Plus className="h-3 w-3" />
                                             <span>Add Categories</span>
@@ -1097,7 +1098,7 @@ export function BaseProfileEditorModal({
                                         return (
                                             <div
                                                 key={cat.id}
-                                                className="p-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm space-y-2"
+                                                className="p-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm) space-y-2"
                                             >
                                                 <div className="flex items-center justify-between gap-2 flex-wrap">
                                                     <div className="flex items-center gap-1.5 min-w-0">
@@ -1122,7 +1123,7 @@ export function BaseProfileEditorModal({
                                                             data-testid={`lock-${cat.id}`}
                                                             className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer shrink-0 ${
                                                                 isLocked
-                                                                    ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                                                    ? "bg-(--pastel-butter) text-(--text-ink) shadow-(--shadow-cute-sm)"
                                                                     : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"
                                                             }`}
                                                         >
@@ -1157,7 +1158,7 @@ export function BaseProfileEditorModal({
                                                                     <button
                                                                         {...triggerProps}
                                                                         type="button"
-                                                                        className="text-[10px] font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-cute-sm cursor-pointer transition-colors"
+                                                                        className="text-[10px] font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-(--shadow-cute-sm) cursor-pointer transition-colors"
                                                                     >
                                                                         Locked
                                                                     </button>
@@ -1238,7 +1239,7 @@ export function BaseProfileEditorModal({
                                                         {/* Editable Dollar Input */}
                                                         <div
                                                             data-testid={`cat-dollar-${cat.id}`}
-                                                            className="flex items-center gap-0.5 rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-1.5 py-0.5 shadow-cute-sm"
+                                                            className="flex items-center gap-0.5 rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-1.5 py-0.5 shadow-(--shadow-cute-sm)"
                                                         >
                                                             <span className="text-[11px] font-bold text-(--text-muted)">
                                                                 S$
@@ -1348,7 +1349,7 @@ export function BaseProfileEditorModal({
                                                                         );
                                                                     }
                                                                 }}
-                                                                className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                                                className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                                             />
                                                             <span className="absolute right-1.5 top-1 text-[11px] font-bold text-(--text-muted)">
                                                                 %
@@ -1389,7 +1390,7 @@ export function BaseProfileEditorModal({
                         <div className="flex items-center gap-2">
                             {/* Sticky Total Percentage Indicator */}
                             <div
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 border-(--border-ink) shadow-cute-sm ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 border-(--border-ink) shadow-(--shadow-cute-sm) ${
                                     isValidTotal
                                         ? "bg-(--pastel-mint) text-(--text-ink)"
                                         : "bg-(--pastel-coral-light) text-(--text-ink)"
@@ -1403,34 +1404,34 @@ export function BaseProfileEditorModal({
                                 <span>Total: {totalPercentage}%</span>
                             </div>
 
-                            <button
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 type="button"
                                 onClick={handleReset}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) rounded-lg hover:bg-(--pastel-cream) transition-colors cursor-pointer"
+                                leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
                             >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                                <span>Reset</span>
-                            </button>
+                                Reset
+                            </Button>
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <button
+                            <Button
+                                variant="secondary"
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) rounded-xl hover:bg-(--pastel-cream) transition-all cursor-pointer"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="primary"
                                 type="submit"
                                 disabled={!isValidTotal || isSubmitting}
-                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                isLoading={isSubmitting}
+                                leftIcon={<Save className="h-3.5 w-3.5" />}
                             >
-                                <Save className="h-3.5 w-3.5" />
-                                <span>
-                                    {isSubmitting ? "Saving..." : "Save Budget"}
-                                </span>
-                            </button>
+                                {isSubmitting ? "Saving..." : "Save Budget"}
+                            </Button>
                         </div>
                     </ModalFooter>
                 </form>

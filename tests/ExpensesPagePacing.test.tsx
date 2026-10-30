@@ -25,14 +25,14 @@ describe('ExpensesPage Pacing & 4-Card Summary Strip', () => {
         localStorage.clear();
     });
 
-    it('renders Spendable Remaining as the primary card in a 4-card summary strip', async () => {
+    it('renders Spendable as the primary card in a 4-card summary strip', async () => {
         renderWithProviders(<ExpensesPage />);
 
         await waitFor(() => {
-            expect(screen.getByText(/Spendable Remaining/i)).toBeInTheDocument();
-            expect(screen.getByText(/Total Spent/i)).toBeInTheDocument();
-            expect(screen.getByText(/Shared Spending/i)).toBeInTheDocument();
-            expect(screen.getByText(/Unsettled Balance/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Spendable$/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Spent$/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Shared$/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Unsettled$/i)).toBeInTheDocument();
         });
     });
 

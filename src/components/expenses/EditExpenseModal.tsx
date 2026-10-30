@@ -19,6 +19,7 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { Select } from "../ui/Select";
@@ -228,7 +229,7 @@ export function EditExpenseModal({
                 <ModalHeader
                     title="Edit Expense"
                     subtitle="Update amount, split, tags, or details"
-                    icon={<Save className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Save className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -319,7 +320,7 @@ export function EditExpenseModal({
                                         onClick={() => setCategoryId(cat.id)}
                                         className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                                             isSelected
-                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                                 : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                         }`}
                                     >
@@ -354,7 +355,7 @@ export function EditExpenseModal({
                                             onClick={() => setPayerId(m.id)}
                                             className={`flex items-center justify-center gap-2 rounded-xl p-2.5 text-xs font-bold transition-all cursor-pointer ${
                                                 isSelected
-                                                    ? "border-2 border-(--border-ink) bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                                    ? "border-2 border-(--border-ink) bg-(--pastel-butter) text-(--text-ink) shadow-(--shadow-cute-sm)"
                                                     : "border border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
                                             }`}
                                         >
@@ -414,7 +415,7 @@ export function EditExpenseModal({
                     </div>
 
                     {/* Shared 50/50 & Split Ratio */}
-                    <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-cute-sm space-y-3">
+                    <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-(--shadow-cute-sm) space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <ArrowRightLeft className="h-4 w-4 text-(--text-ink)" />
@@ -521,7 +522,7 @@ export function EditExpenseModal({
                             <button
                                 type="button"
                                 onClick={() => handleAddTag(newTagInput)}
-                                className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-all"
+                                className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-all"
                             >
                                 + Add
                             </button>
@@ -538,7 +539,7 @@ export function EditExpenseModal({
                                         key={suggested}
                                         type="button"
                                         onClick={() => handleAddTag(suggested)}
-                                        className="rounded-full border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) px-2 py-0.5 text-[11px] font-bold text-(--text-ink) cursor-pointer transition-all shadow-cute-sm"
+                                        className="rounded-full border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) px-2 py-0.5 text-[11px] font-bold text-(--text-ink) cursor-pointer transition-all shadow-(--shadow-cute-sm)"
                                     >
                                         +{suggested}
                                     </button>
@@ -591,24 +592,23 @@ export function EditExpenseModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
+                    <Button
+                        variant="secondary"
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+                        isLoading={isSubmitting}
+                        leftIcon={<Save className="h-4 w-4" strokeWidth={2.5} />}
                     >
-                        <Save className="h-4 w-4 stroke-[2.5]" />
-                        <span>
-                            {isSubmitting ? "Saving..." : "Save Changes"}
-                        </span>
-                    </button>
+                        {isSubmitting ? "Saving..." : "Save Changes"}
+                    </Button>
                 </ModalFooter>
             </form>
         </AnimatedModal>

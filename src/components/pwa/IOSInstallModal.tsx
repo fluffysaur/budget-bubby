@@ -1,6 +1,7 @@
 import React from "react";
 import { Share, PlusSquare } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 
 interface IOSInstallModalProps {
     isOpen: boolean;
@@ -78,13 +79,14 @@ export const IOSInstallModal: React.FC<IOSInstallModalProps> = ({ isOpen, onClos
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
+                    <Button
+                        variant="primary"
                         type="button"
                         onClick={onClose}
-                        className="w-full py-2.5 px-4 rounded-xl bg-(--pastel-lilac) hover:bg-(--pastel-lilac-dark) text-(--text-ink) font-bold text-sm border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                        className="w-full"
                     >
                         Got it
-                    </button>
+                    </Button>
                 </ModalFooter>
             </div>
         </AnimatedModal>

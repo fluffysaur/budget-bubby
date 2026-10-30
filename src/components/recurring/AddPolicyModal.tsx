@@ -25,6 +25,7 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Alert } from "../ui/Alert";
 
@@ -197,7 +198,7 @@ export function AddPolicyModal({
                             ? "Update renewal dates or premium amounts"
                             : "Track insurance, tax obligations, or recurring subscriptions"
                     }
-                    icon={<Shield className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Shield className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -378,20 +379,22 @@ export function AddPolicyModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
+                    <Button
+                        variant="secondary"
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                        disabled={isSubmitting}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        isLoading={isSubmitting}
                     >
                         {isSubmitting ? "Saving..." : "Save Policy"}
-                    </button>
+                    </Button>
                 </ModalFooter>
             </form>
         </AnimatedModal>

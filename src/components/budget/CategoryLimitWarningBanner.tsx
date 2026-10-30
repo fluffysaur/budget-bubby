@@ -237,13 +237,13 @@ export function CategoryLimitWarningBanner({
               className={`p-2 rounded-xl border border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${
                 toast.type === 'exceeded'
                   ? 'bg-[#f76b57] text-white'
-                  : 'bg-[#ffe999] text-[#1a1a1a]'
+                  : 'bg-(--pastel-butter) text-[#1a1a1a]'
               }`}
             >
               {toast.type === 'exceeded' ? (
-                <ShieldAlert className="h-5 w-5 stroke-[2.5]" />
+                <ShieldAlert className="h-5 w-5" strokeWidth={2.5} />
               ) : (
-                <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
+                <AlertTriangle className="h-5 w-5" strokeWidth={2.5} />
               )}
             </div>
             <div className="flex-1 min-w-0 pr-1">
@@ -282,7 +282,7 @@ export function CategoryLimitWarningBanner({
             >
               <div className="flex items-start gap-3">
                 <div className="p-1.5 rounded-xl bg-[#f76b57] text-white border border-(--border-ink) shrink-0 mt-0.5">
-                  <AlertCircle className="h-4 w-4 stroke-[2.5]" />
+                  <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -317,8 +317,8 @@ export function CategoryLimitWarningBanner({
               className="p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fffbeb] dark:bg-[#382f18] text-[#92400e] dark:text-[#fde68a] shadow-(--shadow-cute-sm) transition-all"
             >
               <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-xl bg-[#ffe999] text-[#1a1a1a] border border-(--border-ink) shrink-0 mt-0.5">
-                  <AlertTriangle className="h-4 w-4 stroke-[2.5]" />
+                <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-[#1a1a1a] border border-(--border-ink) shrink-0 mt-0.5">
+                  <AlertTriangle className="h-4 w-4" strokeWidth={2.5} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -342,7 +342,7 @@ export function CategoryLimitWarningBanner({
                             className="inline-flex items-center gap-1 text-[11px] font-black text-[#92400e] dark:text-[#fde68a] hover:underline cursor-pointer"
                           >
                             <span>View</span>
-                            <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
+                            <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
                           </button>
                         )}
                       </div>

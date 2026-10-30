@@ -30,6 +30,7 @@ import {
 import type { Account, AccountType } from '../../types/finance';
 import { formatSGD } from '../../lib/currency';
 import { Card, EmptyStateCard, Button } from '../ui';
+import { TruncatedText } from '../ui/TruncatedText';
 import { AccountCard } from './AccountCard';
 
 export interface AccountGroupListProps {
@@ -163,8 +164,8 @@ export function AccountGroupList({
     return (
       <EmptyStateCard
         icon={<PiggyBank className="h-6 w-6" />}
-        title="No accounts found"
-        description="No financial accounts match the current perspective filter."
+        title="No Accounts"
+        description="No accounts found for this perspective."
         className={className}
       />
     );
@@ -180,7 +181,7 @@ export function AccountGroupList({
             onClick={() => setScopeFilter('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               scopeFilter === 'all'
-                ? 'bg-[#dfc2ff] text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
+                ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
             }`}
           >
@@ -191,7 +192,7 @@ export function AccountGroupList({
             onClick={() => setScopeFilter('non-cpf')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               scopeFilter === 'non-cpf'
-                ? 'bg-[#dfc2ff] text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
+                ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
             }`}
           >
@@ -233,8 +234,8 @@ export function AccountGroupList({
       {filteredAccounts.length === 0 ? (
         <EmptyStateCard
           icon={<Landmark className="h-6 w-6" />}
-          title="No Accounts Added Yet"
-          description="Track your Singapore bank accounts, investments, and CPF balances in one centralized dashboard."
+          title="No Accounts"
+          description="Add an account to start tracking balances."
           action={
             onAddAccount && (
               <Button
@@ -242,7 +243,7 @@ export function AccountGroupList({
                 onClick={onAddAccount}
                 leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
               >
-                Add Your First Account
+                Add Account
               </Button>
             )
           }
@@ -307,10 +308,10 @@ export function AccountGroupList({
                       className="flex items-center justify-between gap-3 px-3.5 py-2 sm:py-2.5 hover:bg-(--bg-cream) transition-colors"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-(--text-ink) truncate">
-                            {account.name}
-                          </span>
+                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                          <div className="text-sm font-bold text-(--text-ink) min-w-0 max-w-40 sm:max-w-60">
+                            <TruncatedText text={account.name} />
+                          </div>
                           {account.institution && (
                             <span className="rounded-md bg-(--bg-cream) px-1.5 py-0.5 text-[10px] font-bold text-(--text-ink) border border-(--border-ink)">
                               {account.institution}

@@ -247,13 +247,13 @@ export function DashboardPage({
 
                     {/* DAILY SPEND & CHECK-IN HERO STRIP (Optimized for Fast Mobile Checking) */}
                     <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute)">
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-[1.5px] border-(--border-subtle)">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-(--border-subtle)">
                             <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                    <Wallet className="h-4 w-4 stroke-[2.5]" />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                    <Wallet className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <h3 className="text-sm font-black text-(--text-ink) font-display">
-                                    Daily Spend &amp; Monthly Limits
+                                    Daily Spend & Limits
                                 </h3>
                             </div>
 
@@ -261,9 +261,9 @@ export function DashboardPage({
                             {isHousehold && overview?.settlementSummary && (
                                 <div
                                     onClick={() => onNavigateTab?.("expenses")}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-[#dfc2ff]/30 px-3 py-1 text-xs font-bold text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) cursor-pointer hover:bg-[#dfc2ff]/50 transition-colors"
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-(--pastel-lilac)/30 px-3 py-1 text-xs font-bold text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) cursor-pointer hover:bg-(--pastel-lilac)/50 transition-colors"
                                 >
-                                    <ArrowRightLeft className="h-3 w-3 stroke-[2.5]" />
+                                    <ArrowRightLeft className="h-3 w-3" strokeWidth={2.5} />
                                     <span>
                                         Settlement:{" "}
                                         {
@@ -271,7 +271,7 @@ export function DashboardPage({
                                                 .settlementText
                                         }
                                     </span>
-                                    <ChevronRight className="h-3 w-3 stroke-[2.5]" />
+                                    <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
                                 </div>
                             )}
                         </div>
@@ -291,8 +291,8 @@ export function DashboardPage({
                                                     backgroundColor: cat.color,
                                                 }}
                                             />
-                                            <span className="truncate">
-                                                {cat.name}
+                                            <span className="min-w-0 max-w-25 sm:max-w-40">
+                                                <TruncatedText text={cat.name} />
                                             </span>
                                         </span>
                                         <span className="text-[11px] font-black text-(--text-muted) font-mono-num">
@@ -329,7 +329,7 @@ export function DashboardPage({
                         {/* Bottom Spendable Remaining */}
                         <div className="mt-4 pt-3 border-t-[1.5px] border-(--border-subtle) flex items-center justify-between text-xs">
                             <span className="text-(--text-muted) font-semibold">
-                                Spendable remaining this month:{" "}
+                                Spendable remaining:{" "}
                                 <strong
                                     className={`font-mono-num text-sm font-black ${
                                         spendableSummary.totalRemaining < 0
@@ -387,13 +387,13 @@ export function DashboardPage({
                                 aria-label="Personal Budget Progress"
                                 className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors"
                             >
-                                <div className="flex items-center justify-between gap-3 pb-4 border-b-[1.5px] border-(--border-subtle)">
+                                <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-subtle)">
                                     <div className="flex items-center gap-2.5">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                            <PieChart className="h-4 w-4 stroke-[2.5]" />
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                            <PieChart className="h-4 w-4" strokeWidth={2.5} />
                                         </div>
                                         <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                                            Personal Monthly Budget
+                                            Monthly Budget
                                         </h3>
                                     </div>
 
@@ -405,7 +405,7 @@ export function DashboardPage({
                                             }
                                             className="text-xs font-bold text-[#7e22ce] dark:text-[#dfc2ff] hover:underline cursor-pointer"
                                         >
-                                            View Full Budget
+                                            View Budget
                                         </button>
                                     )}
                                 </div>
@@ -415,7 +415,7 @@ export function DashboardPage({
                                     {/* Gross Salary */}
                                     <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm)">
                                         <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                                            Gross Salary
+                                            Gross
                                         </span>
                                         <div className="mt-1 text-base sm:text-lg font-black text-(--text-ink) font-mono-num">
                                             {formatSGD(
@@ -442,7 +442,7 @@ export function DashboardPage({
                                     {/* Disposable / Take-Home */}
                                     <div className="rounded-2xl border-2 border-(--border-ink) bg-[#f0fdf4] dark:bg-[#13351d] p-3.5 shadow-(--shadow-cute-sm)">
                                         <span className="text-[11px] font-bold uppercase tracking-wider text-[#14532d] dark:text-[#86efac]">
-                                            Take-Home Pay
+                                            Take-Home
                                         </span>
                                         <div className="mt-1 text-base sm:text-lg font-black text-[#14532d] dark:text-white font-mono-num">
                                             {formatSGD(
@@ -491,13 +491,13 @@ export function DashboardPage({
                                     aria-label="Personal Accounts"
                                     className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors"
                                 >
-                                    <div className="flex items-center justify-between pb-4 border-b-[1.5px] border-(--border-subtle)">
+                                    <div className="flex items-center justify-between pb-4 border-b-2 border-(--border-subtle)">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#fcbffa] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                                <Landmark className="h-4 w-4 stroke-[2.5]" />
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-pink) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                                <Landmark className="h-4 w-4" strokeWidth={2.5} />
                                             </div>
                                             <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                                                Personal Accounts
+                                                Accounts
                                             </h3>
                                         </div>
                                         {onNavigateTab && (
@@ -506,7 +506,7 @@ export function DashboardPage({
                                                 onClick={() =>
                                                     onNavigateTab("accounts")
                                                 }
-                                                className="text-xs font-bold text-(--text-muted) hover:text-[#7e22ce] dark:hover:text-[#dfc2ff] transition-colors cursor-pointer"
+                                                className="text-xs font-bold text-(--text-muted) hover:text-(--pastel-lilac) transition-colors cursor-pointer"
                                             >
                                                 View All
                                             </button>
@@ -527,11 +527,11 @@ export function DashboardPage({
                                                             true,
                                                         )
                                                     }
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1a1a1a] bg-[#dfc2ff] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1a1a1a] bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                                                 >
-                                                    <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                                                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
                                                     <span>
-                                                        Add First Account
+                                                        Add Account
                                                     </span>
                                                 </button>
                                             </div>
@@ -561,7 +561,7 @@ export function DashboardPage({
                                                                     className="text-sm font-bold text-(--text-ink)"
                                                                 />
                                                                 {acc.is_joint && (
-                                                                    <span className="rounded-full bg-[#dfc2ff]/50 border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] shrink-0">
+                                                                    <span className="rounded-full bg-(--pastel-lilac)/50 border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] shrink-0">
                                                                         Joint
                                                                     </span>
                                                                 )}
@@ -604,10 +604,10 @@ export function DashboardPage({
                                     aria-label="Recent Transactions"
                                     className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors"
                                 >
-                                    <div className="flex items-center justify-between pb-4 border-b-[1.5px] border-(--border-subtle)">
+                                    <div className="flex items-center justify-between pb-4 border-b-2 border-(--border-subtle)">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#bbf7d0] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                                <Receipt className="h-4 w-4 stroke-[2.5]" />
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-mint) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                                                <Receipt className="h-4 w-4" strokeWidth={2.5} />
                                             </div>
                                             <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
                                                 Recent Expenses
@@ -650,7 +650,7 @@ export function DashboardPage({
                                                                 )}
                                                             </span>
                                                             {exp.is_shared && (
-                                                                <span className="inline-flex items-center gap-0.5 rounded-full bg-[#dfc2ff]/40 border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] shrink-0">
+                                                                <span className="inline-flex items-center gap-0.5 rounded-full bg-(--pastel-lilac)/40 border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] shrink-0">
                                                                     Shared (50%)
                                                                 </span>
                                                             )}

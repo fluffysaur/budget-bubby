@@ -26,6 +26,8 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
+import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
@@ -379,32 +381,23 @@ export function BulkAddExpenseModal({
                 {/* Global Controls & Tabs */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-(--border-subtle) bg-(--bg-card) px-4 sm:px-6 py-2.5">
                     {/* Mode Tabs */}
-                    <div className="flex items-center rounded-xl bg-(--bg-canvas) p-1 border border-(--border-subtle)">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("grid")}
-                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                                activeTab === "grid"
-                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
-                                    : "text-(--text-muted) hover:text-(--text-ink)"
-                            }`}
-                        >
-                            <TableIcon className="h-3.5 w-3.5" />
-                            <span>Table Grid ({rows.length})</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("paste")}
-                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                                activeTab === "paste"
-                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
-                                    : "text-(--text-muted) hover:text-(--text-ink)"
-                            }`}
-                        >
-                            <FileText className="h-3.5 w-3.5" />
-                            <span>Paste Text / Receipts</span>
-                        </button>
-                    </div>
+                    <SegmentedTabs
+                        tabs={[
+                            {
+                                id: "grid",
+                                label: `Table Grid (${rows.length})`,
+                                icon: <TableIcon className="h-3.5 w-3.5" />,
+                            },
+                            {
+                                id: "paste",
+                                label: "Paste Text / Receipts",
+                                icon: <FileText className="h-3.5 w-3.5" />,
+                            },
+                        ]}
+                        activeTab={activeTab}
+                        onChange={(id) => setActiveTab(id as "grid" | "paste")}
+                        size="sm"
+                    />
 
                     {/* Batch Global Controls */}
                     <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -445,7 +438,7 @@ export function BulkAddExpenseModal({
                     {activeTab === "paste" ? (
                         /* Paste Text Mode */
                         <div className="space-y-4">
-                            <div className="rounded-2xl bg-(--pastel-butter-light) p-4 text-xs text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                            <div className="rounded-2xl bg-(--pastel-butter-light) p-4 text-xs text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                                 <p className="font-bold mb-1 flex items-center gap-1.5 text-(--text-ink)">
                                     <Sparkles className="h-4 w-4 stroke-3 text-(--text-ink)" />
                                     <span>Smart Text &amp; Receipt Parser</span>
@@ -478,7 +471,7 @@ export function BulkAddExpenseModal({
                                 <button
                                     type="button"
                                     onClick={handleApplyPasteText}
-                                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-4 py-2 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-4 py-2 text-xs font-black text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                                 >
                                     <Sparkles className="h-4 w-4 stroke-3" />
                                     <span>Parse into Table Grid</span>
@@ -488,7 +481,7 @@ export function BulkAddExpenseModal({
                     ) : (
                         /* Table Grid Mode */
                         <div className="space-y-3">
-                            <div className="overflow-x-auto rounded-2xl border-2 border-(--border-ink) shadow-cute-sm bg-(--bg-card)">
+                            <div className="overflow-x-auto rounded-2xl border-2 border-(--border-ink) shadow-(--shadow-cute-sm) bg-(--bg-card)">
                                 <table className="w-full text-left text-xs text-(--text-ink)">
                                     <thead className="bg-(--bg-canvas) text-[11px] font-bold uppercase tracking-wider text-(--text-muted) border-b-2 border-(--border-ink)">
                                         <tr>
@@ -742,7 +735,7 @@ export function BulkAddExpenseModal({
                                                         }
                                                         className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                                             row.isShared
-                                                                ? "bg-(--pastel-sage-light) text-(--text-ink) border-(--border-ink) shadow-cute-sm"
+                                                                ? "bg-(--pastel-sage-light) text-(--text-ink) border-(--border-ink) shadow-(--shadow-cute-sm)"
                                                                 : "bg-(--bg-canvas) text-(--text-muted) border-(--border-subtle) hover:border-(--border-ink)"
                                                         }`}
                                                     >
@@ -814,7 +807,7 @@ export function BulkAddExpenseModal({
                             <button
                                 type="button"
                                 onClick={handleAddRow}
-                                className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-all shadow-cute-sm"
+                                className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer transition-all shadow-(--shadow-cute-sm)"
                             >
                                 <Plus className="h-4 w-4" strokeWidth={2.5} />
                                 <span>+ Add Row</span>
@@ -845,27 +838,26 @@ export function BulkAddExpenseModal({
                     </div>
 
                     <div className="flex items-center gap-2.5">
-                        <button
+                        <Button
+                            variant="secondary"
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
                             type="button"
                             onClick={handleSubmit}
                             disabled={isSubmitting || summary.count === 0}
-                            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+                            isLoading={isSubmitting}
+                            leftIcon={<CheckCircle2 className="h-4 w-4" />}
                         >
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span>
-                                {isSubmitting
-                                    ? "Saving All..."
-                                    : `Log All (${summary.count})`}
-                            </span>
-                        </button>
+                            {isSubmitting
+                                ? "Saving All..."
+                                : `Log All (${summary.count})`}
+                        </Button>
                     </div>
                 </ModalFooter>
             </div>

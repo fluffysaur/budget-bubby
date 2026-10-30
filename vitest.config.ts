@@ -13,6 +13,7 @@ export default defineConfig({
             "src/**/*.{test,spec}.{ts,tsx}",
         ],
         testTimeout: 25000,
+        maxWorkers: 4,
     },
     resolve: {
         alias: {

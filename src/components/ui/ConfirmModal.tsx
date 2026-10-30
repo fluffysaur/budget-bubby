@@ -64,9 +64,9 @@ export function ConfirmModal({
         icon !== undefined ? (
             icon
         ) : variant === "danger" ? (
-            <Trash2 className="h-4.5 w-4.5 stroke-[2.2] text-rose-600" />
+            <Trash2 className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />
         ) : (
-            <AlertTriangle className="h-4.5 w-4.5 stroke-[2.2] text-amber-600" />
+            <AlertTriangle className="h-4.5 w-4.5 text-amber-600" strokeWidth={2.5} />
         );
 
     const headerIconBg =

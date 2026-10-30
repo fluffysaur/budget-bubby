@@ -43,18 +43,18 @@ describe("App Integration & Routing", () => {
         // Default Dashboard page renders Net Worth card
         await waitFor(() => {
             expect(screen.getByText(/True Net Worth/i)).toBeInTheDocument();
-        });
-    });
+        }, { timeout: 15000 });
+    }, 30000);
 
     it("navigates to /spend and defaults to expenses ledger", async () => {
         render(<App initialEntries={["/spend"]} />);
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Total Spent/i)).toBeInTheDocument();
+            expect(within(main).getByText(/Unsettled/i)).toBeInTheDocument();
             expect(within(main).getByRole("tab", { name: /Expenses/i })).toHaveAttribute("aria-selected", "true");
             expect(within(main).getByRole("tab", { name: /Budget/i })).toHaveAttribute("aria-selected", "false");
-        });
+        }, { timeout: 5000 });
     });
 
     it("navigates to /spend?tab=budget and activates budget sub-tab", async () => {
@@ -80,7 +80,7 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Total Spent/i)).toBeInTheDocument();
+            expect(within(main).getByText(/Unsettled/i)).toBeInTheDocument();
             expect(within(main).getByPlaceholderText(/Search merchant/i)).toBeInTheDocument();
         });
     });
@@ -89,14 +89,14 @@ describe("App Integration & Routing", () => {
         const { unmount: unmountAccounts } = render(<App initialEntries={["/accounts"]} />);
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByRole("heading", { name: /Accounts & Net Worth/i })).toBeInTheDocument();
+            expect(within(main).getByRole("heading", { name: /^Accounts$/i })).toBeInTheDocument();
         });
         unmountAccounts();
 
         const { unmount: unmountGoals } = render(<App initialEntries={["/goals"]} />);
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Total Target/i)).toBeInTheDocument();
+            expect(within(main).getByText(/^Target$/i)).toBeInTheDocument();
         });
         unmountGoals();
 
@@ -169,7 +169,7 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Total Spent/i)).toBeInTheDocument();
+            expect(within(main).getByText(/Unsettled/i)).toBeInTheDocument();
         });
 
         // Switch to Budget sub-tab

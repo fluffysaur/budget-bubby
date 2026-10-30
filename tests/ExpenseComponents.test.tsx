@@ -505,10 +505,10 @@ describe('ExpensesPage Integration', () => {
     expect(await screen.findByRole('heading', { name: /expenses/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /\+ add expense|\+ quick add/i })).toBeInTheDocument();
 
-    // Summary cards: Total Spent, Shared Spending, Unsettled Balance
-    expect(screen.getByText(/total spent/i)).toBeInTheDocument();
-    expect(screen.getByText('Shared Spending')).toBeInTheDocument();
-    expect(screen.getByText(/unsettled|who owes whom/i)).toBeInTheDocument();
+    // Summary cards: Spent, Shared, Unsettled
+    expect(screen.getByText(/^spent$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^shared$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^unsettled$/i)).toBeInTheDocument();
 
     // Check that transactions are displayed
     expect(await screen.findByText('FairPrice Finest Groceries')).toBeInTheDocument();

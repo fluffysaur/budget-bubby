@@ -12,6 +12,7 @@ import { getTodayDateString } from "../../lib/dateUtils";
 import { financeService } from "../../services/financeService";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 
 export interface BulkBalanceUpdateModalProps {
     isOpen: boolean;
@@ -151,7 +152,7 @@ export function BulkBalanceUpdateModal({
                     id="bulk-balance-modal-title"
                     title="Month-End Check-In"
                     subtitle="Pre-filled with last balances — edit only what changed & save all"
-                    icon={<CalendarCheck2 className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<CalendarCheck2 className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -315,21 +316,22 @@ export function BulkBalanceUpdateModal({
                     </div>
 
                     <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
-                        <button
-                            type="button"
+                        <Button
+                            variant="ghost"
                             onClick={onClose}
-                            className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                            disabled={isSubmitting}
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
+                            variant="primary"
+                            isLoading={isSubmitting}
                             disabled={isSubmitting}
-                            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                            leftIcon={<Check className="h-4 w-4" strokeWidth={2.5} />}
                         >
-                            <Check className="h-4 w-4 stroke-[2.5]" />
-                            <span>{isSubmitting ? "Saving..." : "Save Month-End Snapshot"}</span>
-                        </button>
+                            Save Month-End Snapshot
+                        </Button>
                     </div>
                 </ModalFooter>
             </form>

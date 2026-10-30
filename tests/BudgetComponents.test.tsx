@@ -277,7 +277,7 @@ describe('CategoryProgressList', () => {
 
   it('renders empty state message when no categories are provided', () => {
     render(<CategoryProgressList categories={[]} />);
-    expect(screen.getByText(/no budget categories found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no categories/i)).toBeInTheDocument();
   });
 });
 
@@ -566,7 +566,7 @@ describe('BudgetPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/budget tracker|monthly budget/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /^budget$/i })).toBeInTheDocument();
       expect(screen.getAllByText(/gross pay|gross salary/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/disposable pool|after deductions/i).length).toBeGreaterThan(0);
     });

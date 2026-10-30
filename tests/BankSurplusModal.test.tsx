@@ -14,8 +14,8 @@ describe('BankSurplusModal', () => {
             />
         );
 
-        expect(screen.getByRole('heading', { name: /bank as surplus/i })).toBeInTheDocument();
-        expect(screen.getByText(/Reserve Cushion Confirmation/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /bank surplus/i })).toBeInTheDocument();
+        expect(screen.getByText(/Reserve Cushion/i)).toBeInTheDocument();
         expect(screen.getByText(/Destination:/i)).toBeInTheDocument();
     });
 
@@ -33,7 +33,7 @@ describe('BankSurplusModal', () => {
             />
         );
 
-        const confirmBtn = screen.getByRole('button', { name: /confirm & bank as surplus/i });
+        const confirmBtn = screen.getByRole('button', { name: /^bank surplus$/i });
         fireEvent.click(confirmBtn);
 
         expect(handleConfirm).toHaveBeenCalledTimes(1);

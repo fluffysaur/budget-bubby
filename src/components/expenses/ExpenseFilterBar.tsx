@@ -219,7 +219,7 @@ export function ExpenseFilterBar({
                                 onClick={() => onFilterChange({ ...filter, search: "" })}
                                 className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-(--text-muted) hover:text-(--text-ink) text-xs font-bold cursor-pointer transition-colors"
                             >
-                                <X className="h-3 w-3 stroke-[3]" />
+                                <X className="h-3 w-3 stroke-3" />
                             </button>
                         )}
                     </div>

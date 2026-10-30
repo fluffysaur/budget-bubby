@@ -119,8 +119,8 @@ export function SettlementWidget({
             {/* Header */}
             <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                        <Scale className="h-4 w-4 stroke-[2.5]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                        <Scale className="h-4 w-4" strokeWidth={2.5} />
                     </div>
                     <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
                         Running Settlement
@@ -128,7 +128,7 @@ export function SettlementWidget({
                 </div>
 
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-(--bg-cream) border-2 border-(--border-ink) px-3 py-1 text-[11px] font-bold text-(--text-ink) shadow-(--shadow-cute-sm)">
-                    <ArrowRightLeft className="h-3 w-3 stroke-[2.5]" />
+                    <ArrowRightLeft className="h-3 w-3" strokeWidth={2.5} />
                     <span>50 / 50 Split</span>
                 </span>
             </div>
@@ -155,12 +155,12 @@ export function SettlementWidget({
                         >
                             {isZero ? (
                                 <>
-                                    <CheckCircle2 className="h-4 w-4 shrink-0 stroke-[2.5]" />
+                                    <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                                     <span>All settled up</span>
                                 </>
                             ) : (
                                 <>
-                                    <Scale className="h-4 w-4 shrink-0 stroke-[2.5]" />
+                                    <Scale className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                                     <span>{summary.settlementText}</span>
                                 </>
                             )}
@@ -173,13 +173,13 @@ export function SettlementWidget({
                             type="button"
                             disabled={isZero}
                             onClick={() => setIsConfirmOpen(true)}
-                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-black border-[1.5px] transition-all font-display ${
+                            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-black border-2 transition-all font-display ${
                                 isZero
                                     ? "bg-(--bg-cream) border-(--border-subtle) text-(--text-muted) opacity-60 cursor-not-allowed"
-                                    : "bg-[#dfc2ff] text-[#1a1a1a] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                                    : "bg-(--pastel-lilac) text-[#1a1a1a] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                             }`}
                         >
-                            <CheckCheck className="h-4 w-4 stroke-[2.5]" />
+                            <CheckCheck className="h-4 w-4" strokeWidth={2.5} />
                             <span>Settle Up</span>
                         </button>
                     </div>
@@ -237,7 +237,7 @@ export function SettlementWidget({
                     <ModalHeader
                         id="settle-dialog-title"
                         title="Confirm Settlement"
-                        icon={<CheckCheck className="h-5 w-5 stroke-[2.5] text-emerald-700" />}
+                        icon={<CheckCheck className="h-5 w-5 text-emerald-700" strokeWidth={2.5} />}
                         iconBgColor="bg-(--pastel-mint)"
                         onClose={() => setIsConfirmOpen(false)}
                     />

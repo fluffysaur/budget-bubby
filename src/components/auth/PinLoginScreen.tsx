@@ -254,7 +254,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         data-testid="biometric-unlock-btn"
                         onClick={handleBiometricUnlock}
                         disabled={authLoading || isBiometricAuthenticating}
-                        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-6 rounded-2xl bg-[#ffe999] hover:bg-[#fde047] border-[1.5px] border-(--border-ink) text-[#1a1a1a] font-bold text-sm shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 mb-6 rounded-2xl bg-(--pastel-butter) hover:bg-[#fde047] border-2 border-(--border-ink) text-[#1a1a1a] font-bold text-sm shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer disabled:opacity-50"
                     >
                         {isBiometricAuthenticating ? (
                             <>
@@ -263,7 +263,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                             </>
                         ) : (
                             <>
-                                <Fingerprint className="h-5 w-5 stroke-[2.5] text-[#1a1a1a]" />
+                                <Fingerprint className="h-5 w-5 text-[#1a1a1a]" strokeWidth={2.5} />
                                 <span>Unlock with Fingerprint / Face ID</span>
                             </>
                         )}
@@ -283,7 +283,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                             <div
                                 key={idx}
                                 data-testid={`pin-dot-${idx}`}
-                                className={`h-4.5 w-4.5 rounded-full border-[1.5px] border-(--border-ink) transition-all duration-150 ${
+                                className={`h-4.5 w-4.5 rounded-full border-2 border-(--border-ink) transition-all duration-150 ${
                                     isFilled
                                         ? "bg-emerald-400 scale-110 shadow-(--shadow-cute-sm)"
                                         : "bg-(--bg-card)"
@@ -298,9 +298,9 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     <div
                         role="alert"
                         data-testid="biometric-error-alert"
-                        className="flex items-center gap-2 mb-4 px-3.5 py-2 rounded-xl bg-[#fffbeb] border-[1.5px] border-(--border-ink) text-[#78350f] text-xs font-bold shadow-(--shadow-cute-sm) animate-in fade-in"
+                        className="flex items-center gap-2 mb-4 px-3.5 py-2 rounded-xl bg-[#fffbeb] border-2 border-(--border-ink) text-[#78350f] text-xs font-bold shadow-(--shadow-cute-sm) animate-in fade-in"
                     >
-                        <AlertCircle className="h-4 w-4 shrink-0 stroke-[2.5]" />
+                        <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                         <span>{biometricError}</span>
                     </div>
                 )}
@@ -309,9 +309,9 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 {authError && (
                     <div
                         role="alert"
-                        className="flex items-center gap-2 mb-6 px-3.5 py-2 rounded-xl bg-[#fff1ee] border-[1.5px] border-(--border-ink) text-[#9a1b1b] text-xs font-bold shadow-(--shadow-cute-sm) animate-in fade-in"
+                        className="flex items-center gap-2 mb-6 px-3.5 py-2 rounded-xl bg-[#fff1ee] border-2 border-(--border-ink) text-[#9a1b1b] text-xs font-bold shadow-(--shadow-cute-sm) animate-in fade-in"
                     >
-                        <AlertCircle className="h-4 w-4 shrink-0 stroke-[2.5]" />
+                        <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                         <span>{authError}</span>
                     </div>
                 )}
@@ -319,7 +319,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 {/* Loading Spinner during authentication */}
                 {authLoading && (
                     <div className="flex items-center gap-2 mb-6 text-[#7e22ce] dark:text-[#dfc2ff] text-xs font-bold animate-in fade-in">
-                        <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+                        <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
                         <span>Unlocking household...</span>
                     </div>
                 )}
@@ -333,7 +333,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                             disabled={authLoading}
                             onClick={() => handleDigit(digit)}
                             aria-label={`Digit ${digit}`}
-                            className="h-16 rounded-2xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-2xl font-black font-display text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all focus:outline-none focus:ring-2 focus:ring-[#dfc2ff] disabled:opacity-50 cursor-pointer"
+                            className="h-16 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) text-2xl font-black font-display text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 cursor-pointer"
                         >
                             {digit}
                         </button>
@@ -345,9 +345,9 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         disabled={authLoading || pin.length === 0}
                         onClick={handleClear}
                         aria-label="Clear PIN"
-                        className="h-16 rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-ink) text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-(--shadow-cute-sm) transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#dfc2ff] disabled:opacity-30 cursor-pointer"
+                        className="h-16 rounded-2xl bg-(--bg-cream) border-2 border-(--border-ink) text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-(--shadow-cute-sm) transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-30 cursor-pointer"
                     >
-                        <RotateCcw className="h-5 w-5 stroke-[2.5]" />
+                        <RotateCcw className="h-5 w-5" strokeWidth={2.5} />
                     </button>
 
                     {/* Digit 0 */}
@@ -356,7 +356,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         disabled={authLoading}
                         onClick={() => handleDigit("0")}
                         aria-label="Digit 0"
-                        className="h-16 rounded-2xl bg-(--bg-card) border-[1.5px] border-(--border-ink) text-2xl font-black font-display text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all focus:outline-none focus:ring-2 focus:ring-[#dfc2ff] disabled:opacity-50 cursor-pointer"
+                        className="h-16 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) text-2xl font-black font-display text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 cursor-pointer"
                     >
                         0
                     </button>
@@ -367,9 +367,9 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         disabled={authLoading || pin.length === 0}
                         onClick={handleBackspace}
                         aria-label="Backspace"
-                        className="h-16 rounded-2xl bg-(--bg-cream) border-[1.5px] border-(--border-ink) text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-(--shadow-cute-sm) transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#dfc2ff] disabled:opacity-30 cursor-pointer"
+                        className="h-16 rounded-2xl bg-(--bg-cream) border-2 border-(--border-ink) text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-(--shadow-cute-sm) transition-all flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-30 cursor-pointer"
                     >
-                        <Delete className="h-5 w-5 stroke-[2.5]" />
+                        <Delete className="h-5 w-5" strokeWidth={2.5} />
                     </button>
                 </div>
 
@@ -385,7 +385,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     </button>
                 ) : biometricsAvailable ? (
                     <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-(--text-muted)">
-                        <ScanFace className="h-4 w-4 stroke-[2.5] text-[#7e22ce] dark:text-[#dfc2ff]" />
+                        <ScanFace className="h-4 w-4 text-[#7e22ce] dark:text-[#dfc2ff]" strokeWidth={2.5} />
                         <span>Biometric unlock supported on this device</span>
                     </div>
                 ) : null}
@@ -398,8 +398,8 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 maxWidth="max-w-sm"
             >
                 <div className="flex flex-col min-h-0 flex-1 overflow-hidden p-6 text-center items-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--pastel-lilac) text-(--text-ink) mb-4 border-2 border-(--border-ink) shadow-cute-sm">
-                        <Fingerprint className="h-8 w-8 stroke-[2.5]" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-(--pastel-lilac) text-(--text-ink) mb-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                        <Fingerprint className="h-8 w-8" strokeWidth={2.5} />
                     </div>
 
                     <h2
@@ -421,16 +421,16 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                             data-testid="confirm-enroll-biometrics-btn"
                             disabled={isEnrolling}
                             onClick={handleConfirmEnrollment}
-                            className="w-full py-3 rounded-xl bg-(--pastel-lilac) hover:bg-(--pastel-lilac-dark) text-(--text-ink) text-xs font-black border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            className="w-full py-3 rounded-xl bg-(--pastel-lilac) hover:bg-(--pastel-lilac-dark) text-(--text-ink) text-xs font-black border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         >
                             {isEnrolling ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+                                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
                                     <span>Enrolling Device...</span>
                                 </>
                             ) : (
                                 <>
-                                    <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
+                                    <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />
                                     <span>Enable Biometrics</span>
                                 </>
                             )}

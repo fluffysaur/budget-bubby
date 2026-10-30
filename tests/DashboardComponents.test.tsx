@@ -594,7 +594,7 @@ describe('DashboardPage', () => {
     });
 
     // In personal perspective, settlement widget is replaced or accompanied by personal accounts & recent expenses
-    expect(screen.getByText(/personal accounts|my accounts/i)).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /personal accounts/i })).toBeInTheDocument();
     expect(screen.getByText('DBS Multiplier')).toBeInTheDocument();
   });
 

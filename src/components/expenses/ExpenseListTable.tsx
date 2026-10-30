@@ -309,7 +309,7 @@ export function ExpenseListTable({
         {/* Ledger Body: Empty State or Table + Cards */}
         {expenses.length === 0 ? (
           <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-(--shadow-cute-sm) mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-(--shadow-(--shadow-cute-sm)) mb-3">
               <Receipt className="h-6 w-6" />
             </div>
             <h3 className="text-base font-extrabold text-(--text-ink) mb-1">No expenses found</h3>
@@ -435,7 +435,7 @@ export function ExpenseListTable({
                           const goal = getGoal(expense.goal_id);
                           return (
                             <span
-                              className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-cute-sm"
+                              className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-(--shadow-cute-sm)"
                               title={goal ? `Goal Spend: ${goal.title}` : 'Goal Spend'}
                             >
                               <span role="img" aria-label="Goal" className="text-xs shrink-0">
@@ -496,7 +496,7 @@ export function ExpenseListTable({
                             setEditingExpense(expense);
                           }}
                           aria-label={`Edit ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-(--shadow-(--shadow-cute-sm)) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                           title="Edit expense"
                         >
                           <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -505,7 +505,7 @@ export function ExpenseListTable({
                           type="button"
                           onClick={() => setDeletingExpense(expense)}
                           aria-label={`Delete ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-(--shadow-(--shadow-cute-sm)) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                           title="Delete expense"
                         >
                           <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -537,7 +537,7 @@ export function ExpenseListTable({
                 onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
                 sizeVariant="sm"
                 containerClassName="w-auto"
-                className="bg-(--bg-card) font-bold text-xs py-1 shadow-cute-sm"
+                className="bg-(--bg-card) font-bold text-xs py-1 shadow-(--shadow-cute-sm)"
               >
                 <option value={20}>20</option>
                 <option value={50}>50</option>
@@ -552,7 +552,7 @@ export function ExpenseListTable({
                 onClick={() => handlePageChange(validCurrentPage - 1)}
                 disabled={validCurrentPage <= 1}
                 aria-label="Previous page"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -577,8 +577,8 @@ export function ExpenseListTable({
                         onClick={() => handlePageChange(p)}
                         className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-all cursor-pointer ${
                           p === validCurrentPage
-                            ? 'bg-(--pastel-lilac) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-cute-sm font-black'
-                            : 'border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5'
+                            ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-black'
+                            : 'border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5'
                         }`}
                       >
                         {p}
@@ -592,7 +592,7 @@ export function ExpenseListTable({
                 onClick={() => handlePageChange(validCurrentPage + 1)}
                 disabled={validCurrentPage >= totalPages}
                 aria-label="Next page"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

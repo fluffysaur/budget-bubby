@@ -22,6 +22,7 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
@@ -307,7 +308,7 @@ export function SpendFromGoalModal({
                             <button
                                 type="button"
                                 onClick={() => setIsShared((prev) => !prev)}
-                                className={`w-full py-2 px-3 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer shadow-cute-sm ${
+                                className={`w-full py-2 px-3 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer shadow-(--shadow-cute-sm) ${
                                     isShared
                                         ? "bg-(--pastel-lilac) text-(--text-ink)"
                                         : "bg-(--pastel-butter) text-(--text-ink)"
@@ -340,23 +341,24 @@ export function SpendFromGoalModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
+                    <Button
+                        variant="secondary"
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        isLoading={isSubmitting}
                     >
                         {isSubmitting
                             ? "Logging Spend..."
                             : "Log & Deduct from Goal"}
-                    </button>
+                    </Button>
                 </ModalFooter>
             </form>
         </AnimatedModal>

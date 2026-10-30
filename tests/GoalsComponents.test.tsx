@@ -507,9 +507,9 @@ describe('GoalsPage Integration', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/No savings goals found/i)).toBeInTheDocument();
+      expect(screen.getByText(/No Goals/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /Create your first goal/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add Goal/i })).toBeInTheDocument();
   });
 });

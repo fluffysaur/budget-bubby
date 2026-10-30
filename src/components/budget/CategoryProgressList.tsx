@@ -62,8 +62,8 @@ export function CategoryProgressList({
     return (
       <EmptyStateCard
         icon={<HelpCircle className="h-6 w-6" />}
-        title="No Budget Categories"
-        description="No budget categories found for this month."
+        title="No Categories"
+        description="Add budget categories to track monthly spend."
         className={className}
       />
     );
@@ -164,7 +164,7 @@ export function CategoryProgressList({
                       {subSpent > 0 && (
                         <TooltipPopover
                           label={`${categoryName} Subscriptions Breakdown`}
-                          title="Auto-Deducted Monthly Subscriptions"
+                          title="Subscriptions"
                         >
                           <div className="space-y-1">
                             <p>

@@ -100,3 +100,26 @@ Never re-declare shared constants or calculations locally across feature modules
     - **Meaningful Actions Over Generic 'X'**: For financial milestone or rollover banners, avoid passive dismiss ('X') buttons. Provide dual explicit actions (e.g., primary `Sweep to Goals` and secondary `Bank as Surplus`).
     - **Reserve Confirmation**: Actions that bank or defer funds must provide a clear confirmation modal explaining the reserve cushion benefit and destination.
 - **Responsive Layout**: Always provide mobile-first responsive grid defaults (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`).
+
+## 6. Microcopy, UX Writing & Brevity Guidelines (`conciseCopyRule`)
+
+Always maintain a direct, functional, and concise editorial style across all UI text:
+
+- **Direct & Functional Naming**: Strip explanatory clauses from UI headers and labels. Prefer punchy nouns or active verbs:
+    - Prefer `Bonus Splitter` over `Bonus Allocation Calculator`.
+    - Prefer `Subscriptions` over `Auto-Deducted Monthly Subscriptions`.
+    - Prefer `Sweep Surplus` over `Sweep Unspent Surplus`.
+    - Prefer `Income Flow` over `Monthly CPF & Take-Home Flow`.
+    - Prefer `Spend Trends` over `Monthly Spend Trends & Averages`.
+    - Prefer `Add Expense` over `Quick Add Expense`.
+- **Aggressive Header & Action Brevity**: Keep page headers, card titles, and primary action buttons to 1–3 punchy words (e.g. `Budget`, `Expenses`, `Accounts`, `Goals`, `Loans`, `Recurring`, `Save`, `Bank Surplus`, `Update Balances`).
+- **StatCard & Metric Subtitles**: Limit subtitles to short data tokens (e.g. `12 transactions`, `S$450 remaining`, `5% of budget`), never full conversational sentences or filler phrases.
+- **Empty States Formula**: Always follow the formula:
+    - **Title**: Exactly 2 words (e.g. `No Accounts`, `No Goals`, `No Loans`).
+    - **Prompt**: Exactly 1 concise action prompt sentence (e.g. `Add an account to start tracking balances.`).
+    - **Action**: 1 primary direct CTA button.
+- **Progressive Disclosure**: Keep high-level views uncluttered. Do not place multi-sentence explanatory paragraphs on primary page dashboards; offload deep background rules or calculation logic into `<TooltipPopover>` or collapsible sections.
+- **Notification & Alert Copy**:
+    - **Notification Settings**: Keep toggle descriptions under 8 words (e.g. `Remind before credit card statement due date`, `Daily 6 PM reminder to log spending`).
+    - **Alert Banners**: Metric-focused headline ≤ 6 words paired with a single concise actionable subtitle.
+

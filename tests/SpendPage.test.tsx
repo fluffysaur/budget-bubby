@@ -53,7 +53,7 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
 
         // Embedded ExpensesPage content is rendered
         await waitFor(() => {
-            expect(screen.getByText(/Spendable Remaining/i)).toBeInTheDocument();
+            expect(screen.getByText(/Spendable/i)).toBeInTheDocument();
             expect(screen.getByPlaceholderText(/Search merchant/i)).toBeInTheDocument();
         });
     });

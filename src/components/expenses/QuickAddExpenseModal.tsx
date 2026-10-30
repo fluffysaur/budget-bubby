@@ -42,6 +42,7 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 
@@ -518,7 +519,7 @@ export function QuickAddExpenseModal({
             >
                 <ModalHeader
                     title="Quick Add Expense"
-                    icon={<Plus className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Plus className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
                 />
@@ -632,7 +633,7 @@ export function QuickAddExpenseModal({
                                     setSelectedGoalId("");
                                 }
                             }}
-                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-cute-sm ${
+                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-(--shadow-cute-sm) ${
                                 isGoalSpend
                                     ? "bg-(--pastel-lilac-light) border-(--border-ink)"
                                     : "bg-(--bg-card) border-(--border-subtle) hover:border-(--border-ink)"
@@ -647,7 +648,8 @@ export function QuickAddExpenseModal({
                                     }`}
                                 >
                                     <Target
-                                        className={`h-4 w-4 stroke-[2.5] ${
+                                        strokeWidth={2.5}
+                                        className={`h-4 w-4 ${
                                             isGoalSpend
                                                 ? "text-(--text-ink)"
                                                 : "text-(--text-muted)"
@@ -698,7 +700,7 @@ export function QuickAddExpenseModal({
                             >
                                 <span
                                     aria-hidden="true"
-                                    className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-cute-sm border border-(--border-ink) transition duration-200 ease-in-out ${
+                                    className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-(--shadow-cute-sm) border border-(--border-ink) transition duration-200 ease-in-out ${
                                         isGoalSpend
                                             ? "translate-x-5"
                                             : "translate-x-0.5"
@@ -775,7 +777,7 @@ export function QuickAddExpenseModal({
                                                 }
                                                 className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                                                     isSelected
-                                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
+                                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold"
                                                         : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
                                                 }`}
                                             >
@@ -812,7 +814,7 @@ export function QuickAddExpenseModal({
                                             }}
                                             className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                                                 isSelected
-                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
+                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold"
                                                     : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
                                             }`}
                                         >
@@ -853,7 +855,7 @@ export function QuickAddExpenseModal({
                     </div>
 
                     {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
-                    <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-cute-sm">
+                    <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-(--shadow-cute-sm)">
                         {/* Payer Toggle */}
                         <div className="flex items-center justify-between gap-1.5 flex-wrap">
                             <span className="text-[11px] font-bold text-(--text-muted)">
@@ -875,7 +877,7 @@ export function QuickAddExpenseModal({
                                             }
                                             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                                 isSelected
-                                                    ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                                    ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                                     : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                             }`}
                                         >
@@ -912,7 +914,7 @@ export function QuickAddExpenseModal({
                                     onClick={() => setIsShared(false)}
                                     className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
                                         !isShared
-                                            ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
+                                            ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
                                             : "text-(--text-muted) hover:text-(--text-ink)"
                                     }`}
                                 >
@@ -925,7 +927,7 @@ export function QuickAddExpenseModal({
                                     onClick={() => setIsShared(true)}
                                     className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
                                         isShared
-                                            ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
+                                            ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
                                             : "text-(--text-muted) hover:text-(--text-ink)"
                                     }`}
                                 >
@@ -954,7 +956,7 @@ export function QuickAddExpenseModal({
                                 }}
                                 className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                     date === todayStr
-                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                         : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
                                 }`}
                             >
@@ -966,7 +968,7 @@ export function QuickAddExpenseModal({
                                 onClick={() => setDate(yesterdayStr)}
                                 className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                     date === yesterdayStr
-                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                         : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
                                 }`}
                             >
@@ -978,7 +980,7 @@ export function QuickAddExpenseModal({
                                 onClick={() => setDate(twoDaysAgoStr)}
                                 className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                     date === twoDaysAgoStr
-                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                         : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
                                 }`}
                             >
@@ -1125,7 +1127,7 @@ export function QuickAddExpenseModal({
                                         onClick={() =>
                                             handleAddTag(newTagInput)
                                         }
-                                        className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) px-3 py-1.5 text-xs font-bold cursor-pointer transition-all"
+                                        className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) px-3 py-1.5 text-xs font-bold cursor-pointer transition-all"
                                     >
                                         + Tag
                                     </button>
@@ -1145,7 +1147,7 @@ export function QuickAddExpenseModal({
                                                 onClick={() =>
                                                     handleAddTag(rTag)
                                                 }
-                                                className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) px-2 py-0.5 text-[11px] font-bold transition-all cursor-pointer shadow-cute-sm"
+                                                className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) px-2 py-0.5 text-[11px] font-bold transition-all cursor-pointer shadow-(--shadow-cute-sm)"
                                             >
                                                 <span>
                                                     + #{rTag.replace(/^#/, "")}
@@ -1160,27 +1162,22 @@ export function QuickAddExpenseModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
+                    <Button
+                        variant="secondary"
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-5 py-2.5 text-xs font-black shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        isLoading={isSubmitting}
+                        leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
                     >
-                        {isSubmitting ? (
-                            <span>Saving...</span>
-                        ) : (
-                            <>
-                                <Plus className="h-4 w-4 stroke-[2.5]" />
-                                <span>Add Expense</span>
-                            </>
-                        )}
-                    </button>
+                        {isSubmitting ? "Saving..." : "Add Expense"}
+                    </Button>
                 </ModalFooter>
             </form>
         </AnimatedModal>

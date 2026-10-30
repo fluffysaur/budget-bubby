@@ -221,7 +221,7 @@ describe('PolicyTable Component', () => {
     );
 
     // Select Subscription filter
-    const subscriptionFilter = screen.getByRole('button', { name: /subscription/i });
+    const subscriptionFilter = screen.getByRole('tab', { name: /subscription/i });
     fireEvent.click(subscriptionFilter);
 
     expect(screen.getByText('Spotify Family Plan')).toBeInTheDocument();

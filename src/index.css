@@ -38,6 +38,10 @@
     --color-pink: var(--accent-pink);
     --color-mint: var(--accent-mint);
     --color-coral: var(--accent-coral);
+
+    --shadow-cute-sm: var(--shadow-cute-sm);
+    --shadow-cute: var(--shadow-cute);
+    --shadow-cute-lg: var(--shadow-cute-lg);
 }
 
 :root {

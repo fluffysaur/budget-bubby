@@ -229,7 +229,7 @@ export function MonthPicker({
                                         aria-label={`Select ${monthName} ${navYear}`}
                                         className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                             isSelected
-                                                ? "bg-[#dfc2ff] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                ? "bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
                                                 : isTodayMonth
                                                   ? "bg-(--pastel-mint) text-(--text-ink) border border-(--border-ink) hover:bg-(--pastel-mint-dark)"
                                                   : "bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"

@@ -21,9 +21,9 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ className = 
         onClick={promptInstall}
         title="Install Budget Bubby App"
         aria-label="Install Budget Bubby App"
-        className={`flex h-9 items-center gap-1.5 px-3 rounded-xl border-[1.5px] border-(--border-ink) bg-[#bbf7d0] text-[#14532d] shadow-(--shadow-cute-sm) transition-all hover:bg-[#86efac] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer font-bold text-xs ${className}`}
+        className={`flex h-9 items-center gap-1.5 px-3 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint) text-[#14532d] shadow-(--shadow-cute-sm) transition-all hover:bg-(--pastel-mint-dark) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer font-bold text-xs ${className}`}
       >
-        <Download className="h-4 w-4 shrink-0 stroke-[2.5]" />
+        <Download className="h-4 w-4 shrink-0" strokeWidth={2.5} />
         <span>Install App</span>
       </button>
 

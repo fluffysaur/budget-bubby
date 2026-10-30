@@ -28,20 +28,20 @@ export function SharedGoalsOverview({
     switch (status) {
       case 'achieved':
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#dfc2ff] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+          <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
             Achieved
           </span>
         );
       case 'behind':
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1ee] px-2 py-0.5 text-[10px] font-black text-[#9a1b1b] dark:text-[#fca5a5] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+          <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-coral-light) px-2 py-0.5 text-[10px] font-black text-[#9a1b1b] dark:text-[#fca5a5] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
             Behind
           </span>
         );
       case 'on_track':
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#bbf7d0] px-2 py-0.5 text-[10px] font-black text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+          <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-mint) px-2 py-0.5 text-[10px] font-black text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
             On Track
           </span>
         );
@@ -57,7 +57,7 @@ export function SharedGoalsOverview({
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fcbffa] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-pink) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
             <Target className="h-5 w-5" strokeWidth={2.5} />
           </div>
           <div className="min-w-0">
@@ -157,10 +157,10 @@ export function SharedGoalsOverview({
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
                           goal.status === 'achieved'
-                            ? 'bg-[#dfc2ff]'
+                            ? 'bg-(--pastel-lilac)'
                             : goal.status === 'behind'
-                            ? 'bg-[#f76b57]'
-                            : 'bg-[#bbf7d0]'
+                            ? 'bg-(--pastel-coral)'
+                            : 'bg-(--pastel-mint)'
                         }`}
                         style={{ width: `${progress}%` }}
                       />

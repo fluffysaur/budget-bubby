@@ -19,6 +19,7 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
+import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
 import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
@@ -206,7 +207,7 @@ export function AddEditGoalModal({
                     id="goal-modal-title"
                     title={goal ? "Edit Savings Goal" : "New Savings Goal"}
                     subtitle="Track couple milestones, target dates, and monthly savings pace"
-                    icon={<Target className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Target className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -426,24 +427,21 @@ export function AddEditGoalModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
-                        type="button"
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                        disabled={isSubmitting}
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
+                        variant="primary"
+                        isLoading={isSubmitting}
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
                     >
-                        {isSubmitting
-                            ? "Saving..."
-                            : goal
-                              ? "Save Changes"
-                              : "Create Goal"}
-                    </button>
+                        {goal ? "Save Changes" : "Create Goal"}
+                    </Button>
                 </ModalFooter>
             </form>
         </AnimatedModal>

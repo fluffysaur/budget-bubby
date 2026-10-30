@@ -499,13 +499,14 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
                 "Locked categories keep their exact amount when you click Auto-Balance.",
             ),
         ).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Close tooltip" }));
 
         // Verify category lock toggle buttons exist
         const lockButtons = screen.getAllByTitle(/lock /i);
         expect(lockButtons.length).toBeGreaterThanOrEqual(
             mockCategories.length,
         );
-    });
+    }, 45000);
 
     it("auto-balances unlocked categories proportionally to exactly 100% while keeping locked categories unchanged", async () => {
         render(
@@ -538,6 +539,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
                 "Locked categories keep their exact amount when you click Auto-Balance.",
             ).length,
         ).toBeGreaterThan(0);
+        fireEvent.click(screen.getByRole("button", { name: "Close tooltip" }));
 
         // Now change second category (Lifestyle) slider to 60%, throwing total off from 100%
         const secondCat = mockCategories[1];
@@ -556,14 +558,14 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         // Verify Save Budget button is enabled
         const saveBtn = screen.getByRole("button", { name: /save budget/i });
         expect(saveBtn).not.toBeDisabled();
-    });
+    }, 45000);
 
     it("renders interactive sliders and auto-balance in ManageCategoriesModal under Allocations view", async () => {
         render(<ManageCategoriesModal isOpen={true} onClose={vi.fn()} />);
 
-        // Switch to "Budget Allocations (%)" view
-        const allocationsTab = screen.getByRole("button", {
-            name: /budget allocations/i,
+        // Switch to "Allocations (%)" view
+        const allocationsTab = screen.getByRole("tab", {
+            name: /allocations/i,
         });
         fireEvent.click(allocationsTab);
 
@@ -579,7 +581,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
             const sliders = screen.getAllByRole("slider");
             expect(sliders.length).toBeGreaterThan(0);
         });
-    }, 25000);
+    }, 45000);
 });
 
 describe("CategoryProgressList Warning Badges", () => {

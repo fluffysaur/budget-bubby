@@ -5,9 +5,10 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Pencil, AlertCircle, Loader2, Check } from "lucide-react";
+import { Pencil, AlertCircle, Check } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
+import { Button } from "../ui/Button";
 import type { Account, AccountType, HouseholdMember } from "../../types/finance";
 import { financeService } from "../../services/financeService";
 
@@ -86,7 +87,7 @@ export function EditAccountModal({
                     id="edit-account-title"
                     title="Edit Account Details"
                     subtitle="Update account name, category, or owner"
-                    icon={<Pencil className="h-4.5 w-4.5 stroke-[2.5]" />}
+                    icon={<Pencil className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -216,31 +217,22 @@ export function EditAccountModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <button
-                        type="button"
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
+                        variant="primary"
+                        isLoading={isSubmitting}
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                        leftIcon={<Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
                     >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                <span>Saving...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                                <span>Save Changes</span>
-                            </>
-                        )}
-                    </button>
+                        Save Changes
+                    </Button>
                 </ModalFooter>
             </form>
         </AnimatedModal>

@@ -147,9 +147,9 @@ export function NotificationSettingsModal({
             <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 <ModalHeader
                     title="Settings"
-                    subtitle="Customize sound effects, push notifications &amp; alert thresholds"
-                    icon={<Settings className="h-5 w-5 stroke-[2.5] text-(--text-ink)" />}
-                    iconBgColor="bg-[#dfc2ff]"
+                    subtitle="Customize sound effects, push notifications & alert thresholds"
+                    icon={<Settings className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />}
+                    iconBgColor="bg-(--pastel-lilac)"
                     onClose={onClose}
                 />
 
@@ -162,15 +162,15 @@ export function NotificationSettingsModal({
 
                         <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                                    <Volume2 className="h-4 w-4 stroke-[2.5]" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-butter) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                    <Volume2 className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div>
                                     <span className="text-xs font-bold text-(--text-ink)">
                                         Sound Effects
                                     </span>
                                     <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        Cha-ching spend logging chime &amp; budget warning sounds
+                                        Cha-ching spend logging chime & alert sounds
                                     </p>
                                 </div>
                             </div>
@@ -180,9 +180,9 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestSound}
                                     title="Play test audio chime"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-[1.5px] border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
-                                    <Volume2 className="h-3 w-3 stroke-[2.5]" />
+                                    <Volume2 className="h-3 w-3" strokeWidth={2.5} />
                                     <span>Play</span>
                                 </button>
 
@@ -193,8 +193,8 @@ export function NotificationSettingsModal({
                                     aria-label="Toggle sound effects"
                                     data-testid="toggle-sound-enabled"
                                     onClick={() => handleUpdate({ sound_enabled: !prefs.sound_enabled })}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-[1.5px] border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        prefs.sound_enabled ? "bg-[#ffe999]" : "bg-(--bg-card)"
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        prefs.sound_enabled ? "bg-(--pastel-butter)" : "bg-(--bg-card)"
                                     }`}
                                 >
                                     <span
@@ -215,15 +215,15 @@ export function NotificationSettingsModal({
 
                         <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                                    <Vibrate className="h-4 w-4 stroke-[2.5]" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                    <Vibrate className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div>
                                     <span className="text-xs font-bold text-(--text-ink)">
                                         Haptic Feedback
                                     </span>
                                     <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        Tactile vibration for pulls, streaks, sweeps, logs &amp; alerts
+                                        Tactile vibration for pulls, streaks, sweeps, logs & alerts
                                     </p>
                                 </div>
                             </div>
@@ -233,9 +233,9 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestHaptic}
                                     title="Test haptic vibration"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-[1.5px] border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
-                                    <Vibrate className="h-3 w-3 stroke-[2.5]" />
+                                    <Vibrate className="h-3 w-3" strokeWidth={2.5} />
                                     <span>Vibrate</span>
                                 </button>
 
@@ -246,8 +246,8 @@ export function NotificationSettingsModal({
                                     aria-label="Toggle haptic feedback"
                                     data-testid="toggle-haptics-enabled"
                                     onClick={() => handleUpdate({ haptics_enabled: !(prefs.haptics_enabled ?? true) })}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-[1.5px] border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        (prefs.haptics_enabled ?? true) ? "bg-[#dfc2ff]" : "bg-(--bg-card)"
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        (prefs.haptics_enabled ?? true) ? "bg-(--pastel-lilac)" : "bg-(--bg-card)"
                                     }`}
                                 >
                                     <span
@@ -268,8 +268,8 @@ export function NotificationSettingsModal({
 
                         <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#bbf7d0] text-[#14532d] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                                    <Bell className="h-4 w-4 stroke-[2.5]" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-mint) text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                    <Bell className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
@@ -279,17 +279,17 @@ export function NotificationSettingsModal({
                                         <span
                                             className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
                                                 permission === "granted"
-                                                    ? "bg-[#bbf7d0] text-[#14532d] border-[#14532d]/40"
+                                                    ? "bg-(--pastel-mint) text-[#14532d] border-[#14532d]/40"
                                                     : permission === "denied"
-                                                    ? "bg-[#fff1ee] text-[#9a1b1b] border-[#9a1b1b]/40"
-                                                    : "bg-[#ffe999] text-[#78350f] border-[#78350f]/40"
+                                                    ? "bg-(--pastel-coral-light) text-[#9a1b1b] border-[#9a1b1b]/40"
+                                                    : "bg-(--pastel-butter) text-[#78350f] border-[#78350f]/40"
                                             }`}
                                         >
                                             {permission}
                                         </span>
                                     </div>
                                     <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        Receive native system notifications on this device
+                                        System alerts on this device
                                     </p>
                                 </div>
                             </div>
@@ -299,9 +299,9 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestPush}
                                     title="Send test push notification"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-[1.5px] border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
-                                    <Send className="h-3 w-3 stroke-[2.5]" />
+                                    <Send className="h-3 w-3" strokeWidth={2.5} />
                                     <span>{testPushSent ? "Sent!" : "Test"}</span>
                                 </button>
 
@@ -312,8 +312,8 @@ export function NotificationSettingsModal({
                                     aria-label="Toggle push notifications"
                                     data-testid="toggle-push-enabled"
                                     onClick={() => handleUpdate({ push_enabled: !prefs.push_enabled })}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-[1.5px] border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        prefs.push_enabled ? "bg-[#bbf7d0]" : "bg-(--bg-card)"
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        prefs.push_enabled ? "bg-(--pastel-mint)" : "bg-(--bg-card)"
                                     }`}
                                 >
                                     <span
@@ -340,7 +340,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<CreditCard className="h-4 w-4 text-rose-500 shrink-0" />}
                                         title="Credit Card Payment Due"
-                                        description="Reminds you when an unpaid CC statement is due within lead time"
+                                        description="Alert before statement due date"
                                         isChecked={prefs.cc_payment_due}
                                         testId="toggle-cc-payment-due"
                                         onChange={(val) => handleUpdate({ cc_payment_due: val })}
@@ -350,7 +350,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<CreditCard className="h-4 w-4 text-amber-500 shrink-0" />}
                                         title="Missing Credit Card Statement"
-                                        description="Alerts when a card billing cycle closed with no statement logged yet"
+                                        description="Alert when statement is not yet logged"
                                         isChecked={prefs.cc_missing_statement}
                                         testId="toggle-cc-missing-statement"
                                         onChange={(val) => handleUpdate({ cc_missing_statement: val })}
@@ -360,7 +360,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<Flame className="h-4 w-4 text-amber-500 shrink-0" />}
                                         title="Daily Streak &amp; Spend Check-in"
-                                        description="Evening reminder (from 6:00 PM) to log spend and keep your streak"
+                                        description="Daily 6 PM reminder to log spend"
                                         isChecked={prefs.streak_and_logging}
                                         testId="toggle-streak-logging"
                                         onChange={(val) => handleUpdate({ streak_and_logging: val })}
@@ -370,7 +370,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<Landmark className="h-4 w-4 text-blue-500 shrink-0" />}
                                         title="Monthly Balance Updates"
-                                        description="Prompts on 1st and end of month to refresh account balances &amp; net worth"
+                                        description="Month-end balance refresh prompt"
                                         isChecked={prefs.monthly_balance_updates}
                                         testId="toggle-monthly-balances"
                                         onChange={(val) => handleUpdate({ monthly_balance_updates: val })}
@@ -380,7 +380,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<Users className="h-4 w-4 text-purple-500 shrink-0" />}
                                         title="Partner &amp; Shared Spend Alerts"
-                                        description="Partner logged spend, unsettled balance reminders, and couple streak alert"
+                                        description="Partner spend and split updates"
                                         isChecked={prefs.partner_shared_spend}
                                         testId="toggle-partner-shared-spend"
                                         onChange={(val) => handleUpdate({ partner_shared_spend: val })}
@@ -390,7 +390,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />}
                                         title="Category Budget Limits"
-                                        description="Warning alerts when spendable categories near or exceed monthly caps"
+                                        description="Warn when categories near budget limit"
                                         isChecked={prefs.budget_limit_alerts}
                                         testId="toggle-budget-limit-alerts"
                                         onChange={(val) => handleUpdate({ budget_limit_alerts: val })}
@@ -400,7 +400,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />}
                                         title="Recurring Bills &amp; Policy Renewals"
-                                        description="Insurance premiums, IRAS annual taxes, and subscriptions due this month"
+                                        description="Alert for upcoming bills and taxes"
                                         isChecked={prefs.recurring_bills_due}
                                         testId="toggle-recurring-bills"
                                         onChange={(val) => handleUpdate({ recurring_bills_due: val })}
@@ -410,7 +410,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<Target className="h-4 w-4 text-emerald-500 shrink-0" />}
                                         title="Savings Goal Pacing"
-                                        description="Alerts when a goal falls behind target pacing or hits 100% achieved"
+                                        description="Goal pacing and achievement alerts"
                                         isChecked={prefs.goal_pacing_alerts}
                                         testId="toggle-goal-pacing"
                                         onChange={(val) => handleUpdate({ goal_pacing_alerts: val })}
@@ -420,7 +420,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />}
                                         title="Monthly Budget Review"
-                                        description="Early month prompt to review allocations and lock in target budgets"
+                                        description="Early month budget review prompt"
                                         isChecked={prefs.monthly_budget_review}
                                         testId="toggle-monthly-budget-review"
                                         onChange={(val) => handleUpdate({ monthly_budget_review: val })}
@@ -436,7 +436,7 @@ export function NotificationSettingsModal({
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {/* CC Due Days */}
-                                    <div className="p-3 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
                                         <label
                                             htmlFor="cc-lead-days-input"
                                             className="block text-[11px] font-black text-(--text-ink) mb-1"
@@ -455,14 +455,14 @@ export function NotificationSettingsModal({
                                                     const val = Math.max(1, Math.min(14, Number(e.target.value) || 5));
                                                     handleUpdate({ cc_due_days_before: val });
                                                 }}
-                                                className="w-16 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+                                                className="w-16 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
                                             <span className="text-[11px] font-bold text-(--text-muted)">days before</span>
                                         </div>
                                     </div>
 
                                     {/* Budget Warning % */}
-                                    <div className="p-3 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
                                         <label
                                             htmlFor="budget-warning-pct-input"
                                             className="block text-[11px] font-black text-(--text-ink) mb-1"
@@ -481,14 +481,14 @@ export function NotificationSettingsModal({
                                                     const val = Math.max(50, Math.min(99, Number(e.target.value) || 80));
                                                     handleUpdate({ budget_warning_pct: val });
                                                 }}
-                                                className="w-16 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+                                                className="w-16 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
                                             <span className="text-[11px] font-bold text-(--text-muted)">% of cap</span>
                                         </div>
                                     </div>
 
                                     {/* Shared Settlement Cap */}
-                                    <div className="p-3 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
                                         <label
                                             htmlFor="settlement-threshold-input"
                                             className="block text-[11px] font-black text-(--text-ink) mb-1"
@@ -508,7 +508,7 @@ export function NotificationSettingsModal({
                                                     const val = Math.max(10, Number(e.target.value) || 200);
                                                     handleUpdate({ settlement_threshold_sgd: val });
                                                 }}
-                                                className="w-20 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-[1.5px] border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+                                                className="w-20 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
                                         </div>
                                     </div>
@@ -524,14 +524,14 @@ export function NotificationSettingsModal({
                     )}
                 </ModalBody>
 
-                <ModalFooter className="flex items-center justify-between border-t-[1.5px] border-(--border-subtle) p-4">
+                <ModalFooter className="flex items-center justify-between border-t-2 border-(--border-subtle) p-4">
                     <button
                         type="button"
                         onClick={handleResetDefaults}
                         data-testid="reset-notification-defaults-btn"
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                     >
-                        <RotateCcw className="h-3.5 w-3.5 stroke-[2.5]" />
+                        <RotateCcw className="h-3.5 w-3.5" strokeWidth={2.5} />
                         <span>Reset to Defaults</span>
                     </button>
 
@@ -567,9 +567,9 @@ function CategoryToggleRow({
     onChange,
 }: CategoryToggleRowProps) {
     return (
-        <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border-[1.5px] border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm) transition-colors hover:bg-(--bg-cream)">
+        <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm) transition-colors hover:bg-(--bg-cream)">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--bg-cream) border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
                     {icon}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -587,8 +587,8 @@ function CategoryToggleRow({
                 aria-label={`Toggle ${title}`}
                 data-testid={testId}
                 onClick={() => onChange(!isChecked)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-[1.5px] border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isChecked ? "bg-[#dfc2ff]" : "bg-(--bg-cream)"
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                    isChecked ? "bg-(--pastel-lilac)" : "bg-(--bg-cream)"
                 }`}
             >
                 <span

@@ -13,7 +13,6 @@ import {
     Search,
     CheckCircle2,
     AlertCircle,
-    Loader2,
     Landmark,
     Plus,
     ArrowUpRight,
@@ -25,6 +24,7 @@ import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { TruncatedText } from "../ui/TruncatedText";
+import { Button } from "../ui/Button";
 
 export interface UpdateBalanceModalProps {
     isOpen: boolean;
@@ -350,30 +350,22 @@ export function UpdateBalanceModal({
                     </ModalBody>
 
                     <ModalFooter>
-                        <button
-                            type="button"
+                        <Button
+                            variant="ghost"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-xl text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                            disabled={isSubmitting}
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
+                            variant="primary"
+                            isLoading={isSubmitting}
                             disabled={isSubmitting}
-                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
+                            leftIcon={<CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />}
                         >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    <span>Saving...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    <span>Save Balance</span>
-                                </>
-                            )}
-                        </button>
+                            Save Balance
+                        </Button>
                     </ModalFooter>
                 </form>
             </AnimatedModal>
@@ -585,36 +577,26 @@ export function UpdateBalanceModal({
 
                 {/* Footer Actions */}
                 <ModalFooter className="justify-between">
-                    <button
-                        type="button"
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="rounded-xl px-4 py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                        disabled={isSubmitting}
                     >
                         Cancel
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         type="button"
+                        variant="primary"
                         onClick={handleMultiSubmit}
+                        isLoading={isSubmitting}
                         disabled={isSubmitting || modifiedAccounts.length === 0}
-                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        leftIcon={<CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />}
                     >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                <span>Saving...</span>
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                <span>
-                                    {modifiedAccounts.length > 0
-                                        ? `Save ${modifiedAccounts.length} Modified Account${modifiedAccounts.length === 1 ? "" : "s"}`
-                                        : "No Changes to Save"}
-                                </span>
-                            </>
-                        )}
-                    </button>
+                        {modifiedAccounts.length > 0
+                            ? `Save ${modifiedAccounts.length} Modified Account${modifiedAccounts.length === 1 ? "" : "s"}`
+                            : "No Changes to Save"}
+                    </Button>
                 </ModalFooter>
             </div>
         </AnimatedModal>

@@ -13,14 +13,14 @@ describe('MonthEndSweepBanner', () => {
             />
         );
 
-        // Title: "$3,654.05 unspent from September 2026 budget"
-        expect(screen.getByText(/3,654\.05 unspent from September 2026 budget/i)).toBeInTheDocument();
-        // Subtitle: "Sweep it into your Savings Goals or bank it as surplus!"
-        expect(screen.getByText(/Sweep it into your Savings Goals or bank it as surplus!/i)).toBeInTheDocument();
+        // Title: "$3,654.05 unspent from September 2026"
+        expect(screen.getByText(/3,654\.05 unspent from September 2026/i)).toBeInTheDocument();
+        // Subtitle: "Sweep into savings goals or bank for cushion."
+        expect(screen.getByText(/Sweep into savings goals or bank for cushion\./i)).toBeInTheDocument();
 
         // 2 Action Buttons
         expect(screen.getByRole('button', { name: /sweep to goals/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /bank as surplus/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /bank surplus/i })).toBeInTheDocument();
     });
 
     it('triggers onSweepClick when clicking Sweep to Goals button', () => {
@@ -38,7 +38,7 @@ describe('MonthEndSweepBanner', () => {
         expect(handleSweepClick).toHaveBeenCalledTimes(1);
     });
 
-    it('triggers onBankSurplusClick when clicking Bank as Surplus button', () => {
+    it('triggers onBankSurplusClick when clicking Bank Surplus button', () => {
         const handleBankSurplus = vi.fn();
         render(
             <MonthEndSweepBanner
@@ -49,7 +49,7 @@ describe('MonthEndSweepBanner', () => {
             />
         );
 
-        fireEvent.click(screen.getByRole('button', { name: /bank as surplus/i }));
+        fireEvent.click(screen.getByRole('button', { name: /bank surplus/i }));
         expect(handleBankSurplus).toHaveBeenCalledTimes(1);
     });
 });

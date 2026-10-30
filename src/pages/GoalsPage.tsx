@@ -26,6 +26,7 @@ import {
     StatCard,
     LoadingCard,
     EmptyStateCard,
+    SegmentedTabs,
 } from "../components/ui";
 import {
     useGoalsQuery,
@@ -295,13 +296,13 @@ export function GoalsPage({
             {/* Page Header (Compact if embedded) */}
             {!embedded ? (
                 <PageHeader
-                    title="Savings Goals & Milestones"
+                    title="Goals"
                     actions={
                         <Button
                             variant="primary"
                             aria-label="+ New Goal"
                             className="w-full sm:w-auto"
-                            leftIcon={<Plus className="h-4 w-4 stroke-[2.5]" />}
+                            leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
                             onClick={handleOpenCreateModal}
                         >
                             New Goal
@@ -315,7 +316,7 @@ export function GoalsPage({
                         size="sm"
                         aria-label="+ New Goal"
                         className="w-full sm:w-auto"
-                        leftIcon={<Plus className="h-3.5 w-3.5 stroke-[2.5]" />}
+                        leftIcon={<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
                         onClick={handleOpenCreateModal}
                     >
                         New Goal
@@ -335,7 +336,7 @@ export function GoalsPage({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Card 1: Total Target */}
                 <StatCard
-                    title="Total Target"
+                    title="Target"
                     value={formatSGD(totalTarget)}
                     subtitle={`Across ${perspectiveGoals.length} ${perspectiveGoals.length === 1 ? "goal" : "goals"}`}
                     icon={<Target className="h-4 w-4" />}
@@ -344,7 +345,7 @@ export function GoalsPage({
 
                 {/* Card 2: Total Saved */}
                 <StatCard
-                    title="Total Saved"
+                    title="Saved"
                     value={formatSGD(totalSaved)}
                     subtitle={`${formatSGD(Math.max(0, totalTarget - totalSaved))} remaining`}
                     icon={<PiggyBank className="h-4 w-4" />}
@@ -353,7 +354,7 @@ export function GoalsPage({
 
                 {/* Card 3: Overall Progress */}
                 <StatCard
-                    title="Overall Progress"
+                    title="Progress"
                     value={`${overallProgress}%`}
                     subtitle={`${perspectiveGoals.filter((g) => g.status === "achieved").length} achieved`}
                     icon={<Sparkles className="h-4 w-4" />}
@@ -364,66 +365,50 @@ export function GoalsPage({
                 <StatCard
                     title="Monthly Pace"
                     value={`${formatSGD(totalMonthlyContributions)}/mo`}
-                    subtitle="Monthly savings pacing"
+                    subtitle="Target monthly pace"
                     icon={<Calendar className="h-4 w-4" />}
                     iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
                 />
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div role="tablist" className="flex items-center gap-2">
-                    <button
-                        role="tab"
-                        aria-selected={activeTab === "all"}
-                        aria-controls="goals-tabpanel"
-                        onClick={() => setActiveTab("all")}
-                        className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                            activeTab === "all"
-                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                        }`}
-                    >
-                        <span>All Goals</span>
-                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px]">
-                            {perspectiveGoals.length}
-                        </span>
-                    </button>
-
-                    <button
-                        role="tab"
-                        aria-selected={activeTab === "in_progress"}
-                        aria-controls="goals-tabpanel"
-                        onClick={() => setActiveTab("in_progress")}
-                        className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                            activeTab === "in_progress"
-                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                        }`}
-                    >
-                        <span>In Progress</span>
-                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px]">
-                            {inProgressGoals.length}
-                        </span>
-                    </button>
-
-                    <button
-                        role="tab"
-                        aria-selected={activeTab === "achieved"}
-                        aria-controls="goals-tabpanel"
-                        onClick={() => setActiveTab("achieved")}
-                        className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                            activeTab === "achieved"
-                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
-                        }`}
-                    >
-                        <span>Achieved</span>
-                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px]">
-                            {achievedGoals.length}
-                        </span>
-                    </button>
-                </div>
+            <div className="flex items-center justify-between border-b-2 border-(--border-subtle) pb-3">
+                <SegmentedTabs
+                    tabs={[
+                        {
+                            id: "all",
+                            label: "All Goals",
+                            badge: (
+                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                    {perspectiveGoals.length}
+                                </span>
+                            ),
+                        },
+                        {
+                            id: "in_progress",
+                            label: "In Progress",
+                            badge: (
+                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                    {inProgressGoals.length}
+                                </span>
+                            ),
+                        },
+                        {
+                            id: "achieved",
+                            label: "Achieved",
+                            badge: (
+                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                    {achievedGoals.length}
+                                </span>
+                            ),
+                        },
+                    ]}
+                    activeTab={activeTab}
+                    onChange={(tabId) => setActiveTab(tabId as GoalFilterTab)}
+                    accent="lilac"
+                    size="sm"
+                    ariaLabel="Goals status filter"
+                />
             </div>
 
             {/* Content Area: Loader, Empty State, or Grid */}
@@ -432,17 +417,11 @@ export function GoalsPage({
             ) : displayedGoals.length === 0 ? (
                 <EmptyStateCard
                     icon={<span className="text-2xl">🎯</span>}
-                    title={
-                        activeTab === "all"
-                            ? "No savings goals found"
-                            : activeTab === "in_progress"
-                              ? "No goals currently in progress"
-                              : "No goals achieved yet"
-                    }
+                    title="No Goals"
                     description={
                         activeTab === "all"
-                            ? "Set milestones for your wedding, HDB down payment, renovation, or honeymoon to calculate required monthly pacing."
-                            : "Try changing your filter tab to see your other savings goals."
+                            ? "Add a goal to start tracking savings progress."
+                            : "No goals found in this view."
                     }
                     action={
                         <Button
@@ -450,7 +429,7 @@ export function GoalsPage({
                             onClick={handleOpenCreateModal}
                             leftIcon={<Plus className="h-4 w-4 stroke-3" />}
                         >
-                            Create your first goal
+                            Add Goal
                         </Button>
                     }
                 />

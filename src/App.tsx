@@ -65,13 +65,13 @@ export function RouteSkeletonLoader() {
 
       {/* Hero card / 3-column stats skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)" />
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm)" />
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) sm:col-span-2 lg:col-span-1" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm) sm:col-span-2 lg:col-span-1" />
       </div>
 
       {/* Main card placeholder */}
-      <div className="h-72 bg-(--bg-card) rounded-2xl p-6 border-[1.5px] border-(--border-ink) shadow-(--shadow-cute) flex flex-col justify-between">
+      <div className="h-72 bg-(--bg-card) rounded-2xl p-6 border-2 border-(--border-ink) shadow-(--shadow-cute) flex flex-col justify-between">
         <div className="h-6 bg-[#d8d0c7]/70 dark:bg-slate-700 rounded-lg w-1/4" />
         <div className="space-y-3">
           <div className="h-4 bg-[#d8d0c7]/50 dark:bg-slate-700/60 rounded-md w-full" />

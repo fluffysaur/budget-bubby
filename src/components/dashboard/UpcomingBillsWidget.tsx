@@ -56,23 +56,23 @@ export function UpcomingBillsWidget({
         switch (type) {
             case "insurance":
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#dfc2ff] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <Shield className="h-2.5 w-2.5 stroke-[2.5]" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                        <Shield className="h-2.5 w-2.5" strokeWidth={2.5} />
                         <span>Insurance</span>
                     </span>
                 );
             case "tax":
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f76b57] px-2 py-0.5 text-[10px] font-black text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <Receipt className="h-2.5 w-2.5 stroke-[2.5]" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-coral) px-2 py-0.5 text-[10px] font-black text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                        <Receipt className="h-2.5 w-2.5" strokeWidth={2.5} />
                         <span>Tax</span>
                     </span>
                 );
             case "subscription":
             default:
                 return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#bbf7d0] px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <RotateCw className="h-2.5 w-2.5 stroke-[2.5]" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-mint) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                        <RotateCw className="h-2.5 w-2.5" strokeWidth={2.5} />
                         <span>Subscription</span>
                     </span>
                 );
@@ -104,7 +104,7 @@ export function UpcomingBillsWidget({
             {/* Header */}
             <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#ffe999] text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-butter) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                         <CalendarClock className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0">
@@ -159,7 +159,7 @@ export function UpcomingBillsWidget({
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-[#342445] border-2 border-(--border-ink) text-(--text-ink) shadow-(--shadow-cute-sm) shrink-0">
-                                            <Bell className="h-4 w-4 stroke-[2.5]" />
+                                            <Bell className="h-4 w-4" strokeWidth={2.5} />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 min-w-0">

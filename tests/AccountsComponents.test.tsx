@@ -317,7 +317,7 @@ describe('AccountsPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/accounts & net worth/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /^Accounts$/i })).toBeInTheDocument();
     });
 
     // Check Metric Cards (appears in metric card and chart legend, so getAllByText is >= 1)

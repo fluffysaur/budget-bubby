@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import { MONTH_NAMES_SHORT as MONTH_NAMES } from "../../lib/dateUtils";
+import { SegmentedTabs } from "../ui/SegmentedTabs";
+import { TruncatedText } from "../ui/TruncatedText";
 import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
 
 export interface PolicyTableProps {
@@ -142,7 +144,7 @@ export function PolicyTable({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search policies or notes..."
-                        className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border-[1.5px] border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-all"
+                        className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-(--shadow-cute-sm) focus:outline-none focus:shadow-(--shadow-cute) transition-all"
                     />
                     {searchTerm && (
                         <button
@@ -155,34 +157,20 @@ export function PolicyTable({
                     )}
                 </div>
 
-                {/* Type pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                    {(["all", "insurance", "tax", "subscription"] as const).map(
-                        (type) => {
-                            const isActive = selectedType === type;
-                            const labels: Record<string, string> = {
-                                all: "All",
-                                insurance: "Insurance",
-                                tax: "Tax",
-                                subscription: "Subscription",
-                            };
-                            return (
-                                <button
-                                    key={type}
-                                    type="button"
-                                    onClick={() => setSelectedType(type)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border-2 border-(--border-ink) ${
-                                        isActive
-                                            ? "bg-(--pastel-butter) text-(--text-ink) shadow-(--shadow-cute-sm)"
-                                            : "bg-(--bg-card) text-(--text-muted) hover:bg-(--bg-cream) hover:text-(--text-ink)"
-                                    }`}
-                                >
-                                    {labels[type]}
-                                </button>
-                            );
-                        },
-                    )}
-                </div>
+                {/* Type filter */}
+                <SegmentedTabs
+                    tabs={[
+                        { id: "all", label: "All" },
+                        { id: "insurance", label: "Insurance" },
+                        { id: "tax", label: "Tax" },
+                        { id: "subscription", label: "Subscription" },
+                    ]}
+                    activeTab={selectedType}
+                    onChange={(typeId) => setSelectedType(typeId as "all" | RecurringPolicyType)}
+                    accent="butter"
+                    size="sm"
+                    ariaLabel="Policy type filter"
+                />
             </div>
 
             {/* Table Container */}
@@ -271,10 +259,11 @@ export function PolicyTable({
                                     >
                                         {/* Policy Name & Notes */}
                                         <td className="py-3.5 px-4 font-bold text-(--color-ink) dark:text-white">
-                                            <div>
-                                                <span className="font-display">
-                                                    {policy.name}
-                                                </span>
+                                            <div className="min-w-0 max-w-65">
+                                                <TruncatedText
+                                                    text={policy.name}
+                                                    className="font-display font-bold"
+                                                />
                                                 {policy.notes && (
                                                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 font-normal">
                                                         {policy.notes}
@@ -321,7 +310,7 @@ export function PolicyTable({
                                         {/* Renewal Month */}
                                         <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                                             <span
-                                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border-[1.5px] border-(--border-ink) ${
+                                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border-2 border-(--border-ink) ${
                                                     isMonthly
                                                         ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                                         : "bg-(--pastel-mint-subtle) text-emerald-900 dark:text-emerald-200"
@@ -341,7 +330,7 @@ export function PolicyTable({
                                                         onClick={() =>
                                                             onEdit(policy)
                                                         }
-                                                        className="p-1.5 rounded-lg border-[1.5px] border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) transition-all cursor-pointer"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) transition-all cursor-pointer"
                                                         title="Edit policy"
                                                     >
                                                         <Pencil className="w-4 h-4" />
@@ -354,7 +343,7 @@ export function PolicyTable({
                                                         onClick={() =>
                                                             onDelete(policy.id)
                                                         }
-                                                        className="p-1.5 rounded-lg border-[1.5px] border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 transition-all cursor-pointer"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 transition-all cursor-pointer"
                                                         title="Delete policy"
                                                     >
                                                         <Trash2 className="w-4 h-4" />

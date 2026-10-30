@@ -220,8 +220,8 @@ export function SurplusSweepModal({
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose}>
             <ModalHeader
-                title="Sweep Unspent Surplus"
-                subtitle={`Allocate ${formatSGD(surplusAmount)} from ${formatDisplayMonth(month)} into your Savings Goals`}
+                title="Sweep Surplus"
+                subtitle={`Allocate ${formatSGD(surplusAmount)} into goals`}
                 icon={<PiggyBank className="h-5 w-5 text-indigo-600" />}
                 onClose={onClose}
             />
@@ -230,18 +230,18 @@ export function SurplusSweepModal({
                 {/* Celebration callout banner */}
                 <div className="flex items-start gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-3.5 shadow-(--shadow-cute-sm)">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-ink)">
-                        <Sparkles className="h-5 w-5 stroke-[2.2]" />
+                        <Sparkles className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div className="text-xs sm:text-sm text-(--text-ink)">
                         <p className="font-bold">
-                            🎉 Incredible work in {formatDisplayMonth(month)}!
+                            🎉 Great job in {formatDisplayMonth(month)}!
                         </p>
                         <p className="text-(--text-muted) mt-0.5">
-                            You stayed under your spendable limit with{" "}
+                            You have{" "}
                             <span className="font-bold text-(--text-ink)">
                                 {formatSGD(surplusAmount)}
                             </span>{" "}
-                            to spare. Deposit it into your goals to accelerate your milestones!
+                            unspent. Deposit into goals to boost milestone progress.
                         </p>
                     </div>
                 </div>
@@ -344,7 +344,7 @@ export function SurplusSweepModal({
                                             }`}
                                             aria-label={`Toggle ${goal.title}`}
                                         >
-                                            {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                                            {isSelected && <Check className="h-3.5 w-3.5 stroke-3" />}
                                         </button>
 
                                         {/* Emoji & Goal Info */}
@@ -455,9 +455,9 @@ export function SurplusSweepModal({
                             activeGoals.length === 0
                         }
                         isLoading={isSubmitting}
-                        leftIcon={<PiggyBank className="h-4 w-4 stroke-[2.5]" />}
+                        leftIcon={<PiggyBank className="h-4 w-4" strokeWidth={2.5} />}
                     >
-                        Deposit {formatSGD(totalAllocatedDollars)} into Goals
+                        Sweep {formatSGD(totalAllocatedDollars)}
                     </Button>
                 </div>
             </ModalFooter>

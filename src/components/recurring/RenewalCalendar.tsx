@@ -15,6 +15,7 @@ import {
     MONTH_NAMES_SHORT,
     MONTH_NAMES_FULL,
 } from "../../lib/dateUtils";
+import { TruncatedText } from "../ui/TruncatedText";
 import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
 
 export interface RenewalCalendarProps {
@@ -227,9 +228,9 @@ export function RenewalCalendar({
                                         >
                                             <div className="flex items-center gap-1 min-w-0 flex-1">
                                                 {renderPolicyIcon(p.type)}
-                                                <span className="font-bold text-(--text-ink) truncate">
-                                                    {p.name}
-                                                </span>
+                                                <div className="font-bold text-(--text-ink) min-w-0 flex-1">
+                                                    <TruncatedText text={p.name} />
+                                                </div>
                                             </div>
                                             <span className="font-bold font-mono-num text-(--text-ink) shrink-0 text-[11px]">
                                                 {formatSGD(p.amount)}
