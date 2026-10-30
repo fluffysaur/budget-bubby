@@ -11,11 +11,28 @@
  */
 
 import { useState, useEffect, type FormEvent } from "react";
-import { CreditCard, Building, Calendar, DollarSign, Palette, User } from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    CreditCard,
+    Building,
+    Calendar,
+    DollarSign,
+    Palette,
+    User,
+} from "lucide-react";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
+import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
-import type { CreditCard as CreditCardType, HouseholdMember, CreateCreditCardInput } from "../../types/finance";
+import type {
+    CreditCard as CreditCardType,
+    HouseholdMember,
+    CreateCreditCardInput,
+} from "../../types/finance";
 
 export interface AddEditCreditCardModalProps {
     isOpen: boolean;
@@ -37,7 +54,17 @@ const PRESET_COLORS = [
     { label: "Pink Fuchsia", hex: "#c026d3" },
 ];
 
-const PRESET_BANKS = ["DBS", "OCBC", "UOB", "Citibank", "Standard Chartered", "HSBC", "AMEX", "Maybank", "Other"];
+const PRESET_BANKS = [
+    "DBS",
+    "OCBC",
+    "UOB",
+    "Citibank",
+    "Standard Chartered",
+    "HSBC",
+    "AMEX",
+    "Maybank",
+    "Other",
+];
 
 export function AddEditCreditCardModal({
     isOpen,
@@ -57,7 +84,9 @@ export function AddEditCreditCardModal({
     const [dueDay, setDueDay] = useState<number>(5);
     const [creditLimit, setCreditLimit] = useState<string>("");
     const [color, setColor] = useState<string>(PRESET_COLORS[0].hex);
-    const [ownerId, setOwnerId] = useState<string>(defaultOwnerId || members[0]?.id || "");
+    const [ownerId, setOwnerId] = useState<string>(
+        defaultOwnerId || members[0]?.id || "",
+    );
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -71,9 +100,13 @@ export function AddEditCreditCardModal({
                 setLast4(card.last4 || "");
                 setBillingDay(card.billing_day || 15);
                 setDueDay(card.due_day || 5);
-                setCreditLimit(card.credit_limit ? card.credit_limit.toString() : "");
+                setCreditLimit(
+                    card.credit_limit ? card.credit_limit.toString() : "",
+                );
                 setColor(card.color || PRESET_COLORS[0].hex);
-                setOwnerId(card.owner_id || defaultOwnerId || members[0]?.id || "");
+                setOwnerId(
+                    card.owner_id || defaultOwnerId || members[0]?.id || "",
+                );
             } else {
                 setName("");
                 setBank("DBS");
@@ -108,7 +141,9 @@ export function AddEditCreditCardModal({
         }
 
         if (last4 && (last4.length !== 4 || isNaN(Number(last4)))) {
-            setErrorMessage("Last 4 digits must be exactly 4 digits, or left blank");
+            setErrorMessage(
+                "Last 4 digits must be exactly 4 digits, or left blank",
+            );
             return;
         }
 
@@ -124,7 +159,10 @@ export function AddEditCreditCardModal({
         }
 
         const numericLimit = creditLimit ? parseFloat(creditLimit) : null;
-        if (numericLimit !== null && (isNaN(numericLimit) || numericLimit < 0)) {
+        if (
+            numericLimit !== null &&
+            (isNaN(numericLimit) || numericLimit < 0)
+        ) {
             setErrorMessage("Please enter a valid credit limit");
             return;
         }
@@ -160,7 +198,11 @@ export function AddEditCreditCardModal({
             onCardSaved?.();
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save credit card");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to save credit card",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -168,7 +210,10 @@ export function AddEditCreditCardModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     title={isEditing ? "Edit Credit Card" : "Add Credit Card"}
                     subtitle="Track statements, billing cycles, and due dates"
@@ -179,14 +224,15 @@ export function AddEditCreditCardModal({
 
                 <ModalBody>
                     {errorMessage && (
-                        <div className="p-3 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
-                            {errorMessage}
-                        </div>
+                        <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
                     {/* Card Name */}
                     <div>
-                        <label htmlFor="card-name" className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                        <label
+                            htmlFor="card-name"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                        >
                             Card Name *
                         </label>
                         <input
@@ -203,7 +249,10 @@ export function AddEditCreditCardModal({
                     {/* Bank & Last 4 Digits */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label htmlFor="card-bank" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="card-bank"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <Building className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Issuing Bank *</span>
                             </label>
@@ -223,7 +272,9 @@ export function AddEditCreditCardModal({
                                 <input
                                     type="text"
                                     value={customBank}
-                                    onChange={(e) => setCustomBank(e.target.value)}
+                                    onChange={(e) =>
+                                        setCustomBank(e.target.value)
+                                    }
                                     placeholder="Enter bank name"
                                     className="mt-2 w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-xs text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
@@ -231,7 +282,10 @@ export function AddEditCreditCardModal({
                         </div>
 
                         <div>
-                            <label htmlFor="card-last4" className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="card-last4"
+                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 Last 4 Digits
                             </label>
                             <input
@@ -239,7 +293,9 @@ export function AddEditCreditCardModal({
                                 type="text"
                                 maxLength={4}
                                 value={last4}
-                                onChange={(e) => setLast4(e.target.value.replace(/\D/g, ""))}
+                                onChange={(e) =>
+                                    setLast4(e.target.value.replace(/\D/g, ""))
+                                }
                                 placeholder="1234"
                                 className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-sm font-mono-num text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             />
@@ -249,42 +305,62 @@ export function AddEditCreditCardModal({
                     {/* Statement Date & Due Date */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label htmlFor="card-billing-day" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="card-billing-day"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Statement Day</span>
                             </label>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-(--text-muted)">Day</span>
+                                <span className="text-xs text-(--text-muted)">
+                                    Day
+                                </span>
                                 <input
                                     id="card-billing-day"
                                     type="number"
                                     min={1}
                                     max={31}
                                     value={billingDay}
-                                    onChange={(e) => setBillingDay(parseInt(e.target.value) || 1)}
+                                    onChange={(e) =>
+                                        setBillingDay(
+                                            parseInt(e.target.value) || 1,
+                                        )
+                                    }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
-                                <span className="text-xs text-(--text-muted)">of month</span>
+                                <span className="text-xs text-(--text-muted)">
+                                    of month
+                                </span>
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="card-due-day" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="card-due-day"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Payment Due Day</span>
                             </label>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-(--text-muted)">Day</span>
+                                <span className="text-xs text-(--text-muted)">
+                                    Day
+                                </span>
                                 <input
                                     id="card-due-day"
                                     type="number"
                                     min={1}
                                     max={31}
                                     value={dueDay}
-                                    onChange={(e) => setDueDay(parseInt(e.target.value) || 1)}
+                                    onChange={(e) =>
+                                        setDueDay(parseInt(e.target.value) || 1)
+                                    }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
-                                <span className="text-xs text-(--text-muted)">of month</span>
+                                <span className="text-xs text-(--text-muted)">
+                                    of month
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -292,19 +368,26 @@ export function AddEditCreditCardModal({
                     {/* Credit Limit & Card Owner */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label htmlFor="card-limit" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="card-limit"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <DollarSign className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Credit Limit</span>
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
+                                    S$
+                                </span>
                                 <input
                                     id="card-limit"
                                     type="number"
                                     step="100"
                                     min="0"
                                     value={creditLimit}
-                                    onChange={(e) => setCreditLimit(e.target.value)}
+                                    onChange={(e) =>
+                                        setCreditLimit(e.target.value)
+                                    }
                                     placeholder="e.g. 10000"
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
@@ -312,7 +395,10 @@ export function AddEditCreditCardModal({
                         </div>
 
                         <div>
-                            <label htmlFor="card-owner" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="card-owner"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <User className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Cardholder</span>
                             </label>
@@ -370,7 +456,11 @@ export function AddEditCreditCardModal({
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
                     >
-                        {isSubmitting ? "Saving..." : isEditing ? "Save Changes" : "Add Credit Card"}
+                        {isSubmitting
+                            ? "Saving..."
+                            : isEditing
+                              ? "Save Changes"
+                              : "Add Credit Card"}
                     </button>
                 </ModalFooter>
             </form>

@@ -10,7 +10,11 @@
 import { useMemo } from "react";
 import { Calendar, Flame, Shield, FileText, Repeat } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
-import { getSingaporeDate } from "../../lib/dateUtils";
+import {
+    getSingaporeDate,
+    MONTH_NAMES_SHORT,
+    MONTH_NAMES_FULL,
+} from "../../lib/dateUtils";
 import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
 
 export interface RenewalCalendarProps {
@@ -29,36 +33,6 @@ interface MonthData {
     isMaxMonth: boolean;
     policies: RecurringPolicy[];
 }
-
-const MONTH_NAMES_SHORT = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-];
-
-const MONTH_NAMES_FULL = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
 
 export function RenewalCalendar({
     policies,

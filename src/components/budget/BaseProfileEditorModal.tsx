@@ -23,27 +23,19 @@ import {
     Pencil,
     Trash2,
     Check,
-    Utensils,
-    Sparkles,
-    Car,
-    TrendingUp,
-    PiggyBank,
-    Heart,
-    Shield,
-    ShoppingBag,
-    Coffee,
-    Plane,
-    Home,
-    Wifi,
-    Tag,
-    Gift,
     User,
     Sliders,
     ArrowUpRight,
 } from "lucide-react";
 import { financeService } from "../../services/financeService";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { TooltipPopover } from "../ui/TooltipPopover";
+import { Alert } from "../ui/Alert";
 import { mockCategories } from "../../data/mockSeedData";
 import {
     calculateCPFAndNetPay,
@@ -52,9 +44,11 @@ import {
     dollarToPercentage,
     parseAllocationInput,
     isSpendableCategory,
+    autoBalanceAllocations,
 } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
 import { isValidUuid } from "../../lib/uuid";
+import { PRESET_COLORS, PRESET_ICONS } from "../../lib/categoryPresets";
 import type {
     BaseBudgetProfile,
     BaseProfileAllocation,
@@ -63,36 +57,6 @@ import type {
     HouseholdMember,
     RecurringPolicy,
 } from "../../types/finance";
-
-const PRESET_COLORS = [
-    "#F59E0B", // Amber
-    "#EC4899", // Pink
-    "#3B82F6", // Blue
-    "#10B981", // Emerald
-    "#6366F1", // Indigo
-    "#8B5CF6", // Purple
-    "#64748B", // Slate
-    "#EF4444", // Red
-    "#06B6D4", // Cyan
-    "#F97316", // Orange
-];
-
-const PRESET_ICONS = [
-    { id: "utensils", label: "Food", Icon: Utensils },
-    { id: "sparkles", label: "Lifestyle", Icon: Sparkles },
-    { id: "car", label: "Transport", Icon: Car },
-    { id: "shopping-bag", label: "Shopping", Icon: ShoppingBag },
-    { id: "coffee", label: "Drinks / Cafe", Icon: Coffee },
-    { id: "plane", label: "Travel", Icon: Plane },
-    { id: "home", label: "Housing", Icon: Home },
-    { id: "wifi", label: "Utilities / Sub", Icon: Wifi },
-    { id: "trending-up", label: "Investments", Icon: TrendingUp },
-    { id: "piggy-bank", label: "Savings", Icon: PiggyBank },
-    { id: "heart", label: "Tithing / Charity", Icon: Heart },
-    { id: "shield", label: "Buffer / Insurance", Icon: Shield },
-    { id: "gift", label: "Gifts", Icon: Gift },
-    { id: "tag", label: "General Tag", Icon: Tag },
-];
 
 export interface BaseProfileEditorModalProps {
     isOpen: boolean;
@@ -136,22 +100,30 @@ export function BaseProfileEditorModal({
     const titleId = useId();
 
     // Local categories list synced with prop
-    const [localCategories, setLocalCategories] = useState<Category[]>(categories);
+    const [localCategories, setLocalCategories] =
+        useState<Category[]>(categories);
 
     // Form State (stored as strings to allow typing decimals and erasing to empty "")
-    const [grossSalary, setGrossSalary] = useState<string>(String(profile?.gross_salary ?? 5000));
+    const [grossSalary, setGrossSalary] = useState<string>(
+        String(profile?.gross_salary ?? 5000),
+    );
     const [cpfRate, setCpfRate] = useState<string>(
-        String(profile?.cpf_employee_rate != null ? parseFloat((profile.cpf_employee_rate * 100).toFixed(4)) : 20)
+        String(
+            profile?.cpf_employee_rate != null
+                ? parseFloat((profile.cpf_employee_rate * 100).toFixed(4))
+                : 20,
+        ),
     );
 
     // Compute effective Monthly Taxes and Insurance strictly derived from policies
     const { effectiveTaxes, effectiveInsurance } = useMemo(() => {
         if (policies !== undefined && policies.length > 0) {
-            const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
-                policies,
-                profile?.owner_id,
-            );
-            return { effectiveTaxes: taxesMonthly, effectiveInsurance: insuranceMonthly };
+            const { taxesMonthly, insuranceMonthly } =
+                calculateMemberPolicyDeductions(policies, profile?.owner_id);
+            return {
+                effectiveTaxes: taxesMonthly,
+                effectiveInsurance: insuranceMonthly,
+            };
         }
         return {
             effectiveTaxes: Number(initialTaxes) || 0,
@@ -160,13 +132,21 @@ export function BaseProfileEditorModal({
     }, [policies, profile?.owner_id, initialTaxes, initialInsurance]);
 
     // Category percentages mapped by categoryId: string (e.g. "15", "6.9633", "")
-    const [categoryPercentages, setCategoryPercentages] = useState<Record<string, string>>({});
+    const [categoryPercentages, setCategoryPercentages] = useState<
+        Record<string, string>
+    >({});
     // Explicit dollar amounts when set via $ (e.g. "300") so they stay fixed across disposable pool updates
-    const [categoryDollarOverrides, setCategoryDollarOverrides] = useState<Record<string, string>>({});
+    const [categoryDollarOverrides, setCategoryDollarOverrides] = useState<
+        Record<string, string>
+    >({});
     // Raw inputs while typing with $ prefix
-    const [rawPercentText, setRawPercentText] = useState<Record<string, string>>({});
+    const [rawPercentText, setRawPercentText] = useState<
+        Record<string, string>
+    >({});
     // Locked category state for auto-balancing
-    const [lockedCategories, setLockedCategories] = useState<Record<string, boolean>>({});
+    const [lockedCategories, setLockedCategories] = useState<
+        Record<string, boolean>
+    >({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -175,7 +155,9 @@ export function BaseProfileEditorModal({
     const prevProfileIdRef = useRef<string | null>(null);
 
     // Inline category form state
-    const [catFormMode, setCatFormMode] = useState<"create" | "edit" | null>(null);
+    const [catFormMode, setCatFormMode] = useState<"create" | "edit" | null>(
+        null,
+    );
     const [editingCat, setEditingCat] = useState<Category | null>(null);
     const [catName, setCatName] = useState<string>("");
     const [catGroup, setCatGroup] = useState<CategoryGroup>("spendable");
@@ -187,19 +169,34 @@ export function BaseProfileEditorModal({
     // Synchronize initial state ONLY when modal opens or when profile/member changes
     useEffect(() => {
         const isJustOpening = isOpen && !prevIsOpenRef.current;
-        const isProfileChanged = profile && profile.id !== prevProfileIdRef.current;
+        const isProfileChanged =
+            profile && profile.id !== prevProfileIdRef.current;
 
         if (isJustOpening || isProfileChanged) {
             setLocalCategories(categories);
             if (profile) {
                 setGrossSalary(String(profile.gross_salary));
-                setCpfRate(String(parseFloat((profile.cpf_employee_rate * 100).toFixed(4))));
+                setCpfRate(
+                    String(
+                        parseFloat(
+                            (profile.cpf_employee_rate * 100).toFixed(4),
+                        ),
+                    ),
+                );
             }
 
             const pctMap: Record<string, string> = {};
             for (const cat of categories) {
-                const existing = allocations.find((a) => a.category_id === cat.id);
-                pctMap[cat.id] = existing ? String(parseFloat((existing.target_percentage * 100).toFixed(4))) : "0";
+                const existing = allocations.find(
+                    (a) => a.category_id === cat.id,
+                );
+                pctMap[cat.id] = existing
+                    ? String(
+                          parseFloat(
+                              (existing.target_percentage * 100).toFixed(4),
+                          ),
+                      )
+                    : "0";
             }
             setCategoryPercentages(pctMap);
             setCategoryDollarOverrides({});
@@ -221,7 +218,11 @@ export function BaseProfileEditorModal({
         const gross = Math.max(0, parseFloat(grossSalary) || 0);
         const rate = (parseFloat(cpfRate) || 0) / 100;
         const net = calculateCPFAndNetPay(gross, rate).takeHomePay;
-        return calculateDisposableBudget(net, effectiveTaxes, effectiveInsurance);
+        return calculateDisposableBudget(
+            net,
+            effectiveTaxes,
+            effectiveInsurance,
+        );
     }, [grossSalary, cpfRate, effectiveTaxes, effectiveInsurance]);
 
     // When disposable pool changes, automatically keep fixed dollar categories synchronized
@@ -230,10 +231,14 @@ export function BaseProfileEditorModal({
         setCategoryPercentages((prev) => {
             let hasChanged = false;
             const updated = { ...prev };
-            for (const [catId, dollarStr] of Object.entries(categoryDollarOverrides)) {
+            for (const [catId, dollarStr] of Object.entries(
+                categoryDollarOverrides,
+            )) {
                 const dollarNum = parseFloat(dollarStr);
                 if (!isNaN(dollarNum) && dollarNum > 0) {
-                    const nextPct = String(dollarToPercentage(dollarNum, currentDisposablePool));
+                    const nextPct = String(
+                        dollarToPercentage(dollarNum, currentDisposablePool),
+                    );
                     if (updated[catId] !== nextPct) {
                         updated[catId] = nextPct;
                         hasChanged = true;
@@ -252,66 +257,30 @@ export function BaseProfileEditorModal({
     };
 
     const handleAutoBalance = () => {
-        const unlockedCats = localCategories.filter((c) => !lockedCategories[c.id]);
+        const result = autoBalanceAllocations<string>(
+            localCategories.map((c) => c.id),
+            categoryPercentages,
+            lockedCategories,
+            true,
+        );
 
-        if (unlockedCats.length === 0) {
-            setErrorMessage("All categories are locked. Please unlock at least one category to auto-balance.");
+        if (result.error) {
+            setErrorMessage(result.error);
             return;
         }
 
-        const lockedSum = localCategories
-            .filter((c) => lockedCategories[c.id])
-            .reduce((sum, c) => sum + (parseFloat(categoryPercentages[c.id] || "0") || 0), 0);
-
-        const targetUnlockedSum = Math.max(0, Math.round((100 - lockedSum) * 10000) / 10000);
-        const currentUnlockedSum = unlockedCats.reduce(
-            (sum, c) => sum + (parseFloat(categoryPercentages[c.id] || "0") || 0),
-            0
-        );
-
-        const updated: Record<string, string> = { ...categoryPercentages };
-
-        if (currentUnlockedSum <= 0) {
-            const baseShare = Math.floor((targetUnlockedSum / unlockedCats.length) * 100) / 100;
-            let runningSum = 0;
-
-            unlockedCats.forEach((c, idx) => {
-                if (idx === unlockedCats.length - 1) {
-                    const finalShare = Math.round((targetUnlockedSum - runningSum) * 100) / 100;
-                    updated[c.id] = String(finalShare);
-                } else {
-                    updated[c.id] = String(baseShare);
-                    runningSum += baseShare;
-                }
-                // Clear dollar override on auto-balance for unlocked cats
-                setCategoryDollarOverrides((prev) => {
-                    const next = { ...prev };
+        // Clear dollar override on auto-balance for unlocked cats
+        setCategoryDollarOverrides((prev) => {
+            const next = { ...prev };
+            localCategories.forEach((c) => {
+                if (!lockedCategories[c.id]) {
                     delete next[c.id];
-                    return next;
-                });
-            });
-        } else {
-            let runningAllocated = 0;
-            unlockedCats.forEach((c, idx) => {
-                if (idx === unlockedCats.length - 1) {
-                    const finalShare = Math.round((targetUnlockedSum - runningAllocated) * 100) / 100;
-                    updated[c.id] = String(Math.max(0, finalShare));
-                } else {
-                    const current = parseFloat(categoryPercentages[c.id] || "0") || 0;
-                    const proportion = current / currentUnlockedSum;
-                    const allocated = Math.round(targetUnlockedSum * proportion * 100) / 100;
-                    updated[c.id] = String(allocated);
-                    runningAllocated += allocated;
                 }
-                setCategoryDollarOverrides((prev) => {
-                    const next = { ...prev };
-                    delete next[c.id];
-                    return next;
-                });
             });
-        }
+            return next;
+        });
 
-        setCategoryPercentages(updated);
+        setCategoryPercentages(result.updatedPercentages);
         setErrorMessage(null);
     };
 
@@ -336,7 +305,8 @@ export function BaseProfileEditorModal({
     const totalPercentage = useMemo(() => {
         const sum = localCategories.reduce((acc, cat) => {
             const raw = categoryPercentages[cat.id];
-            const parsed = raw === undefined || raw === "" ? 0 : parseFloat(raw);
+            const parsed =
+                raw === undefined || raw === "" ? 0 : parseFloat(raw);
             return acc + (isNaN(parsed) ? 0 : parsed);
         }, 0);
         return Math.round(sum * 1000) / 1000;
@@ -373,13 +343,20 @@ export function BaseProfileEditorModal({
     };
 
     // Handle editing in % box (with smart "$" detection)
-    const handlePercentageChange = (categoryId: string, rawVal: string, isFocused = false) => {
+    const handlePercentageChange = (
+        categoryId: string,
+        rawVal: string,
+        isFocused = false,
+    ) => {
         const parsed = parseAllocationInput(rawVal, currentDisposablePool);
 
         if (parsed.isDollar) {
             // Keep raw text while focused with $ so keystrokes aren't hijacked
             if (isFocused) {
-                setRawPercentText((prev) => ({ ...prev, [categoryId]: rawVal }));
+                setRawPercentText((prev) => ({
+                    ...prev,
+                    [categoryId]: rawVal,
+                }));
             } else {
                 setRawPercentText((prev) => {
                     const next = { ...prev };
@@ -407,7 +384,10 @@ export function BaseProfileEditorModal({
             }));
         } else {
             if (isFocused) {
-                setRawPercentText((prev) => ({ ...prev, [categoryId]: rawVal }));
+                setRawPercentText((prev) => ({
+                    ...prev,
+                    [categoryId]: rawVal,
+                }));
             } else {
                 setRawPercentText((prev) => {
                     const next = { ...prev };
@@ -438,12 +418,20 @@ export function BaseProfileEditorModal({
     const handleReset = () => {
         if (profile) {
             setGrossSalary(String(profile.gross_salary));
-            setCpfRate(String(parseFloat((profile.cpf_employee_rate * 100).toFixed(4))));
+            setCpfRate(
+                String(
+                    parseFloat((profile.cpf_employee_rate * 100).toFixed(4)),
+                ),
+            );
         }
         const pctMap: Record<string, string> = {};
         for (const cat of localCategories) {
             const existing = allocations.find((a) => a.category_id === cat.id);
-            pctMap[cat.id] = existing ? String(parseFloat((existing.target_percentage * 100).toFixed(4))) : "0";
+            pctMap[cat.id] = existing
+                ? String(
+                      parseFloat((existing.target_percentage * 100).toFixed(4)),
+                  )
+                : "0";
         }
         setCategoryPercentages(pctMap);
         setCategoryDollarOverrides({});
@@ -487,7 +475,10 @@ export function BaseProfileEditorModal({
     const handleOpenEditCategory = (cat: Category) => {
         setEditingCat(cat);
         setCatName(cat.name);
-        setCatGroup(cat.group || (isSpendableCategory(cat) ? "spendable" : "allocation"));
+        setCatGroup(
+            cat.group ||
+                (isSpendableCategory(cat) ? "spendable" : "allocation"),
+        );
         setCatColor(cat.color || PRESET_COLORS[0]);
         setCatIcon(cat.icon || "tag");
         setErrorMessage(null);
@@ -510,7 +501,10 @@ export function BaseProfileEditorModal({
                     group: catGroup,
                 });
                 setLocalCategories((prev) => [...prev, created]);
-                setCategoryPercentages((prev) => ({ ...prev, [created.id]: "0" }));
+                setCategoryPercentages((prev) => ({
+                    ...prev,
+                    [created.id]: "0",
+                }));
             } else if (catFormMode === "edit" && editingCat) {
                 await financeService.updateCategory(editingCat.id, {
                     name: catName.trim(),
@@ -524,7 +518,9 @@ export function BaseProfileEditorModal({
             await refreshCategoriesFromService();
         } catch (err: unknown) {
             console.error("Failed to save category:", err);
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save category.");
+            setErrorMessage(
+                err instanceof Error ? err.message : "Failed to save category.",
+            );
         } finally {
             setIsCatSaving(false);
         }
@@ -539,7 +535,11 @@ export function BaseProfileEditorModal({
             await refreshCategoriesFromService();
         } catch (err: unknown) {
             console.error("Failed to delete category:", err);
-            setErrorMessage(err instanceof Error ? err.message : "Failed to delete category.");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to delete category.",
+            );
         } finally {
             setIsCatSaving(false);
         }
@@ -553,7 +553,11 @@ export function BaseProfileEditorModal({
             await refreshCategoriesFromService();
         } catch (err: unknown) {
             console.error("Failed to restore preset categories:", err);
-            setErrorMessage(err instanceof Error ? err.message : "Failed to restore presets.");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to restore presets.",
+            );
         } finally {
             setIsCatSaving(false);
         }
@@ -563,7 +567,9 @@ export function BaseProfileEditorModal({
         e.preventDefault();
 
         if (!isValidTotal) {
-            setErrorMessage(`Category allocations must sum to exactly 100% (currently ${totalPercentage}%).`);
+            setErrorMessage(
+                `Category allocations must sum to exactly 100% (currently ${totalPercentage}%).`,
+            );
             return;
         }
 
@@ -588,28 +594,44 @@ export function BaseProfileEditorModal({
                 updated_at: new Date().toISOString(),
             };
 
-            const updatedAllocations: BaseProfileAllocation[] = localCategories.map((cat) => {
-                const existing = allocations.find((a) => a.category_id === cat.id);
-                const targetPct = (parseFloat(categoryPercentages[cat.id] || "0") || 0) / 100;
-                let allocId: string;
-                if (existing?.id && isValidUuid(existing.id)) {
-                    allocId = existing.id;
-                } else if (typeof crypto !== "undefined" && crypto.randomUUID) {
-                    allocId = crypto.randomUUID();
-                } else {
-                    allocId = existing ? existing.id : `alloc-${profile.id}-${cat.id}`;
-                }
-                return {
-                    id: allocId,
-                    profile_id: profile.id,
-                    category_id: cat.id,
-                    target_percentage: targetPct,
-                };
-            });
+            const updatedAllocations: BaseProfileAllocation[] =
+                localCategories.map((cat) => {
+                    const existing = allocations.find(
+                        (a) => a.category_id === cat.id,
+                    );
+                    const targetPct =
+                        (parseFloat(categoryPercentages[cat.id] || "0") || 0) /
+                        100;
+                    let allocId: string;
+                    if (existing?.id && isValidUuid(existing.id)) {
+                        allocId = existing.id;
+                    } else if (
+                        typeof crypto !== "undefined" &&
+                        crypto.randomUUID
+                    ) {
+                        allocId = crypto.randomUUID();
+                    } else {
+                        allocId = existing
+                            ? existing.id
+                            : `alloc-${profile.id}-${cat.id}`;
+                    }
+                    return {
+                        id: allocId,
+                        profile_id: profile.id,
+                        category_id: cat.id,
+                        target_percentage: targetPct,
+                    };
+                });
 
-            await financeService.updateBaseProfile(updatedProfile, updatedAllocations);
+            await financeService.updateBaseProfile(
+                updatedProfile,
+                updatedAllocations,
+            );
 
-            const cpfDeduction = calculateCPFAndNetPay(parsedGross, parsedCpf).cpfDeduction;
+            const cpfDeduction = calculateCPFAndNetPay(
+                parsedGross,
+                parsedCpf,
+            ).cpfDeduction;
             if (monthlyBudgetId && isValidUuid(monthlyBudgetId)) {
                 await financeService.updateMonthlyBudget({
                     id: monthlyBudgetId,
@@ -620,8 +642,14 @@ export function BaseProfileEditorModal({
                 });
             } else if (selectedMonth) {
                 try {
-                    const monthDetail = await financeService.getMonthlyBudget(selectedMonth, profile.owner_id);
-                    if (monthDetail?.budget?.id && isValidUuid(monthDetail.budget.id)) {
+                    const monthDetail = await financeService.getMonthlyBudget(
+                        selectedMonth,
+                        profile.owner_id,
+                    );
+                    if (
+                        monthDetail?.budget?.id &&
+                        isValidUuid(monthDetail.budget.id)
+                    ) {
                         await financeService.updateMonthlyBudget({
                             id: monthDetail.budget.id,
                             gross_salary: parsedGross,
@@ -639,7 +667,11 @@ export function BaseProfileEditorModal({
             onClose();
         } catch (err: unknown) {
             console.error("Failed to update base profile:", err);
-            setErrorMessage(err instanceof Error ? err.message : "Failed to update base profile.");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to update base profile.",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -659,7 +691,11 @@ export function BaseProfileEditorModal({
                 <ModalHeader
                     id={titleId}
                     title="Edit Budget & Categories"
-                    subtitle={profileMember && members.length <= 1 ? profileMember.display_name : undefined}
+                    subtitle={
+                        profileMember && members.length <= 1
+                            ? profileMember.display_name
+                            : undefined
+                    }
                     icon={<Sliders className="h-4.5 w-4.5 stroke-[2.5]" />}
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
@@ -696,10 +732,7 @@ export function BaseProfileEditorModal({
                 >
                     <ModalBody className="p-4 sm:p-5 space-y-5 bg-(--bg-card)">
                         {errorMessage && (
-                            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-xs font-bold text-(--text-ink) shadow-cute-sm">
-                                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                                <span>{errorMessage}</span>
-                            </div>
+                            <Alert variant="danger">{errorMessage}</Alert>
                         )}
 
                         {/* Section 1: Income & CPF */}
@@ -717,7 +750,9 @@ export function BaseProfileEditorModal({
                                         Gross Salary (SGD)
                                     </label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-xs font-bold text-(--text-muted)">S$</span>
+                                        <span className="absolute left-3 top-2.5 text-xs font-bold text-(--text-muted)">
+                                            S$
+                                        </span>
                                         <input
                                             id="gross-salary-input"
                                             type="number"
@@ -725,7 +760,9 @@ export function BaseProfileEditorModal({
                                             min="0"
                                             required
                                             value={grossSalary}
-                                            onChange={(e) => setGrossSalary(e.target.value)}
+                                            onChange={(e) =>
+                                                setGrossSalary(e.target.value)
+                                            }
                                             aria-label="Gross Salary"
                                             className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                         />
@@ -748,11 +785,15 @@ export function BaseProfileEditorModal({
                                             max="100"
                                             required
                                             value={cpfRate}
-                                            onChange={(e) => setCpfRate(e.target.value)}
+                                            onChange={(e) =>
+                                                setCpfRate(e.target.value)
+                                            }
                                             aria-label="CPF Employee Rate"
                                             className="w-full pl-3 pr-8 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                         />
-                                        <span className="absolute right-3 top-2.5 text-xs font-bold text-(--text-muted)">%</span>
+                                        <span className="absolute right-3 top-2.5 text-xs font-bold text-(--text-muted)">
+                                            %
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -791,7 +832,9 @@ export function BaseProfileEditorModal({
                                         <span className="text-base sm:text-lg font-mono-num font-black text-(--text-ink)">
                                             {formatSGD(effectiveTaxes)}
                                         </span>
-                                        <span className="text-[11px] font-bold text-(--text-muted)">/mo</span>
+                                        <span className="text-[11px] font-bold text-(--text-muted)">
+                                            /mo
+                                        </span>
                                     </div>
                                     <span className="block text-[10px] text-(--text-muted) mt-1">
                                         From active tax policies
@@ -809,7 +852,9 @@ export function BaseProfileEditorModal({
                                         <span className="text-base sm:text-lg font-mono-num font-black text-(--text-ink)">
                                             {formatSGD(effectiveInsurance)}
                                         </span>
-                                        <span className="text-[11px] font-bold text-(--text-muted)">/mo</span>
+                                        <span className="text-[11px] font-bold text-(--text-muted)">
+                                            /mo
+                                        </span>
                                     </div>
                                     <span className="block text-[10px] text-(--text-muted) mt-1">
                                         From active insurance policies
@@ -861,7 +906,8 @@ export function BaseProfileEditorModal({
                                         title="Category Lock"
                                         ariaLabel="Category lock explanation"
                                     >
-                                        Locked categories keep their exact amount when you click Auto-Balance.
+                                        Locked categories keep their exact
+                                        amount when you click Auto-Balance.
                                     </TooltipPopover>
                                 </div>
                             </div>
@@ -892,7 +938,9 @@ export function BaseProfileEditorModal({
                                             <input
                                                 type="text"
                                                 value={catName}
-                                                onChange={(e) => setCatName(e.target.value)}
+                                                onChange={(e) =>
+                                                    setCatName(e.target.value)
+                                                }
                                                 placeholder="e.g. Groceries, Pet, Gym"
                                                 className="w-full px-3 py-1.5 text-xs font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                             />
@@ -905,7 +953,9 @@ export function BaseProfileEditorModal({
                                             <div className="grid grid-cols-2 gap-1.5">
                                                 <button
                                                     type="button"
-                                                    onClick={() => setCatGroup("spendable")}
+                                                    onClick={() =>
+                                                        setCatGroup("spendable")
+                                                    }
                                                     className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
                                                         catGroup === "spendable"
                                                             ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
@@ -916,9 +966,14 @@ export function BaseProfileEditorModal({
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setCatGroup("allocation")}
+                                                    onClick={() =>
+                                                        setCatGroup(
+                                                            "allocation",
+                                                        )
+                                                    }
                                                     className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
-                                                        catGroup === "allocation"
+                                                        catGroup ===
+                                                        "allocation"
                                                             ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
                                                             : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
                                                     }`}
@@ -936,38 +991,52 @@ export function BaseProfileEditorModal({
                                                 <button
                                                     key={c}
                                                     type="button"
-                                                    onClick={() => setCatColor(c)}
+                                                    onClick={() =>
+                                                        setCatColor(c)
+                                                    }
                                                     className="h-5 w-5 rounded-full border-2 border-(--border-ink) flex items-center justify-center transition-transform cursor-pointer"
                                                     style={{
                                                         backgroundColor: c,
-                                                        transform: catColor === c ? "scale(1.15)" : "scale(1)",
+                                                        transform:
+                                                            catColor === c
+                                                                ? "scale(1.15)"
+                                                                : "scale(1)",
                                                     }}
                                                 >
-                                                    {catColor === c && <Check className="h-3 w-3 text-white stroke-3" />}
+                                                    {catColor === c && (
+                                                        <Check className="h-3 w-3 text-white stroke-3" />
+                                                    )}
                                                 </button>
                                             ))}
                                         </div>
 
                                         <div className="flex items-center gap-1 flex-wrap">
-                                            {PRESET_ICONS.slice(0, 8).map((item) => {
-                                                const IconComp = item.Icon;
-                                                const isSelected = catIcon === item.id;
-                                                return (
-                                                    <button
-                                                        key={item.id}
-                                                        type="button"
-                                                        onClick={() => setCatIcon(item.id)}
-                                                        title={item.label}
-                                                        className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
-                                                            isSelected
-                                                                ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
-                                                                : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
-                                                        }`}
-                                                    >
-                                                        <IconComp className="h-3.5 w-3.5" />
-                                                    </button>
-                                                );
-                                            })}
+                                            {PRESET_ICONS.slice(0, 8).map(
+                                                (item) => {
+                                                    const IconComp = item.Icon;
+                                                    const isSelected =
+                                                        catIcon === item.id;
+                                                    return (
+                                                        <button
+                                                            key={item.id}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setCatIcon(
+                                                                    item.id,
+                                                                )
+                                                            }
+                                                            title={item.label}
+                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                                isSelected
+                                                                    ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
+                                                                    : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
+                                                            }`}
+                                                        >
+                                                            <IconComp className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    );
+                                                },
+                                            )}
                                         </div>
                                     </div>
 
@@ -979,7 +1048,11 @@ export function BaseProfileEditorModal({
                                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 cursor-pointer"
                                         >
                                             <Check className="h-3.5 w-3.5" />
-                                            <span>{catFormMode === "create" ? "Create Category" : "Update Category"}</span>
+                                            <span>
+                                                {catFormMode === "create"
+                                                    ? "Create Category"
+                                                    : "Update Category"}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
@@ -988,7 +1061,9 @@ export function BaseProfileEditorModal({
                             <div className="space-y-2.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 sm:p-4 shadow-cute-sm">
                                 {localCategories.length === 0 ? (
                                     <div className="text-center py-6">
-                                        <p className="text-xs text-(--text-muted) mb-2">No categories configured yet.</p>
+                                        <p className="text-xs text-(--text-muted) mb-2">
+                                            No categories configured yet.
+                                        </p>
                                         <button
                                             type="button"
                                             onClick={handleOpenCreateCategory}
@@ -1000,12 +1075,24 @@ export function BaseProfileEditorModal({
                                     </div>
                                 ) : (
                                     localCategories.map((cat) => {
-                                        const rawVal = categoryPercentages[cat.id];
-                                        const currentPct = rawVal === undefined || rawVal === "" ? 0 : parseFloat(rawVal) || 0;
-                                        const isLocked = Boolean(lockedCategories[cat.id]);
+                                        const rawVal =
+                                            categoryPercentages[cat.id];
+                                        const currentPct =
+                                            rawVal === undefined ||
+                                            rawVal === ""
+                                                ? 0
+                                                : parseFloat(rawVal) || 0;
+                                        const isLocked = Boolean(
+                                            lockedCategories[cat.id],
+                                        );
                                         const dollarEquivalent =
-                                            Math.round(currentDisposablePool * (currentPct / 100) * 100) / 100;
-                                        const isDeleting = deletingCatId === cat.id;
+                                            Math.round(
+                                                currentDisposablePool *
+                                                    (currentPct / 100) *
+                                                    100,
+                                            ) / 100;
+                                        const isDeleting =
+                                            deletingCatId === cat.id;
 
                                         return (
                                             <div
@@ -1017,9 +1104,21 @@ export function BaseProfileEditorModal({
                                                         {/* Category Lock Toggle */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => toggleCategoryLock(cat.id)}
-                                                            title={isLocked ? `Unlock ${cat.name}` : `Lock ${cat.name}`}
-                                                            aria-label={isLocked ? "Unlock category" : "Lock category"}
+                                                            onClick={() =>
+                                                                toggleCategoryLock(
+                                                                    cat.id,
+                                                                )
+                                                            }
+                                                            title={
+                                                                isLocked
+                                                                    ? `Unlock ${cat.name}`
+                                                                    : `Lock ${cat.name}`
+                                                            }
+                                                            aria-label={
+                                                                isLocked
+                                                                    ? "Unlock category"
+                                                                    : "Lock category"
+                                                            }
                                                             data-testid={`lock-${cat.id}`}
                                                             className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer shrink-0 ${
                                                                 isLocked
@@ -1036,7 +1135,10 @@ export function BaseProfileEditorModal({
 
                                                         <span
                                                             className="h-2.5 w-2.5 rounded-full shrink-0 border border-(--border-ink)"
-                                                            style={{ backgroundColor: cat.color }}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    cat.color,
+                                                            }}
                                                         />
                                                         <label
                                                             htmlFor={`cat-alloc-${cat.id}`}
@@ -1049,7 +1151,9 @@ export function BaseProfileEditorModal({
                                                                 title="Category Lock"
                                                                 align="left"
                                                                 ariaLabel="Category is locked"
-                                                                renderTrigger={(triggerProps) => (
+                                                                renderTrigger={(
+                                                                    triggerProps,
+                                                                ) => (
                                                                     <button
                                                                         {...triggerProps}
                                                                         type="button"
@@ -1059,7 +1163,12 @@ export function BaseProfileEditorModal({
                                                                     </button>
                                                                 )}
                                                             >
-                                                                Locked categories keep their exact amount when you click Auto-Balance.
+                                                                Locked
+                                                                categories keep
+                                                                their exact
+                                                                amount when you
+                                                                click
+                                                                Auto-Balance.
                                                             </TooltipPopover>
                                                         )}
 
@@ -1068,15 +1177,25 @@ export function BaseProfileEditorModal({
                                                             <div className="inline-flex items-center gap-1 ml-1">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleDeleteCategoryInline(cat.id)}
-                                                                    disabled={isCatSaving}
+                                                                    onClick={() =>
+                                                                        handleDeleteCategoryInline(
+                                                                            cat.id,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        isCatSaving
+                                                                    }
                                                                     className="px-2 py-0.5 rounded text-[10px] font-bold bg-(--pastel-coral-light) text-rose-800 border border-(--border-ink) hover:bg-rose-200 cursor-pointer"
                                                                 >
                                                                     Delete
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => setDeletingCatId(null)}
+                                                                    onClick={() =>
+                                                                        setDeletingCatId(
+                                                                            null,
+                                                                        )
+                                                                    }
                                                                     className="px-2 py-0.5 rounded text-[10px] font-semibold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                                                                 >
                                                                     Cancel
@@ -1086,7 +1205,11 @@ export function BaseProfileEditorModal({
                                                             <div className="inline-flex items-center gap-0.5 ml-1">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleOpenEditCategory(cat)}
+                                                                    onClick={() =>
+                                                                        handleOpenEditCategory(
+                                                                            cat,
+                                                                        )
+                                                                    }
                                                                     title={`Edit ${cat.name}`}
                                                                     aria-label="Edit category"
                                                                     className="p-1 rounded-md text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
@@ -1095,7 +1218,11 @@ export function BaseProfileEditorModal({
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => setDeletingCatId(cat.id)}
+                                                                    onClick={() =>
+                                                                        setDeletingCatId(
+                                                                            cat.id,
+                                                                        )
+                                                                    }
                                                                     title={`Delete ${cat.name}`}
                                                                     aria-label="Delete category"
                                                                     className="p-1 rounded-md text-(--text-muted) hover:text-rose-600 hover:bg-(--pastel-coral-light) transition-colors cursor-pointer"
@@ -1113,7 +1240,9 @@ export function BaseProfileEditorModal({
                                                             data-testid={`cat-dollar-${cat.id}`}
                                                             className="flex items-center gap-0.5 rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-1.5 py-0.5 shadow-cute-sm"
                                                         >
-                                                            <span className="text-[11px] font-bold text-(--text-muted)">S$</span>
+                                                            <span className="text-[11px] font-bold text-(--text-muted)">
+                                                                S$
+                                                            </span>
                                                             <input
                                                                 id={`cat-dollar-input-${cat.id}`}
                                                                 data-testid={`cat-dollar-input-${cat.id}`}
@@ -1122,18 +1251,35 @@ export function BaseProfileEditorModal({
                                                                 min="0"
                                                                 placeholder="0"
                                                                 value={
-                                                                    categoryDollarOverrides[cat.id] !== undefined
-                                                                        ? categoryDollarOverrides[cat.id]
-                                                                        : dollarEquivalent === 0
-                                                                        ? "0"
-                                                                        : String(dollarEquivalent)
+                                                                    categoryDollarOverrides[
+                                                                        cat.id
+                                                                    ] !==
+                                                                    undefined
+                                                                        ? categoryDollarOverrides[
+                                                                              cat
+                                                                                  .id
+                                                                          ]
+                                                                        : dollarEquivalent ===
+                                                                            0
+                                                                          ? "0"
+                                                                          : String(
+                                                                                dollarEquivalent,
+                                                                            )
                                                                 }
-                                                                onChange={(e) => handleDollarChange(cat.id, e.target.value)}
+                                                                onChange={(e) =>
+                                                                    handleDollarChange(
+                                                                        cat.id,
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
                                                                 aria-label="Monthly dollar amount"
                                                                 title={`Monthly dollar amount for ${cat.name}`}
                                                                 className="w-16 text-right text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
                                                             />
-                                                            <span className="text-[10px] font-bold text-(--text-muted)">/mo</span>
+                                                            <span className="text-[10px] font-bold text-(--text-muted)">
+                                                                /mo
+                                                            </span>
                                                         </div>
 
                                                         {/* Smart Percentage Input (Supports "$300" or "15%") */}
@@ -1144,21 +1290,62 @@ export function BaseProfileEditorModal({
                                                                 inputMode="decimal"
                                                                 placeholder="0"
                                                                 value={
-                                                                    rawPercentText[cat.id] !== undefined
-                                                                        ? rawPercentText[cat.id]
-                                                                        : categoryPercentages[cat.id] === ""
-                                                                        ? ""
-                                                                        : categoryPercentages[cat.id] !== undefined
-                                                                        ? String(parseFloat(parseFloat(categoryPercentages[cat.id]).toFixed(2)))
-                                                                        : "0"
+                                                                    rawPercentText[
+                                                                        cat.id
+                                                                    ] !==
+                                                                    undefined
+                                                                        ? rawPercentText[
+                                                                              cat
+                                                                                  .id
+                                                                          ]
+                                                                        : categoryPercentages[
+                                                                                cat
+                                                                                    .id
+                                                                            ] ===
+                                                                            ""
+                                                                          ? ""
+                                                                          : categoryPercentages[
+                                                                                  cat
+                                                                                      .id
+                                                                              ] !==
+                                                                              undefined
+                                                                            ? String(
+                                                                                  parseFloat(
+                                                                                      parseFloat(
+                                                                                          categoryPercentages[
+                                                                                              cat
+                                                                                                  .id
+                                                                                          ],
+                                                                                      ).toFixed(
+                                                                                          2,
+                                                                                      ),
+                                                                                  ),
+                                                                              )
+                                                                            : "0"
                                                                 }
                                                                 onChange={(e) =>
-                                                                    handlePercentageChange(cat.id, e.target.value, true)
+                                                                    handlePercentageChange(
+                                                                        cat.id,
+                                                                        e.target
+                                                                            .value,
+                                                                        true,
+                                                                    )
                                                                 }
-                                                                onBlur={() => handlePercentBlur(cat.id)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === "Enter") {
-                                                                        handlePercentBlur(cat.id);
+                                                                onBlur={() =>
+                                                                    handlePercentBlur(
+                                                                        cat.id,
+                                                                    )
+                                                                }
+                                                                onKeyDown={(
+                                                                    e,
+                                                                ) => {
+                                                                    if (
+                                                                        e.key ===
+                                                                        "Enter"
+                                                                    ) {
+                                                                        handlePercentBlur(
+                                                                            cat.id,
+                                                                        );
                                                                     }
                                                                 }}
                                                                 className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
@@ -1180,7 +1367,12 @@ export function BaseProfileEditorModal({
                                                         aria-label="Allocation slider"
                                                         data-testid={`slider-${cat.id}`}
                                                         value={currentPct}
-                                                        onChange={(e) => handlePercentageChange(cat.id, e.target.value)}
+                                                        onChange={(e) =>
+                                                            handlePercentageChange(
+                                                                cat.id,
+                                                                e.target.value,
+                                                            )
+                                                        }
                                                         className="w-full h-1.5 bg-(--bg-cream) border border-(--border-ink) rounded-lg appearance-none cursor-pointer accent-emerald-600"
                                                     />
                                                 </div>
@@ -1235,7 +1427,9 @@ export function BaseProfileEditorModal({
                                 className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                             >
                                 <Save className="h-3.5 w-3.5" />
-                                <span>{isSubmitting ? "Saving..." : "Save Budget"}</span>
+                                <span>
+                                    {isSubmitting ? "Saving..." : "Save Budget"}
+                                </span>
                             </button>
                         </div>
                     </ModalFooter>

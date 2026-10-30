@@ -12,13 +12,14 @@
  */
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { Save, ArrowRightLeft, ChevronDown } from "lucide-react";
 import {
-    Save,
-    ArrowRightLeft,
-    AlertCircle,
-    ChevronDown,
-} from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
+import { Alert } from "../ui/Alert";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { Select } from "../ui/Select";
 import { financeService } from "../../services/financeService";
@@ -29,7 +30,13 @@ import {
 import { formatSGD } from "../../lib/currency";
 import { getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
-import type { Expense, Category, HouseholdMember, UpdateExpenseInput, SavingsGoal } from "../../types/finance";
+import type {
+    Expense,
+    Category,
+    HouseholdMember,
+    UpdateExpenseInput,
+    SavingsGoal,
+} from "../../types/finance";
 
 export interface EditExpenseModalProps {
     isOpen: boolean;
@@ -62,8 +69,12 @@ export function EditExpenseModal({
     categories: propCategories,
     members: propMembers,
 }: EditExpenseModalProps) {
-    const categories = propCategories && propCategories.length > 0 ? propCategories : mockCategories;
-    const members = propMembers && propMembers.length > 0 ? propMembers : mockMembers;
+    const categories =
+        propCategories && propCategories.length > 0
+            ? propCategories
+            : mockCategories;
+    const members =
+        propMembers && propMembers.length > 0 ? propMembers : mockMembers;
 
     const [amount, setAmount] = useState<number>(0);
     const [currency, setCurrency] = useState<string>("SGD");
@@ -100,7 +111,8 @@ export function EditExpenseModal({
             const origCurr = expense.original_currency || "SGD";
             setCurrency(origCurr);
             setAmount(
-                expense.original_amount !== undefined && expense.original_amount !== null
+                expense.original_amount !== undefined &&
+                    expense.original_amount !== null
                     ? expense.original_amount
                     : expense.amount,
             );
@@ -120,7 +132,10 @@ export function EditExpenseModal({
 
     // Currency configuration
     const currentCurrencyConfig = useMemo(() => {
-        return SUPPORTED_CURRENCIES.find((c) => c.code === currency) || SUPPORTED_CURRENCIES[0];
+        return (
+            SUPPORTED_CURRENCIES.find((c) => c.code === currency) ||
+            SUPPORTED_CURRENCIES[0]
+        );
     }, [currency]);
 
     // Computed SGD equivalent if foreign currency
@@ -164,11 +179,14 @@ export function EditExpenseModal({
             setIsSubmitting(true);
             setErrorMessage(null);
 
-            const { amountInSGD, exchangeRate } = convertToSGD(amount, currency);
+            const { amountInSGD, exchangeRate } = convertToSGD(
+                amount,
+                currency,
+            );
 
             const updates: UpdateExpenseInput = {
                 payer_id: payerId,
-                category_id: goalId ? null : (categoryId || null),
+                category_id: goalId ? null : categoryId || null,
                 date,
                 time: time || null,
                 item: item.trim(),
@@ -183,12 +201,17 @@ export function EditExpenseModal({
                 goal_id: goalId || null,
             };
 
-            const updated = await financeService.updateExpense(expense.id, updates);
+            const updated = await financeService.updateExpense(
+                expense.id,
+                updates,
+            );
             onSave?.(updated);
             onClose();
         } catch (err) {
             console.error("Failed to update expense:", err);
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save changes.");
+            setErrorMessage(
+                err instanceof Error ? err.message : "Failed to save changes.",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -198,7 +221,10 @@ export function EditExpenseModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     title="Edit Expense"
                     subtitle="Update amount, split, tags, or details"
@@ -209,10 +235,7 @@ export function EditExpenseModal({
 
                 <ModalBody>
                     {errorMessage && (
-                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                            <AlertCircle className="h-4 w-4 shrink-0" />
-                            <span>{errorMessage}</span>
-                        </div>
+                        <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
                     {/* Amount and Currency */}
@@ -225,7 +248,9 @@ export function EditExpenseModal({
                                 <select
                                     aria-label="Select currency"
                                     value={currency}
-                                    onChange={(e) => setCurrency(e.target.value)}
+                                    onChange={(e) =>
+                                        setCurrency(e.target.value)
+                                    }
                                     className="appearance-none rounded-full border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 >
                                     {SUPPORTED_CURRENCIES.map((c) => (
@@ -252,8 +277,10 @@ export function EditExpenseModal({
 
                         {convertedPreview && (
                             <div className="mt-2 text-center text-xs font-bold text-(--text-ink) bg-(--pastel-butter-light) rounded-lg p-2 border border-(--border-ink)">
-                                ≈ {formatSGD(convertedPreview.amountInSGD)} SGD (Rate: 1 SGD ={" "}
-                                {convertedPreview.exchangeRate.toLocaleString()} {currency})
+                                ≈ {formatSGD(convertedPreview.amountInSGD)} SGD
+                                (Rate: 1 SGD ={" "}
+                                {convertedPreview.exchangeRate.toLocaleString()}{" "}
+                                {currency})
                             </div>
                         )}
                     </div>
@@ -298,7 +325,10 @@ export function EditExpenseModal({
                                     >
                                         <span
                                             className="h-2 w-2 rounded-full border border-black/20"
-                                            style={{ backgroundColor: cat.color || "#dfc2ff" }}
+                                            style={{
+                                                backgroundColor:
+                                                    cat.color || "#dfc2ff",
+                                            }}
                                         />
                                         <span>{cat.name}</span>
                                     </button>
@@ -351,7 +381,9 @@ export function EditExpenseModal({
                                         type="date"
                                         required
                                         value={date}
-                                        onChange={(e) => setDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setDate(e.target.value)
+                                        }
                                         className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                     />
                                 </div>
@@ -361,12 +393,16 @@ export function EditExpenseModal({
                                         type="time"
                                         aria-label="Expense Time"
                                         value={time}
-                                        onChange={(e) => setTime(e.target.value)}
+                                        onChange={(e) =>
+                                            setTime(e.target.value)
+                                        }
                                         className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-2 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setTime(getCurrentSingaporeTime())}
+                                        onClick={() =>
+                                            setTime(getCurrentSingaporeTime())
+                                        }
                                         className="rounded-xl px-2.5 py-2 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border-2 border-(--border-ink) transition-all cursor-pointer"
                                         title="Set to current time"
                                     >
@@ -392,12 +428,16 @@ export function EditExpenseModal({
                                 aria-checked={isShared}
                                 onClick={() => setIsShared(!isShared)}
                                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                                    isShared ? "bg-(--pastel-lilac)" : "bg-(--bg-canvas)"
+                                    isShared
+                                        ? "bg-(--pastel-lilac)"
+                                        : "bg-(--bg-canvas)"
                                 }`}
                             >
                                 <span
                                     className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-(--border-ink) shadow-xs transition duration-200 ease-in-out mt-0.5 ml-0.5 ${
-                                        isShared ? "translate-x-5 bg-white" : "translate-x-0"
+                                        isShared
+                                            ? "translate-x-5 bg-white"
+                                            : "translate-x-0"
                                     }`}
                                 />
                             </button>
@@ -408,7 +448,8 @@ export function EditExpenseModal({
                                 <div className="flex justify-between text-xs font-medium text-(--text-ink)">
                                     <span>Partner's Split Share</span>
                                     <span className="font-bold text-(--text-ink)">
-                                        {Math.round(splitRatio * 100)}% ({formatSGD(amount * splitRatio)})
+                                        {Math.round(splitRatio * 100)}% (
+                                        {formatSGD(amount * splitRatio)})
                                     </span>
                                 </div>
                                 <input
@@ -417,12 +458,18 @@ export function EditExpenseModal({
                                     max="1"
                                     step="0.05"
                                     value={splitRatio}
-                                    onChange={(e) => setSplitRatio(parseFloat(e.target.value))}
+                                    onChange={(e) =>
+                                        setSplitRatio(
+                                            parseFloat(e.target.value),
+                                        )
+                                    }
                                     className="w-full accent-purple-600 cursor-pointer"
                                 />
                                 <div className="flex justify-between text-[10px] text-(--text-muted)">
                                     <span>0% (Full Payer)</span>
-                                    <span className="font-semibold text-(--text-ink)">50/50</span>
+                                    <span className="font-semibold text-(--text-ink)">
+                                        50/50
+                                    </span>
                                     <span>100% (Full Partner)</span>
                                 </div>
                             </div>
@@ -482,7 +529,9 @@ export function EditExpenseModal({
 
                         {/* Contextual quick tags */}
                         <div className="flex flex-wrap gap-1 mt-2">
-                            {QUICK_TAG_SUGGESTIONS.filter((s) => !tags.includes(s))
+                            {QUICK_TAG_SUGGESTIONS.filter(
+                                (s) => !tags.includes(s),
+                            )
                                 .slice(0, 6)
                                 .map((suggested) => (
                                     <button
@@ -508,10 +557,14 @@ export function EditExpenseModal({
                                 sizeVariant="sm"
                                 className="bg-(--bg-canvas)"
                             >
-                                <option value="">None (Standard expense)</option>
+                                <option value="">
+                                    None (Standard expense)
+                                </option>
                                 {availableGoals.map((g) => (
                                     <option key={g.id} value={g.id}>
-                                        {g.title} (Saved: {formatSGD(g.saved_so_far)} / {formatSGD(g.target_amount)})
+                                        {g.title} (Saved:{" "}
+                                        {formatSGD(g.saved_so_far)} /{" "}
+                                        {formatSGD(g.target_amount)})
                                     </option>
                                 ))}
                             </Select>
@@ -552,7 +605,9 @@ export function EditExpenseModal({
                         className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                         <Save className="h-4 w-4 stroke-[2.5]" />
-                        <span>{isSubmitting ? "Saving..." : "Save Changes"}</span>
+                        <span>
+                            {isSubmitting ? "Saving..." : "Save Changes"}
+                        </span>
                     </button>
                 </ModalFooter>
             </form>

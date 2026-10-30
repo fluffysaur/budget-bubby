@@ -11,8 +11,14 @@
  */
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { Target, AlertCircle, TrendingUp } from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { Target, TrendingUp } from "lucide-react";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
+import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
 import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
@@ -50,7 +56,7 @@ export function AddEditGoalModal({
 
     // Form State
     const [emoji, setEmoji] = useState<string>("🎯");
-    const [title, setTitle] = useState<string>("" );
+    const [title, setTitle] = useState<string>("");
     const [targetAmount, setTargetAmount] = useState<string>("");
     const [savedSoFar, setSavedSoFar] = useState<string>("0");
     const [targetDate, setTargetDate] = useState<string>("");
@@ -66,8 +72,14 @@ export function AddEditGoalModal({
                 setTitle(goal.title);
                 setTargetAmount(goal.target_amount.toString());
                 setSavedSoFar(goal.saved_so_far.toString());
-                setTargetDate(goal.target_date ? goal.target_date.substring(0, 10) : "");
-                setMonthlyContribution(goal.monthly_contribution ? goal.monthly_contribution.toString() : "0");
+                setTargetDate(
+                    goal.target_date ? goal.target_date.substring(0, 10) : "",
+                );
+                setMonthlyContribution(
+                    goal.monthly_contribution
+                        ? goal.monthly_contribution.toString()
+                        : "0",
+                );
             } else {
                 setEmoji("🎯");
                 setTitle("");
@@ -97,7 +109,12 @@ export function AddEditGoalModal({
 
     const livePacing =
         numericTarget > 0 && targetDate
-            ? calculateGoalPacing(numericTarget, numericSaved, targetDate, numericMonthly)
+            ? calculateGoalPacing(
+                  numericTarget,
+                  numericSaved,
+                  targetDate,
+                  numericMonthly,
+              )
             : null;
 
     const handleSubmit = async (e: FormEvent) => {
@@ -105,13 +122,17 @@ export function AddEditGoalModal({
         setErrorMessage(null);
 
         if (!title.trim()) {
-            setErrorMessage("Please enter a goal title (e.g. Wedding Banquet, HDB Reno)");
+            setErrorMessage(
+                "Please enter a goal title (e.g. Wedding Banquet, HDB Reno)",
+            );
             titleInputRef.current?.focus();
             return;
         }
 
         if (isNaN(numericTarget) || numericTarget <= 0) {
-            setErrorMessage("Please enter a valid target amount greater than S$0.00");
+            setErrorMessage(
+                "Please enter a valid target amount greater than S$0.00",
+            );
             return;
         }
 
@@ -134,7 +155,8 @@ export function AddEditGoalModal({
             setIsSubmitting(true);
 
             // Ensure normalized date string
-            const normalizedDate = targetDate.length === 7 ? `${targetDate}-01` : targetDate;
+            const normalizedDate =
+                targetDate.length === 7 ? `${targetDate}-01` : targetDate;
 
             if (goal) {
                 // Update Mode
@@ -164,7 +186,11 @@ export function AddEditGoalModal({
 
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save savings goal");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to save savings goal",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -172,7 +198,10 @@ export function AddEditGoalModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     id="goal-modal-title"
                     title={goal ? "Edit Savings Goal" : "New Savings Goal"}
@@ -185,10 +214,7 @@ export function AddEditGoalModal({
                 <ModalBody>
                     {/* Error Alert */}
                     {errorMessage && (
-                        <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                            <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
-                            <span>{errorMessage}</span>
-                        </div>
+                        <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
                     {/* Emoji Presets & Custom Selector */}
@@ -210,7 +236,9 @@ export function AddEditGoalModal({
                                     }`}
                                 >
                                     <span className="text-sm">{p.emoji}</span>
-                                    <span className="text-[11px]">{p.label}</span>
+                                    <span className="text-[11px]">
+                                        {p.label}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -224,7 +252,9 @@ export function AddEditGoalModal({
                                 className="w-14 text-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-2 text-xl shadow-xs"
                                 placeholder="🎯"
                             />
-                            <span className="text-xs text-(--text-muted)">Custom emoji</span>
+                            <span className="text-xs text-(--text-muted)">
+                                Custom emoji
+                            </span>
                         </div>
                     </div>
 
@@ -257,7 +287,9 @@ export function AddEditGoalModal({
                                 Target Amount (S$) *
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
+                                    S$
+                                </span>
                                 <input
                                     id="goal-target"
                                     type="number"
@@ -265,7 +297,9 @@ export function AddEditGoalModal({
                                     min="0.01"
                                     placeholder="20,000"
                                     value={targetAmount}
-                                    onChange={(e) => setTargetAmount(e.target.value)}
+                                    onChange={(e) =>
+                                        setTargetAmount(e.target.value)
+                                    }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
@@ -279,7 +313,9 @@ export function AddEditGoalModal({
                                 Saved So Far (S$)
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
+                                    S$
+                                </span>
                                 <input
                                     id="goal-saved"
                                     type="number"
@@ -287,7 +323,9 @@ export function AddEditGoalModal({
                                     min="0"
                                     placeholder="0"
                                     value={savedSoFar}
-                                    onChange={(e) => setSavedSoFar(e.target.value)}
+                                    onChange={(e) =>
+                                        setSavedSoFar(e.target.value)
+                                    }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
@@ -320,7 +358,9 @@ export function AddEditGoalModal({
                                 Monthly Contribution (S$)
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">S$</span>
+                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
+                                    S$
+                                </span>
                                 <input
                                     id="goal-monthly"
                                     type="number"
@@ -328,7 +368,9 @@ export function AddEditGoalModal({
                                     min="0"
                                     placeholder="500"
                                     value={monthlyContribution}
-                                    onChange={(e) => setMonthlyContribution(e.target.value)}
+                                    onChange={(e) =>
+                                        setMonthlyContribution(e.target.value)
+                                    }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
@@ -361,7 +403,9 @@ export function AddEditGoalModal({
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-2 text-(--text-muted)">
                                 <div>
-                                    <span className="text-[11px] block">Required Pace:</span>
+                                    <span className="text-[11px] block">
+                                        Required Pace:
+                                    </span>
                                     <span className="font-bold text-(--text-ink) font-mono-num">
                                         {livePacing.status === "achieved"
                                             ? "Complete"
@@ -369,7 +413,9 @@ export function AddEditGoalModal({
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-[11px] block">Time to Target:</span>
+                                    <span className="text-[11px] block">
+                                        Time to Target:
+                                    </span>
                                     <span className="font-bold text-(--text-ink) font-mono-num">
                                         {livePacing.monthsRemaining} months
                                     </span>
@@ -392,7 +438,11 @@ export function AddEditGoalModal({
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
                     >
-                        {isSubmitting ? "Saving..." : goal ? "Save Changes" : "Create Goal"}
+                        {isSubmitting
+                            ? "Saving..."
+                            : goal
+                              ? "Save Changes"
+                              : "Create Goal"}
                     </button>
                 </ModalFooter>
             </form>

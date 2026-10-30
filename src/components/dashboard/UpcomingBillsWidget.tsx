@@ -14,24 +14,12 @@ import {
     Bell,
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
-import { getSingaporeDate } from "../../lib/dateUtils";
+import {
+    getSingaporeDate,
+    MONTH_NAMES_FULL as MONTH_NAMES,
+} from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
 import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
-
-const MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-];
 
 export interface UpcomingBillsWidgetProps {
     policies?: RecurringPolicy[];
@@ -101,7 +89,9 @@ export function UpcomingBillsWidget({
         if (p.payment_month === nextMonthNum) {
             return { text: "Due next month", urgent: false };
         }
-        const monthName = p.payment_month ? MONTH_NAMES[p.payment_month - 1] : "Annual";
+        const monthName = p.payment_month
+            ? MONTH_NAMES[p.payment_month - 1]
+            : "Annual";
         return { text: `Due in ${monthName}`, urgent: false };
     };
 
@@ -134,7 +124,10 @@ export function UpcomingBillsWidget({
                         className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                     >
                         <span>View All</span>
-                        <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        <ChevronRight
+                            className="h-3.5 w-3.5"
+                            strokeWidth={2.5}
+                        />
                     </button>
                 )}
             </div>
@@ -150,7 +143,8 @@ export function UpcomingBillsWidget({
                             No upcoming renewals
                         </p>
                         <p className="mt-1 text-xs text-(--text-muted) max-w-xs font-medium">
-                            Add recurring insurance policies or annual IRAS taxes to track renewal dates.
+                            Add recurring insurance policies or annual IRAS
+                            taxes to track renewal dates.
                         </p>
                     </div>
                 ) : (
@@ -198,7 +192,11 @@ export function UpcomingBillsWidget({
                                         </div>
                                         {policy.frequency === "annually" && (
                                             <div className="text-[10px] font-mono-num text-(--text-muted)">
-                                                ~{formatSGD(policy.monthly_amortized_amount)}/mo
+                                                ~
+                                                {formatSGD(
+                                                    policy.monthly_amortized_amount,
+                                                )}
+                                                /mo
                                             </div>
                                         )}
                                     </div>

@@ -20,29 +20,25 @@ import {
     useRole,
     useInteractions,
 } from "@floating-ui/react";
-import { ChevronLeft, ChevronRight, Calendar, RotateCcw, X } from "lucide-react";
-import { addMonths, formatDisplayMonth, getCurrentMonth } from "../../lib/dateUtils";
+import {
+    ChevronLeft,
+    ChevronRight,
+    Calendar,
+    RotateCcw,
+    X,
+} from "lucide-react";
+import {
+    addMonths,
+    formatDisplayMonth,
+    getCurrentMonth,
+    MONTH_NAMES_SHORT as MONTH_NAMES,
+} from "../../lib/dateUtils";
 
 export interface MonthPickerProps {
     selectedMonth: string; // 'YYYY-MM'
     onChangeMonth: (month: string) => void;
     className?: string;
 }
-
-const MONTH_NAMES = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-];
 
 export function MonthPicker({
     selectedMonth,
@@ -217,7 +213,10 @@ export function MonthPicker({
                         {/* 12-Month Grid (4 rows x 3 cols) */}
                         <div className="grid grid-cols-3 gap-1.5">
                             {MONTH_NAMES.map((monthName, index) => {
-                                const monthNumStr = String(index + 1).padStart(2, "0");
+                                const monthNumStr = String(index + 1).padStart(
+                                    2,
+                                    "0",
+                                );
                                 const monthKey = `${navYear}-${monthNumStr}`;
                                 const isSelected = selectedMonth === monthKey;
                                 const isTodayMonth = currentMonth === monthKey;

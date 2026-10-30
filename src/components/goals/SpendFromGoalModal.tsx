@@ -8,14 +8,35 @@
  */
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { ShoppingBag, Calendar, DollarSign, Tag, User, Layers } from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    ShoppingBag,
+    Calendar,
+    DollarSign,
+    Tag,
+    User,
+    Layers,
+} from "lucide-react";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
+import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
-import { getTodayDateString, getCurrentSingaporeTime } from "../../lib/dateUtils";
+import {
+    getTodayDateString,
+    getCurrentSingaporeTime,
+} from "../../lib/dateUtils";
 import { formatSGD } from "../../lib/currency";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
-import type { SavingsGoal, Category, HouseholdMember, CreateExpenseInput } from "../../types/finance";
+import type {
+    SavingsGoal,
+    Category,
+    HouseholdMember,
+    CreateExpenseInput,
+} from "../../types/finance";
 
 export interface SpendFromGoalModalProps {
     isOpen: boolean;
@@ -40,8 +61,12 @@ export function SpendFromGoalModal({
 
     const [amount, setAmount] = useState<string>("");
     const [item, setItem] = useState<string>("");
-    const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || "");
-    const [payerId, setPayerId] = useState<string>(defaultPayerId || members[0]?.id || "");
+    const [categoryId, setCategoryId] = useState<string>(
+        categories[0]?.id || "",
+    );
+    const [payerId, setPayerId] = useState<string>(
+        defaultPayerId || members[0]?.id || "",
+    );
     const [isShared, setIsShared] = useState<boolean>(true);
     const [date, setDate] = useState<string>(getTodayDateString());
     const [remarks, setRemarks] = useState<string>("");
@@ -76,13 +101,17 @@ export function SpendFromGoalModal({
 
         const numericAmount = parseFloat(amount);
         if (isNaN(numericAmount) || numericAmount <= 0) {
-            setErrorMessage("Please enter a valid expense amount greater than S$0.00");
+            setErrorMessage(
+                "Please enter a valid expense amount greater than S$0.00",
+            );
             amountInputRef.current?.focus();
             return;
         }
 
         if (!item.trim()) {
-            setErrorMessage("Please enter an expense description (e.g. Banquet Deposit, Wedding Bands)");
+            setErrorMessage(
+                "Please enter an expense description (e.g. Banquet Deposit, Wedding Bands)",
+            );
             return;
         }
 
@@ -117,7 +146,11 @@ export function SpendFromGoalModal({
             onSpendSaved?.();
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to record goal spend");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to record goal spend",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -125,7 +158,11 @@ export function SpendFromGoalModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden" data-testid="spend-from-goal-modal">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+                data-testid="spend-from-goal-modal"
+            >
                 <ModalHeader
                     title={`Spend from ${goal.title}`}
                     subtitle={`Fund balance: ${formatSGD(goal.saved_so_far)}`}
@@ -137,24 +174,30 @@ export function SpendFromGoalModal({
                 {/* Notice Banner */}
                 <div className="bg-(--pastel-butter-light) px-4 sm:px-5 py-2.5 border-b border-(--border-subtle) text-xs text-(--text-ink) flex items-center gap-2">
                     <ShoppingBag className="h-4 w-4 shrink-0 text-purple-600 dark:text-purple-400" />
-                    <span>Deducts directly from sinking fund without affecting monthly category budgets.</span>
+                    <span>
+                        Deducts directly from sinking fund without affecting
+                        monthly category budgets.
+                    </span>
                 </div>
 
                 <ModalBody>
                     {errorMessage && (
-                        <div className="p-3 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
-                            {errorMessage}
-                        </div>
+                        <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
                     {/* Amount Input */}
                     <div>
-                        <label htmlFor="spend-amount" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                        <label
+                            htmlFor="spend-amount"
+                            className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                        >
                             <DollarSign className="h-3.5 w-3.5 text-(--text-muted)" />
                             <span>Amount to Spend (SGD) *</span>
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3.5 top-2.5 text-base font-bold text-(--text-muted)">S$</span>
+                            <span className="absolute left-3.5 top-2.5 text-base font-bold text-(--text-muted)">
+                                S$
+                            </span>
                             <input
                                 id="spend-amount"
                                 ref={amountInputRef}
@@ -172,7 +215,10 @@ export function SpendFromGoalModal({
 
                     {/* Item / Description */}
                     <div>
-                        <label htmlFor="spend-item" className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                        <label
+                            htmlFor="spend-item"
+                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                        >
                             Item / Description *
                         </label>
                         <input
@@ -189,7 +235,10 @@ export function SpendFromGoalModal({
                     {/* Category & Payer */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label htmlFor="spend-category" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="spend-category"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <Layers className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Category</span>
                             </label>
@@ -209,7 +258,10 @@ export function SpendFromGoalModal({
                         </div>
 
                         <div>
-                            <label htmlFor="spend-payer" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="spend-payer"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <User className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Payer</span>
                             </label>
@@ -232,7 +284,10 @@ export function SpendFromGoalModal({
                     {/* Date & Shared Toggle */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label htmlFor="spend-date" className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            <label
+                                htmlFor="spend-date"
+                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                            >
                                 <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
                                 <span>Date</span>
                             </label>
@@ -298,7 +353,9 @@ export function SpendFromGoalModal({
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) px-5 py-2.5 text-xs font-black text-(--text-ink) shadow-cute-sm hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 transition-all cursor-pointer"
                     >
-                        {isSubmitting ? "Logging Spend..." : "Log & Deduct from Goal"}
+                        {isSubmitting
+                            ? "Logging Spend..."
+                            : "Log & Deduct from Goal"}
                     </button>
                 </ModalFooter>
             </form>

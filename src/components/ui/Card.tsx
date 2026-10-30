@@ -1,7 +1,8 @@
 import React from "react";
 
-export type CardVariant = "white" | "cream" | "lilac" | "butter" | "blush" | "mint" | "coral";
-export type CardElevation = "tactile" | "flat" | "subtle";
+export type CardVariant =
+    "white" | "cream" | "lilac" | "butter" | "blush" | "mint" | "coral";
+export type CardElevation = "tactile" | "sm" | "flat" | "subtle";
 export type CardPadding = "none" | "sm" | "md" | "lg";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -15,11 +16,11 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const variantBgMap: Record<CardVariant, string> = {
     white: "bg-(--bg-card)",
     cream: "bg-(--bg-cream)",
-    lilac: "bg-[#f5ecff] dark:bg-[#342445]",
-    butter: "bg-[#fffbeb] dark:bg-[#382f18]",
-    blush: "bg-[#fff0fa] dark:bg-[#3d1f39]",
-    mint: "bg-[#f0fdf4] dark:bg-[#1a3825]",
-    coral: "bg-[#fff1ee] dark:bg-[#3b1c19]",
+    lilac: "bg-(--pastel-lilac-light) dark:bg-purple-950/40",
+    butter: "bg-(--pastel-butter-light) dark:bg-amber-950/40",
+    blush: "bg-(--pastel-pink-light) dark:bg-pink-950/40",
+    mint: "bg-(--pastel-mint-light) dark:bg-emerald-950/40",
+    coral: "bg-(--pastel-coral-light) dark:bg-rose-950/40",
 };
 
 const paddingMap: Record<CardPadding, string> = {
@@ -42,9 +43,13 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         },
         ref,
     ) => {
-        let borderAndShadow = "border-2 border-(--border-ink) shadow-(--shadow-cute)";
+        let borderAndShadow =
+            "border-2 border-(--border-ink) shadow-(--shadow-cute)";
 
-        if (elevation === "flat") {
+        if (elevation === "sm") {
+            borderAndShadow =
+                "border-2 border-(--border-ink) shadow-(--shadow-cute-sm)";
+        } else if (elevation === "flat") {
             borderAndShadow = "border-2 border-(--border-ink)";
         } else if (elevation === "subtle") {
             borderAndShadow = "border-2 border-(--border-subtle)";

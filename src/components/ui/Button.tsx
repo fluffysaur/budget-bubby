@@ -2,8 +2,9 @@ import React, { forwardRef } from "react";
 import { Loader2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-export type ButtonVariant = "primary" | "secondary" | "butter" | "outline" | "ghost" | "danger";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant =
+    "primary" | "secondary" | "butter" | "outline" | "ghost" | "danger";
+export type ButtonSize = "sm" | "md" | "lg" | "icon-sm" | "icon-md";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant;
@@ -15,23 +16,22 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
     primary:
-        "bg-[#dfc2ff] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] dark:hover:bg-[#fbf7f1] dark:hover:text-[#1a1a1a]",
+        "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--text-ink) hover:text-(--bg-cream) dark:hover:bg-(--bg-cream) dark:hover:text-(--text-ink)",
     secondary:
-        "bg-(--bg-card) text-(--text-ink) border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#fffdf2] dark:hover:bg-[#2f2b28]",
-    butter:
-        "bg-[#ffe999] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#fde047]",
+        "bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-cream) dark:hover:bg-(--bg-cream)",
+    butter: "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--accent-butter)",
     outline:
-        "bg-transparent border-[1.5px] border-(--border-subtle) text-(--text-ink) hover:bg-(--bg-cream)",
-    ghost:
-        "bg-transparent text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) border-transparent",
-    danger:
-        "bg-[#f76b57] text-[#1a1a1a] border-[1.5px] border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-[#ff5733] hover:text-white",
+        "bg-transparent border-2 border-(--border-subtle) text-(--text-ink) hover:bg-(--bg-cream)",
+    ghost: "bg-transparent text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) border-transparent",
+    danger: "bg-(--accent-coral) text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--pastel-coral)",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
     sm: "px-3 py-1.5 text-xs font-bold rounded-xl gap-1.5",
     md: "px-4 py-2 text-xs sm:text-sm font-bold rounded-xl gap-2",
     lg: "px-5 py-2.5 text-sm sm:text-base font-bold rounded-2xl gap-2.5",
+    "icon-sm": "p-1.5 text-xs font-bold rounded-xl",
+    "icon-md": "p-2 text-sm font-bold rounded-xl",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -71,7 +71,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     leftIcon && <span className="shrink-0">{leftIcon}</span>
                 )}
                 {children && <span>{children}</span>}
-                {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
+                {!isLoading && rightIcon && (
+                    <span className="shrink-0">{rightIcon}</span>
+                )}
             </button>
         );
     },

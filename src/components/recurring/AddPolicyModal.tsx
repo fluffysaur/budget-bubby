@@ -11,11 +11,22 @@
 
 import { useState, useEffect, type FormEvent } from "react";
 import { Shield } from "lucide-react";
-import type { RecurringPolicy, RecurringPolicyType, RecurringFrequency, CreatePolicyInput } from "../../types/finance";
+import type {
+    RecurringPolicy,
+    RecurringPolicyType,
+    RecurringFrequency,
+    CreatePolicyInput,
+} from "../../types/finance";
 import { useHousehold } from "../../context/HouseholdContext";
 import { mockMembers } from "../../data/mockSeedData";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
+import { Alert } from "../ui/Alert";
 
 function useSafeHousehold() {
     try {
@@ -39,7 +50,9 @@ function useSafeHousehold() {
 export interface AddPolicyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (policyData: CreatePolicyInput & { id?: string }) => void | Promise<void>;
+    onSave: (
+        policyData: CreatePolicyInput & { id?: string },
+    ) => void | Promise<void>;
     initialPolicy?: RecurringPolicy | null;
 }
 
@@ -67,9 +80,12 @@ export function AddPolicyModal({
     const { members, activeMember } = useSafeHousehold();
 
     // Find member IDs
-    const yiJiaMember = members.find((m) => m.display_name.toLowerCase().includes("yi jia"));
+    const yiJiaMember = members.find((m) =>
+        m.display_name.toLowerCase().includes("yi jia"),
+    );
 
-    const defaultOwnerId = activeMember?.id || yiJiaMember?.id || "mem-00000000-0011";
+    const defaultOwnerId =
+        activeMember?.id || yiJiaMember?.id || "mem-00000000-0011";
 
     // Form states
     const [name, setName] = useState<string>("");
@@ -93,7 +109,11 @@ export function AddPolicyModal({
                 setAmount(String(initialPolicy.amount));
                 setFrequency(initialPolicy.frequency);
                 setPaymentMonth(initialPolicy.payment_month || 1);
-                setStartDate(initialPolicy.start_date ? initialPolicy.start_date.substring(0, 10) : "");
+                setStartDate(
+                    initialPolicy.start_date
+                        ? initialPolicy.start_date.substring(0, 10)
+                        : "",
+                );
                 setNotes(initialPolicy.notes || "");
             } else {
                 setName("");
@@ -136,7 +156,8 @@ export function AddPolicyModal({
                 owner_id: ownerId,
                 amount: Math.round(numericAmount * 100) / 100,
                 frequency,
-                payment_month: frequency === "annually" ? Number(paymentMonth) : null,
+                payment_month:
+                    frequency === "annually" ? Number(paymentMonth) : null,
                 start_date: startDate || null,
                 notes: notes.trim() || null,
             };
@@ -148,7 +169,9 @@ export function AddPolicyModal({
             await onSave(payload);
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save policy");
+            setErrorMessage(
+                err instanceof Error ? err.message : "Failed to save policy",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -158,10 +181,17 @@ export function AddPolicyModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     id="modal-headline"
-                    title={isEditing ? "Edit Recurring Policy" : "Add Recurring Policy"}
+                    title={
+                        isEditing
+                            ? "Edit Recurring Policy"
+                            : "Add Recurring Policy"
+                    }
                     subtitle={
                         isEditing
                             ? "Update renewal dates or premium amounts"
@@ -175,9 +205,7 @@ export function AddPolicyModal({
                 <ModalBody>
                     {/* Error notification */}
                     {errorMessage && (
-                        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
-                            {errorMessage}
-                        </div>
+                        <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
                     {/* Policy Name */}
@@ -205,13 +233,25 @@ export function AddPolicyModal({
                                 id="policy-type"
                                 label="Type"
                                 value={type}
-                                onChange={(e) => setType(e.target.value as RecurringPolicyType)}
+                                onChange={(e) =>
+                                    setType(
+                                        e.target.value as RecurringPolicyType,
+                                    )
+                                }
                                 className="bg-(--bg-canvas)"
                             >
-                                <option value="insurance">🛡️ Life / Health Insurance</option>
-                                <option value="tax">🏛️ Income / Property Tax</option>
-                                <option value="subscription">📱 Subscription (Netflix, Spotify)</option>
-                                <option value="other">📦 Other Recurring</option>
+                                <option value="insurance">
+                                    🛡️ Life / Health Insurance
+                                </option>
+                                <option value="tax">
+                                    🏛️ Income / Property Tax
+                                </option>
+                                <option value="subscription">
+                                    📱 Subscription (Netflix, Spotify)
+                                </option>
+                                <option value="other">
+                                    📦 Other Recurring
+                                </option>
                             </Select>
                         </div>
 
@@ -224,10 +264,7 @@ export function AddPolicyModal({
                                 className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
-                                    <option
-                                        key={m.id}
-                                        value={m.id}
-                                    >
+                                    <option key={m.id} value={m.id}>
                                         👤 {m.display_name}
                                     </option>
                                 ))}
@@ -266,11 +303,19 @@ export function AddPolicyModal({
                                 id="policy-frequency"
                                 label="Frequency"
                                 value={frequency}
-                                onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
+                                onChange={(e) =>
+                                    setFrequency(
+                                        e.target.value as RecurringFrequency,
+                                    )
+                                }
                                 className="bg-(--bg-canvas)"
                             >
-                                <option value="annually">Once a year (Annual)</option>
-                                <option value="monthly">Every month (Monthly)</option>
+                                <option value="annually">
+                                    Once a year (Annual)
+                                </option>
+                                <option value="monthly">
+                                    Every month (Monthly)
+                                </option>
                             </Select>
                         </div>
                     </div>
@@ -282,14 +327,13 @@ export function AddPolicyModal({
                                 id="policy-month"
                                 label="Renewal Month"
                                 value={paymentMonth}
-                                onChange={(e) => setPaymentMonth(Number(e.target.value))}
+                                onChange={(e) =>
+                                    setPaymentMonth(Number(e.target.value))
+                                }
                                 className="bg-(--bg-canvas)"
                             >
                                 {MONTH_OPTIONS.map((m) => (
-                                    <option
-                                        key={m.value}
-                                        value={m.value}
-                                    >
+                                    <option key={m.value} value={m.value}>
                                         📅 {m.label}
                                     </option>
                                 ))}

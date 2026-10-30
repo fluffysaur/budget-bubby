@@ -17,15 +17,32 @@ import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Plus, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
-import { getTodayDateString, getSingaporeDate, formatISODate, getCurrentSingaporeTime } from "../../lib/dateUtils";
+import {
+    getTodayDateString,
+    getSingaporeDate,
+    formatISODate,
+    getCurrentSingaporeTime,
+} from "../../lib/dateUtils";
 import { isSpendableCategory } from "../../lib/financialFormulas";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import {
     SUPPORTED_CURRENCIES,
     convertToSGD,
 } from "../../lib/currencyConverter";
-import type { Category, HouseholdMember, Expense, CreateExpenseInput, SavingsGoal } from "../../types/finance";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import type {
+    Category,
+    HouseholdMember,
+    Expense,
+    CreateExpenseInput,
+    SavingsGoal,
+} from "../../types/finance";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
+import { Alert } from "../ui/Alert";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 
 export interface QuickAddExpenseModalProps {
@@ -45,32 +62,88 @@ const GLOBAL_RECENT_TAGS_STORAGE_KEY = "budget_bubby_recent_tags_global_v2";
 const KEYWORD_CATEGORY_MAP: { keywords: string[]; categoryKey: string }[] = [
     {
         keywords: [
-            "grab", "gojek", "mrt", "bus", "taxi", "comfortdelgro", "parking",
-            "petrol", "ez-link", "ezlink", "simplygo", "transit", "fuel", "tada",
+            "grab",
+            "gojek",
+            "mrt",
+            "bus",
+            "taxi",
+            "comfortdelgro",
+            "parking",
+            "petrol",
+            "ez-link",
+            "ezlink",
+            "simplygo",
+            "transit",
+            "fuel",
+            "tada",
         ],
         categoryKey: "transport",
     },
     {
         keywords: [
-            "lunch", "dinner", "breakfast", "coffee", "cafe", "hawker", "food",
-            "groceries", "fairprice", "cold storage", "sheng siong", "shengsiong",
-            "breadtalk", "toast box", "yakun", "starbucks", "kfc", "mcdonalds",
-            "macdonalds", "bubble tea", "koi", "liho", "snack", "restaurant", "subway",
+            "lunch",
+            "dinner",
+            "breakfast",
+            "coffee",
+            "cafe",
+            "hawker",
+            "food",
+            "groceries",
+            "fairprice",
+            "cold storage",
+            "sheng siong",
+            "shengsiong",
+            "breadtalk",
+            "toast box",
+            "yakun",
+            "starbucks",
+            "kfc",
+            "mcdonalds",
+            "macdonalds",
+            "bubble tea",
+            "koi",
+            "liho",
+            "snack",
+            "restaurant",
+            "subway",
         ],
         categoryKey: "food",
     },
     {
         keywords: [
-            "shopping", "movie", "cinema", "gym", "netflix", "spotify",
-            "date night", "personal care", "gifts", "uniqlo", "zara", "shopee",
-            "lazada", "entertainment", "games", "haircut",
+            "shopping",
+            "movie",
+            "cinema",
+            "gym",
+            "netflix",
+            "spotify",
+            "date night",
+            "personal care",
+            "gifts",
+            "uniqlo",
+            "zara",
+            "shopee",
+            "lazada",
+            "entertainment",
+            "games",
+            "haircut",
         ],
         categoryKey: "lifestyle",
     },
     {
         keywords: [
-            "clinic", "pharmacy", "doctor", "hospital", "panadol", "watsons",
-            "guardian", "utilities", "repair", "sp services", "maintenance", "dentist",
+            "clinic",
+            "pharmacy",
+            "doctor",
+            "hospital",
+            "panadol",
+            "watsons",
+            "guardian",
+            "utilities",
+            "repair",
+            "sp services",
+            "maintenance",
+            "dentist",
         ],
         categoryKey: "buffer",
     },
@@ -91,7 +164,12 @@ function getStoredRecentTags(): string[] {
 }
 
 function storeRecentTags(newTags: string[]) {
-    if (typeof window === "undefined" || !window.localStorage || !newTags.length) return;
+    if (
+        typeof window === "undefined" ||
+        !window.localStorage ||
+        !newTags.length
+    )
+        return;
     try {
         const existing = getStoredRecentTags();
         const combined = [
@@ -129,8 +207,8 @@ export function QuickAddExpenseModal({
         propMembers && propMembers.length > 0
             ? propMembers
             : ctxMembers && ctxMembers.length > 0
-            ? ctxMembers
-            : mockMembers;
+              ? ctxMembers
+              : mockMembers;
 
     const categories =
         propCategories && propCategories.length > 0
@@ -148,20 +226,26 @@ export function QuickAddExpenseModal({
 
     // Default to Personal when in Personal perspective, or Shared when in Combined view (unless overridden)
     const resolvedDefaultShared =
-        defaultShared !== undefined ? defaultShared : perspective === "household";
+        defaultShared !== undefined
+            ? defaultShared
+            : perspective === "household";
 
     // Amount & Currency State
     const [amount, setAmount] = useState<number>(0);
     const [currencyCode, setCurrencyCode] = useState<string>("SGD");
-    const [customExchangeRate, setCustomExchangeRate] = useState<number | undefined>(undefined);
+    const [customExchangeRate, setCustomExchangeRate] = useState<
+        number | undefined
+    >(undefined);
 
     // Item & Category State
     const [item, setItem] = useState<string>("");
     const [categoryId, setCategoryId] = useState<string>(
         spendableCategories[0]?.id || categories[0]?.id || "",
     );
-    const [categoryManuallySelected, setCategoryManuallySelected] = useState<boolean>(false);
-    const [showMoreCategories, setShowMoreCategories] = useState<boolean>(false);
+    const [categoryManuallySelected, setCategoryManuallySelected] =
+        useState<boolean>(false);
+    const [showMoreCategories, setShowMoreCategories] =
+        useState<boolean>(false);
 
     // Payer & Shared State
     const [payerId, setPayerId] = useState<string>(() => {
@@ -179,10 +263,14 @@ export function QuickAddExpenseModal({
     // Tags State
     const [tags, setTags] = useState<string[]>([]);
     const [newTagInput, setNewTagInput] = useState<string>("");
-    const [recentTagsList, setRecentTagsList] = useState<string[]>(() => getStoredRecentTags());
+    const [recentTagsList, setRecentTagsList] = useState<string[]>(() =>
+        getStoredRecentTags(),
+    );
 
     // Goals State
-    const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(propGoals || []);
+    const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(
+        propGoals || [],
+    );
     const [selectedGoalId, setSelectedGoalId] = useState<string>("");
     const [isGoalSpend, setIsGoalSpend] = useState<boolean>(false);
     const [showMoreGoals, setShowMoreGoals] = useState<boolean>(false);
@@ -221,11 +309,20 @@ export function QuickAddExpenseModal({
             setCurrencyCode("SGD");
             setCustomExchangeRate(undefined);
             setItem("");
-            setCategoryId(spendableCategories[0]?.id || categories[0]?.id || "");
+            setCategoryId(
+                spendableCategories[0]?.id || categories[0]?.id || "",
+            );
             setCategoryManuallySelected(false);
             setShowMoreCategories(false);
-            setPayerId(defaultPayerId || (activeMember ? activeMember.id : members[0]?.id || ""));
-            setIsShared(defaultShared !== undefined ? defaultShared : perspective === "household");
+            setPayerId(
+                defaultPayerId ||
+                    (activeMember ? activeMember.id : members[0]?.id || ""),
+            );
+            setIsShared(
+                defaultShared !== undefined
+                    ? defaultShared
+                    : perspective === "household",
+            );
             setDate(getTodayDateString());
             setTime(getCurrentSingaporeTime());
             setRemarks("");
@@ -252,7 +349,9 @@ export function QuickAddExpenseModal({
 
     // Calculate currency conversion
     const selectedCurrency = useMemo(
-        () => SUPPORTED_CURRENCIES.find((c) => c.code === currencyCode) || SUPPORTED_CURRENCIES[0],
+        () =>
+            SUPPORTED_CURRENCIES.find((c) => c.code === currencyCode) ||
+            SUPPORTED_CURRENCIES[0],
         [currencyCode],
     );
 
@@ -266,8 +365,8 @@ export function QuickAddExpenseModal({
     const visibleCategories = showMoreCategories
         ? categories
         : spendableCategories.length > 0
-        ? spendableCategories
-        : categories;
+          ? spendableCategories
+          : categories;
 
     // Auto-detect category from description text if user hasn't explicitly chosen one
     const handleItemTextChange = (text: string) => {
@@ -310,7 +409,9 @@ export function QuickAddExpenseModal({
             .filter(
                 (rTag) =>
                     !tags.some(
-                        (t) => t.replace(/^#/, "").toLowerCase() === rTag.toLowerCase(),
+                        (t) =>
+                            t.replace(/^#/, "").toLowerCase() ===
+                            rTag.toLowerCase(),
                     ),
             )
             .slice(0, 3);
@@ -318,8 +419,7 @@ export function QuickAddExpenseModal({
 
     // Count active items in the "More options" accordion
     const moreOptionsActiveCount =
-        (remarks.trim() ? 1 : 0) +
-        (tags.length > 0 ? 1 : 0);
+        (remarks.trim() ? 1 : 0) + (tags.length > 0 ? 1 : 0);
 
     // Auto-expand accordion if any nested fields have active values
     const isAccordionExpanded = showMoreOptions || moreOptionsActiveCount > 0;
@@ -342,7 +442,9 @@ export function QuickAddExpenseModal({
         setErrorMessage(null);
 
         if (isNaN(amount) || amount <= 0) {
-            setErrorMessage("Please enter a valid expense amount greater than 0");
+            setErrorMessage(
+                "Please enter a valid expense amount greater than 0",
+            );
             return;
         }
 
@@ -352,19 +454,23 @@ export function QuickAddExpenseModal({
         }
 
         if (isGoalSpend && !selectedGoalId) {
-            setErrorMessage("Please select which savings goal funds this expense");
+            setErrorMessage(
+                "Please select which savings goal funds this expense",
+            );
             return;
         }
 
         try {
             setIsSubmitting(true);
 
-            const finalAmountInSGD = currencyCode === "SGD" ? amount : fxConversion.amountInSGD;
-            const finalExchangeRate = currencyCode === "SGD" ? 1 : fxConversion.exchangeRate;
+            const finalAmountInSGD =
+                currencyCode === "SGD" ? amount : fxConversion.amountInSGD;
+            const finalExchangeRate =
+                currencyCode === "SGD" ? 1 : fxConversion.exchangeRate;
 
             const input: CreateExpenseInput = {
                 payer_id: payerId,
-                category_id: isGoalSpend ? null : (categoryId || null),
+                category_id: isGoalSpend ? null : categoryId || null,
                 date: date || todayStr,
                 time: time || getCurrentSingaporeTime(),
                 item: item.trim(),
@@ -373,7 +479,7 @@ export function QuickAddExpenseModal({
                 is_shared: isShared,
                 split_ratio: isShared ? 0.5 : 0.0,
                 tags: tags.length > 0 ? tags : undefined,
-                goal_id: isGoalSpend ? (selectedGoalId || null) : null,
+                goal_id: isGoalSpend ? selectedGoalId || null : null,
                 original_amount: currencyCode !== "SGD" ? amount : null,
                 original_currency: currencyCode,
                 exchange_rate: currencyCode !== "SGD" ? finalExchangeRate : 1,
@@ -396,7 +502,9 @@ export function QuickAddExpenseModal({
             onExpenseAdded?.(created);
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save expense");
+            setErrorMessage(
+                err instanceof Error ? err.message : "Failed to save expense",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -404,7 +512,10 @@ export function QuickAddExpenseModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     title="Quick Add Expense"
                     icon={<Plus className="h-4.5 w-4.5 stroke-[2.5]" />}
@@ -415,9 +526,7 @@ export function QuickAddExpenseModal({
                 <ModalBody>
                     {/* Error Alert */}
                     {errorMessage && (
-                        <div className="rounded-xl bg-rose-50 p-2.5 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                            {errorMessage}
-                        </div>
+                        <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
                     {/* Amount Input Header with Inline Currency Selector */}
@@ -470,23 +579,37 @@ export function QuickAddExpenseModal({
                                 <div className="flex items-center gap-1.5 font-bold">
                                     <span>Converted:</span>
                                     <span className="text-sm font-black text-(--text-ink)">
-                                        ≈ S${fxConversion.amountInSGD.toFixed(2)}
+                                        ≈ S$
+                                        {fxConversion.amountInSGD.toFixed(2)}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-(--text-muted)">1 SGD =</span>
+                                    <span className="text-[10px] text-(--text-muted)">
+                                        1 SGD =
+                                    </span>
                                     <input
                                         type="number"
                                         step="any"
                                         aria-label="Exchange rate"
-                                        value={customExchangeRate ?? fxConversion.exchangeRate}
+                                        value={
+                                            customExchangeRate ??
+                                            fxConversion.exchangeRate
+                                        }
                                         onChange={(e) => {
-                                            const val = parseFloat(e.target.value);
-                                            setCustomExchangeRate(isNaN(val) || val <= 0 ? undefined : val);
+                                            const val = parseFloat(
+                                                e.target.value,
+                                            );
+                                            setCustomExchangeRate(
+                                                isNaN(val) || val <= 0
+                                                    ? undefined
+                                                    : val,
+                                            );
                                         }}
                                         className="w-20 rounded-lg border border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-xs font-semibold text-center text-(--text-ink)"
                                     />
-                                    <span className="text-[10px] font-semibold">{currencyCode}</span>
+                                    <span className="text-[10px] font-semibold">
+                                        {currencyCode}
+                                    </span>
                                 </div>
                             </div>
                         )}
@@ -498,7 +621,11 @@ export function QuickAddExpenseModal({
                             onClick={() => {
                                 const next = !isGoalSpend;
                                 setIsGoalSpend(next);
-                                if (next && !selectedGoalId && activeGoals.length > 0) {
+                                if (
+                                    next &&
+                                    !selectedGoalId &&
+                                    activeGoals.length > 0
+                                ) {
                                     setSelectedGoalId(activeGoals[0].id);
                                 }
                                 if (!next) {
@@ -552,7 +679,11 @@ export function QuickAddExpenseModal({
                                     e.stopPropagation();
                                     const next = !isGoalSpend;
                                     setIsGoalSpend(next);
-                                    if (next && !selectedGoalId && activeGoals.length > 0) {
+                                    if (
+                                        next &&
+                                        !selectedGoalId &&
+                                        activeGoals.length > 0
+                                    ) {
                                         setSelectedGoalId(activeGoals[0].id);
                                     }
                                     if (!next) {
@@ -560,13 +691,17 @@ export function QuickAddExpenseModal({
                                     }
                                 }}
                                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    isGoalSpend ? "bg-(--pastel-lilac)" : "bg-slate-200 dark:bg-slate-700"
+                                    isGoalSpend
+                                        ? "bg-(--pastel-lilac)"
+                                        : "bg-slate-200 dark:bg-slate-700"
                                 }`}
                             >
                                 <span
                                     aria-hidden="true"
                                     className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-cute-sm border border-(--border-ink) transition duration-200 ease-in-out ${
-                                        isGoalSpend ? "translate-x-5" : "translate-x-0.5"
+                                        isGoalSpend
+                                            ? "translate-x-5"
+                                            : "translate-x-0.5"
                                     }`}
                                 />
                             </button>
@@ -580,54 +715,75 @@ export function QuickAddExpenseModal({
                                 {isGoalSpend ? "Goal" : "Category"}
                             </span>
                             <div>
-                                {isGoalSpend ? (
-                                    activeGoals.length > 4 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowMoreGoals((prev) => !prev)}
-                                            className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
-                                        >
-                                            {showMoreGoals
-                                                ? "Show less"
-                                                : `+ More (${activeGoals.length - 4})`}
-                                        </button>
-                                    )
-                                ) : (
-                                    allocationCategories.length > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowMoreCategories((prev) => !prev)}
-                                            className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
-                                        >
-                                            {showMoreCategories
-                                                ? "Spendable only"
-                                                : `+ More (${allocationCategories.length})`}
-                                        </button>
-                                    )
-                                )}
+                                {isGoalSpend
+                                    ? activeGoals.length > 4 && (
+                                          <button
+                                              type="button"
+                                              onClick={() =>
+                                                  setShowMoreGoals(
+                                                      (prev) => !prev,
+                                                  )
+                                              }
+                                              className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
+                                          >
+                                              {showMoreGoals
+                                                  ? "Show less"
+                                                  : `+ More (${activeGoals.length - 4})`}
+                                          </button>
+                                      )
+                                    : allocationCategories.length > 0 && (
+                                          <button
+                                              type="button"
+                                              onClick={() =>
+                                                  setShowMoreCategories(
+                                                      (prev) => !prev,
+                                                  )
+                                              }
+                                              className="text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) underline cursor-pointer"
+                                          >
+                                              {showMoreCategories
+                                                  ? "Spendable only"
+                                                  : `+ More (${allocationCategories.length})`}
+                                          </button>
+                                      )}
                             </div>
                         </div>
 
                         {isGoalSpend ? (
-                            <div className="flex flex-wrap gap-1.5" aria-label="Goal Selection">
+                            <div
+                                className="flex flex-wrap gap-1.5"
+                                aria-label="Goal Selection"
+                            >
                                 {activeGoals.length === 0 ? (
-                                    <p className="text-xs text-(--text-muted) py-1">No active savings goals found.</p>
+                                    <p className="text-xs text-(--text-muted) py-1">
+                                        No active savings goals found.
+                                    </p>
                                 ) : (
-                                    (showMoreGoals ? activeGoals : activeGoals.slice(0, 4)).map((g) => {
-                                        const isSelected = selectedGoalId === g.id;
+                                    (showMoreGoals
+                                        ? activeGoals
+                                        : activeGoals.slice(0, 4)
+                                    ).map((g) => {
+                                        const isSelected =
+                                            selectedGoalId === g.id;
                                         return (
                                             <button
                                                 key={g.id}
                                                 type="button"
                                                 aria-pressed={isSelected}
-                                                onClick={() => setSelectedGoalId(g.id)}
+                                                onClick={() =>
+                                                    setSelectedGoalId(g.id)
+                                                }
                                                 className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                                                     isSelected
                                                         ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
                                                         : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
                                                 }`}
                                             >
-                                                <span role="img" aria-label={g.title} className="text-xs shrink-0">
+                                                <span
+                                                    role="img"
+                                                    aria-label={g.title}
+                                                    className="text-xs shrink-0"
+                                                >
                                                     {g.emoji || "🎯"}
                                                 </span>
                                                 <span>{g.title}</span>
@@ -637,7 +793,10 @@ export function QuickAddExpenseModal({
                                 )}
                             </div>
                         ) : (
-                            <div className="flex flex-wrap gap-1.5" aria-label="Category Selection">
+                            <div
+                                className="flex flex-wrap gap-1.5"
+                                aria-label="Category Selection"
+                            >
                                 {visibleCategories.map((cat) => {
                                     const isSelected = categoryId === cat.id;
                                     return (
@@ -647,7 +806,9 @@ export function QuickAddExpenseModal({
                                             aria-pressed={isSelected}
                                             onClick={() => {
                                                 setCategoryId(cat.id);
-                                                setCategoryManuallySelected(true);
+                                                setCategoryManuallySelected(
+                                                    true,
+                                                );
                                             }}
                                             className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                                                 isSelected
@@ -657,7 +818,10 @@ export function QuickAddExpenseModal({
                                         >
                                             <span
                                                 className="h-2 w-2 rounded-full border border-black/20"
-                                                style={{ backgroundColor: cat.color || "#dfc2ff" }}
+                                                style={{
+                                                    backgroundColor:
+                                                        cat.color || "#dfc2ff",
+                                                }}
                                             />
                                             <span>{cat.name}</span>
                                         </button>
@@ -680,7 +844,9 @@ export function QuickAddExpenseModal({
                             type="text"
                             placeholder="e.g., FairPrice Groceries, Grab, Lunch"
                             value={item}
-                            onChange={(e) => handleItemTextChange(e.target.value)}
+                            onChange={(e) =>
+                                handleItemTextChange(e.target.value)
+                            }
                             required
                             className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
@@ -693,7 +859,10 @@ export function QuickAddExpenseModal({
                             <span className="text-[11px] font-bold text-(--text-muted)">
                                 Payer:
                             </span>
-                            <div className="flex gap-1.5" aria-label="Payer Selection">
+                            <div
+                                className="flex gap-1.5"
+                                aria-label="Payer Selection"
+                            >
                                 {members.map((member) => {
                                     const isSelected = payerId === member.id;
                                     return (
@@ -701,14 +870,18 @@ export function QuickAddExpenseModal({
                                             key={member.id}
                                             type="button"
                                             aria-pressed={isSelected}
-                                            onClick={() => setPayerId(member.id)}
+                                            onClick={() =>
+                                                setPayerId(member.id)
+                                            }
                                             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                                 isSelected
                                                     ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                     : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                             }`}
                                         >
-                                            <span>{member.avatar_url || "👤"}</span>
+                                            <span>
+                                                {member.avatar_url || "👤"}
+                                            </span>
                                             <span>{member.display_name}</span>
                                         </button>
                                     );
@@ -835,7 +1008,9 @@ export function QuickAddExpenseModal({
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setTime(getCurrentSingaporeTime())}
+                                    onClick={() =>
+                                        setTime(getCurrentSingaporeTime())
+                                    }
                                     className="rounded-lg px-2 py-1 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border border-(--border-subtle) transition-all cursor-pointer"
                                     title="Reset to current time"
                                 >
@@ -868,7 +1043,13 @@ export function QuickAddExpenseModal({
                             )}
                         </button>
 
-                        <div className={isAccordionExpanded ? "space-y-4 pt-2" : "hidden"}>
+                        <div
+                            className={
+                                isAccordionExpanded
+                                    ? "space-y-4 pt-2"
+                                    : "hidden"
+                            }
+                        >
                             {/* Dedicated Inline Remarks / Notes */}
                             <div>
                                 <label
@@ -906,7 +1087,9 @@ export function QuickAddExpenseModal({
                                                 <span>{tag}</span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleRemoveTag(tag)}
+                                                    onClick={() =>
+                                                        handleRemoveTag(tag)
+                                                    }
                                                     aria-label={`Remove tag ${tag}`}
                                                     className="text-(--text-muted) hover:text-rose-600 cursor-pointer ml-0.5"
                                                 >
@@ -925,7 +1108,9 @@ export function QuickAddExpenseModal({
                                             type="text"
                                             placeholder="e.g. VietnamTrip, Reimbursable"
                                             value={newTagInput}
-                                            onChange={(e) => setNewTagInput(e.target.value)}
+                                            onChange={(e) =>
+                                                setNewTagInput(e.target.value)
+                                            }
                                             onKeyDown={(e) => {
                                                 if (e.key === "Enter") {
                                                     e.preventDefault();
@@ -937,7 +1122,9 @@ export function QuickAddExpenseModal({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => handleAddTag(newTagInput)}
+                                        onClick={() =>
+                                            handleAddTag(newTagInput)
+                                        }
                                         className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) px-3 py-1.5 text-xs font-bold cursor-pointer transition-all"
                                     >
                                         + Tag
@@ -955,10 +1142,14 @@ export function QuickAddExpenseModal({
                                                 key={rTag}
                                                 type="button"
                                                 aria-label={`Add tag ${rTag.replace(/^#/, "")}`}
-                                                onClick={() => handleAddTag(rTag)}
+                                                onClick={() =>
+                                                    handleAddTag(rTag)
+                                                }
                                                 className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) px-2 py-0.5 text-[11px] font-bold transition-all cursor-pointer shadow-cute-sm"
                                             >
-                                                <span>+ #{rTag.replace(/^#/, "")}</span>
+                                                <span>
+                                                    + #{rTag.replace(/^#/, "")}
+                                                </span>
                                             </button>
                                         ))}
                                     </div>

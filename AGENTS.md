@@ -9,6 +9,8 @@ Always use canonical Tailwind v4 utilities rather than arbitrary values where st
     - `bg-(--bg-card)` (NOT `bg-[var(--bg-card)]`)
     - `border-(--border-ink)` (NOT `border-[var(--border-ink)]`)
     - `shadow-(--shadow-cute-sm)` (NOT `shadow-[var(--shadow-cute-sm)]`)
+    - Use theme pastel tokens: `bg-(--pastel-lilac-light)`, `bg-(--pastel-butter-light)`, `bg-(--pastel-mint-light)`, `bg-(--pastel-coral-light)`, `bg-(--pastel-pink-light)`.
+    - Never use hardcoded arbitrary hex color values (e.g. `bg-[#dfc2ff]` or `bg-[#ffe999]`) when theme CSS variables exist.
 - **Borders**: Use standard border width tokens:
     - `border-2` (NOT `border-[2px]` or `border-[1.5px]`)
     - `border-t-2` (NOT `border-t-[2px]`)
@@ -46,7 +48,8 @@ Always use canonical Tailwind v4 utilities rather than arbitrary values where st
 
 ## 4. React & Fast Refresh Hygiene
 
-- In component files (`.tsx`), avoid exporting non-component helper functions unless annotated with `// eslint-disable-next-line react-refresh/only-export-components`, or extract them to dedicated files in `src/lib/` or `src/services/`.
+- **Component File Isolation**: In component files (`.tsx`), avoid exporting non-component helper functions unless annotated with `// eslint-disable-next-line react-refresh/only-export-components`, or extract them to dedicated files in `src/lib/` or `src/services/`.
+- **Zero ESLint Warnings Invariant**: Every code modification must keep `npm run lint` at 0 errors and 0 warnings.
 - **Strict Rules of Hooks Invariant (`react-hooks/rules-of-hooks`)**:
     - **Never** declare hooks (`useState`, `useMemo`, `useEffect`, `useCallback`, `useRef`, or custom query hooks) below or after any conditional early return statement (e.g. `if (loading) return ...`, `if (!data) return ...`, `if (error) return ...`).
     - All hooks must be grouped unconditionally at the very top of the component body before any branching or early returns to prevent fatal runtime blank-page crashes (`Rendered fewer/more hooks than during previous render`).
@@ -64,19 +67,31 @@ Budget Bubby uses a tactile, friendly "Warm Oat" aesthetic with neo-brutalist / 
 - **Theme Tokens**: Always prefer project tokens:
     - Backgrounds: `bg-(--bg-canvas)`, `bg-(--bg-cream)`, `bg-(--bg-card)`.
     - Text: `text-(--text-ink)`, `text-(--text-muted)`, `text-(--text-faint)`.
-    - Pastel Accents: `bg-(--accent-lilac-subtle)`, `bg-(--accent-butter-subtle)`, `bg-emerald-50`, `bg-rose-50`, etc.
+    - Pastel Accents: `bg-(--pastel-lilac-light)`, `bg-(--pastel-butter-light)`, `bg-(--pastel-mint-light)`, `bg-(--pastel-coral-light)`, `bg-(--pastel-pink-light)`.
 
 ### B. Mandatory Reusable Primitives (Zero Reinventing the Wheel)
-Never roll custom raw containers or ad-hoc wrappers when standard primitives exist in `src/components/ui/`:
-- **Cards & Stats**: Use `<Card variant="..." />` and `<StatCard />`. Use the `footer`, `subtitle`, and `badge` props of `StatCard` for pacing/limits rather than building custom cards from scratch.
-- **Buttons**: Always `<Button variant="primary" | "secondary" | "danger" | "ghost" />` with `leftIcon` or `rightIcon`.
+Never roll custom raw containers, ad-hoc dialogs, or handwritten alert boxes when standard primitives exist in `src/components/ui/`:
+- **Alert Banners**: Always use `<Alert variant="danger" | "warning" | "info" | "success" title={...}>{children}</Alert>` for form error messages, validation warnings, and feedback banners. Never write inline ad-hoc alert containers (e.g. `p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700`).
+- **Confirmation Dialogs**: Always use `<ConfirmModal isOpen={...} onClose={...} onConfirm={...} title="..." variant="danger" | "warning" | "primary" />` for deletion confirmations and destructive state transitions.
+- **Category Badges**: Always use `<CategoryBadge name={...} color={...} icon={...} size="sm" | "md" />` for displaying category dots, icons, and labels.
+- **Cards & Stats**: Use `<Card variant="..." elevation="tactile" | "sm" | "flat" | "subtle" />` and `<StatCard />`. Use `elevation="sm"` for clean bordered cards with `shadow-(--shadow-cute-sm)`. Use the `footer`, `subtitle`, and `badge` props of `StatCard` for pacing/limits rather than building custom cards from scratch.
+- **Buttons**: Always `<Button variant="primary" | "secondary" | "danger" | "butter" | "ghost" | "outline" size="sm" | "md" | "lg" | "icon-sm" | "icon-md" />` with `leftIcon` or `rightIcon`.
 - **Dialogs & Modals**: Always `<AnimatedModal />` with `<ModalHeader />`, `<ModalBody />`, and `<ModalFooter />`.
 - **Badges & Indicators**: Always `<Badge variant="..." />`.
+- **Inputs & Selects**: Always `<Input />` and `<Select />`.
 - **Currency & Numbers**: Use `<CurrencyText amount={...} />` or `formatSGD(...)`.
 - **Tooltips & Popovers**: Always `<TooltipPopover />` for definitions or contextual calculations.
 - **Overflow Protection**: Always wrap dynamic labels with `<TruncatedText text={...} />`.
 
-### C. Usability & User Experience Defaults
+### C. Shared Utilities, Constants & Logic (Zero Redundancy)
+Never re-declare shared constants or calculations locally across feature modules:
+- **Month Names**: Always import `MONTH_NAMES_SHORT` or `MONTH_NAMES_FULL` (or the canonical `MONTH_NAMES` alias) from `src/lib/dateUtils`. Never re-declare `const MONTH_NAMES = ['Jan', 'Feb', ...]`.
+- **Category Presets & Icons**: Always import `PRESET_COLORS`, `PRESET_ICONS`, and `getCategoryIconComponent` from `src/lib/categoryPresets`. Never recreate color lists or icon mapping tables in modals.
+- **Allocation Auto-Balancing**: Always use `autoBalanceAllocations` from `src/lib/financialFormulas` to adjust unlocked category percentages proportionally to sum to 100%.
+- **Text & Receipt Parsing**: Always use `parseBulkExpenseText` from `src/lib/expenseParser`.
+- **DOM & Dirty Checking**: Always use `checkContainerDirty` and `findScrollableAncestor` from `src/lib/domUtils`.
+
+### D. Usability & User Experience Defaults
 - **Touch & Accessibility**: Minimum touch target height `min-h-11` (or `h-10` compact) with tactile press transforms (`active:translate-x-0.5 active:translate-y-0.5`).
 - **Clear Information Hierarchy**: Bold, primary figures in `text-2xl font-black font-display tracking-tight text-(--text-ink)` paired with uppercase tracked secondary labels in `text-xs font-bold uppercase tracking-wider text-(--text-muted)`.
 - **Sensory & Visual Feedback**: For positive financial milestones (e.g., month-end surplus sweep, reaching a savings goal), trigger celebratory feedback (confetti and soft chime sound effects via `playSuccessSound()`).
@@ -85,4 +100,3 @@ Never roll custom raw containers or ad-hoc wrappers when standard primitives exi
     - **Meaningful Actions Over Generic 'X'**: For financial milestone or rollover banners, avoid passive dismiss ('X') buttons. Provide dual explicit actions (e.g., primary `Sweep to Goals` and secondary `Bank as Surplus`).
     - **Reserve Confirmation**: Actions that bank or defer funds must provide a clear confirmation modal explaining the reserve cushion benefit and destination.
 - **Responsive Layout**: Always provide mobile-first responsive grid defaults (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`).
-
