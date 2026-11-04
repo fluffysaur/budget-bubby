@@ -364,7 +364,7 @@ export function RecurringPage({
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                                 All Recurring
                             </h2>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-slate-500 dark:text-(--text-faint)">
                                 {inScopeItems.length} items
                             </span>
                         </div>

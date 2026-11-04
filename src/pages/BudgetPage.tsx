@@ -50,6 +50,7 @@ import { UncategorizedRecurringRow } from '../components/budget/UncategorizedRec
 import type {
   BaseBudgetProfile,
 } from '../types/finance';
+import { CurrencyText } from '../components/ui/CurrencyText';
 
 export interface BudgetPageProps {
   className?: string;
@@ -256,7 +257,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         <StatCard
           title="Deductions"
           loading={isLoading}
-          value={<span className="text-rose-600 dark:text-rose-400">-{formatSGD(totalDeductions, { showCents: false })}</span>}
+          value={<span className="text-rose-600 dark:text-rose-400">-<CurrencyText formatted={formatSGD(totalDeductions, { showCents: false })} /></span>}
           tooltip="Employee CPF contribution (20%) + amortized monthly Taxes & Insurance."
           icon={<TrendingDown className="h-4 w-4" />}
           iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
@@ -286,7 +287,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
               }`}
             >
               {totalRemaining < 0 ? 'Over ' : 'Left '}
-              {formatSGD(Math.abs(totalRemaining), { showCents: false })}
+              <CurrencyText formatted={formatSGD(Math.abs(totalRemaining), { showCents: false })} />
             </span>
           }
           icon={<Receipt className="h-4 w-4" />}
@@ -305,8 +306,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
               <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
                 Categories
               </h2>
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                {formatSGD(spendableRemaining)} left of {formatSGD(spendableAllocated)} cap
+              <span className="text-xs font-semibold text-slate-500 dark:text-(--text-faint)">
+                <CurrencyText amount={spendableRemaining} /> left of <CurrencyText amount={spendableAllocated} /> cap
               </span>
             </div>
 
@@ -318,7 +319,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 <h3 className="mt-2.5 text-sm font-bold text-slate-800 dark:text-slate-200">
                   No Categories
                 </h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-slate-500 dark:text-(--text-faint)">
                   Add categories or restore presets to start tracking.
                 </p>
                 <div className="mt-3 flex items-center justify-center gap-2.5">

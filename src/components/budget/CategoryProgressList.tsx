@@ -26,13 +26,13 @@ import {
   Layers,
   Repeat,
 } from 'lucide-react';
-import { formatSGD } from '../../lib/currency';
 import { formatAllocationPercent } from '../../lib/financialFormulas';
 import { getRecurringMonthlyAmount } from '../../lib/recurringItems';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { TruncatedText } from '../ui/TruncatedText';
 import { EmptyStateCard } from '../ui/EmptyStateCard';
 import type { MonthlyBudgetCategoryDetail } from '../../types/finance';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface CategoryProgressListProps {
   categories: MonthlyBudgetCategoryDetail[];
@@ -169,13 +169,13 @@ export function CategoryProgressList({
                         >
                           <div className="space-y-1">
                             <p>
-                              Includes <strong>{formatSGD(subSpent)}/mo</strong> from recurring items:
+                              Includes <strong><CurrencyText amount={subSpent} />/mo</strong> from recurring items:
                             </p>
                             {subItems.length > 0 && (
                               <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
                                 {subItems.map((s) => (
                                   <li key={s.id}>
-                                    {s.name}: {formatSGD(getRecurringMonthlyAmount(s))}
+                                    {s.name}: <CurrencyText amount={getRecurringMonthlyAmount(s)} />
                                   </li>
                                 ))}
                               </ul>
@@ -187,7 +187,7 @@ export function CategoryProgressList({
                     {subSpent > 0 && (
                       <div className="flex items-center gap-1 text-[10px] font-medium text-(--text-muted)">
                         <Repeat className="h-2.5 w-2.5 text-purple-600 dark:text-purple-400" />
-                        <span>Includes {formatSGD(subSpent)} recurring</span>
+                        <span>Includes <CurrencyText amount={subSpent} /> recurring</span>
                       </div>
                     )}
                   </div>
@@ -214,16 +214,16 @@ export function CategoryProgressList({
                   <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                     Spent
                   </span>
-                  <span className="text-sm font-mono-num font-black text-(--text-ink)">
-                    {formatSGD(actual)}
+                  <span className="text-(--text-ink)">
+                    <CurrencyText amount={actual} size="md" />
                   </span>
                 </div>
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                     Budgeted
                   </span>
-                  <span className="text-sm font-mono-num font-black text-(--text-ink)">
-                    {formatSGD(allocated)}
+                  <span className="text-(--text-ink)">
+                    <CurrencyText amount={allocated} size="md" />
                   </span>
                 </div>
                 <div>
@@ -231,13 +231,13 @@ export function CategoryProgressList({
                     Remaining
                   </span>
                   <span
-                    className={`text-sm font-mono-num font-black ${
+                    className={`${
                       remaining < 0
                         ? 'text-rose-600 dark:text-rose-400'
                         : 'text-emerald-700 dark:text-emerald-400'
                     }`}
                   >
-                    {formatSGD(remaining)}
+                    <CurrencyText amount={remaining} size="md" />
                   </span>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export function CategoryProgressList({
                   <div className="flex items-center justify-between text-[11px] text-rose-600 dark:text-rose-400 font-bold pt-0.5">
                     <span className="flex items-center gap-1 font-mono-num">
                       <AlertCircle className="h-3 w-3" />
-                      Over by {formatSGD(Math.abs(remaining))}
+                      Over by <CurrencyText amount={Math.abs(remaining)} />
                     </span>
                     <span
                       data-testid={`badge-rose-${catDetail.category_id}`}
@@ -273,7 +273,7 @@ export function CategoryProgressList({
                   <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold pt-0.5">
                     <span className="flex items-center gap-1 font-mono-num">
                       <AlertTriangle className="h-3 w-3" />
-                      {formatSGD(remaining)} remaining
+                      <CurrencyText amount={remaining} /> remaining
                     </span>
                   </div>
                 ) : null}

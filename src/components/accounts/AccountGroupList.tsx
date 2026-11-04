@@ -28,10 +28,10 @@ import {
   Plus,
 } from 'lucide-react';
 import type { Account, AccountType } from '../../types/finance';
-import { formatSGD } from '../../lib/currency';
 import { Card, EmptyStateCard, Button } from '../ui';
 import { TruncatedText } from '../ui/TruncatedText';
 import { AccountCard } from './AccountCard';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface AccountGroupListProps {
   accounts: Account[];
@@ -196,7 +196,7 @@ export function AccountGroupList({
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
             }`}
           >
-            Non-CPF Liquid ({formatSGD(nonCpfTotal)})
+            Non-CPF Liquid (<CurrencyText amount={nonCpfTotal} />)
           </button>
         </div>
 
@@ -276,8 +276,8 @@ export function AccountGroupList({
 
               {/* Subtotal and Asset Share Percentage */}
               <div className="flex items-baseline gap-2 sm:text-right">
-                <span className="text-lg font-bold text-(--text-ink) font-display font-mono-num tracking-tight">
-                  {formatSGD(group.subtotal)}
+                <span className="text-(--text-ink) font-display">
+                  <CurrencyText amount={group.subtotal} size="md" />
                 </span>
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono-num">
                   {group.sharePercentage.toFixed(1)}% of assets
@@ -324,7 +324,7 @@ export function AccountGroupList({
                           )}
                         </div>
                         {account.notes && (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-(--text-faint) truncate mt-0.5">
                             {account.notes}
                           </p>
                         )}
@@ -359,7 +359,7 @@ export function AccountGroupList({
                               type="button"
                               onClick={() => setInlineEditingId(null)}
                               aria-label="Cancel inline edit"
-                              className="p-1 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 cursor-pointer"
+                              className="p-1 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-(--text-faint) cursor-pointer"
                             >
                               <X className="h-3.5 w-3.5" />
                             </button>
@@ -374,9 +374,9 @@ export function AccountGroupList({
                                   : onUpdateBalance?.(account)
                               }
                               title="Click to edit balance"
-                              className="text-sm sm:text-base font-extrabold text-(--text-ink) font-display font-mono-num hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                              className="text-(--text-ink) font-display hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                             >
-                              {formatSGD(account.balance)}
+                              <CurrencyText amount={account.balance} size="md" />
                             </button>
                             <button
                               type="button"

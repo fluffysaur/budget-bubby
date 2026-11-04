@@ -20,11 +20,11 @@ import {
 } from "lucide-react";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import { financeService } from "../../services/financeService";
-import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { TruncatedText } from "../ui/TruncatedText";
 import { Button } from "../ui/Button";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface UpdateBalanceModalProps {
     isOpen: boolean;
@@ -304,8 +304,8 @@ export function UpdateBalanceModal({
                             </div>
                             <p className="text-[11px] text-(--text-muted) mt-1.5">
                                 Previous:{" "}
-                                <span className="font-bold text-(--text-ink)">
-                                    {formatSGD(account.balance)}
+                                <span className="text-(--text-ink)">
+                                    <CurrencyText amount={account.balance} />
                                 </span>
                             </p>
                         </div>
@@ -509,9 +509,7 @@ export function UpdateBalanceModal({
                                                 <span>•</span>
                                                 <span>
                                                     Prev:{" "}
-                                                    <span className="font-mono-num font-bold">
-                                                        {formatSGD(currentVal)}
-                                                    </span>
+                                                    <CurrencyText amount={currentVal} />
                                                 </span>
                                             </div>
                                         </div>
@@ -534,7 +532,7 @@ export function UpdateBalanceModal({
                                                     <ArrowDownRight className="h-3 w-3" />
                                                 )}
                                                 {diff > 0 ? "+" : ""}
-                                                {formatSGD(diff)}
+                                                <CurrencyText amount={diff} />
                                             </span>
                                         ) : (
                                             <span className="text-[10px] text-(--text-muted) opacity-40 hidden sm:inline">

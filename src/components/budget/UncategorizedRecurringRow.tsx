@@ -5,11 +5,11 @@
  */
 
 import { Repeat } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
 import { getRecurringMonthlyAmount } from "../../lib/recurringItems";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { TruncatedText } from "../ui/TruncatedText";
 import type { RecurringItem } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface UncategorizedRecurringRowProps {
     amount: number;
@@ -50,10 +50,8 @@ export function UncategorizedRecurringRow({
                                     <span className="min-w-0 flex-1">
                                         <TruncatedText text={item.name} />
                                     </span>
-                                    <span className="shrink-0 font-mono-num">
-                                        {formatSGD(
-                                            getRecurringMonthlyAmount(item),
-                                        )}
+                                    <span className="shrink-0">
+                                        <CurrencyText amount={getRecurringMonthlyAmount(item)} />
                                     </span>
                                 </li>
                             ))}
@@ -61,8 +59,8 @@ export function UncategorizedRecurringRow({
                     </TooltipPopover>
                 )}
             </div>
-            <span className="shrink-0 text-sm font-mono-num font-black text-(--text-ink)">
-                {formatSGD(amount)}
+            <span className="shrink-0 text-(--text-ink)">
+                <CurrencyText amount={amount} size="md" />
             </span>
         </div>
     );

@@ -9,7 +9,6 @@
 
 import { useMemo } from "react";
 import { Calendar, Flame } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
 import {
     formatDueInDays,
     getDaysUntilDue,
@@ -21,13 +20,14 @@ import {
 import { TruncatedText } from "../ui/TruncatedText";
 import { RECURRING_TYPE_ICONS } from "../../lib/recurringItems";
 import type { RecurringItem, RecurringItemType } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 const TYPE_ICON_COLORS: Record<RecurringItemType, string> = {
     insurance: "text-blue-500",
     tax: "text-purple-500",
     subscription: "text-amber-500",
     bill: "text-emerald-600",
-    other: "text-slate-400",
+    other: "text-(--text-faint)",
 };
 
 export interface RenewalCalendarProps {
@@ -139,7 +139,7 @@ export function RenewalCalendar({
         const Icon = RECURRING_TYPE_ICONS[type] ?? Calendar;
         return (
             <Icon
-                className={`w-3 h-3 shrink-0 ${TYPE_ICON_COLORS[type] ?? "text-slate-400"}`}
+                className={`w-3 h-3 shrink-0 ${TYPE_ICON_COLORS[type] ?? "text-(--text-faint)"}`}
             />
         );
     };
@@ -224,7 +224,7 @@ export function RenewalCalendar({
                                     Total Outlay
                                 </span>
                                 <p
-                                    className={`text-base font-extrabold font-mono-num tracking-tight ${
+                                    className={`${
                                         m.isHeavy
                                             ? "text-rose-600 dark:text-rose-400"
                                             : m.totalOutlay > 0
@@ -232,7 +232,7 @@ export function RenewalCalendar({
                                               : "text-(--text-muted) opacity-60"
                                     }`}
                                 >
-                                    {formatSGD(m.totalOutlay)}
+                                    <CurrencyText amount={m.totalOutlay} size="md" />
                                 </p>
                             </div>
 
@@ -268,8 +268,8 @@ export function RenewalCalendar({
                                                         )}
                                                     </div>
                                                 </div>
-                                                <span className="font-bold font-mono-num text-(--text-ink) shrink-0 text-[11px]">
-                                                    {formatSGD(p.amount)}
+                                                <span className="text-(--text-ink) shrink-0">
+                                                    <CurrencyText amount={p.amount} size="sm" />
                                                 </span>
                                             </div>
                                         );

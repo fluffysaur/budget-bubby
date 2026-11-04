@@ -53,6 +53,7 @@ import type {
     HouseholdMember,
     UpsertCreditCardStatementInput,
 } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface CreditCardTrackerSectionProps {
     members: HouseholdMember[];
@@ -424,11 +425,11 @@ export function CreditCardTrackerSection({
                 <CreditCardListSkeleton />
             ) : filteredCards.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
-                    <CreditCardIcon className="h-10 w-10 text-slate-400 mb-3" />
+                    <CreditCardIcon className="h-10 w-10 text-(--text-faint) mb-3" />
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white">
                         No Credit Cards Configured
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+                    <p className="text-xs text-slate-500 dark:text-(--text-faint) max-w-sm mt-1">
                         Add your DBS, OCBC, UOB, or Citi credit cards to track
                         statement billing cycles and payment due dates.
                     </p>
@@ -583,10 +584,8 @@ export function CreditCardTrackerSection({
                                                     <span className="text-xs font-bold text-(--text-muted)">
                                                         Statement Amount
                                                     </span>
-                                                    <span className="font-mono-num text-base font-black text-(--text-ink)">
-                                                        {formatSGD(
-                                                            stmt.statement_amount,
-                                                        )}
+                                                    <span className="text-(--text-ink)">
+                                                        <CurrencyText amount={stmt.statement_amount} size="md" />
                                                     </span>
                                                 </div>
 

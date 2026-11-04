@@ -1,7 +1,7 @@
 import { PiggyBank, Shield, ArrowRight } from "lucide-react";
 import { Button } from "../ui";
-import { formatSGD } from "../../lib/currency";
 import { formatDisplayMonth } from "../../lib/dateUtils";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface MonthEndSweepBannerProps {
     month: string;
@@ -32,7 +32,7 @@ export function MonthEndSweepBanner({
                 </div>
                 <div className="min-w-0 flex-1 text-xs sm:text-sm">
                     <h2 className="font-bold text-(--text-ink) truncate">
-                        {formatSGD(surplusAmount)} unspent from {formatDisplayMonth(month)}
+                        <CurrencyText amount={surplusAmount} /> unspent from {formatDisplayMonth(month)}
                     </h2>
                     <p className="text-(--text-muted) text-xs mt-0.5">
                         Sweep into savings goals or bank for cushion.

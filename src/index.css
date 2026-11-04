@@ -46,14 +46,14 @@
 
 :root {
     /* Warm Oat Light Mode Tokens (SBW inspired) */
-    --bg-canvas: #f3efec;
+    --bg-canvas: #e9e2da;
     --bg-cream: #fbf7f1;
     --bg-card: #ffffff;
     --bg-elevated: #ffffff;
 
     --text-ink: #1a1a1a;
     --text-muted: #57504b;
-    --text-faint: #857b74;
+    --text-faint: #6e645d;
 
     --border-ink: #222222;
     --border-subtle: #d8d0c7;
@@ -108,14 +108,14 @@
 
 .dark {
     /* Cozy Espresso Dark Mode Tokens */
-    --bg-canvas: #181615;
+    --bg-canvas: #121010;
     --bg-cream: #211e1c;
     --bg-card: #262220;
     --bg-elevated: #2f2b28;
 
     --text-ink: #fbf7f1;
     --text-muted: #b8afa8;
-    --text-faint: #80766e;
+    --text-faint: #a0968e;
 
     --border-ink: #4a433f;
     --border-subtle: #38322e;

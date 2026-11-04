@@ -16,10 +16,10 @@ import {
     Settings,
     Sparkles,
 } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
 import { formatAllocationPercent } from "../../lib/financialFormulas";
 import { TruncatedText } from "../ui/TruncatedText";
 import type { MonthlyBudget, MonthlyBudgetCategoryDetail } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BudgetWaterfallProps {
   budget?: MonthlyBudget | null;
@@ -37,7 +37,7 @@ export function BudgetWaterfall({
   if (!budget) {
     return (
       <div className={`p-8 text-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 ${className}`}>
-        <p className="text-sm text-slate-500 dark:text-slate-400">No budget data available for this period.</p>
+        <p className="text-sm text-slate-500 dark:text-(--text-faint)">No budget data available for this period.</p>
       </div>
     );
   }
@@ -88,14 +88,14 @@ export function BudgetWaterfall({
                         </div>
                     </div>
                     <div className="mt-1.5">
-                        <span className="font-mono-num text-lg sm:text-xl font-black tracking-tight text-(--text-ink)">
-                            {formatSGD(totalGross)}
+                        <span className="text-(--text-ink)">
+                            <CurrencyText amount={totalGross} size="lg" />
                         </span>
                     </div>
                     <div className="mt-1.5 text-[11px] font-mono-num text-(--text-muted) space-y-0.5">
                         <div className="flex justify-between">
                             <span>Salary:</span>
-                            <span className="font-bold text-(--text-ink)">{formatSGD(grossSalary)}</span>
+                            <span className="text-(--text-ink)"><CurrencyText amount={grossSalary} /></span>
                         </div>
                         {bonus > 0 && (
                             <div className="flex justify-between text-purple-700 dark:text-purple-300 font-bold">
@@ -103,7 +103,7 @@ export function BudgetWaterfall({
                                     <Sparkles className="h-3 w-3" />
                                     Bonus:
                                 </span>
-                                <span>+{formatSGD(bonus)}</span>
+                                <span>+<CurrencyText amount={bonus} /></span>
                             </div>
                         )}
                     </div>
@@ -121,7 +121,7 @@ export function BudgetWaterfall({
                     </div>
                     <div className="mt-1.5">
                         <span className="font-mono-num text-lg sm:text-xl font-black tracking-tight text-rose-600 dark:text-rose-400">
-                            -{formatSGD(cpfDeduction)}
+                            -<CurrencyText amount={cpfDeduction} />
                         </span>
                     </div>
                     <p className="mt-1.5 text-[11px] font-medium text-(--text-muted)">
@@ -141,17 +141,17 @@ export function BudgetWaterfall({
                     </div>
                     <div className="mt-1.5">
                         <span className="font-mono-num text-lg sm:text-xl font-black tracking-tight text-rose-600 dark:text-rose-400">
-                            -{formatSGD(fixedDeductions)}
+                            -<CurrencyText amount={fixedDeductions} />
                         </span>
                     </div>
                     <div className="mt-1.5 text-[11px] font-mono-num text-(--text-muted) space-y-0.5">
                         <div className="flex justify-between">
                             <span>Taxes:</span>
-                            <span className="font-bold text-(--text-ink)">-{formatSGD(taxesDeduction)}</span>
+                            <span className="font-bold text-(--text-ink)">-<CurrencyText amount={taxesDeduction} /></span>
                         </div>
                         <div className="flex justify-between">
                             <span>Insurance:</span>
-                            <span className="font-bold text-(--text-ink)">-{formatSGD(insuranceDeduction)}</span>
+                            <span className="font-bold text-(--text-ink)">-<CurrencyText amount={insuranceDeduction} /></span>
                         </div>
                     </div>
                 </div>
@@ -167,8 +167,8 @@ export function BudgetWaterfall({
                         </div>
                     </div>
                     <div className="mt-1.5">
-                        <span className="font-mono-num text-lg sm:text-xl font-black tracking-tight text-(--text-ink)">
-                            {formatSGD(afterDeductions)}
+                        <span className="text-(--text-ink)">
+                            <CurrencyText amount={afterDeductions} size="lg" />
                         </span>
                     </div>
                     <p className="mt-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
@@ -212,8 +212,8 @@ export function BudgetWaterfall({
                                             {percentDisplay}
                                         </span>
                                     </div>
-                                    <div className="text-sm font-mono-num font-black text-(--text-ink) mt-1 truncate">
-                                        {formatSGD(catDetail.allocated_amount)}
+                                    <div className="text-(--text-ink) mt-1 truncate">
+                                        <CurrencyText amount={catDetail.allocated_amount} size="md" />
                                     </div>
                                 </div>
                             );

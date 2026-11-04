@@ -31,6 +31,7 @@ import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatDisplayMonth, formatDisplayDate } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
 import type { SavingsGoal, Expense } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface GoalCardProps {
     goal: SavingsGoal;
@@ -184,10 +185,10 @@ export function GoalCard({
                             Target Amount
                         </span>
                         <span
-                            className="text-xs sm:text-sm font-mono-num font-black text-(--text-ink) mt-0.5 block truncate"
+                            className="text-(--text-ink) mt-0.5 block truncate"
                             title={formatSGD(targetAmount)}
                         >
-                            {formatSGD(targetAmount)}
+                            <CurrencyText amount={targetAmount} size="md" />
                         </span>
                     </div>
 
@@ -196,10 +197,10 @@ export function GoalCard({
                             Total Saved
                         </span>
                         <span
-                            className="text-xs sm:text-sm font-mono-num font-black text-emerald-700 dark:text-emerald-400 mt-0.5 block truncate"
+                            className="text-emerald-700 dark:text-emerald-400 mt-0.5 block truncate"
                             title={formatSGD(totalSaved)}
                         >
-                            {formatSGD(totalSaved)}
+                            <CurrencyText amount={totalSaved} size="md" />
                         </span>
                     </div>
 
@@ -208,10 +209,10 @@ export function GoalCard({
                             Goal Spend
                         </span>
                         <span
-                            className="text-xs sm:text-sm font-mono-num font-black text-purple-700 dark:text-purple-300 mt-0.5 block truncate"
+                            className="text-purple-700 dark:text-purple-300 mt-0.5 block truncate"
                             title={formatSGD(goalSpend)}
                         >
-                            {formatSGD(goalSpend)}
+                            <CurrencyText amount={goalSpend} size="md" />
                         </span>
                     </div>
 
@@ -220,10 +221,10 @@ export function GoalCard({
                             Balance
                         </span>
                         <span
-                            className="text-xs sm:text-sm font-mono-num font-black text-(--text-ink) mt-0.5 block truncate"
+                            className="text-(--text-ink) mt-0.5 block truncate"
                             title={formatSGD(balance)}
                         >
-                            {formatSGD(balance)}
+                            <CurrencyText amount={balance} size="md" />
                         </span>
                     </div>
                 </div>
@@ -258,15 +259,15 @@ export function GoalCard({
                 {/* Monthly Pacing Details */}
                 <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/80">
                     <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500 dark:text-slate-400">
+                        <span className="text-slate-500 dark:text-(--text-faint)">
                             Current Monthly:
                         </span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {formatSGD(goal.monthly_contribution)}/mo
+                            <CurrencyText amount={goal.monthly_contribution} />/mo
                         </span>
                     </div>
                     <div className="mt-1 flex items-center justify-between text-xs">
-                        <span className="text-slate-500 dark:text-slate-400">
+                        <span className="text-slate-500 dark:text-(--text-faint)">
                             Required Pace:
                         </span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
@@ -281,7 +282,7 @@ export function GoalCard({
                         <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                             <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                             <span>
-                                + {formatSGD(monthlyShortfall)}/mo to stay on
+                                + <CurrencyText amount={monthlyShortfall} />/mo to stay on
                                 track
                             </span>
                         </div>
@@ -304,7 +305,7 @@ export function GoalCard({
                                 </span>
                             </span>
                             <span className="flex items-center gap-1.5 text-[11px] text-purple-600 dark:text-purple-400 font-mono">
-                                <span>{formatSGD(goalSpend)}</span>
+                                <span><CurrencyText amount={goalSpend} /></span>
                                 {showExpenses ? (
                                     <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
                                 ) : (
@@ -328,12 +329,12 @@ export function GoalCard({
                                             <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
                                                 {exp.item}
                                             </span>
-                                            <span className="text-[10px] text-slate-400">
+                                            <span className="text-[10px] text-(--text-faint)">
                                                 {formatDisplayDate(exp.date)}
                                             </span>
                                         </div>
-                                        <span className="font-bold text-purple-700 dark:text-purple-300 shrink-0">
-                                            {formatSGD(exp.amount)}
+                                        <span className="text-purple-700 dark:text-purple-300 shrink-0">
+                                            <CurrencyText amount={exp.amount} />
                                         </span>
                                     </div>
                                 ))}

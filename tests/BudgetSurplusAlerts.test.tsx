@@ -36,6 +36,7 @@ import type {
     Expense,
     MonthlyBudgetCategoryDetail,
 } from "../src/types/finance";
+import { withText } from "./helpers/textContent";
 
 // Mock Web Audio Synthesis sound effects
 vi.mock("../src/lib/soundEffects", () => ({
@@ -136,7 +137,7 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
             screen.getByTestId("category-limit-exceeded-banner"),
         ).toBeInTheDocument();
         expect(
-            screen.getByText(/Lifestyle has exceeded cap by S\$45\.00!/i),
+            screen.getByText(withText(/Lifestyle has exceeded cap by S\$45\.00!/i)),
         ).toBeInTheDocument();
 
         // Amber Nearing Alert
@@ -145,7 +146,7 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
         ).toBeInTheDocument();
         expect(
             screen.getByText(
-                /Food is at 84% \(S\$672\.00 of S\$800\.00\) — S\$128\.00 left/i,
+                withText(/Food is at 84% \(S\$672\.00 of S\$800\.00\) — S\$128\.00 left/i),
             ),
         ).toBeInTheDocument();
     });
@@ -435,13 +436,13 @@ describe("Cumulative Surplus & Deficit Calculations", () => {
         expect(currentBadge).toBeInTheDocument();
         expect(screen.getByText(/Surplus this month/i)).toBeInTheDocument();
         expect(
-            screen.getAllByText(/\+S\$180\.20/i).length,
+            screen.getAllByText(withText(/\+S\$180\.20/i)).length,
         ).toBeGreaterThanOrEqual(1);
 
         const bankedBadge = screen.getByTestId("total-banked-surplus-badge");
         expect(bankedBadge).toBeInTheDocument();
         expect(
-            screen.getByText(/Total Banked Surplus: \+S\$520\.40/i),
+            screen.getByText(withText(/Total Banked Surplus: \+S\$520\.40/i)),
         ).toBeInTheDocument();
 
         // Goal Protection tooltip callout
@@ -628,7 +629,7 @@ describe("CategoryProgressList Warning Badges", () => {
         render(<CategoryProgressList categories={categories} />);
 
         // Amber warning text on progress bar (amber chip removed)
-        expect(screen.getByText(/S\$80\.00 remaining/i)).toBeInTheDocument();
+        expect(screen.getByText(withText(/S\$80\.00 remaining/i))).toBeInTheDocument();
         expect(screen.queryByText("Amber Guardrail")).not.toBeInTheDocument();
 
         // Rose cap exceeded badge on progress bar

@@ -21,6 +21,7 @@ import { useOptionalHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
 import { getDefaultNotificationPreferences } from '../../data/mockSeedData';
 import type { Expense, MonthlyBudgetCategoryDetail, NotificationPreferences } from '../../types/finance';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface CategoryLimitWarningBannerProps {
   categories?: MonthlyBudgetCategoryDetail[];
@@ -275,7 +276,7 @@ export function CategoryLimitWarningBanner({
               type="button"
               onClick={() => setToast(null)}
               aria-label="Dismiss notification"
-              className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -314,10 +315,10 @@ export function CategoryLimitWarningBanner({
                         className="flex items-center justify-between gap-2 text-xs font-bold text-[#9a1b1b] dark:text-[#fca5a5] flex-wrap"
                       >
                         <span>
-                          {item.name} has exceeded cap by {formatSGD(item.over)}!
+                          {item.name} has exceeded cap by <CurrencyText amount={item.over} />!
                         </span>
                         <span className="text-[11px] font-mono-num opacity-90">
-                          {formatSGD(item.spent)} of {formatSGD(item.allocated)} ({item.percentage}%)
+                          <CurrencyText amount={item.spent} /> of <CurrencyText amount={item.allocated} /> ({item.percentage}%)
                         </span>
                       </div>
                     ))}
@@ -350,7 +351,7 @@ export function CategoryLimitWarningBanner({
                         className="flex items-center justify-between gap-2 text-xs font-bold text-[#92400e] dark:text-[#fde68a] flex-wrap"
                       >
                         <span>
-                          {item.name} is at {item.percentage}% ({formatSGD(item.spent)} of {formatSGD(item.allocated)}) — {formatSGD(item.left)} left
+                          {item.name} is at {item.percentage}% (<CurrencyText amount={item.spent} /> of <CurrencyText amount={item.allocated} />) — <CurrencyText amount={item.left} /> left
                         </span>
                         {onNavigateCategory && (
                           <button

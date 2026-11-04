@@ -21,12 +21,12 @@ import { Alert } from "../ui/Alert";
 import { CategoryBadge } from "../ui/CategoryBadge";
 import { Card } from "../ui/Card";
 import { financeService } from "../../services/financeService";
-import { formatSGD } from "../../lib/currency";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { haptics } from "../../lib/haptics";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import type { Expense, Category, HouseholdMember } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface DeleteExpenseModalProps {
     isOpen: boolean;
@@ -112,8 +112,8 @@ export function DeleteExpenseModal({
                                 )}
                             </div>
                             <div className="text-right shrink-0">
-                                <div className="text-lg font-mono-num font-black text-(--text-ink)">
-                                    {formatSGD(expense.amount)}
+                                <div className="text-(--text-ink)">
+                                    <CurrencyText amount={expense.amount} size="md" />
                                 </div>
                                 {hasForeignCurrency && (
                                     <div className="text-[11px] font-mono-num font-semibold text-(--text-muted)">
@@ -161,9 +161,7 @@ export function DeleteExpenseModal({
                                 }
                             >
                                 Deleting this expense will return{" "}
-                                <span className="font-mono-num font-bold">
-                                    {formatSGD(expense.amount)}
-                                </span>{" "}
+                                <CurrencyText amount={expense.amount} />{" "}
                                 back to the linked savings goal balance.
                             </Alert>
                         )}

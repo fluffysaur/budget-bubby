@@ -6,9 +6,9 @@
 import { useState } from "react";
 import type { Account } from "../../types/finance";
 import { financeService } from "../../services/financeService";
-import { formatSGD } from "../../lib/currency";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Alert } from "../ui/Alert";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface DeleteAccountModalProps {
     isOpen: boolean;
@@ -64,8 +64,8 @@ export function DeleteAccountModal({
                         ? ` (${account.institution})`
                         : ""}{" "}
                     with current balance of{" "}
-                    <span className="font-bold text-(--text-ink) font-mono-num">
-                        {formatSGD(account.balance)}
+                    <span className="text-(--text-ink)">
+                        <CurrencyText amount={account.balance} />
                     </span>
                     ?
                 </p>

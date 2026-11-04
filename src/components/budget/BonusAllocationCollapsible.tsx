@@ -14,6 +14,7 @@ import { Sparkles } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { calculateBonusAllocation } from '../../lib/financialFormulas';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface BonusAllocationCollapsibleProps {
   initialGrossBonus?: number;
@@ -66,7 +67,7 @@ export function BonusAllocationCollapsible({
               Employee CPF ({Math.round(cpfRate * 100)}%)
             </span>
             <span className="mt-1 font-mono-num text-lg font-black text-rose-600 dark:text-rose-400">
-              -{formatSGD(result.cpfDeduction)}
+              -<CurrencyText amount={result.cpfDeduction} />
             </span>
           </div>
 
@@ -74,8 +75,8 @@ export function BonusAllocationCollapsible({
             <span className="text-[11px] font-black uppercase tracking-wider text-(--text-ink)">
               After CPF Take-Home Bonus
             </span>
-            <span className="mt-1 font-mono-num text-lg font-black text-emerald-950 dark:text-emerald-100">
-              {formatSGD(result.afterCpf)}
+            <span className="mt-1 text-emerald-950 dark:text-emerald-100">
+              <CurrencyText amount={result.afterCpf} size="md" />
             </span>
           </div>
         </div>
@@ -98,8 +99,8 @@ export function BonusAllocationCollapsible({
                   {Math.round(bucket.percentage * 100)}%
                 </span>
               </div>
-              <span className="mt-2 font-mono-num text-sm font-black text-(--text-ink)">
-                {formatSGD(bucket.amount)}
+              <span className="mt-2 text-(--text-ink)">
+                <CurrencyText amount={bucket.amount} size="md" />
               </span>
             </div>
           ))}

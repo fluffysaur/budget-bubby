@@ -24,6 +24,23 @@ export default tseslint.config(
     },
   },
   {
+    // Amounts must use the shared money type scale (see src/lib/moneyStyles.ts)
+    files: ['src/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXElement > JSXExpressionContainer > CallExpression[callee.name='formatSGD']",
+          message: 'Render amounts with <CurrencyText amount={...} size="..." /> instead of {formatSGD(...)}.',
+        },
+        {
+          selector: "JSXFragment > JSXExpressionContainer > CallExpression[callee.name='formatSGD']",
+          message: 'Render amounts with <CurrencyText amount={...} size="..." /> instead of {formatSGD(...)}.',
+        },
+      ],
+    },
+  },
+  {
     files: ['src/context/**/*.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',

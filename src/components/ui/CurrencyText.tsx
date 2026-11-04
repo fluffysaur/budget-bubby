@@ -1,52 +1,43 @@
 import React from "react";
 import { formatSGD } from "../../lib/currency";
+import { MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES, type MoneySize } from "../../lib/moneyStyles";
 
-export type CurrencySize = "xs" | "sm" | "base" | "lg" | "xl" | "2xl" | "3xl";
-export type CurrencyTone = "default" | "positive" | "negative" | "muted" | "coral" | "mint";
+export type CurrencySize = MoneySize;
+export type CurrencyTone = "inherit" | "default" | "positive" | "negative" | "muted";
 
 export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     amount?: number;
+    /** Pre-formatted value, e.g. formatSGD(x, { showCents: false }) */
     formatted?: string;
     size?: CurrencySize;
+    /** Defaults to inheriting the surrounding text colour. */
     tone?: CurrencyTone;
-    bold?: boolean;
 }
 
-const sizeMap: Record<CurrencySize, string> = {
-    xs: "text-xs",
-    sm: "text-sm",
-    base: "text-base",
-    lg: "text-lg sm:text-xl",
-    xl: "text-xl sm:text-2xl",
-    "2xl": "text-2xl sm:text-3xl",
-    "3xl": "text-3xl sm:text-4xl",
-};
-
 const toneMap: Record<CurrencyTone, string> = {
+    inherit: "",
     default: "text-(--text-ink)",
     positive: "text-emerald-700 dark:text-emerald-400",
     negative: "text-(--accent-coral-ink) dark:text-rose-400",
     muted: "text-(--text-muted)",
-    coral: "text-(--accent-coral-ink) dark:text-rose-400",
-    mint: "text-emerald-700 dark:text-emerald-400",
 };
 
+/** Renders an SGD amount in the app's single money type scale. */
 export function CurrencyText({
     amount,
     formatted,
-    size = "base",
-    tone = "default",
-    bold = true,
+    size = "inline",
+    tone = "inherit",
     className = "",
     ...props
 }: CurrencyTextProps) {
-    const displayValue = formatted !== undefined ? formatted : amount !== undefined ? formatSGD(amount) : "$0.00";
+    const displayValue = formatted ?? formatSGD(amount ?? 0);
+    const classes = [MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES[size], toneMap[tone], className]
+        .filter(Boolean)
+        .join(" ");
 
     return (
-        <span
-            className={`font-mono-num tracking-tight ${bold ? "font-extrabold" : "font-semibold"} ${sizeMap[size]} ${toneMap[tone]} ${className}`}
-            {...props}
-        >
+        <span className={classes} {...props}>
             {displayValue}
         </span>
     );

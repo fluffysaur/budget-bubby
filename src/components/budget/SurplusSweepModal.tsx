@@ -238,8 +238,8 @@ export function SurplusSweepModal({
                         </p>
                         <p className="text-(--text-muted) mt-0.5">
                             You have{" "}
-                            <span className="font-bold text-(--text-ink)">
-                                {formatSGD(surplusAmount)}
+                            <span className="text-(--text-ink)">
+                                <CurrencyText amount={surplusAmount} />
                             </span>{" "}
                             unspent. Deposit into goals to boost milestone progress.
                         </p>
@@ -364,7 +364,7 @@ export function SurplusSweepModal({
                                                 </span>
                                                 <span>•</span>
                                                 <span>
-                                                    Target: {formatSGD(goal.target_amount)}
+                                                    Target: <CurrencyText amount={goal.target_amount} />
                                                 </span>
                                             </div>
                                         </div>
@@ -409,20 +409,20 @@ export function SurplusSweepModal({
                         </strong>
                         <span className="text-(--text-muted)">
                             {" "}
-                            of {formatSGD(surplusAmount)}
+                            of <CurrencyText amount={surplusAmount} />
                         </span>
                     </div>
 
                     <div>
                         {isExceeded ? (
                             <Badge variant="rose">
-                                Exceeded by {formatSGD(Math.abs(remainingDollars))}
+                                Exceeded by <CurrencyText amount={Math.abs(remainingDollars)} />
                             </Badge>
                         ) : isFullyAllocated ? (
                             <Badge variant="emerald">100% Allocated</Badge>
                         ) : (
                             <Badge variant="slate">
-                                {formatSGD(remainingDollars)} unallocated
+                                <CurrencyText amount={remainingDollars} /> unallocated
                             </Badge>
                         )}
                     </div>
@@ -457,7 +457,7 @@ export function SurplusSweepModal({
                         isLoading={isSubmitting}
                         leftIcon={<PiggyBank className="h-4 w-4" strokeWidth={2.5} />}
                     >
-                        Sweep {formatSGD(totalAllocatedDollars)}
+                        Sweep <CurrencyText amount={totalAllocatedDollars} />
                     </Button>
                 </div>
             </ModalFooter>

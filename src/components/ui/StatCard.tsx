@@ -1,4 +1,5 @@
 import React from "react";
+import { MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES } from "../../lib/moneyStyles";
 import { TooltipPopover } from "./TooltipPopover";
 import { Card, type CardVariant } from "./Card";
 import { SkeletonLine, SkeletonStatValue } from "./Skeleton";
@@ -81,7 +82,7 @@ export function StatCard({
                 </div>
 
                 <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between gap-1 sm:gap-2 flex-wrap min-w-0">
-                    <div className="text-base sm:text-xl xl:text-2xl font-black text-(--text-ink) tracking-tight font-mono-num">
+                    <div className={`${MONEY_BASE_CLASSES} ${MONEY_SIZE_CLASSES.lg} text-(--text-ink)`}>
                         {loading ? <SkeletonStatValue /> : value}
                     </div>
                     {badge && !loading && (

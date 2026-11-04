@@ -11,7 +11,6 @@
 
 import { useState, useMemo } from "react";
 import { Pencil, Trash2, Search, AlertCircle, Plus } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
 import { MONTH_NAMES_SHORT as MONTH_NAMES } from "../../lib/dateUtils";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TruncatedText } from "../ui/TruncatedText";
@@ -22,6 +21,7 @@ import {
     RECURRING_TYPE_LABELS,
 } from "../../lib/recurringItems";
 import type { RecurringItem, RecurringItemType } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface RecurringTableProps {
     recurringItems: RecurringItem[];
@@ -244,7 +244,7 @@ export function RecurringTable({
                                                     className="font-display font-bold"
                                                 />
                                                 {recurringItem.notes && (
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 font-normal">
+                                                    <p className="text-xs text-slate-500 dark:text-(--text-faint) line-clamp-1 font-normal">
                                                         {recurringItem.notes}
                                                     </p>
                                                 )}
@@ -272,16 +272,14 @@ export function RecurringTable({
                                         </td>
 
                                         {/* Amount */}
-                                        <td className="py-3 px-4 whitespace-nowrap text-right font-bold font-mono-num text-(--color-ink) dark:text-white">
-                                            {formatSGD(recurringItem.amount)}
+                                        <td className="py-3 px-4 whitespace-nowrap text-right text-(--color-ink) dark:text-white">
+                                            <CurrencyText amount={recurringItem.amount} />
                                         </td>
 
                                         {/* Monthly Amortized Outflow */}
                                         <td className="py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-bold font-mono-num">
-                                            {formatSGD(
-                                                recurringItem.monthly_amortized_amount,
-                                            )}
-                                            <span className="text-xs text-slate-400 font-normal ml-0.5">
+                                            <CurrencyText amount={recurringItem.monthly_amortized_amount} />
+                                            <span className="text-xs text-(--text-faint) font-normal ml-0.5">
                                                 /mo
                                             </span>
                                         </td>

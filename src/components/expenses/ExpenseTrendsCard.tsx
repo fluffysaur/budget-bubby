@@ -23,6 +23,7 @@ import { formatSGD } from '../../lib/currency';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { Card } from '../ui/Card';
 import type { ExpenseTrendsSummary, MonthlyExpenseTrendPoint, CategoryAverageMetric } from '../../types/finance';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface ExpenseTrendsCardProps {
   trends: ExpenseTrendsSummary;
@@ -75,7 +76,7 @@ export function ExpenseTrendsCard({
                 Tracks monthly spendable expenses (Food, Lifestyle, Transport, Buffer) including active monthly subscriptions in Lifestyle. In Personal view, shared 50/50 expenses count at your 50% share.
               </TooltipPopover>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-slate-500 dark:text-(--text-faint)">
               {perspectiveLabel} • 6-month history &amp; category benchmarks
             </p>
           </div>
@@ -104,13 +105,13 @@ export function ExpenseTrendsCard({
       {/* Top KPI Strip */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-4 my-4">
         <div className="rounded-xl bg-slate-50/80 dark:bg-slate-800/50 p-3 border border-slate-100 dark:border-slate-800">
-          <span className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-(--text-faint)">
             This Month
           </span>
-          <span className="mt-1 block text-sm sm:text-lg font-extrabold text-slate-900 dark:text-white">
-            {formatSGD(currentMonthTotal)}
+          <span className="mt-1 block text-slate-900 dark:text-white">
+            <CurrencyText amount={currentMonthTotal} size="md" />
           </span>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+          <span className="text-[10px] text-(--text-faint)">
             Spendable + subs
           </span>
         </div>
@@ -119,8 +120,8 @@ export function ExpenseTrendsCard({
           <span className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
             3-Month Avg
           </span>
-          <span className="mt-1 block text-sm sm:text-lg font-extrabold text-emerald-800 dark:text-emerald-200">
-            {formatSGD(rolling3MonthAvg)}
+          <span className="mt-1 block text-emerald-800 dark:text-emerald-200">
+            <CurrencyText amount={rolling3MonthAvg} size="md" />
           </span>
           <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80">
             Rolling benchmark
@@ -128,13 +129,13 @@ export function ExpenseTrendsCard({
         </div>
 
         <div className="rounded-xl bg-slate-50/80 dark:bg-slate-800/50 p-3 border border-slate-100 dark:border-slate-800">
-          <span className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-(--text-faint)">
             6-Month Avg
           </span>
-          <span className="mt-1 block text-sm sm:text-lg font-extrabold text-slate-900 dark:text-white">
-            {formatSGD(rolling6MonthAvg)}
+          <span className="mt-1 block text-slate-900 dark:text-white">
+            <CurrencyText amount={rolling6MonthAvg} size="md" />
           </span>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+          <span className="text-[10px] text-(--text-faint)">
             Longer baseline
           </span>
         </div>
@@ -202,7 +203,7 @@ export function ExpenseTrendsCard({
               <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
               Category Monthly Averages vs This Month
             </span>
-            <span className="text-[11px] text-slate-400">Current / Avg</span>
+            <span className="text-[11px] text-(--text-faint)">Current / Avg</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {categoryAverages.map((cat: CategoryAverageMetric) => {
@@ -226,9 +227,9 @@ export function ExpenseTrendsCard({
                     </span>
                     <span className="font-bold text-(--text-ink)">
                       <strong className={isOverAvg ? 'text-amber-600 dark:text-amber-400 font-mono-num' : 'text-(--text-ink) font-mono-num'}>
-                        {formatSGD(cat.currentMonth)}
+                        <CurrencyText amount={cat.currentMonth} />
                       </strong>{' '}
-                      <span className="text-(--text-muted) font-mono-num">/ avg {formatSGD(cat.averageMonthly)}</span>
+                      <span className="text-(--text-muted) font-mono-num">/ avg <CurrencyText amount={cat.averageMonthly} /></span>
                     </span>
                   </div>
                   <div className="mt-1.5 h-2 w-full rounded-full bg-(--bg-card) border border-(--border-ink) overflow-hidden">
