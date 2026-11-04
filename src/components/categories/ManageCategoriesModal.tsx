@@ -513,7 +513,7 @@ export function ManageCategoriesModal({
 
                     {/* Allocations View with Range Sliders, Locks & Auto-Balance */}
                     {activeView === "allocations" ? (
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                        <div className="space-y-4">
                             <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
                                 <div>
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-faint) flex items-center gap-1.5">
@@ -914,7 +914,7 @@ export function ManageCategoriesModal({
                                 </form>
                             ) : (
                                 /* List Mode */
-                                <div className="mt-4 space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+                                <div className="mt-4 space-y-5">
                                     {/* Top Action Row */}
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-semibold text-(--text-muted)">

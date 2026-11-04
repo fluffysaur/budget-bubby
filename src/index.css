@@ -488,4 +488,14 @@ body {
     .animate-bubby-hammer {
         animation: none;
     }
+
+    /* Modals and sheets appear and disappear without sliding or scaling */
+    .modal-sheet-enter,
+    .modal-sheet-exit,
+    .animate-modal-in,
+    .animate-modal-out,
+    .animate-drawer-in,
+    .animate-drawer-out {
+        animation-duration: 1ms !important;
+    }
 }
