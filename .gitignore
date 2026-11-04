@@ -34,3 +34,6 @@ seed.private.sql
 playwright-report/
 test-results/
 blob-report/
+
+# Generated Edge Function bundle (npm run build:functions)
+supabase/functions/_shared/dist/

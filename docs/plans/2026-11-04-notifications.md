@@ -1,7 +1,7 @@
 # Notifications Overhaul Plan
 
 Date: 2026-11-04
-Status: Phase 1 in PR #10. Phase 2 implemented on `feat/cc-due-reminders` (stacked on Phase 1, uncommitted). Phase 3 not started.
+Status: Phases 1 and 2 merged (#10, #14). Phase 3 implemented on `feat/server-push` (uncommitted).
 
 ## Problem
 
@@ -159,94 +159,57 @@ alter table notification_preferences
 
 ## Phase 3: Real scheduled pushes (`feat/server-push`)
 
-### Spike first (half a day)
+### Spike result
 
-- Confirm the Supabase Edge Runtime can import `src/lib/reminders/*` from outside `supabase/functions`, including extensionless imports. If it can't, move the pure rules to `supabase/functions/_shared/reminders/` and import them from the frontend through a Vite alias.
-- List the server-side data each rule needs:
-    - category `actualSpent` (today worked out in `supabaseFinanceService.getMonthlyBudget`)
-    - goal `status`
-    - `settlementSummary`
-    - streaks and check-ins
-- Decide whether to pull those calculations out into shared pure modules or rewrite them as SQL views. Prefer pulling them out, so there's one source of truth.
+- The app's Supabase service scopes almost every query through RLS, not explicit `household_id` filters. **Decision:** the server reuses that service with a service-role client, and refuses to run unless exactly one household exists. No budget, goal or settlement logic is duplicated.
+- The Edge Function can't import the app's TypeScript directly (extensionless imports, `import.meta.env`). `npm run build:functions` uses Vite in library mode to bundle `src/server/sendReminders.ts` into `supabase/functions/_shared/dist/send-reminders.js`. That file is gitignored. `envPrefix` is set so no `VITE_*` values end up in the bundle.
+- `@supabase/supabase-js` stays external and is resolved by the function's `deno.json` import map, along with `npm:web-push`.
 
-### Migration `20261105092000_push_subscriptions.sql`
+### As built
 
-```sql
-create table if not exists push_subscriptions (
-    id uuid primary key default gen_random_uuid(),
-    household_id uuid not null references households(id) on delete cascade,
-    member_id uuid not null references household_members(id) on delete cascade,
-    endpoint text not null unique,
-    p256dh text not null,
-    auth text not null,
-    user_agent text,
-    created_at timestamptz not null default now(),
-    last_seen_at timestamptz not null default now()
-);
--- RLS: household access, same as other tables
+```
+src/lib/reminders/
+├── rules.ts          # pure rules (Phase 1-2)
+├── engine.ts         # computeRemindersFrom(source, options) + getReminderUrl
+├── push.ts           # classify / selectForPush / buildPushMessages
+└── pushMessage.ts    # PushMessage + withReadKeys (no imports; used by sw.ts)
+src/server/sendReminders.ts      # runSendReminders(deps) + createSupabaseSendDeps(client)
+src/lib/pushSubscription.ts      # syncPushSubscription, isServerPushEnabled
+src/sw.ts                        # injectManifest service worker
+supabase/functions/send-reminders/{index.ts,deno.json}
+supabase/migrations/20261106090000_push_subscriptions.sql
+supabase/migrations/20261106091000_notification_cron.sql
 ```
 
-### Migration `20261105093000_notification_cron.sql`
-
-- `create extension if not exists pg_cron; create extension if not exists pg_net;`
-- Schedule `0 * * * *` (hourly). It calls `net.http_post` to `/functions/v1/send-reminders`, with the URL and `CRON_SECRET` read from Supabase Vault.
-- Schedule a daily cleanup: `delete from notification_log where created_at < now() - interval '90 days'`.
-
-### Service worker
-
-- Switch `vite-plugin-pwa` to `strategies: 'injectManifest'`, `srcDir: 'src'`, `filename: 'sw.ts'`.
-- Add dev dependencies `workbox-precaching`, `workbox-routing`, `workbox-strategies`, `workbox-expiration` and `workbox-cacheable-response` (approved).
-- `src/sw.ts` contains:
-    - `precacheAndRoute(self.__WB_MANIFEST)`
-    - the existing Google Fonts caching rules, ported from `vite.config.ts`
-    - the existing `registerType: 'prompt'` update flow, kept working with `PWAUpdateToast`
-    - a `push` handler that shows the notification, with `data.url` and `data.keys`
-    - a `notificationclick` handler that focuses or opens the client at `data.url`, then posts `{ type: 'mark-read', keys }` to the app
-
-### Subscribing
-
-- `src/lib/pushSubscription.ts` handles subscriptions:
-    - When permission is granted and `push_enabled` is on, call `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: VITE_VAPID_PUBLIC_KEY })` and upsert into `push_subscriptions`.
-    - Refresh `last_seen_at` on launch.
-    - When `push_enabled` is turned off, unsubscribe and delete the row.
-
-### Edge Function `supabase/functions/send-reminders`
-
-- Reject requests without a valid `Authorization: Bearer ${CRON_SECRET}`.
-- Run with the service role and work through every household member:
-    1. Load preferences and data, then run the shared rules at "now" in SGT.
-    2. Choose which alerts go out this hour:
-        - routine alerts at the 9 AM bundle
-        - check-in and couple streak at `checkin_time`
-        - budget and settlement threshold on any run
-        - nothing during quiet hours; held alerts go out on the first run after quiet hours end
-    3. For each chosen alert, call `claimNotificationSend` (insert … on conflict do nothing).
-    4. Send the claimed alerts:
-        - urgent ones on their own
-        - the others as one summary (`3 Reminders` / `Citi due in 3 days, Netflix due tomorrow, …`)
-    5. Send through `npm:web-push` to every subscription the member has. Delete subscriptions that return 404 or 410.
-- Secrets: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`. Set `VITE_VAPID_PUBLIC_KEY` in Vercel.
-
-### Client changes
-
-- Remove the browser push from `evaluateAndDispatchReminders`. The bell keeps `computeActiveReminders` for the live list.
-- Handle the `mark-read` message from the service worker. Make sure each deep link (`?category=`, `?statement=`, `?item=`, `?goal=`) opens and highlights its target.
+- **Service:** `SupabaseFinanceServiceImpl(client?, { localFallback })`. The server passes `localFallback: false`, so notification-log errors throw instead of being recorded in memory, which would push again every hour. Marking read now updates existing rows first, so the `type` set when the alert was pushed is kept.
+- **Selection:** pushes are sorted into three groups.
+    - *Urgent* (CC due ≤ 1 day or overdue, budget exceeded): one push each.
+    - *Routine* (balance, CC due, statement missing, recurring, budget review, goals, partner spend): from 9 AM, bundled as "N Reminders" when there are two or more.
+    - *Immediate* (check-in, couple streak, budget nearing, settlement): one push each on the next run.
+    - Nothing is pushed during quiet hours, and held alerts go out on the first run after.
+- **Server push mode** is on when `VITE_VAPID_PUBLIC_KEY` is set. The app then stops sending pushes itself and only subscribes the device. Without the key, Phase 1–2 behavior is unchanged.
+- **Tapping a push:** the service worker opens or focuses the app at `url?read=key1,key2`. The bell marks those keys read and removes the parameter. Each tap opens the right page; only goals also highlight the item (`?goalId=`).
+- **Notification icon:** fixed to `/pwa-192x192.png`. The old `/icons/icon-192x192.png` path didn't exist.
 
 ### Tests
 
-- Edge Function unit tests for the selection logic: quiet hours, check-in time, 9 AM bundling, urgent alerts sent on their own, and claim idempotency.
-- Manual check on both devices: a test push via the function's dry-run flag, tapping it opens the right screen, and the bell clears.
+- `tests/sendReminders.test.ts`: classification, the morning bundle, message building, URLs and read keys, the single-household guard, once per key across hourly runs, dry run, skips (push off, no devices, quiet hours), and removing devices that are gone.
+- `tests/serverPush.test.tsx`: subscribe and save, unsubscribe and delete, no-op without a key, no app-sent pushes in server mode, and `?read=` handling.
+- Browser smoke test (Playwright, production build): the service worker registers, a push delivered through DevTools shows the notification with the right data, and there are no page errors.
 
 ## Rollout
 
-1. Merge Phase 1, then apply `notification_log` and deploy. Repeats stop at this point.
-2. Merge Phase 2, then apply the timing migration and deploy.
-3. Phase 3:
-    1. Generate VAPID keys and set the secrets and the Vercel env.
-    2. Deploy the Edge Function.
-    3. Apply the `push_subscriptions` migration, then the cron migration.
-    4. Deploy the frontend.
-    5. Open the app once on each phone to subscribe.
+1. Merge Phase 1, apply `notification_log`, and deploy. *(done)*
+2. Merge Phase 2, apply the timing migration, and deploy. *(done)*
+3. Phase 3, in this order:
+    1. Generate VAPID keys: `npx web-push generate-vapid-keys`.
+    2. Set the function secrets: `npx supabase secrets set VAPID_PUBLIC_KEY=… VAPID_PRIVATE_KEY=… VAPID_SUBJECT=mailto:you@example.com CRON_SECRET=<random>`.
+    3. Deploy the function: `npm run deploy:functions`. This builds the bundle and deploys with `--no-verify-jwt`, since the function checks `CRON_SECRET` itself.
+    4. Apply `20261106090000_push_subscriptions.sql`.
+    5. Create the two Vault secrets listed at the top of `20261106091000_notification_cron.sql`, then apply that migration.
+    6. Set `VITE_VAPID_PUBLIC_KEY` in Vercel and redeploy the frontend.
+    7. Open the app once on each phone, so it subscribes.
+    8. Check with a dry run: `curl -X POST <function-url> -H "Authorization: Bearer <CRON_SECRET>" -d '{"dryRun":true}'`.
 4. In a later migration, drop `cc_due_days_before` once every client is on the new version.
 
 ## Out of scope

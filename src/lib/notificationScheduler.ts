@@ -9,28 +9,14 @@
  */
 
 import { financeService } from "../services/financeService";
-import { getCurrentMonth, formatISODate, formatMonth } from "./dateUtils";
 import { getDefaultNotificationPreferences } from "../data/mockSeedData";
-import {
-    checkDailyCheckinReminder,
-    checkBalanceUpdateReminder,
-    checkCreditCardDueReminders,
-    checkMissingCreditCardStatements,
-    checkPartnerSharedSpendReminders,
-    checkSettlementReminder,
-    checkCoupleStreakRiskReminder,
-    checkBudgetLimitReminders,
-    checkRecurringBillsReminders,
-    checkGoalPacingReminders,
-    checkMonthlyBudgetReviewReminder,
-    currentMinutes,
-    isWithinQuietHours,
-    DEFAULT_CC_DUE_REMINDER_DAYS,
-    type AppReminder,
-} from "./reminders/rules";
+import { isServerPushEnabled } from "./pushSubscription";
+import { currentMinutes, isWithinQuietHours, type AppReminder } from "./reminders/rules";
+import { computeRemindersFrom, type ComputeRemindersOptions } from "./reminders/engine";
 import type { NotificationPreferences } from "../types/finance";
 
 export * from "./reminders/rules";
+export * from "./reminders/engine";
 
 // =============================================================================
 // Legacy device-local dismissals (pre notification_log). Read once to migrate.
@@ -78,137 +64,13 @@ export async function migrateLegacyDismissals(memberId: string): Promise<void> {
 // =============================================================================
 
 /**
- * CC due reminder offsets. Rows saved before cc_due_reminder_days existed
- * fall back to the legacy single lead time.
- */
-export function getCcDueReminderDays(prefs: NotificationPreferences): number[] {
-    if (Array.isArray(prefs.cc_due_reminder_days)) return prefs.cc_due_reminder_days;
-    if (prefs.cc_due_days_before) return [prefs.cc_due_days_before];
-    return DEFAULT_CC_DUE_REMINDER_DAYS;
-}
-
-export interface ComputeRemindersOptions {
-    memberId?: string;
-    currentHour?: number;
-    referenceDate?: Date;
-}
-
-/**
  * Computes all active, non-dismissed reminders for a member.
  */
 export async function computeActiveReminders(
     options?: ComputeRemindersOptions,
 ): Promise<AppReminder[]> {
     try {
-        const memberId = options?.memberId || "mem-00000000-0011";
-        const referenceDate = options?.referenceDate;
-        const currentMonth = referenceDate ? formatMonth(referenceDate) : getCurrentMonth();
-        const todayStr = referenceDate ? formatISODate(referenceDate) : undefined;
-
-        const [
-            prefs,
-            log,
-            streak,
-            snapshots,
-            statements,
-            cards,
-            overview,
-            expenses,
-            recurringItems,
-            goals,
-            allCheckins,
-            monthlyBudget,
-        ] = await Promise.all([
-            financeService.getNotificationPreferences(memberId),
-            financeService.getNotificationLog(memberId),
-            financeService.getStreakSummary(memberId),
-            financeService.getAllAccountSnapshots(memberId),
-            financeService.getCreditCardStatements(),
-            financeService.getCreditCards(),
-            financeService.getHouseholdOverview(),
-            financeService.getExpenses(),
-            financeService.getRecurringItems(),
-            financeService.getGoals(),
-            financeService.getDailyCheckins(),
-            financeService.getMonthlyBudget(currentMonth, memberId),
-        ]);
-
-        const members = overview.members || [];
-        const candidates: (AppReminder | null)[] = [];
-        const ccDueDays = getCcDueReminderDays(prefs);
-
-        if (prefs.streak_and_logging) {
-            candidates.push(
-                checkDailyCheckinReminder(
-                    streak,
-                    options?.currentHour,
-                    memberId,
-                    todayStr,
-                    prefs.checkin_time,
-                ),
-            );
-        }
-
-        if (prefs.monthly_balance_updates) {
-            candidates.push(checkBalanceUpdateReminder(snapshots, referenceDate, memberId));
-        }
-
-        if (prefs.cc_payment_due) {
-            candidates.push(
-                ...checkCreditCardDueReminders(statements, todayStr, ccDueDays, memberId),
-            );
-        }
-
-        if (prefs.cc_missing_statement) {
-            candidates.push(
-                ...checkMissingCreditCardStatements(cards, statements, referenceDate, memberId),
-            );
-        }
-
-        if (prefs.partner_shared_spend) {
-            candidates.push(
-                ...checkPartnerSharedSpendReminders(expenses, members, memberId, todayStr),
-                checkSettlementReminder(
-                    overview.settlementSummary,
-                    prefs.settlement_threshold_sgd || 200,
-                    referenceDate,
-                    memberId,
-                ),
-                checkCoupleStreakRiskReminder(
-                    allCheckins,
-                    members,
-                    memberId,
-                    options?.currentHour,
-                    todayStr,
-                    prefs.checkin_time,
-                ),
-            );
-        }
-
-        if (prefs.budget_limit_alerts) {
-            candidates.push(
-                ...checkBudgetLimitReminders(monthlyBudget, prefs.budget_warning_pct || 80, memberId),
-            );
-        }
-
-        if (prefs.recurring_bills_due) {
-            candidates.push(...checkRecurringBillsReminders(recurringItems, referenceDate, memberId));
-        }
-
-        if (prefs.goal_pacing_alerts) {
-            candidates.push(...checkGoalPacingReminders(goals, referenceDate));
-        }
-
-        if (prefs.monthly_budget_review) {
-            candidates.push(checkMonthlyBudgetReviewReminder(monthlyBudget, referenceDate, memberId));
-        }
-
-        const dismissed = new Set(
-            log.filter((entry) => entry.dismissed_at).map((entry) => entry.reminder_key),
-        );
-        return candidates.filter(
-            (r): r is AppReminder => r !== null && !dismissed.has(r.id),
-        );
+        return await computeRemindersFrom(financeService, options);
     } catch (err) {
         console.error("Failed to compute active reminders:", err);
         return [];
@@ -264,8 +126,8 @@ export async function dispatchPWANotification(
             const registration = await navigator.serviceWorker.getRegistration();
             if (registration && registration.showNotification) {
                 await registration.showNotification(title, {
-                    icon: "/icons/icon-192x192.png",
-                    badge: "/icons/icon-192x192.png",
+                    icon: "/pwa-192x192.png",
+                    badge: "/pwa-192x192.png",
                     ...options,
                 });
                 return true;
@@ -284,6 +146,9 @@ export async function dispatchPWANotification(
 /**
  * Computes reminders and pushes each one at most once. A reminder is pushed
  * only if this call wins the claim in the notification log.
+ *
+ * With server push configured, the send-reminders function sends every push
+ * and this only returns the reminders for the bell.
  */
 export async function evaluateAndDispatchReminders(
     options?: ComputeRemindersOptions,
@@ -308,6 +173,7 @@ export async function evaluateAndDispatchReminders(
 
     if (
         !quiet &&
+        !isServerPushEnabled() &&
         prefs.push_enabled &&
         typeof window !== "undefined" &&
         "Notification" in window &&

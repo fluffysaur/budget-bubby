@@ -39,9 +39,11 @@ import type {
   NotificationPreferences,
   NotificationLogEntry,
   NotificationLogRef,
+  PushSubscriptionInput,
   UpdateNotificationPreferencesInput,
 } from '../types/finance';
 import { getDefaultNotificationPreferences } from '../data/mockSeedData';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
 import {
   calculateSharedExpenseSettlement,
@@ -76,12 +78,6 @@ export const PRESET_DEFAULT_CATEGORIES = [
   { name: 'Buffer', color: '#64748B', icon: 'shield', group: 'spendable' as const },
 ];
 
-function getClient() {
-  if (!supabase) {
-    throw new Error('Supabase client is not configured');
-  }
-  return supabase;
-}
 
 /**
  * Fills fields missing from older rows with defaults and trims Postgres
@@ -104,8 +100,32 @@ function normalizeNotificationPreferences(
 }
 
 export class SupabaseFinanceServiceImpl implements FinanceService {
+  private readonly clientOverride?: SupabaseClient;
+  private readonly localFallback: boolean;
+
+  /**
+   * @param client Supabase client to use. Defaults to the browser client,
+   *   read on each call. The send-reminders function passes a service-role
+   *   client.
+   * @param options.localFallback When true (default), notification log calls
+   *   fall back to the device-local log on errors. The server sets it false
+   *   so errors surface instead of being recorded in memory.
+   */
+  constructor(client?: SupabaseClient, options: { localFallback?: boolean } = {}) {
+    this.clientOverride = client;
+    this.localFallback = options.localFallback ?? true;
+  }
+
+  private getClient(): SupabaseClient {
+    const client = this.clientOverride ?? supabase;
+    if (!client) {
+      throw new Error('Supabase client is not configured');
+    }
+    return client;
+  }
+
   private async getHouseholdId(): Promise<string> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('households').select('id').limit(1).maybeSingle();
     if (error) throw error;
     if (data?.id) return data.id;
@@ -139,7 +159,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getHouseholdOverview(): Promise<HouseholdOverview> {
-    const client = getClient();
+    const client = this.getClient();
 
     // 1. Fetch household
     const { data: householdData, error: hhError } = await client
@@ -240,7 +260,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getAccounts(perspective: Perspective): Promise<Account[]> {
-    const client = getClient();
+    const client = this.getClient();
     let query = client.from('accounts').select('*');
 
     if (perspective !== 'household') {
@@ -266,7 +286,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async createAccount(input: CreateAccountInput): Promise<Account> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = isValidUuid(input.household_id)
       ? input.household_id
       : await this.getHouseholdId();
@@ -303,7 +323,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async updateAccount(id: string, updates: UpdateAccountInput): Promise<Account> {
-    const client = getClient();
+    const client = this.getClient();
     const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.type !== undefined) payload.type = updates.type;
@@ -324,7 +344,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async deleteAccount(id: string): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     const { error } = await client.from('accounts').delete().eq('id', id);
     if (error) throw error;
   }
@@ -335,7 +355,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     notes?: string,
     date?: string
   ): Promise<Account> {
-    const client = getClient();
+    const client = this.getClient();
     const rounded = Math.round(newBalance * 100) / 100;
 
     const updates: Record<string, unknown> = { balance: rounded, updated_at: new Date().toISOString() };
@@ -387,7 +407,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getAccountSnapshots(accountId: string): Promise<AccountSnapshot[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client
       .from('account_snapshots')
       .select('*')
@@ -398,7 +418,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getAllAccountSnapshots(perspective?: Perspective): Promise<AccountSnapshot[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client
       .from('account_snapshots')
       .select('*')
@@ -416,14 +436,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getBaseProfiles(): Promise<BaseBudgetProfile[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('base_budget_profiles').select('*');
     if (error) throw error;
     return (data || []) as BaseBudgetProfile[];
   }
 
   public async getBaseAllocations(profileId?: string): Promise<BaseProfileAllocation[]> {
-    const client = getClient();
+    const client = this.getClient();
     let query = client.from('base_profile_allocations').select('*');
     if (profileId) {
       query = query.eq('profile_id', profileId);
@@ -434,7 +454,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getCategories(): Promise<Category[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('categories').select('*');
     if (error) throw error;
     const cats = (data || []) as Category[];
@@ -456,7 +476,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async seedDefaultCategories(explicitHouseholdId?: string): Promise<Category[]> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = explicitHouseholdId || (await this.getHouseholdId());
 
     const rowsToInsert = PRESET_DEFAULT_CATEGORIES.map((preset) => ({
@@ -480,7 +500,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async addCategory(input: CreateCategoryInput): Promise<Category> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = isValidUuid(input.household_id)
       ? input.household_id
       : await this.getHouseholdId();
@@ -508,7 +528,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async updateCategory(id: string, updates: UpdateCategoryInput): Promise<Category> {
-    const client = getClient();
+    const client = this.getClient();
     const payload: Record<string, unknown> = {};
     if (updates.name !== undefined) payload.name = updates.name.trim();
     if (updates.color !== undefined) payload.color = updates.color;
@@ -530,7 +550,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async deleteCategory(id: string): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     const { error } = await client
       .from('categories')
       .delete()
@@ -543,7 +563,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     profile: BaseBudgetProfile,
     allocations: BaseProfileAllocation[]
   ): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
 
     // 1. Resolve household_id safely (prevent invalid syntax for type uuid like "hh-00000000-0001")
     let householdId = profile.household_id;
@@ -658,7 +678,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getMonthlyBudget(month: string, memberId?: string): Promise<MonthlyBudgetDetail> {
-    const client = getClient();
+    const client = this.getClient();
     let query = client.from('monthly_budgets').select('*').eq('month', month);
     if (memberId) {
       query = query.eq('owner_id', memberId);
@@ -857,7 +877,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   public async updateMonthlyBudget(
     budgetUpdates: Partial<MonthlyBudget> & { id?: string }
   ): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     if (!budgetUpdates.id) {
       throw new Error('Monthly budget ID is required for update');
     }
@@ -874,7 +894,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getExpenses(filter?: ExpenseFilter): Promise<Expense[]> {
-    const client = getClient();
+    const client = this.getClient();
     const sortBy = filter?.sortBy || 'date';
     const ascending = filter?.sortOrder === 'asc';
     let query = client.from('expenses').select('*');
@@ -926,7 +946,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async addExpense(input: CreateExpenseInput): Promise<Expense> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = input.household_id || (await this.getHouseholdId());
 
     // Safely resolve payer_id if a mock or non-UUID string was supplied
@@ -1020,7 +1040,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async updateExpense(id: string, updates: UpdateExpenseInput): Promise<Expense> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('expenses').update(updates).eq('id', id).select().single();
     if (error) throw error;
     return data as Expense;
@@ -1036,13 +1056,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async deleteExpense(id: string): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     const { error } = await client.from('expenses').delete().eq('id', id);
     if (error) throw error;
   }
 
   public async settleSharedExpenses(member1Id: string, member2Id: string): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     const { error } = await client
       .from('expenses')
       .update({ settled: true })
@@ -1053,14 +1073,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getGoals(): Promise<SavingsGoal[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('savings_goals').select('*');
     if (error) throw error;
     return (data || []) as SavingsGoal[];
   }
 
   public async addGoal(input: CreateGoalInput): Promise<SavingsGoal> {
-    const client = getClient();
+    const client = this.getClient();
     const savedSoFar = input.saved_so_far ?? 0;
     const monthlyContribution = input.monthly_contribution ?? 0;
     const pacing = calculateGoalPacing(
@@ -1093,7 +1113,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async updateGoal(id: string, updates: Partial<SavingsGoal>): Promise<SavingsGoal> {
-    const client = getClient();
+    const client = this.getClient();
     // Fetch existing goal to recalculate pacing if amounts/dates change
     const { data: existing, error: fetchError } = await client
       .from('savings_goals')
@@ -1121,14 +1141,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async getRecurringItems(): Promise<RecurringItem[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('recurring_items').select('*');
     if (error) throw error;
     return (data || []) as RecurringItem[];
   }
 
   public async addRecurringItem(input: CreateRecurringItemInput): Promise<RecurringItem> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = isValidUuid(input.household_id)
       ? input.household_id
       : await this.getHouseholdId();
@@ -1164,7 +1184,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     id: string,
     updates: Partial<RecurringItem>
   ): Promise<RecurringItem> {
-    const client = getClient();
+    const client = this.getClient();
 
     const finalUpdates: Partial<RecurringItem> = { ...updates };
     delete finalUpdates.id;
@@ -1202,21 +1222,21 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async deleteRecurringItem(id: string): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     const { error } = await client.from('recurring_items').delete().eq('id', id);
     if (error) throw error;
   }
 
   // Credit Cards
   public async getCreditCards(): Promise<CreditCard[]> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client.from('credit_cards').select('*').order('created_at', { ascending: true });
     if (error) throw error;
     return (data || []) as CreditCard[];
   }
 
   public async addCreditCard(input: CreateCreditCardInput): Promise<CreditCard> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = input.household_id || (await this.getHouseholdId());
     const { data, error } = await client
       .from('credit_cards')
@@ -1239,7 +1259,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async updateCreditCard(id: string, updates: Partial<CreditCard>): Promise<CreditCard> {
-    const client = getClient();
+    const client = this.getClient();
     const { data, error } = await client
       .from('credit_cards')
       .update(updates)
@@ -1251,13 +1271,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async deleteCreditCard(id: string): Promise<void> {
-    const client = getClient();
+    const client = this.getClient();
     const { error } = await client.from('credit_cards').delete().eq('id', id);
     if (error) throw error;
   }
 
   public async getCreditCardStatements(month?: string): Promise<CreditCardStatement[]> {
-    const client = getClient();
+    const client = this.getClient();
     let query = client.from('credit_card_statements').select('*, card:credit_cards(*)');
     if (month) {
       query = query.eq('month', month);
@@ -1268,7 +1288,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   }
 
   public async upsertCreditCardStatement(input: UpsertCreditCardStatementInput): Promise<CreditCardStatement> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = input.household_id || (await this.getHouseholdId());
     const { data, error } = await client
       .from('credit_card_statements')
@@ -1294,7 +1314,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   // Daily Check-ins & Streaks
   public async getDailyCheckins(memberId?: string): Promise<DailyCheckin[]> {
-    const client = getClient();
+    const client = this.getClient();
     let query = client.from('daily_checkins').select('*').order('checkin_date', { ascending: false });
     if (memberId) {
       query = query.eq('member_id', memberId);
@@ -1309,7 +1329,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     date: string,
     type: CheckinType
   ): Promise<DailyCheckin> {
-    const client = getClient();
+    const client = this.getClient();
     const householdId = await this.getHouseholdId();
     const { data, error } = await client
       .from('daily_checkins')
@@ -1376,7 +1396,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
 
     // Couple streak (days where BOTH partners checked in)
-    const client = getClient();
+    const client = this.getClient();
     const { data: membersData } = await client.from('household_members').select('id').order('created_at', { ascending: true });
     const members = (membersData || []) as { id: string }[];
     const m1 = members[0]?.id;
@@ -1434,7 +1454,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   public async getNotificationPreferences(memberId: string): Promise<NotificationPreferences> {
     const cacheKey = `bb_notif_prefs_${memberId}`;
     try {
-      const client = getClient();
+      const client = this.getClient();
       const householdId = await this.getHouseholdId();
       const { data, error } = await client
         .from('notification_preferences')
@@ -1500,7 +1520,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     };
 
     try {
-      const client = getClient();
+      const client = this.getClient();
       const { error } = await client
         .from('notification_preferences')
         .upsert(
@@ -1531,7 +1551,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   public async getNotificationLog(memberId: string): Promise<NotificationLogEntry[]> {
     try {
       const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await getClient()
+      const { data, error } = await this.getClient()
         .from('notification_log')
         .select('reminder_key, type, sent_at, read_at, dismissed_at, created_at')
         .eq('member_id', memberId)
@@ -1539,6 +1559,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       if (error) throw error;
       return (data || []) as NotificationLogEntry[];
     } catch (err) {
+      if (!this.localFallback) throw err;
       console.debug('Failed to fetch notification log, using local log:', err);
       return getLocalNotificationLog(memberId);
     }
@@ -1548,7 +1569,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     try {
       const householdId = await this.getHouseholdId();
       // Insert-or-ignore: a returned row means this caller owns the send
-      const { data, error } = await getClient()
+      const { data, error } = await this.getClient()
         .from('notification_log')
         .upsert(
           {
@@ -1564,6 +1585,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       if (error) throw error;
       return (data || []).length > 0;
     } catch (err) {
+      if (!this.localFallback) throw err;
       console.debug('Failed to claim notification send, using local log:', err);
       return claimLocalNotificationSend(memberId, ref);
     }
@@ -1571,15 +1593,68 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async markNotificationsRead(memberId: string, refs: NotificationLogRef[]): Promise<void> {
     if (refs.length === 0) return;
-    await this.upsertNotificationLog(memberId, refs, { read_at: new Date().toISOString() }, () =>
-      markLocalNotificationsRead(memberId, refs)
-    );
+    const readAt = new Date().toISOString();
+    try {
+      // Update existing rows first so their type (set when pushed) is kept
+      const { data, error } = await this.getClient()
+        .from('notification_log')
+        .update({ read_at: readAt })
+        .eq('member_id', memberId)
+        .in(
+          'reminder_key',
+          refs.map((ref) => ref.key)
+        )
+        .select('reminder_key');
+      if (error) throw error;
+      const updated = new Set((data || []).map((row) => row.reminder_key as string));
+      const missing = refs.filter((ref) => !updated.has(ref.key));
+      if (missing.length === 0) return;
+      await this.upsertNotificationLog(memberId, missing, { read_at: readAt }, () =>
+        markLocalNotificationsRead(memberId, missing)
+      );
+    } catch (err) {
+      if (!this.localFallback) throw err;
+      console.debug('Failed to mark notifications read, using local log:', err);
+      markLocalNotificationsRead(memberId, refs);
+    }
   }
 
   public async dismissNotification(memberId: string, ref: NotificationLogRef): Promise<void> {
     await this.upsertNotificationLog(memberId, [ref], { dismissed_at: new Date().toISOString() }, () =>
       dismissLocalNotification(memberId, ref)
     );
+  }
+
+  // Push Subscriptions
+  public async savePushSubscription(
+    memberId: string,
+    subscription: PushSubscriptionInput
+  ): Promise<void> {
+    const householdId = await this.getHouseholdId();
+    // Upsert by endpoint: a device follows whichever member last subscribed on it
+    const { error } = await this.getClient()
+      .from('push_subscriptions')
+      .upsert(
+        {
+          household_id: householdId,
+          member_id: memberId,
+          endpoint: subscription.endpoint,
+          p256dh: subscription.p256dh,
+          auth: subscription.auth,
+          user_agent: subscription.user_agent ?? null,
+          last_seen_at: new Date().toISOString(),
+        },
+        { onConflict: 'endpoint' }
+      );
+    if (error) throw error;
+  }
+
+  public async deletePushSubscription(endpoint: string): Promise<void> {
+    const { error } = await this.getClient()
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint);
+    if (error) throw error;
   }
 
   private async upsertNotificationLog(
@@ -1590,7 +1665,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   ): Promise<void> {
     try {
       const householdId = await this.getHouseholdId();
-      const { error } = await getClient()
+      const { error } = await this.getClient()
         .from('notification_log')
         .upsert(
           refs.map((ref) => ({
@@ -1604,6 +1679,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         );
       if (error) throw error;
     } catch (err) {
+      if (!this.localFallback) throw err;
       console.debug('Failed to update notification log, using local log:', err);
       fallback();
     }

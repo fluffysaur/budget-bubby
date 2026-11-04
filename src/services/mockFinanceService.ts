@@ -40,6 +40,7 @@ import type {
   UpdateNotificationPreferencesInput,
   NotificationLogEntry,
   NotificationLogRef,
+  PushSubscriptionInput,
 } from '../types/finance';
 import {
   mockSeedData,
@@ -1289,6 +1290,14 @@ class MockFinanceServiceImpl implements FinanceService {
   public async dismissNotification(memberId: string, ref: NotificationLogRef): Promise<void> {
     dismissLocalNotification(memberId, ref);
   }
+
+  // Push Subscriptions: no server in mock mode, so nothing to store
+  public async savePushSubscription(
+    _memberId: string,
+    _subscription: PushSubscriptionInput
+  ): Promise<void> {}
+
+  public async deletePushSubscription(_endpoint: string): Promise<void> {}
 }
 
 export const mockFinanceService = new MockFinanceServiceImpl();

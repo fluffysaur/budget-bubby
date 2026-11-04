@@ -37,6 +37,7 @@ import type {
   UpdateNotificationPreferencesInput,
   NotificationLogEntry,
   NotificationLogRef,
+  PushSubscriptionInput,
 } from '../types/finance';
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
@@ -111,6 +112,9 @@ export interface FinanceService {
   claimNotificationSend(memberId: string, ref: NotificationLogRef): Promise<boolean>;
   markNotificationsRead(memberId: string, refs: NotificationLogRef[]): Promise<void>;
   dismissNotification(memberId: string, ref: NotificationLogRef): Promise<void>;
+  // Push Subscriptions (one per device)
+  savePushSubscription(memberId: string, subscription: PushSubscriptionInput): Promise<void>;
+  deletePushSubscription(endpoint: string): Promise<void>;
 }
 
 export function isDemoModeActive(): boolean {
@@ -328,6 +332,10 @@ export const financeService: FinanceService = {
   markNotificationsRead: (memberId, refs) =>
     getActiveService().markNotificationsRead(memberId, refs),
   dismissNotification: (memberId, ref) => getActiveService().dismissNotification(memberId, ref),
+  // Push Subscriptions
+  savePushSubscription: (memberId, subscription) =>
+    getActiveService().savePushSubscription(memberId, subscription),
+  deletePushSubscription: (endpoint) => getActiveService().deletePushSubscription(endpoint),
 };
 
 export default financeService;
