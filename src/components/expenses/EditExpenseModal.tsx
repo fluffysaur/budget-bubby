@@ -22,10 +22,12 @@ import {
 import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
+import { FxRateField } from "./FxRateField";
 import { Select } from "../ui/Select";
 import { financeService } from "../../services/financeService";
 import {
     SUPPORTED_CURRENCIES,
+    buildExpenseFxFields,
     convertToSGD,
 } from "../../lib/currencyConverter";
 import { formatSGD } from "../../lib/currency";
@@ -79,6 +81,8 @@ export function EditExpenseModal({
 
     const [amount, setAmount] = useState<number>(0);
     const [currency, setCurrency] = useState<string>("SGD");
+    // Saved or user-entered rate; undefined means the live default rate.
+    const [customRate, setCustomRate] = useState<number | undefined>();
     const [item, setItem] = useState<string>("");
     const [categoryId, setCategoryId] = useState<string>("");
     const [payerId, setPayerId] = useState<string>("");
@@ -111,6 +115,10 @@ export function EditExpenseModal({
         if (expense && isOpen) {
             const origCurr = expense.original_currency || "SGD";
             setCurrency(origCurr);
+            const savedRate = Number(expense.exchange_rate);
+            setCustomRate(
+                origCurr !== "SGD" && savedRate > 0 ? savedRate : undefined,
+            );
             setAmount(
                 expense.original_amount !== undefined &&
                     expense.original_amount !== null
@@ -139,11 +147,7 @@ export function EditExpenseModal({
         );
     }, [currency]);
 
-    // Computed SGD equivalent if foreign currency
-    const convertedPreview = useMemo(() => {
-        if (currency === "SGD") return null;
-        return convertToSGD(amount, currency);
-    }, [amount, currency]);
+    const amountInSGD = convertToSGD(amount, currency, customRate).amountInSGD;
 
     // Add a tag
     const handleAddTag = (tagToAdd: string) => {
@@ -180,21 +184,13 @@ export function EditExpenseModal({
             setIsSubmitting(true);
             setErrorMessage(null);
 
-            const { amountInSGD, exchangeRate } = convertToSGD(
-                amount,
-                currency,
-            );
-
             const updates: UpdateExpenseInput = {
                 payer_id: payerId,
                 category_id: goalId ? null : categoryId || null,
                 date,
                 time: time || null,
                 item: item.trim(),
-                amount: amountInSGD,
-                original_amount: currency !== "SGD" ? amount : null,
-                original_currency: currency,
-                exchange_rate: currency !== "SGD" ? exchangeRate : null,
+                ...buildExpenseFxFields(amount, currency, customRate),
                 remarks: remarks.trim() || null,
                 is_shared: isShared,
                 split_ratio: isShared ? splitRatio : 0.5,
@@ -249,9 +245,10 @@ export function EditExpenseModal({
                                 <select
                                     aria-label="Select currency"
                                     value={currency}
-                                    onChange={(e) =>
-                                        setCurrency(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setCurrency(e.target.value);
+                                        setCustomRate(undefined);
+                                    }}
                                     className="appearance-none rounded-full border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 >
                                     {SUPPORTED_CURRENCIES.map((c) => (
@@ -271,18 +268,19 @@ export function EditExpenseModal({
                             value={amount}
                             onChange={setAmount}
                             currencySymbol={currentCurrencyConfig.symbol}
+                            currencyCode={currency}
                             autoFocus
                             id="edit-expense-amount"
                             aria-label="Edit expense amount"
                         />
 
-                        {convertedPreview && (
-                            <div className="mt-2 text-center text-xs font-bold text-(--text-ink) bg-(--pastel-butter-light) rounded-lg p-2 border border-(--border-ink)">
-                                ≈ {formatSGD(convertedPreview.amountInSGD)} SGD
-                                (Rate: 1 SGD ={" "}
-                                {convertedPreview.exchangeRate.toLocaleString()}{" "}
-                                {currency})
-                            </div>
+                        {currency !== "SGD" && (
+                            <FxRateField
+                                currencyCode={currency}
+                                foreignAmount={amount}
+                                customRate={customRate}
+                                onCustomRateChange={setCustomRate}
+                            />
                         )}
                     </div>
 
@@ -450,7 +448,7 @@ export function EditExpenseModal({
                                     <span>Partner's Split Share</span>
                                     <span className="font-bold text-(--text-ink)">
                                         {Math.round(splitRatio * 100)}% (
-                                        {formatSGD(amount * splitRatio)})
+                                        {formatSGD(amountInSGD * splitRatio)})
                                     </span>
                                 </div>
                                 <input

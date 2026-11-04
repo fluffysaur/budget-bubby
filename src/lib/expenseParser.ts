@@ -2,6 +2,22 @@ import { SUPPORTED_CURRENCIES } from "./currencyConverter";
 import { getCurrentSingaporeTime } from "./dateUtils";
 import type { Category, SavingsGoal } from "../types/finance";
 
+// Currency symbols (e.g. RM, ₫, NT$), longest first so "US$" isn't read as "S$".
+const CURRENCY_ALIASES = SUPPORTED_CURRENCIES.flatMap((c) =>
+    (c.aliases ?? []).map((alias) => {
+        const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return {
+            code: c.code,
+            length: alias.length,
+            // Symbol right before or after a number, not inside a word.
+            regex: new RegExp(
+                `(?<![A-Za-z])${escaped}\\s?(?=\\d)|(?<=\\d)\\s?${escaped}(?![A-Za-z])`,
+                "i",
+            ),
+        };
+    }),
+).sort((a, b) => b.length - a.length);
+
 export interface BulkExpenseDraftRow {
     id: string;
     date: string;
@@ -141,15 +157,23 @@ export function parseBulkExpenseText(
             working = working.replace(timeMatch12[0], " ").trim();
         }
 
-        // 4. Extract currency if specified (e.g. VND, JPY, MYR, USD, S$, $, RM, ₫, ¥)
+        // 4. Extract currency: a code (VND, CNY) wins over a symbol (₫, ¥ = JPY).
+        // A plain "$" stays SGD.
         let currency = "SGD";
+        let codeFound = false;
         for (const c of SUPPORTED_CURRENCIES) {
             const codeRegex = new RegExp(`\\b${c.code}\\b`, "i");
             if (codeRegex.test(working)) {
                 currency = c.code;
+                codeFound = true;
                 working = working.replace(codeRegex, " ").trim();
                 break;
             }
+        }
+        const symbolMatch = CURRENCY_ALIASES.find((a) => a.regex.test(working));
+        if (symbolMatch) {
+            if (!codeFound) currency = symbolMatch.code;
+            working = working.replace(symbolMatch.regex, " ").trim();
         }
 
         // 5. Extract amount (e.g. 12.50, 4.20, $35.00, S$12.50)

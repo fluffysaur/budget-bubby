@@ -27,8 +27,9 @@ import { isSpendableCategory } from "../../lib/financialFormulas";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import {
     SUPPORTED_CURRENCIES,
-    convertToSGD,
+    buildExpenseFxFields,
 } from "../../lib/currencyConverter";
+import { FxRateField } from "./FxRateField";
 import type {
     Category,
     HouseholdMember,
@@ -356,13 +357,6 @@ export function QuickAddExpenseModal({
         [currencyCode],
     );
 
-    const fxConversion = useMemo(() => {
-        if (currencyCode === "SGD") {
-            return { amountInSGD: amount, exchangeRate: 1 };
-        }
-        return convertToSGD(amount, currencyCode, customExchangeRate);
-    }, [amount, currencyCode, customExchangeRate]);
-
     const visibleCategories = showMoreCategories
         ? categories
         : spendableCategories.length > 0
@@ -464,26 +458,22 @@ export function QuickAddExpenseModal({
         try {
             setIsSubmitting(true);
 
-            const finalAmountInSGD =
-                currencyCode === "SGD" ? amount : fxConversion.amountInSGD;
-            const finalExchangeRate =
-                currencyCode === "SGD" ? 1 : fxConversion.exchangeRate;
-
             const input: CreateExpenseInput = {
                 payer_id: payerId,
                 category_id: isGoalSpend ? null : categoryId || null,
                 date: date || todayStr,
                 time: time || getCurrentSingaporeTime(),
                 item: item.trim(),
-                amount: finalAmountInSGD,
+                ...buildExpenseFxFields(
+                    amount,
+                    currencyCode,
+                    customExchangeRate,
+                ),
                 remarks: remarks.trim() ? remarks.trim() : null,
                 is_shared: isShared,
                 split_ratio: isShared ? 0.5 : 0.0,
                 tags: tags.length > 0 ? tags : undefined,
                 goal_id: isGoalSpend ? selectedGoalId || null : null,
-                original_amount: currencyCode !== "SGD" ? amount : null,
-                original_currency: currencyCode,
-                exchange_rate: currencyCode !== "SGD" ? finalExchangeRate : 1,
             };
 
             const created = await financeService.addExpense(input);
@@ -576,43 +566,12 @@ export function QuickAddExpenseModal({
 
                         {/* Foreign Currency Live Conversion Preview & Editable Rate */}
                         {currencyCode !== "SGD" && (
-                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-(--pastel-butter-light) p-2.5 text-xs text-(--text-ink) border border-(--border-ink)">
-                                <div className="flex items-center gap-1.5 font-bold">
-                                    <span>Converted:</span>
-                                    <span className="text-sm font-black text-(--text-ink)">
-                                        ≈ S$
-                                        {fxConversion.amountInSGD.toFixed(2)}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-(--text-muted)">
-                                        1 SGD =
-                                    </span>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        aria-label="Exchange rate"
-                                        value={
-                                            customExchangeRate ??
-                                            fxConversion.exchangeRate
-                                        }
-                                        onChange={(e) => {
-                                            const val = parseFloat(
-                                                e.target.value,
-                                            );
-                                            setCustomExchangeRate(
-                                                isNaN(val) || val <= 0
-                                                    ? undefined
-                                                    : val,
-                                            );
-                                        }}
-                                        className="w-20 rounded-lg border border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-xs font-semibold text-center text-(--text-ink)"
-                                    />
-                                    <span className="text-[10px] font-semibold">
-                                        {currencyCode}
-                                    </span>
-                                </div>
-                            </div>
+                            <FxRateField
+                                currencyCode={currencyCode}
+                                foreignAmount={amount}
+                                customRate={customExchangeRate}
+                                onCustomRateChange={setCustomExchangeRate}
+                            />
                         )}
                     </div>
 
