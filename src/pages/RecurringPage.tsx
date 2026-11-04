@@ -19,7 +19,13 @@ import {
     RefreshCw,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, Button, StatCard, Card } from "../components/ui";
+import {
+    PageHeader,
+    Button,
+    StatCard,
+    Card,
+    RecurringContentSkeleton,
+} from "../components/ui";
 import { usePoliciesQuery } from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
@@ -289,6 +295,7 @@ export function RecurringPage({
                 {/* Metric 1: Annual Outflow */}
                 <StatCard
                     title="Annual Outflow"
+                    loading={isLoading}
                     value={formatSGD(totalAnnualOutflow)}
                     subtitle={`${inScopePolicies.length} tracked policies`}
                     icon={<DollarSign className="w-4 h-4" />}
@@ -298,6 +305,7 @@ export function RecurringPage({
                 {/* Metric 2: Monthly Amortized Outflow */}
                 <StatCard
                     title="Monthly Amortized"
+                    loading={isLoading}
                     value={`${formatSGD(monthlyAmortizedOutflow)}/mo`}
                     subtitle="Monthly deduction impact"
                     icon={<TrendingDown className="w-4 h-4" />}
@@ -307,6 +315,7 @@ export function RecurringPage({
                 {/* Metric 3: Upcoming Renewal */}
                 <StatCard
                     title="Next Renewal"
+                    loading={isLoading}
                     value={
                         <span
                             className="text-base sm:text-lg truncate block"
@@ -323,6 +332,7 @@ export function RecurringPage({
                 {/* Metric 4: Heaviest Month */}
                 <StatCard
                     title="Heaviest Month"
+                    loading={isLoading}
                     value={
                         <span className="text-base sm:text-lg text-rose-600 dark:text-rose-400 truncate block">
                             {heaviestMonthName}
@@ -338,28 +348,34 @@ export function RecurringPage({
                 />
             </div>
 
-            {/* 12-Month Renewal Calendar */}
-            <Card variant="white" padding="md">
-                <RenewalCalendar policies={inScopePolicies} />
-            </Card>
+            {isLoading ? (
+                <RecurringContentSkeleton />
+            ) : (
+                <>
+                    {/* 12-Month Renewal Calendar */}
+                    <Card variant="white" padding="md">
+                        <RenewalCalendar policies={inScopePolicies} />
+                    </Card>
 
-            {/* Policy Table */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                        Active Policies &amp; Schedules
-                    </h2>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {inScopePolicies.length} policy records in scope
-                    </span>
-                </div>
+                    {/* Policy Table */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                                Active Policies &amp; Schedules
+                            </h2>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {inScopePolicies.length} policy records in scope
+                            </span>
+                        </div>
 
-                <PolicyTable
-                    policies={inScopePolicies}
-                    onEdit={handleEditPolicy}
-                    onDelete={handleDeletePolicy}
-                />
-            </div>
+                        <PolicyTable
+                            policies={inScopePolicies}
+                            onEdit={handleEditPolicy}
+                            onDelete={handleDeletePolicy}
+                        />
+                    </div>
+                </>
+            )}
 
             {/* Add / Edit Policy Modal */}
             <AddPolicyModal

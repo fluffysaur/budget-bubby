@@ -24,7 +24,7 @@ import {
     Button,
     StatCard,
     SegmentedTabs,
-    LoadingCard,
+    AccountsContentSkeleton,
 } from "../components/ui";
 import { useAccountsQuery, useLoansQuery } from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
@@ -61,11 +61,12 @@ export function AccountsPage({
     // TanStack Query Cached Data Hooks
     const { data: accountsData, isLoading: accountsLoading } =
         useAccountsQuery(perspective);
-    const { data: loansData } = useLoansQuery();
+    const { data: loansData, isLoading: loansLoading } = useLoansQuery();
 
     const accounts = useMemo(() => accountsData || [], [accountsData]);
     const loans = useMemo(() => loansData || [], [loansData]);
-    const isLoading = accountsLoading && !accountsData;
+    const isLoading =
+        (accountsLoading && !accountsData) || (loansLoading && !loansData);
 
     // Modal States
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
@@ -205,6 +206,7 @@ export function AccountsPage({
                             {/* Card 1: Net Worth */}
                             <StatCard
                                 title="Net Worth"
+                                loading={isLoading}
                                 value={formatSGD(trueNetWorth)}
                                 tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
                                 icon={<TrendingUp className="h-4 w-4" />}
@@ -214,6 +216,7 @@ export function AccountsPage({
                             {/* Card 2: Total Assets */}
                             <StatCard
                                 title="Assets"
+                                loading={isLoading}
                                 value={formatSGD(totalAssets)}
                                 subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
                                 icon={<Wallet className="h-4 w-4" />}
@@ -223,6 +226,7 @@ export function AccountsPage({
                             {/* Card 3: Total Liabilities / Loans */}
                             <StatCard
                                 title="Liabilities"
+                                loading={isLoading}
                                 value={formatSGD(totalLiabilities)}
                                 subtitle={`${loans.length} active loan${loans.length === 1 ? "" : "s"}`}
                                 icon={<CreditCard className="h-4 w-4" />}
@@ -232,7 +236,7 @@ export function AccountsPage({
 
                         {/* Loading Indicator */}
                         {isLoading ? (
-                            <LoadingCard message="Loading account balances & net worth..." />
+                            <AccountsContentSkeleton />
                         ) : (
                             <>
                                 {/* Net Worth Progression Area Chart */}

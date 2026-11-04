@@ -24,7 +24,7 @@ import {
     PageHeader,
     Button,
     StatCard,
-    LoadingCard,
+    GoalsSkeleton,
     EmptyStateCard,
     SegmentedTabs,
 } from "../components/ui";
@@ -337,6 +337,7 @@ export function GoalsPage({
                 {/* Card 1: Total Target */}
                 <StatCard
                     title="Target"
+                    loading={isLoading}
                     value={formatSGD(totalTarget)}
                     subtitle={`Across ${perspectiveGoals.length} ${perspectiveGoals.length === 1 ? "goal" : "goals"}`}
                     icon={<Target className="h-4 w-4" />}
@@ -346,6 +347,7 @@ export function GoalsPage({
                 {/* Card 2: Total Saved */}
                 <StatCard
                     title="Saved"
+                    loading={isLoading}
                     value={formatSGD(totalSaved)}
                     subtitle={`${formatSGD(Math.max(0, totalTarget - totalSaved))} remaining`}
                     icon={<PiggyBank className="h-4 w-4" />}
@@ -355,6 +357,7 @@ export function GoalsPage({
                 {/* Card 3: Overall Progress */}
                 <StatCard
                     title="Progress"
+                    loading={isLoading}
                     value={`${overallProgress}%`}
                     subtitle={`${perspectiveGoals.filter((g) => g.status === "achieved").length} achieved`}
                     icon={<Sparkles className="h-4 w-4" />}
@@ -364,6 +367,7 @@ export function GoalsPage({
                 {/* Card 4: Total Monthly Contributions */}
                 <StatCard
                     title="Monthly Pace"
+                    loading={isLoading}
                     value={`${formatSGD(totalMonthlyContributions)}/mo`}
                     subtitle="Target monthly pace"
                     icon={<Calendar className="h-4 w-4" />}
@@ -413,7 +417,7 @@ export function GoalsPage({
 
             {/* Content Area: Loader, Empty State, or Grid */}
             {isLoading ? (
-                <LoadingCard message="Loading savings goals..." />
+                <GoalsSkeleton />
             ) : displayedGoals.length === 0 ? (
                 <EmptyStateCard
                     icon={<span className="text-2xl">🎯</span>}
