@@ -93,14 +93,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
   const [editingProfileMemberId, setEditingProfileMemberId] = useState<string | null>(null);
 
   // Determine perspective display name
-  const perspectiveDisplayName = useMemo(() => {
-    if (perspective === 'household') return 'Combined Household';
-    if (activeMember) return activeMember.display_name;
-    const clean = perspective.toLowerCase();
-    if (clean.includes('yijia')) return 'Yi Jia';
-    if (clean.includes('rachel')) return 'Rachel';
-    return perspective;
-  }, [perspective, activeMember]);
 
   // Cached Monthly Budget Detail Query (Calculates combined or single-member dynamically)
   const { data: budgetDetailData, isLoading: budgetLoading } = useQuery<MonthlyBudgetDetail | null>({
@@ -487,7 +479,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
             <BudgetWaterfall
               budget={budgetDetail?.budget}
               categories={budgetDetail?.categories}
-              perspectiveName={perspectiveDisplayName}
               onEditProfile={() => handleOpenEditor()}
             />
           </CollapsibleSection>

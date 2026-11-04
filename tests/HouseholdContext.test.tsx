@@ -8,7 +8,6 @@ import {
 import { AppHeader } from "../src/components/layout/AppHeader";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
 import { MobileBottomNav } from "../src/components/layout/MobileBottomNav";
-import { PerspectiveBanner } from "../src/components/layout/PerspectiveBanner";
 
 function TestConsumer() {
     const {
@@ -332,37 +331,6 @@ describe("Layout Components", () => {
             const spendTab = screen.getByRole("button", { name: /spend/i });
             fireEvent.click(spendTab);
             expect(onSelectTab).toHaveBeenCalledWith("spend");
-        });
-    });
-
-    describe("PerspectiveBanner", () => {
-        it("displays context banner for household and personal perspectives", async () => {
-            let renderResult: any;
-            await act(async () => {
-                renderResult = render(
-                    <HouseholdProvider>
-                        <PerspectiveBanner />
-                    </HouseholdProvider>,
-                );
-            });
-
-            // Default is household
-            expect(screen.getByText("Combined")).toBeInTheDocument();
-            expect(screen.getByText(/Yi Jia & Rachel/i)).toBeInTheDocument();
-
-            // Switch to Yi Jia via header/context
-            await act(async () => {
-                renderResult.rerender(
-                    <HouseholdProvider initialPerspective="yijia">
-                        <PerspectiveBanner />
-                    </HouseholdProvider>,
-                );
-            });
-
-            expect(screen.getByText(/Yi Jia/i)).toBeInTheDocument();
-            expect(
-                screen.getByText(/Personal Perspective/i),
-            ).toBeInTheDocument();
         });
     });
 });

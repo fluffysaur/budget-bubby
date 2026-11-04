@@ -24,7 +24,6 @@ import type { MonthlyBudget, MonthlyBudgetCategoryDetail } from "../../types/fin
 export interface BudgetWaterfallProps {
   budget?: MonthlyBudget | null;
   categories?: MonthlyBudgetCategoryDetail[];
-  perspectiveName?: string;
   onEditProfile?: () => void;
   className?: string;
 }
@@ -32,7 +31,6 @@ export interface BudgetWaterfallProps {
 export function BudgetWaterfall({
   budget,
   categories = [],
-  perspectiveName,
   onEditProfile,
   className = '',
 }: BudgetWaterfallProps) {
@@ -63,11 +61,6 @@ export function BudgetWaterfall({
                     <h2 className="font-display font-black text-base sm:text-lg tracking-tight text-(--text-ink)">
                         Budget Waterfall Breakdown
                     </h2>
-                    {perspectiveName && (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shadow-cute-sm">
-                            {perspectiveName}
-                        </span>
-                    )}
                 </div>
 
                 {onEditProfile && (

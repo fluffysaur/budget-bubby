@@ -29,6 +29,7 @@ import { mockMembers } from "../../data/mockSeedData";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
+import { StreakChip } from "./StreakChip";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
@@ -424,6 +425,9 @@ export function AppHeader({
                             <span className="xs:hidden">Demo</span>
                         </div>
                     )}
+
+                    {/* Check-in streak */}
+                    <StreakChip />
 
                     {/* Notification Center Popover */}
                     <NotificationCenterPopover onNavigateTab={onNavigateTab} />

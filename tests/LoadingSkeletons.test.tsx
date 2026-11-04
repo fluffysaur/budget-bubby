@@ -208,7 +208,7 @@ describe("Page loading skeletons", () => {
 
         const skeleton = await screen.findByTestId("dashboard-skeleton");
         expect(skeleton).toHaveAttribute("role", "status");
-        expect(screen.queryByRole("region", { name: "Personal Budget Progress" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("region", { name: "Left to Spend" })).not.toBeInTheDocument();
 
         await act(async () => {
             pending.resolve(makeBudget(month, 7345));
@@ -217,6 +217,6 @@ describe("Page loading skeletons", () => {
         await waitFor(() => {
             expect(screen.queryByTestId("dashboard-skeleton")).not.toBeInTheDocument();
         });
-        expect(screen.getByRole("region", { name: "Personal Budget Progress" })).toBeInTheDocument();
+        expect(screen.getByRole("region", { name: "Left to Spend" })).toBeInTheDocument();
     });
 });

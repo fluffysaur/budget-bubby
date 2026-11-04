@@ -42,7 +42,7 @@ describe("App Integration & Routing", () => {
 
         // Default Dashboard page renders Net Worth card
         await waitFor(() => {
-            expect(screen.getByRole("region", { name: "Net Worth Summary" })).toBeInTheDocument();
+            expect(screen.getByRole("region", { name: "Left to Spend" })).toBeInTheDocument();
         }, { timeout: 15000 });
     }, 30000);
 

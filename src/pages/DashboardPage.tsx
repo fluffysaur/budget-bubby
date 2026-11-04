@@ -1,48 +1,27 @@
 /**
  * DashboardPage Component
- * Top-level Financial Hub & Settlement Center
- * Adapts dynamically to active perspective:
- * - Mobile Daily Briefing Strip: Spendable Remaining, 4 Category Meters (Food, Lifestyle, Transport, Buffer), Settlement Status
- * - Combined Household: NetWorthHeroCard, SettlementWidget, SharedGoalsOverview, UpcomingBillsWidget
- * - Personal Perspectives: Personal Net Worth, Monthly Budget progress, Personal Accounts & Recent Transactions
- * - Quick Actions: Quick Add Expense, Update Account Balance
+ * Home screen focused on the daily question "how much can I still spend?":
+ * - At most one category limit alert
+ * - Left to Spend hero with per-category meters
+ * - Upcoming bills
+ *
+ * Net worth lives on Accounts, goals on Plan, settlement on Spend > Expenses,
+ * and the check-in streak in the header.
  */
 
-import { useState, useMemo } from "react";
-import {
-    Plus,
-    PieChart,
-    Landmark,
-    Receipt,
-    Wallet,
-    ArrowRightLeft,
-    ChevronRight,
-} from "lucide-react";
+import { useMemo } from "react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
+import { Card, PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
 import {
-    useAccountsQuery,
-    useGoalsQuery,
     useRecurringItemsQuery,
-    useExpensesQuery,
     useMonthlyBudgetQuery,
-    useCategoriesQuery,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
-import { formatDisplayDate } from "../lib/dateUtils";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
-import { mockCategories, mockMembers } from "../data/mockSeedData";
+import { mockMembers } from "../data/mockSeedData";
 import { isSpendableCategory } from "../lib/financialFormulas";
-import { NetWorthHeroCard } from "../components/dashboard/NetWorthHeroCard";
-import { DailyCheckinStreakBar } from "../components/dashboard/DailyCheckinStreakBar";
-import { SettlementWidget } from "../components/dashboard/SettlementWidget";
-import { SharedGoalsOverview } from "../components/dashboard/SharedGoalsOverview";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
-import { QuickAddExpenseModal } from "../components/expenses/QuickAddExpenseModal";
-import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
-import { AddAccountModal } from "../components/accounts/AddAccountModal";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
-import type { Account } from "../types/finance";
 
 export interface DashboardPageProps {
     className?: string;
@@ -53,71 +32,27 @@ export function DashboardPage({
     className = "",
     onNavigateTab,
 }: DashboardPageProps) {
-    const {
-        perspective,
-        activeMember,
-        members: ctxMembers,
-        overview,
-        refreshData: refreshHousehold,
-    } = useHousehold();
+    const { activeMember, members: ctxMembers } = useHousehold();
 
     const members =
         ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
-    const isHousehold = perspective === "household";
 
     const currentMonth = useCurrentMonth();
     const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
 
     // TanStack Query Cached Data Hooks
-    const { data: accountsData, isLoading: accountsLoading } = useAccountsQuery(perspective);
-    const { data: goalsData } = useGoalsQuery();
     const { data: recurringItemsData } = useRecurringItemsQuery();
-    const { data: expensesData, isLoading: expensesLoading } =
-        useExpensesQuery();
     const { data: budgetData, isLoading: budgetLoading } = useMonthlyBudgetQuery(
         currentMonth,
         targetMemberId,
     );
-    const { data: categoriesData } = useCategoriesQuery();
 
-    const accounts = useMemo(() => accountsData || [], [accountsData]);
-    const goals = useMemo(() => goalsData || [], [goalsData]);
     const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
-    const expenses = useMemo(() => expensesData || [], [expensesData]);
     const monthlyBudget = budgetData || null;
-    const categories = useMemo(() => categoriesData || [], [categoriesData]);
 
-    // Show skeleton until the figures the overview renders (balances, budget, spend) have data for the current keys
-    const isLoading =
-        (accountsLoading && !accountsData) ||
-        (budgetLoading && !budgetData) ||
-        (expensesLoading && !expensesData);
+    const isLoading = budgetLoading && !budgetData;
 
-    // Modal States
-    const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
-    const [isUpdateBalanceOpen, setIsUpdateBalanceOpen] =
-        useState<boolean>(false);
-    const [isAddAccountOpen, setIsAddAccountOpen] = useState<boolean>(false);
-    const [selectedAccountForUpdate, setSelectedAccountForUpdate] =
-        useState<Account | null>(null);
-
-    // Perspective Display Name
-    const perspectiveDisplayName = useMemo(() => {
-        if (isHousehold) return "Combined Household";
-        if (activeMember) return activeMember.display_name;
-        const clean = perspective.toLowerCase();
-        if (clean.includes("yijia")) return "Yi Jia";
-        if (clean.includes("rachel")) return "Rachel";
-        return perspective;
-    }, [isHousehold, activeMember, perspective]);
-
-    // Net Worth Calculations
-    const totalAssets = useMemo(() => {
-        const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
-        return Math.round(sum * 100) / 100;
-    }, [accounts]);
-
-    // Spendable budget remaining for the mobile daily briefing
+    // Spendable budget: total left plus a meter per spendable category
     const spendableSummary = useMemo(() => {
         const budgetCategories = monthlyBudget?.categories || [];
         const spendable = budgetCategories.filter((bc) =>
@@ -152,537 +87,141 @@ export function DashboardPage({
             spendableItems.reduce((s, c) => s + c.spent, 0);
         const totalRemaining =
             monthlyBudget?.spendableRemaining ?? totalAllocated - totalSpent;
+        const totalPct =
+            totalAllocated > 0
+                ? Math.min(100, Math.round((totalSpent / totalAllocated) * 100))
+                : 0;
 
         return {
-            totalSpendableAllocated: totalAllocated,
+            totalAllocated,
             totalSpent,
             totalRemaining,
+            totalPct,
             categories: spendableItems,
         };
     }, [monthlyBudget]);
 
-    // Personal perspective transactions
-    const personalExpenses = useMemo(() => {
-        if (isHousehold || !activeMember) return [];
-        return expenses
-            .filter((e) => e.payer_id === activeMember.id)
-            .slice(0, 5);
-    }, [isHousehold, activeMember, expenses]);
-
-    // Modal Handlers
-    const handleOpenUpdateBalance = (account?: Account) => {
-        if (account) {
-            setSelectedAccountForUpdate(account);
-            setIsUpdateBalanceOpen(true);
-            return;
-        }
-
-        // Tapped without specific account (e.g. from top Dashboard header)
-        if (accounts.length === 0) {
-            // Gracefully handle 0 accounts by opening AddAccountModal with welcome banner
-            setIsAddAccountOpen(true);
-        } else {
-            // Open multi-account selection update modal
-            setSelectedAccountForUpdate(null);
-            setIsUpdateBalanceOpen(true);
-        }
-    };
-
-    const handleExpenseAdded = async () => {
-        await refreshHousehold();
-    };
-
-    const handleBalanceUpdated = async () => {
-        await refreshHousehold();
-    };
-
-    const handleSettled = async () => {
-        await refreshHousehold();
-    };
+    const isOverspent = spendableSummary.totalRemaining < 0;
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
-            {/* Top Header */}
-            <PageHeader
-                title="Home"
-            />
+            <PageHeader title="Home" />
 
-            {/* Loading Indicator */}
             {isLoading ? (
                 <DashboardSkeleton />
             ) : (
                 <>
-                    {/* GAMIFIED DAILY CHECK-IN STREAK BAR */}
-                    <DailyCheckinStreakBar
-                        memberId={activeMember?.id}
-                        onCheckinSuccess={refreshHousehold}
-                    />
-
-                    {/* Category Budget Limit Guardrail Alerts */}
+                    {/* Most urgent category limit alert */}
                     <CategoryLimitWarningBanner
+                        single
                         categories={monthlyBudget?.categories || []}
                         onNavigateCategory={() => onNavigateTab?.("budget")}
                     />
 
-                    {/* DAILY SPEND & CHECK-IN HERO STRIP (Optimized for Fast Mobile Checking) */}
-                    <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute)">
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-(--border-subtle)">
-                            <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                    <Wallet className="h-4 w-4" strokeWidth={2.5} />
-                                </div>
-                                <h3 className="text-sm font-black text-(--text-ink) font-display">
-                                    Daily Spend & Limits
-                                </h3>
-                            </div>
-
-                            {/* Settlement Pill if in household view */}
-                            {isHousehold && overview?.settlementSummary && (
+                    {/* Left to Spend hero */}
+                    <Card
+                        role="region"
+                        aria-label="Left to Spend"
+                        padding="lg"
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                                    Left to Spend
+                                </span>
                                 <div
-                                    onClick={() => onNavigateTab?.("expenses")}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-(--pastel-lilac)/30 px-3 py-1 text-xs font-bold text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) cursor-pointer hover:bg-(--pastel-lilac)/50 transition-colors"
-                                >
-                                    <ArrowRightLeft className="h-3 w-3" strokeWidth={2.5} />
-                                    <span>
-                                        Settlement:{" "}
-                                        {
-                                            overview.settlementSummary
-                                                .settlementText
-                                        }
-                                    </span>
-                                    <ChevronRight className="h-3 w-3" strokeWidth={2.5} />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Spendable Progress Grid */}
-                        <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                            {spendableSummary.categories.map((cat) => (
-                                <div
-                                    key={cat.id}
-                                    className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 shadow-(--shadow-cute-sm)"
-                                >
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="font-bold text-(--text-ink) flex items-center gap-1.5 font-display">
-                                            <span
-                                                className="h-2.5 w-2.5 rounded-full shrink-0 border border-[#1a1a1a]"
-                                                style={{
-                                                    backgroundColor: cat.color,
-                                                }}
-                                            />
-                                            <span className="min-w-0 max-w-25 sm:max-w-40">
-                                                <TruncatedText text={cat.name} />
-                                            </span>
-                                        </span>
-                                        <span className="text-[11px] font-black text-(--text-muted) font-mono-num">
-                                            {cat.pct}%
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-2 flex items-baseline justify-between text-xs font-mono-num">
-                                        <span className="font-extrabold text-(--text-ink)">
-                                            {formatSGD(cat.spent)}
-                                        </span>
-                                        <span className="text-[10px] font-bold text-(--text-muted)">
-                                            / {formatSGD(cat.allocated)}
-                                        </span>
-                                    </div>
-
-                                    {/* Progress bar */}
-                                    <div className="mt-2 h-2 w-full rounded-full bg-(--bg-card) border border-(--border-ink)/30 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all"
-                                            style={{
-                                                width: `${cat.pct}%`,
-                                                backgroundColor:
-                                                    cat.pct > 100
-                                                        ? "#f76b57"
-                                                        : cat.color,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Bottom Spendable Remaining */}
-                        <div className="mt-4 pt-3 border-t-[1.5px] border-(--border-subtle) flex items-center justify-between text-xs">
-                            <span className="text-(--text-muted) font-semibold">
-                                Spendable remaining:{" "}
-                                <strong
-                                    className={`font-mono-num text-sm font-black ${
-                                        spendableSummary.totalRemaining < 0
+                                    data-testid="left-to-spend-amount"
+                                    className={`mt-1 text-3xl sm:text-4xl font-black tracking-tight font-mono-num ${
+                                        isOverspent
                                             ? "text-[#9a1b1b] dark:text-rose-400"
-                                            : "text-[#14532d] dark:text-[#86efac]"
+                                            : "text-(--text-ink)"
                                     }`}
                                 >
                                     {formatSGD(spendableSummary.totalRemaining)}
-                                </strong>
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* 1. Net Worth Hero Card */}
-                    <NetWorthHeroCard
-                        netWorth={totalAssets}
-                        perspective={perspective}
-                        perspectiveName={perspectiveDisplayName}
-                        onUpdateBalance={() => handleOpenUpdateBalance()}
-                    />
-
-                    {/* COMBINED HOUSEHOLD PERSPECTIVE VIEW */}
-                    {isHousehold ? (
-                        <>
-                            {/* 2. Splitwise-style Running Settlement Widget */}
-                            <SettlementWidget
-                                summary={overview?.settlementSummary}
-                                members={members}
-                                expenses={expenses}
-                                onSettled={handleSettled}
-                            />
-
-                            {/* 3. Two-Column Grid: Goals Milestones & Upcoming Bills */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <SharedGoalsOverview
-                                    goals={goals}
-                                    onViewAll={() => onNavigateTab?.("goals")}
-                                />
-                                <UpcomingBillsWidget
-                                    recurringItems={recurringItems}
-                                    onViewAll={() =>
-                                        onNavigateTab?.("recurring")
-                                    }
-                                />
+                                </div>
+                                <span className="mt-1 block text-xs font-semibold text-(--text-muted) font-mono-num">
+                                    {formatSGD(spendableSummary.totalSpent)} of{" "}
+                                    {formatSGD(spendableSummary.totalAllocated)} spent
+                                </span>
                             </div>
-                        </>
-                    ) : (
-                        /* PERSONAL PERSPECTIVE VIEW (Yi Jia / Rachel / Member N) */
-                        <div className="space-y-5">
-                            {/* Personal Monthly Budget Progress */}
+                            {onNavigateTab && (
+                                <button
+                                    type="button"
+                                    onClick={() => onNavigateTab("budget")}
+                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                                >
+                                    Budget
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Overall progress */}
+                        <div className="mt-3 h-2.5 w-full rounded-full bg-(--bg-cream) border border-(--border-ink)/30 overflow-hidden">
                             <div
-                                role="region"
-                                aria-label="Personal Budget Progress"
-                                className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors"
-                            >
-                                <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-subtle)">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                            <PieChart className="h-4 w-4" strokeWidth={2.5} />
-                                        </div>
-                                        <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                                            Monthly Budget
-                                        </h3>
-                                    </div>
-
-                                    {onNavigateTab && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onNavigateTab("budget")
-                                            }
-                                            className="text-xs font-bold text-[#7e22ce] dark:text-[#dfc2ff] hover:underline cursor-pointer"
-                                        >
-                                            View Budget
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* 4 Metric Cards for Personal Budget */}
-                                <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                    {/* Gross Salary */}
-                                    <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm)">
-                                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                                            Gross
-                                        </span>
-                                        <div className="mt-1 text-base sm:text-lg font-black text-(--text-ink) font-mono-num">
-                                            {formatSGD(
-                                                monthlyBudget?.budget
-                                                    .gross_salary || 0,
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* CPF Deduction */}
-                                    <div className="rounded-2xl border-2 border-(--border-ink) bg-[#fff1ee] dark:bg-[#3d1c1a] p-3.5 shadow-(--shadow-cute-sm)">
-                                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#9a1b1b] dark:text-[#fca5a5]">
-                                            CPF (20%)
-                                        </span>
-                                        <div className="mt-1 text-base sm:text-lg font-black text-[#9a1b1b] dark:text-rose-400 font-mono-num">
-                                            -
-                                            {formatSGD(
-                                                monthlyBudget?.budget
-                                                    .cpf_deduction || 0,
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Disposable / Take-Home */}
-                                    <div className="rounded-2xl border-2 border-(--border-ink) bg-[#f0fdf4] dark:bg-[#13351d] p-3.5 shadow-(--shadow-cute-sm)">
-                                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#14532d] dark:text-[#86efac]">
-                                            Take-Home
-                                        </span>
-                                        <div className="mt-1 text-base sm:text-lg font-black text-[#14532d] dark:text-white font-mono-num">
-                                            {formatSGD(
-                                                monthlyBudget?.disposablePool ||
-                                                    0,
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Spent & Remaining */}
-                                    <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm)">
-                                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                                            Spent / Left
-                                        </span>
-                                        <div className="mt-1 flex items-baseline justify-between gap-1 flex-wrap">
-                                            <span className="text-base sm:text-lg font-black text-(--text-ink) font-mono-num">
-                                                {formatSGD(
-                                                    monthlyBudget?.totalSpent ||
-                                                        0,
-                                                )}
-                                            </span>
-                                            <span
-                                                className={`text-xs font-black font-mono-num ${
-                                                    (monthlyBudget?.totalRemaining ||
-                                                        0) < 0
-                                                        ? "text-[#9a1b1b] dark:text-rose-400"
-                                                        : "text-[#14532d] dark:text-[#86efac]"
-                                                }`}
-                                            >
-                                                Left{" "}
-                                                {formatSGD(
-                                                    monthlyBudget?.totalRemaining ||
-                                                        0,
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Personal Accounts & Recent Personal Transactions */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                                {/* Personal Accounts List */}
-                                <div
-                                    role="region"
-                                    aria-label="Personal Accounts"
-                                    className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors"
-                                >
-                                    <div className="flex items-center justify-between pb-4 border-b-2 border-(--border-subtle)">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-pink) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                                <Landmark className="h-4 w-4" strokeWidth={2.5} />
-                                            </div>
-                                            <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                                                Accounts
-                                            </h3>
-                                        </div>
-                                        {onNavigateTab && (
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    onNavigateTab("accounts")
-                                                }
-                                                className="text-xs font-bold text-(--text-muted) hover:text-(--pastel-lilac) transition-colors cursor-pointer"
-                                            >
-                                                View All
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-4 space-y-2.5">
-                                        {accounts.length === 0 ? (
-                                            <div className="py-6 text-center">
-                                                <p className="text-xs font-medium text-(--text-muted) mb-3">
-                                                    No accounts found for this
-                                                    perspective.
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setIsAddAccountOpen(
-                                                            true,
-                                                        )
-                                                    }
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#1a1a1a] bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
-                                                >
-                                                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                                                    <span>
-                                                        Add Account
-                                                    </span>
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            accounts.map((acc) => (
-                                                <div
-                                                    key={acc.id}
-                                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm)"
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white dark:bg-[#382f18] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-xs font-black text-(--text-ink) font-mono-num shrink-0">
-                                                            {acc.institution?.slice(
-                                                                0,
-                                                                3,
-                                                            ) ||
-                                                                acc.type.slice(
-                                                                    0,
-                                                                    3,
-                                                                )}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="flex items-center gap-2 min-w-0">
-                                                                <TruncatedText
-                                                                    text={
-                                                                        acc.name
-                                                                    }
-                                                                    className="text-sm font-bold text-(--text-ink)"
-                                                                />
-                                                                {acc.is_joint && (
-                                                                    <span className="rounded-full bg-(--pastel-lilac)/50 border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] shrink-0">
-                                                                        Joint
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <span className="text-[11px] font-medium text-(--text-muted) block truncate">
-                                                                {acc.type} •{" "}
-                                                                {acc.institution ||
-                                                                    "Bank"}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="text-right shrink-0">
-                                                        <div className="text-sm font-black text-(--text-ink) font-mono-num">
-                                                            {formatSGD(
-                                                                acc.balance,
-                                                            )}
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                handleOpenUpdateBalance(
-                                                                    acc,
-                                                                )
-                                                            }
-                                                            className="text-[11px] font-bold text-[#7e22ce] dark:text-[#dfc2ff] hover:underline cursor-pointer"
-                                                        >
-                                                            Update
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Recent Personal Transactions */}
-                                <div
-                                    role="region"
-                                    aria-label="Recent Transactions"
-                                    className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) transition-colors"
-                                >
-                                    <div className="flex items-center justify-between pb-4 border-b-2 border-(--border-subtle)">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-mint) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                                <Receipt className="h-4 w-4" strokeWidth={2.5} />
-                                            </div>
-                                            <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                                                Recent Expenses
-                                            </h3>
-                                        </div>
-                                        {onNavigateTab && (
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    onNavigateTab("expenses")
-                                                }
-                                                className="text-xs font-bold text-(--text-muted) hover:text-[#7e22ce] dark:hover:text-[#dfc2ff] transition-colors cursor-pointer"
-                                            >
-                                                View Ledger
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-4 space-y-2.5">
-                                        {personalExpenses.length === 0 ? (
-                                            <p className="text-xs font-medium text-(--text-muted) py-6 text-center">
-                                                No recent transactions paid by{" "}
-                                                {perspectiveDisplayName}.
-                                            </p>
-                                        ) : (
-                                            personalExpenses.map((exp) => (
-                                                <div
-                                                    key={exp.id}
-                                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm)"
-                                                >
-                                                    <div className="min-w-0 flex-1">
-                                                        <TruncatedText
-                                                            text={exp.item}
-                                                            className="text-sm font-bold text-(--text-ink)"
-                                                        />
-                                                        <div className="flex items-center gap-2 mt-0.5 text-xs text-(--text-muted)">
-                                                            <span>
-                                                                {formatDisplayDate(
-                                                                    exp.date,
-                                                                )}
-                                                            </span>
-                                                            {exp.is_shared && (
-                                                                <span className="inline-flex items-center gap-0.5 rounded-full bg-(--pastel-lilac)/40 border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] shrink-0">
-                                                                    Shared (50%)
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="text-sm font-black text-(--text-ink) font-mono-num text-right shrink-0">
-                                                        {formatSGD(exp.amount)}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                                className={`h-full rounded-full transition-all ${
+                                    isOverspent ? "bg-[#f76b57]" : "bg-emerald-500"
+                                }`}
+                                style={{ width: `${spendableSummary.totalPct}%` }}
+                            />
                         </div>
-                    )}
+
+                        {/* Per-category meters */}
+                        {spendableSummary.categories.length > 0 && (
+                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                {spendableSummary.categories.map((cat) => (
+                                    <div
+                                        key={cat.id}
+                                        className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 shadow-(--shadow-cute-sm)"
+                                    >
+                                        <div className="flex items-center justify-between gap-1 text-xs">
+                                            <span className="font-bold text-(--text-ink) flex items-center gap-1.5 font-display min-w-0 flex-1">
+                                                <span
+                                                    className="h-2.5 w-2.5 rounded-full shrink-0 border border-[#1a1a1a]"
+                                                    style={{
+                                                        backgroundColor: cat.color,
+                                                    }}
+                                                />
+                                                <span className="min-w-0">
+                                                    <TruncatedText text={cat.name} />
+                                                </span>
+                                            </span>
+                                            <span className="shrink-0 text-[11px] font-black text-(--text-muted) font-mono-num">
+                                                {cat.pct}%
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 text-sm font-extrabold text-(--text-ink) font-mono-num">
+                                            {formatSGD(cat.remaining)}
+                                            <span className="ml-1 text-[10px] font-bold text-(--text-muted)">
+                                                left
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 h-2 w-full rounded-full bg-(--bg-card) border border-(--border-ink)/30 overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full transition-all"
+                                                style={{
+                                                    width: `${cat.pct}%`,
+                                                    backgroundColor:
+                                                        cat.remaining < 0
+                                                            ? "#f76b57"
+                                                            : cat.color,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* Upcoming bills */}
+                    <UpcomingBillsWidget
+                        recurringItems={recurringItems}
+                        onViewAll={() => onNavigateTab?.("recurring")}
+                    />
                 </>
             )}
-
-            {/* Quick Add Expense Modal */}
-            <QuickAddExpenseModal
-                isOpen={isQuickAddOpen}
-                onClose={() => setIsQuickAddOpen(false)}
-                onExpenseAdded={handleExpenseAdded}
-                defaultPayerId={activeMember?.id}
-                categories={categories.length > 0 ? categories : mockCategories}
-                members={members}
-            />
-
-            {/* Update Balance Modal (Supports both single target and multi-account batch update) */}
-            <UpdateBalanceModal
-                isOpen={isUpdateBalanceOpen}
-                account={selectedAccountForUpdate}
-                accounts={accounts}
-                onClose={() => {
-                    setIsUpdateBalanceOpen(false);
-                    setSelectedAccountForUpdate(null);
-                }}
-                onBalanceUpdated={handleBalanceUpdated}
-                onBalancesUpdated={handleBalanceUpdated}
-                onOpenAddAccount={() => setIsAddAccountOpen(true)}
-            />
-
-            {/* Add Account Modal */}
-            <AddAccountModal
-                isOpen={isAddAccountOpen}
-                onClose={() => setIsAddAccountOpen(false)}
-                members={members}
-                defaultOwnerId={activeMember?.id}
-                isInitialSetup={accounts.length === 0}
-                onAccountCreated={async () => {
-                    await refreshHousehold();
-                }}
-            />
         </div>
     );
 }

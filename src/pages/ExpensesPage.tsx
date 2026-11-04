@@ -2,7 +2,7 @@
  * Expenses Page
  * Minimal, Ledger-First Spend Hub:
  * - PageHeader with '+ Bulk Log' and 'Add Expense'
- * - Compact 3-metric summary strip: Total Spent, Shared Spending, and Unsettled / Who Owes Whom
+ * - Compact summary strip: Spendable, Total Spent, Shared Spending, and Unsettled (with Settle Up)
  * - Mobile-friendly collapsible filter bar & responsive transaction ledger table right at the top
  * - Collapsible Spend Trends & Tags drawers below the ledger
  */
@@ -20,7 +20,7 @@ import {
   PiggyBank,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, CollapsibleSection } from '../components/ui';
+import { PageHeader, Button, StatCard, CollapsibleSection, ConfirmModal } from '../components/ui';
 import {
   useExpensesQuery,
   useAllExpensesQuery,
@@ -119,6 +119,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
+  const [isSettleOpen, setIsSettleOpen] = useState<boolean>(false);
 
   // Month-end Sweep Modal State
   const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
@@ -178,6 +179,15 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
   // Handle adding an expense
   const handleExpenseAdded = async () => {
     await refreshHousehold();
+  };
+
+  // Mark all shared expenses between the two partners as settled
+  const handleSettleUp = async () => {
+    const [m1, m2] = members;
+    if (!m1 || !m2) return;
+    await financeService.settleSharedExpenses(m1.id, m2.id);
+    await refreshHousehold();
+    setIsSettleOpen(false);
   };
 
   // Handle deleting an expense
@@ -453,8 +463,33 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
               ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
               : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
           }
+          footer={
+            settlement.netBalance > 0 && members.length >= 2 ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsSettleOpen(true)}
+                leftIcon={<Scale className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                className="mt-1"
+              >
+                Settle Up
+              </Button>
+            ) : undefined
+          }
         />
       </div>
+
+      <ConfirmModal
+        isOpen={isSettleOpen}
+        onClose={() => setIsSettleOpen(false)}
+        onConfirm={handleSettleUp}
+        title="Settle Up"
+        variant="primary"
+        confirmLabel="Settle"
+        icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />}
+      >
+        Mark all shared expenses as settled? The {formatSGD(settlement.netBalance)} balance resets to S$0.00.
+      </ConfirmModal>
 
       {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
       <ExpenseListTable
