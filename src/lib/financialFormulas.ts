@@ -13,6 +13,7 @@ import type {
     AccountSnapshot,
     BonusAllocationResult,
     Category,
+    CreditCardStatement,
     Expense,
     ExpenseTrendsSummary,
     MonthlyBalancePoint,
@@ -40,6 +41,7 @@ import {
     getTodayDateString,
     getCurrentMonth,
     formatShortMonth,
+    toSingaporeMonth,
 } from "./dateUtils";
 import { formatSGD } from "./currency";
 import { calculateRecurringCategorySpend } from "./recurringItems";
@@ -291,18 +293,68 @@ export function getMemberExpenseShare(
 }
 
 /**
+ * Whether a credit-card statement was still owed at the end of `month` ('YYYY-MM', SGT).
+ */
+export function isStatementOwedAt(
+    stmt: CreditCardStatement,
+    month: string,
+): boolean {
+    const amount = Number(stmt.statement_amount) || 0;
+    if (amount <= 0) return false;
+    if (stmt.month > month) return false;
+    if (!stmt.is_paid) return true;
+    const paidMonth = stmt.paid_at
+        ? toSingaporeMonth(stmt.paid_at)
+        : stmt.due_date.slice(0, 7);
+    return paidMonth > month;
+}
+
+/**
+ * Total unpaid credit-card statement balance owed at the end of `month` ('YYYY-MM', SGT).
+ */
+export function calculateCardDebt(
+    statements: CreditCardStatement[],
+    month: string,
+): number {
+    let sum = 0;
+    for (const stmt of statements) {
+        if (isStatementOwedAt(stmt, month)) {
+            sum += Number(stmt.statement_amount) || 0;
+        }
+    }
+    return Math.round(sum * 100) / 100;
+}
+
+/**
+ * Filters credit-card statements for the active perspective.
+ * Combined keeps all statements; personal views keep only statements on cards
+ * owned by `activeMemberId` (including inactive cards; dropping unresolved owners).
+ */
+export function filterStatementsForPerspective(
+    statements: CreditCardStatement[],
+    perspective: Perspective,
+    activeMemberId?: string,
+): CreditCardStatement[] {
+    if (perspective === "household") return statements;
+    if (!activeMemberId) return [];
+    return statements.filter((stmt) => stmt.card?.owner_id === activeMemberId);
+}
+
+/**
  * 9. Calculates the end-of-month balance & Net Worth series from real AccountSnapshots.
  * Nothing is invented:
  * - The series starts at the month of the earliest snapshot (or `monthsCount` months back, if later).
  * - An account counts from the month of its first snapshot onwards, at its latest
  *   snapshot on or before that month's end. Accounts added later step in when added.
  * - The current month uses live account balances, so it matches the Net Worth card.
+ * - At each month-end, unpaid credit-card statements owed at that month are subtracted.
  */
 export function calculateMonthlyBalanceTrends(
     accounts: Account[],
     snapshots: AccountSnapshot[],
     monthsCount: number = 6,
     referenceMonth?: string,
+    statements: CreditCardStatement[] = [],
 ): MonthlyBalancePoint[] {
     const currentM = referenceMonth || getCurrentMonth();
 
@@ -366,6 +418,9 @@ export function calculateMonthlyBalanceTrends(
 
         const totalAssets = round2(cash + investments + cpf + other);
         const nonCpfAssets = round2(cash + investments + other);
+        const cardDebt = calculateCardDebt(statements, month);
+        const netWorth = round2(totalAssets - cardDebt);
+        const nonCpfNetWorth = round2(nonCpfAssets - cardDebt);
 
         const prevPoint = points.length > 0 ? points[points.length - 1] : null;
         const momChange = prevPoint ? round2(totalAssets - prevPoint.totalAssets) : 0;
@@ -383,8 +438,9 @@ export function calculateMonthlyBalanceTrends(
             other,
             totalAssets,
             nonCpfAssets,
-            netWorth: totalAssets,
-            nonCpfNetWorth: nonCpfAssets,
+            cardDebt,
+            netWorth,
+            nonCpfNetWorth,
             momChange,
             momChangePct,
         });

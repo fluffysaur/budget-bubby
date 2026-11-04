@@ -284,8 +284,8 @@ describe('AccountsPage', () => {
     vi.spyOn(financeService, 'getAccounts').mockResolvedValue(sampleAccounts);
   });
 
-  it('renders the Net Worth card as the total of account balances', async () => {
-    // Net Worth = total of account balances = 100,000 SGD
+  it('renders the Net Worth card as account balances minus unpaid card statements', async () => {
+    // Net Worth = total of account balances (100,000) - unpaid seed statements (842.50 + 350.20 = 1,192.70) = 98,807.30 SGD
     await act(async () => {
       render(
         <HouseholdProvider>
@@ -296,10 +296,10 @@ describe('AccountsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /^Accounts$/i })).toBeInTheDocument();
+      expect(screen.getAllByText(formatSGD(98807.3)).length).toBeGreaterThanOrEqual(1);
     });
 
-    // Check Metric Cards (appears in metric card and chart legend, so getAllByText is >= 1)
-    expect(screen.getAllByText(formatSGD(100000)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(`${formatSGD(1192.7)} card debt`)).toBeInTheDocument();
     expect(screen.queryByText(/liabilities/i)).not.toBeInTheDocument();
 
     // Check that AccountGroupList is rendered

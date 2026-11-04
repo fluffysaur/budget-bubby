@@ -14,8 +14,11 @@ import {
     useCallback,
     useRef,
     useMemo,
+    useContext,
     type FormEvent,
 } from "react";
+import { QueryClientContext, useQueryClient } from "@tanstack/react-query";
+import { queryClient as defaultQueryClient } from "../../lib/queryClient";
 import {
     CreditCard as CreditCardIcon,
     Plus,
@@ -123,6 +126,9 @@ export function CreditCardTrackerSection({
     activeMemberId,
     className = "",
 }: CreditCardTrackerSectionProps) {
+    const contextQueryClient = useContext(QueryClientContext);
+    const queryClient = useQueryClient(contextQueryClient ?? defaultQueryClient);
+
     const [selectedMonth, setSelectedMonth] =
         useState<string>(getCurrentMonth);
     useFollowCurrentMonth(selectedMonth, setSelectedMonth);
@@ -233,6 +239,9 @@ export function CreditCardTrackerSection({
                 notes: stmt.notes,
             };
             await financeService.upsertCreditCardStatement(input);
+            queryClient.invalidateQueries({
+                queryKey: ["finance", "credit-card-statements"],
+            });
             await loadData();
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
@@ -292,6 +301,9 @@ export function CreditCardTrackerSection({
                 is_paid: existingStatement ? existingStatement.is_paid : false,
                 paid_at: existingStatement ? existingStatement.paid_at : null,
             });
+            queryClient.invalidateQueries({
+                queryKey: ["finance", "credit-card-statements"],
+            });
             await loadData();
             setIsLogStatementOpen(false);
         } catch (err: unknown) {
@@ -307,6 +319,9 @@ export function CreditCardTrackerSection({
         try {
             await financeService.deleteCreditCard(cardId);
             setCardToDelete(null);
+            queryClient.invalidateQueries({
+                queryKey: ["finance", "credit-card-statements"],
+            });
             await loadData();
         } catch (err) {
             console.error("Failed to delete credit card:", err);

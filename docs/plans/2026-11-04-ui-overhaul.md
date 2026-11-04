@@ -1,7 +1,7 @@
 # UI Overhaul Plan
 
 Date: 2026-11-04
-Status: Done (PRs 2–6 merged). Follow-ups in progress.
+Status: Done (PRs 2–6 merged, follow-ups complete).
 
 ## Problem
 
@@ -137,7 +137,7 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
     - The current month uses live balances.
     - With fewer than 2 months of data, it shows "No History" with an Update Balances action.
 - ~~**Home vs Spend mismatch**~~: fixed in `fix/combined-left-to-spend`. Combined uses the household total everywhere (decided 2026-11-04). Home, Budget and the Expenses Spendable card share `useBudgetDetailQuery`. The Expenses card also now counts recurring items billed to spendable categories.
-- **Card debt in net worth:** optionally count unpaid credit-card statements as liabilities. That would be a new behaviour, so it's a separate decision.
+- ~~**Card debt in net worth**~~: fixed in `feat/card-debt-net-worth` ([`2026-11-04-card-debt-net-worth.md`](2026-11-04-card-debt-net-worth.md)). Net worth is account balances minus unpaid credit-card statements (`is_paid = false`), filtered by card owner in personal views, subtracted at each month-end in the history chart, and shown as a `S$X card debt` subtitle on the Net Worth card.
 
 ## Out of scope
 
