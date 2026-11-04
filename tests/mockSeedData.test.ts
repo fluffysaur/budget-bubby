@@ -7,8 +7,6 @@ import {
   mockBaseAllocations,
   mockAccounts,
   mockAccountSnapshots,
-  mockLoans,
-  mockLoanPayments,
   mockSavingsGoals,
   mockRecurringItems,
   mockMonthlyBudgets,
@@ -70,18 +68,6 @@ describe('mockSeedData', () => {
     expect(accountTypes).toContain('Investment');
     expect(accountTypes).toContain('CPF');
     expect(mockAccountSnapshots).toHaveLength(mockAccounts.length);
-  });
-
-  it('contains HDB loan with correct amortization attributes', () => {
-    expect(mockLoans).toHaveLength(1);
-    const [loan] = mockLoans;
-    expect(loan.name).toBe('HDB Loan');
-    expect(loan.principal).toBe(500000);
-    expect(loan.interest_rate).toBe(0.026);
-    expect(loan.monthly_payment).toBe(2665);
-    expect(loan.term_months).toBe(242);
-    expect(loan.status).toBe('active');
-    expect(mockLoanPayments.length).toBeGreaterThanOrEqual(1);
   });
 
   it('contains 5 shared goals with correct status', () => {

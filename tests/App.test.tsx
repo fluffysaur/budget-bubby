@@ -42,7 +42,7 @@ describe("App Integration & Routing", () => {
 
         // Default Dashboard page renders Net Worth card
         await waitFor(() => {
-            expect(screen.getByText(/True Net Worth/i)).toBeInTheDocument();
+            expect(screen.getByRole("region", { name: "Net Worth Summary" })).toBeInTheDocument();
         }, { timeout: 15000 });
     }, 30000);
 
@@ -103,7 +103,7 @@ describe("App Integration & Routing", () => {
         const { unmount: unmountLoans } = render(<App initialEntries={["/loans"]} />);
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Prepayment Simulator/i)).toBeInTheDocument();
+            expect(within(main).getByText("Under Construction")).toBeInTheDocument();
         });
         unmountLoans();
 

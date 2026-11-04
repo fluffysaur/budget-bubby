@@ -1,24 +1,15 @@
 /**
  * NetWorthHeroCard Component
- * Hero metric card displaying True Net Worth (Total Assets - Outstanding Loans),
- * Total Assets, Total Liabilities pills, active perspective badge, and trend indicator.
+ * Hero metric card showing Net Worth (total of all account balances)
+ * with the active perspective badge.
  */
 
-import { useMemo } from 'react';
-import {
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  CreditCard,
-} from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import type { Perspective } from '../../types/finance';
 
 export interface NetWorthHeroCardProps {
   netWorth: number;
-  totalAssets: number;
-  totalLiabilities: number;
   perspective?: Perspective;
   perspectiveName?: string;
   className?: string;
@@ -27,8 +18,6 @@ export interface NetWorthHeroCardProps {
 
 export function NetWorthHeroCard({
   netWorth,
-  totalAssets,
-  totalLiabilities,
   perspective = 'household',
   perspectiveName,
   className = '',
@@ -38,19 +27,13 @@ export function NetWorthHeroCard({
 
   const isPositive = netWorth >= 0;
 
-  // Asset coverage percentage
-  const coverageRatio = useMemo(() => {
-    if (totalLiabilities <= 0) return 100;
-    return Math.round((totalAssets / totalLiabilities) * 100);
-  }, [totalAssets, totalLiabilities]);
-
   return (
     <div
       role="region"
-      aria-label="True Net Worth Summary"
+      aria-label="Net Worth Summary"
       className={`relative overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-linear-to-br from-[#fbf7f1] via-white to-[#f5ecff] dark:from-[#262220] dark:via-[#2b2724] dark:to-[#342445] p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
     >
-      {/* Top row: Status & Trend Pill */}
+      {/* Top row: perspective badge */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {displayName ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-(--border-ink) bg-(--bg-card) px-3 py-1 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm)">
@@ -61,42 +44,20 @@ export function NetWorthHeroCard({
             Household Balance Sheet
           </span>
         )}
-
-        {/* Trend Indicator Pill */}
-        <div
-          data-testid="trend-indicator"
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border-2 border-(--border-ink) shadow-(--shadow-cute-sm) ${
-            isPositive
-              ? 'bg-(--pastel-mint) text-[#14532d]'
-              : 'bg-(--pastel-coral-light) text-[#9a1b1b]'
-          }`}
-        >
-          {isPositive ? (
-            <>
-              <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.5} />
-              <span>Positive Net Worth</span>
-            </>
-          ) : (
-            <>
-              <TrendingDown className="h-3.5 w-3.5" strokeWidth={2.5} />
-              <span>Debt Payoff Phase</span>
-            </>
-          )}
-        </div>
       </div>
 
       {/* Hero Net Worth Amount */}
       <div className="mt-4">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold uppercase tracking-widest text-(--text-muted)">
-            True Net Worth
+            Net Worth
           </span>
           <TooltipPopover
-            title="True Net Worth Formula"
-            ariaLabel="True Net Worth Formula"
+            title="Net Worth Formula"
+            ariaLabel="Net Worth Formula"
             align="left"
           >
-            Total Assets (Cash, Investments &amp; CPF) minus Total Outstanding Loans &amp; Liabilities.
+            Total of all account balances (Cash, Investments &amp; CPF).
           </TooltipPopover>
         </div>
         <div className="mt-1 flex items-baseline gap-3">
@@ -109,48 +70,6 @@ export function NetWorthHeroCard({
           >
             {formatSGD(netWorth)}
           </h2>
-        </div>
-      </div>
-
-      {/* Sub-Metrics Pills: Assets and Liabilities */}
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t-2 border-(--border-ink)/20">
-        {/* Total Assets Pill */}
-        <div className="flex items-center justify-between rounded-2xl bg-[#f0fdf4] dark:bg-[#13351d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-[#1e462b] border-2 border-(--border-ink) text-[#14532d] dark:text-[#86efac] shadow-(--shadow-cute-sm)">
-              <Wallet className="h-5 w-5" strokeWidth={2.5} />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#166534] dark:text-[#86efac]">
-                Total Assets
-              </span>
-              <div className="text-base sm:text-lg font-black text-[#14532d] dark:text-white font-mono-num">
-                {formatSGD(totalAssets)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Liabilities Pill */}
-        <div className="flex items-center justify-between rounded-2xl bg-[#fff1ee] dark:bg-[#3d1c1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-[#4a2220] border-2 border-(--border-ink) text-[#9a1b1b] dark:text-[#fca5a5] shadow-(--shadow-cute-sm)">
-              <CreditCard className="h-5 w-5" strokeWidth={2.5} />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#991b1b] dark:text-[#fca5a5]">
-                Total Liabilities
-              </span>
-              <div className="text-base sm:text-lg font-black text-[#9a1b1b] dark:text-rose-400 font-mono-num">
-                {formatSGD(totalLiabilities)}
-              </div>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-[10px] font-bold text-[#991b1b] dark:text-[#fca5a5]">
-              {totalLiabilities > 0 ? `${coverageRatio}% Covered` : 'Debt Free'}
-            </span>
-          </div>
         </div>
       </div>
     </div>

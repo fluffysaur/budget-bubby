@@ -2,7 +2,7 @@
  * Desktop Sidebar Navigation
  * Fixed-width sidebar for desktop viewports providing grouped navigation:
  * - Core Daily & Monthly tabs (Dashboard, Expenses, Budget, Accounts & Net Worth)
- * - Long-Term Plan tabs (Plan Overview, Goals, Loans, Recurring)
+ * - Long-Term Plan tabs (Goals, Recurring, Bonus, Loans)
  */
 
 import type { ComponentType } from "react";
@@ -41,7 +41,7 @@ const NAV_ITEMS: NavItem[] = [
         id: "plan",
         label: "Plan",
         icon: Compass,
-        description: "Goals, loans & recurring commitments",
+        description: "Goals & recurring commitments",
     },
 ];
 

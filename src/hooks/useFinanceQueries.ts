@@ -10,7 +10,6 @@ import type {
     ExpenseFilter,
     HouseholdOverview,
     Account,
-    Loan,
     SavingsGoal,
     RecurringItem,
     Expense,
@@ -28,7 +27,6 @@ export const queryKeys = {
     householdOverview: ["finance", "household-overview"] as const,
     accounts: (perspective?: Perspective) =>
         ["finance", "accounts", perspective ?? "household"] as const,
-    loans: ["finance", "loans"] as const,
     goals: ["finance", "goals"] as const,
     recurringItems: ["finance", "recurringItems"] as const,
     expenses: (filter?: ExpenseFilter) =>
@@ -60,13 +58,6 @@ export function useAccountsQuery(perspective?: Perspective) {
     return useQuery<Account[]>({
         queryKey: queryKeys.accounts(perspective),
         queryFn: () => financeService.getAccounts(perspective || "household"),
-    });
-}
-
-export function useLoansQuery() {
-    return useQuery<Loan[]>({
-        queryKey: queryKeys.loans,
-        queryFn: () => financeService.getLoans(),
     });
 }
 
@@ -188,12 +179,6 @@ export function useInvalidateFinance() {
             }),
         invalidateGoals: () => {
             queryClient.invalidateQueries({ queryKey: ["finance", "goals"] });
-            queryClient.invalidateQueries({
-                queryKey: ["finance", "household-overview"],
-            });
-        },
-        invalidateLoans: () => {
-            queryClient.invalidateQueries({ queryKey: ["finance", "loans"] });
             queryClient.invalidateQueries({
                 queryKey: ["finance", "household-overview"],
             });

@@ -49,22 +49,16 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       }
     });
 
-    it('computes accurate household overview with True Net Worth = Total Assets - Total Liabilities', async () => {
+    it('computes accurate household overview with Net Worth = Total Assets', async () => {
       const overview = await mockFinanceService.getHouseholdOverview();
       const accounts = await mockFinanceService.getAccounts('household');
-      const loans = await mockFinanceService.getLoans();
 
       const expectedAssets = Math.round(
         accounts.reduce((sum, a) => sum + a.balance, 0) * 100
       ) / 100;
-      const expectedLiabilities = Math.round(
-        loans.reduce((sum, l) => sum + (l.principal - l.amount_paid), 0) * 100
-      ) / 100;
-      const expectedTrueNetWorth = Math.round((expectedAssets - expectedLiabilities) * 100) / 100;
 
       expect(overview.totalAssets).toBe(expectedAssets);
-      expect(overview.totalLiabilities).toBe(expectedLiabilities);
-      expect(overview.trueNetWorth).toBe(expectedTrueNetWorth);
+      expect(overview.trueNetWorth).toBe(expectedAssets);
       expect(overview.settlementSummary).toBeDefined();
       expect(overview.activeGoals.length).toBeGreaterThan(0);
     });
@@ -238,12 +232,8 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
     });
   });
 
-  describe('Savings Goals & Liabilities & Recurring', () => {
-    it('fetches loans and recurring items', async () => {
-      const loans = await mockFinanceService.getLoans();
-      expect(loans.length).toBeGreaterThan(0);
-      expect(loans[0].name).toBe('HDB Loan');
-
+  describe('Savings Goals & Recurring', () => {
+    it('fetches recurring items', async () => {
       const recurringItems = await mockFinanceService.getRecurringItems();
       expect(recurringItems.length).toBeGreaterThan(0);
       expect(recurringItems.some((p) => p.type === 'insurance')).toBe(true);

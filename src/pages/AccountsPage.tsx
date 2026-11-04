@@ -2,7 +2,7 @@
  * AccountsPage Component
  * Full page coordinating:
  * - Active perspective (Combined Household vs Yi Jia vs Rachel)
- * - Summary metric cards: True Net Worth, Total Assets, Total Liabilities / Loans
+ * - Net worth summary card (total of all account balances)
  * - Net Worth progression chart (NetWorthChart)
  * - Grouped account listings with Notion-style table/card view (AccountGroupList)
  * - 1-Click Month-End Check-In Bulk Update Modal (BulkBalanceUpdateModal)
@@ -12,7 +12,6 @@
 import { useState, useMemo } from "react";
 import {
     Wallet,
-    CreditCard,
     TrendingUp,
     CalendarCheck,
     Plus,
@@ -26,7 +25,7 @@ import {
     SegmentedTabs,
     AccountsContentSkeleton,
 } from "../components/ui";
-import { useAccountsQuery, useLoansQuery } from "../hooks/useFinanceQueries";
+import { useAccountsQuery } from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { AccountGroupList } from "../components/accounts/AccountGroupList";
@@ -61,12 +60,9 @@ export function AccountsPage({
     // TanStack Query Cached Data Hooks
     const { data: accountsData, isLoading: accountsLoading } =
         useAccountsQuery(perspective);
-    const { data: loansData, isLoading: loansLoading } = useLoansQuery();
 
     const accounts = useMemo(() => accountsData || [], [accountsData]);
-    const loans = useMemo(() => loansData || [], [loansData]);
-    const isLoading =
-        (accountsLoading && !accountsData) || (loansLoading && !loansData);
+    const isLoading = accountsLoading && !accountsData;
 
     // Modal States
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
@@ -114,29 +110,6 @@ export function AccountsPage({
         const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
         return Math.round(sum * 100) / 100;
     }, [accounts]);
-
-    const activeLoans = useMemo(() => {
-        return loans.filter((l) => {
-            if (l.status !== "active") return false;
-            if (perspective === "household") return true;
-            return !l.borrower_id || l.borrower_id === activeMember?.id;
-        });
-    }, [loans, perspective, activeMember]);
-
-    const totalLiabilities = useMemo(() => {
-        const sum = activeLoans.reduce((acc, l) => {
-            const remaining = l.principal - l.amount_paid;
-            if (perspective !== "household" && !l.borrower_id) {
-                return acc + remaining * 0.5; // 50% split for joint household loans
-            }
-            return acc + remaining;
-        }, 0);
-        return Math.round(sum * 100) / 100;
-    }, [activeLoans, perspective]);
-
-    const trueNetWorth = useMemo(() => {
-        return Math.round((totalAssets - totalLiabilities) * 100) / 100;
-    }, [totalAssets, totalLiabilities]);
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
@@ -201,38 +174,16 @@ export function AccountsPage({
                                 Update Balances
                             </Button>
                         </div>
-                        {/* High-Level Metric Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                            {/* Card 1: Net Worth */}
-                            <StatCard
-                                title="Net Worth"
-                                loading={isLoading}
-                                value={formatSGD(trueNetWorth)}
-                                tooltip="Calculated as Total Assets minus Outstanding Loans &amp; Liabilities."
-                                icon={<TrendingUp className="h-4 w-4" />}
-                                iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
-                            />
-
-                            {/* Card 2: Total Assets */}
-                            <StatCard
-                                title="Assets"
-                                loading={isLoading}
-                                value={formatSGD(totalAssets)}
-                                subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
-                                icon={<Wallet className="h-4 w-4" />}
-                                iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                            />
-
-                            {/* Card 3: Total Liabilities / Loans */}
-                            <StatCard
-                                title="Liabilities"
-                                loading={isLoading}
-                                value={formatSGD(totalLiabilities)}
-                                subtitle={`${loans.length} active loan${loans.length === 1 ? "" : "s"}`}
-                                icon={<CreditCard className="h-4 w-4" />}
-                                iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                            />
-                        </div>
+                        {/* Net Worth */}
+                        <StatCard
+                            title="Net Worth"
+                            loading={isLoading}
+                            value={formatSGD(totalAssets)}
+                            subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
+                            tooltip="Total of all account balances."
+                            icon={<TrendingUp className="h-4 w-4" />}
+                            iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
+                        />
 
                         {/* Loading Indicator */}
                         {isLoading ? (
@@ -240,7 +191,7 @@ export function AccountsPage({
                         ) : (
                             <>
                                 {/* Net Worth Progression Area Chart */}
-                                <NetWorthChart accounts={accounts} loans={loans} />
+                                <NetWorthChart accounts={accounts} />
 
                                 {/* Grouped Accounts Listing with Table / Card view */}
                                 <AccountGroupList

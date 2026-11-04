@@ -15,8 +15,6 @@ import type {
   MonthlyBudget,
   MonthlyBudgetCategory,
   Expense,
-  Loan,
-  LoanPayment,
   SavingsGoal,
   RecurringItem,
   CreditCard,
@@ -411,63 +409,6 @@ export const mockHistoricalAccountSnapshots: AccountSnapshot[] = SNAPSHOT_MONTH_
       snapshot_date: date,
     }))
 );
-
-export const mockLoans: Loan[] = [
-  {
-    id: 'loan-00000000-0401',
-    household_id: 'hh-00000000-0001',
-    borrower_id: null,
-    name: 'HDB Loan',
-    principal: 500000.0,
-    interest_rate: 0.026,
-    monthly_payment: 2665.0,
-    amount_paid: 50000.0,
-    start_date: '2026-05-01',
-    term_months: 242,
-    loan_type: 'amortized',
-    status: 'active',
-    created_at: '2026-05-01T00:00:00.000Z',
-  },
-];
-
-export const mockLoanPayments: LoanPayment[] = [
-  {
-    id: 'loan-pmt-01',
-    loan_id: 'loan-00000000-0401',
-    payment_date: '2026-06-01',
-    payment_amount: 2665.0,
-    principal_portion: 1581.67,
-    interest_portion: 1083.33,
-    is_extra_payment: false,
-  },
-  {
-    id: 'loan-pmt-02',
-    loan_id: 'loan-00000000-0401',
-    payment_date: '2026-07-01',
-    payment_amount: 2665.0,
-    principal_portion: 1585.1,
-    interest_portion: 1079.9,
-    is_extra_payment: false,
-  },
-  {
-    id: 'loan-pmt-03',
-    loan_id: 'loan-00000000-0401',
-    payment_date: '2026-08-01',
-    payment_amount: 2665.0,
-    principal_portion: 1588.53,
-    interest_portion: 1076.47,
-    is_extra_payment: false,
-  },
-  {
-    id: 'loan-pmt-04',
-    loan_id: 'loan-00000000-0401',
-    payment_date: '2026-09-01',
-    payment_amount: 2665.0,
-    principal_portion: 1591.97,
-    interest_portion: 1073.03,
-    is_extra_payment: false,
-  },
-];
 
 export const mockSavingsGoals: SavingsGoal[] = [
   {
@@ -1224,8 +1165,6 @@ export interface MockSeedDataset {
   baseAllocations: BaseProfileAllocation[];
   accounts: Account[];
   accountSnapshots: AccountSnapshot[];
-  loans: Loan[];
-  loanPayments: LoanPayment[];
   savingsGoals: SavingsGoal[];
   recurringItems: RecurringItem[];
   monthlyBudgets: MonthlyBudget[];
@@ -1271,8 +1210,6 @@ export const mockSeedData: MockSeedDataset = {
   baseAllocations: mockBaseAllocations,
   accounts: mockAccounts,
   accountSnapshots: mockAccountSnapshots,
-  loans: mockLoans,
-  loanPayments: mockLoanPayments,
   savingsGoals: mockSavingsGoals,
   recurringItems: mockRecurringItems,
   monthlyBudgets: mockMonthlyBudgets,

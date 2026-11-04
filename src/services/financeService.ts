@@ -21,7 +21,6 @@ import type {
   Expense,
   ExpenseFilter,
   HouseholdOverview,
-  Loan,
   MonthlyBudget,
   MonthlyBudgetDetail,
   Perspective,
@@ -82,7 +81,6 @@ export interface FinanceService {
   bulkAddExpenses(expenses: CreateExpenseInput[]): Promise<Expense[]>;
   deleteExpense(id: string): Promise<void>;
   settleSharedExpenses(member1Id: string, member2Id: string): Promise<void>;
-  getLoans(): Promise<Loan[]>;
   getGoals(): Promise<SavingsGoal[]>;
   addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
   updateGoal(id: string, updates: Partial<SavingsGoal>): Promise<SavingsGoal>;
@@ -254,7 +252,6 @@ export const financeService: FinanceService = {
     await getActiveService().settleSharedExpenses(m1, m2);
     invalidateFinanceCache();
   },
-  getLoans: () => getActiveService().getLoans(),
   getGoals: () => getActiveService().getGoals(),
   addGoal: async (goal) => {
     const res = await getActiveService().addGoal(goal);

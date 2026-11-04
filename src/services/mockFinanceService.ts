@@ -2,7 +2,7 @@
  * Mock Finance Service for Budget Bubby.
  * In-memory state initialized from mockSeedData.ts with localStorage synchronization.
  * Supports full CRUD for accounts, balances, snapshots, monthly budgets, expenses,
- * shared settlements, loans, savings goals, and recurring items.
+ * shared settlements, savings goals, and recurring items.
  */
 
 import type {
@@ -22,7 +22,6 @@ import type {
   Expense,
   ExpenseFilter,
   HouseholdOverview,
-  Loan,
   MonthlyBudget,
   MonthlyBudgetCategoryDetail,
   MonthlyBudgetDetail,
@@ -173,12 +172,7 @@ class MockFinanceServiceImpl implements FinanceService {
       accounts.reduce((sum, a) => sum + a.balance, 0) * 100
     ) / 100;
 
-    const activeLoans = this.state.loans.filter((l) => l.status === 'active');
-    const totalLiabilities = Math.round(
-      activeLoans.reduce((sum, l) => sum + (l.principal - l.amount_paid), 0) * 100
-    ) / 100;
-
-    const trueNetWorth = Math.round((totalAssets - totalLiabilities) * 100) / 100;
+    const trueNetWorth = totalAssets;
 
     const m1 = this.state.members[0];
     const m2 = this.state.members[1];
@@ -206,7 +200,6 @@ class MockFinanceServiceImpl implements FinanceService {
       household: cloneDeep(this.state.household),
       members: cloneDeep(this.state.members),
       totalAssets,
-      totalLiabilities,
       trueNetWorth,
       settlementSummary,
       activeGoals: cloneDeep(activeGoals),
@@ -864,10 +857,6 @@ class MockFinanceServiceImpl implements FinanceService {
       }
     }
     this.persist();
-  }
-
-  public async getLoans(): Promise<Loan[]> {
-    return cloneDeep(this.state.loans);
   }
 
   public async getGoals(): Promise<SavingsGoal[]> {

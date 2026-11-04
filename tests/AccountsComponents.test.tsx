@@ -20,7 +20,7 @@ import { NetWorthChart, type NetWorthDataPoint } from '../src/components/account
 import { AccountsPage } from '../src/pages/AccountsPage';
 import { financeService } from '../src/services/financeService';
 import { formatSGD } from '../src/lib/currency';
-import type { Account, Loan } from '../src/types/finance';
+import type { Account } from '../src/types/finance';
 
 // Mock ResizeObserver for jsdom environment
 class ResizeObserverMock {
@@ -93,24 +93,6 @@ const sampleAccounts: Account[] = [
     is_joint: true,
     notes: 'For condo reno',
     updated_at: '2026-09-15T00:00:00.000Z',
-  },
-];
-
-const sampleLoans: Loan[] = [
-  {
-    id: 'loan-1',
-    household_id: 'hh-1',
-    borrower_id: null,
-    name: 'HDB Housing Loan',
-    principal: 500000.0,
-    interest_rate: 0.026,
-    monthly_payment: 2665.0,
-    amount_paid: 50000.0,
-    start_date: '2026-05-01',
-    term_months: 242,
-    loan_type: 'amortized',
-    status: 'active',
-    created_at: '2026-05-01T00:00:00.000Z',
   },
 ];
 
@@ -270,11 +252,11 @@ describe('UpdateBalanceModal', () => {
 describe('NetWorthChart', () => {
   it('renders Recharts chart with progression data points', () => {
     const testData: NetWorthDataPoint[] = [
-      { date: '2026-05', assets: 500000, liabilities: 450000, netWorth: 50000 },
-      { date: '2026-06', assets: 510000, liabilities: 448000, netWorth: 62000 },
-      { date: '2026-07', assets: 520000, liabilities: 446000, netWorth: 74000 },
-      { date: '2026-08', assets: 535000, liabilities: 444000, netWorth: 91000 },
-      { date: '2026-09', assets: 544200, liabilities: 450000, netWorth: 94200 },
+      { date: '2026-05', netWorth: 50000 },
+      { date: '2026-06', netWorth: 62000 },
+      { date: '2026-07', netWorth: 74000 },
+      { date: '2026-08', netWorth: 91000 },
+      { date: '2026-09', netWorth: 94200 },
     ];
 
     render(<NetWorthChart data={testData} />);
@@ -282,18 +264,17 @@ describe('NetWorthChart', () => {
     expect(screen.getByRole('heading', { name: /^net worth$/i })).toBeInTheDocument();
     // Verify calculation tooltip trigger exists
     expect(screen.getByRole('button', { name: /net worth formula/i })).toBeInTheDocument();
-    // Verify legend pills exist
-    expect(screen.getAllByText(/total assets/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/liabilities/i).length).toBeGreaterThan(0);
+    // Single Net Worth legend pill, no loan/liability series
     expect(screen.getAllByText(/^net worth$/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/liabilities/i)).not.toBeInTheDocument();
+    expect(screen.getByText('S$94,200.00')).toBeInTheDocument();
   });
 
-  it('calculates Net Worth using formula Net Worth = Total Assets - Outstanding Loans & Liabilities when generating from accounts and loans', () => {
-    // Total assets: 100,000 SGD. Outstanding loan: 500,000 - 50,000 = 450,000 SGD.
-    // Net worth = 100,000 - 450,000 = -350,000 SGD.
-    render(<NetWorthChart accounts={sampleAccounts} loans={sampleLoans} />);
+  it('calculates Net Worth as the total of account balances when generating from accounts', () => {
+    // Total of account balances: 100,000 SGD.
+    render(<NetWorthChart accounts={sampleAccounts} />);
     expect(screen.getByRole('heading', { name: /^net worth$/i })).toBeInTheDocument();
-    expect(screen.getByText('-S$350,000.00')).toBeInTheDocument();
+    expect(screen.getByText('S$100,000.00')).toBeInTheDocument();
   });
 });
 
@@ -301,13 +282,10 @@ describe('AccountsPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(financeService, 'getAccounts').mockResolvedValue(sampleAccounts);
-    vi.spyOn(financeService, 'getLoans').mockResolvedValue(sampleLoans);
   });
 
-  it('renders Net Worth, Total Assets, and Total Liabilities metric cards correctly', async () => {
-    // Total Assets = 100,000 SGD
-    // Total Liabilities = 500,000 - 50,000 = 450,000 SGD
-    // True Net Worth = 100,000 - 450,000 = -350,000 SGD
+  it('renders the Net Worth card as the total of account balances', async () => {
+    // Net Worth = total of account balances = 100,000 SGD
     await act(async () => {
       render(
         <HouseholdProvider>
@@ -322,8 +300,7 @@ describe('AccountsPage', () => {
 
     // Check Metric Cards (appears in metric card and chart legend, so getAllByText is >= 1)
     expect(screen.getAllByText(formatSGD(100000)).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(formatSGD(450000)).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(formatSGD(-350000)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(/liabilities/i)).not.toBeInTheDocument();
 
     // Check that AccountGroupList is rendered
     expect(screen.getByText("UOB Lady's Savings")).toBeInTheDocument();

@@ -1,8 +1,8 @@
 /**
  * PlanPage Component
  * Consolidated 5th navigation hub for Long-Term Financial Planning:
- * - Segmented sub-tabs: Goals | Loans | Recurring | Bonus Calculator
- * - Embeds GoalsPage, LoansPage, RecurringPage, and Bonus calculator seamlessly
+ * - Segmented sub-tabs: Goals | Recurring | Bonus | Loans
+ * - Embeds GoalsPage, RecurringPage, the Bonus calculator, and a Loans placeholder
  * - Eliminates scattered sidebar links while preserving route compatibility
  */
 
@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { PageHeader, SegmentedTabs } from "../components/ui";
 import { GoalsPage } from "./GoalsPage";
-import { LoansPage } from "./LoansPage";
 import { RecurringPage } from "./RecurringPage";
 import { BonusAllocationCollapsible } from "../components/budget/BonusAllocationCollapsible";
+import { LoansPlaceholder } from "../components/loans/LoansPlaceholder";
 
 export type PlanSubTab = "goals" | "loans" | "recurring" | "bonus";
 
@@ -30,9 +30,9 @@ export interface PlanPageProps {
 
 const SUB_TABS: { id: PlanSubTab; label: string; icon: typeof Target }[] = [
   { id: "goals", label: "Goals", icon: Target },
-  { id: "loans", label: "Loans", icon: CreditCard },
   { id: "recurring", label: "Recurring", icon: CalendarClock },
   { id: "bonus", label: "Bonus", icon: Sparkles },
+  { id: "loans", label: "Loans", icon: CreditCard },
 ];
 
 export function PlanPage({ initialTab = "goals", className = "" }: PlanPageProps) {
@@ -77,13 +77,13 @@ export function PlanPage({ initialTab = "goals", className = "" }: PlanPageProps
       {/* Embedded Sub-Tab Content */}
       <div className="pt-1">
         {activeTab === 'goals' && <GoalsPage embedded={true} />}
-        {activeTab === 'loans' && <LoansPage embedded={true} />}
         {activeTab === 'recurring' && <RecurringPage embedded={true} />}
         {activeTab === 'bonus' && (
           <div className="space-y-4">
             <BonusAllocationCollapsible defaultOpen={true} />
           </div>
         )}
+        {activeTab === 'loans' && <LoansPlaceholder />}
       </div>
     </div>
   );

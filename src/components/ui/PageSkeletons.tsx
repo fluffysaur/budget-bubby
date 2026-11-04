@@ -147,38 +147,6 @@ export function GoalsSkeleton({ className = "" }: PageSkeletonProps) {
     );
 }
 
-export function LoansSkeleton({ className = "" }: PageSkeletonProps) {
-    return (
-        <SkeletonGroup
-            label="Loading loans"
-            data-testid="loans-skeleton"
-            className={`space-y-5 ${className}`}
-        >
-            <Card>
-                <div className="flex items-center gap-2.5">
-                    <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
-                    <Skeleton className="h-5 w-32" />
-                </div>
-                <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    {Array.from({ length: 4 }, (_, i) => (
-                        <div
-                            key={i}
-                            className="rounded-xl border-2 border-(--border-subtle) bg-(--bg-cream) p-3 space-y-2"
-                        >
-                            <Skeleton className="h-3 w-16" />
-                            <Skeleton className="h-5 w-24" />
-                        </div>
-                    ))}
-                </div>
-                <Skeleton className="mt-4 h-3 w-full rounded-full" />
-            </Card>
-            <SkeletonCard lines={3} />
-            <SkeletonCard chart />
-            <SkeletonCard rows={3} />
-        </SkeletonGroup>
-    );
-}
-
 export function AccountsContentSkeleton({ className = "" }: PageSkeletonProps) {
     return (
         <SkeletonGroup
