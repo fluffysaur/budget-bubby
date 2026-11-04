@@ -589,3 +589,19 @@ export type UpdateNotificationPreferencesInput = Partial<
     Omit<NotificationPreferences, "id" | "household_id" | "member_id" | "updated_at">
 >;
 
+
+/** Per-member record of a reminder's push, read and dismiss state. */
+export interface NotificationLogEntry {
+    reminder_key: string;
+    type: string;
+    sent_at?: string | null;
+    read_at?: string | null;
+    dismissed_at?: string | null;
+    created_at?: string;
+}
+
+/** Identifies one reminder when writing to the notification log. */
+export interface NotificationLogRef {
+    key: string;
+    type: string;
+}

@@ -39,6 +39,8 @@ import type {
   StreakSummary,
   NotificationPreferences,
   UpdateNotificationPreferencesInput,
+  NotificationLogEntry,
+  NotificationLogRef,
 } from '../types/finance';
 import {
   mockSeedData,
@@ -67,6 +69,12 @@ import {
 } from '../lib/recurringItems';
 import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
+import {
+  getLocalNotificationLog,
+  claimLocalNotificationSend,
+  markLocalNotificationsRead,
+  dismissLocalNotification,
+} from './localNotificationLog';
 
 const STORAGE_KEY = 'budget_buddy_mock_dataset_v1';
 
@@ -1274,6 +1282,23 @@ class MockFinanceServiceImpl implements FinanceService {
       );
     }
     return cloneDeep(updated);
+  }
+
+  // Notification Log
+  public async getNotificationLog(memberId: string): Promise<NotificationLogEntry[]> {
+    return getLocalNotificationLog(memberId);
+  }
+
+  public async claimNotificationSend(memberId: string, ref: NotificationLogRef): Promise<boolean> {
+    return claimLocalNotificationSend(memberId, ref);
+  }
+
+  public async markNotificationsRead(memberId: string, refs: NotificationLogRef[]): Promise<void> {
+    markLocalNotificationsRead(memberId, refs);
+  }
+
+  public async dismissNotification(memberId: string, ref: NotificationLogRef): Promise<void> {
+    dismissLocalNotification(memberId, ref);
   }
 }
 

@@ -36,6 +36,8 @@ import type {
   StreakSummary,
   NotificationPreferences,
   UpdateNotificationPreferencesInput,
+  NotificationLogEntry,
+  NotificationLogRef,
 } from '../types/finance';
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
@@ -105,6 +107,12 @@ export interface FinanceService {
     memberId: string,
     updates: UpdateNotificationPreferencesInput
   ): Promise<NotificationPreferences>;
+  // Notification Log
+  getNotificationLog(memberId: string): Promise<NotificationLogEntry[]>;
+  /** Returns true only for the first caller to claim this reminder key. */
+  claimNotificationSend(memberId: string, ref: NotificationLogRef): Promise<boolean>;
+  markNotificationsRead(memberId: string, refs: NotificationLogRef[]): Promise<void>;
+  dismissNotification(memberId: string, ref: NotificationLogRef): Promise<void>;
 }
 
 export function isDemoModeActive(): boolean {
@@ -316,6 +324,13 @@ export const financeService: FinanceService = {
     invalidateFinanceCache();
     return res;
   },
+  // Notification Log
+  getNotificationLog: (memberId) => getActiveService().getNotificationLog(memberId),
+  claimNotificationSend: (memberId, ref) =>
+    getActiveService().claimNotificationSend(memberId, ref),
+  markNotificationsRead: (memberId, refs) =>
+    getActiveService().markNotificationsRead(memberId, refs),
+  dismissNotification: (memberId, ref) => getActiveService().dismissNotification(memberId, ref),
 };
 
 export default financeService;
