@@ -48,6 +48,19 @@ export function getSingaporeDate(): Date {
     return new Date(sgTimeString);
 }
 
+const sgtMonthFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Singapore",
+    year: "numeric",
+    month: "2-digit",
+});
+
+/** 'YYYY-MM' in Asia/Singapore for an ISO timestamp. */
+export function toSingaporeMonth(iso: string): string {
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return iso.slice(0, 7);
+    return sgtMonthFormatter.format(date);
+}
+
 /**
  * Returns current month string in 'YYYY-MM' format.
  */

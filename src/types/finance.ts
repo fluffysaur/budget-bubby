@@ -470,6 +470,7 @@ export interface MonthlyBalancePoint {
   other: number;
   totalAssets: number;
   nonCpfAssets: number;
+  cardDebt: number;
   netWorth: number;
   nonCpfNetWorth: number;
   momChange: number;

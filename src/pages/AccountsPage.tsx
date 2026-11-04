@@ -25,9 +25,18 @@ import {
     SegmentedTabs,
     AccountsContentSkeleton,
 } from "../components/ui";
-import { useAccountsQuery, useAccountSnapshotsQuery } from "../hooks/useFinanceQueries";
+import {
+    useAccountsQuery,
+    useAccountSnapshotsQuery,
+    useCreditCardStatementsQuery,
+} from "../hooks/useFinanceQueries";
+import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
+import {
+    calculateCardDebt,
+    filterStatementsForPerspective,
+} from "../lib/financialFormulas";
 import { AccountGroupList } from "../components/accounts/AccountGroupList";
 import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
 import { AddAccountModal } from "../components/accounts/AddAccountModal";
@@ -56,13 +65,24 @@ export function AccountsPage({
     const [activeTab, setActiveTab] = useState<"accounts" | "credit_cards">(
         defaultTab,
     );
+    const currentMonth = useCurrentMonth();
 
     // TanStack Query Cached Data Hooks
     const { data: accountsData, isLoading: accountsLoading } =
         useAccountsQuery(perspective);
     const { data: snapshots } = useAccountSnapshotsQuery(perspective);
+    const { data: statementsData } = useCreditCardStatementsQuery();
 
     const accounts = useMemo(() => accountsData || [], [accountsData]);
+    const statements = useMemo(
+        () =>
+            filterStatementsForPerspective(
+                statementsData || [],
+                perspective,
+                activeMember?.id,
+            ),
+        [statementsData, perspective, activeMember?.id],
+    );
     const isLoading = accountsLoading && !accountsData;
 
     // Modal States
@@ -111,6 +131,16 @@ export function AccountsPage({
         const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
         return Math.round(sum * 100) / 100;
     }, [accounts]);
+
+    const cardDebt = useMemo(
+        () => calculateCardDebt(statements, currentMonth),
+        [statements, currentMonth],
+    );
+
+    const netWorth = useMemo(
+        () => Math.round((totalAssets - cardDebt) * 100) / 100,
+        [totalAssets, cardDebt],
+    );
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
@@ -179,9 +209,13 @@ export function AccountsPage({
                         <StatCard
                             title="Net Worth"
                             loading={isLoading}
-                            value={formatSGD(totalAssets)}
-                            subtitle={`${accounts.length} account${accounts.length === 1 ? "" : "s"}`}
-                            tooltip="Total of all account balances."
+                            value={formatSGD(netWorth)}
+                            subtitle={
+                                cardDebt > 0
+                                    ? `${formatSGD(cardDebt)} card debt`
+                                    : `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
+                            }
+                            tooltip="Account balances minus unpaid card statements."
                             icon={<TrendingUp className="h-4 w-4" />}
                             iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                         />
@@ -195,6 +229,7 @@ export function AccountsPage({
                                 <NetWorthChart
                                     accounts={accounts}
                                     snapshots={snapshots}
+                                    statements={statements}
                                     onUpdateBalances={() => {
                                         setSelectedAccount(null);
                                         setIsUpdateModalOpen(true);

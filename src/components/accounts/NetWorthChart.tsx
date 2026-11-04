@@ -9,7 +9,7 @@
 import { useMemo } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { CalendarCheck, TrendingUp } from "lucide-react";
-import type { Account, AccountSnapshot } from "../../types/finance";
+import type { Account, AccountSnapshot, CreditCardStatement } from "../../types/finance";
 import { formatDisplayMonth } from "../../lib/dateUtils";
 import { calculateMonthlyBalanceTrends } from "../../lib/financialFormulas";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
@@ -27,6 +27,7 @@ export interface NetWorthChartProps {
     data?: NetWorthDataPoint[];
     accounts?: Account[];
     snapshots?: AccountSnapshot[];
+    statements?: CreditCardStatement[];
     onUpdateBalances?: () => void;
     className?: string;
 }
@@ -71,6 +72,7 @@ export function NetWorthChart({
     data,
     accounts,
     snapshots,
+    statements,
     onUpdateBalances,
     className = "",
 }: NetWorthChartProps) {
@@ -79,13 +81,17 @@ export function NetWorthChart({
         if (data && data.length > 0) {
             return data;
         }
-        return calculateMonthlyBalanceTrends(accounts || [], snapshots || [], 6, currentM).map(
-            (point) => ({
-                date: formatDisplayMonth(point.month),
-                netWorth: point.netWorth,
-            }),
-        );
-    }, [data, accounts, snapshots, currentM]);
+        return calculateMonthlyBalanceTrends(
+            accounts || [],
+            snapshots || [],
+            6,
+            currentM,
+            statements || [],
+        ).map((point) => ({
+            date: formatDisplayMonth(point.month),
+            netWorth: point.netWorth,
+        }));
+    }, [data, accounts, snapshots, statements, currentM]);
 
     const hasHistory = chartData.length >= 2;
     const latestPoint = chartData[chartData.length - 1];
@@ -112,8 +118,9 @@ export function NetWorthChart({
                             align="left"
                             className="shrink-0"
                         >
-                            Net Worth = total of all account balances. Accounts are
-                            included from their first balance update.
+                            Net Worth = account balances minus unpaid card
+                            statements. Accounts are included from their first
+                            balance update.
                         </TooltipPopover>
                     </div>
                 </div>
