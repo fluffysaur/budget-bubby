@@ -33,6 +33,7 @@ import {
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
+import { useFollowCurrentMonth } from '../hooks/useCurrentMonth';
 import {
   calculateSharedExpenseSettlement,
   calculateExpenseTrendsSummary,
@@ -74,6 +75,11 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
     payerId: undefined,
     isShared: undefined,
   });
+
+  // Keep the default month filter on the live calendar month across rollover
+  const currentMonth = useFollowCurrentMonth(filter.month, (month) =>
+    setFilter((prev) => ({ ...prev, month })),
+  );
 
   // Synchronize perspective filter if active member changes
   useEffect(() => {
@@ -187,7 +193,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
   // Reset all filters
   const handleResetFilters = () => {
     setFilter({
-      month: getCurrentMonth(),
+      month: currentMonth,
       search: '',
       categoryId: undefined,
       payerId: activeMember ? activeMember.id : undefined,
@@ -246,15 +252,15 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       policies,
       perspective,
       activeMember?.id,
-      filter.month || getCurrentMonth(),
+      filter.month || currentMonth,
       6
     );
-  }, [allExpenses, expenses, categories, policies, perspective, activeMember, filter.month]);
+  }, [allExpenses, expenses, categories, policies, perspective, activeMember, filter.month, currentMonth]);
 
   // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
   const spendablePacing = useMemo(() => {
     return calculateSpendablePacing({
-      month: filter.month || getCurrentMonth(),
+      month: filter.month || currentMonth,
       memberId: activeMember?.id,
       perspective,
       expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
@@ -262,12 +268,12 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       baseProfiles,
       baseAllocations,
     });
-  }, [filter.month, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
+  }, [filter.month, currentMonth, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
 
   // Check unspent surplus from the prior month
   const unspentSurplusInfo = useMemo(() => {
     return detectUnspentMonthEndSurplus({
-      currentMonth: getCurrentMonth(),
+      currentMonth,
       memberId: activeMember?.id,
       perspective,
       expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
@@ -275,12 +281,12 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       baseProfiles,
       baseAllocations,
     });
-  }, [activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
+  }, [currentMonth, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
 
   const showSweepBanner =
     unspentSurplusInfo.hasUnspentSurplus &&
     dismissedSweepMonth !== unspentSurplusInfo.lastMonth &&
-    (!filter.month || filter.month === getCurrentMonth());
+    (!filter.month || filter.month === currentMonth);
 
   return (
     <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>

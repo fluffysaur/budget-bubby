@@ -35,6 +35,7 @@ import {
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
+import { useFollowCurrentMonth } from '../hooks/useCurrentMonth';
 import { isValidUuid } from '../lib/uuid';
 import { isSpendableCategory } from '../lib/financialFormulas';
 import { mockBaseProfiles, mockBaseAllocations, mockCategories } from '../data/mockSeedData';
@@ -62,7 +63,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
   const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
 
   // State
-  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
+  useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
   // Cached Metadata Queries
   const { data: categoriesData } = useCategoriesQuery();

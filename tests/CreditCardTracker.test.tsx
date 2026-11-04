@@ -2,7 +2,7 @@
  * Credit Card Tracker: Statements, Due Dates & Card Management
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CreditCardTrackerSection, getRelativeDueLabel } from '../src/components/accounts/CreditCardTrackerSection';
 import { AddEditCreditCardModal } from '../src/components/accounts/AddEditCreditCardModal';
@@ -55,6 +55,17 @@ describe('Credit Card Statements & Due Date Tracker', () => {
   });
 
   describe('CreditCardTrackerSection Component', () => {
+    // Mock seed statements live in 2026-10; pin the clock so the tracker
+    // (which defaults to the current month) opens on that month.
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-15T04:00:00.000Z'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it('renders configured cards and monthly summary statistics for 2026-10', async () => {
       render(
         <CreditCardTrackerSection
