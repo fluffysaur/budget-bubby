@@ -94,7 +94,7 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
 ## Follow-ups found during the work
 
 - **Fake net-worth history:** when no data is passed, `NetWorthChart` invents the previous 4 months by multiplying today's total by 0.93–0.985. Replace this with real `account_snapshots` history (the unused `calculateMonthlyBalanceTrends` already does that), or hide the chart until there is history.
-- **Home vs Spend mismatch:** in Combined view, Home's Left to Spend uses the first member's budget, while Spend > Expenses shows the household figure (demo: S$1,676 vs S$4,000). This behaviour already existed before PR 3.
+- ~~**Home vs Spend mismatch**~~: fixed in `fix/combined-left-to-spend`. Combined uses the household total everywhere (decided 2026-11-04). Home, Budget and the Expenses Spendable card share `useBudgetDetailQuery`. The Expenses card also now counts recurring items billed to spendable categories.
 - **Card debt in net worth:** optionally count unpaid credit-card statements as liabilities. That would be a new behaviour, so it's a separate decision.
 
 ## Out of scope
