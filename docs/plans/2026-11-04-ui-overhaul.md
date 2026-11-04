@@ -1,7 +1,7 @@
 # UI Overhaul Plan
 
 Date: 2026-11-04
-Status: Agreed, in progress (PR 2 merged, PR 3 ready for review)
+Status: Agreed, in progress (PRs 2–3 merged, PR 4 ready for review)
 
 ## Problem
 
@@ -90,6 +90,27 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
 - **Net worth and goals:** Accounts and Plan > Goals already show these, so `NetWorthHeroCard` and `SharedGoalsOverview` are deleted rather than moved.
 - **Streak:** a header chip shows the count. Tapping it opens the existing `DailyCheckinStreakBar` in a popover.
 - **Alerts:** `CategoryLimitWarningBanner` gains a `single` mode that shows only the most urgent alert plus "+N more". Budget still shows every alert.
+
+## PR 4 notes
+
+- **Money scale** (`src/lib/moneyStyles.ts`):
+
+    | Size | Use | Style |
+    |---|---|---|
+    | `hero` | page hero figures | 3xl/4xl, black |
+    | `lg` | stat cards | xl/2xl, black |
+    | `md` | list rows | sm/base, extrabold |
+    | `sm` | secondary amounts | xs, bold |
+    | `inline` | amounts in sentences | surrounding size, bold |
+
+    Amounts inherit the surrounding colour. StatCard values use `lg`.
+- **Conversion:** a script converted 106 hand-styled `{formatSGD()}` children to `<CurrencyText>`, picking each size from the old classes. The ESLint rule `no-restricted-syntax` now blocks new ones. `formatSGD` is still used for strings (attributes, template literals, notifications).
+- **Card elevation stays `tactile` by default**, against Decision 17. The `sm` shadow is smaller, so it would make cards stand out less, not more. The extra separation comes from a darker canvas instead.
+- **Contrast:**
+    - Canvas is `#e9e2da` in light mode and `#121010` in dark, up from 1.14 to about 1.25 contrast against cards.
+    - `--text-faint` is now `#6e645d` (light) and `#a0968e` (dark), and passes AA on every background. It used to measure 3.2–4.1.
+    - 46 uses of `text-slate-400` (2.2–2.6 in light mode) are replaced with `--text-faint`.
+    - The net-worth chart's axis labels use `--text-faint`.
 
 ## Follow-ups found during the work
 
