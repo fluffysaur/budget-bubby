@@ -16,7 +16,7 @@ test.describe('Budget Bubby App Smoke Test', () => {
       await expect(page.getByRole('button', { name: /Rachel/i })).toBeVisible();
     }
 
-    // Dashboard heading
-    await expect(page.getByRole('heading', { level: 1, name: /Dashboard/i })).toBeVisible();
+    // Home heading
+    await expect(page.getByRole('heading', { level: 1, name: /^Home$/i })).toBeVisible();
   });
 });

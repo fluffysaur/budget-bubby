@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Quick Add Expense Flow', () => {
-  test('should open modal, add shared expense, and see it in ledger', async ({ page }) => {
+  test('should open modal, add shared expense, and see it in ledger', async ({ page, isMobile }) => {
     await page.goto('/expenses');
 
-    // Click "+ Add Expense" button on Expenses page
-    await page.getByRole('button', { name: /Add Expense/i }).first().click();
+    // Inline "Add Expense" shows from md up; phones use the bottom-nav Quick Add button
+    if (isMobile) {
+      await page.getByRole('navigation', { name: 'Mobile Navigation' }).getByRole('button', { name: 'Quick Add' }).click();
+    } else {
+      await page.getByRole('button', { name: /Add Expense/i }).first().click();
+    }
 
     // Verify modal is visible
     const modal = page.getByRole('dialog');

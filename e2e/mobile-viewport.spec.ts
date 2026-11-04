@@ -32,16 +32,18 @@ test.describe('Mobile Viewport & Bottom Navigation', () => {
     await expect(modal).not.toBeVisible();
 
     // Navigate between tabs using Mobile Bottom Navigation
-    await bottomNav.getByRole('button', { name: 'Expenses' }).click();
-    await expect(page).toHaveURL(/\/expenses/);
-    await expect(page.getByRole('heading', { level: 1, name: /^Expenses$/i })).toBeVisible();
+    await bottomNav.getByRole('button', { name: 'Spend' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: /^Spend$/i })).toBeVisible();
 
     await bottomNav.getByRole('button', { name: 'Accounts' }).click();
     await expect(page).toHaveURL(/\/accounts/);
-    await expect(page.getByRole('heading', { level: 1, name: /Accounts & Net Worth/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^Accounts$/i })).toBeVisible();
+
+    await bottomNav.getByRole('button', { name: 'Plan' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: /^Plan$/i })).toBeVisible();
 
     await bottomNav.getByRole('button', { name: 'Dashboard' }).click();
     await expect(page).toHaveURL(/\/(dashboard)?$/);
-    await expect(page.getByRole('heading', { level: 1, name: /Dashboard/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^Home$/i })).toBeVisible();
   });
 });
