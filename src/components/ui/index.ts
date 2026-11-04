@@ -12,6 +12,7 @@ export * from "./CollapsibleSection";
 export * from "./AnimatedModal";
 export * from "./TruncatedText";
 export * from "./LoadingCard";
+export * from "./Skeleton";
 export * from "./EmptyStateCard";
 export * from "./PullToRefresh";
 export * from "./Alert";

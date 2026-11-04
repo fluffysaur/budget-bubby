@@ -1,6 +1,7 @@
 import React from "react";
 import { TooltipPopover } from "./TooltipPopover";
 import { Card, type CardVariant } from "./Card";
+import { SkeletonLine, SkeletonStatValue } from "./Skeleton";
 
 export interface StatCardProps {
     title: React.ReactNode;
@@ -15,6 +16,8 @@ export interface StatCardProps {
     variant?: CardVariant;
     className?: string;
     onClick?: () => void;
+    /** Renders skeleton placeholders for value/subtitle/footer while data loads. */
+    loading?: boolean;
 }
 
 export function StatCard({
@@ -30,6 +33,7 @@ export function StatCard({
     variant = "white",
     className = "",
     onClick,
+    loading = false,
 }: StatCardProps) {
     const Component = onClick ? "button" : "div";
 
@@ -38,6 +42,7 @@ export function StatCard({
             variant={variant}
             interactive={!!onClick}
             padding="none"
+            aria-busy={loading || undefined}
             className={`overflow-hidden text-left ${className}`}
         >
             <Component
@@ -77,21 +82,23 @@ export function StatCard({
 
                 <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between gap-1 sm:gap-2 flex-wrap min-w-0">
                     <div className="text-base sm:text-xl xl:text-2xl font-black text-(--text-ink) tracking-tight font-mono-num">
-                        {value}
+                        {loading ? <SkeletonStatValue /> : value}
                     </div>
-                    {badge && <div className="shrink-0">{badge}</div>}
+                    {badge && !loading && (
+                        <div className="shrink-0">{badge}</div>
+                    )}
                 </div>
 
                 {subtitle && (
                     <div className="mt-1 text-[11px] sm:text-xs font-medium text-(--text-muted) truncate sm:line-clamp-2">
-                        {subtitle}
+                        {loading ? <SkeletonLine /> : subtitle}
                     </div>
                 )}
             </Component>
 
             {footer && (
                 <div className="border-t-2 border-(--border-ink) bg-(--bg-cream) px-4 py-2 text-xs font-bold text-(--text-muted)">
-                    {footer}
+                    {loading ? <SkeletonLine className="w-full" /> : footer}
                 </div>
             )}
         </Card>
