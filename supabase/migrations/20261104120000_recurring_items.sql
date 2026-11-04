@@ -2,7 +2,8 @@
 -- Budget Bubby: Recurring Items
 -- Generalizes recurring_policies into recurring_items:
 --   1. Renames the table, its indexes, constraints and RLS policy.
---   2. Creates a temporary recurring_policies compatibility view so the
+--   2. Widens the type check to include 'bill' and 'other'.
+--   3. Creates a temporary recurring_policies compatibility view so the
 --      previously deployed frontend keeps working during rollout.
 -- ==============================================================================
 
@@ -46,7 +47,13 @@ with check (
   and public.is_household_member(household_id)
 );
 
--- 2. Temporary compatibility view -----------------------------------------------
+-- 2. Widen type check -----------------------------------------------------------
+alter table recurring_items drop constraint if exists recurring_items_type_check;
+alter table recurring_items
+    add constraint recurring_items_type_check
+    check (type in ('insurance', 'tax', 'subscription', 'bill', 'other'));
+
+-- 3. Temporary compatibility view -----------------------------------------------
 -- TEMPORARY: lets the previously deployed frontend keep using
 -- .from('recurring_policies') for reads and writes while the new frontend
 -- (which uses recurring_items) rolls out. It will be dropped in a later

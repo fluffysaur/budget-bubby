@@ -8,7 +8,7 @@
  */
 
 import { useMemo } from "react";
-import { Calendar, Flame, Shield, FileText, Repeat } from "lucide-react";
+import { Calendar, Flame } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
     getSingaporeDate,
@@ -16,7 +16,16 @@ import {
     MONTH_NAMES_FULL,
 } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
+import { RECURRING_TYPE_ICONS } from "../../lib/recurringItems";
 import type { RecurringItem, RecurringItemType } from "../../types/finance";
+
+const TYPE_ICON_COLORS: Record<RecurringItemType, string> = {
+    insurance: "text-blue-500",
+    tax: "text-purple-500",
+    subscription: "text-amber-500",
+    bill: "text-emerald-600",
+    other: "text-slate-400",
+};
 
 export interface RenewalCalendarProps {
     recurringItems: RecurringItem[];
@@ -109,16 +118,12 @@ export function RenewalCalendar({
 
     // Type icon helper
     const renderItemIcon = (type: RecurringItemType) => {
-        switch (type) {
-            case "insurance":
-                return <Shield className="w-3 h-3 text-blue-500" />;
-            case "tax":
-                return <FileText className="w-3 h-3 text-purple-500" />;
-            case "subscription":
-                return <Repeat className="w-3 h-3 text-amber-500" />;
-            default:
-                return <Calendar className="w-3 h-3 text-slate-400" />;
-        }
+        const Icon = RECURRING_TYPE_ICONS[type] ?? Calendar;
+        return (
+            <Icon
+                className={`w-3 h-3 shrink-0 ${TYPE_ICON_COLORS[type] ?? "text-slate-400"}`}
+            />
+        );
     };
 
     return (

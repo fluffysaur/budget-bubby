@@ -394,7 +394,7 @@ export interface CreateGoalInput {
   emoji?: string;
 }
 
-export type RecurringItemType = 'insurance' | 'tax' | 'subscription';
+export type RecurringItemType = 'insurance' | 'tax' | 'subscription' | 'bill' | 'other';
 export type RecurringFrequency = 'annually' | 'monthly';
 
 export interface RecurringItem {

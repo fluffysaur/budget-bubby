@@ -23,6 +23,7 @@ import { PageHeader, Button, StatCard, Card } from "../components/ui";
 import { useRecurringItemsQuery } from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
+import { isDeductionType } from "../lib/recurringItems";
 import {
     getSingaporeDate,
     MONTH_NAMES_FULL as MONTH_NAMES,
@@ -94,7 +95,7 @@ export function RecurringPage({
     // Metric 1: Total Annual Outflow (Insurance & Tax recurring items)
     const totalAnnualOutflow = useMemo(() => {
         return inScopeItems
-            .filter((p) => p.type !== "subscription")
+            .filter((p) => isDeductionType(p.type))
             .reduce((sum, p) => {
                 if (p.frequency === "monthly") {
                     return sum + p.amount * 12;
@@ -106,7 +107,7 @@ export function RecurringPage({
     // Metric 2: Monthly Amortized Outflow
     const monthlyAmortizedOutflow = useMemo(() => {
         return inScopeItems
-            .filter((p) => p.type !== "subscription")
+            .filter((p) => isDeductionType(p.type))
             .reduce((sum, p) => sum + p.monthly_amortized_amount, 0);
     }, [inScopeItems]);
 

@@ -241,18 +241,13 @@ export function AddRecurringModal({
                                 }
                                 className="bg-(--bg-canvas)"
                             >
-                                <option value="insurance">
-                                    🛡️ Life / Health Insurance
-                                </option>
-                                <option value="tax">
-                                    🏛️ Income / Property Tax
-                                </option>
+                                <option value="insurance">🛡️ Insurance</option>
+                                <option value="tax">🏛️ Tax</option>
                                 <option value="subscription">
-                                    📱 Subscription (Netflix, Spotify)
+                                    📱 Subscription
                                 </option>
-                                <option value="other">
-                                    📦 Other Recurring
-                                </option>
+                                <option value="bill">🧾 Bill</option>
+                                <option value="other">📦 Other</option>
                             </Select>
                         </div>
 

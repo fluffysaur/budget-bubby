@@ -228,6 +228,38 @@ describe('RecurringTable Component', () => {
     expect(screen.queryByText('Manulife - Lifeready 25 Plus')).not.toBeInTheDocument();
   });
 
+  it('shows Bill and Other badges and filter tabs', () => {
+    const extraItems: RecurringItem[] = [
+      ...sampleItems,
+      {
+        ...sampleItems[4],
+        id: 'ri-bill',
+        type: 'bill',
+        name: 'SP Group Utilities',
+      },
+      {
+        ...sampleItems[4],
+        id: 'ri-other',
+        type: 'other',
+        name: 'Cloud Storage',
+      },
+    ];
+    render(<RecurringTable recurringItems={extraItems} onEdit={vi.fn()} onDelete={vi.fn()} />);
+
+    const badges = screen.getAllByRole('status').map((b) => b.textContent);
+    expect(badges).toContain('Bill');
+    expect(badges).toContain('Other');
+
+    fireEvent.click(screen.getByRole('tab', { name: /^bill$/i }));
+    expect(screen.getByText('SP Group Utilities')).toBeInTheDocument();
+    expect(screen.queryByText('Cloud Storage')).not.toBeInTheDocument();
+    expect(screen.queryByText('Spotify Family Plan')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /^other$/i }));
+    expect(screen.getByText('Cloud Storage')).toBeInTheDocument();
+    expect(screen.queryByText('SP Group Utilities')).not.toBeInTheDocument();
+  });
+
   it('displays empty state when filter has no matches', () => {
     render(
       <RecurringTable

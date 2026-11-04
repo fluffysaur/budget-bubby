@@ -4,26 +4,22 @@
  * Features:
  * - Columns: Policy Name, Type badge, Insured/Owner, Frequency, Premium Amount, Monthly Amortized Outflow, Renewal Month, Actions
  * - Search by recurring item name or notes
- * - Filter by recurring item type (All, Insurance, Tax, Subscription)
+ * - Filter by type (All, Insurance, Tax, Subscription, Bill, Other)
  * - Empty state with clear filters option
  * - Edit and Delete actions
  */
 
 import { useState, useMemo } from "react";
-import {
-    Shield,
-    FileText,
-    Repeat,
-    Pencil,
-    Trash2,
-    Search,
-    AlertCircle,
-    HelpCircle,
-} from "lucide-react";
+import { Pencil, Trash2, Search, AlertCircle } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import { MONTH_NAMES_SHORT as MONTH_NAMES } from "../../lib/dateUtils";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TruncatedText } from "../ui/TruncatedText";
+import { RecurringTypeBadge } from "./RecurringTypeBadge";
+import {
+    RECURRING_ITEM_TYPES,
+    RECURRING_TYPE_LABELS,
+} from "../../lib/recurringItems";
 import type { RecurringItem, RecurringItemType } from "../../types/finance";
 
 export interface RecurringTableProps {
@@ -86,52 +82,6 @@ export function RecurringTable({
         return "Joint";
     };
 
-    // Type badge styling
-    const renderTypeBadge = (type: RecurringItemType) => {
-        switch (type) {
-            case "insurance":
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <Shield className="w-3 h-3 text-purple-600 dark:text-purple-300" />
-                        Insurance
-                    </span>
-                );
-            case "tax":
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <FileText className="w-3 h-3 text-amber-700 dark:text-amber-400" />
-                        Tax
-                    </span>
-                );
-            case "subscription":
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <Repeat className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
-                        Subscription
-                    </span>
-                );
-            default:
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--bg-cream) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <HelpCircle className="w-3 h-3" />
-                        {type}
-                    </span>
-                );
-        }
-    };
-
     return (
         <div className={`space-y-4 ${className}`}>
             {/* Search & Filter Bar */}
@@ -161,9 +111,10 @@ export function RecurringTable({
                 <SegmentedTabs
                     tabs={[
                         { id: "all", label: "All" },
-                        { id: "insurance", label: "Insurance" },
-                        { id: "tax", label: "Tax" },
-                        { id: "subscription", label: "Subscription" },
+                        ...RECURRING_ITEM_TYPES.map((t) => ({
+                            id: t,
+                            label: RECURRING_TYPE_LABELS[t],
+                        })),
                     ]}
                     activeTab={selectedType}
                     onChange={(typeId) => setSelectedType(typeId as "all" | RecurringItemType)}
@@ -274,7 +225,7 @@ export function RecurringTable({
 
                                         {/* Type Badge */}
                                         <td className="py-3 px-4 whitespace-nowrap">
-                                            {renderTypeBadge(recurringItem.type)}
+                                            <RecurringTypeBadge type={recurringItem.type} />
                                         </td>
 
                                         {/* Owner / Insured */}

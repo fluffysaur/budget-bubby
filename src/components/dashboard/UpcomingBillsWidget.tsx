@@ -5,21 +5,15 @@
  */
 
 import { useMemo } from "react";
-import {
-    CalendarClock,
-    ChevronRight,
-    Shield,
-    Receipt,
-    RotateCw,
-    Bell,
-} from "lucide-react";
+import { CalendarClock, ChevronRight, Bell } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
     getSingaporeDate,
     MONTH_NAMES_FULL as MONTH_NAMES,
 } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
-import type { RecurringItem, RecurringItemType } from "../../types/finance";
+import { RecurringTypeBadge } from "../recurring/RecurringTypeBadge";
+import type { RecurringItem } from "../../types/finance";
 
 export interface UpcomingBillsWidgetProps {
     recurringItems?: RecurringItem[];
@@ -51,33 +45,6 @@ export function UpcomingBillsWidget({
     }, [recurringItems, currentMonthNum, nextMonthNum]);
 
     const displayItems = sortedItems.slice(0, 3);
-
-    const getTypeBadge = (type: RecurringItemType) => {
-        switch (type) {
-            case "insurance":
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <Shield className="h-2.5 w-2.5" strokeWidth={2.5} />
-                        <span>Insurance</span>
-                    </span>
-                );
-            case "tax":
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-coral) px-2 py-0.5 text-[10px] font-black text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <Receipt className="h-2.5 w-2.5" strokeWidth={2.5} />
-                        <span>Tax</span>
-                    </span>
-                );
-            case "subscription":
-            default:
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-mint) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <RotateCw className="h-2.5 w-2.5" strokeWidth={2.5} />
-                        <span>Subscription</span>
-                    </span>
-                );
-        }
-    };
 
     const getDueStatus = (p: RecurringItem) => {
         if (p.frequency === "monthly") {
@@ -167,7 +134,7 @@ export function UpcomingBillsWidget({
                                                     text={recurringItem.name}
                                                     className="text-sm font-bold text-(--text-ink) font-display"
                                                 />
-                                                {getTypeBadge(recurringItem.type)}
+                                                <RecurringTypeBadge type={recurringItem.type} />
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span
