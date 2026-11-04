@@ -43,6 +43,7 @@ import {
     formatDisplayDate,
     addMonths,
 } from "../../lib/dateUtils";
+import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
 import type {
     CreditCard,
@@ -119,11 +120,9 @@ export function CreditCardTrackerSection({
     activeMemberId,
     className = "",
 }: CreditCardTrackerSectionProps) {
-    const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-        // Default to 2026-10 or current month
-        const cur = getCurrentMonth();
-        return cur.startsWith("2026") ? cur : "2026-10";
-    });
+    const [selectedMonth, setSelectedMonth] =
+        useState<string>(getCurrentMonth);
+    useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
     const [cards, setCards] = useState<CreditCard[]>([]);
     const [statements, setStatements] = useState<CreditCardStatement[]>([]);

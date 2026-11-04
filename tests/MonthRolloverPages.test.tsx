@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { BudgetPage } from "../src/pages/BudgetPage";
 import { ExpensesPage } from "../src/pages/ExpensesPage";
+import { CreditCardTrackerSection } from "../src/components/accounts/CreditCardTrackerSection";
 import { mockFinanceService } from "../src/services/mockFinanceService";
 
 // 2026-10-31 22:00 in Singapore (UTC+8)
@@ -130,5 +131,34 @@ describe("ExpensesPage month rollover", () => {
         await waitFor(() => {
             expect(monthInput(container)?.value).toBe("2026-11");
         });
+    });
+});
+
+describe("CreditCardTrackerSection month default", () => {
+    it("defaults to the real current month, not a hardcoded 2026 fallback", async () => {
+        vi.setSystemTime(new Date("2027-03-15T04:00:00.000Z"));
+        render(<CreditCardTrackerSection members={[]} perspective="household" />);
+        expect(screen.getByText("March 2027")).toBeInTheDocument();
+    });
+
+    it("follows the current month across rollover", async () => {
+        render(<CreditCardTrackerSection members={[]} perspective="household" />);
+        expect(screen.getByText("October 2026")).toBeInTheDocument();
+
+        rollOverToNovember();
+
+        await waitFor(() => {
+            expect(screen.getByText("November 2026")).toBeInTheDocument();
+        });
+    });
+
+    it("keeps a month the user stepped to", async () => {
+        render(<CreditCardTrackerSection members={[]} perspective="household" />);
+        fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
+        expect(screen.getByText("September 2026")).toBeInTheDocument();
+
+        rollOverToNovember();
+
+        expect(screen.getByText("September 2026")).toBeInTheDocument();
     });
 });
