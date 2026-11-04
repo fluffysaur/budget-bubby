@@ -498,6 +498,34 @@ describe('UpcomingBillsWidget', () => {
     expect(screen.getByText('S$1,600.00')).toBeInTheDocument();
   });
 
+  it('sorts by next due date and shows "Due in X days" with clamped due days', () => {
+    const items: RecurringItem[] = [
+      { ...sampleItems[0], id: 'far', name: 'Far Renewal', payment_month: 9, due_day: 1 },
+      {
+        ...sampleItems[0],
+        id: 'bill-31',
+        type: 'bill',
+        name: 'SP Utilities',
+        frequency: 'monthly',
+        payment_month: null,
+        amount: 90,
+        monthly_amortized_amount: 90,
+        due_day: 31,
+      },
+      { ...sampleItems[0], id: 'dec', name: 'Dec Renewal', payment_month: 12, due_day: 10 },
+    ];
+    render(<UpcomingBillsWidget recurringItems={items} referenceDate={new Date(2026, 10, 25)} />);
+
+    // Day 31 clamps to 30 Nov -> 5 days; Dec 10 -> 15 days; Sep -> far away
+    expect(screen.getByText('Due in 5 days')).toBeInTheDocument();
+    expect(screen.getByText('Due in 15 days')).toBeInTheDocument();
+    expect(screen.getByText('Due in September')).toBeInTheDocument();
+    expect(screen.getByText('Bill')).toBeInTheDocument();
+
+    const names = screen.getAllByText(/SP Utilities|Dec Renewal|Far Renewal/).map((el) => el.textContent);
+    expect(names).toEqual(['SP Utilities', 'Dec Renewal', 'Far Renewal']);
+  });
+
   it('renders empty state when no upcoming bills', () => {
     render(<UpcomingBillsWidget recurringItems={[]} />);
     expect(screen.getByText(/no upcoming renewals/i)).toBeInTheDocument();

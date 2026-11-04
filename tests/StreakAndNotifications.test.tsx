@@ -730,6 +730,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
           amount: 2400,
           frequency: 'annually',
           payment_month: 10, // October
+          due_day: 25,
           monthly_amortized_amount: 200,
         },
         {
@@ -749,6 +750,52 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(rOct).toHaveLength(1);
       expect(rOct[0].type).toBe('recurring_bill_due');
       expect(rOct[0].message).toContain('Manulife');
+      expect(rOct[0].message).toContain('due in 10 days');
+      expect(rOct[0].id).toBe('reminder-recurring-pol-1-2026-10-25');
+    });
+
+    it('checkRecurringBillsReminders uses due day for monthly items and clamps short months', () => {
+      const base = {
+        household_id: 'hh-1',
+        owner_id: 'mem-1',
+        type: 'bill' as const,
+        amount: 90,
+        frequency: 'monthly' as const,
+        monthly_amortized_amount: 90,
+      };
+      const recurringItems: RecurringItem[] = [
+        { ...base, id: 'bill-31', name: 'SP Utilities', due_day: 31 },
+        { ...base, id: 'bill-10', name: 'Phone Plan', due_day: 10 },
+        { ...base, id: 'bill-ended', name: 'Old Gym', due_day: 30, end_date: '2026-10-31' },
+      ];
+
+      // 28 Nov 2026: day 31 clamps to 30 Nov -> due in 2 days; day 10 is 12 days away
+      const r = checkRecurringBillsReminders(recurringItems, new Date('2026-11-28T09:00:00'));
+      expect(r).toHaveLength(1);
+      expect(r[0].message).toContain('SP Utilities');
+      expect(r[0].message).toContain('due in 2 days');
+      expect(r[0].id).toBe('reminder-recurring-bill-31-2026-11-30');
+    });
+
+    it('checkRecurringBillsReminders skips annual items more than 30 days away', () => {
+      const recurringItems: RecurringItem[] = [
+        {
+          id: 'ins-dec',
+          household_id: 'hh-1',
+          owner_id: 'mem-1',
+          type: 'insurance',
+          name: 'Year End Shield',
+          amount: 1200,
+          frequency: 'annually',
+          payment_month: 12,
+          due_day: 20,
+          monthly_amortized_amount: 100,
+        },
+      ];
+      expect(checkRecurringBillsReminders(recurringItems, new Date('2026-11-04T09:00:00'))).toHaveLength(0);
+      const r = checkRecurringBillsReminders(recurringItems, new Date('2026-11-25T09:00:00'));
+      expect(r).toHaveLength(1);
+      expect(r[0].message).toContain('due in 25 days');
     });
 
     it('checkGoalPacingReminders alerts when savings goals are behind target or achieved', () => {
@@ -1103,6 +1150,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
           amount: 1500,
           frequency: 'annually',
           payment_month: 10,
+          due_day: 20,
           monthly_amortized_amount: 125,
         },
         {
@@ -1114,6 +1162,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
           amount: 800,
           frequency: 'annually',
           payment_month: 10,
+          due_day: 20,
           monthly_amortized_amount: 66.67,
         },
       ];

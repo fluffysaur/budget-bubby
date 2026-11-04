@@ -27,6 +27,8 @@ import {
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
+import { Input } from "../ui/Input";
+import { MONTH_NAMES_FULL } from "../../lib/dateUtils";
 import { Alert } from "../ui/Alert";
 
 function useSafeHousehold() {
@@ -57,20 +59,10 @@ export interface AddRecurringModalProps {
     initialItem?: RecurringItem | null;
 }
 
-const MONTH_OPTIONS = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
-];
+const MONTH_OPTIONS = MONTH_NAMES_FULL.map((label, idx) => ({
+    value: idx + 1,
+    label,
+}));
 
 export function AddRecurringModal({
     isOpen,
@@ -95,6 +87,7 @@ export function AddRecurringModal({
     const [amount, setAmount] = useState<string>("");
     const [frequency, setFrequency] = useState<RecurringFrequency>("annually");
     const [paymentMonth, setPaymentMonth] = useState<number>(1);
+    const [dueDay, setDueDay] = useState<string>("");
     const [startDate, setStartDate] = useState<string>("");
     const [notes, setNotes] = useState<string>("");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -110,6 +103,9 @@ export function AddRecurringModal({
                 setAmount(String(initialItem.amount));
                 setFrequency(initialItem.frequency);
                 setPaymentMonth(initialItem.payment_month || 1);
+                setDueDay(
+                    initialItem.due_day ? String(initialItem.due_day) : "",
+                );
                 setStartDate(
                     initialItem.start_date
                         ? initialItem.start_date.substring(0, 10)
@@ -123,6 +119,7 @@ export function AddRecurringModal({
                 setAmount("");
                 setFrequency("annually");
                 setPaymentMonth(1);
+                setDueDay("");
                 setStartDate("");
                 setNotes("");
             }
@@ -149,6 +146,22 @@ export function AddRecurringModal({
             return;
         }
 
+        const trimmedDueDay = dueDay.trim();
+        const numericDueDay = Number(trimmedDueDay);
+        if (frequency === "monthly" && !trimmedDueDay) {
+            setErrorMessage("Due day is required for monthly items.");
+            return;
+        }
+        if (
+            trimmedDueDay &&
+            (!Number.isInteger(numericDueDay) ||
+                numericDueDay < 1 ||
+                numericDueDay > 31)
+        ) {
+            setErrorMessage("Due day must be between 1 and 31.");
+            return;
+        }
+
         try {
             setIsSubmitting(true);
             const payload: CreateRecurringItemInput & { id?: string } = {
@@ -159,6 +172,7 @@ export function AddRecurringModal({
                 frequency,
                 payment_month:
                     frequency === "annually" ? Number(paymentMonth) : null,
+                due_day: trimmedDueDay ? numericDueDay : null,
                 start_date: startDate || null,
                 notes: notes.trim() || null,
             };
@@ -316,26 +330,48 @@ export function AddRecurringModal({
                         </div>
                     </div>
 
-                    {/* Conditional Renewal Month (Only if Annual) */}
-                    {frequency === "annually" && (
+                    {/* Renewal Month (annual only) & Due Day */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {frequency === "annually" && (
+                            <div>
+                                <Select
+                                    id="recurring-month"
+                                    label="Renewal Month"
+                                    value={paymentMonth}
+                                    onChange={(e) =>
+                                        setPaymentMonth(Number(e.target.value))
+                                    }
+                                    className="bg-(--bg-canvas)"
+                                >
+                                    {MONTH_OPTIONS.map((m) => (
+                                        <option key={m.value} value={m.value}>
+                                            📅 {m.label}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                        )}
                         <div>
-                            <Select
-                                id="recurring-month"
-                                label="Renewal Month"
-                                value={paymentMonth}
-                                onChange={(e) =>
-                                    setPaymentMonth(Number(e.target.value))
+                            <Input
+                                id="recurring-due-day"
+                                label={
+                                    frequency === "monthly"
+                                        ? "Due Day *"
+                                        : "Due Day (Optional)"
                                 }
+                                type="number"
+                                inputMode="numeric"
+                                min={1}
+                                max={31}
+                                step={1}
+                                placeholder="1-31"
+                                value={dueDay}
+                                onChange={(e) => setDueDay(e.target.value)}
+                                mono
                                 className="bg-(--bg-canvas)"
-                            >
-                                {MONTH_OPTIONS.map((m) => (
-                                    <option key={m.value} value={m.value}>
-                                        📅 {m.label}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                         </div>
-                    )}
+                    </div>
 
                     {/* Start Date */}
                     <div>

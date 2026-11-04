@@ -436,6 +436,50 @@ describe('AddRecurringModal Component', () => {
     );
   });
 
+  it('requires a due day for monthly items and submits it', async () => {
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText(/Policy Name/i), { target: { value: 'Phone Plan' } });
+    fireEvent.change(screen.getByLabelText(/Premium Amount/i), { target: { value: '30' } });
+    fireEvent.change(screen.getByLabelText(/Frequency/i), { target: { value: 'monthly' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save Policy/i }));
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText(/Due day is required/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Due Day/i), { target: { value: '32' } });
+    await act(async () => {
+      // Bypass native min/max validation to exercise the in-form check
+      fireEvent.submit(screen.getByRole('button', { name: /Save Policy/i }).closest('form')!);
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText(/between 1 and 31/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Due Day/i), { target: { value: '31' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save Policy/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: 'monthly', due_day: 31, payment_month: null })
+    );
+  });
+
+  it('allows annual items without a due day', async () => {
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} />);
+    fireEvent.change(screen.getByLabelText(/Policy Name/i), { target: { value: 'Car Insurance' } });
+    fireEvent.change(screen.getByLabelText(/Premium Amount/i), { target: { value: '900' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save Policy/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: 'annually', due_day: null })
+    );
+  });
+
   it('pre-fills fields when editing existing recurring item', () => {
     render(
       <AddRecurringModal

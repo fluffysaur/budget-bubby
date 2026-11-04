@@ -59,6 +59,7 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
+import { resolveDueDay } from '../lib/recurringItems';
 import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 
@@ -925,6 +926,7 @@ class MockFinanceServiceImpl implements FinanceService {
       end_date: input.end_date || null,
       notes: input.notes || null,
       monthly_amortized_amount: monthlyAmortized,
+      due_day: resolveDueDay(input.frequency, input.due_day),
     };
 
     this.state.recurringItems.push(newItem);

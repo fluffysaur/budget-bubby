@@ -551,6 +551,7 @@ export const mockRecurringItems: RecurringItem[] = [
     end_date: '2044-09-18',
     notes: 'Annual premium renewed in September',
     monthly_amortized_amount: 266.67,
+    due_day: 18,
   },
   {
     id: 'pol-00000000-0602',
@@ -565,6 +566,7 @@ export const mockRecurringItems: RecurringItem[] = [
     end_date: null,
     notes: 'Annual premium renewed in October',
     monthly_amortized_amount: 133.33,
+    due_day: 1,
   },
   {
     id: 'pol-00000000-0603',
@@ -579,6 +581,7 @@ export const mockRecurringItems: RecurringItem[] = [
     end_date: '2027-04-05',
     notes: 'IRAS GIRO 12-month schedule',
     monthly_amortized_amount: 91.67,
+    due_day: 5,
   },
   {
     id: 'pol-00000000-0604',
@@ -593,6 +596,7 @@ export const mockRecurringItems: RecurringItem[] = [
     end_date: '2027-04-05',
     notes: 'IRAS GIRO 12-month schedule',
     monthly_amortized_amount: 150.0,
+    due_day: 5,
   },
 ];
 
@@ -610,6 +614,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 3.5,
+    due_day: 1,
   },
   {
     id: 'pol-00000000-0606',
@@ -624,6 +629,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 4.99,
+    due_day: 5,
   },
   {
     id: 'pol-00000000-0607',
@@ -638,6 +644,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 9.65,
+    due_day: 12,
   },
   {
     id: 'pol-00000000-0608',
@@ -652,6 +659,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 28.99,
+    due_day: 20,
   },
   {
     id: 'pol-00000000-0609',
@@ -666,6 +674,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     end_date: null,
     notes: 'Monthly mobile plan',
     monthly_amortized_amount: 0.0,
+    due_day: 28,
   },
 ];
 

@@ -3,7 +3,8 @@
 -- Generalizes recurring_policies into recurring_items:
 --   1. Renames the table, its indexes, constraints and RLS policy.
 --   2. Widens the type check to include 'bill' and 'other'.
---   3. Creates a temporary recurring_policies compatibility view so the
+--   3. Adds due_day (1-31, required for monthly items).
+--   4. Creates a temporary recurring_policies compatibility view so the
 --      previously deployed frontend keeps working during rollout.
 -- ==============================================================================
 
@@ -53,7 +54,25 @@ alter table recurring_items
     add constraint recurring_items_type_check
     check (type in ('insurance', 'tax', 'subscription', 'bill', 'other'));
 
--- 3. Temporary compatibility view -----------------------------------------------
+-- 3. Due day --------------------------------------------------------------------
+-- Default 1 keeps inserts from the old frontend (which never sends due_day) valid.
+alter table recurring_items add column if not exists due_day integer default 1;
+
+-- Backfill: day of start_date, else 1
+update recurring_items
+set due_day = coalesce(extract(day from start_date)::integer, 1);
+
+alter table recurring_items drop constraint if exists recurring_items_due_day_check;
+alter table recurring_items
+    add constraint recurring_items_due_day_check
+    check (due_day between 1 and 31);
+
+alter table recurring_items drop constraint if exists recurring_items_monthly_due_day_check;
+alter table recurring_items
+    add constraint recurring_items_monthly_due_day_check
+    check (frequency <> 'monthly' or due_day is not null);
+
+-- 4. Temporary compatibility view -----------------------------------------------
 -- TEMPORARY: lets the previously deployed frontend keep using
 -- .from('recurring_policies') for reads and writes while the new frontend
 -- (which uses recurring_items) rolls out. It will be dropped in a later
@@ -66,5 +85,6 @@ with (security_invoker = true)
 as select * from recurring_items;
 
 alter view recurring_policies alter column id set default gen_random_uuid();
+alter view recurring_policies alter column due_day set default 1;
 
 grant select, insert, update, delete on recurring_policies to authenticated;

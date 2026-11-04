@@ -17,7 +17,15 @@
  */
 
 import { financeService } from '../services/financeService';
-import { getTodayDateString, getCurrentMonth, getSingaporeDate } from './dateUtils';
+import {
+  getTodayDateString,
+  getCurrentMonth,
+  getSingaporeDate,
+  getNextDueDate,
+  getDaysUntilDue,
+  formatDueInDays,
+  formatISODate,
+} from './dateUtils';
 import { isSpendableCategory } from './financialFormulas';
 import type {
   StreakSummary,
@@ -461,8 +469,14 @@ export function checkBudgetLimitReminders(
   return reminders;
 }
 
+/** Annual items: remind from this many days before the due date. */
+export const RECURRING_ANNUAL_REMINDER_DAYS = 30;
+/** Monthly items: remind from this many days before the due date. */
+export const RECURRING_MONTHLY_REMINDER_DAYS = 3;
+
 /**
- * 9. Checks for recurring annual insurance/tax/subscription recurring items due in the current month.
+ * 9. Checks for recurring items due soon, using each item's due day
+ * (clamped to short months): annual items within 30 days, monthly items within 3 days.
  */
 export function checkRecurringBillsReminders(
   recurringItems: RecurringItem[],
@@ -470,7 +484,7 @@ export function checkRecurringBillsReminders(
   memberId?: string
 ): AppReminder[] {
   const d = referenceDate || getSingaporeDate();
-  const currentMonthNum = d.getMonth() + 1;
+  const todayStr = formatISODate(d);
   const reminders: AppReminder[] = [];
 
   for (const p of recurringItems) {
@@ -478,20 +492,29 @@ export function checkRecurringBillsReminders(
     if (memberId && p.owner_id && p.owner_id !== memberId) {
       continue;
     }
+    // Skip items outside their active date range
+    if (p.end_date && p.end_date < todayStr) continue;
 
-    if (p.frequency === 'annually' && p.payment_month === currentMonthNum) {
-      reminders.push({
-        id: `reminder-recurring-${p.id}-${d.getFullYear()}-${currentMonthNum}`,
-        type: 'recurring_bill_due',
-        title: `Upcoming Renewal: ${p.name}`,
-        message: `${p.name} (${p.type}) of SGD ${p.amount.toFixed(2)} is due this month.`,
-        severity: 'info',
-        actionLabel: 'View Policies',
-        actionType: 'view_recurring',
-        data: { itemId: p.id },
-        createdAt: new Date().toISOString(),
-      });
-    }
+    const dueDate = getNextDueDate(p, d);
+    const days = getDaysUntilDue(p, d);
+    if (!dueDate || days === null) continue;
+    if (p.start_date && formatISODate(dueDate) < p.start_date) continue;
+
+    const windowDays =
+      p.frequency === 'monthly' ? RECURRING_MONTHLY_REMINDER_DAYS : RECURRING_ANNUAL_REMINDER_DAYS;
+    if (days > windowDays) continue;
+
+    reminders.push({
+      id: `reminder-recurring-${p.id}-${formatISODate(dueDate)}`,
+      type: 'recurring_bill_due',
+      title: p.frequency === 'monthly' ? `Due Soon: ${p.name}` : `Upcoming Renewal: ${p.name}`,
+      message: `${p.name} (${p.type}) of SGD ${Number(p.amount).toFixed(2)}: ${formatDueInDays(days).toLowerCase()}.`,
+      severity: 'info',
+      actionLabel: 'View Recurring',
+      actionType: 'view_recurring',
+      data: { itemId: p.id, dueDate: formatISODate(dueDate) },
+      createdAt: new Date().toISOString(),
+    });
   }
 
   return reminders;

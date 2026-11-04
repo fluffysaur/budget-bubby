@@ -11,6 +11,9 @@ import { useMemo } from "react";
 import { Calendar, Flame } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
+    formatDueInDays,
+    getDaysUntilDue,
+    getNextDueDate,
     getSingaporeDate,
     MONTH_NAMES_SHORT,
     MONTH_NAMES_FULL,
@@ -31,6 +34,8 @@ export interface RenewalCalendarProps {
     recurringItems: RecurringItem[];
     currentMonth?: number; // 1 - 12
     className?: string;
+    /** Overrides "today" (Singapore time) for "Due in X days" labels. */
+    referenceDate?: Date;
 }
 
 interface MonthData {
@@ -48,6 +53,7 @@ export function RenewalCalendar({
     recurringItems,
     currentMonth,
     className = "",
+    referenceDate,
 }: RenewalCalendarProps) {
     // Resolve current active month (1-12)
     const resolvedCurrentMonth = useMemo(() => {
@@ -115,6 +121,18 @@ export function RenewalCalendar({
             averageMonthlyOutlay: avg,
         };
     }, [recurringItems, resolvedCurrentMonth]);
+
+    // "Due in X days" for items whose next due date falls in the current month
+    const getCurrentMonthDueLabel = (
+        item: RecurringItem,
+        monthNumber: number,
+    ): string | null => {
+        const today = referenceDate ?? getSingaporeDate();
+        const next = getNextDueDate(item, today);
+        if (!next || next.getMonth() + 1 !== monthNumber) return null;
+        const days = getDaysUntilDue(item, today);
+        return days === null ? null : formatDueInDays(days);
+    };
 
     // Type icon helper
     const renderItemIcon = (type: RecurringItemType) => {
@@ -226,22 +244,37 @@ export function RenewalCalendar({
                                         No renewals
                                     </div>
                                 ) : (
-                                    m.recurringItems.map((p) => (
-                                        <div
-                                            key={`${m.monthNumber}-${p.id}`}
-                                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) text-xs shadow-(--shadow-cute-sm)"
-                                        >
-                                            <div className="flex items-center gap-1 min-w-0 flex-1">
-                                                {renderItemIcon(p.type)}
-                                                <div className="font-bold text-(--text-ink) min-w-0 flex-1">
-                                                    <TruncatedText text={p.name} />
+                                    m.recurringItems.map((p) => {
+                                        const dueLabel = m.isCurrent
+                                            ? getCurrentMonthDueLabel(
+                                                  p,
+                                                  m.monthNumber,
+                                              )
+                                            : null;
+                                        return (
+                                            <div
+                                                key={`${m.monthNumber}-${p.id}`}
+                                                className="flex items-center justify-between gap-2 p-2 rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) text-xs shadow-(--shadow-cute-sm)"
+                                            >
+                                                <div className="flex items-center gap-1 min-w-0 flex-1">
+                                                    {renderItemIcon(p.type)}
+                                                    <div className="font-bold text-(--text-ink) min-w-0 flex-1">
+                                                        <TruncatedText
+                                                            text={p.name}
+                                                        />
+                                                        {dueLabel && (
+                                                            <span className="block text-[10px] font-semibold text-(--text-muted)">
+                                                                {dueLabel}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
+                                                <span className="font-bold font-mono-num text-(--text-ink) shrink-0 text-[11px]">
+                                                    {formatSGD(p.amount)}
+                                                </span>
                                             </div>
-                                            <span className="font-bold font-mono-num text-(--text-ink) shrink-0 text-[11px]">
-                                                {formatSGD(p.amount)}
-                                            </span>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

@@ -50,6 +50,7 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
+import { resolveDueDay } from '../lib/recurringItems';
 import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import type { FinanceService } from './financeService';
@@ -1141,6 +1142,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         end_date: input.end_date || null,
         notes: input.notes || null,
         monthly_amortized_amount: monthlyAmortized,
+        due_day: resolveDueDay(input.frequency, input.due_day),
       })
       .select()
       .single();

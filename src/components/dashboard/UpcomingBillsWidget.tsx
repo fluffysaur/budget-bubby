@@ -8,6 +8,9 @@ import { useMemo } from "react";
 import { CalendarClock, ChevronRight, Bell } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
+    formatDueInDays,
+    formatISODate,
+    getDaysUntilDue,
     getSingaporeDate,
     MONTH_NAMES_FULL as MONTH_NAMES,
 } from "../../lib/dateUtils";
@@ -19,42 +22,35 @@ export interface UpcomingBillsWidgetProps {
     recurringItems?: RecurringItem[];
     onViewAll?: () => void;
     className?: string;
+    /** Overrides "today" (Singapore time) for due-date calculations. */
+    referenceDate?: Date;
 }
 
 export function UpcomingBillsWidget({
     recurringItems = [],
     onViewAll,
     className = "",
+    referenceDate,
 }: UpcomingBillsWidgetProps) {
-    const sgNow = getSingaporeDate();
-    const currentMonthNum = sgNow.getMonth() + 1; // 1 - 12
-    const nextMonthNum = (currentMonthNum % 12) + 1;
-
-    // Filter and sort recurring items by due urgency
+    // Sort active items by next due date (due day clamped to short months)
     const sortedItems = useMemo(() => {
-        return [...recurringItems].sort((a, b) => {
-            // Prioritize current month, then next month, then other months
-            const getPriority = (p: RecurringItem) => {
-                if (p.frequency === "monthly") return 3;
-                if (p.payment_month === currentMonthNum) return 1;
-                if (p.payment_month === nextMonthNum) return 2;
-                return 4;
-            };
-            return getPriority(a) - getPriority(b);
-        });
-    }, [recurringItems, currentMonthNum, nextMonthNum]);
+        const today = referenceDate ?? getSingaporeDate();
+        const todayStr = formatISODate(today);
+        return recurringItems
+            .filter((p) => !p.end_date || p.end_date >= todayStr)
+            .map((p) => ({ item: p, days: getDaysUntilDue(p, today) }))
+            .sort(
+                (a, b) =>
+                    (a.days ?? Number.POSITIVE_INFINITY) -
+                    (b.days ?? Number.POSITIVE_INFINITY),
+            );
+    }, [recurringItems, referenceDate]);
 
     const displayItems = sortedItems.slice(0, 3);
 
-    const getDueStatus = (p: RecurringItem) => {
-        if (p.frequency === "monthly") {
-            return { text: "Monthly active", urgent: false };
-        }
-        if (p.payment_month === currentMonthNum) {
-            return { text: "Due this month", urgent: true };
-        }
-        if (p.payment_month === nextMonthNum) {
-            return { text: "Due next month", urgent: false };
+    const getDueStatus = (p: RecurringItem, days: number | null) => {
+        if (days !== null && days <= 31) {
+            return { text: formatDueInDays(days), urgent: days <= 7 };
         }
         const monthName = p.payment_month
             ? MONTH_NAMES[p.payment_month - 1]
@@ -116,8 +112,8 @@ export function UpcomingBillsWidget({
                     </div>
                 ) : (
                     <div className="space-y-2.5">
-                        {displayItems.map((recurringItem) => {
-                            const due = getDueStatus(recurringItem);
+                        {displayItems.map(({ item: recurringItem, days }) => {
+                            const due = getDueStatus(recurringItem, days);
 
                             return (
                                 <div

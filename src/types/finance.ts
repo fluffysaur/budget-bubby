@@ -410,6 +410,7 @@ export interface RecurringItem {
   end_date?: string | null;
   notes?: string | null;
   monthly_amortized_amount: number;
+  due_day?: number | null; // 1 - 31, clamped to short months; required for monthly items
 }
 
 export interface CreateRecurringItemInput {
@@ -423,6 +424,7 @@ export interface CreateRecurringItemInput {
   start_date?: string | null;
   end_date?: string | null;
   notes?: string | null;
+  due_day?: number | null; // 1 - 31
 }
 
 // ---------------------------------------------------------------------------

@@ -13,7 +13,7 @@ import {
     Zap,
     type LucideIcon,
 } from "lucide-react";
-import type { RecurringItemType } from "../types/finance";
+import type { RecurringFrequency, RecurringItemType } from "../types/finance";
 import type { BadgeVariant } from "../components/ui/Badge";
 
 export const RECURRING_TYPE_ICONS: Record<RecurringItemType, LucideIcon> = {
@@ -59,4 +59,19 @@ export function isDeductionType(type: RecurringItemType): boolean {
 /** Subscription, bill and other items are spending tracked against a budget category. */
 export function isSpendType(type: RecurringItemType): boolean {
     return !isDeductionType(type);
+}
+
+/**
+ * Normalizes a due day for storage: an integer 1-31, required (default 1)
+ * for monthly items and optional (null) for annual items.
+ */
+export function resolveDueDay(
+    frequency: RecurringFrequency,
+    dueDay?: number | null,
+): number | null {
+    const n = Number(dueDay);
+    if (dueDay !== null && dueDay !== undefined && Number.isFinite(n)) {
+        return Math.min(31, Math.max(1, Math.round(n)));
+    }
+    return frequency === "monthly" ? 1 : null;
 }
