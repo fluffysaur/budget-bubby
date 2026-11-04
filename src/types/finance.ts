@@ -579,9 +579,16 @@ export interface NotificationPreferences {
     goal_pacing_alerts: boolean;
     monthly_budget_review: boolean;
     // Custom thresholds
+    /** @deprecated Kept for the deployed frontend; use cc_due_reminder_days. */
     cc_due_days_before: number; // default: 5
+    /** Days before a CC due date to remind; 0 = due day. Default [7, 3, 1, 0]. */
+    cc_due_reminder_days?: number[];
     budget_warning_pct: number; // default: 80
     settlement_threshold_sgd: number; // default: 200
+    // Timing ("HH:MM", Singapore time)
+    checkin_time?: string; // default: "18:00"
+    quiet_hours_start?: string; // default: "22:00"
+    quiet_hours_end?: string; // default: "08:00"
     updated_at?: string;
 }
 

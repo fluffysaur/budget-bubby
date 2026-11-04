@@ -1257,8 +1257,12 @@ export function getDefaultNotificationPreferences(
     goal_pacing_alerts: true,
     monthly_budget_review: true,
     cc_due_days_before: 5,
+    cc_due_reminder_days: [7, 3, 1, 0],
     budget_warning_pct: 80,
     settlement_threshold_sgd: 200,
+    checkin_time: '18:00',
+    quiet_hours_start: '22:00',
+    quiet_hours_end: '08:00',
     updated_at: new Date().toISOString(),
   };
 }

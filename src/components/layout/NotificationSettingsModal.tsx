@@ -5,7 +5,8 @@
  * Features:
  * - Master delivery channels: PWA Push Notifications & Audio Chimes
  * - Per-category toggles for all 8 notification domains
- * - Configurable thresholds: CC lead days, Budget warning %, Settlement cap
+ * - Configurable thresholds: CC due reminder days, Budget warning %, Settlement cap
+ * - Timing: daily check-in time and quiet hours
  * - Interactive test push notification and audio preview
  * - Persistent per-member synchronization
  */
@@ -27,6 +28,8 @@ import {
     Check,
     Send,
     Settings,
+    Clock,
+    Moon,
 } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
@@ -35,11 +38,24 @@ import { useHousehold } from "../../context/HouseholdContext";
 import {
     requestNotificationPermission,
     dispatchPWANotification,
+    getCcDueReminderDays,
+    DEFAULT_CHECKIN_TIME,
+    DEFAULT_QUIET_HOURS_START,
+    DEFAULT_QUIET_HOURS_END,
 } from "../../lib/notificationScheduler";
+import { formatTime12h } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
 import { getDefaultNotificationPreferences } from "../../data/mockSeedData";
 import type { NotificationPreferences, UpdateNotificationPreferencesInput } from "../../types/finance";
+
+/** CC due reminder chips: days before due (0 = due day). */
+const CC_DUE_DAY_OPTIONS: { day: number; label: string }[] = [
+    { day: 7, label: "7d" },
+    { day: 3, label: "3d" },
+    { day: 1, label: "1d" },
+    { day: 0, label: "Due day" },
+];
 
 export interface NotificationSettingsModalProps {
     isOpen: boolean;
@@ -96,6 +112,25 @@ export function NotificationSettingsModal({
         } catch (err) {
             console.error("Failed to save notification preference update:", err);
         }
+    };
+
+    const ccDueDays = getCcDueReminderDays(prefs);
+    const checkinTime = prefs.checkin_time || DEFAULT_CHECKIN_TIME;
+
+    const handleToggleCcDueDay = (day: number) => {
+        const next = ccDueDays.includes(day)
+            ? ccDueDays.filter((d) => d !== day)
+            : [...ccDueDays, day].sort((a, b) => b - a);
+        // Keep the legacy lead time in sync for the previously deployed frontend
+        const legacyLeadDays = Math.max(1, Math.min(14, next.length ? Math.max(...next) : 1));
+        handleUpdate({ cc_due_reminder_days: next, cc_due_days_before: legacyLeadDays });
+    };
+
+    const handleTimeUpdate = (
+        key: "checkin_time" | "quiet_hours_start" | "quiet_hours_end",
+        value: string,
+    ) => {
+        if (/^\d{2}:\d{2}$/.test(value)) handleUpdate({ [key]: value });
     };
 
     // Reset to defaults
@@ -360,7 +395,7 @@ export function NotificationSettingsModal({
                                     <CategoryToggleRow
                                         icon={<Flame className="h-4 w-4 text-amber-500 shrink-0" />}
                                         title="Daily Streak &amp; Spend Check-in"
-                                        description="Daily 6 PM reminder to log spend"
+                                        description={`Daily ${formatTime12h(checkinTime)} reminder to log spend`}
                                         isChecked={prefs.streak_and_logging}
                                         testId="toggle-streak-logging"
                                         onChange={(val) => handleUpdate({ streak_and_logging: val })}
@@ -434,32 +469,42 @@ export function NotificationSettingsModal({
                                     Custom Thresholds
                                 </h4>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    {/* CC Due Days */}
-                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
-                                        <label
-                                            htmlFor="cc-lead-days-input"
-                                            className="block text-[11px] font-black text-(--text-ink) mb-1"
-                                        >
-                                            CC Due Lead Time
-                                        </label>
-                                        <div className="flex items-center gap-1.5">
-                                            <input
-                                                id="cc-lead-days-input"
-                                                type="number"
-                                                min={1}
-                                                max={14}
-                                                value={prefs.cc_due_days_before}
-                                                data-testid="input-cc-lead-days"
-                                                onChange={(e) => {
-                                                    const val = Math.max(1, Math.min(14, Number(e.target.value) || 5));
-                                                    handleUpdate({ cc_due_days_before: val });
-                                                }}
-                                                className="w-16 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
-                                            />
-                                            <span className="text-[11px] font-bold text-(--text-muted)">days before</span>
-                                        </div>
+                                {/* CC Due Reminder Days */}
+                                <div className="mb-3 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                    <div
+                                        id="cc-due-days-label"
+                                        className="text-[11px] font-black text-(--text-ink) mb-2"
+                                    >
+                                        CC Due Reminders
                                     </div>
+                                    <div
+                                        role="group"
+                                        aria-labelledby="cc-due-days-label"
+                                        className="flex flex-wrap gap-2"
+                                    >
+                                        {CC_DUE_DAY_OPTIONS.map(({ day, label }) => {
+                                            const isOn = ccDueDays.includes(day);
+                                            return (
+                                                <button
+                                                    key={day}
+                                                    type="button"
+                                                    aria-pressed={isOn}
+                                                    data-testid={`chip-cc-due-${day}`}
+                                                    onClick={() => handleToggleCcDueDay(day)}
+                                                    className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
+                                                        isOn
+                                                            ? "bg-(--pastel-lilac) text-(--text-ink)"
+                                                            : "bg-(--bg-cream) text-(--text-muted)"
+                                                    }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                                     {/* Budget Warning % */}
                                     <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
@@ -514,6 +559,40 @@ export function NotificationSettingsModal({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Timing Section */}
+                            <div>
+                                <h4 className="text-xs font-black uppercase tracking-wider text-(--text-muted) mb-3 font-display">
+                                    Timing
+                                </h4>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <TimeField
+                                        id="checkin-time-input"
+                                        label="Check-in Time"
+                                        icon={<Clock className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                                        value={checkinTime}
+                                        testId="input-checkin-time"
+                                        onChange={(val) => handleTimeUpdate("checkin_time", val)}
+                                    />
+                                    <TimeField
+                                        id="quiet-start-input"
+                                        label="Quiet From"
+                                        icon={<Moon className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                                        value={prefs.quiet_hours_start || DEFAULT_QUIET_HOURS_START}
+                                        testId="input-quiet-start"
+                                        onChange={(val) => handleTimeUpdate("quiet_hours_start", val)}
+                                    />
+                                    <TimeField
+                                        id="quiet-end-input"
+                                        label="Quiet Until"
+                                        icon={<Moon className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                                        value={prefs.quiet_hours_end || DEFAULT_QUIET_HOURS_END}
+                                        testId="input-quiet-end"
+                                        onChange={(val) => handleTimeUpdate("quiet_hours_end", val)}
+                                    />
+                                </div>
+                            </div>
                         </>
                     ) : (
                         <div className="rounded-2xl border-2 border-dashed border-(--border-subtle) bg-(--bg-card)/50 p-4 text-center">
@@ -546,6 +625,37 @@ export function NotificationSettingsModal({
                 </ModalFooter>
             </div>
         </AnimatedModal>
+    );
+}
+
+interface TimeFieldProps {
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+    value: string;
+    testId: string;
+    onChange: (val: string) => void;
+}
+
+function TimeField({ id, label, icon, value, testId, onChange }: TimeFieldProps) {
+    return (
+        <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+            <label
+                htmlFor={id}
+                className="flex items-center gap-1 text-[11px] font-black text-(--text-ink) mb-1"
+            >
+                {icon}
+                {label}
+            </label>
+            <input
+                id={id}
+                type="time"
+                value={value}
+                data-testid={testId}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full h-10 px-2.5 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+            />
+        </div>
     );
 }
 

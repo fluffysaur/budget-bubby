@@ -79,6 +79,51 @@ export const RECURRING_MONTHLY_REMINDER_DAYS = 3;
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
+/** Default reminder timing ("HH:MM", Singapore time). */
+export const DEFAULT_CHECKIN_TIME = "18:00";
+export const DEFAULT_QUIET_HOURS_START = "22:00";
+export const DEFAULT_QUIET_HOURS_END = "08:00";
+/** Default CC due reminder offsets in days before due (0 = due day). */
+export const DEFAULT_CC_DUE_REMINDER_DAYS = [7, 3, 1, 0];
+
+/** "HH:MM" (or "HH:MM:SS") to minutes after midnight. Invalid input returns null. */
+export function timeToMinutes(time: string | undefined | null): number | null {
+    const match = time?.match(/^(\d{1,2}):(\d{2})/);
+    if (!match) return null;
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (hours > 23 || minutes > 59) return null;
+    return hours * 60 + minutes;
+}
+
+/**
+ * Minutes after midnight in Singapore time. A given `currentHour` is
+ * treated as the start of that hour.
+ */
+export function currentMinutes(currentHour?: number, referenceDate?: Date): number {
+    if (currentHour !== undefined) return currentHour * 60;
+    const d = sgNow(referenceDate);
+    return d.getHours() * 60 + d.getMinutes();
+}
+
+/** True when `minutes` falls in [start, end), wrapping past midnight. */
+export function isWithinQuietHours(
+    minutes: number,
+    start: string = DEFAULT_QUIET_HOURS_START,
+    end: string = DEFAULT_QUIET_HOURS_END,
+): boolean {
+    const startMin = timeToMinutes(start);
+    const endMin = timeToMinutes(end);
+    if (startMin === null || endMin === null || startMin === endMin) return false;
+    if (startMin < endMin) return minutes >= startMin && minutes < endMin;
+    return minutes >= startMin || minutes < endMin;
+}
+
+function isPastCheckinTime(currentHour: number | undefined, checkinTime: string): boolean {
+    const target = timeToMinutes(checkinTime) ?? (timeToMinutes(DEFAULT_CHECKIN_TIME) as number);
+    return currentMinutes(currentHour) >= target;
+}
+
 function sgNow(referenceDate?: Date): Date {
     return referenceDate || getSingaporeDate();
 }
@@ -102,18 +147,18 @@ function daysBetween(fromDate: string, toDate: string): number {
 }
 
 /**
- * 1. Daily spend check-in, from 18:00 when not yet checked in today.
+ * 1. Daily spend check-in, from the member's check-in time (default 18:00)
+ * when not yet checked in today.
  */
 export function checkDailyCheckinReminder(
     streak: StreakSummary,
     currentHour?: number,
     memberId?: string,
     todayStr?: string,
+    checkinTime: string = DEFAULT_CHECKIN_TIME,
 ): AppReminder | null {
     if (streak.checkedInToday) return null;
-
-    const hour = currentHour !== undefined ? currentHour : getSingaporeDate().getHours();
-    if (hour < 18) return null;
+    if (!isPastCheckinTime(currentHour, checkinTime)) return null;
 
     const today = todayStr || sgToday();
     const days = streak.currentStreak || 0;
@@ -361,7 +406,8 @@ export function checkSettlementReminder(
 }
 
 /**
- * 7. Couple streak at risk: evening, active member checked in, partner hasn't.
+ * 7. Couple streak at risk: from the check-in time, active member checked
+ * in, partner hasn't.
  */
 export function checkCoupleStreakRiskReminder(
     allCheckins: DailyCheckin[],
@@ -369,14 +415,14 @@ export function checkCoupleStreakRiskReminder(
     activeMemberId: string,
     currentHour?: number,
     todayStr?: string,
+    checkinTime: string = DEFAULT_CHECKIN_TIME,
 ): AppReminder | null {
     if (members.length < 2) return null;
 
     const partner = members.find((m) => m.id !== activeMemberId);
     if (!partner) return null;
 
-    const hour = currentHour !== undefined ? currentHour : getSingaporeDate().getHours();
-    if (hour < 18) return null;
+    if (!isPastCheckinTime(currentHour, checkinTime)) return null;
 
     const today = todayStr || sgToday();
     const activeCheckedIn = allCheckins.some(
