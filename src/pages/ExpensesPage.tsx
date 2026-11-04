@@ -29,6 +29,7 @@ import {
   useGoalsQuery,
   useBaseProfilesQuery,
   useBaseAllocationsQuery,
+  useBudgetDetailQuery,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -268,6 +269,15 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
   }, [allExpenses, expenses, categories, recurringItems, perspective, activeMember, filter.month, currentMonth]);
 
   // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
+  // Same budget as Home and Budget, so the Spendable card matches them
+  const memberIds = useMemo(() => members.map((m) => m.id), [members]);
+  const { data: pacingBudget } = useBudgetDetailQuery(
+    filter.month || currentMonth,
+    perspective,
+    activeMember?.id,
+    memberIds,
+  );
+
   const spendablePacing = useMemo(() => {
     return calculateSpendablePacing({
       month: filter.month || currentMonth,
@@ -277,8 +287,9 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       categories,
       baseProfiles,
       baseAllocations,
+      monthlyBudget: pacingBudget ?? undefined,
     });
-  }, [filter.month, currentMonth, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
+  }, [filter.month, currentMonth, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations, pacingBudget]);
 
   // Check unspent surplus from the prior month
   const unspentSurplusInfo = useMemo(() => {

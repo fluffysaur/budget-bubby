@@ -13,7 +13,6 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Settings,
   DollarSign,
@@ -31,6 +30,7 @@ import {
   useBaseProfilesQuery,
   useBaseAllocationsQuery,
   useRecurringItemsQuery,
+  useBudgetDetailQuery,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -49,9 +49,6 @@ import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCar
 import { UncategorizedRecurringRow } from '../components/budget/UncategorizedRecurringRow';
 import type {
   BaseBudgetProfile,
-  MonthlyBudget,
-  MonthlyBudgetCategoryDetail,
-  MonthlyBudgetDetail,
 } from '../types/finance';
 
 export interface BudgetPageProps {
@@ -94,108 +91,14 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
   // Determine perspective display name
 
-  // Cached Monthly Budget Detail Query (Calculates combined or single-member dynamically)
-  const { data: budgetDetailData, isLoading: budgetLoading } = useQuery<MonthlyBudgetDetail | null>({
-    queryKey: ['finance', 'budget-detail', selectedMonth, perspective, activeMember?.id],
-    queryFn: async () => {
-      if (perspective === 'household' && members.length > 0) {
-        // Combined household view: fetch budgets for all members and combine dynamically
-        const memberBudgets = await Promise.all(
-          members.map((m) => financeService.getMonthlyBudget(selectedMonth, m.id))
-        );
-
-        if (memberBudgets.length > 0) {
-          const combinedGross = memberBudgets.reduce((s, b) => s + (b.budget.gross_salary || 0), 0);
-          const combinedBonus = memberBudgets.reduce((s, b) => s + (b.budget.bonus || 0), 0);
-          const combinedCpf = memberBudgets.reduce((s, b) => s + (b.budget.cpf_deduction || 0), 0);
-          const combinedTaxes = memberBudgets.reduce((s, b) => s + (b.budget.taxes_deduction || 0), 0);
-          const combinedInsurance = memberBudgets.reduce((s, b) => s + (b.budget.insurance_deduction || 0), 0);
-          const combinedAfter = memberBudgets.reduce((s, b) => s + (b.budget.after_deductions || 0), 0);
-
-          const combinedBudget: MonthlyBudget = {
-            id: `mb-combined-${selectedMonth}`,
-            household_id: memberBudgets[0].budget.household_id,
-            owner_id: 'household',
-            month: selectedMonth,
-            gross_salary: combinedGross,
-            bonus: combinedBonus,
-            cpf_deduction: combinedCpf,
-            taxes_deduction: Math.round(combinedTaxes * 100) / 100,
-            insurance_deduction: Math.round(combinedInsurance * 100) / 100,
-            after_deductions: Math.round(combinedAfter * 100) / 100,
-            notes: 'Combined household monthly budget',
-            is_locked: memberBudgets.every((b) => b.budget.is_locked),
-          };
-
-          // Merge categories across all members
-          const categoryMap = new Map<string, MonthlyBudgetCategoryDetail>();
-
-          const mergeCats = (catList: MonthlyBudgetCategoryDetail[]) => {
-            for (const item of catList) {
-              const existing = categoryMap.get(item.category_id);
-              if (existing) {
-                const allocated = Math.round((existing.allocated_amount + item.allocated_amount) * 100) / 100;
-                const spent = Math.round(((existing.actualSpent || 0) + (item.actualSpent || 0)) * 100) / 100;
-                const remaining = Math.round((allocated - spent) * 100) / 100;
-                const pct = combinedAfter > 0 ? allocated / combinedAfter : 0;
-                const recurringSpent =
-                  Math.round(((existing.recurringSpent || 0) + (item.recurringSpent || 0)) * 100) / 100;
-                const recurringItems = [...(existing.recurringItems || []), ...(item.recurringItems || [])];
-
-                categoryMap.set(item.category_id, {
-                  ...existing,
-                  allocated_amount: allocated,
-                  actualSpent: spent,
-                  remaining,
-                  percentage: pct,
-                  recurringSpent,
-                  recurringItems,
-                });
-              } else {
-                const pct = combinedAfter > 0 ? item.allocated_amount / combinedAfter : item.percentage;
-                categoryMap.set(item.category_id, {
-                  ...item,
-                  percentage: pct,
-                });
-              }
-            }
-          };
-
-          for (const mb of memberBudgets) {
-            mergeCats(mb.categories);
-          }
-
-          const combinedCategories = Array.from(categoryMap.values());
-          const uncategorizedRecurringSpent = Math.round(
-            memberBudgets.reduce((sum, mb) => sum + (mb.uncategorizedRecurringSpent || 0), 0) * 100
-          ) / 100;
-          const uncategorizedRecurringItems = memberBudgets.flatMap(
-            (mb) => mb.uncategorizedRecurringItems || []
-          );
-          const totalSpent = Math.round(
-            (combinedCategories.reduce((sum, c) => sum + (c.actualSpent || 0), 0) +
-              uncategorizedRecurringSpent) *
-              100
-          ) / 100;
-          const totalRemaining = Math.round((combinedAfter - totalSpent) * 100) / 100;
-
-          return {
-            budget: combinedBudget,
-            categories: combinedCategories,
-            disposablePool: combinedAfter,
-            totalSpent,
-            totalRemaining,
-            uncategorizedRecurringSpent,
-            uncategorizedRecurringItems,
-          };
-        }
-      }
-
-      // Single member perspective
-      const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
-      return financeService.getMonthlyBudget(selectedMonth, targetMemberId);
-    },
-  });
+  // Combined household budget in the Combined view, otherwise the member's budget
+  const memberIds = useMemo(() => members.map((m) => m.id), [members]);
+  const { data: budgetDetailData, isLoading: budgetLoading } = useBudgetDetailQuery(
+    selectedMonth,
+    perspective,
+    activeMember?.id,
+    memberIds,
+  );
 
   const budgetDetail = budgetDetailData ?? null;
   const isLoading = budgetLoading && !budgetDetailData;

@@ -818,6 +818,12 @@ export function calculateSpendablePacing({
         }
     }
 
+    // A budget's own spent figure also counts recurring items billed to
+    // spendable categories, so prefer it to keep Home, Budget and Expenses in step
+    if (monthlyBudget?.spendableSpent !== undefined) {
+        spent = monthlyBudget.spendableSpent;
+    }
+
     const spendableAllocated = Math.round(cap * 100) / 100;
     const spendableSpent = Math.round(spent * 100) / 100;
     const spendableRemaining =

@@ -5,6 +5,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
+import { combineMonthlyBudgets } from "../lib/combineMonthlyBudgets";
 import type {
     Perspective,
     ExpenseFilter,
@@ -93,6 +94,41 @@ export function useMonthlyBudgetQuery(month: string, memberId?: string) {
     return useQuery<MonthlyBudgetDetail>({
         queryKey: queryKeys.monthlyBudget(month, memberId),
         queryFn: () => financeService.getMonthlyBudget(month, memberId),
+        enabled: Boolean(month),
+    });
+}
+
+/**
+ * Budget for the active perspective: the combined household budget in the
+ * Combined view, otherwise the active member's budget (falling back to the
+ * first member). Shared by Home and Budget so both show the same figures.
+ */
+export function useBudgetDetailQuery(
+    month: string,
+    perspective: Perspective,
+    activeMemberId: string | undefined,
+    memberIds: string[],
+) {
+    const isCombined = perspective === "household" && memberIds.length > 0;
+    return useQuery<MonthlyBudgetDetail | null>({
+        queryKey: [
+            "finance",
+            "budget-detail",
+            month,
+            perspective,
+            activeMemberId,
+            memberIds.join(","),
+        ],
+        queryFn: async () => {
+            if (isCombined) {
+                const memberBudgets = await Promise.all(
+                    memberIds.map((id) => financeService.getMonthlyBudget(month, id)),
+                );
+                const combined = combineMonthlyBudgets(memberBudgets, month);
+                if (combined) return combined;
+            }
+            return financeService.getMonthlyBudget(month, activeMemberId ?? memberIds[0]);
+        },
         enabled: Boolean(month),
     });
 }
