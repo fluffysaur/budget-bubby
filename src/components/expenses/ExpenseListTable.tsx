@@ -25,7 +25,6 @@ import {
   ArrowUpDown,
   RotateCcw,
 } from 'lucide-react';
-import { formatSGD } from '../../lib/currency';
 import { formatForeignAmount } from '../../lib/currencyConverter';
 import { formatDisplayDate, formatTime12h, extractTimeFromISO } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
@@ -46,6 +45,7 @@ import type {
   SortDirection,
   ExpenseFilter,
 } from '../../types/finance';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface ExpenseListTableProps {
   expenses: Expense[];
@@ -227,7 +227,7 @@ export function ExpenseListTable({
   // Render sort header icon
   const renderSortIcon = (field: ExpenseSortField) => {
     if (activeSortBy !== field) {
-      return <ChevronsUpDown className="h-3.5 w-3.5 text-slate-400 opacity-60 ml-1 inline" />;
+      return <ChevronsUpDown className="h-3.5 w-3.5 text-(--text-faint) opacity-60 ml-1 inline" />;
     }
     return activeSortOrder === 'asc' ? (
       <ChevronUp className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
@@ -399,7 +399,7 @@ export function ExpenseListTable({
 
                     {/* Formatted SGD Amount */}
                     <td className="order-2 py-0 sm:py-4 px-0 sm:px-3 ml-auto sm:ml-0 shrink-0 sm:table-cell text-right">
-                      <div className="font-mono-num font-black text-sm text-(--text-ink)">{formatSGD(expense.amount)}</div>
+                      <div className="text-(--text-ink)"><CurrencyText amount={expense.amount} size="md" /></div>
                       {hasForeignCurrency && (
                         <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
                           {formatForeignAmount(expense.original_amount!, expense.original_currency!)}

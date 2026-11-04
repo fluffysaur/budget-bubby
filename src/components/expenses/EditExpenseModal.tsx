@@ -30,7 +30,6 @@ import {
     buildExpenseFxFields,
     convertToSGD,
 } from "../../lib/currencyConverter";
-import { formatSGD } from "../../lib/currency";
 import { getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import type {
@@ -40,6 +39,7 @@ import type {
     UpdateExpenseInput,
     SavingsGoal,
 } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface EditExpenseModalProps {
     isOpen: boolean;
@@ -448,7 +448,7 @@ export function EditExpenseModal({
                                     <span>Partner's Split Share</span>
                                     <span className="font-bold text-(--text-ink)">
                                         {Math.round(splitRatio * 100)}% (
-                                        {formatSGD(amountInSGD * splitRatio)})
+                                        <CurrencyText amount={amountInSGD * splitRatio} />)
                                     </span>
                                 </div>
                                 <input
@@ -562,8 +562,8 @@ export function EditExpenseModal({
                                 {availableGoals.map((g) => (
                                     <option key={g.id} value={g.id}>
                                         {g.title} (Saved:{" "}
-                                        {formatSGD(g.saved_so_far)} /{" "}
-                                        {formatSGD(g.target_amount)})
+                                        <CurrencyText amount={g.saved_so_far} /> /{" "}
+                                        <CurrencyText amount={g.target_amount} />)
                                     </option>
                                 ))}
                             </Select>

@@ -9,9 +9,9 @@
 
 import { useMemo } from 'react';
 import { Tag, Filter, Check, X, Layers } from 'lucide-react';
-import { formatSGD } from '../../lib/currency';
 import { Card } from '../ui/Card';
 import type { Expense, Category } from '../../types/finance';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface TagAggregate {
   tag: string;
@@ -221,10 +221,10 @@ export function SpendTagsOverviewCard({
 
                     {/* Spend & Count Highlight */}
                     <div className="mt-2.5 flex items-baseline justify-between">
-                      <span className="text-base font-extrabold text-slate-900 dark:text-white">
-                        {formatSGD(item.totalAmount)}
+                      <span className="text-slate-900 dark:text-white">
+                        <CurrencyText amount={item.totalAmount} size="md" />
                       </span>
-                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-(--text-faint)">
                         {item.transactionCount} {item.transactionCount === 1 ? 'tx' : 'txs'}
                       </span>
                     </div>
@@ -233,7 +233,7 @@ export function SpendTagsOverviewCard({
                   {/* Category breakdown tags */}
                   {item.categories.length > 0 && (
                     <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center gap-1.5 flex-wrap">
-                      <Layers className="h-3 w-3 text-slate-400 shrink-0" />
+                      <Layers className="h-3 w-3 text-(--text-faint) shrink-0" />
                       {item.categories.slice(0, 3).map((cat) => (
                         <span
                           key={cat.id}
@@ -244,13 +244,13 @@ export function SpendTagsOverviewCard({
                             style={{ backgroundColor: cat.color }}
                           />
                           <span>{cat.name}</span>
-                          <span className="text-slate-400 font-mono text-[9px]">
-                            {formatSGD(cat.amount)}
+                          <span className="text-(--text-faint) font-mono">
+                            <CurrencyText amount={cat.amount} size="sm" />
                           </span>
                         </span>
                       ))}
                       {item.categories.length > 3 && (
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-(--text-faint)">
                           +{item.categories.length - 3} more
                         </span>
                       )}
@@ -264,7 +264,7 @@ export function SpendTagsOverviewCard({
           {/* Footer note */}
           <div className="flex items-center justify-between text-[11px] text-(--text-muted) pt-1">
             <span>Click any tag to filter the transaction ledger</span>
-            <span>Total Tagged Spend: <span className="font-bold text-(--text-ink) font-mono-num">{formatSGD(totalTaggedSpend)}</span></span>
+            <span>Total Tagged Spend: <span className="text-(--text-ink)"><CurrencyText amount={totalTaggedSpend} /></span></span>
           </div>
         </div>
       )}

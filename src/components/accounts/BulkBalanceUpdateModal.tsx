@@ -7,12 +7,12 @@
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { CalendarCheck2, Sparkles, Check, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { financeService } from "../../services/financeService";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BulkBalanceUpdateModalProps {
     isOpen: boolean;
@@ -252,7 +252,7 @@ export function BulkBalanceUpdateModal({
                                         <div className="flex items-center gap-2 mt-0.5 text-[11px] text-(--text-muted)">
                                             <span>{account.type}</span>
                                             <span>•</span>
-                                            <span className="font-mono-num">Last: {formatSGD(account.balance)}</span>
+                                            <span className="font-mono-num">Last: <CurrencyText amount={account.balance} /></span>
                                             {isChanged && (
                                                 <span
                                                     className={`inline-flex items-center font-bold font-mono-num ${
@@ -264,7 +264,7 @@ export function BulkBalanceUpdateModal({
                                                     ) : (
                                                         <ArrowDownRight className="h-3 w-3" />
                                                     )}
-                                                    {formatSGD(Math.abs(diff))}
+                                                    <CurrencyText amount={Math.abs(diff)} />
                                                 </span>
                                             )}
                                         </div>
@@ -295,8 +295,8 @@ export function BulkBalanceUpdateModal({
                     <div className="flex items-center gap-3 text-xs w-full sm:w-auto justify-between sm:justify-start">
                         <div>
                             <span className="text-(--text-muted) block text-[10px]">New Total Assets</span>
-                            <span className="text-base font-black text-(--text-ink) font-mono-num">
-                                {formatSGD(summary.newTotal)}
+                            <span className="text-(--text-ink)">
+                                <CurrencyText amount={summary.newTotal} size="md" />
                             </span>
                         </div>
                         <div className="h-7 w-px bg-(--border-subtle)" />
@@ -310,7 +310,7 @@ export function BulkBalanceUpdateModal({
                                 }`}
                             >
                                 {summary.delta >= 0 ? "+" : ""}
-                                {formatSGD(summary.delta)} ({summary.changedCount} edited)
+                                <CurrencyText amount={summary.delta} /> ({summary.changedCount} edited)
                             </span>
                         </div>
                     </div>

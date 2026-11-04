@@ -6,7 +6,6 @@
 
 import { useMemo } from "react";
 import { CalendarClock, ChevronRight, Bell } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
 import {
     formatDueInDays,
     formatISODate,
@@ -17,6 +16,7 @@ import {
 import { TruncatedText } from "../ui/TruncatedText";
 import { RecurringTypeBadge } from "../recurring/RecurringTypeBadge";
 import type { RecurringItem } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface UpcomingBillsWidgetProps {
     recurringItems?: RecurringItem[];
@@ -149,15 +149,13 @@ export function UpcomingBillsWidget({
                                     </div>
 
                                     <div className="text-right shrink-0">
-                                        <div className="text-sm font-black text-(--text-ink) font-mono-num">
-                                            {formatSGD(recurringItem.amount)}
+                                        <div className="text-(--text-ink)">
+                                            <CurrencyText amount={recurringItem.amount} size="md" />
                                         </div>
                                         {recurringItem.frequency === "annually" && (
                                             <div className="text-[10px] font-mono-num text-(--text-muted)">
                                                 ~
-                                                {formatSGD(
-                                                    recurringItem.monthly_amortized_amount,
-                                                )}
+                                                <CurrencyText amount={recurringItem.monthly_amortized_amount} />
                                                 /mo
                                             </div>
                                         )}

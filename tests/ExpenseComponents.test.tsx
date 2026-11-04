@@ -506,7 +506,7 @@ describe('ExpensesPage Integration', () => {
     expect(screen.getByRole('button', { name: /\+ add expense|\+ quick add/i })).toBeInTheDocument();
 
     // Summary cards: Spent, Shared, Unsettled
-    expect(screen.getByText(/^spent$/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^spent$/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/^shared$/i)).toBeInTheDocument();
     expect(screen.getByText(/^unsettled$/i)).toBeInTheDocument();
 

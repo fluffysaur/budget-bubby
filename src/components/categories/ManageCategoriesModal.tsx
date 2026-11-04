@@ -47,12 +47,12 @@ import {
     calculateMemberRecurringDeductions,
     autoBalanceAllocations,
 } from "../../lib/financialFormulas";
-import { formatSGD } from "../../lib/currency";
 import {
     PRESET_COLORS,
     PRESET_ICONS,
     getCategoryIconComponent as getIconComponent,
 } from "../../lib/categoryPresets";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface ManageCategoriesModalProps {
     isOpen: boolean;
@@ -516,14 +516,14 @@ export function ManageCategoriesModal({
                         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                             <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
                                 <div>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-faint) flex items-center gap-1.5">
                                         <Percent className="h-3.5 w-3.5" />
                                         Percentage Allocations (Must Sum to
                                         100%)
                                     </h3>
-                                    <p className="text-[11px] text-slate-400">
+                                    <p className="text-[11px] text-(--text-faint)">
                                         Calculated from estimated disposable
-                                        pool of {formatSGD(disposablePool)}/mo
+                                        pool of <CurrencyText amount={disposablePool} />/mo
                                     </p>
                                 </div>
 
@@ -597,7 +597,7 @@ export function ManageCategoriesModal({
                                                         className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                                                             isLocked
                                                                 ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-600 dark:text-amber-400"
-                                                                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                                                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200"
                                                         }`}
                                                     >
                                                         {isLocked ? (
@@ -629,7 +629,7 @@ export function ManageCategoriesModal({
 
                                                 <div className="flex items-center gap-2.5 shrink-0">
                                                     <div className="relative w-28">
-                                                        <span className="absolute left-2 top-1.5 text-xs text-slate-400 font-mono pointer-events-none">
+                                                        <span className="absolute left-2 top-1.5 text-xs text-(--text-faint) font-mono pointer-events-none">
                                                             S$
                                                         </span>
                                                         <input
@@ -693,7 +693,7 @@ export function ManageCategoriesModal({
                                                             }
                                                             className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
                                                         />
-                                                        <span className="absolute right-1.5 top-1.5 text-[11px] text-slate-400">
+                                                        <span className="absolute right-1.5 top-1.5 text-[11px] text-(--text-faint)">
                                                             %
                                                         </span>
                                                     </div>
@@ -793,7 +793,7 @@ export function ManageCategoriesModal({
                                                 className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
                                                     group === "spendable"
                                                         ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                                                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-(--text-faint)"
                                                 }`}
                                             >
                                                 <span className="block font-semibold">
@@ -813,7 +813,7 @@ export function ManageCategoriesModal({
                                                 className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
                                                     group === "allocation"
                                                         ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300"
-                                                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-(--text-faint)"
                                                 }`}
                                             >
                                                 <span className="block font-semibold">
@@ -948,12 +948,12 @@ export function ManageCategoriesModal({
                                     </div>
 
                                     {loading ? (
-                                        <div className="py-12 text-center text-xs text-slate-400">
+                                        <div className="py-12 text-center text-xs text-(--text-faint)">
                                             Loading categories...
                                         </div>
                                     ) : categories.length === 0 ? (
                                         <div className="py-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6">
-                                            <Tag className="h-8 w-8 mx-auto text-slate-400 mb-2 opacity-50" />
+                                            <Tag className="h-8 w-8 mx-auto text-(--text-faint) mb-2 opacity-50" />
                                             <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                                                 No Categories
                                             </h4>
@@ -989,7 +989,7 @@ export function ManageCategoriesModal({
                                         <>
                                             {/* Spendable Categories Section */}
                                             <div>
-                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center justify-between">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-(--text-faint) mb-2 flex items-center justify-between">
                                                     <span>
                                                         Spendable Categories (
                                                         {
@@ -997,7 +997,7 @@ export function ManageCategoriesModal({
                                                         }
                                                         )
                                                     </span>
-                                                    <span className="text-[10px] lowercase text-slate-400 font-normal">
+                                                    <span className="text-[10px] lowercase text-(--text-faint) font-normal">
                                                         tracked against monthly
                                                         spend
                                                     </span>
@@ -1041,7 +1041,7 @@ export function ManageCategoriesModal({
                                                                                     cat,
                                                                                 )
                                                                             }
-                                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                             title="Edit Category"
                                                                         >
                                                                             <Pencil className="h-3.5 w-3.5" />
@@ -1053,7 +1053,7 @@ export function ManageCategoriesModal({
                                                                                     cat,
                                                                                 )
                                                                             }
-                                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                             title="Delete Category"
                                                                         >
                                                                             <Trash2 className="h-3.5 w-3.5" />
@@ -1068,7 +1068,7 @@ export function ManageCategoriesModal({
 
                                             {/* Wealth & Fixed Allocation Section */}
                                             <div>
-                                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center justify-between">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-(--text-faint) mb-2 flex items-center justify-between">
                                                     <span>
                                                         Wealth & Fixed
                                                         Allocations (
@@ -1077,7 +1077,7 @@ export function ManageCategoriesModal({
                                                         }
                                                         )
                                                     </span>
-                                                    <span className="text-[10px] lowercase text-slate-400 font-normal">
+                                                    <span className="text-[10px] lowercase text-(--text-faint) font-normal">
                                                         transferred directly
                                                         from gross income
                                                     </span>
@@ -1121,7 +1121,7 @@ export function ManageCategoriesModal({
                                                                                     cat,
                                                                                 )
                                                                             }
-                                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                             title="Edit Category"
                                                                         >
                                                                             <Pencil className="h-3.5 w-3.5" />
@@ -1133,7 +1133,7 @@ export function ManageCategoriesModal({
                                                                                     cat,
                                                                                 )
                                                                             }
-                                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                             title="Delete Category"
                                                                         >
                                                                             <Trash2 className="h-3.5 w-3.5" />

@@ -9,6 +9,7 @@ import {
 import { formatSGD } from "../../lib/currency";
 import { formatDisplayMonth } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BankSurplusModalProps {
     isOpen: boolean;
@@ -48,7 +49,7 @@ export function BankSurplusModal({
                         <span>Reserve Cushion</span>
                     </div>
                     <p className="text-xs text-(--text-muted) leading-relaxed">
-                        Bank <strong className="text-(--text-ink)">{formatSGD(surplusAmount)}</strong> to cushion
+                        Bank <strong className="text-(--text-ink)"><CurrencyText amount={surplusAmount} /></strong> to cushion
                         future months against unexpected overages.
                     </p>
                 </div>
@@ -58,7 +59,7 @@ export function BankSurplusModal({
                     <div className="flex items-center justify-between text-xs">
                         <span className="text-(--text-muted)">Unspent Amount:</span>
                         <strong className="text-emerald-700 font-extrabold text-sm">
-                            +{formatSGD(surplusAmount)}
+                            +<CurrencyText amount={surplusAmount} />
                         </strong>
                     </div>
                     <div className="flex items-center justify-between text-xs border-t border-(--border-subtle) pt-2">

@@ -16,6 +16,7 @@ import { GoalsPage } from '../src/pages/GoalsPage';
 import { financeService } from '../src/services/financeService';
 import { formatSGD } from '../src/lib/currency';
 import type { SavingsGoal } from '../src/types/finance';
+import { withText } from './helpers/textContent';
 
 const sampleAchievedGoal: SavingsGoal = {
   id: 'goal-wedding-01',
@@ -136,7 +137,7 @@ describe('GoalCard Component', () => {
     render(<GoalCard goal={sampleOnTrackGoal} />);
 
     // Monthly contribution formatted
-    expect(screen.getAllByText(/S\$10,000\.00\/mo/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(withText(/S\$10,000\.00\/mo/)).length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays target date and remaining months countdown', () => {

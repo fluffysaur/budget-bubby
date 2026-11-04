@@ -9,9 +9,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Sparkles, Coins, X } from "lucide-react";
 import type { Expense } from "../../types/finance";
-import { formatSGD } from "../../lib/currency";
 import { playChaChingSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface ExpenseSuccessCelebrationProps {
     expense?: Expense | null;
@@ -138,8 +138,8 @@ export function ExpenseSuccessCelebration({
                     <span className="text-emerald-700 dark:text-emerald-300 font-extrabold shrink-0">
                         Cha-ching!
                     </span>
-                    <span className="font-extrabold shrink-0 font-mono-num">
-                        {formatSGD(activeExpense.amount)}
+                    <span className="shrink-0">
+                        <CurrencyText amount={activeExpense.amount} />
                     </span>
                     <span className="text-(--text-muted) shrink-0">•</span>
                     <span className="truncate max-w-28 sm:max-w-48 text-(--text-ink) font-medium">

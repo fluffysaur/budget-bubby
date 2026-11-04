@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MonthEndSweepBanner } from '../src/components/budget/MonthEndSweepBanner';
+import { withText } from './helpers/textContent';
 
 describe('MonthEndSweepBanner', () => {
     it('renders shortened title with amount and month, plus actionable subtitle', () => {
@@ -14,7 +15,7 @@ describe('MonthEndSweepBanner', () => {
         );
 
         // Title: "$3,654.05 unspent from September 2026"
-        expect(screen.getByText(/3,654\.05 unspent from September 2026/i)).toBeInTheDocument();
+        expect(screen.getByText(withText(/3,654\.05 unspent from September 2026/i))).toBeInTheDocument();
         // Subtitle: "Sweep into savings goals or bank for cushion."
         expect(screen.getByText(/Sweep into savings goals or bank for cushion\./i)).toBeInTheDocument();
 

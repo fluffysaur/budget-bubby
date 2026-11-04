@@ -47,7 +47,6 @@ import {
     isSpendableCategory,
     autoBalanceAllocations,
 } from "../../lib/financialFormulas";
-import { formatSGD } from "../../lib/currency";
 import { isValidUuid } from "../../lib/uuid";
 import { PRESET_COLORS, PRESET_ICONS } from "../../lib/categoryPresets";
 import type {
@@ -58,6 +57,7 @@ import type {
     HouseholdMember,
     RecurringItem,
 } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BaseProfileEditorModalProps {
     isOpen: boolean;
@@ -830,8 +830,8 @@ export function BaseProfileEditorModal({
                                         Monthly Taxes
                                     </span>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-base sm:text-lg font-mono-num font-black text-(--text-ink)">
-                                            {formatSGD(effectiveTaxes)}
+                                        <span className="text-(--text-ink)">
+                                            <CurrencyText amount={effectiveTaxes} size="md" />
                                         </span>
                                         <span className="text-[11px] font-bold text-(--text-muted)">
                                             /mo
@@ -850,8 +850,8 @@ export function BaseProfileEditorModal({
                                         Monthly Insurance
                                     </span>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-base sm:text-lg font-mono-num font-black text-(--text-ink)">
-                                            {formatSGD(effectiveInsurance)}
+                                        <span className="text-(--text-ink)">
+                                            <CurrencyText amount={effectiveInsurance} size="md" />
                                         </span>
                                         <span className="text-[11px] font-bold text-(--text-muted)">
                                             /mo

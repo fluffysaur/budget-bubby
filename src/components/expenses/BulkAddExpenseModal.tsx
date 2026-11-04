@@ -39,7 +39,6 @@ import {
 } from "../../lib/currencyConverter";
 import { useFxRates } from "../../hooks/useFxRates";
 import { FxRateInput } from "./FxRateField";
-import { formatSGD } from "../../lib/currency";
 import {
     getTodayDateString,
     getCurrentSingaporeTime,
@@ -56,6 +55,7 @@ import {
     parseBulkExpenseText,
     type BulkExpenseDraftRow,
 } from "../../lib/expenseParser";
+import { CurrencyText } from "../ui/CurrencyText";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export { parseBulkExpenseText };
@@ -867,8 +867,8 @@ export function BulkAddExpenseModal({
                                 {summary.count === 1 ? "" : "s"}
                             </span>{" "}
                             totaling{" "}
-                            <span className="font-black text-(--text-ink) text-sm font-mono-num">
-                                {formatSGD(summary.totalSGD)}
+                            <span className="text-(--text-ink)">
+                                <CurrencyText amount={summary.totalSGD} size="md" />
                             </span>
                         </span>
                         {summary.goalCount > 0 && (

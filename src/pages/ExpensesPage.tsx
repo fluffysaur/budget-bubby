@@ -51,6 +51,7 @@ import { MonthEndSweepBanner } from '../components/budget/MonthEndSweepBanner';
 import { SurplusSweepModal, type SurplusSweepAllocation } from '../components/budget/SurplusSweepModal';
 import { BankSurplusModal } from '../components/budget/BankSurplusModal';
 import type { ExpenseFilter } from '../types/finance';
+import { CurrencyText } from '../components/ui/CurrencyText';
 
 export interface ExpensesPageProps {
   className?: string;
@@ -409,8 +410,8 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
           footer={
             <div className="space-y-1.5 mt-1">
               <div className="flex items-center justify-between text-[11px] text-(--text-muted) font-medium">
-                <span>Spent {formatSGD(spendablePacing.spendableSpent)}</span>
-                <span>Limit {formatSGD(spendablePacing.spendableAllocated)}</span>
+                <span>Spent <CurrencyText amount={spendablePacing.spendableSpent} /></span>
+                <span>Limit <CurrencyText amount={spendablePacing.spendableAllocated} /></span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 border border-(--border-subtle)">
                 <div
@@ -435,7 +436,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
                   }
                   className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1 cursor-pointer pt-0.5"
                 >
-                  <span>Sweep {formatSGD(spendablePacing.spendableRemaining)} →</span>
+                  <span>Sweep <CurrencyText amount={spendablePacing.spendableRemaining} /> →</span>
                 </button>
               )}
             </div>
@@ -499,7 +500,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         confirmLabel="Settle"
         icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />}
       >
-        Mark all shared expenses as settled? The {formatSGD(settlement.netBalance)} balance resets to S$0.00.
+        Mark all shared expenses as settled? The <CurrencyText amount={settlement.netBalance} /> balance resets to S$0.00.
       </ConfirmModal>
 
       {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}

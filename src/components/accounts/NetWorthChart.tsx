@@ -9,11 +9,11 @@ import { useMemo } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { TrendingUp } from "lucide-react";
 import type { Account } from "../../types/finance";
-import { formatSGD } from "../../lib/currency";
 import { addMonths, formatDisplayMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Card } from "../ui/Card";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface NetWorthDataPoint {
     date: string;
@@ -53,8 +53,8 @@ function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
                     className="flex items-center justify-between gap-3"
                 >
                     <span className="text-(--text-muted)">{entry.name}:</span>
-                    <span className="font-mono-num text-indigo-600 dark:text-indigo-400 font-black">
-                        {formatSGD(entry.value)}
+                    <span className="text-indigo-600 dark:text-indigo-400">
+                        <CurrencyText amount={entry.value} />
                     </span>
                 </div>
             ))}
@@ -119,7 +119,7 @@ export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartP
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
                         <span className="h-2 w-2 rounded-full bg-indigo-600" />
                         <span>Net Worth</span>
-                        {latestPoint && <span className="font-bold ml-1">{formatSGD(latestPoint.netWorth)}</span>}
+                        {latestPoint && <span className="ml-1"><CurrencyText amount={latestPoint.netWorth} /></span>}
                     </div>
 
                 </div>
@@ -164,12 +164,12 @@ export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartP
                             dataKey="date"
                             tickLine={false}
                             axisLine={false}
-                            tick={{ fontSize: 11, fill: "#94A3B8" }}
+                            tick={{ fontSize: 11, fill: "var(--text-faint)" }}
                         />
                         <YAxis
                             tickLine={false}
                             axisLine={false}
-                            tick={{ fontSize: 10, fill: "#94A3B8" }}
+                            tick={{ fontSize: 10, fill: "var(--text-faint)" }}
                             tickFormatter={(v) => {
                                 if (Math.abs(v) >= 1000) {
                                     return `S$${(v / 1000).toFixed(0)}k`;

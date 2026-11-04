@@ -16,12 +16,12 @@ import {
     useRecurringItemsQuery,
     useBudgetDetailQuery,
 } from "../hooks/useFinanceQueries";
-import { formatSGD } from "../lib/currency";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { mockMembers } from "../data/mockSeedData";
 import { isSpendableCategory } from "../lib/financialFormulas";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
+import { CurrencyText } from "../components/ui/CurrencyText";
 
 export interface DashboardPageProps {
     className?: string;
@@ -134,17 +134,17 @@ export function DashboardPage({
                                 </span>
                                 <div
                                     data-testid="left-to-spend-amount"
-                                    className={`mt-1 text-3xl sm:text-4xl font-black tracking-tight font-mono-num ${
+                                    className={`mt-1 ${
                                         isOverspent
                                             ? "text-[#9a1b1b] dark:text-rose-400"
                                             : "text-(--text-ink)"
                                     }`}
                                 >
-                                    {formatSGD(spendableSummary.totalRemaining)}
+                                    <CurrencyText amount={spendableSummary.totalRemaining} size="hero" />
                                 </div>
                                 <span className="mt-1 block text-xs font-semibold text-(--text-muted) font-mono-num">
-                                    {formatSGD(spendableSummary.totalSpent)} of{" "}
-                                    {formatSGD(spendableSummary.totalAllocated)} spent
+                                    <CurrencyText amount={spendableSummary.totalSpent} /> of{" "}
+                                    <CurrencyText amount={spendableSummary.totalAllocated} /> spent
                                 </span>
                             </div>
                             {onNavigateTab && (
@@ -194,7 +194,7 @@ export function DashboardPage({
                                         </div>
 
                                         <div className="mt-2 text-sm font-extrabold text-(--text-ink) font-mono-num">
-                                            {formatSGD(cat.remaining)}
+                                            <CurrencyText amount={cat.remaining} />
                                             <span className="ml-1 text-[10px] font-bold text-(--text-muted)">
                                                 left
                                             </span>

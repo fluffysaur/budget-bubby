@@ -18,9 +18,9 @@ import {
   Settings,
 } from 'lucide-react';
 import type { Account, AccountType } from '../../types/finance';
-import { formatSGD } from '../../lib/currency';
 import { formatDisplayDate } from '../../lib/dateUtils';
 import { TruncatedText } from '../ui/TruncatedText';
+import { CurrencyText } from '../ui/CurrencyText';
 
 export interface AccountCardProps {
   account: Account;
@@ -135,8 +135,8 @@ export function AccountCard({
 
         {/* Balance Display */}
         <div className="mt-2.5">
-          <span className="font-mono-num text-xl sm:text-2xl font-black tracking-tight text-(--text-ink)">
-            {formatSGD(account.balance)}
+          <span className="text-(--text-ink)">
+            <CurrencyText amount={account.balance} size="lg" />
           </span>
           {account.currency && account.currency !== 'SGD' && (
             <span className="ml-1.5 text-xs text-(--text-muted) font-mono-num font-bold">

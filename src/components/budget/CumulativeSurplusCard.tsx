@@ -41,6 +41,7 @@ import type {
     Perspective,
     SavingsGoal,
 } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface CumulativeSurplusCardProps {
     selectedMonth?: string;
@@ -313,7 +314,7 @@ export function CumulativeSurplusCard({
                         </span>
                         <div className="font-mono-num text-xl font-black tracking-tight mt-0.5">
                             {isCurrentSurplusPositive ? "+" : "-"}
-                            {formatSGD(Math.abs(currentSurplus))}
+                            <CurrencyText amount={Math.abs(currentSurplus)} />
                         </div>
                         <span className="block text-xs font-bold mt-0.5 opacity-90">
                             {isCurrentSurplusPositive
@@ -348,11 +349,11 @@ export function CumulativeSurplusCard({
                         </span>
                         <div className="font-mono-num text-xl font-black tracking-tight mt-0.5">
                             {isBankedPositive ? "+" : "-"}
-                            {formatSGD(Math.abs(totalBanked))}
+                            <CurrencyText amount={Math.abs(totalBanked)} />
                         </div>
                         <span className="block text-xs font-bold mt-0.5 opacity-90">
                             Total Banked Surplus: {isBankedPositive ? "+" : "-"}
-                            {formatSGD(Math.abs(totalBanked))}
+                            <CurrencyText amount={Math.abs(totalBanked)} />
                         </span>
                     </div>
 
@@ -417,12 +418,12 @@ export function CumulativeSurplusCard({
                                         }`}
                                     >
                                         {isPos ? "+" : "-"}
-                                        {formatSGD(Math.abs(point.delta))}
+                                        <CurrencyText amount={Math.abs(point.delta)} />
                                     </div>
 
                                     <div className="font-mono-num text-[10px] text-(--text-muted) mt-0.5">
-                                        {formatSGD(point.spent)} /{" "}
-                                        {formatSGD(point.cap)}
+                                        <CurrencyText amount={point.spent} /> /{" "}
+                                        <CurrencyText amount={point.cap} />
                                     </div>
                                 </div>
 
@@ -442,7 +443,7 @@ export function CumulativeSurplusCard({
                                     </div>
                                     <div className="font-mono-num text-[9px] text-(--text-muted) text-right mt-1 font-semibold">
                                         Cum: {point.cumulative >= 0 ? "+" : ""}
-                                        {formatSGD(point.cumulative)}
+                                        <CurrencyText amount={point.cumulative} />
                                     </div>
                                 </div>
                             </div>

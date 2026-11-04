@@ -20,9 +20,10 @@ import {
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
-import { formatSGD } from "../../lib/currency";
 import { haptics } from "../../lib/haptics";
 import type { SavingsGoal } from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
+import { formatSGD } from "../../lib/currency";
 
 export interface QuickDepositModalProps {
     isOpen: boolean;
@@ -141,7 +142,7 @@ export function QuickDepositModal({
                                             : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                     }`}
                                 >
-                                    +{formatSGD(amt)}
+                                    <CurrencyText formatted={`+${formatSGD(amt)}`} />
                                 </button>
                             ))}
                         </div>
@@ -181,9 +182,7 @@ export function QuickDepositModal({
                         <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 text-xs shadow-cute-sm space-y-2">
                             <div className="flex justify-between font-bold text-(--text-ink)">
                                 <span>Projected Balance:</span>
-                                <span className="font-mono-num">
-                                    {formatSGD(newSavedSoFar)}
-                                </span>
+                                <CurrencyText amount={newSavedSoFar} />
                             </div>
                             <div className="w-full h-2 rounded-full bg-(--bg-canvas) border border-(--border-ink) overflow-hidden">
                                 <div

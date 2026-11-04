@@ -52,7 +52,7 @@ export const PWAUpdateToast: React.FC = () => {
           <p className="text-sm font-semibold text-slate-900 dark:text-white">
             {needRefresh ? 'New version available' : 'Ready for offline use'}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-(--text-faint) mt-0.5">
             {needRefresh
               ? 'An updated version of Budget Bubby is ready to reload.'
               : 'App assets are cached. You can open Budget Bubby without network.'}
@@ -78,7 +78,7 @@ export const PWAUpdateToast: React.FC = () => {
 
         <button
           onClick={close}
-          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md"
+          className="text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />
