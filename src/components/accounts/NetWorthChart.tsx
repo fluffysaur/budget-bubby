@@ -1,19 +1,22 @@
 /**
  * NetWorthChart Component
  * Responsive Recharts Area Chart displaying:
- * - Historical Net Worth Progression
- * - Net Worth = total of all account balances
+ * - Net Worth history built only from real balance snapshots
+ *   (see calculateMonthlyBalanceTrends: accounts count from their first update)
+ * - "No History" empty state until there are at least 2 months of data
  */
 
 import { useMemo } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { TrendingUp } from "lucide-react";
-import type { Account } from "../../types/finance";
-import { addMonths, formatDisplayMonth } from "../../lib/dateUtils";
+import { CalendarCheck, TrendingUp } from "lucide-react";
+import type { Account, AccountSnapshot } from "../../types/finance";
+import { formatDisplayMonth } from "../../lib/dateUtils";
+import { calculateMonthlyBalanceTrends } from "../../lib/financialFormulas";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Card } from "../ui/Card";
 import { CurrencyText } from "../ui/CurrencyText";
+import { Button } from "../ui/Button";
 
 export interface NetWorthDataPoint {
     date: string;
@@ -23,6 +26,8 @@ export interface NetWorthDataPoint {
 export interface NetWorthChartProps {
     data?: NetWorthDataPoint[];
     accounts?: Account[];
+    snapshots?: AccountSnapshot[];
+    onUpdateBalances?: () => void;
     className?: string;
 }
 
@@ -62,29 +67,27 @@ function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
     );
 }
 
-export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartProps) {
+export function NetWorthChart({
+    data,
+    accounts,
+    snapshots,
+    onUpdateBalances,
+    className = "",
+}: NetWorthChartProps) {
     const currentM = useCurrentMonth();
     const chartData = useMemo<NetWorthDataPoint[]>(() => {
         if (data && data.length > 0) {
             return data;
         }
+        return calculateMonthlyBalanceTrends(accounts || [], snapshots || [], 6, currentM).map(
+            (point) => ({
+                date: formatDisplayMonth(point.month),
+                netWorth: point.netWorth,
+            }),
+        );
+    }, [data, accounts, snapshots, currentM]);
 
-        // Derive current total
-        const currentNetWorth = Math.round((accounts || []).reduce((sum, a) => sum + a.balance, 0) * 100) / 100;
-
-        // Generate a 5-month historical progression leading up to current month
-        const months = [-4, -3, -2, -1, 0].map((offset) => formatDisplayMonth(addMonths(currentM, offset)));
-        const multipliers = [0.93, 0.95, 0.97, 0.985, 1.0];
-
-        return months.map((month, idx) => ({
-            date: month,
-            netWorth:
-                idx === months.length - 1
-                    ? currentNetWorth
-                    : Math.round(currentNetWorth * multipliers[idx] * 100) / 100,
-        }));
-    }, [data, accounts, currentM]);
-
+    const hasHistory = chartData.length >= 2;
     const latestPoint = chartData[chartData.length - 1];
 
     return (
@@ -109,7 +112,8 @@ export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartP
                             align="left"
                             className="shrink-0"
                         >
-                            Net Worth = total of all account balances
+                            Net Worth = total of all account balances. Accounts are
+                            included from their first balance update.
                         </TooltipPopover>
                     </div>
                 </div>
@@ -125,7 +129,31 @@ export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartP
                 </div>
             </div>
 
-            {/* Chart Canvas */}
+            {!hasHistory ? (
+                <div
+                    data-testid="net-worth-no-history"
+                    className="flex flex-col items-center justify-center py-10 text-center"
+                >
+                    <h3 className="text-base font-bold text-(--text-ink) font-display">
+                        No History
+                    </h3>
+                    <p className="mt-1.5 text-sm text-(--text-muted)">
+                        Update balances monthly to see your trend.
+                    </p>
+                    {onUpdateBalances && (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className="mt-4"
+                            onClick={onUpdateBalances}
+                            leftIcon={<CalendarCheck className="h-4 w-4" strokeWidth={2.5} />}
+                        >
+                            Update Balances
+                        </Button>
+                    )}
+                </div>
+            ) : (
+            /* Chart Canvas */
             <div className="w-full h-72 sm:h-80">
                 <ResponsiveContainer
                     width="100%"
@@ -190,6 +218,7 @@ export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartP
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
+            )}
         </Card>
     );
 }

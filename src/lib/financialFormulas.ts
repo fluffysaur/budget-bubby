@@ -291,8 +291,12 @@ export function getMemberExpenseShare(
 }
 
 /**
- * 9. Calculates historical End-of-Month balance & Net Worth series from real AccountSnapshots.
- * Supports All vs. Non-CPF (Liquid) assets and Month-over-Month (MoM) deltas.
+ * 9. Calculates the end-of-month balance & Net Worth series from real AccountSnapshots.
+ * Nothing is invented:
+ * - The series starts at the month of the earliest snapshot (or `monthsCount` months back, if later).
+ * - An account counts from the month of its first snapshot onwards, at its latest
+ *   snapshot on or before that month's end. Accounts added later step in when added.
+ * - The current month uses live account balances, so it matches the Net Worth card.
  */
 export function calculateMonthlyBalanceTrends(
     accounts: Account[],
@@ -301,46 +305,53 @@ export function calculateMonthlyBalanceTrends(
     referenceMonth?: string,
 ): MonthlyBalancePoint[] {
     const currentM = referenceMonth || getCurrentMonth();
-    const months: string[] = [];
-    for (let i = -(monthsCount - 1); i <= 0; i++) {
-        months.push(addMonths(currentM, i));
+
+    const snapsByAccount = new Map<string, AccountSnapshot[]>();
+    for (const snap of snapshots) {
+        const list = snapsByAccount.get(snap.account_id) ?? [];
+        list.push(snap);
+        snapsByAccount.set(snap.account_id, list);
+    }
+    for (const list of snapsByAccount.values()) {
+        list.sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
     }
 
+    const accountIds = new Set(accounts.map((a) => a.id));
+    const snapshotMonths = snapshots
+        .filter((s) => accountIds.has(s.account_id))
+        .map((s) => s.snapshot_date.slice(0, 7));
+    const firstMonth = snapshotMonths.length > 0 ? snapshotMonths.sort()[0] : currentM;
+
+    const windowStart = addMonths(currentM, -(monthsCount - 1));
+    const startMonth = firstMonth > windowStart ? firstMonth : windowStart;
+
+    const months: string[] = [];
+    for (let m = startMonth; m <= currentM; m = addMonths(m, 1)) {
+        months.push(m);
+    }
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
     const points: MonthlyBalancePoint[] = [];
 
-    for (let idx = 0; idx < months.length; idx++) {
-        const month = months[idx];
-
+    for (const month of months) {
+        const isCurrent = month === currentM;
         let cash = 0;
         let investments = 0;
         let cpf = 0;
         let other = 0;
 
         for (const acc of accounts) {
-            // Find latest snapshot for this account up to the end of `month`
-            const accSnaps = snapshots
-                .filter(
-                    (s) =>
-                        s.account_id === acc.id &&
-                        s.snapshot_date.slice(0, 7) <= month,
-                )
-                .sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
-
-            let bal: number;
-            if (accSnaps.length > 0) {
-                bal = Number(accSnaps[accSnaps.length - 1].balance);
+            let bal: number | null = null;
+            if (isCurrent) {
+                bal = Number(acc.balance);
             } else {
-                // Fallback if no snapshot exists at or before `month`: check earliest snapshot or current balance
-                const allAccSnaps = snapshots
-                    .filter((s) => s.account_id === acc.id)
-                    .sort((a, b) =>
-                        a.snapshot_date.localeCompare(b.snapshot_date),
-                    );
-                bal =
-                    allAccSnaps.length > 0
-                        ? Number(allAccSnaps[0].balance)
-                        : Number(acc.balance);
+                const accSnaps = snapsByAccount.get(acc.id) ?? [];
+                for (const snap of accSnaps) {
+                    if (snap.snapshot_date.slice(0, 7) <= month) bal = Number(snap.balance);
+                    else break;
+                }
             }
+            if (bal === null) continue; // Not tracked yet in this month
 
             if (acc.type === "Cash") cash += bal;
             else if (acc.type === "Investment") investments += bal;
@@ -348,30 +359,19 @@ export function calculateMonthlyBalanceTrends(
             else other += bal;
         }
 
-        cash = Math.round(cash * 100) / 100;
-        investments = Math.round(investments * 100) / 100;
-        cpf = Math.round(cpf * 100) / 100;
-        other = Math.round(other * 100) / 100;
+        cash = round2(cash);
+        investments = round2(investments);
+        cpf = round2(cpf);
+        other = round2(other);
 
-        const totalAssets =
-            Math.round((cash + investments + cpf + other) * 100) / 100;
-        const nonCpfAssets =
-            Math.round((cash + investments + other) * 100) / 100;
+        const totalAssets = round2(cash + investments + cpf + other);
+        const nonCpfAssets = round2(cash + investments + other);
 
-        const netWorth = totalAssets;
-        const nonCpfNetWorth = nonCpfAssets;
-
-        const prevPoint = idx > 0 ? points[idx - 1] : null;
-        const momChange = prevPoint
-            ? Math.round((totalAssets - prevPoint.totalAssets) * 100) / 100
-            : 0;
+        const prevPoint = points.length > 0 ? points[points.length - 1] : null;
+        const momChange = prevPoint ? round2(totalAssets - prevPoint.totalAssets) : 0;
         const momChangePct =
             prevPoint && prevPoint.totalAssets > 0
-                ? Math.round(
-                      ((totalAssets - prevPoint.totalAssets) /
-                          prevPoint.totalAssets) *
-                          1000,
-                  ) / 10
+                ? Math.round(((totalAssets - prevPoint.totalAssets) / prevPoint.totalAssets) * 1000) / 10
                 : 0;
 
         points.push({
@@ -383,8 +383,8 @@ export function calculateMonthlyBalanceTrends(
             other,
             totalAssets,
             nonCpfAssets,
-            netWorth,
-            nonCpfNetWorth,
+            netWorth: totalAssets,
+            nonCpfNetWorth: nonCpfAssets,
             momChange,
             momChangePct,
         });

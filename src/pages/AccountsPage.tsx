@@ -25,7 +25,7 @@ import {
     SegmentedTabs,
     AccountsContentSkeleton,
 } from "../components/ui";
-import { useAccountsQuery } from "../hooks/useFinanceQueries";
+import { useAccountsQuery, useAccountSnapshotsQuery } from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { AccountGroupList } from "../components/accounts/AccountGroupList";
@@ -60,6 +60,7 @@ export function AccountsPage({
     // TanStack Query Cached Data Hooks
     const { data: accountsData, isLoading: accountsLoading } =
         useAccountsQuery(perspective);
+    const { data: snapshots } = useAccountSnapshotsQuery(perspective);
 
     const accounts = useMemo(() => accountsData || [], [accountsData]);
     const isLoading = accountsLoading && !accountsData;
@@ -191,7 +192,14 @@ export function AccountsPage({
                         ) : (
                             <>
                                 {/* Net Worth Progression Area Chart */}
-                                <NetWorthChart accounts={accounts} />
+                                <NetWorthChart
+                                    accounts={accounts}
+                                    snapshots={snapshots}
+                                    onUpdateBalances={() => {
+                                        setSelectedAccount(null);
+                                        setIsUpdateModalOpen(true);
+                                    }}
+                                />
 
                                 {/* Grouped Accounts Listing with Table / Card view */}
                                 <AccountGroupList

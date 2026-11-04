@@ -1,12 +1,12 @@
 # UI Overhaul Plan
 
 Date: 2026-11-04
-Status: Agreed, in progress (PRs 2–5 merged, PR 6 ready for review)
+Status: Done (PRs 2–6 merged). Follow-ups in progress.
 
 ## Problem
 
 The app feels complex and cluttered, and its styling is inconsistent. This plan
-covers the open items in [`Comments for Site 1.md`](../../src/pages/Comments%20for%20Site%201.md),
+covers the open items in `Comments for Site 1.md` (removed in #20),
 plus an audit against `AGENTS.md`.
 
 What we found:
@@ -131,7 +131,11 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
 
 ## Follow-ups found during the work
 
-- **Fake net-worth history:** when no data is passed, `NetWorthChart` invents the previous 4 months by multiplying today's total by 0.93–0.985. Replace this with real `account_snapshots` history (the unused `calculateMonthlyBalanceTrends` already does that), or hide the chart until there is history.
+- ~~**Fake net-worth history**~~: fixed in `fix/net-worth-history`. The chart uses real `account_snapshots` only (decided 2026-11-04):
+    - It starts at the first snapshot month.
+    - Each account counts from its first snapshot onwards. Accounts added later step in.
+    - The current month uses live balances.
+    - With fewer than 2 months of data, it shows "No History" with an Update Balances action.
 - ~~**Home vs Spend mismatch**~~: fixed in `fix/combined-left-to-spend`. Combined uses the household total everywhere (decided 2026-11-04). Home, Budget and the Expenses Spendable card share `useBudgetDetailQuery`. The Expenses card also now counts recurring items billed to spendable categories.
 - **Card debt in net worth:** optionally count unpaid credit-card statements as liabilities. That would be a new behaviour, so it's a separate decision.
 
