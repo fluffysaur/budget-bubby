@@ -18,6 +18,7 @@ import { getTodayDateString, formatISODate } from '../../lib/dateUtils';
 import { playChaChingSound } from '../../lib/soundEffects';
 import { haptics } from '../../lib/haptics';
 import { TooltipPopover } from '../ui/TooltipPopover';
+import { Skeleton, SkeletonGroup } from '../ui/Skeleton';
 import type { DailyCheckin, StreakSummary } from '../../types/finance';
 
 export interface DailyCheckinStreakBarProps {
@@ -204,10 +205,9 @@ export function DailyCheckinStreakBar({
           {/* Today's Check-in Status / 1-Tap Check-in Button */}
           <div className="flex items-center gap-2">
             {isLoading ? (
-              <div className="flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
-                <Loader2 className="h-4 w-4 animate-spin text-[#b45309]" />
-                <span className="hidden xs:inline">Checking status...</span>
-              </div>
+              <SkeletonGroup label="Checking status">
+                <Skeleton className="h-7 w-28 rounded-xl" />
+              </SkeletonGroup>
             ) : streak.checkedInToday ? (
               <div
                 data-testid="checked-in-today-status"
