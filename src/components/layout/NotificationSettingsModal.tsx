@@ -188,7 +188,7 @@ export function NotificationSettingsModal({
                     onClose={onClose}
                 />
 
-                <ModalBody className="p-4 sm:p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+                <ModalBody className="p-4 sm:p-6 space-y-6">
                     {/* Sound Effects Section */}
                     <div>
                         <h4 className="text-xs font-black uppercase tracking-wider text-(--text-muted) mb-3 font-display">

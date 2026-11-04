@@ -1,7 +1,7 @@
 # UI Overhaul Plan
 
 Date: 2026-11-04
-Status: Agreed, in progress (PRs 2–4 merged, PR 5 ready for review)
+Status: Agreed, in progress (PRs 2–5 merged, PR 6 ready for review)
 
 ## Problem
 
@@ -119,6 +119,15 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
 - **Its toggle summarises the defaults**, e.g. `Today · Yi Jia · Shared`. It opens on its own when remarks, tags, a foreign currency or goal funding are set.
 - **Split default:** an explicit prop, else the last split used (`budget_bubby_last_split_v1`), else Shared in Combined view and Personal otherwise.
 - **Fast Log:** `FastLogWidget` is deleted, and `/fast-log` now opens the Add Expense sheet over Home.
+
+## PR 6 notes
+
+- **Mostly in place already:** all 23 modals, including `ConfirmModal`, use `AnimatedModal`. It defaults to a bottom sheet on mobile (slides up, swipe or tap outside to close) and a centred dialog on desktop (fades and scales). No modal turns this off.
+- **Reduced motion:** modal and sheet animations now drop to 1ms when it is on.
+- **Logout:** the hand-built logout confirmation is now a `ConfirmModal`.
+- **Single scroll area:** removed nested `max-h-[60vh]` scroll areas in Manage Categories, and the extra `max-h-[70vh]` on Notification Settings' `ModalBody`. Each sheet now scrolls as one area.
+- **Left as is:** the biometrics enrolment prompt on the PIN screen. It's a one-off welcome prompt, not a form.
+- **New test:** `e2e/modal-behaviour.spec.ts` checks the sheet is anchored to the bottom on phones, the dialog is centred on desktop, and reduced motion is respected.
 
 ## Follow-ups found during the work
 

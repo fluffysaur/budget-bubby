@@ -15,7 +15,6 @@ import {
     ChevronDown,
     Check,
     LogOut,
-    AlertTriangle,
     Download,
     RotateCw,
     Settings,
@@ -34,7 +33,7 @@ import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyIcon } from "../ui/BubbyIcon";
-import { AnimatedModal, ModalHeader, ModalFooter } from "../ui/AnimatedModal";
+import { ConfirmModal } from "../ui/ConfirmModal";
 
 export interface AppHeaderProps {
     className?: string;
@@ -493,42 +492,23 @@ export function AppHeader({
             </div>
 
             {/* Logout Confirmation Modal */}
-            <AnimatedModal
+            <ConfirmModal
                 isOpen={isLogoutConfirmOpen}
                 onClose={() => setIsLogoutConfirmOpen(false)}
+                onConfirm={() => {
+                    setIsLogoutConfirmOpen(false);
+                    signOut();
+                }}
+                title="Lock & Sign Out?"
+                variant="danger"
+                confirmLabel="Sign Out"
+                icon={<LogOut className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />}
                 maxWidth="max-w-sm"
             >
-                <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-                    <ModalHeader
-                        title="Lock & Sign Out?"
-                        subtitle="You will need your 6-digit PIN to unlock again."
-                        icon={
-                            <AlertTriangle className="h-5 w-5 text-rose-700" strokeWidth={2.5} />
-                        }
-                        iconBgColor="bg-rose-100"
-                        onClose={() => setIsLogoutConfirmOpen(false)}
-                    />
-                    <ModalFooter className="justify-end gap-2.5">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsLogoutConfirmOpen(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => {
-                                setIsLogoutConfirmOpen(false);
-                                signOut();
-                            }}
-                        >
-                            Sign Out
-                        </Button>
-                    </ModalFooter>
-                </div>
-            </AnimatedModal>
+                <p className="text-sm text-(--text-muted)">
+                    You&apos;ll need your 6-digit PIN to unlock again.
+                </p>
+            </ConfirmModal>
 
             {/* iOS install modal when prompt triggered from menu */}
             <IOSInstallModal
