@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Dedicated port so e2e never reuses an unrelated dev server on 5173.
+const E2E_PORT = 5199;
+const E2E_URL = `http://localhost:${E2E_PORT}`;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -10,7 +14,7 @@ export default defineConfig({
     ['html', { open: 'never' }],
   ],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: E2E_URL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -24,8 +28,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    command: `npm run dev -- --port ${E2E_PORT} --strictPort`,
+    url: E2E_URL,
+    reuseExistingServer: false,
+    // Empty Supabase vars override any .env file, forcing mock data mode.
+    env: {
+      VITE_SUPABASE_URL: '',
+      VITE_SUPABASE_ANON_KEY: '',
+    },
   },
 });
