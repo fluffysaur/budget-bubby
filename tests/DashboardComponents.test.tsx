@@ -4,10 +4,8 @@
  *
  * Tests:
  * 1. NetWorthHeroCard:
- *    - Renders True Net Worth (Total Assets - Outstanding Loans) formatted in SGD
- *    - Renders Total Assets and Total Liabilities pills
+ *    - Renders Net Worth (total of account balances) formatted in SGD
  *    - Displays active perspective badge (Combined Household vs Member)
- *    - Displays trend indicator
  * 2. SettlementWidget:
  *    - Displays "Who Owes Whom" balance (e.g., "Rachel owes Yi Jia S$1,234.50" or "All settled up")
  *    - Displays breakdown of what each partner paid towards shared expenses
@@ -46,7 +44,6 @@ import type {
   Expense,
   HouseholdMember,
   HouseholdOverview,
-  Loan,
   MonthlyBudgetDetail,
   RecurringItem,
   SavingsGoal,
@@ -230,23 +227,6 @@ const sampleAccounts: Account[] = [
   },
 ];
 
-const sampleLoans: Loan[] = [
-  {
-    id: 'loan-01',
-    household_id: 'hh-001',
-    borrower_id: null, // Joint loan
-    name: 'HDB Housing Loan',
-    principal: 400000.0,
-    interest_rate: 0.026,
-    monthly_payment: 2132.0,
-    amount_paid: 40000.0, // Remaining: 360,000
-    start_date: '2026-05-01',
-    term_months: 240,
-    loan_type: 'amortized',
-    status: 'active',
-  },
-];
-
 const sampleExpenses: Expense[] = [
   {
     id: 'exp-01',
@@ -280,8 +260,7 @@ const sampleHouseholdOverview: HouseholdOverview = {
   },
   members: sampleMembers,
   totalAssets: 180000.0,
-  totalLiabilities: 360000.0,
-  trueNetWorth: -180000.0,
+  trueNetWorth: 180000.0,
   settlementSummary: sampleSettlementSummary,
   activeGoals: sampleGoals,
   upcomingBills: sampleItems,
@@ -326,31 +305,24 @@ const sampleMonthlyBudget: MonthlyBudgetDetail = {
 };
 
 describe('NetWorthHeroCard', () => {
-  it('renders True Net Worth, Total Assets, and Total Liabilities formatted in SGD', () => {
+  it('renders Net Worth formatted in SGD without loan or liability pills', () => {
     render(
       <NetWorthHeroCard
-        netWorth={-180000.0}
-        totalAssets={180000.0}
-        totalLiabilities={360000.0}
+        netWorth={180000.0}
         perspective="household"
         perspectiveName="Combined Household"
       />
     );
 
-    // Checks True Net Worth formatting: -S$180,000.00
-    expect(screen.getByText('-S$180,000.00')).toBeInTheDocument();
-    // Checks Total Assets: S$180,000.00
     expect(screen.getByText('S$180,000.00')).toBeInTheDocument();
-    // Checks Total Liabilities: S$360,000.00
-    expect(screen.getByText('S$360,000.00')).toBeInTheDocument();
+    expect(screen.queryByText(/liabilities/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/debt payoff/i)).not.toBeInTheDocument();
   });
 
-  it('displays perspective badge and trend indicator', () => {
+  it('displays perspective badge', () => {
     const { rerender } = render(
       <NetWorthHeroCard
         netWorth={150000.0}
-        totalAssets={250000.0}
-        totalLiabilities={100000.0}
         perspective="household"
         perspectiveName="Combined Household"
       />
@@ -363,8 +335,6 @@ describe('NetWorthHeroCard', () => {
     rerender(
       <NetWorthHeroCard
         netWorth={75000.0}
-        totalAssets={125000.0}
-        totalLiabilities={50000.0}
         perspective="yijia"
         perspectiveName="Yi Jia"
       />
@@ -546,14 +516,13 @@ describe('DashboardPage', () => {
     vi.restoreAllMocks();
     vi.spyOn(financeService, 'getHouseholdOverview').mockResolvedValue(sampleHouseholdOverview);
     vi.spyOn(financeService, 'getAccounts').mockResolvedValue(sampleAccounts);
-    vi.spyOn(financeService, 'getLoans').mockResolvedValue(sampleLoans);
     vi.spyOn(financeService, 'getGoals').mockResolvedValue(sampleGoals);
     vi.spyOn(financeService, 'getRecurringItems').mockResolvedValue(sampleItems);
     vi.spyOn(financeService, 'getExpenses').mockResolvedValue(sampleExpenses);
     vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue(sampleMonthlyBudget);
   });
 
-  it('renders Combined Household Hub with all widgets and True Net Worth', async () => {
+  it('renders Combined Household Hub with all widgets and Net Worth', async () => {
     await act(async () => {
       render(
         <HouseholdProvider initialPerspective="household">
@@ -563,8 +532,8 @@ describe('DashboardPage', () => {
     });
 
     await waitFor(() => {
-      // True Net Worth: Assets 180k - Liabilities 360k = -180k
-      expect(screen.getAllByText('-S$180,000.00').length).toBeGreaterThanOrEqual(1);
+      // Net Worth: sum of account balances = 180k
+      expect(screen.getAllByText('S$180,000.00').length).toBeGreaterThanOrEqual(1);
     });
 
     // Settlement Widget is displayed in Household view

@@ -22,7 +22,6 @@ import type {
   Household,
   HouseholdMember,
   HouseholdOverview,
-  Loan,
   MonthlyBudget,
   MonthlyBudgetCategoryDetail,
   MonthlyBudgetDetail,
@@ -153,19 +152,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       accounts.reduce((sum, a) => sum + Number(a.balance), 0) * 100
     ) / 100;
 
-    // 4. Fetch active loans for liabilities
-    const { data: loansData, error: loanError } = await client
-      .from('loans')
-      .select('*')
-      .eq('household_id', household.id)
-      .eq('status', 'active');
-    if (loanError) throw loanError;
-    const loans = (loansData || []) as Loan[];
-    const totalLiabilities = Math.round(
-      loans.reduce((sum, l) => sum + (Number(l.principal) - Number(l.amount_paid)), 0) * 100
-    ) / 100;
-
-    const trueNetWorth = Math.round((totalAssets - totalLiabilities) * 100) / 100;
+    const trueNetWorth = totalAssets;
 
     // 5. Fetch unsettled shared expenses for couple settlement
     const { data: expensesData, error: expError } = await client
@@ -217,7 +204,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       household,
       members,
       totalAssets,
-      totalLiabilities,
       trueNetWorth,
       settlementSummary,
       activeGoals,
@@ -1036,13 +1022,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .eq('settled', false)
       .or(`payer_id.eq.${member1Id},payer_id.eq.${member2Id}`);
     if (error) throw error;
-  }
-
-  public async getLoans(): Promise<Loan[]> {
-    const client = getClient();
-    const { data, error } = await client.from('loans').select('*');
-    if (error) throw error;
-    return (data || []) as Loan[];
   }
 
   public async getGoals(): Promise<SavingsGoal[]> {

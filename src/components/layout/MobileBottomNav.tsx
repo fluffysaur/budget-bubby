@@ -5,7 +5,7 @@
  * 2. Spend (Expenses & Budget)
  * +  Quick Add Expense (FAB)
  * 3. Balances (Accounts & Net Worth)
- * 4. Plan (Goals, Loans & Recurring)
+ * 4. Plan (Goals, Recurring & Loans)
  */
 
 import { LayoutDashboard, Plus, Receipt, Landmark, Compass } from "lucide-react";
@@ -122,7 +122,7 @@ export function MobileBottomNav({
                     <span className="text-[10px] font-bold leading-tight">Balances</span>
                 </button>
 
-                {/* Tab 4: Plan (Goals, Loans, Recurring) */}
+                {/* Tab 4: Plan (Goals, Recurring, Loans) */}
                 <button
                     type="button"
                     onClick={() => onSelectTab?.("plan")}

@@ -644,7 +644,6 @@ describe('BudgetPage', () => {
         },
       ],
       totalAssets: 10000,
-      totalLiabilities: 0,
       trueNetWorth: 10000,
       settlementSummary: {
         netBalance: 0,

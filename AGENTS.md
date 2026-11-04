@@ -125,6 +125,7 @@ Always maintain a direct, functional, and concise editorial style across all UI 
     - **Title**: Exactly 2 words (e.g. `No Accounts`, `No Goals`, `No Loans`).
     - **Prompt**: Exactly 1 concise action prompt sentence (e.g. `Add an account to start tracking balances.`).
     - **Action**: 1 primary direct CTA button.
+    - **Placeholder exception**: "Under Construction" placeholders for unbuilt features (e.g. Plan > Loans) have no button, since there is nothing to act on yet.
 - **Progressive Disclosure**: Keep high-level views uncluttered. Do not place multi-sentence explanatory paragraphs on primary page dashboards; offload deep background rules or calculation logic into `<TooltipPopover>` or collapsible sections.
 - **Notification & Alert Copy**:
     - **Notification Settings**: Keep toggle descriptions under 8 words (e.g. `Remind before credit card statement due date`, `Daily 6 PM reminder to log spending`).

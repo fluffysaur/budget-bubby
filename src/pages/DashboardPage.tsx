@@ -22,7 +22,6 @@ import { useHousehold } from "../context/HouseholdContext";
 import { PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
 import {
     useAccountsQuery,
-    useLoansQuery,
     useGoalsQuery,
     useRecurringItemsQuery,
     useExpensesQuery,
@@ -71,7 +70,6 @@ export function DashboardPage({
 
     // TanStack Query Cached Data Hooks
     const { data: accountsData, isLoading: accountsLoading } = useAccountsQuery(perspective);
-    const { data: loansData } = useLoansQuery();
     const { data: goalsData } = useGoalsQuery();
     const { data: recurringItemsData } = useRecurringItemsQuery();
     const { data: expensesData, isLoading: expensesLoading } =
@@ -83,7 +81,6 @@ export function DashboardPage({
     const { data: categoriesData } = useCategoriesQuery();
 
     const accounts = useMemo(() => accountsData || [], [accountsData]);
-    const loans = useMemo(() => loansData || [], [loansData]);
     const goals = useMemo(() => goalsData || [], [goalsData]);
     const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
     const expenses = useMemo(() => expensesData || [], [expensesData]);
@@ -119,29 +116,6 @@ export function DashboardPage({
         const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
         return Math.round(sum * 100) / 100;
     }, [accounts]);
-
-    const activeLoans = useMemo(() => {
-        return loans.filter((l) => {
-            if (l.status !== "active") return false;
-            if (isHousehold) return true;
-            return !l.borrower_id || l.borrower_id === activeMember?.id;
-        });
-    }, [loans, isHousehold, activeMember]);
-
-    const totalLiabilities = useMemo(() => {
-        const sum = activeLoans.reduce((acc, l) => {
-            const remaining = l.principal - l.amount_paid;
-            if (!isHousehold && !l.borrower_id) {
-                return acc + remaining * 0.5; // 50% split for joint household loan in personal view
-            }
-            return acc + remaining;
-        }, 0);
-        return Math.round(sum * 100) / 100;
-    }, [activeLoans, isHousehold]);
-
-    const trueNetWorth = useMemo(() => {
-        return Math.round((totalAssets - totalLiabilities) * 100) / 100;
-    }, [totalAssets, totalLiabilities]);
 
     // Spendable budget remaining for the mobile daily briefing
     const spendableSummary = useMemo(() => {
@@ -348,11 +322,9 @@ export function DashboardPage({
                         </div>
                     </div>
 
-                    {/* 1. True Net Worth Hero Card */}
+                    {/* 1. Net Worth Hero Card */}
                     <NetWorthHeroCard
-                        netWorth={trueNetWorth}
-                        totalAssets={totalAssets}
-                        totalLiabilities={totalLiabilities}
+                        netWorth={totalAssets}
                         perspective={perspective}
                         perspectiveName={perspectiveDisplayName}
                         onUpdateBalance={() => handleOpenUpdateBalance()}

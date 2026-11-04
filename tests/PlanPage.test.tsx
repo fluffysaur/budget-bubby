@@ -42,4 +42,25 @@ describe('PlanPage Component', () => {
     expect(bonusTab).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByText(/Bonus Splitter/i)).toBeInTheDocument();
   });
+
+  it('lists Loans last and shows the Under Construction placeholder', () => {
+    render(
+      <MemoryRouter>
+        <HouseholdProvider>
+          <PlanPage />
+        </HouseholdProvider>
+      </MemoryRouter>
+    );
+
+    const tabNav = screen.getByRole('navigation', { name: 'Navigation Tabs' });
+    const tabNames = within(tabNav).getAllByRole('tab').map((t) => t.textContent?.trim());
+    expect(tabNames).toEqual(['Goals', 'Recurring', 'Bonus', 'Loans']);
+    expect(within(tabNav).getByRole('tab', { name: /Goals/i })).toHaveAttribute('aria-selected', 'true');
+
+    fireEvent.click(within(tabNav).getByRole('tab', { name: /Loans/i }));
+
+    expect(screen.getByText('Under Construction')).toBeInTheDocument();
+    expect(screen.getByText('Bubby is building something for your loans.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add loan/i })).not.toBeInTheDocument();
+  });
 });

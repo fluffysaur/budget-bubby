@@ -3,7 +3,6 @@ import {
   calculateCPFAndNetPay,
   calculateDisposableBudget,
   calculateCategoryAllocations,
-  calculateLoanAmortization,
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateSpendablePacing,
@@ -90,67 +89,6 @@ describe('financialFormulas', () => {
 
     it('returns empty array when targets array is empty', () => {
       expect(calculateCategoryAllocations(3000, [])).toEqual([]);
-    });
-  });
-
-  describe('calculateLoanAmortization', () => {
-    it('calculates exact amortization schedule for HDB Loan ($500k @ 2.6%, $2,665/mo)', () => {
-      const principal = 500000;
-      const annualRate = 0.026; // 2.6%
-      const monthlyPayment = 2665;
-      const startDate = '2026-09-01';
-
-      const result = calculateLoanAmortization(principal, annualRate, monthlyPayment, startDate);
-
-      expect(result.totalMonths).toBe(242);
-      expect(result.monthlyPayment).toBe(2665);
-      expect(result.schedule).toHaveLength(242);
-
-      // Month 1 checks
-      const m1 = result.schedule[0];
-      expect(m1.month).toBe(1);
-      expect(m1.paymentDate).toBe('2026-09-01');
-      // 500000 * (0.026 / 12) = 1083.33
-      expect(m1.interestPayment).toBe(1083.33);
-      // 2665 - 1083.33 = 1581.67
-      expect(m1.principalPayment).toBe(1581.67);
-      expect(m1.remainingBalance).toBe(498418.33);
-
-      // Payoff checks
-      const lastRow = result.schedule[result.schedule.length - 1];
-      expect(lastRow.remainingBalance).toBe(0);
-      expect(result.totalInterest).toBeGreaterThan(142000);
-      expect(result.totalInterest).toBeLessThan(143000);
-      expect(result.payoffDate).toBe('2046-10-01');
-    });
-
-    it('simulates prepayment accelerating loan payoff and reducing total interest', () => {
-      const standard = calculateLoanAmortization(500000, 0.026, 2665, '2026-09-01');
-      const withExtra = calculateLoanAmortization(500000, 0.026, 2665, '2026-09-01', 500);
-
-      // Extra 500/month (total 3165/mo) reduces months from 242 to 194 (48 months shorter = 4 years!)
-      expect(withExtra.totalMonths).toBe(194);
-      expect(standard.totalMonths - withExtra.totalMonths).toBe(48);
-
-      // Interest savings: ~142.4k down to ~112.7k (~29.7k saved!)
-      const interestSaved = standard.totalInterest - withExtra.totalInterest;
-      expect(interestSaved).toBeGreaterThan(29000);
-      expect(interestSaved).toBeLessThan(30000);
-
-      // Payoff date moves earlier
-      expect(new Date(withExtra.payoffDate).getTime()).toBeLessThan(new Date(standard.payoffDate).getTime());
-    });
-
-    it('handles loan paid off in a single payment when payment exceeds principal', () => {
-      const result = calculateLoanAmortization(1000, 0.05, 1200, '2026-09-01');
-      expect(result.totalMonths).toBe(1);
-      expect(result.schedule[0].remainingBalance).toBe(0);
-    });
-
-    it('handles zero balance or throws meaningful error if monthly payment cannot cover interest', () => {
-      expect(() => calculateLoanAmortization(500000, 0.12, 100, '2026-09-01')).toThrow(
-        /monthly payment.*cannot cover monthly interest/i
-      );
     });
   });
 

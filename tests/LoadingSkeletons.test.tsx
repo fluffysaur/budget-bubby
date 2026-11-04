@@ -12,12 +12,11 @@ import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { BudgetPage } from "../src/pages/BudgetPage";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { GoalsPage } from "../src/pages/GoalsPage";
-import { LoansPage } from "../src/pages/LoansPage";
 import { RecurringPage } from "../src/pages/RecurringPage";
 import { financeService } from "../src/services/financeService";
 import { Skeleton, SkeletonGroup, StatCard } from "../src/components/ui";
 import { getCurrentMonth, addMonths } from "../src/lib/dateUtils";
-import type { MonthlyBudgetDetail, SavingsGoal, Loan, RecurringItem } from "../src/types/finance";
+import type { MonthlyBudgetDetail, SavingsGoal, RecurringItem } from "../src/types/finance";
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
@@ -171,28 +170,6 @@ describe("Page loading skeletons", () => {
             expect(screen.queryByTestId("goals-skeleton")).not.toBeInTheDocument();
         });
         expect(screen.getByText("No Goals")).toBeInTheDocument();
-    });
-
-    it("LoansPage shows a loans skeleton while loading, then the empty state", async () => {
-        const pending = deferred<Loan[]>();
-        vi.spyOn(financeService, "getLoans").mockImplementation(() => pending.promise);
-
-        render(
-            <HouseholdProvider>
-                <LoansPage />
-            </HouseholdProvider>,
-        );
-
-        expect(await screen.findByTestId("loans-skeleton")).toHaveAttribute("role", "status");
-
-        await act(async () => {
-            pending.resolve([]);
-        });
-
-        await waitFor(() => {
-            expect(screen.queryByTestId("loans-skeleton")).not.toBeInTheDocument();
-        });
-        expect(screen.getByText("No Loans")).toBeInTheDocument();
     });
 
     it("RecurringPage shows a skeleton while loading, then the policy table", async () => {

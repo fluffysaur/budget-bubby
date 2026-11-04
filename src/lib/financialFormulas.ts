@@ -4,9 +4,8 @@
  * 1. Singapore CPF (20%) & Net Take-Home Pay
  * 2. Disposable Budget Allocation Pool
  * 3. Category Target Allocations
- * 4. Loan Amortization & Prepayment Simulator
- * 5. Couple Shared Expense Settlement ("Who Owes Whom")
- * 6. Savings Goal Pacing Indicator
+ * 4. Couple Shared Expense Settlement ("Who Owes Whom")
+ * 5. Savings Goal Pacing Indicator
  */
 
 import type {
@@ -16,7 +15,6 @@ import type {
     Category,
     Expense,
     ExpenseTrendsSummary,
-    Loan,
     MonthlyBalancePoint,
     MonthlyExpenseTrendPoint,
     Perspective,
@@ -24,8 +22,6 @@ import type {
     CPFAndNetPayResult,
     CategoryAllocationTarget,
     CategoryAllocation,
-    AmortizationScheduleRow,
-    AmortizationResult,
     SettlementSummary,
     GoalPacingResult,
     GoalStatus,
@@ -108,84 +104,6 @@ export function calculateCategoryAllocations(
         allocatedAmount:
             Math.round(afterDeductions * target.percentage * 100) / 100,
     }));
-}
-
-/**
- * 4. Calculates month-by-month loan amortization schedule and payoff metrics.
- * Supports optional extra monthly prepayment simulation.
- * Throws if the monthly payment is insufficient to cover monthly interest.
- */
-export function calculateLoanAmortization(
-    principal: number,
-    annualRate: number,
-    monthlyPayment: number,
-    startDate: string,
-    extraMonthlyPayment: number = 0,
-): AmortizationResult {
-    if (principal <= 0) {
-        return {
-            schedule: [],
-            totalMonths: 0,
-            totalInterest: 0,
-            payoffDate: startDate,
-            monthlyPayment: 0,
-        };
-    }
-
-    const monthlyRate = annualRate / 12;
-    const totalPaymentPerMonth = monthlyPayment + extraMonthlyPayment;
-    const firstMonthInterest = Math.round(principal * monthlyRate * 100) / 100;
-
-    if (totalPaymentPerMonth <= firstMonthInterest) {
-        throw new Error(
-            `Monthly payment (${totalPaymentPerMonth}) cannot cover monthly interest (${firstMonthInterest}). Loan balance will not decrease.`,
-        );
-    }
-
-    let balance = principal;
-    let totalInterest = 0;
-    let month = 0;
-    const schedule: AmortizationScheduleRow[] = [];
-    const maxIterations = 600; // 50 years safeguard
-
-    while (balance > 0.005 && month < maxIterations) {
-        month++;
-        const paymentDate = addMonths(startDate, month - 1);
-        const interestPayment = Math.round(balance * monthlyRate * 100) / 100;
-        const principalPayment = Math.min(
-            Math.round((totalPaymentPerMonth - interestPayment) * 100) / 100,
-            balance,
-        );
-        const actualPayment =
-            Math.round((principalPayment + interestPayment) * 100) / 100;
-
-        totalInterest =
-            Math.round((totalInterest + interestPayment) * 100) / 100;
-        balance = Math.round((balance - principalPayment) * 100) / 100;
-
-        schedule.push({
-            month,
-            paymentDate,
-            payment: actualPayment,
-            principalPayment,
-            interestPayment,
-            remainingBalance: balance,
-            totalInterestPaid: totalInterest,
-        });
-    }
-
-    const payoffDate =
-        schedule.length > 0
-            ? schedule[schedule.length - 1].paymentDate
-            : startDate;
-
-    return {
-        schedule,
-        totalMonths: schedule.length,
-        totalInterest,
-        payoffDate,
-        monthlyPayment: totalPaymentPerMonth,
-    };
 }
 
 /**
@@ -379,8 +297,6 @@ export function getMemberExpenseShare(
 export function calculateMonthlyBalanceTrends(
     accounts: Account[],
     snapshots: AccountSnapshot[],
-    loans: Loan[],
-    perspective: Perspective = "household",
     monthsCount: number = 6,
     referenceMonth?: string,
 ): MonthlyBalancePoint[] {
@@ -390,32 +306,10 @@ export function calculateMonthlyBalanceTrends(
         months.push(addMonths(currentM, i));
     }
 
-    const activeLoans = (loans || []).filter((l) => l.status === "active");
-    const currentTotalLiability = activeLoans.reduce((sum, l) => {
-        const remaining = Math.max(
-            0,
-            Number(l.principal) - Number(l.amount_paid),
-        );
-        if (perspective !== "household" && !l.borrower_id) {
-            return sum + remaining * 0.5;
-        }
-        return sum + remaining;
-    }, 0);
-
-    const monthlyLoanPrincipalStep = activeLoans.reduce((sum, l) => {
-        const payment = Number(l.monthly_payment) || 0;
-        const estPrincipal = payment * 0.6;
-        if (perspective !== "household" && !l.borrower_id) {
-            return sum + estPrincipal * 0.5;
-        }
-        return sum + estPrincipal;
-    }, 0);
-
     const points: MonthlyBalancePoint[] = [];
 
     for (let idx = 0; idx < months.length; idx++) {
         const month = months[idx];
-        const monthsBeforeCurrent = months.length - 1 - idx;
 
         let cash = 0;
         let investments = 0;
@@ -464,16 +358,7 @@ export function calculateMonthlyBalanceTrends(
         const nonCpfAssets =
             Math.round((cash + investments + other) * 100) / 100;
 
-        const liabilities =
-            currentTotalLiability > 0
-                ? Math.round(
-                      (currentTotalLiability +
-                          monthsBeforeCurrent * monthlyLoanPrincipalStep) *
-                          100,
-                  ) / 100
-                : 0;
-
-        const netWorth = Math.round((totalAssets - liabilities) * 100) / 100;
+        const netWorth = totalAssets;
         const nonCpfNetWorth = nonCpfAssets;
 
         const prevPoint = idx > 0 ? points[idx - 1] : null;
@@ -498,7 +383,6 @@ export function calculateMonthlyBalanceTrends(
             other,
             totalAssets,
             nonCpfAssets,
-            liabilities,
             netWorth,
             nonCpfNetWorth,
             momChange,

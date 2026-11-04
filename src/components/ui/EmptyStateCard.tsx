@@ -3,6 +3,8 @@ import { Card, type CardVariant } from "./Card";
 
 export interface EmptyStateCardProps {
     icon?: React.ReactNode;
+    /** Larger artwork shown above the title instead of the boxed icon. */
+    illustration?: React.ReactNode;
     title: React.ReactNode;
     description?: React.ReactNode;
     action?: React.ReactNode;
@@ -12,6 +14,7 @@ export interface EmptyStateCardProps {
 
 export function EmptyStateCard({
     icon,
+    illustration,
     title,
     description,
     action,
@@ -23,7 +26,8 @@ export function EmptyStateCard({
             variant={variant}
             className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center ${className}`}
         >
-            {icon && (
+            {illustration && <div className="mb-4 shrink-0">{illustration}</div>}
+            {!illustration && icon && (
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--pastel-lilac) dark:bg-purple-950/40 text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) mb-3 shrink-0">
                     {icon}
                 </div>

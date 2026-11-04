@@ -345,32 +345,6 @@ export interface CategoryLimitAlert {
   severity: 'warning' | 'exceeded';
 }
 
-export interface Loan {
-  id: string;
-  household_id: string;
-  borrower_id?: string | null;
-  name: string;
-  principal: number;
-  interest_rate: number; // decimal e.g. 0.0260 for 2.6%
-  monthly_payment: number;
-  amount_paid: number;
-  start_date: string;
-  term_months: number;
-  loan_type: string;
-  status: 'active' | 'paid_off';
-  created_at?: string;
-}
-
-export interface LoanPayment {
-  id: string;
-  loan_id: string;
-  payment_date: string;
-  payment_amount: number;
-  principal_portion: number;
-  interest_portion: number;
-  is_extra_payment: boolean;
-}
-
 export type GoalStatus = 'on_track' | 'behind' | 'achieved';
 
 export interface SavingsGoal {
@@ -452,24 +426,6 @@ export interface CategoryAllocation {
   allocatedAmount: number;
 }
 
-export interface AmortizationScheduleRow {
-  month: number;
-  paymentDate: string; // 'YYYY-MM-DD'
-  payment: number;
-  principalPayment: number;
-  interestPayment: number;
-  remainingBalance: number;
-  totalInterestPaid: number;
-}
-
-export interface AmortizationResult {
-  schedule: AmortizationScheduleRow[];
-  totalMonths: number;
-  totalInterest: number;
-  payoffDate: string;
-  monthlyPayment: number;
-}
-
 export interface SettlementSummary {
   netBalance: number;
   debtorId: string | null;
@@ -492,7 +448,6 @@ export interface HouseholdOverview {
   household: Household;
   members: HouseholdMember[];
   totalAssets: number;
-  totalLiabilities: number;
   trueNetWorth: number;
   settlementSummary: SettlementSummary;
   activeGoals: SavingsGoal[];
@@ -515,7 +470,6 @@ export interface MonthlyBalancePoint {
   other: number;
   totalAssets: number;
   nonCpfAssets: number;
-  liabilities: number;
   netWorth: number;
   nonCpfNetWorth: number;
   momChange: number;

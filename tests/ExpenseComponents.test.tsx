@@ -552,7 +552,6 @@ describe('ExpensesPage Integration', () => {
       household: { id: 'hh-1', name: 'Yi Jia & Rachel', currency: 'SGD' },
       members: mockMembers,
       totalAssets: 100000,
-      totalLiabilities: 0,
       trueNetWorth: 100000,
       settlementSummary: {
         netBalance: 52.40,

@@ -460,3 +460,32 @@ body {
 .animate-sparkle-twinkle {
     animation: sparkleTwinkle 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* Bubby construction hammer: slow lift, quick tap on the coin-bricks */
+@keyframes bubbyHammerTap {
+    0%,
+    100% {
+        transform: rotate(-14deg);
+    }
+    55% {
+        transform: rotate(-22deg);
+    }
+    75% {
+        transform: rotate(34deg);
+    }
+    82% {
+        transform: rotate(29deg);
+    }
+}
+
+.animate-bubby-hammer {
+    transform-box: view-box;
+    transform-origin: 392px 340px;
+    animation: bubbyHammerTap 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-bubby-hammer {
+        animation: none;
+    }
+}

@@ -2,15 +2,13 @@
  * NetWorthChart Component
  * Responsive Recharts Area Chart displaying:
  * - Historical Net Worth Progression
- * - Total Assets
- * - Liabilities / Loans
- * - True Net Worth = Total Assets - Outstanding Loans
+ * - Net Worth = total of all account balances
  */
 
 import { useMemo } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { TrendingUp } from "lucide-react";
-import type { Account, Loan } from "../../types/finance";
+import type { Account } from "../../types/finance";
 import { formatSGD } from "../../lib/currency";
 import { addMonths, formatDisplayMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
@@ -19,15 +17,12 @@ import { Card } from "../ui/Card";
 
 export interface NetWorthDataPoint {
     date: string;
-    assets: number;
-    liabilities: number;
     netWorth: number;
 }
 
 export interface NetWorthChartProps {
     data?: NetWorthDataPoint[];
     accounts?: Account[];
-    loans?: Loan[];
     className?: string;
 }
 
@@ -52,68 +47,43 @@ function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
             <div className="font-bold text-(--text-ink) font-display pb-1 border-b-2 border-(--border-ink)">
                 {label}
             </div>
-            {payload.map((entry) => {
-                const colorClass =
-                    entry.dataKey === "assets"
-                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
-                        : entry.dataKey === "liabilities"
-                          ? "text-rose-600 dark:text-rose-400 font-bold"
-                          : "text-indigo-600 dark:text-indigo-400 font-black";
-
-                return (
-                    <div
-                        key={entry.dataKey}
-                        className="flex items-center justify-between gap-3"
-                    >
-                        <span className="text-(--text-muted)">{entry.name}:</span>
-                        <span className={`font-mono-num ${colorClass}`}>{formatSGD(entry.value)}</span>
-                    </div>
-                );
-            })}
+            {payload.map((entry) => (
+                <div
+                    key={entry.dataKey}
+                    className="flex items-center justify-between gap-3"
+                >
+                    <span className="text-(--text-muted)">{entry.name}:</span>
+                    <span className="font-mono-num text-indigo-600 dark:text-indigo-400 font-black">
+                        {formatSGD(entry.value)}
+                    </span>
+                </div>
+            ))}
         </div>
     );
 }
 
-export function NetWorthChart({ data, accounts, loans, className = "" }: NetWorthChartProps) {
+export function NetWorthChart({ data, accounts, className = "" }: NetWorthChartProps) {
     const currentM = useCurrentMonth();
     const chartData = useMemo<NetWorthDataPoint[]>(() => {
         if (data && data.length > 0) {
             return data;
         }
 
-        // Derive current totals
-        const currentAssets = Math.round((accounts || []).reduce((sum, a) => sum + a.balance, 0) * 100) / 100;
-
-        const currentLiabilities =
-            Math.round(
-                (loans || [])
-                    .filter((l) => l.status === "active")
-                    .reduce((sum, l) => sum + (l.principal - l.amount_paid), 0) * 100,
-            ) / 100;
+        // Derive current total
+        const currentNetWorth = Math.round((accounts || []).reduce((sum, a) => sum + a.balance, 0) * 100) / 100;
 
         // Generate a 5-month historical progression leading up to current month
         const months = [-4, -3, -2, -1, 0].map((offset) => formatDisplayMonth(addMonths(currentM, offset)));
-        const assetMultipliers = [0.93, 0.95, 0.97, 0.985, 1.0];
-        const liabilityIncrements = currentLiabilities > 0 ? [10660, 7995, 5330, 2665, 0] : [0, 0, 0, 0, 0];
+        const multipliers = [0.93, 0.95, 0.97, 0.985, 1.0];
 
-        return months.map((month, idx) => {
-            const isCurrent = idx === months.length - 1;
-            const assets = isCurrent ? currentAssets : Math.round(currentAssets * assetMultipliers[idx] * 100) / 100;
-
-            const liabilities = isCurrent
-                ? currentLiabilities
-                : Math.round((currentLiabilities + liabilityIncrements[idx]) * 100) / 100;
-
-            const netWorth = Math.round((assets - liabilities) * 100) / 100;
-
-            return {
-                date: month,
-                assets,
-                liabilities,
-                netWorth,
-            };
-        });
-    }, [data, accounts, loans, currentM]);
+        return months.map((month, idx) => ({
+            date: month,
+            netWorth:
+                idx === months.length - 1
+                    ? currentNetWorth
+                    : Math.round(currentNetWorth * multipliers[idx] * 100) / 100,
+        }));
+    }, [data, accounts, currentM]);
 
     const latestPoint = chartData[chartData.length - 1];
 
@@ -139,7 +109,7 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                             align="left"
                             className="shrink-0"
                         >
-                            Net Worth = Total Assets - Outstanding Loans &amp; Liabilities
+                            Net Worth = total of all account balances
                         </TooltipPopover>
                     </div>
                 </div>
@@ -152,17 +122,6 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                         {latestPoint && <span className="font-bold ml-1">{formatSGD(latestPoint.netWorth)}</span>}
                     </div>
 
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                        <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                        <span>Total Assets</span>
-                        {latestPoint && <span className="font-bold ml-1">{formatSGD(latestPoint.assets)}</span>}
-                    </div>
-
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60">
-                        <span className="h-2 w-2 rounded-full bg-rose-600" />
-                        <span>Liabilities</span>
-                        {latestPoint && <span className="font-bold ml-1">{formatSGD(latestPoint.liabilities)}</span>}
-                    </div>
                 </div>
             </div>
 
@@ -195,42 +154,6 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                                     stopOpacity={0.0}
                                 />
                             </linearGradient>
-                            <linearGradient
-                                id="colorAssets"
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                            >
-                                <stop
-                                    offset="5%"
-                                    stopColor="#10B981"
-                                    stopOpacity={0.25}
-                                />
-                                <stop
-                                    offset="95%"
-                                    stopColor="#10B981"
-                                    stopOpacity={0.0}
-                                />
-                            </linearGradient>
-                            <linearGradient
-                                id="colorLiabilities"
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                            >
-                                <stop
-                                    offset="5%"
-                                    stopColor="#F43F5E"
-                                    stopOpacity={0.2}
-                                />
-                                <stop
-                                    offset="95%"
-                                    stopColor="#F43F5E"
-                                    stopOpacity={0.0}
-                                />
-                            </linearGradient>
                         </defs>
                         <CartesianGrid
                             strokeDasharray="3 3"
@@ -257,26 +180,8 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                         <Tooltip content={<CustomTooltip />} />
                         <Area
                             type="monotone"
-                            dataKey="assets"
-                            name="Total Assets"
-                            stroke="#10B981"
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#colorAssets)"
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="liabilities"
-                            name="Liabilities"
-                            stroke="#F43F5E"
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#colorLiabilities)"
-                        />
-                        <Area
-                            type="monotone"
                             dataKey="netWorth"
-                            name="True Net Worth"
+                            name="Net Worth"
                             stroke="#6366F1"
                             strokeWidth={2.5}
                             fillOpacity={1}

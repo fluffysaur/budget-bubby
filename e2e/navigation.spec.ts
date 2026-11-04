@@ -54,10 +54,10 @@ test.describe('Navigation and Perspective Switching', () => {
     await expect(page).toHaveURL(/\/accounts/);
     await expect(page.getByRole('heading', { level: 1, name: /^Accounts$/i })).toBeVisible();
 
-    // Plan: Goals, Loans and Recurring sub-tabs
+    // Plan: Goals, Recurring and Loans sub-tabs
     await sidebar.getByRole('button', { name: /^Plan/i }).click();
     await expect(page.getByRole('heading', { level: 1, name: /^Plan$/i })).toBeVisible();
-    for (const name of ['Goals', 'Loans', 'Recurring']) {
+    for (const name of ['Goals', 'Recurring', 'Loans']) {
       const tab = page.getByRole('tab', { name, exact: true });
       await tab.click();
       await expect(tab).toHaveAttribute('aria-selected', 'true');
