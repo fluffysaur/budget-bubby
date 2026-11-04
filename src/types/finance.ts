@@ -561,6 +561,14 @@ export interface NotificationLogEntry {
     created_at?: string;
 }
 
+/** A device's Web Push subscription keys. */
+export interface PushSubscriptionInput {
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    user_agent?: string;
+}
+
 /** Identifies one reminder when writing to the notification log. */
 export interface NotificationLogRef {
     key: string;

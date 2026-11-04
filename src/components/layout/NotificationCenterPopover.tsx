@@ -14,7 +14,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     Bell,
     Flame,
@@ -37,6 +37,7 @@ import {
     migrateLegacyDismissals,
     type AppReminder,
 } from "../../lib/notificationScheduler";
+import { syncPushSubscription } from "../../lib/pushSubscription";
 import { Button } from "../ui/Button";
 import { TruncatedText } from "../ui/TruncatedText";
 import { financeService } from "../../services/financeService";
@@ -76,6 +77,7 @@ export function NotificationCenterPopover({
     onOpenUpdateBalances,
 }: NotificationCenterPopoverProps) {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { activeMember, members, refreshData } = useHousehold();
     const isMobile = useIsMobile();
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -89,6 +91,7 @@ export function NotificationCenterPopover({
     const mobileOverlayRef = useRef<HTMLDivElement>(null);
 
     const activeMemberId = activeMember?.id || members?.[0]?.id || "mem-00000000-0011";
+    const readParam = searchParams.get("read");
 
     // Sync browser notification permission state
     useEffect(() => {
@@ -151,14 +154,49 @@ export function NotificationCenterPopover({
         };
     }, [activeMemberId, loadReadIds]);
 
+    // Keep this device's push subscription in line with permission and preferences
+    const syncSubscription = useCallback(async () => {
+        try {
+            const prefs = await financeService.getNotificationPreferences(activeMemberId);
+            await syncPushSubscription(activeMemberId, prefs.push_enabled);
+        } catch (err) {
+            console.debug("Failed to sync push subscription:", err);
+        }
+    }, [activeMemberId]);
+
+    useEffect(() => {
+        syncSubscription();
+    }, [syncSubscription, permission]);
+
+    // A tapped push opens the app with ?read=key1,key2: mark those read, then strip the param
+    useEffect(() => {
+        if (!readParam) return;
+        const keys = readParam.split(",").filter(Boolean);
+        const known = new Map(reminders.map((r) => [r.id, r.type]));
+        const refs = keys.map((key) => ({ key, type: known.get(key) ?? "push" }));
+        setReadIds((prev) => new Set([...prev, ...keys]));
+        financeService
+            .markNotificationsRead(activeMemberId, refs)
+            .catch((err) => console.debug("Failed to mark pushed reminders read:", err));
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete("read");
+                return next;
+            },
+            { replace: true },
+        );
+    }, [readParam, reminders, activeMemberId, setSearchParams]);
+
     // Listen for global notification preference updates
     useEffect(() => {
         const handlePreferencesUpdated = () => {
             loadReminders();
+            syncSubscription();
         };
         window.addEventListener("notificationPreferencesUpdated", handlePreferencesUpdated);
         return () => window.removeEventListener("notificationPreferencesUpdated", handlePreferencesUpdated);
-    }, [loadReminders]);
+    }, [loadReminders, syncSubscription]);
 
     // Click outside listener for desktop popover
     useEffect(() => {
