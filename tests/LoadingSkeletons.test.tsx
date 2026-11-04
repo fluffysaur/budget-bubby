@@ -17,7 +17,7 @@ import { RecurringPage } from "../src/pages/RecurringPage";
 import { financeService } from "../src/services/financeService";
 import { Skeleton, SkeletonGroup, StatCard } from "../src/components/ui";
 import { getCurrentMonth, addMonths } from "../src/lib/dateUtils";
-import type { MonthlyBudgetDetail, SavingsGoal, Loan, RecurringPolicy } from "../src/types/finance";
+import type { MonthlyBudgetDetail, SavingsGoal, Loan, RecurringItem } from "../src/types/finance";
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
@@ -196,8 +196,8 @@ describe("Page loading skeletons", () => {
     });
 
     it("RecurringPage shows a skeleton while loading, then the policy table", async () => {
-        const pending = deferred<RecurringPolicy[]>();
-        vi.spyOn(financeService, "getPolicies").mockImplementation(() => pending.promise);
+        const pending = deferred<RecurringItem[]>();
+        vi.spyOn(financeService, "getRecurringItems").mockImplementation(() => pending.promise);
 
         render(
             <HouseholdProvider>
@@ -206,7 +206,7 @@ describe("Page loading skeletons", () => {
         );
 
         expect(await screen.findByTestId("recurring-skeleton")).toHaveAttribute("role", "status");
-        expect(screen.queryByText(/Active Policies/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/All Recurring/i)).not.toBeInTheDocument();
 
         await act(async () => {
             pending.resolve([]);
@@ -215,7 +215,7 @@ describe("Page loading skeletons", () => {
         await waitFor(() => {
             expect(screen.queryByTestId("recurring-skeleton")).not.toBeInTheDocument();
         });
-        expect(screen.getByText(/Active Policies/i)).toBeInTheDocument();
+        expect(screen.getByText(/All Recurring/i)).toBeInTheDocument();
     });
 
     it("DashboardPage keeps the skeleton until budget data arrives instead of showing S$0 figures", async () => {

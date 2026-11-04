@@ -41,7 +41,7 @@ import { mockCategories } from "../../data/mockSeedData";
 import {
     calculateCPFAndNetPay,
     calculateDisposableBudget,
-    calculateMemberPolicyDeductions,
+    calculateMemberRecurringDeductions,
     dollarToPercentage,
     parseAllocationInput,
     isSpendableCategory,
@@ -56,7 +56,7 @@ import type {
     Category,
     CategoryGroup,
     HouseholdMember,
-    RecurringPolicy,
+    RecurringItem,
 } from "../../types/finance";
 
 export interface BaseProfileEditorModalProps {
@@ -66,7 +66,7 @@ export interface BaseProfileEditorModalProps {
     allocations: BaseProfileAllocation[];
     categories?: Category[];
     members?: HouseholdMember[];
-    policies?: RecurringPolicy[];
+    recurringItems?: RecurringItem[];
     initialTaxes?: number;
     initialInsurance?: number;
     monthlyBudgetId?: string;
@@ -75,7 +75,7 @@ export interface BaseProfileEditorModalProps {
     onManageCategories?: () => void;
     onCategoriesChanged?: () => void | Promise<void>;
     onSelectMember?: (memberId: string) => void;
-    onManagePolicies?: () => void;
+    onManageRecurring?: () => void;
     className?: string;
 }
 
@@ -86,7 +86,7 @@ export function BaseProfileEditorModal({
     allocations,
     categories = mockCategories,
     members = [],
-    policies,
+    recurringItems,
     initialTaxes = 0,
     initialInsurance = 0,
     monthlyBudgetId,
@@ -95,7 +95,7 @@ export function BaseProfileEditorModal({
     onManageCategories,
     onCategoriesChanged,
     onSelectMember,
-    onManagePolicies,
+    onManageRecurring,
     className = "",
 }: BaseProfileEditorModalProps) {
     const titleId = useId();
@@ -116,11 +116,11 @@ export function BaseProfileEditorModal({
         ),
     );
 
-    // Compute effective Monthly Taxes and Insurance strictly derived from policies
+    // Compute effective Monthly Taxes and Insurance strictly derived from recurring items
     const { effectiveTaxes, effectiveInsurance } = useMemo(() => {
-        if (policies !== undefined && policies.length > 0) {
+        if (recurringItems !== undefined && recurringItems.length > 0) {
             const { taxesMonthly, insuranceMonthly } =
-                calculateMemberPolicyDeductions(policies, profile?.owner_id);
+                calculateMemberRecurringDeductions(recurringItems, profile?.owner_id);
             return {
                 effectiveTaxes: taxesMonthly,
                 effectiveInsurance: insuranceMonthly,
@@ -130,7 +130,7 @@ export function BaseProfileEditorModal({
             effectiveTaxes: Number(initialTaxes) || 0,
             effectiveInsurance: Number(initialInsurance) || 0,
         };
-    }, [policies, profile?.owner_id, initialTaxes, initialInsurance]);
+    }, [recurringItems, profile?.owner_id, initialTaxes, initialInsurance]);
 
     // Category percentages mapped by categoryId: string (e.g. "15", "6.9633", "")
     const [categoryPercentages, setCategoryPercentages] = useState<
@@ -214,7 +214,7 @@ export function BaseProfileEditorModal({
         prevIsOpenRef.current = isOpen;
     }, [isOpen, profile, allocations, categories]);
 
-    // Live disposable pool calculation based on current form inputs and policy deductions
+    // Live disposable pool calculation based on current form inputs and recurring item deductions
     const currentDisposablePool = useMemo(() => {
         const gross = Math.max(0, parseFloat(grossSalary) || 0);
         const rate = (parseFloat(cpfRate) || 0) / 100;
@@ -800,7 +800,7 @@ export function BaseProfileEditorModal({
                             </div>
                         </div>
 
-                        {/* Section 2: Fixed Monthly Deductions (Managed in Policies) */}
+                        {/* Section 2: Fixed Monthly Deductions (Managed in Recurring) */}
                         <div className="space-y-2.5">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
@@ -809,14 +809,14 @@ export function BaseProfileEditorModal({
                                 </h3>
                                 <button
                                     type="button"
-                                    data-testid="manage-policies-link"
+                                    data-testid="manage-recurring-link"
                                     onClick={() => {
                                         onClose();
-                                        onManagePolicies?.();
+                                        onManageRecurring?.();
                                     }}
                                     className="inline-flex items-center gap-1 text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) hover:underline transition-colors cursor-pointer"
                                 >
-                                    <span>Manage in Policies</span>
+                                    <span>Manage in Recurring</span>
                                     <ArrowUpRight className="h-3 w-3" />
                                 </button>
                             </div>
@@ -838,7 +838,7 @@ export function BaseProfileEditorModal({
                                         </span>
                                     </div>
                                     <span className="block text-[10px] text-(--text-muted) mt-1">
-                                        From active tax policies
+                                        From tax items
                                     </span>
                                 </div>
 
@@ -858,7 +858,7 @@ export function BaseProfileEditorModal({
                                         </span>
                                     </div>
                                     <span className="block text-[10px] text-(--text-muted) mt-1">
-                                        From active insurance policies
+                                        From insurance items
                                     </span>
                                 </div>
                             </div>

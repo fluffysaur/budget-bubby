@@ -496,8 +496,8 @@ describe('BaseProfileEditorModal', () => {
     expect(lockBtn).toHaveAttribute('title', expect.stringMatching(/unlock/i));
   });
 
-  it('displays read-only monthly taxes and insurance cards with Manage in Policies button', () => {
-    const onManagePolicies = vi.fn();
+  it('displays read-only monthly taxes and insurance cards with Manage in Recurring button', () => {
+    const onManageRecurring = vi.fn();
     render(
       <BaseProfileEditorModal
         isOpen={true}
@@ -507,17 +507,17 @@ describe('BaseProfileEditorModal', () => {
         categories={mockCategories}
         initialTaxes={150}
         initialInsurance={350}
-        onManagePolicies={onManagePolicies}
+        onManageRecurring={onManageRecurring}
       />
     );
 
     expect(screen.getByTestId('readonly-monthly-taxes')).toHaveTextContent(/150\.00/);
     expect(screen.getByTestId('readonly-monthly-insurance')).toHaveTextContent(/350\.00/);
 
-    const manageBtn = screen.getByRole('button', { name: /manage in policies/i });
+    const manageBtn = screen.getByRole('button', { name: /manage in recurring/i });
     expect(manageBtn).toBeInTheDocument();
     fireEvent.click(manageBtn);
-    expect(onManagePolicies).toHaveBeenCalled();
+    expect(onManageRecurring).toHaveBeenCalled();
   });
 
   it('auto-balances unlocked categories to 100% while keeping dollar-locked category fixed', () => {

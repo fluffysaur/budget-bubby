@@ -1,63 +1,63 @@
 /**
- * PolicyTable Component
- * Table displaying recurring insurance policies, taxes, and subscriptions.
+ * RecurringTable Component
+ * Table of recurring items: insurance, tax, subscriptions, bills and other.
  * Features:
- * - Columns: Policy Name, Type badge, Insured/Owner, Frequency, Premium Amount, Monthly Amortized Outflow, Renewal Month, Actions
- * - Search by policy name or notes
- * - Filter by policy type (All, Insurance, Tax, Subscription)
- * - Empty state with clear filters option
+ * - Columns: Name, Type badge, Owner, Frequency, Amount, Monthly Amortized, Due, Actions
+ * - Search by recurring item name or notes
+ * - Filter by type (All, Insurance, Tax, Subscription, Bill, Other)
+ * - Empty states: no items (add CTA) and no matches (clear filters)
  * - Edit and Delete actions
  */
 
 import { useState, useMemo } from "react";
-import {
-    Shield,
-    FileText,
-    Repeat,
-    Pencil,
-    Trash2,
-    Search,
-    AlertCircle,
-    HelpCircle,
-} from "lucide-react";
+import { Pencil, Trash2, Search, AlertCircle, Plus } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import { MONTH_NAMES_SHORT as MONTH_NAMES } from "../../lib/dateUtils";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TruncatedText } from "../ui/TruncatedText";
-import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
+import { Button } from "../ui/Button";
+import { RecurringTypeBadge } from "./RecurringTypeBadge";
+import {
+    RECURRING_ITEM_TYPES,
+    RECURRING_TYPE_LABELS,
+} from "../../lib/recurringItems";
+import type { RecurringItem, RecurringItemType } from "../../types/finance";
 
-export interface PolicyTableProps {
-    policies: RecurringPolicy[];
-    onEdit?: (policy: RecurringPolicy) => void;
-    onDelete?: (policyId: string) => void;
+export interface RecurringTableProps {
+    recurringItems: RecurringItem[];
+    onEdit?: (recurringItem: RecurringItem) => void;
+    onDelete?: (itemId: string) => void;
+    /** Shown as the empty-state CTA when there are no items at all */
+    onAdd?: () => void;
     className?: string;
 }
 
-export function PolicyTable({
-    policies,
+export function RecurringTable({
+    recurringItems,
     onEdit,
     onDelete,
+    onAdd,
     className = "",
-}: PolicyTableProps) {
+}: RecurringTableProps) {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedType, setSelectedType] = useState<
-        "all" | RecurringPolicyType
+        "all" | RecurringItemType
     >("all");
 
-    // Filtered policies
-    const filteredPolicies = useMemo(() => {
-        return policies.filter((policy) => {
+    // Filtered recurring items
+    const filteredItems = useMemo(() => {
+        return recurringItems.filter((recurringItem) => {
             // Type filter
-            if (selectedType !== "all" && policy.type !== selectedType) {
+            if (selectedType !== "all" && recurringItem.type !== selectedType) {
                 return false;
             }
 
             // Search term
             if (searchTerm.trim()) {
                 const query = searchTerm.toLowerCase();
-                const matchesName = policy.name.toLowerCase().includes(query);
+                const matchesName = recurringItem.name.toLowerCase().includes(query);
                 const matchesNotes =
-                    policy.notes?.toLowerCase().includes(query) ?? false;
+                    recurringItem.notes?.toLowerCase().includes(query) ?? false;
                 if (!matchesName && !matchesNotes) {
                     return false;
                 }
@@ -65,7 +65,9 @@ export function PolicyTable({
 
             return true;
         });
-    }, [policies, selectedType, searchTerm]);
+    }, [recurringItems, selectedType, searchTerm]);
+
+    const hasNoItems = recurringItems.length === 0;
 
     // Helper for owner label
     const getOwnerLabel = (ownerId: string) => {
@@ -86,52 +88,6 @@ export function PolicyTable({
         return "Joint";
     };
 
-    // Type badge styling
-    const renderTypeBadge = (type: RecurringPolicyType) => {
-        switch (type) {
-            case "insurance":
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <Shield className="w-3 h-3 text-purple-600 dark:text-purple-300" />
-                        Insurance
-                    </span>
-                );
-            case "tax":
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <FileText className="w-3 h-3 text-amber-700 dark:text-amber-400" />
-                        Tax
-                    </span>
-                );
-            case "subscription":
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <Repeat className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
-                        Subscription
-                    </span>
-                );
-            default:
-                return (
-                    <span
-                        role="status"
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-(--bg-cream) text-(--text-ink) border-2 border-(--border-ink)"
-                    >
-                        <HelpCircle className="w-3 h-3" />
-                        {type}
-                    </span>
-                );
-        }
-    };
-
     return (
         <div className={`space-y-4 ${className}`}>
             {/* Search & Filter Bar */}
@@ -143,7 +99,7 @@ export function PolicyTable({
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search policies or notes..."
+                        placeholder="Search name or notes..."
                         className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-(--shadow-cute-sm) focus:outline-none focus:shadow-(--shadow-cute) transition-all"
                     />
                     {searchTerm && (
@@ -161,15 +117,16 @@ export function PolicyTable({
                 <SegmentedTabs
                     tabs={[
                         { id: "all", label: "All" },
-                        { id: "insurance", label: "Insurance" },
-                        { id: "tax", label: "Tax" },
-                        { id: "subscription", label: "Subscription" },
+                        ...RECURRING_ITEM_TYPES.map((t) => ({
+                            id: t,
+                            label: RECURRING_TYPE_LABELS[t],
+                        })),
                     ]}
                     activeTab={selectedType}
-                    onChange={(typeId) => setSelectedType(typeId as "all" | RecurringPolicyType)}
+                    onChange={(typeId) => setSelectedType(typeId as "all" | RecurringItemType)}
                     accent="butter"
                     size="sm"
-                    ariaLabel="Policy type filter"
+                    ariaLabel="Recurring type filter"
                 />
             </div>
 
@@ -179,7 +136,7 @@ export function PolicyTable({
                     <thead>
                         <tr className="border-b-2 border-(--border-ink) bg-(--bg-cream) text-xs font-bold text-(--text-ink) uppercase tracking-wider font-display">
                             <th scope="col" className="py-3.5 px-4">
-                                Policy Name
+                                Name
                             </th>
                             <th scope="col" className="py-3.5 px-4">
                                 Type
@@ -191,7 +148,7 @@ export function PolicyTable({
                                 Frequency
                             </th>
                             <th scope="col" className="py-3.5 px-4 text-right">
-                                Premium
+                                Amount
                             </th>
                             <th scope="col" className="py-3.5 px-4 text-right">
                                 Monthly Amortized
@@ -205,7 +162,7 @@ export function PolicyTable({
                         </tr>
                     </thead>
                     <tbody className="divide-y-2 divide-(--border-ink) text-sm">
-                        {filteredPolicies.length === 0 ? (
+                        {filteredItems.length === 0 ? (
                             <tr>
                                 <td
                                     colSpan={8}
@@ -213,38 +170,60 @@ export function PolicyTable({
                                 >
                                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-60" />
                                     <p className="font-bold text-base text-(--text-ink) font-display">
-                                        No policies found
+                                        {hasNoItems
+                                            ? "Nothing Recurring"
+                                            : "No Matches"}
                                     </p>
                                     <p className="text-xs text-(--text-muted) mt-1">
-                                        Try adjusting your search query or
-                                        filter selection.
+                                        {hasNoItems
+                                            ? "Add a bill or subscription to start tracking."
+                                            : "Try another search or filter."}
                                     </p>
-                                    {(searchTerm || selectedType !== "all") && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setSearchTerm("");
-                                                setSelectedType("all");
-                                            }}
-                                            className="mt-3 inline-flex items-center text-xs font-bold text-(--text-ink) underline cursor-pointer"
-                                        >
-                                            Clear active filters
-                                        </button>
-                                    )}
+                                    {hasNoItems
+                                        ? onAdd && (
+                                              <Button
+                                                  variant="primary"
+                                                  size="sm"
+                                                  className="mt-3"
+                                                  leftIcon={
+                                                      <Plus
+                                                          className="w-3.5 h-3.5"
+                                                          strokeWidth={2.5}
+                                                      />
+                                                  }
+                                                  onClick={onAdd}
+                                              >
+                                                  Add Recurring
+                                              </Button>
+                                          )
+                                        : (searchTerm ||
+                                              selectedType !== "all") && (
+                                              <Button
+                                                  variant="secondary"
+                                                  size="sm"
+                                                  className="mt-3"
+                                                  onClick={() => {
+                                                      setSearchTerm("");
+                                                      setSelectedType("all");
+                                                  }}
+                                              >
+                                                  Clear Filters
+                                              </Button>
+                                          )}
                                 </td>
                             </tr>
                         ) : (
-                            filteredPolicies.map((policy) => {
+                            filteredItems.map((recurringItem) => {
                                 const isMonthly =
-                                    policy.frequency === "monthly";
+                                    recurringItem.frequency === "monthly";
                                 const renewalMonthText = isMonthly
                                     ? "Monthly"
-                                    : policy.payment_month &&
-                                        policy.payment_month >= 1 &&
-                                        policy.payment_month <= 12
-                                      ? `${MONTH_NAMES[policy.payment_month - 1]} (M${policy.payment_month})`
+                                    : recurringItem.payment_month &&
+                                        recurringItem.payment_month >= 1 &&
+                                        recurringItem.payment_month <= 12
+                                      ? `${MONTH_NAMES[recurringItem.payment_month - 1]} (M${recurringItem.payment_month})`
                                       : "N/A";
-                                const owner = getOwnerLabel(policy.owner_id);
+                                const owner = getOwnerLabel(recurringItem.owner_id);
                                 const ownerIcon =
                                     owner === "Yi Jia"
                                         ? "👨"
@@ -254,19 +233,19 @@ export function PolicyTable({
 
                                 return (
                                     <tr
-                                        key={policy.id}
+                                        key={recurringItem.id}
                                         className="hover:bg-(--bg-cream)/70 transition-colors"
                                     >
-                                        {/* Policy Name & Notes */}
+                                        {/* Name & Notes */}
                                         <td className="py-3.5 px-4 font-bold text-(--color-ink) dark:text-white">
                                             <div className="min-w-0 max-w-65">
                                                 <TruncatedText
-                                                    text={policy.name}
+                                                    text={recurringItem.name}
                                                     className="font-display font-bold"
                                                 />
-                                                {policy.notes && (
+                                                {recurringItem.notes && (
                                                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 font-normal">
-                                                        {policy.notes}
+                                                        {recurringItem.notes}
                                                     </p>
                                                 )}
                                             </div>
@@ -274,7 +253,7 @@ export function PolicyTable({
 
                                         {/* Type Badge */}
                                         <td className="py-3 px-4 whitespace-nowrap">
-                                            {renderTypeBadge(policy.type)}
+                                            <RecurringTypeBadge type={recurringItem.type} />
                                         </td>
 
                                         {/* Owner / Insured */}
@@ -289,18 +268,18 @@ export function PolicyTable({
 
                                         {/* Frequency */}
                                         <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 font-medium capitalize">
-                                            {policy.frequency}
+                                            {recurringItem.frequency}
                                         </td>
 
-                                        {/* Premium Amount */}
+                                        {/* Amount */}
                                         <td className="py-3 px-4 whitespace-nowrap text-right font-bold font-mono-num text-(--color-ink) dark:text-white">
-                                            {formatSGD(policy.amount)}
+                                            {formatSGD(recurringItem.amount)}
                                         </td>
 
                                         {/* Monthly Amortized Outflow */}
                                         <td className="py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-bold font-mono-num">
                                             {formatSGD(
-                                                policy.monthly_amortized_amount,
+                                                recurringItem.monthly_amortized_amount,
                                             )}
                                             <span className="text-xs text-slate-400 font-normal ml-0.5">
                                                 /mo
@@ -326,12 +305,12 @@ export function PolicyTable({
                                                 {onEdit && (
                                                     <button
                                                         type="button"
-                                                        aria-label={`Edit ${policy.name}`}
+                                                        aria-label={`Edit ${recurringItem.name}`}
                                                         onClick={() =>
-                                                            onEdit(policy)
+                                                            onEdit(recurringItem)
                                                         }
                                                         className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) transition-all cursor-pointer"
-                                                        title="Edit policy"
+                                                        title="Edit recurring item"
                                                     >
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
@@ -339,12 +318,12 @@ export function PolicyTable({
                                                 {onDelete && (
                                                     <button
                                                         type="button"
-                                                        aria-label={`Delete ${policy.name}`}
+                                                        aria-label={`Delete ${recurringItem.name}`}
                                                         onClick={() =>
-                                                            onDelete(policy.id)
+                                                            onDelete(recurringItem.id)
                                                         }
                                                         className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 transition-all cursor-pointer"
-                                                        title="Delete policy"
+                                                        title="Delete recurring item"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -362,4 +341,4 @@ export function PolicyTable({
     );
 }
 
-export default PolicyTable;
+export default RecurringTable;

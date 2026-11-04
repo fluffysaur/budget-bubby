@@ -18,7 +18,7 @@ import type {
   Loan,
   LoanPayment,
   SavingsGoal,
-  RecurringPolicy,
+  RecurringItem,
   CreditCard,
   CreditCardStatement,
   DailyCheckin,
@@ -537,7 +537,7 @@ export const mockSavingsGoals: SavingsGoal[] = [
   },
 ];
 
-export const mockRecurringPolicies: RecurringPolicy[] = [
+export const mockRecurringItems: RecurringItem[] = [
   {
     id: 'pol-00000000-0601',
     household_id: 'hh-00000000-0001',
@@ -551,6 +551,7 @@ export const mockRecurringPolicies: RecurringPolicy[] = [
     end_date: '2044-09-18',
     notes: 'Annual premium renewed in September',
     monthly_amortized_amount: 266.67,
+    due_day: 18,
   },
   {
     id: 'pol-00000000-0602',
@@ -565,6 +566,7 @@ export const mockRecurringPolicies: RecurringPolicy[] = [
     end_date: null,
     notes: 'Annual premium renewed in October',
     monthly_amortized_amount: 133.33,
+    due_day: 1,
   },
   {
     id: 'pol-00000000-0603',
@@ -579,6 +581,7 @@ export const mockRecurringPolicies: RecurringPolicy[] = [
     end_date: '2027-04-05',
     notes: 'IRAS GIRO 12-month schedule',
     monthly_amortized_amount: 91.67,
+    due_day: 5,
   },
   {
     id: 'pol-00000000-0604',
@@ -593,10 +596,11 @@ export const mockRecurringPolicies: RecurringPolicy[] = [
     end_date: '2027-04-05',
     notes: 'IRAS GIRO 12-month schedule',
     monthly_amortized_amount: 150.0,
+    due_day: 5,
   },
 ];
 
-export const mockSubscriptionPolicies: RecurringPolicy[] = [
+export const mockSubscriptionItems: RecurringItem[] = [
   {
     id: 'pol-00000000-0605',
     household_id: 'hh-00000000-0001',
@@ -610,6 +614,8 @@ export const mockSubscriptionPolicies: RecurringPolicy[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 3.5,
+    due_day: 1,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0606',
@@ -624,6 +630,8 @@ export const mockSubscriptionPolicies: RecurringPolicy[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 4.99,
+    due_day: 5,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0607',
@@ -638,6 +646,8 @@ export const mockSubscriptionPolicies: RecurringPolicy[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 9.65,
+    due_day: 12,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0608',
@@ -652,6 +662,8 @@ export const mockSubscriptionPolicies: RecurringPolicy[] = [
     end_date: null,
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 28.99,
+    due_day: 20,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0609',
@@ -666,6 +678,8 @@ export const mockSubscriptionPolicies: RecurringPolicy[] = [
     end_date: null,
     notes: 'Monthly mobile plan',
     monthly_amortized_amount: 0.0,
+    due_day: 28,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
 ];
 
@@ -1213,7 +1227,7 @@ export interface MockSeedDataset {
   loans: Loan[];
   loanPayments: LoanPayment[];
   savingsGoals: SavingsGoal[];
-  recurringPolicies: RecurringPolicy[];
+  recurringItems: RecurringItem[];
   monthlyBudgets: MonthlyBudget[];
   monthlyBudgetCategories: MonthlyBudgetCategory[];
   expenses: Expense[];
@@ -1260,7 +1274,7 @@ export const mockSeedData: MockSeedDataset = {
   loans: mockLoans,
   loanPayments: mockLoanPayments,
   savingsGoals: mockSavingsGoals,
-  recurringPolicies: mockRecurringPolicies,
+  recurringItems: mockRecurringItems,
   monthlyBudgets: mockMonthlyBudgets,
   monthlyBudgetCategories: mockMonthlyBudgetCategories,
   expenses: mockExpenses,

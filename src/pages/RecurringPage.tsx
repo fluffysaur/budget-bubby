@@ -1,11 +1,11 @@
 /**
  * RecurringPage Component
- * Recurring Policies, Taxes & Annual Renewal Calendar Center:
+ * Recurring items (insurance, tax, subscriptions, bills, other) & renewal calendar:
  * - 4 Summary metric cards: Total Annual Outflow, Monthly Amortized Outflow, Upcoming Renewal, Heaviest Month
  * - Perspective filtering (Combined Household vs Yi Jia vs Rachel)
  * - 12-Month RenewalCalendar timeline
- * - PolicyTable with search, type filters, edit, and delete
- * - AddPolicyModal integration
+ * - RecurringTable with search, type filters, edit, and delete
+ * - AddRecurringModal integration
  */
 
 import { useState, useMemo } from "react";
@@ -15,7 +15,6 @@ import {
     TrendingDown,
     CalendarCheck,
     Flame,
-    AlertCircle,
     RefreshCw,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
@@ -26,17 +25,22 @@ import {
     Card,
     RecurringContentSkeleton,
 } from "../components/ui";
-import { usePoliciesQuery } from "../hooks/useFinanceQueries";
+import { Alert } from "../components/ui/Alert";
+import {
+    useCategoriesQuery,
+    useRecurringItemsQuery,
+} from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
+import { isDeductionType } from "../lib/recurringItems";
 import {
     getSingaporeDate,
     MONTH_NAMES_FULL as MONTH_NAMES,
 } from "../lib/dateUtils";
-import { PolicyTable } from "../components/recurring/PolicyTable";
+import { RecurringTable } from "../components/recurring/RecurringTable";
 import { RenewalCalendar } from "../components/recurring/RenewalCalendar";
-import { AddPolicyModal } from "../components/recurring/AddPolicyModal";
-import type { RecurringPolicy, CreatePolicyInput } from "../types/finance";
+import { AddRecurringModal } from "../components/recurring/AddRecurringModal";
+import type { RecurringItem, CreateRecurringItemInput } from "../types/finance";
 
 export interface RecurringPageProps {
     className?: string;
@@ -54,28 +58,30 @@ export function RecurringPage({
         refreshData: refreshHousehold,
     } = useHousehold();
 
-    // Cached Policies Query
+    // Cached Recurring Items Query
     const {
-        data: policiesData,
-        isLoading: policiesLoading,
-        error: policiesError,
-    } = usePoliciesQuery();
-    const policies = useMemo(() => policiesData || [], [policiesData]);
-    const isLoading = policiesLoading && !policiesData;
+        data: recurringItemsData,
+        isLoading: recurringItemsLoading,
+        error: recurringItemsError,
+    } = useRecurringItemsQuery();
+    const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
+    const { data: categoriesData } = useCategoriesQuery();
+    const categories = useMemo(() => categoriesData || [], [categoriesData]);
+    const isLoading = recurringItemsLoading && !recurringItemsData;
     const [actionError, setActionError] = useState<string | null>(null);
     const errorMessage =
         actionError ||
-        (policiesError ? (policiesError as Error).message : null);
+        (recurringItemsError ? (recurringItemsError as Error).message : null);
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [editingPolicy, setEditingPolicy] = useState<RecurringPolicy | null>(
+    const [editingItem, setEditingItem] = useState<RecurringItem | null>(
         null,
     );
 
     // Perspective filtering
-    const inScopePolicies = useMemo(() => {
-        return policies.filter((policy) => {
+    const inScopeItems = useMemo(() => {
+        return recurringItems.filter((recurringItem) => {
             if (perspective === "household") {
                 return true;
             }
@@ -84,37 +90,37 @@ export function RecurringPage({
                     m.display_name.toLowerCase().includes("yi jia"),
                 );
                 const yjId = yiJia?.id || "mem-00000000-0011";
-                return policy.owner_id === yjId || policy.owner_id === "joint";
+                return recurringItem.owner_id === yjId || recurringItem.owner_id === "joint";
             }
             if (perspective === "rachel") {
                 const rachel = members.find((m) =>
                     m.display_name.toLowerCase().includes("rachel"),
                 );
                 const rcId = rachel?.id || "mem-00000000-0012";
-                return policy.owner_id === rcId || policy.owner_id === "joint";
+                return recurringItem.owner_id === rcId || recurringItem.owner_id === "joint";
             }
-            return !policy.owner_id || policy.owner_id === activeMember?.id;
+            return !recurringItem.owner_id || recurringItem.owner_id === activeMember?.id;
         });
-    }, [policies, perspective, activeMember, members]);
+    }, [recurringItems, perspective, activeMember, members]);
 
-    // Metric 1: Total Annual Outflow (Insurance & Tax policies)
+    // Metric 1: Total Annual Outflow (Insurance & Tax recurring items)
     const totalAnnualOutflow = useMemo(() => {
-        return inScopePolicies
-            .filter((p) => p.type !== "subscription")
+        return inScopeItems
+            .filter((p) => isDeductionType(p.type))
             .reduce((sum, p) => {
                 if (p.frequency === "monthly") {
                     return sum + p.amount * 12;
                 }
                 return sum + p.amount;
             }, 0);
-    }, [inScopePolicies]);
+    }, [inScopeItems]);
 
     // Metric 2: Monthly Amortized Outflow
     const monthlyAmortizedOutflow = useMemo(() => {
-        return inScopePolicies
-            .filter((p) => p.type !== "subscription")
+        return inScopeItems
+            .filter((p) => isDeductionType(p.type))
             .reduce((sum, p) => sum + p.monthly_amortized_amount, 0);
-    }, [inScopePolicies]);
+    }, [inScopeItems]);
 
     // Metric 3 & 4: Monthly Outlay Map, Heaviest Month & Upcoming Renewal
     const {
@@ -127,7 +133,7 @@ export function RecurringPage({
         const sgNow = getSingaporeDate();
         const currentMonthNum = sgNow.getMonth() + 1; // 1-12
 
-        for (const p of inScopePolicies) {
+        for (const p of inScopeItems) {
             if (p.frequency === "monthly") {
                 for (let m = 0; m < 12; m++) {
                     monthlyTotals[m] += p.amount;
@@ -147,14 +153,14 @@ export function RecurringPage({
         const heaviestName = maxVal > 0 ? MONTH_NAMES[maxIdx] : "None";
 
         // Upcoming Renewal: closest annual renewal month >= currentMonthNum, or wrap around
-        const annualPolicies = inScopePolicies.filter(
+        const annualItems = inScopeItems.filter(
             (p) => p.frequency === "annually" && p.payment_month,
         );
 
-        let nextPolicy: RecurringPolicy | null = null;
+        let nextItem: RecurringItem | null = null;
         let minDistance = 999;
 
-        for (const p of annualPolicies) {
+        for (const p of annualItems) {
             const pMonth = p.payment_month!;
             let distance = pMonth - currentMonthNum;
             if (distance < 0) {
@@ -162,60 +168,60 @@ export function RecurringPage({
             }
             if (distance < minDistance) {
                 minDistance = distance;
-                nextPolicy = p;
+                nextItem = p;
             }
         }
 
-        let upcomingPolicyName = "None upcoming";
-        let upcomingPolicySub = "No upcoming renewals";
-        if (nextPolicy && nextPolicy.payment_month) {
-            const dueMonthStr = MONTH_NAMES[nextPolicy.payment_month - 1];
-            upcomingPolicyName = nextPolicy.name;
-            upcomingPolicySub = `${dueMonthStr.slice(0, 3)} • ${formatSGD(nextPolicy.amount)}`;
-        } else if (inScopePolicies.some((p) => p.frequency === "monthly")) {
-            upcomingPolicyName = "Active Subscriptions";
-            upcomingPolicySub = "Billed monthly";
+        let upcomingItemName = "None upcoming";
+        let upcomingItemSub = "No upcoming renewals";
+        if (nextItem && nextItem.payment_month) {
+            const dueMonthStr = MONTH_NAMES[nextItem.payment_month - 1];
+            upcomingItemName = nextItem.name;
+            upcomingItemSub = `${dueMonthStr.slice(0, 3)} • ${formatSGD(nextItem.amount)}`;
+        } else if (inScopeItems.some((p) => p.frequency === "monthly")) {
+            upcomingItemName = "Active Subscriptions";
+            upcomingItemSub = "Billed monthly";
         }
 
         return {
             heaviestMonthName: heaviestName,
             heaviestMonthAmount: maxVal,
-            upcomingRenewalText: upcomingPolicyName,
-            upcomingRenewalSub: upcomingPolicySub,
+            upcomingRenewalText: upcomingItemName,
+            upcomingRenewalSub: upcomingItemSub,
         };
-    }, [inScopePolicies]);
+    }, [inScopeItems]);
 
     // Handlers
     const handleOpenAddModal = () => {
-        setEditingPolicy(null);
+        setEditingItem(null);
         setIsModalOpen(true);
     };
 
-    const handleEditPolicy = (policy: RecurringPolicy) => {
-        setEditingPolicy(policy);
+    const handleEditItem = (recurringItem: RecurringItem) => {
+        setEditingItem(recurringItem);
         setIsModalOpen(true);
     };
 
-    const handleDeletePolicy = async (policyId: string) => {
+    const handleDeleteItem = async (itemId: string) => {
         try {
             setActionError(null);
-            await financeService.deletePolicy(policyId);
+            await financeService.deleteRecurringItem(itemId);
             await refreshHousehold();
         } catch (err: unknown) {
-            console.error("Failed to delete policy:", err);
+            console.error("Failed to delete recurring item:", err);
             setActionError(
-                err instanceof Error ? err.message : "Failed to delete policy",
+                err instanceof Error ? err.message : "Failed to delete recurring item",
             );
         }
     };
 
-    const handleSavePolicy = async (
-        payload: CreatePolicyInput & { id?: string },
+    const handleSaveItem = async (
+        payload: CreateRecurringItemInput & { id?: string },
     ) => {
         if (payload.id) {
-            await financeService.updatePolicy(payload.id, payload);
+            await financeService.updateRecurringItem(payload.id, payload);
         } else {
-            await financeService.addPolicy(payload);
+            await financeService.addRecurringItem(payload);
         }
         await refreshHousehold();
     };
@@ -248,7 +254,7 @@ export function RecurringPage({
                                 }
                                 onClick={handleOpenAddModal}
                             >
-                                Add Policy
+                                Add Recurring
                             </Button>
                         </div>
                     }
@@ -276,19 +282,14 @@ export function RecurringPage({
                             }
                             onClick={handleOpenAddModal}
                         >
-                            Add Policy
+                            Add Recurring
                         </Button>
                     </div>
                 </div>
             )}
 
             {/* Error Banner */}
-            {errorMessage && (
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-200 text-sm">
-                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
-                    <p className="flex-1">{errorMessage}</p>
-                </div>
-            )}
+            {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
 
             {/* 4 Summary Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -297,7 +298,7 @@ export function RecurringPage({
                     title="Annual Outflow"
                     loading={isLoading}
                     value={formatSGD(totalAnnualOutflow)}
-                    subtitle={`${inScopePolicies.length} tracked policies`}
+                    subtitle={`${inScopeItems.length} items`}
                     icon={<DollarSign className="w-4 h-4" />}
                     iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
                 />
@@ -307,7 +308,7 @@ export function RecurringPage({
                     title="Monthly Amortized"
                     loading={isLoading}
                     value={`${formatSGD(monthlyAmortizedOutflow)}/mo`}
-                    subtitle="Monthly deduction impact"
+                    subtitle="Insurance & tax"
                     icon={<TrendingDown className="w-4 h-4" />}
                     iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
                 />
@@ -341,7 +342,7 @@ export function RecurringPage({
                     subtitle={
                         heaviestMonthAmount > 0
                             ? `${formatSGD(heaviestMonthAmount)} total`
-                            : "No annual policies"
+                            : "No annual items"
                     }
                     icon={<Flame className="w-4 h-4" />}
                     iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
@@ -354,35 +355,37 @@ export function RecurringPage({
                 <>
                     {/* 12-Month Renewal Calendar */}
                     <Card variant="white" padding="md">
-                        <RenewalCalendar policies={inScopePolicies} />
+                        <RenewalCalendar recurringItems={inScopeItems} />
                     </Card>
 
-                    {/* Policy Table */}
+                    {/* Recurring Table */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                                Active Policies &amp; Schedules
+                                All Recurring
                             </h2>
                             <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {inScopePolicies.length} policy records in scope
+                                {inScopeItems.length} items
                             </span>
                         </div>
 
-                        <PolicyTable
-                            policies={inScopePolicies}
-                            onEdit={handleEditPolicy}
-                            onDelete={handleDeletePolicy}
+                        <RecurringTable
+                            recurringItems={inScopeItems}
+                            onEdit={handleEditItem}
+                            onDelete={handleDeleteItem}
+                            onAdd={handleOpenAddModal}
                         />
                     </div>
                 </>
             )}
 
-            {/* Add / Edit Policy Modal */}
-            <AddPolicyModal
+            {/* Add / Edit Recurring Modal */}
+            <AddRecurringModal
                 isOpen={isModalOpen}
-                initialPolicy={editingPolicy}
+                initialItem={editingItem}
+                categories={categories}
                 onClose={() => setIsModalOpen(false)}
-                onSave={handleSavePolicy}
+                onSave={handleSaveItem}
             />
         </div>
     );

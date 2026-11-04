@@ -17,7 +17,7 @@ import type {
   CreateExpenseInput,
   UpdateExpenseInput,
   CreateGoalInput,
-  CreatePolicyInput,
+  CreateRecurringItemInput,
   Expense,
   ExpenseFilter,
   HouseholdOverview,
@@ -25,7 +25,7 @@ import type {
   MonthlyBudget,
   MonthlyBudgetDetail,
   Perspective,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   CreditCard,
   CreateCreditCardInput,
@@ -84,10 +84,10 @@ export interface FinanceService {
   getGoals(): Promise<SavingsGoal[]>;
   addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
   updateGoal(id: string, updates: Partial<SavingsGoal>): Promise<SavingsGoal>;
-  getPolicies(): Promise<RecurringPolicy[]>;
-  addPolicy(policy: CreatePolicyInput): Promise<RecurringPolicy>;
-  updatePolicy(id: string, updates: Partial<RecurringPolicy>): Promise<RecurringPolicy>;
-  deletePolicy(id: string): Promise<void>;
+  getRecurringItems(): Promise<RecurringItem[]>;
+  addRecurringItem(recurringItem: CreateRecurringItemInput): Promise<RecurringItem>;
+  updateRecurringItem(id: string, updates: Partial<RecurringItem>): Promise<RecurringItem>;
+  deleteRecurringItem(id: string): Promise<void>;
   // Credit Cards
   getCreditCards(): Promise<CreditCard[]>;
   addCreditCard(input: CreateCreditCardInput): Promise<CreditCard>;
@@ -258,19 +258,19 @@ export const financeService: FinanceService = {
     invalidateFinanceCache();
     return res;
   },
-  getPolicies: () => getActiveService().getPolicies(),
-  addPolicy: async (policy) => {
-    const res = await getActiveService().addPolicy(policy);
+  getRecurringItems: () => getActiveService().getRecurringItems(),
+  addRecurringItem: async (recurringItem) => {
+    const res = await getActiveService().addRecurringItem(recurringItem);
     invalidateFinanceCache();
     return res;
   },
-  updatePolicy: async (id, updates) => {
-    const res = await getActiveService().updatePolicy(id, updates);
+  updateRecurringItem: async (id, updates) => {
+    const res = await getActiveService().updateRecurringItem(id, updates);
     invalidateFinanceCache();
     return res;
   },
-  deletePolicy: async (id) => {
-    await getActiveService().deletePolicy(id);
+  deleteRecurringItem: async (id) => {
+    await getActiveService().deleteRecurringItem(id);
     invalidateFinanceCache();
   },
   // Credit Cards

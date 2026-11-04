@@ -44,7 +44,7 @@ import {
     dollarToPercentage,
     parseAllocationInput,
     formatAllocationPercent,
-    calculateMemberPolicyDeductions,
+    calculateMemberRecurringDeductions,
     autoBalanceAllocations,
 } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
@@ -116,11 +116,11 @@ export function ManageCategoriesModal({
     const loadCategories = async () => {
         try {
             setLoading(true);
-            const [data, profs, allocs, policies] = await Promise.all([
+            const [data, profs, allocs, recurringItems] = await Promise.all([
                 financeService.getCategories(),
                 financeService.getBaseProfiles(),
                 financeService.getBaseAllocations(),
-                financeService.getPolicies(),
+                financeService.getRecurringItems(),
             ]);
             setCategories(data || []);
             setBaseProfiles(profs || []);
@@ -134,8 +134,8 @@ export function ManageCategoriesModal({
                     activeProf.cpf_employee_rate || 0.2,
                 ).cpfDeduction;
                 const { taxesMonthly, insuranceMonthly } =
-                    calculateMemberPolicyDeductions(
-                        policies || [],
+                    calculateMemberRecurringDeductions(
+                        recurringItems || [],
                         activeProf.owner_id,
                     );
                 const disp = calculateDisposableBudget(

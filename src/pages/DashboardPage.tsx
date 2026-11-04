@@ -24,7 +24,7 @@ import {
     useAccountsQuery,
     useLoansQuery,
     useGoalsQuery,
-    usePoliciesQuery,
+    useRecurringItemsQuery,
     useExpensesQuery,
     useMonthlyBudgetQuery,
     useCategoriesQuery,
@@ -73,7 +73,7 @@ export function DashboardPage({
     const { data: accountsData, isLoading: accountsLoading } = useAccountsQuery(perspective);
     const { data: loansData } = useLoansQuery();
     const { data: goalsData } = useGoalsQuery();
-    const { data: policiesData } = usePoliciesQuery();
+    const { data: recurringItemsData } = useRecurringItemsQuery();
     const { data: expensesData, isLoading: expensesLoading } =
         useExpensesQuery();
     const { data: budgetData, isLoading: budgetLoading } = useMonthlyBudgetQuery(
@@ -85,7 +85,7 @@ export function DashboardPage({
     const accounts = useMemo(() => accountsData || [], [accountsData]);
     const loans = useMemo(() => loansData || [], [loansData]);
     const goals = useMemo(() => goalsData || [], [goalsData]);
-    const policies = useMemo(() => policiesData || [], [policiesData]);
+    const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
     const expenses = useMemo(() => expensesData || [], [expensesData]);
     const monthlyBudget = budgetData || null;
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
@@ -376,7 +376,7 @@ export function DashboardPage({
                                     onViewAll={() => onNavigateTab?.("goals")}
                                 />
                                 <UpcomingBillsWidget
-                                    policies={policies}
+                                    recurringItems={recurringItems}
                                     onViewAll={() =>
                                         onNavigateTab?.("recurring")
                                     }

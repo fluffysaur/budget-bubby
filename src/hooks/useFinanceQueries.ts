@@ -12,7 +12,7 @@ import type {
     Account,
     Loan,
     SavingsGoal,
-    RecurringPolicy,
+    RecurringItem,
     Expense,
     MonthlyBudgetDetail,
     Category,
@@ -30,7 +30,7 @@ export const queryKeys = {
         ["finance", "accounts", perspective ?? "household"] as const,
     loans: ["finance", "loans"] as const,
     goals: ["finance", "goals"] as const,
-    policies: ["finance", "policies"] as const,
+    recurringItems: ["finance", "recurringItems"] as const,
     expenses: (filter?: ExpenseFilter) =>
         ["finance", "expenses", filter ?? {}] as const,
     allExpenses: ["finance", "all-expenses"] as const,
@@ -77,10 +77,10 @@ export function useGoalsQuery() {
     });
 }
 
-export function usePoliciesQuery() {
-    return useQuery<RecurringPolicy[]>({
-        queryKey: queryKeys.policies,
-        queryFn: () => financeService.getPolicies(),
+export function useRecurringItemsQuery() {
+    return useQuery<RecurringItem[]>({
+        queryKey: queryKeys.recurringItems,
+        queryFn: () => financeService.getRecurringItems(),
     });
 }
 
@@ -198,9 +198,9 @@ export function useInvalidateFinance() {
                 queryKey: ["finance", "household-overview"],
             });
         },
-        invalidatePolicies: () => {
+        invalidateRecurringItems: () => {
             queryClient.invalidateQueries({
-                queryKey: ["finance", "policies"],
+                queryKey: ["finance", "recurringItems"],
             });
             queryClient.invalidateQueries({
                 queryKey: ["finance", "household-overview"],

@@ -1,0 +1,110 @@
+-- ==============================================================================
+-- Budget Bubby: Recurring Items
+-- Generalizes recurring_policies into recurring_items:
+--   1. Renames the table, its indexes, constraints and RLS policy.
+--   2. Widens the type check to include 'bill' and 'other'.
+--   3. Adds due_day (1-31, required for monthly items).
+--   4. Adds category_id (budget category the item's spend counts toward).
+--   5. Creates a temporary recurring_policies compatibility view so the
+--      previously deployed frontend keeps working during rollout.
+-- ==============================================================================
+
+-- 1. Rename table ---------------------------------------------------------------
+alter table if exists recurring_policies rename to recurring_items;
+
+alter index if exists idx_recurring_policies_household_id
+    rename to idx_recurring_items_household_id;
+alter index if exists idx_recurring_policies_owner_id
+    rename to idx_recurring_items_owner_id;
+
+-- Rename auto-generated constraints (pkey, fkeys, checks) to the new prefix
+do $$
+declare
+    con record;
+begin
+    for con in
+        select conname
+        from pg_constraint
+        where conrelid = 'public.recurring_items'::regclass
+          and conname like 'recurring_policies_%'
+    loop
+        execute format(
+            'alter table public.recurring_items rename constraint %I to %I',
+            con.conname,
+            replace(con.conname, 'recurring_policies_', 'recurring_items_')
+        );
+    end loop;
+end $$;
+
+-- Recreate RLS policy on the renamed table (same rules as strict auth RLS)
+alter table recurring_items enable row level security;
+drop policy if exists "Allow household access" on recurring_items;
+create policy "Allow household access" on recurring_items for all
+using (
+  auth.uid() is not null
+  and public.is_household_member(household_id)
+)
+with check (
+  auth.uid() is not null
+  and public.is_household_member(household_id)
+);
+
+-- 2. Widen type check -----------------------------------------------------------
+alter table recurring_items drop constraint if exists recurring_items_type_check;
+alter table recurring_items
+    add constraint recurring_items_type_check
+    check (type in ('insurance', 'tax', 'subscription', 'bill', 'other'));
+
+-- 3. Due day --------------------------------------------------------------------
+-- Default 1 keeps inserts from the old frontend (which never sends due_day) valid.
+alter table recurring_items add column if not exists due_day integer default 1;
+
+-- Backfill: day of start_date, else 1
+update recurring_items
+set due_day = coalesce(extract(day from start_date)::integer, 1);
+
+alter table recurring_items drop constraint if exists recurring_items_due_day_check;
+alter table recurring_items
+    add constraint recurring_items_due_day_check
+    check (due_day between 1 and 31);
+
+alter table recurring_items drop constraint if exists recurring_items_monthly_due_day_check;
+alter table recurring_items
+    add constraint recurring_items_monthly_due_day_check
+    check (frequency <> 'monthly' or due_day is not null);
+
+-- 4. Spend category -------------------------------------------------------------
+alter table recurring_items
+    add column if not exists category_id uuid references categories(id) on delete set null;
+
+create index if not exists idx_recurring_items_category_id on recurring_items(category_id);
+
+-- Backfill: subscriptions previously counted toward the household's Lifestyle category
+update recurring_items ri
+set category_id = (
+    select c.id
+    from categories c
+    where c.household_id = ri.household_id
+      and c.name ilike '%lifestyle%'
+    order by c.name
+    limit 1
+)
+where ri.type = 'subscription'
+  and ri.category_id is null;
+
+-- 5. Temporary compatibility view -----------------------------------------------
+-- TEMPORARY: lets the previously deployed frontend keep using
+-- .from('recurring_policies') for reads and writes while the new frontend
+-- (which uses recurring_items) rolls out. It will be dropped in a later
+-- migration once the new frontend is deployed everywhere.
+-- Simple single-table select, so Postgres keeps it auto-updatable; omitted
+-- columns (id, due_day, category_id) fall back to the base table defaults.
+-- security_invoker makes the base table's RLS apply to the caller.
+create or replace view recurring_policies
+with (security_invoker = true)
+as select * from recurring_items;
+
+alter view recurring_policies alter column id set default gen_random_uuid();
+alter view recurring_policies alter column due_day set default 1;
+
+grant select, insert, update, delete on recurring_policies to authenticated;

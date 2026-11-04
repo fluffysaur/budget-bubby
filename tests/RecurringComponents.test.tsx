@@ -1,17 +1,17 @@
 /**
  * Comprehensive Unit & Integration Tests for Task 11:
- * Recurring Policies, Taxes & Annual Renewal Calendar
+ * Recurring items (insurance, tax, subscriptions, bills, other) & Renewal Calendar
  *
  * Tests:
- * 1. Policy calculation engine & helpers:
+ * 1. Recurring calculation engine & helpers:
  *    - Monthly amortized calculations (annually: amount / 12, monthly: amount)
  *    - 12-month calendar outlay groupings
  *    - Heaviest renewal month calculation
  *    - Upcoming renewal detection
- * 2. PolicyTable component:
+ * 2. RecurringTable component:
  *    - Renders all columns, type badges, formatSGD amounts
  *    - Filters by search term
- *    - Filters by policy type
+ *    - Filters by recurring item type
  *    - Empty state
  *    - Edit and Delete action callbacks
  * 3. RenewalCalendar component:
@@ -19,34 +19,34 @@
  *    - Computes and displays monthly cash outlay totals
  *    - Visual indicator for current calendar month
  *    - Highlights heavy premium renewal months
- *    - Displays policy chips with provider/name and amount
- * 4. AddPolicyModal component:
+ *    - Displays recurring item chips with provider/name and amount
+ * 4. AddRecurringModal component:
  *    - Open/closed visibility
  *    - Required field validation (name, amount)
  *    - Frequency change toggles renewal month field
- *    - Add new policy submits correct payload
- *    - Edit existing policy pre-fills and updates payload
+ *    - Add new recurring item submits correct payload
+ *    - Edit existing recurring item pre-fills and updates payload
  * 5. Service Layer:
- *    - addPolicy, updatePolicy, deletePolicy on mockFinanceService / financeService
+ *    - addRecurringItem, updateRecurringItem, deleteRecurringItem on mockFinanceService / financeService
  * 6. RecurringPage component:
  *    - 4 summary metric cards (Total Annual Outflow, Monthly Amortized Outflow, Upcoming Renewal, Heaviest Month)
  *    - Perspective filtering (household vs yijia vs rachel)
- *    - Modal opening, policy addition, editing, and deletion flow
+ *    - Modal opening, recurring item addition, editing, and deletion flow
  */
 
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
-import { PolicyTable } from '../src/components/recurring/PolicyTable';
+import { RecurringTable } from '../src/components/recurring/RecurringTable';
 import { RenewalCalendar } from '../src/components/recurring/RenewalCalendar';
-import { AddPolicyModal } from '../src/components/recurring/AddPolicyModal';
+import { AddRecurringModal } from '../src/components/recurring/AddRecurringModal';
 import { RecurringPage } from '../src/pages/RecurringPage';
 import { financeService } from '../src/services/financeService';
 import { mockFinanceService } from '../src/services/mockFinanceService';
 import { formatSGD } from '../src/lib/currency';
-import type { RecurringPolicy, CreatePolicyInput } from '../src/types/finance';
+import type { RecurringItem, CreateRecurringItemInput } from '../src/types/finance';
 
-const samplePolicies: RecurringPolicy[] = [
+const sampleItems: RecurringItem[] = [
   {
     id: 'pol-01',
     household_id: 'hh-01',
@@ -119,13 +119,13 @@ const samplePolicies: RecurringPolicy[] = [
   },
 ];
 
-describe('Policy Calculations & Logic', () => {
-  it('correctly amortizes annual vs monthly policies', () => {
-    // Annual policy: amount / 12
+describe('Recurring Calculations & Logic', () => {
+  it('correctly amortizes annual vs monthly recurring items', () => {
+    // Annual recurring item: amount / 12
     const annualAmortized = Math.round((3200 / 12) * 100) / 100;
     expect(annualAmortized).toBe(266.67);
 
-    // Monthly policy: full amount
+    // Monthly recurring item: full amount
     const monthlyAmortized = Math.round(19.98 * 100) / 100;
     expect(monthlyAmortized).toBe(19.98);
   });
@@ -137,7 +137,7 @@ describe('Policy Calculations & Logic', () => {
     // Month 10 (Oct): 1600 + 19.98 = 1619.98
     // Other months: 19.98
     const monthlyOutlays: number[] = Array(12).fill(0);
-    for (const p of samplePolicies) {
+    for (const p of sampleItems) {
       if (p.frequency === 'monthly') {
         for (let m = 0; m < 12; m++) {
           monthlyOutlays[m] += p.amount;
@@ -159,29 +159,29 @@ describe('Policy Calculations & Logic', () => {
   });
 });
 
-describe('PolicyTable Component', () => {
-  it('renders all table columns, policy details, and badges', () => {
+describe('RecurringTable Component', () => {
+  it('renders all table columns, recurring item details, and badges', () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
 
     render(
-      <PolicyTable
-        policies={samplePolicies}
+      <RecurringTable
+        recurringItems={sampleItems}
         onEdit={onEdit}
         onDelete={onDelete}
       />
     );
 
     // Headers
-    expect(screen.getByRole('columnheader', { name: /Policy Name/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Name$/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Type/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Owner/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Frequency/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /Premium/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Amount$/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Monthly Amortized/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Renewal/i })).toBeInTheDocument();
 
-    // Policy names
+    // Item names
     expect(screen.getByText('Manulife - Lifeready 25 Plus')).toBeInTheDocument();
     expect(screen.getByText('Income Enhanced Incomeshield Preferred')).toBeInTheDocument();
     expect(screen.getByText('Spotify Family Plan')).toBeInTheDocument();
@@ -195,10 +195,10 @@ describe('PolicyTable Component', () => {
     expect(screen.getByText(formatSGD(266.67))).toBeInTheDocument();
   });
 
-  it('filters policies by search query', () => {
+  it('filters recurring items by search query', () => {
     render(
-      <PolicyTable
-        policies={samplePolicies}
+      <RecurringTable
+        recurringItems={sampleItems}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -211,10 +211,10 @@ describe('PolicyTable Component', () => {
     expect(screen.queryByText('Spotify Family Plan')).not.toBeInTheDocument();
   });
 
-  it('filters policies by type selection', () => {
+  it('filters recurring items by type selection', () => {
     render(
-      <PolicyTable
-        policies={samplePolicies}
+      <RecurringTable
+        recurringItems={sampleItems}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -228,19 +228,60 @@ describe('PolicyTable Component', () => {
     expect(screen.queryByText('Manulife - Lifeready 25 Plus')).not.toBeInTheDocument();
   });
 
+  it('shows Bill and Other badges and filter tabs', () => {
+    const extraItems: RecurringItem[] = [
+      ...sampleItems,
+      {
+        ...sampleItems[4],
+        id: 'ri-bill',
+        type: 'bill',
+        name: 'SP Group Utilities',
+      },
+      {
+        ...sampleItems[4],
+        id: 'ri-other',
+        type: 'other',
+        name: 'Cloud Storage',
+      },
+    ];
+    render(<RecurringTable recurringItems={extraItems} onEdit={vi.fn()} onDelete={vi.fn()} />);
+
+    const badges = screen.getAllByRole('status').map((b) => b.textContent);
+    expect(badges).toContain('Bill');
+    expect(badges).toContain('Other');
+
+    fireEvent.click(screen.getByRole('tab', { name: /^bill$/i }));
+    expect(screen.getByText('SP Group Utilities')).toBeInTheDocument();
+    expect(screen.queryByText('Cloud Storage')).not.toBeInTheDocument();
+    expect(screen.queryByText('Spotify Family Plan')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /^other$/i }));
+    expect(screen.getByText('Cloud Storage')).toBeInTheDocument();
+    expect(screen.queryByText('SP Group Utilities')).not.toBeInTheDocument();
+  });
+
+  it('shows the Nothing Recurring empty state with an add action', () => {
+    const onAdd = vi.fn();
+    render(<RecurringTable recurringItems={[]} onAdd={onAdd} />);
+    expect(screen.getByText('Nothing Recurring')).toBeInTheDocument();
+    expect(screen.getByText('Add a bill or subscription to start tracking.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Add Recurring/i }));
+    expect(onAdd).toHaveBeenCalledTimes(1);
+  });
+
   it('displays empty state when filter has no matches', () => {
     render(
-      <PolicyTable
-        policies={samplePolicies}
+      <RecurringTable
+        recurringItems={sampleItems}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
       />
     );
 
     const searchInput = screen.getByPlaceholderText(/search/i);
-    fireEvent.change(searchInput, { target: { value: 'Nonexistent Policy 999' } });
+    fireEvent.change(searchInput, { target: { value: 'Nonexistent Item 999' } });
 
-    expect(screen.getByText(/No policies found/i)).toBeInTheDocument();
+    expect(screen.getByText(/No Matches/i)).toBeInTheDocument();
   });
 
   it('triggers onEdit and onDelete callbacks', () => {
@@ -248,8 +289,8 @@ describe('PolicyTable Component', () => {
     const onDelete = vi.fn();
 
     render(
-      <PolicyTable
-        policies={samplePolicies}
+      <RecurringTable
+        recurringItems={sampleItems}
         onEdit={onEdit}
         onDelete={onDelete}
       />
@@ -257,11 +298,11 @@ describe('PolicyTable Component', () => {
 
     const editButtons = screen.getAllByRole('button', { name: /edit/i });
     fireEvent.click(editButtons[0]);
-    expect(onEdit).toHaveBeenCalledWith(samplePolicies[0]);
+    expect(onEdit).toHaveBeenCalledWith(sampleItems[0]);
 
     const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     fireEvent.click(deleteButtons[0]);
-    expect(onDelete).toHaveBeenCalledWith(samplePolicies[0].id);
+    expect(onDelete).toHaveBeenCalledWith(sampleItems[0].id);
   });
 });
 
@@ -269,7 +310,7 @@ describe('RenewalCalendar Component', () => {
   it('renders all 12 months with their outlay totals', () => {
     render(
       <RenewalCalendar
-        policies={samplePolicies}
+        recurringItems={sampleItems}
         currentMonth={9} // September
       />
     );
@@ -291,7 +332,7 @@ describe('RenewalCalendar Component', () => {
   it('highlights current calendar month and heavy renewal months', () => {
     render(
       <RenewalCalendar
-        policies={samplePolicies}
+        recurringItems={sampleItems}
         currentMonth={9} // September
       />
     );
@@ -303,10 +344,10 @@ describe('RenewalCalendar Component', () => {
     expect(screen.getAllByText(/Heavy/i).length).toBeGreaterThan(0);
   });
 
-  it('displays policy cards/chips in their designated renewal month', () => {
+  it('displays recurring item cards/chips in their designated renewal month', () => {
     render(
       <RenewalCalendar
-        policies={samplePolicies}
+        recurringItems={sampleItems}
         currentMonth={9}
       />
     );
@@ -318,68 +359,68 @@ describe('RenewalCalendar Component', () => {
   });
 });
 
-describe('AddPolicyModal Component', () => {
+describe('AddRecurringModal Component', () => {
   it('does not render when isOpen is false', () => {
     render(
-      <AddPolicyModal
+      <AddRecurringModal
         isOpen={false}
         onClose={vi.fn()}
         onSave={vi.fn()}
       />
     );
 
-    expect(screen.queryByText(/Add Recurring Policy/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Add Recurring/i)).not.toBeInTheDocument();
   });
 
   it('renders modal with form fields when isOpen is true', () => {
     render(
-      <AddPolicyModal
+      <AddRecurringModal
         isOpen={true}
         onClose={vi.fn()}
         onSave={vi.fn()}
       />
     );
 
-    expect(screen.getByText(/Add Recurring Policy/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Policy Name/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add Recurring/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Type/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Owner/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Premium Amount/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Amount/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Frequency/i)).toBeInTheDocument();
   });
 
   it('validates required inputs before saving', async () => {
     const onSave = vi.fn();
     render(
-      <AddPolicyModal
+      <AddRecurringModal
         isOpen={true}
         onClose={vi.fn()}
         onSave={onSave}
       />
     );
 
-    const submitBtn = screen.getByRole('button', { name: /Save Policy/i });
+    const submitBtn = screen.getByRole('button', { name: /^Save$/i });
     fireEvent.click(submitBtn);
 
     // Should not call onSave if name or amount is missing
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.getByText(/Policy name is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/Name is required/i)).toBeInTheDocument();
   });
 
-  it('submits new policy with calculated amortized monthly amount', async () => {
+  it('submits new recurring item with calculated amortized monthly amount', async () => {
     const onSave = vi.fn();
     render(
-      <AddPolicyModal
+      <AddRecurringModal
         isOpen={true}
         onClose={vi.fn()}
         onSave={onSave}
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/Policy Name/i), {
+    fireEvent.change(screen.getByLabelText(/^Name/i), {
       target: { value: 'Great Eastern SupremeHealth' },
     });
-    fireEvent.change(screen.getByLabelText(/Premium Amount/i), {
+    fireEvent.change(screen.getByLabelText(/^Amount/i), {
       target: { value: '1200' },
     });
     fireEvent.change(screen.getByLabelText(/Frequency/i), {
@@ -389,7 +430,7 @@ describe('AddPolicyModal Component', () => {
       target: { value: '11' }, // November
     });
 
-    const submitBtn = screen.getByRole('button', { name: /Save Policy/i });
+    const submitBtn = screen.getByRole('button', { name: /^Save$/i });
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -404,31 +445,117 @@ describe('AddPolicyModal Component', () => {
     );
   });
 
-  it('pre-fills fields when editing existing policy', () => {
+  it('requires a due day for monthly items and submits it', async () => {
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText(/^Name/i), { target: { value: 'Phone Plan' } });
+    fireEvent.change(screen.getByLabelText(/^Amount/i), { target: { value: '30' } });
+    fireEvent.change(screen.getByLabelText(/Frequency/i), { target: { value: 'monthly' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText(/Due day is required/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Due Day/i), { target: { value: '32' } });
+    await act(async () => {
+      // Bypass native min/max validation to exercise the in-form check
+      fireEvent.submit(screen.getByRole('button', { name: /^Save$/i }).closest('form')!);
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText(/between 1 and 31/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Due Day/i), { target: { value: '31' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: 'monthly', due_day: 31, payment_month: null })
+    );
+  });
+
+  it('allows annual items without a due day', async () => {
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} />);
+    fireEvent.change(screen.getByLabelText(/^Name/i), { target: { value: 'Car Insurance' } });
+    fireEvent.change(screen.getByLabelText(/^Amount/i), { target: { value: '900' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: 'annually', due_day: null })
+    );
+  });
+
+  it('shows a category picker only for subscription, bill and other, defaulting to Lifestyle', async () => {
+    const categories = [
+      { id: 'cat-food', household_id: 'hh-01', name: 'Food', color: '#000', icon: 'utensils', is_system: false },
+      { id: 'cat-life', household_id: 'hh-01', name: 'Lifestyle', color: '#000', icon: 'sparkles', is_system: false },
+    ];
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} categories={categories} />);
+
+    // Insurance (default type) hides the category picker
+    expect(screen.queryByLabelText(/^Category$/i)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Type/i), { target: { value: 'bill' } });
+    const categorySelect = screen.getByLabelText(/^Category$/i) as HTMLSelectElement;
+    expect(categorySelect.value).toBe('cat-life');
+
+    fireEvent.change(categorySelect, { target: { value: 'cat-food' } });
+    fireEvent.change(screen.getByLabelText(/^Name/i), { target: { value: 'Meal Plan' } });
+    fireEvent.change(screen.getByLabelText(/^Amount/i), { target: { value: '120' } });
+    fireEvent.change(screen.getByLabelText(/Frequency/i), { target: { value: 'monthly' } });
+    fireEvent.change(screen.getByLabelText(/Due Day/i), { target: { value: '5' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'bill', category_id: 'cat-food', due_day: 5 })
+    );
+  });
+
+  it('sends no category for insurance and tax', async () => {
+    const categories = [
+      { id: 'cat-life', household_id: 'hh-01', name: 'Lifestyle', color: '#000', icon: 'sparkles', is_system: false },
+    ];
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} categories={categories} />);
+    fireEvent.change(screen.getByLabelText(/^Name/i), { target: { value: 'Shield' } });
+    fireEvent.change(screen.getByLabelText(/^Amount/i), { target: { value: '600' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ type: 'insurance', category_id: null }));
+  });
+
+  it('pre-fills fields when editing existing recurring item', () => {
     render(
-      <AddPolicyModal
+      <AddRecurringModal
         isOpen={true}
-        initialPolicy={samplePolicies[0]}
+        initialItem={sampleItems[0]}
         onClose={vi.fn()}
         onSave={vi.fn()}
       />
     );
 
-    expect(screen.getByText(/Edit Recurring Policy/i)).toBeInTheDocument();
-    const nameInput = screen.getByLabelText(/Policy Name/i) as HTMLInputElement;
+    expect(screen.getByText(/Edit Recurring/i)).toBeInTheDocument();
+    const nameInput = screen.getByLabelText(/^Name/i) as HTMLInputElement;
     expect(nameInput.value).toBe('Manulife - Lifeready 25 Plus');
-    const amountInput = screen.getByLabelText(/Premium Amount/i) as HTMLInputElement;
+    const amountInput = screen.getByLabelText(/^Amount/i) as HTMLInputElement;
     expect(amountInput.value).toBe('3200');
   });
 });
 
-describe('Finance Service Policy Operations', () => {
+describe('Finance Service Recurring Operations', () => {
   beforeEach(() => {
     mockFinanceService.resetState();
   });
 
-  it('adds a new recurring policy via service', async () => {
-    const newPolicyInput: CreatePolicyInput = {
+  it('adds a new recurring item via service', async () => {
+    const newItemInput: CreateRecurringItemInput = {
       owner_id: 'mem-00000000-0011',
       type: 'insurance',
       name: 'Prudential PruShield',
@@ -438,31 +565,31 @@ describe('Finance Service Policy Operations', () => {
       notes: 'Mid-year renewal',
     };
 
-    const created = await financeService.addPolicy(newPolicyInput);
+    const created = await financeService.addRecurringItem(newItemInput);
     expect(created.id).toBeDefined();
     expect(created.name).toBe('Prudential PruShield');
     expect(created.amount).toBe(2400.0);
     expect(created.monthly_amortized_amount).toBe(200.0);
 
-    const allPolicies = await financeService.getPolicies();
-    expect(allPolicies.some((p) => p.id === created.id)).toBe(true);
+    const allItems = await financeService.getRecurringItems();
+    expect(allItems.some((p) => p.id === created.id)).toBe(true);
   });
 
-  it('deletes a recurring policy via service', async () => {
-    const policies = await financeService.getPolicies();
-    const policyToDelete = policies[0];
+  it('deletes a recurring item via service', async () => {
+    const recurringItems = await financeService.getRecurringItems();
+    const itemToDelete = recurringItems[0];
 
-    await financeService.deletePolicy(policyToDelete.id);
+    await financeService.deleteRecurringItem(itemToDelete.id);
 
-    const updatedPolicies = await financeService.getPolicies();
-    expect(updatedPolicies.some((p) => p.id === policyToDelete.id)).toBe(false);
+    const updatedItems = await financeService.getRecurringItems();
+    expect(updatedItems.some((p) => p.id === itemToDelete.id)).toBe(false);
   });
 
-  it('updates a recurring policy via service', async () => {
-    const policies = await financeService.getPolicies();
-    const policyToUpdate = policies[0];
+  it('updates a recurring item via service', async () => {
+    const recurringItems = await financeService.getRecurringItems();
+    const itemToUpdate = recurringItems[0];
 
-    const updated = await financeService.updatePolicy(policyToUpdate.id, {
+    const updated = await financeService.updateRecurringItem(itemToUpdate.id, {
       amount: 4800.0,
     });
 
@@ -492,7 +619,7 @@ describe('RecurringPage Component', () => {
     });
   });
 
-  it('filters policies and metrics by perspective (Yi Jia vs Rachel)', async () => {
+  it('filters recurring items and metrics by perspective (Yi Jia vs Rachel)', async () => {
     const { rerender } = render(
       <HouseholdProvider initialPerspective="yijia">
         <RecurringPage />
@@ -519,7 +646,7 @@ describe('RecurringPage Component', () => {
     });
   });
 
-  it('integrates AddPolicyModal to create a new policy and refresh view', async () => {
+  it('integrates AddRecurringModal to create a new recurring item and refresh view', async () => {
     render(
       <HouseholdProvider initialPerspective="household">
         <RecurringPage />
@@ -527,20 +654,20 @@ describe('RecurringPage Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Add Policy/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Add Recurring/i })).toBeInTheDocument();
     });
 
-    // Click Add Policy button
-    fireEvent.click(screen.getByRole('button', { name: /Add Policy/i }));
+    // Click Add Recurring button
+    fireEvent.click(screen.getByRole('button', { name: /Add Recurring/i }));
 
     // Modal appears
-    expect(screen.getByText(/Add Recurring Policy/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Name/i)).toBeInTheDocument();
 
     // Fill form
-    fireEvent.change(screen.getByLabelText(/Policy Name/i), {
+    fireEvent.change(screen.getByLabelText(/^Name/i), {
       target: { value: 'AIA Vitality Plus' },
     });
-    fireEvent.change(screen.getByLabelText(/Premium Amount/i), {
+    fireEvent.change(screen.getByLabelText(/^Amount/i), {
       target: { value: '600' },
     });
     fireEvent.change(screen.getByLabelText(/Frequency/i), {
@@ -551,9 +678,9 @@ describe('RecurringPage Component', () => {
     });
 
     // Submit
-    fireEvent.click(screen.getByRole('button', { name: /Save Policy/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
 
-    // Wait for modal to close and new policy to show in table
+    // Wait for modal to close and new recurring item to show in table
     await waitFor(() => {
       expect(screen.getAllByText('AIA Vitality Plus').length).toBeGreaterThan(0);
     });

@@ -110,7 +110,7 @@ describe("App Integration & Routing", () => {
         const { unmount: unmountRecurring } = render(<App initialEntries={["/recurring"]} />);
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Active Policies & Schedules/i)).toBeInTheDocument();
+            expect(within(main).getByText(/All Recurring/i)).toBeInTheDocument();
         });
         unmountRecurring();
     });

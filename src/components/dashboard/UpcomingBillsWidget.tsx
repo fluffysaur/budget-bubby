@@ -1,93 +1,56 @@
 /**
  * UpcomingBillsWidget Component
- * Displays upcoming renewal alerts / recurring bills due in the current
- * and upcoming month (e.g. Manulife, IncomeShield, IRAS tax, subscriptions).
+ * Shows the next recurring items due (insurance, tax, subscriptions,
+ * bills and other), sorted by due date.
  */
 
 import { useMemo } from "react";
-import {
-    CalendarClock,
-    ChevronRight,
-    Shield,
-    Receipt,
-    RotateCw,
-    Bell,
-} from "lucide-react";
+import { CalendarClock, ChevronRight, Bell } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
+    formatDueInDays,
+    formatISODate,
+    getDaysUntilDue,
     getSingaporeDate,
     MONTH_NAMES_FULL as MONTH_NAMES,
 } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
-import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
+import { RecurringTypeBadge } from "../recurring/RecurringTypeBadge";
+import type { RecurringItem } from "../../types/finance";
 
 export interface UpcomingBillsWidgetProps {
-    policies?: RecurringPolicy[];
+    recurringItems?: RecurringItem[];
     onViewAll?: () => void;
     className?: string;
+    /** Overrides "today" (Singapore time) for due-date calculations. */
+    referenceDate?: Date;
 }
 
 export function UpcomingBillsWidget({
-    policies = [],
+    recurringItems = [],
     onViewAll,
     className = "",
+    referenceDate,
 }: UpcomingBillsWidgetProps) {
-    const sgNow = getSingaporeDate();
-    const currentMonthNum = sgNow.getMonth() + 1; // 1 - 12
-    const nextMonthNum = (currentMonthNum % 12) + 1;
+    // Sort active items by next due date (due day clamped to short months)
+    const sortedItems = useMemo(() => {
+        const today = referenceDate ?? getSingaporeDate();
+        const todayStr = formatISODate(today);
+        return recurringItems
+            .filter((p) => !p.end_date || p.end_date >= todayStr)
+            .map((p) => ({ item: p, days: getDaysUntilDue(p, today) }))
+            .sort(
+                (a, b) =>
+                    (a.days ?? Number.POSITIVE_INFINITY) -
+                    (b.days ?? Number.POSITIVE_INFINITY),
+            );
+    }, [recurringItems, referenceDate]);
 
-    // Filter and sort policies by due urgency
-    const sortedPolicies = useMemo(() => {
-        return [...policies].sort((a, b) => {
-            // Prioritize current month, then next month, then other months
-            const getPriority = (p: RecurringPolicy) => {
-                if (p.frequency === "monthly") return 3;
-                if (p.payment_month === currentMonthNum) return 1;
-                if (p.payment_month === nextMonthNum) return 2;
-                return 4;
-            };
-            return getPriority(a) - getPriority(b);
-        });
-    }, [policies, currentMonthNum, nextMonthNum]);
+    const displayItems = sortedItems.slice(0, 3);
 
-    const displayPolicies = sortedPolicies.slice(0, 3);
-
-    const getTypeBadge = (type: RecurringPolicyType) => {
-        switch (type) {
-            case "insurance":
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <Shield className="h-2.5 w-2.5" strokeWidth={2.5} />
-                        <span>Insurance</span>
-                    </span>
-                );
-            case "tax":
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-coral) px-2 py-0.5 text-[10px] font-black text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <Receipt className="h-2.5 w-2.5" strokeWidth={2.5} />
-                        <span>Tax</span>
-                    </span>
-                );
-            case "subscription":
-            default:
-                return (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-mint) px-2 py-0.5 text-[10px] font-black text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
-                        <RotateCw className="h-2.5 w-2.5" strokeWidth={2.5} />
-                        <span>Subscription</span>
-                    </span>
-                );
-        }
-    };
-
-    const getDueStatus = (p: RecurringPolicy) => {
-        if (p.frequency === "monthly") {
-            return { text: "Monthly active", urgent: false };
-        }
-        if (p.payment_month === currentMonthNum) {
-            return { text: "Due this month", urgent: true };
-        }
-        if (p.payment_month === nextMonthNum) {
-            return { text: "Due next month", urgent: false };
+    const getDueStatus = (p: RecurringItem, days: number | null) => {
+        if (days !== null && days <= 31) {
+            return { text: formatDueInDays(days), urgent: days <= 7 };
         }
         const monthName = p.payment_month
             ? MONTH_NAMES[p.payment_month - 1]
@@ -98,7 +61,7 @@ export function UpcomingBillsWidget({
     return (
         <div
             role="region"
-            aria-label="Upcoming Bills and Renewals"
+            aria-label="Upcoming Bills"
             className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
         >
             {/* Header */}
@@ -109,10 +72,10 @@ export function UpcomingBillsWidget({
                     </div>
                     <div className="min-w-0">
                         <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                            Upcoming Renewals
+                            Upcoming Bills
                         </h3>
                         <p className="text-xs font-semibold text-(--text-muted)">
-                            Insurance, tax &amp; policy alerts
+                            Next due from Recurring
                         </p>
                     </div>
                 </div>
@@ -134,27 +97,26 @@ export function UpcomingBillsWidget({
 
             {/* Content */}
             <div className="mt-4">
-                {displayPolicies.length === 0 ? (
+                {displayItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-(--border-ink) py-8 text-center bg-(--bg-cream)">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-lg mb-2">
                             📋
                         </div>
                         <p className="text-sm font-bold text-(--text-ink) font-display">
-                            No upcoming renewals
+                            Nothing Due
                         </p>
                         <p className="mt-1 text-xs text-(--text-muted) max-w-xs font-medium">
-                            Add recurring insurance policies or annual IRAS
-                            taxes to track renewal dates.
+                            Add a recurring item to track due dates.
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-2.5">
-                        {displayPolicies.map((policy) => {
-                            const due = getDueStatus(policy);
+                        {displayItems.map(({ item: recurringItem, days }) => {
+                            const due = getDueStatus(recurringItem, days);
 
                             return (
                                 <div
-                                    key={policy.id}
+                                    key={recurringItem.id}
                                     className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-card)"
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -164,10 +126,10 @@ export function UpcomingBillsWidget({
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <TruncatedText
-                                                    text={policy.name}
+                                                    text={recurringItem.name}
                                                     className="text-sm font-bold text-(--text-ink) font-display"
                                                 />
-                                                {getTypeBadge(policy.type)}
+                                                <RecurringTypeBadge type={recurringItem.type} />
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span
@@ -180,7 +142,7 @@ export function UpcomingBillsWidget({
                                                     {due.text}
                                                 </span>
                                                 <span className="text-[11px] font-medium text-(--text-muted) capitalize">
-                                                    • {policy.frequency}
+                                                    • {recurringItem.frequency}
                                                 </span>
                                             </div>
                                         </div>
@@ -188,13 +150,13 @@ export function UpcomingBillsWidget({
 
                                     <div className="text-right shrink-0">
                                         <div className="text-sm font-black text-(--text-ink) font-mono-num">
-                                            {formatSGD(policy.amount)}
+                                            {formatSGD(recurringItem.amount)}
                                         </div>
-                                        {policy.frequency === "annually" && (
+                                        {recurringItem.frequency === "annually" && (
                                             <div className="text-[10px] font-mono-num text-(--text-muted)">
                                                 ~
                                                 {formatSGD(
-                                                    policy.monthly_amortized_amount,
+                                                    recurringItem.monthly_amortized_amount,
                                                 )}
                                                 /mo
                                             </div>

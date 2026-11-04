@@ -238,15 +238,15 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
     });
   });
 
-  describe('Savings Goals & Liabilities & Policies', () => {
-    it('fetches loans and recurring policies', async () => {
+  describe('Savings Goals & Liabilities & Recurring', () => {
+    it('fetches loans and recurring items', async () => {
       const loans = await mockFinanceService.getLoans();
       expect(loans.length).toBeGreaterThan(0);
       expect(loans[0].name).toBe('HDB Loan');
 
-      const policies = await mockFinanceService.getPolicies();
-      expect(policies.length).toBeGreaterThan(0);
-      expect(policies.some((p) => p.type === 'insurance')).toBe(true);
+      const recurringItems = await mockFinanceService.getRecurringItems();
+      expect(recurringItems.length).toBeGreaterThan(0);
+      expect(recurringItems.some((p) => p.type === 'insurance')).toBe(true);
     });
 
     it('adds and updates savings goals with automatic status pacing', async () => {

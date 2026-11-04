@@ -24,7 +24,7 @@ import { PageHeader, Button, StatCard, CollapsibleSection } from '../components/
 import {
   useExpensesQuery,
   useAllExpensesQuery,
-  usePoliciesQuery,
+  useRecurringItemsQuery,
   useCategoriesQuery,
   useGoalsQuery,
   useBaseProfilesQuery,
@@ -93,7 +93,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
   // TanStack Query Cached Data Hooks
   const { data: expensesData, isLoading: expensesLoading } = useExpensesQuery(filter);
   const { data: allExpensesData } = useAllExpensesQuery();
-  const { data: policiesData } = usePoliciesQuery();
+  const { data: recurringItemsData } = useRecurringItemsQuery();
   const { data: categoriesData } = useCategoriesQuery();
   const { data: goalsData } = useGoalsQuery();
   const { data: baseProfilesData } = useBaseProfilesQuery();
@@ -101,7 +101,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
 
   const expenses = useMemo(() => expensesData || [], [expensesData]);
   const allExpenses = useMemo(() => allExpensesData || expensesData || [], [allExpensesData, expensesData]);
-  const policies = useMemo(() => policiesData || [], [policiesData]);
+  const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
   const categories = useMemo(
     () => (categoriesData && categoriesData.length > 0 ? categoriesData : mockCategories),
     [categoriesData],
@@ -249,13 +249,13 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
     return calculateExpenseTrendsSummary(
       trendsSource,
       categories,
-      policies,
+      recurringItems,
       perspective,
       activeMember?.id,
       filter.month || currentMonth,
       6
     );
-  }, [allExpenses, expenses, categories, policies, perspective, activeMember, filter.month, currentMonth]);
+  }, [allExpenses, expenses, categories, recurringItems, perspective, activeMember, filter.month, currentMonth]);
 
   // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
   const spendablePacing = useMemo(() => {

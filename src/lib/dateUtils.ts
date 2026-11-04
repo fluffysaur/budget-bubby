@@ -268,3 +268,88 @@ export function extractTimeFromISO(isoString?: string | null): string {
     const m = String(sgDate.getMinutes()).padStart(2, "0");
     return `${h}:${m}`;
 }
+
+/**
+ * Returns the number of days in a calendar month (month is 1-12).
+ */
+export function getDaysInMonth(year: number, month: number): number {
+    return new Date(year, month, 0).getDate();
+}
+
+/**
+ * Clamps a 1-31 due day to the last day of the given month (month is 1-12).
+ * e.g. due day 31 in November -> 30, in February 2028 (leap) -> 29.
+ */
+export function clampDueDay(
+    dueDay: number,
+    year: number,
+    month: number,
+): number {
+    const safeDay = Math.max(1, Math.floor(dueDay) || 1);
+    return Math.min(safeDay, getDaysInMonth(year, month));
+}
+
+export interface DueSchedule {
+    frequency: "monthly" | "annually";
+    due_day?: number | null;
+    payment_month?: number | null; // 1 - 12, annual items only
+}
+
+function startOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function dueDateIn(year: number, month: number, dueDay: number): Date {
+    return new Date(year, month - 1, clampDueDay(dueDay, year, month));
+}
+
+/**
+ * Returns the next due date (on or after `referenceDate`, by calendar day)
+ * for a monthly or annual schedule, clamping the due day to short months.
+ * Returns null for annual schedules without a payment month.
+ */
+export function getNextDueDate(
+    schedule: DueSchedule,
+    referenceDate: Date = getSingaporeDate(),
+): Date | null {
+    const today = startOfDay(referenceDate);
+    const dueDay = schedule.due_day ?? 1;
+    const year = today.getFullYear();
+
+    if (schedule.frequency === "monthly") {
+        const month = today.getMonth() + 1;
+        const thisMonth = dueDateIn(year, month, dueDay);
+        if (thisMonth >= today) return thisMonth;
+        return month === 12
+            ? dueDateIn(year + 1, 1, dueDay)
+            : dueDateIn(year, month + 1, dueDay);
+    }
+
+    const paymentMonth = schedule.payment_month;
+    if (!paymentMonth || paymentMonth < 1 || paymentMonth > 12) return null;
+    const thisYear = dueDateIn(year, paymentMonth, dueDay);
+    if (thisYear >= today) return thisYear;
+    return dueDateIn(year + 1, paymentMonth, dueDay);
+}
+
+/**
+ * Whole calendar days from `referenceDate` until the next due date (0 = due today).
+ */
+export function getDaysUntilDue(
+    schedule: DueSchedule,
+    referenceDate: Date = getSingaporeDate(),
+): number | null {
+    const next = getNextDueDate(schedule, referenceDate);
+    if (!next) return null;
+    const today = startOfDay(referenceDate);
+    return Math.round((next.getTime() - today.getTime()) / 86_400_000);
+}
+
+/**
+ * Short label for days until due: "Due today", "Due tomorrow", "Due in 5 days".
+ */
+export function formatDueInDays(days: number): string {
+    if (days <= 0) return "Due today";
+    if (days === 1) return "Due tomorrow";
+    return `Due in ${days} days`;
+}

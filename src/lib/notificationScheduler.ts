@@ -9,7 +9,7 @@
  *   4. Missing Credit Card Statement (card billing cycle closed without logged statement)
  *   5. Partner / Shared Spend (new shared spend logged by partner, settlement balance threshold, couple streak risk)
  *   6. Budget Limit Alerts (nearing/exceeded spendable category cap)
- *   7. Recurring Bills Due (insurance, tax, subscription renewals this month)
+ *   7. Recurring Bills Due (any recurring item due soon, by due day)
  *   8. Savings Goal Pacing (behind schedule or achieved)
  *   9. Monthly Budget Review (early month budget review prompt)
  * - Dispatches Service Worker PWA notifications when permitted
@@ -17,7 +17,15 @@
  */
 
 import { financeService } from '../services/financeService';
-import { getTodayDateString, getCurrentMonth, getSingaporeDate } from './dateUtils';
+import {
+  getTodayDateString,
+  getCurrentMonth,
+  getSingaporeDate,
+  getNextDueDate,
+  getDaysUntilDue,
+  formatDueInDays,
+  formatISODate,
+} from './dateUtils';
 import { isSpendableCategory } from './financialFormulas';
 import type {
   StreakSummary,
@@ -29,7 +37,7 @@ import type {
   SettlementSummary,
   DailyCheckin,
   MonthlyBudgetDetail,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   NotificationPreferences,
 } from '../types/finance';
@@ -461,37 +469,52 @@ export function checkBudgetLimitReminders(
   return reminders;
 }
 
+/** Annual items: remind from this many days before the due date. */
+export const RECURRING_ANNUAL_REMINDER_DAYS = 30;
+/** Monthly items: remind from this many days before the due date. */
+export const RECURRING_MONTHLY_REMINDER_DAYS = 3;
+
 /**
- * 9. Checks for recurring annual insurance/tax/subscription policies due in the current month.
+ * 9. Checks for recurring items due soon, using each item's due day
+ * (clamped to short months): annual items within 30 days, monthly items within 3 days.
  */
 export function checkRecurringBillsReminders(
-  policies: RecurringPolicy[],
+  recurringItems: RecurringItem[],
   referenceDate?: Date,
   memberId?: string
 ): AppReminder[] {
   const d = referenceDate || getSingaporeDate();
-  const currentMonthNum = d.getMonth() + 1;
+  const todayStr = formatISODate(d);
   const reminders: AppReminder[] = [];
 
-  for (const p of policies) {
-    // Strict member scoping: policies must belong to active user
+  for (const p of recurringItems) {
+    // Strict member scoping: recurring items must belong to active user
     if (memberId && p.owner_id && p.owner_id !== memberId) {
       continue;
     }
+    // Skip items outside their active date range
+    if (p.end_date && p.end_date < todayStr) continue;
 
-    if (p.frequency === 'annually' && p.payment_month === currentMonthNum) {
-      reminders.push({
-        id: `reminder-recurring-${p.id}-${d.getFullYear()}-${currentMonthNum}`,
-        type: 'recurring_bill_due',
-        title: `Upcoming Renewal: ${p.name}`,
-        message: `${p.name} (${p.type}) of SGD ${p.amount.toFixed(2)} is due this month.`,
-        severity: 'info',
-        actionLabel: 'View Policies',
-        actionType: 'view_recurring',
-        data: { policyId: p.id },
-        createdAt: new Date().toISOString(),
-      });
-    }
+    const dueDate = getNextDueDate(p, d);
+    const days = getDaysUntilDue(p, d);
+    if (!dueDate || days === null) continue;
+    if (p.start_date && formatISODate(dueDate) < p.start_date) continue;
+
+    const windowDays =
+      p.frequency === 'monthly' ? RECURRING_MONTHLY_REMINDER_DAYS : RECURRING_ANNUAL_REMINDER_DAYS;
+    if (days > windowDays) continue;
+
+    reminders.push({
+      id: `reminder-recurring-${p.id}-${formatISODate(dueDate)}`,
+      type: 'recurring_bill_due',
+      title: p.frequency === 'monthly' ? `Due Soon: ${p.name}` : `Upcoming Renewal: ${p.name}`,
+      message: `${p.name} (${p.type}) of SGD ${Number(p.amount).toFixed(2)}: ${formatDueInDays(days).toLowerCase()}.`,
+      severity: 'info',
+      actionLabel: 'View Recurring',
+      actionType: 'view_recurring',
+      data: { itemId: p.id, dueDate: formatISODate(dueDate) },
+      createdAt: new Date().toISOString(),
+    });
   }
 
   return reminders;
@@ -594,7 +617,7 @@ export async function computeActiveReminders(
       cards,
       overview,
       expenses,
-      policies,
+      recurringItems,
       goals,
       allCheckins,
       monthlyBudget,
@@ -606,7 +629,7 @@ export async function computeActiveReminders(
       financeService.getCreditCards(),
       financeService.getHouseholdOverview(),
       financeService.getExpenses(),
-      financeService.getPolicies(),
+      financeService.getRecurringItems(),
       financeService.getGoals(),
       financeService.getDailyCheckins(),
       financeService.getMonthlyBudget(currentMonth, memberId),
@@ -706,7 +729,7 @@ export async function computeActiveReminders(
 
     // 7. Recurring Bills & Renewals Due
     if (prefs.recurring_bills_due) {
-      const billReminders = checkRecurringBillsReminders(policies, options?.referenceDate, memberId);
+      const billReminders = checkRecurringBillsReminders(recurringItems, options?.referenceDate, memberId);
       for (const r of billReminders) {
         if (!dismissedIds.has(r.id)) reminders.push(r);
       }

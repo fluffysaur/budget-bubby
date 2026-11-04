@@ -2,7 +2,7 @@
  * Mock Finance Service for Budget Bubby.
  * In-memory state initialized from mockSeedData.ts with localStorage synchronization.
  * Supports full CRUD for accounts, balances, snapshots, monthly budgets, expenses,
- * shared settlements, loans, savings goals, and recurring policies.
+ * shared settlements, loans, savings goals, and recurring items.
  */
 
 import type {
@@ -18,7 +18,7 @@ import type {
   UpdateCategoryInput,
   CreateExpenseInput,
   CreateGoalInput,
-  CreatePolicyInput,
+  CreateRecurringItemInput,
   Expense,
   ExpenseFilter,
   HouseholdOverview,
@@ -27,7 +27,7 @@ import type {
   MonthlyBudgetCategoryDetail,
   MonthlyBudgetDetail,
   Perspective,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   UpdateExpenseInput,
   CreditCard,
@@ -44,7 +44,7 @@ import {
   mockSeedData,
   mockCategories,
   mockHistoricalAccountSnapshots,
-  mockSubscriptionPolicies,
+  mockSubscriptionItems,
   mockCreditCards,
   mockCreditCardStatements,
   mockDailyCheckins,
@@ -55,10 +55,16 @@ import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateCPFAndNetPay,
-  calculateMemberPolicyDeductions,
+  calculateMemberRecurringDeductions,
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
+import {
+  calculateRecurringCategorySpend,
+  findDefaultRecurringCategoryId,
+  isSpendType,
+  resolveDueDay,
+} from '../lib/recurringItems';
 import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 
@@ -85,15 +91,28 @@ function loadInitialData(): MockSeedDataset {
     dataset = cloneDeep(mockSeedData);
   }
 
-  // Ensure multi-month historical snapshots and subscription policies are available
+  // Ensure multi-month historical snapshots and subscription recurring items are available
   if (!dataset.accountSnapshots || dataset.accountSnapshots.length <= 18) {
     dataset.accountSnapshots = cloneDeep(mockHistoricalAccountSnapshots);
   }
-  if (!dataset.recurringPolicies.some((p) => p.type === 'subscription')) {
-    dataset.recurringPolicies = [
-      ...dataset.recurringPolicies,
-      ...cloneDeep(mockSubscriptionPolicies),
+  // Migrate datasets persisted before the policies -> recurring items rename
+  const legacy = dataset as MockSeedDataset & { recurringPolicies?: RecurringItem[] };
+  if (!dataset.recurringItems) {
+    dataset.recurringItems = legacy.recurringPolicies ?? cloneDeep(mockSeedData.recurringItems);
+    delete legacy.recurringPolicies;
+  }
+  if (!dataset.recurringItems.some((p) => p.type === 'subscription')) {
+    dataset.recurringItems = [
+      ...dataset.recurringItems,
+      ...cloneDeep(mockSubscriptionItems),
     ];
+  }
+  // Backfill spend categories for subscriptions persisted before category_id existed
+  const defaultRecurringCategoryId = findDefaultRecurringCategoryId(dataset.categories);
+  for (const item of dataset.recurringItems) {
+    if (item.category_id === undefined) {
+      item.category_id = item.type === 'subscription' ? defaultRecurringCategoryId : null;
+    }
   }
 
   if (!dataset.creditCards) {
@@ -183,7 +202,7 @@ class MockFinanceServiceImpl implements FinanceService {
       trueNetWorth,
       settlementSummary,
       activeGoals: cloneDeep(activeGoals),
-      upcomingBills: cloneDeep(this.state.recurringPolicies),
+      upcomingBills: cloneDeep(this.state.recurringItems),
     };
   }
 
@@ -466,8 +485,8 @@ class MockFinanceServiceImpl implements FinanceService {
         ).cpfDeduction;
       }
 
-      const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
-        this.state.recurringPolicies,
+      const { taxesMonthly, insuranceMonthly } = calculateMemberRecurringDeductions(
+        this.state.recurringItems,
         budget.owner_id
       );
       budget.taxes_deduction = taxesMonthly;
@@ -540,7 +559,7 @@ class MockFinanceServiceImpl implements FinanceService {
       this.state.baseProfiles.find((p) => !targetOwnerId || p.owner_id === targetOwnerId) ||
       this.state.baseProfiles[0];
 
-    // If budget does not exist for this month, dynamically generate from base profile & recurring policies
+    // If budget does not exist for this month, dynamically generate from base profile & recurring items
     if (!budget) {
       const ownerId = targetOwnerId || this.state.members[0].id;
       const gross = baseProfile ? baseProfile.gross_salary : 5000;
@@ -548,7 +567,7 @@ class MockFinanceServiceImpl implements FinanceService {
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
       const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberPolicyDeductions(this.state.recurringPolicies, ownerId);
+        calculateMemberRecurringDeductions(this.state.recurringItems, ownerId);
 
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
@@ -592,25 +611,19 @@ class MockFinanceServiceImpl implements FinanceService {
       budgetCategories = generated;
     }
 
-    // Active monthly subscriptions for this member
-    const subscriptionItems = this.state.recurringPolicies.filter(
-      (p) =>
-        p.type === 'subscription' &&
-        (p.owner_id === budget!.owner_id || p.owner_id === 'joint')
+    // Recurring subscription/bill/other spend for this member and month, by category
+    const recurringSpend = calculateRecurringCategorySpend(
+      this.state.recurringItems,
+      month,
+      {
+        ownerId: budget!.owner_id,
+        knownCategoryIds: budgetCategories.map((bc) => bc.category_id),
+      }
     );
-    const totalSubscriptionMonthly = Math.round(
-      subscriptionItems.reduce(
-        (sum, p) => sum + (p.monthly_amortized_amount ?? p.amount ?? 0),
-        0
-      ) * 100
-    ) / 100;
 
     // Calculate actual spent per category for this owner and month (including 50% share of shared expenses)
     const categoryDetails: MonthlyBudgetCategoryDetail[] = budgetCategories.map((bc) => {
       const category = this.state.categories.find((cat) => cat.id === bc.category_id);
-      const isLifestyle = Boolean(
-        category && category.name.toLowerCase().includes('lifestyle')
-      );
 
       // Exclude goal-funded expenses from normal monthly spendable category caps
       const expenseShareSum = this.state.expenses
@@ -620,8 +633,9 @@ class MockFinanceServiceImpl implements FinanceService {
           0
         );
 
-      const subSpent = isLifestyle ? totalSubscriptionMonthly : 0;
-      const actualSpent = Math.round((expenseShareSum + subSpent) * 100) / 100;
+      const recurring = recurringSpend.byCategory[bc.category_id];
+      const recurringSpent = recurring?.total ?? 0;
+      const actualSpent = Math.round((expenseShareSum + recurringSpent) * 100) / 100;
       const remaining = Math.round((bc.allocated_amount - actualSpent) * 100) / 100;
 
       return {
@@ -629,13 +643,17 @@ class MockFinanceServiceImpl implements FinanceService {
         category: category ? cloneDeep(category) : undefined,
         actualSpent,
         remaining,
-        subscriptionSpent: subSpent,
-        subscriptionItems: isLifestyle ? cloneDeep(subscriptionItems) : undefined,
+        recurringSpent,
+        recurringItems: recurring ? cloneDeep(recurring.items) : undefined,
       };
     });
 
+    const uncategorizedRecurringSpent = recurringSpend.uncategorized.total;
+
     const totalSpent = Math.round(
-      categoryDetails.reduce((sum, c) => sum + (c.actualSpent || 0), 0) * 100
+      (categoryDetails.reduce((sum, c) => sum + (c.actualSpent || 0), 0) +
+        uncategorizedRecurringSpent) *
+        100
     ) / 100;
 
     const disposablePool = budget.after_deductions;
@@ -666,6 +684,8 @@ class MockFinanceServiceImpl implements FinanceService {
       spendableSpent,
       spendableRemaining,
       allocationTotal,
+      uncategorizedRecurringSpent,
+      uncategorizedRecurringItems: cloneDeep(recurringSpend.uncategorized.items),
     };
   }
 
@@ -896,17 +916,17 @@ class MockFinanceServiceImpl implements FinanceService {
     return cloneDeep(goal);
   }
 
-  public async getPolicies(): Promise<RecurringPolicy[]> {
-    return cloneDeep(this.state.recurringPolicies);
+  public async getRecurringItems(): Promise<RecurringItem[]> {
+    return cloneDeep(this.state.recurringItems);
   }
 
-  public async addPolicy(input: CreatePolicyInput): Promise<RecurringPolicy> {
+  public async addRecurringItem(input: CreateRecurringItemInput): Promise<RecurringItem> {
     const monthlyAmortized =
       input.frequency === 'annually'
         ? Math.round((input.amount / 12) * 100) / 100
         : Math.round(input.amount * 100) / 100;
 
-    const newPolicy: RecurringPolicy = {
+    const newItem: RecurringItem = {
       id: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       household_id: input.household_id || this.state.household.id,
       owner_id: input.owner_id,
@@ -919,40 +939,46 @@ class MockFinanceServiceImpl implements FinanceService {
       end_date: input.end_date || null,
       notes: input.notes || null,
       monthly_amortized_amount: monthlyAmortized,
+      due_day: resolveDueDay(input.frequency, input.due_day),
+      category_id: isSpendType(input.type) ? input.category_id ?? null : null,
     };
 
-    this.state.recurringPolicies.push(newPolicy);
-    this.syncUnlockedBudgetsForOwner(newPolicy.owner_id);
+    this.state.recurringItems.push(newItem);
+    this.syncUnlockedBudgetsForOwner(newItem.owner_id);
     this.persist();
-    return cloneDeep(newPolicy);
+    return cloneDeep(newItem);
   }
 
-  public async updatePolicy(
+  public async updateRecurringItem(
     id: string,
-    updates: Partial<RecurringPolicy>
-  ): Promise<RecurringPolicy> {
-    const policy = this.state.recurringPolicies.find((p) => p.id === id);
-    if (!policy) {
-      throw new Error(`Recurring policy with id "${id}" not found`);
+    updates: Partial<RecurringItem>
+  ): Promise<RecurringItem> {
+    const recurringItem = this.state.recurringItems.find((p) => p.id === id);
+    if (!recurringItem) {
+      throw new Error(`Recurring item with id "${id}" not found`);
     }
 
-    Object.assign(policy, updates);
+    Object.assign(recurringItem, updates);
+    // Insurance/tax reduce take-home pay and never count toward a spend category
+    if (!isSpendType(recurringItem.type)) {
+      recurringItem.category_id = null;
+    }
 
     // Recompute monthly_amortized_amount if amount or frequency changed
     if (updates.amount !== undefined || updates.frequency !== undefined) {
-      policy.monthly_amortized_amount =
-        policy.frequency === 'annually'
-          ? Math.round((policy.amount / 12) * 100) / 100
-          : Math.round(policy.amount * 100) / 100;
+      recurringItem.monthly_amortized_amount =
+        recurringItem.frequency === 'annually'
+          ? Math.round((recurringItem.amount / 12) * 100) / 100
+          : Math.round(recurringItem.amount * 100) / 100;
     }
 
     this.syncUnlockedBudgetsForOwner();
     this.persist();
-    return cloneDeep(policy);
+    return cloneDeep(recurringItem);
   }
 
-  public async deletePolicy(id: string): Promise<void> {
-    this.state.recurringPolicies = this.state.recurringPolicies.filter((p) => p.id !== id);
+  public async deleteRecurringItem(id: string): Promise<void> {
+    this.state.recurringItems = this.state.recurringItems.filter((p) => p.id !== id);
     this.syncUnlockedBudgetsForOwner();
     this.persist();
   }
