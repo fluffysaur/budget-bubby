@@ -20,7 +20,7 @@ import type {
     MonthlyBalancePoint,
     MonthlyExpenseTrendPoint,
     Perspective,
-    RecurringPolicy,
+    RecurringItem,
     CPFAndNetPayResult,
     CategoryAllocationTarget,
     CategoryAllocation,
@@ -515,7 +515,7 @@ export function calculateMonthlyBalanceTrends(
 export function calculateExpenseTrends(
     expenses: Expense[],
     categories: Category[],
-    policies: RecurringPolicy[] = [],
+    recurringItems: RecurringItem[] = [],
     perspective: Perspective = "household",
     memberId?: string,
     currentMonth?: string,
@@ -534,7 +534,7 @@ export function calculateExpenseTrends(
         spendableCats[0];
 
     // Monthly subscriptions in scope
-    const activeSubs = (policies || []).filter((p) => {
+    const activeSubs = (recurringItems || []).filter((p) => {
         if (p.type !== "subscription") return false;
         if (perspective === "household" || !memberId) return true;
         return p.owner_id === memberId || p.owner_id === "joint";
@@ -1099,18 +1099,18 @@ export function formatAllocationPercent(pct: number): string {
 }
 
 /**
- * 19. Computes a member's monthly amortized Taxes and Insurance deductions from active policies.
+ * 19. Computes a member's monthly amortized Taxes and Insurance deductions from active recurring items.
  */
-export function calculateMemberPolicyDeductions(
-    policies: RecurringPolicy[] = [],
+export function calculateMemberRecurringDeductions(
+    recurringItems: RecurringItem[] = [],
     memberId?: string,
 ): { taxesMonthly: number; insuranceMonthly: number } {
-    const inScope = (policies || []).filter((p) => {
+    const inScope = (recurringItems || []).filter((p) => {
         if (!memberId || memberId === "household") return true;
         return p.owner_id === memberId || p.owner_id === "joint";
     });
 
-    const getMonthlyAmount = (p: RecurringPolicy): number => {
+    const getMonthlyAmount = (p: RecurringItem): number => {
         if (
             p.monthly_amortized_amount !== undefined &&
             p.monthly_amortized_amount !== null

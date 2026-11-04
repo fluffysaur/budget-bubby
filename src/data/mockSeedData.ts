@@ -18,7 +18,7 @@ import type {
   Loan,
   LoanPayment,
   SavingsGoal,
-  RecurringPolicy,
+  RecurringItem,
   CreditCard,
   CreditCardStatement,
   DailyCheckin,
@@ -537,7 +537,7 @@ export const mockSavingsGoals: SavingsGoal[] = [
   },
 ];
 
-export const mockRecurringPolicies: RecurringPolicy[] = [
+export const mockRecurringItems: RecurringItem[] = [
   {
     id: 'pol-00000000-0601',
     household_id: 'hh-00000000-0001',
@@ -596,7 +596,7 @@ export const mockRecurringPolicies: RecurringPolicy[] = [
   },
 ];
 
-export const mockSubscriptionPolicies: RecurringPolicy[] = [
+export const mockSubscriptionItems: RecurringItem[] = [
   {
     id: 'pol-00000000-0605',
     household_id: 'hh-00000000-0001',
@@ -1213,7 +1213,7 @@ export interface MockSeedDataset {
   loans: Loan[];
   loanPayments: LoanPayment[];
   savingsGoals: SavingsGoal[];
-  recurringPolicies: RecurringPolicy[];
+  recurringItems: RecurringItem[];
   monthlyBudgets: MonthlyBudget[];
   monthlyBudgetCategories: MonthlyBudgetCategory[];
   expenses: Expense[];
@@ -1260,7 +1260,7 @@ export const mockSeedData: MockSeedDataset = {
   loans: mockLoans,
   loanPayments: mockLoanPayments,
   savingsGoals: mockSavingsGoals,
-  recurringPolicies: mockRecurringPolicies,
+  recurringItems: mockRecurringItems,
   monthlyBudgets: mockMonthlyBudgets,
   monthlyBudgetCategories: mockMonthlyBudgetCategories,
   expenses: mockExpenses,

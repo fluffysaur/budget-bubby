@@ -2,7 +2,7 @@
  * Mock Finance Service for Budget Bubby.
  * In-memory state initialized from mockSeedData.ts with localStorage synchronization.
  * Supports full CRUD for accounts, balances, snapshots, monthly budgets, expenses,
- * shared settlements, loans, savings goals, and recurring policies.
+ * shared settlements, loans, savings goals, and recurring items.
  */
 
 import type {
@@ -18,7 +18,7 @@ import type {
   UpdateCategoryInput,
   CreateExpenseInput,
   CreateGoalInput,
-  CreatePolicyInput,
+  CreateRecurringItemInput,
   Expense,
   ExpenseFilter,
   HouseholdOverview,
@@ -27,7 +27,7 @@ import type {
   MonthlyBudgetCategoryDetail,
   MonthlyBudgetDetail,
   Perspective,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   UpdateExpenseInput,
   CreditCard,
@@ -44,7 +44,7 @@ import {
   mockSeedData,
   mockCategories,
   mockHistoricalAccountSnapshots,
-  mockSubscriptionPolicies,
+  mockSubscriptionItems,
   mockCreditCards,
   mockCreditCardStatements,
   mockDailyCheckins,
@@ -55,7 +55,7 @@ import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateCPFAndNetPay,
-  calculateMemberPolicyDeductions,
+  calculateMemberRecurringDeductions,
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
@@ -85,14 +85,20 @@ function loadInitialData(): MockSeedDataset {
     dataset = cloneDeep(mockSeedData);
   }
 
-  // Ensure multi-month historical snapshots and subscription policies are available
+  // Ensure multi-month historical snapshots and subscription recurring items are available
   if (!dataset.accountSnapshots || dataset.accountSnapshots.length <= 18) {
     dataset.accountSnapshots = cloneDeep(mockHistoricalAccountSnapshots);
   }
-  if (!dataset.recurringPolicies.some((p) => p.type === 'subscription')) {
-    dataset.recurringPolicies = [
-      ...dataset.recurringPolicies,
-      ...cloneDeep(mockSubscriptionPolicies),
+  // Migrate datasets persisted before the policies -> recurring items rename
+  const legacy = dataset as MockSeedDataset & { recurringPolicies?: RecurringItem[] };
+  if (!dataset.recurringItems) {
+    dataset.recurringItems = legacy.recurringPolicies ?? cloneDeep(mockSeedData.recurringItems);
+    delete legacy.recurringPolicies;
+  }
+  if (!dataset.recurringItems.some((p) => p.type === 'subscription')) {
+    dataset.recurringItems = [
+      ...dataset.recurringItems,
+      ...cloneDeep(mockSubscriptionItems),
     ];
   }
 
@@ -183,7 +189,7 @@ class MockFinanceServiceImpl implements FinanceService {
       trueNetWorth,
       settlementSummary,
       activeGoals: cloneDeep(activeGoals),
-      upcomingBills: cloneDeep(this.state.recurringPolicies),
+      upcomingBills: cloneDeep(this.state.recurringItems),
     };
   }
 
@@ -466,8 +472,8 @@ class MockFinanceServiceImpl implements FinanceService {
         ).cpfDeduction;
       }
 
-      const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
-        this.state.recurringPolicies,
+      const { taxesMonthly, insuranceMonthly } = calculateMemberRecurringDeductions(
+        this.state.recurringItems,
         budget.owner_id
       );
       budget.taxes_deduction = taxesMonthly;
@@ -540,7 +546,7 @@ class MockFinanceServiceImpl implements FinanceService {
       this.state.baseProfiles.find((p) => !targetOwnerId || p.owner_id === targetOwnerId) ||
       this.state.baseProfiles[0];
 
-    // If budget does not exist for this month, dynamically generate from base profile & recurring policies
+    // If budget does not exist for this month, dynamically generate from base profile & recurring items
     if (!budget) {
       const ownerId = targetOwnerId || this.state.members[0].id;
       const gross = baseProfile ? baseProfile.gross_salary : 5000;
@@ -548,7 +554,7 @@ class MockFinanceServiceImpl implements FinanceService {
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
       const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberPolicyDeductions(this.state.recurringPolicies, ownerId);
+        calculateMemberRecurringDeductions(this.state.recurringItems, ownerId);
 
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
@@ -593,7 +599,7 @@ class MockFinanceServiceImpl implements FinanceService {
     }
 
     // Active monthly subscriptions for this member
-    const subscriptionItems = this.state.recurringPolicies.filter(
+    const subscriptionItems = this.state.recurringItems.filter(
       (p) =>
         p.type === 'subscription' &&
         (p.owner_id === budget!.owner_id || p.owner_id === 'joint')
@@ -896,17 +902,17 @@ class MockFinanceServiceImpl implements FinanceService {
     return cloneDeep(goal);
   }
 
-  public async getPolicies(): Promise<RecurringPolicy[]> {
-    return cloneDeep(this.state.recurringPolicies);
+  public async getRecurringItems(): Promise<RecurringItem[]> {
+    return cloneDeep(this.state.recurringItems);
   }
 
-  public async addPolicy(input: CreatePolicyInput): Promise<RecurringPolicy> {
+  public async addRecurringItem(input: CreateRecurringItemInput): Promise<RecurringItem> {
     const monthlyAmortized =
       input.frequency === 'annually'
         ? Math.round((input.amount / 12) * 100) / 100
         : Math.round(input.amount * 100) / 100;
 
-    const newPolicy: RecurringPolicy = {
+    const newItem: RecurringItem = {
       id: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       household_id: input.household_id || this.state.household.id,
       owner_id: input.owner_id,
@@ -921,38 +927,38 @@ class MockFinanceServiceImpl implements FinanceService {
       monthly_amortized_amount: monthlyAmortized,
     };
 
-    this.state.recurringPolicies.push(newPolicy);
-    this.syncUnlockedBudgetsForOwner(newPolicy.owner_id);
+    this.state.recurringItems.push(newItem);
+    this.syncUnlockedBudgetsForOwner(newItem.owner_id);
     this.persist();
-    return cloneDeep(newPolicy);
+    return cloneDeep(newItem);
   }
 
-  public async updatePolicy(
+  public async updateRecurringItem(
     id: string,
-    updates: Partial<RecurringPolicy>
-  ): Promise<RecurringPolicy> {
-    const policy = this.state.recurringPolicies.find((p) => p.id === id);
-    if (!policy) {
-      throw new Error(`Recurring policy with id "${id}" not found`);
+    updates: Partial<RecurringItem>
+  ): Promise<RecurringItem> {
+    const recurringItem = this.state.recurringItems.find((p) => p.id === id);
+    if (!recurringItem) {
+      throw new Error(`Recurring item with id "${id}" not found`);
     }
 
-    Object.assign(policy, updates);
+    Object.assign(recurringItem, updates);
 
     // Recompute monthly_amortized_amount if amount or frequency changed
     if (updates.amount !== undefined || updates.frequency !== undefined) {
-      policy.monthly_amortized_amount =
-        policy.frequency === 'annually'
-          ? Math.round((policy.amount / 12) * 100) / 100
-          : Math.round(policy.amount * 100) / 100;
+      recurringItem.monthly_amortized_amount =
+        recurringItem.frequency === 'annually'
+          ? Math.round((recurringItem.amount / 12) * 100) / 100
+          : Math.round(recurringItem.amount * 100) / 100;
     }
 
     this.syncUnlockedBudgetsForOwner();
     this.persist();
-    return cloneDeep(policy);
+    return cloneDeep(recurringItem);
   }
 
-  public async deletePolicy(id: string): Promise<void> {
-    this.state.recurringPolicies = this.state.recurringPolicies.filter((p) => p.id !== id);
+  public async deleteRecurringItem(id: string): Promise<void> {
+    this.state.recurringItems = this.state.recurringItems.filter((p) => p.id !== id);
     this.syncUnlockedBudgetsForOwner();
     this.persist();
   }

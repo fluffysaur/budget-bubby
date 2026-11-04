@@ -4,7 +4,7 @@
  * - Jan - Dec timeline displaying total cash outlay required for each calendar month.
  * - Highlights heavy renewal months (e.g., September Manulife $3,200, October IncomeShield $1,600).
  * - Visual indicator badge and ring for current calendar month.
- * - Displays policy cards/chips in their designated renewal month.
+ * - Displays recurring item cards/chips in their designated renewal month.
  */
 
 import { useMemo } from "react";
@@ -16,10 +16,10 @@ import {
     MONTH_NAMES_FULL,
 } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
-import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
+import type { RecurringItem, RecurringItemType } from "../../types/finance";
 
 export interface RenewalCalendarProps {
-    policies: RecurringPolicy[];
+    recurringItems: RecurringItem[];
     currentMonth?: number; // 1 - 12
     className?: string;
 }
@@ -32,11 +32,11 @@ interface MonthData {
     isCurrent: boolean;
     isHeavy: boolean;
     isMaxMonth: boolean;
-    policies: RecurringPolicy[];
+    recurringItems: RecurringItem[];
 }
 
 export function RenewalCalendar({
-    policies,
+    recurringItems,
     currentMonth,
     className = "",
 }: RenewalCalendarProps) {
@@ -52,25 +52,25 @@ export function RenewalCalendar({
     // Compute 12-month data breakdown
     const { monthBreakdown } = useMemo(() => {
         const monthlyTotals = Array(12).fill(0);
-        const monthPoliciesMap: RecurringPolicy[][] = Array.from(
+        const monthItemsMap: RecurringItem[][] = Array.from(
             { length: 12 },
             () => [],
         );
 
-        for (const policy of policies) {
-            if (policy.frequency === "monthly") {
+        for (const recurringItem of recurringItems) {
+            if (recurringItem.frequency === "monthly") {
                 for (let m = 0; m < 12; m++) {
-                    monthlyTotals[m] += policy.amount;
-                    monthPoliciesMap[m].push(policy);
+                    monthlyTotals[m] += recurringItem.amount;
+                    monthItemsMap[m].push(recurringItem);
                 }
             } else if (
-                policy.payment_month &&
-                policy.payment_month >= 1 &&
-                policy.payment_month <= 12
+                recurringItem.payment_month &&
+                recurringItem.payment_month >= 1 &&
+                recurringItem.payment_month <= 12
             ) {
-                const idx = policy.payment_month - 1;
-                monthlyTotals[idx] += policy.amount;
-                monthPoliciesMap[idx].push(policy);
+                const idx = recurringItem.payment_month - 1;
+                monthlyTotals[idx] += recurringItem.amount;
+                monthItemsMap[idx].push(recurringItem);
             }
         }
 
@@ -95,7 +95,7 @@ export function RenewalCalendar({
                 isCurrent: monthNum === resolvedCurrentMonth,
                 isHeavy,
                 isMaxMonth: isMax,
-                policies: monthPoliciesMap[idx],
+                recurringItems: monthItemsMap[idx],
             };
         });
 
@@ -105,10 +105,10 @@ export function RenewalCalendar({
             totalAnnualOutlay: total,
             averageMonthlyOutlay: avg,
         };
-    }, [policies, resolvedCurrentMonth]);
+    }, [recurringItems, resolvedCurrentMonth]);
 
     // Type icon helper
-    const renderPolicyIcon = (type: RecurringPolicyType) => {
+    const renderItemIcon = (type: RecurringItemType) => {
         switch (type) {
             case "insurance":
                 return <Shield className="w-3 h-3 text-blue-500" />;
@@ -216,18 +216,18 @@ export function RenewalCalendar({
 
                             {/* Policy Chips in this Month */}
                             <div className="flex-1 flex flex-col gap-2 min-h-[68px]">
-                                {m.policies.length === 0 ? (
+                                {m.recurringItems.length === 0 ? (
                                     <div className="flex-1 flex items-center justify-center text-[11px] text-(--text-muted) italic">
                                         No renewals
                                     </div>
                                 ) : (
-                                    m.policies.map((p) => (
+                                    m.recurringItems.map((p) => (
                                         <div
                                             key={`${m.monthNumber}-${p.id}`}
                                             className="flex items-center justify-between gap-2 p-2 rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) text-xs shadow-(--shadow-cute-sm)"
                                         >
                                             <div className="flex items-center gap-1 min-w-0 flex-1">
-                                                {renderPolicyIcon(p.type)}
+                                                {renderItemIcon(p.type)}
                                                 <div className="font-bold text-(--text-ink) min-w-0 flex-1">
                                                     <TruncatedText text={p.name} />
                                                 </div>

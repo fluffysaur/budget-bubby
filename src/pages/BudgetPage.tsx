@@ -30,7 +30,7 @@ import {
   useCategoriesQuery,
   useBaseProfilesQuery,
   useBaseAllocationsQuery,
-  usePoliciesQuery,
+  useRecurringItemsQuery,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -68,7 +68,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
   const { data: categoriesData } = useCategoriesQuery();
   const { data: baseProfilesData } = useBaseProfilesQuery();
   const { data: baseAllocationsData } = useBaseAllocationsQuery();
-  const { data: policiesData } = usePoliciesQuery();
+  const { data: recurringItemsData } = useRecurringItemsQuery();
 
   const categories = useMemo(() => {
     if (categoriesData && categoriesData.length > 0) return categoriesData;
@@ -489,8 +489,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           allocations={activeAllocations}
           categories={categories}
           members={members}
-          policies={policiesData || []}
-          onManagePolicies={() =>
+          recurringItems={recurringItemsData || []}
+          onManageRecurring={() =>
             onNavigateTab
               ? onNavigateTab('recurring')
               : typeof window !== 'undefined'

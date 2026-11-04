@@ -142,7 +142,7 @@ export interface MonthlyBudgetCategoryDetail extends MonthlyBudgetCategory {
   actualSpent?: number;
   remaining?: number;
   subscriptionSpent?: number;
-  subscriptionItems?: RecurringPolicy[];
+  subscriptionItems?: RecurringItem[];
 }
 
 export interface MonthlyBudgetDetail {
@@ -394,14 +394,14 @@ export interface CreateGoalInput {
   emoji?: string;
 }
 
-export type RecurringPolicyType = 'insurance' | 'tax' | 'subscription';
+export type RecurringItemType = 'insurance' | 'tax' | 'subscription';
 export type RecurringFrequency = 'annually' | 'monthly';
 
-export interface RecurringPolicy {
+export interface RecurringItem {
   id: string;
   household_id: string;
   owner_id: string;
-  type: RecurringPolicyType;
+  type: RecurringItemType;
   name: string;
   amount: number;
   frequency: RecurringFrequency;
@@ -412,10 +412,10 @@ export interface RecurringPolicy {
   monthly_amortized_amount: number;
 }
 
-export interface CreatePolicyInput {
+export interface CreateRecurringItemInput {
   household_id?: string;
   owner_id: string;
-  type: RecurringPolicyType;
+  type: RecurringItemType;
   name: string;
   amount: number;
   frequency: RecurringFrequency;
@@ -488,7 +488,7 @@ export interface HouseholdOverview {
   trueNetWorth: number;
   settlementSummary: SettlementSummary;
   activeGoals: SavingsGoal[];
-  upcomingBills: RecurringPolicy[];
+  upcomingBills: RecurringItem[];
 }
 
 export interface BulkBalanceUpdateItem {

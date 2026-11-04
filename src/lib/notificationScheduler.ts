@@ -29,7 +29,7 @@ import type {
   SettlementSummary,
   DailyCheckin,
   MonthlyBudgetDetail,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   NotificationPreferences,
 } from '../types/finance';
@@ -462,10 +462,10 @@ export function checkBudgetLimitReminders(
 }
 
 /**
- * 9. Checks for recurring annual insurance/tax/subscription policies due in the current month.
+ * 9. Checks for recurring annual insurance/tax/subscription recurring items due in the current month.
  */
 export function checkRecurringBillsReminders(
-  policies: RecurringPolicy[],
+  recurringItems: RecurringItem[],
   referenceDate?: Date,
   memberId?: string
 ): AppReminder[] {
@@ -473,8 +473,8 @@ export function checkRecurringBillsReminders(
   const currentMonthNum = d.getMonth() + 1;
   const reminders: AppReminder[] = [];
 
-  for (const p of policies) {
-    // Strict member scoping: policies must belong to active user
+  for (const p of recurringItems) {
+    // Strict member scoping: recurring items must belong to active user
     if (memberId && p.owner_id && p.owner_id !== memberId) {
       continue;
     }
@@ -488,7 +488,7 @@ export function checkRecurringBillsReminders(
         severity: 'info',
         actionLabel: 'View Policies',
         actionType: 'view_recurring',
-        data: { policyId: p.id },
+        data: { itemId: p.id },
         createdAt: new Date().toISOString(),
       });
     }
@@ -594,7 +594,7 @@ export async function computeActiveReminders(
       cards,
       overview,
       expenses,
-      policies,
+      recurringItems,
       goals,
       allCheckins,
       monthlyBudget,
@@ -606,7 +606,7 @@ export async function computeActiveReminders(
       financeService.getCreditCards(),
       financeService.getHouseholdOverview(),
       financeService.getExpenses(),
-      financeService.getPolicies(),
+      financeService.getRecurringItems(),
       financeService.getGoals(),
       financeService.getDailyCheckins(),
       financeService.getMonthlyBudget(currentMonth, memberId),
@@ -706,7 +706,7 @@ export async function computeActiveReminders(
 
     // 7. Recurring Bills & Renewals Due
     if (prefs.recurring_bills_due) {
-      const billReminders = checkRecurringBillsReminders(policies, options?.referenceDate, memberId);
+      const billReminders = checkRecurringBillsReminders(recurringItems, options?.referenceDate, memberId);
       for (const r of billReminders) {
         if (!dismissedIds.has(r.id)) reminders.push(r);
       }

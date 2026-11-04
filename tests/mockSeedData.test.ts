@@ -10,7 +10,7 @@ import {
   mockLoans,
   mockLoanPayments,
   mockSavingsGoals,
-  mockRecurringPolicies,
+  mockRecurringItems,
   mockMonthlyBudgets,
   mockMonthlyBudgetCategories,
   mockExpenses,
@@ -96,9 +96,9 @@ describe('mockSeedData', () => {
     expect(hdb?.status).toBe('on_track');
   });
 
-  it('contains recurring policies for insurance and taxes', () => {
-    expect(mockRecurringPolicies).toHaveLength(4);
-    const types = mockRecurringPolicies.map((p) => p.type);
+  it('contains recurring items for insurance and taxes', () => {
+    expect(mockRecurringItems).toHaveLength(4);
+    const types = mockRecurringItems.map((p) => p.type);
     expect(types).toContain('insurance');
     expect(types).toContain('tax');
   });

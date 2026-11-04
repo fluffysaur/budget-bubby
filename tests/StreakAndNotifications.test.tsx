@@ -44,7 +44,7 @@ import type {
   SettlementSummary,
   DailyCheckin,
   MonthlyBudgetDetail,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
 } from '../src/types/finance';
 
@@ -719,8 +719,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(alerts.find((a) => a.title.includes('Nearing'))).toBeDefined();
     });
 
-    it('checkRecurringBillsReminders alerts for annual policies due in current month', () => {
-      const policies: RecurringPolicy[] = [
+    it('checkRecurringBillsReminders alerts for annual recurring items due in current month', () => {
+      const recurringItems: RecurringItem[] = [
         {
           id: 'pol-1',
           household_id: 'hh-1',
@@ -745,7 +745,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         },
       ];
 
-      const rOct = checkRecurringBillsReminders(policies, new Date('2026-10-15T12:00:00'));
+      const rOct = checkRecurringBillsReminders(recurringItems, new Date('2026-10-15T12:00:00'));
       expect(rOct).toHaveLength(1);
       expect(rOct[0].type).toBe('recurring_bill_due');
       expect(rOct[0].message).toContain('Manulife');
@@ -946,7 +946,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       vi.spyOn(financeService, 'getCreditCardStatements').mockResolvedValue([]);
       vi.spyOn(financeService, 'getCreditCards').mockResolvedValue([]);
       vi.spyOn(financeService, 'getExpenses').mockResolvedValue([]);
-      vi.spyOn(financeService, 'getPolicies').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getRecurringItems').mockResolvedValue([]);
       vi.spyOn(financeService, 'getGoals').mockResolvedValue([]);
       vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([]);
       vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue({
@@ -1093,7 +1093,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
     });
 
     it('strictly scopes recurring bills to active member', () => {
-      const policies: RecurringPolicy[] = [
+      const recurringItems: RecurringItem[] = [
         {
           id: 'pol-mem1',
           household_id: 'hh-1',
@@ -1119,11 +1119,11 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       ];
 
       const testDate = new Date('2026-10-15T12:00:00');
-      const alertsMem1 = checkRecurringBillsReminders(policies, testDate, 'mem-1');
+      const alertsMem1 = checkRecurringBillsReminders(recurringItems, testDate, 'mem-1');
       expect(alertsMem1).toHaveLength(1);
       expect(alertsMem1[0].message).toContain('Yi Jia Life Insurance');
 
-      const alertsMem2 = checkRecurringBillsReminders(policies, testDate, 'mem-2');
+      const alertsMem2 = checkRecurringBillsReminders(recurringItems, testDate, 'mem-2');
       expect(alertsMem2).toHaveLength(1);
       expect(alertsMem2[0].message).toContain('Rachel Health Insurance');
     });

@@ -497,7 +497,7 @@ describe('BaseProfileEditorModal', () => {
   });
 
   it('displays read-only monthly taxes and insurance cards with Manage in Policies button', () => {
-    const onManagePolicies = vi.fn();
+    const onManageRecurring = vi.fn();
     render(
       <BaseProfileEditorModal
         isOpen={true}
@@ -507,7 +507,7 @@ describe('BaseProfileEditorModal', () => {
         categories={mockCategories}
         initialTaxes={150}
         initialInsurance={350}
-        onManagePolicies={onManagePolicies}
+        onManageRecurring={onManageRecurring}
       />
     );
 
@@ -517,7 +517,7 @@ describe('BaseProfileEditorModal', () => {
     const manageBtn = screen.getByRole('button', { name: /manage in policies/i });
     expect(manageBtn).toBeInTheDocument();
     fireEvent.click(manageBtn);
-    expect(onManagePolicies).toHaveBeenCalled();
+    expect(onManageRecurring).toHaveBeenCalled();
   });
 
   it('auto-balances unlocked categories to 100% while keeping dollar-locked category fixed', () => {

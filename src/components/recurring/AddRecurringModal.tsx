@@ -1,9 +1,9 @@
 /**
- * AddPolicyModal Component
- * Dialog modal for creating or editing recurring policies, taxes, and subscriptions.
+ * AddRecurringModal Component
+ * Dialog modal for creating or editing recurring items, taxes, and subscriptions.
  * Features:
  * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
- * - Pre-filling for editing existing policies
+ * - Pre-filling for editing existing recurring items
  * - Field validation (Name required, positive Amount)
  * - Frequency selector with conditional renewal month input
  * - Owner selector (Yi Jia, Rachel, Joint)
@@ -12,10 +12,10 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Shield } from "lucide-react";
 import type {
-    RecurringPolicy,
-    RecurringPolicyType,
+    RecurringItem,
+    RecurringItemType,
     RecurringFrequency,
-    CreatePolicyInput,
+    CreateRecurringItemInput,
 } from "../../types/finance";
 import { useHousehold } from "../../context/HouseholdContext";
 import { mockMembers } from "../../data/mockSeedData";
@@ -48,13 +48,13 @@ function useSafeHousehold() {
     }
 }
 
-export interface AddPolicyModalProps {
+export interface AddRecurringModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (
-        policyData: CreatePolicyInput & { id?: string },
+        itemData: CreateRecurringItemInput & { id?: string },
     ) => void | Promise<void>;
-    initialPolicy?: RecurringPolicy | null;
+    initialItem?: RecurringItem | null;
 }
 
 const MONTH_OPTIONS = [
@@ -72,12 +72,12 @@ const MONTH_OPTIONS = [
     { value: 12, label: "December" },
 ];
 
-export function AddPolicyModal({
+export function AddRecurringModal({
     isOpen,
     onClose,
     onSave,
-    initialPolicy = null,
-}: AddPolicyModalProps) {
+    initialItem = null,
+}: AddRecurringModalProps) {
     const { members, activeMember } = useSafeHousehold();
 
     // Find member IDs
@@ -90,7 +90,7 @@ export function AddPolicyModal({
 
     // Form states
     const [name, setName] = useState<string>("");
-    const [type, setType] = useState<RecurringPolicyType>("insurance");
+    const [type, setType] = useState<RecurringItemType>("insurance");
     const [ownerId, setOwnerId] = useState<string>(defaultOwnerId);
     const [amount, setAmount] = useState<string>("");
     const [frequency, setFrequency] = useState<RecurringFrequency>("annually");
@@ -100,22 +100,22 @@ export function AddPolicyModal({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    // Sync state when initialPolicy changes or modal opens
+    // Sync state when initialItem changes or modal opens
     useEffect(() => {
         if (isOpen) {
-            if (initialPolicy) {
-                setName(initialPolicy.name);
-                setType(initialPolicy.type);
-                setOwnerId(initialPolicy.owner_id);
-                setAmount(String(initialPolicy.amount));
-                setFrequency(initialPolicy.frequency);
-                setPaymentMonth(initialPolicy.payment_month || 1);
+            if (initialItem) {
+                setName(initialItem.name);
+                setType(initialItem.type);
+                setOwnerId(initialItem.owner_id);
+                setAmount(String(initialItem.amount));
+                setFrequency(initialItem.frequency);
+                setPaymentMonth(initialItem.payment_month || 1);
                 setStartDate(
-                    initialPolicy.start_date
-                        ? initialPolicy.start_date.substring(0, 10)
+                    initialItem.start_date
+                        ? initialItem.start_date.substring(0, 10)
                         : "",
                 );
-                setNotes(initialPolicy.notes || "");
+                setNotes(initialItem.notes || "");
             } else {
                 setName("");
                 setType("insurance");
@@ -129,7 +129,7 @@ export function AddPolicyModal({
             setErrorMessage(null);
             setIsSubmitting(false);
         }
-    }, [isOpen, initialPolicy, defaultOwnerId]);
+    }, [isOpen, initialItem, defaultOwnerId]);
 
     if (!isOpen) return null;
 
@@ -151,7 +151,7 @@ export function AddPolicyModal({
 
         try {
             setIsSubmitting(true);
-            const payload: CreatePolicyInput & { id?: string } = {
+            const payload: CreateRecurringItemInput & { id?: string } = {
                 name: trimmedName,
                 type,
                 owner_id: ownerId,
@@ -163,22 +163,22 @@ export function AddPolicyModal({
                 notes: notes.trim() || null,
             };
 
-            if (initialPolicy?.id) {
-                payload.id = initialPolicy.id;
+            if (initialItem?.id) {
+                payload.id = initialItem.id;
             }
 
             await onSave(payload);
             onClose();
         } catch (err: unknown) {
             setErrorMessage(
-                err instanceof Error ? err.message : "Failed to save policy",
+                err instanceof Error ? err.message : "Failed to save recurring item",
             );
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const isEditing = Boolean(initialPolicy?.id);
+    const isEditing = Boolean(initialItem?.id);
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
@@ -212,13 +212,13 @@ export function AddPolicyModal({
                     {/* Policy Name */}
                     <div>
                         <label
-                            htmlFor="policy-name"
+                            htmlFor="recurring-name"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
                             Policy Name *
                         </label>
                         <input
-                            id="policy-name"
+                            id="recurring-name"
                             type="text"
                             placeholder="e.g. AIA Guaranteed Protect Plus, IncomeShield"
                             value={name}
@@ -231,12 +231,12 @@ export function AddPolicyModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <Select
-                                id="policy-type"
+                                id="recurring-type"
                                 label="Type"
                                 value={type}
                                 onChange={(e) =>
                                     setType(
-                                        e.target.value as RecurringPolicyType,
+                                        e.target.value as RecurringItemType,
                                     )
                                 }
                                 className="bg-(--bg-canvas)"
@@ -258,7 +258,7 @@ export function AddPolicyModal({
 
                         <div>
                             <Select
-                                id="policy-owner"
+                                id="recurring-owner"
                                 label="Owner"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
@@ -277,7 +277,7 @@ export function AddPolicyModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label
-                                htmlFor="policy-amount"
+                                htmlFor="recurring-amount"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
                                 Premium Amount *
@@ -287,7 +287,7 @@ export function AddPolicyModal({
                                     S$
                                 </span>
                                 <input
-                                    id="policy-amount"
+                                    id="recurring-amount"
                                     type="number"
                                     step="0.01"
                                     min="0.01"
@@ -301,7 +301,7 @@ export function AddPolicyModal({
 
                         <div>
                             <Select
-                                id="policy-frequency"
+                                id="recurring-frequency"
                                 label="Frequency"
                                 value={frequency}
                                 onChange={(e) =>
@@ -325,7 +325,7 @@ export function AddPolicyModal({
                     {frequency === "annually" && (
                         <div>
                             <Select
-                                id="policy-month"
+                                id="recurring-month"
                                 label="Renewal Month"
                                 value={paymentMonth}
                                 onChange={(e) =>
@@ -345,13 +345,13 @@ export function AddPolicyModal({
                     {/* Start Date */}
                     <div>
                         <label
-                            htmlFor="policy-start-date"
+                            htmlFor="recurring-start-date"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
                             Policy Inception / Start Date (Optional)
                         </label>
                         <input
-                            id="policy-start-date"
+                            id="recurring-start-date"
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
@@ -362,13 +362,13 @@ export function AddPolicyModal({
                     {/* Notes */}
                     <div>
                         <label
-                            htmlFor="policy-notes"
+                            htmlFor="recurring-notes"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
                             Notes
                         </label>
                         <textarea
-                            id="policy-notes"
+                            id="recurring-notes"
                             rows={2}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
@@ -401,4 +401,4 @@ export function AddPolicyModal({
     );
 }
 
-export default AddPolicyModal;
+export default AddRecurringModal;

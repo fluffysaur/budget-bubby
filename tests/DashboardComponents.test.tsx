@@ -20,9 +20,9 @@
  *    - Handles empty goals state cleanly
  *    - Invokes onViewAll callback
  * 4. UpcomingBillsWidget:
- *    - Displays recurring policies / bills due in current and upcoming months
- *    - Displays policy type badge, amount formatted in SGD, and due timing
- *    - Handles empty policies state cleanly
+ *    - Displays recurring items / bills due in current and upcoming months
+ *    - Displays recurring item type badge, amount formatted in SGD, and due timing
+ *    - Handles empty recurring items state cleanly
  *    - Invokes onViewAll callback
  * 5. DashboardPage:
  *    - Household perspective renders NetWorthHeroCard, SettlementWidget, SharedGoalsOverview, UpcomingBillsWidget
@@ -48,7 +48,7 @@ import type {
   HouseholdOverview,
   Loan,
   MonthlyBudgetDetail,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   SettlementSummary,
 } from '../src/types/finance';
@@ -138,7 +138,7 @@ const sampleGoals: SavingsGoal[] = [
   },
 ];
 
-const samplePolicies: RecurringPolicy[] = [
+const sampleItems: RecurringItem[] = [
   {
     id: 'pol-01',
     household_id: 'hh-001',
@@ -284,7 +284,7 @@ const sampleHouseholdOverview: HouseholdOverview = {
   trueNetWorth: -180000.0,
   settlementSummary: sampleSettlementSummary,
   activeGoals: sampleGoals,
-  upcomingBills: samplePolicies,
+  upcomingBills: sampleItems,
 };
 
 const sampleMonthlyBudget: MonthlyBudgetDetail = {
@@ -489,8 +489,8 @@ describe('SharedGoalsOverview', () => {
 });
 
 describe('UpcomingBillsWidget', () => {
-  it('renders upcoming policies with formatted amounts and renewal status', () => {
-    render(<UpcomingBillsWidget policies={samplePolicies} />);
+  it('renders upcoming recurring items with formatted amounts and renewal status', () => {
+    render(<UpcomingBillsWidget recurringItems={sampleItems} />);
 
     expect(screen.getByText('Manulife - Lifeready 25 Plus')).toBeInTheDocument();
     expect(screen.getByText('IncomeShield Preferred')).toBeInTheDocument();
@@ -499,13 +499,13 @@ describe('UpcomingBillsWidget', () => {
   });
 
   it('renders empty state when no upcoming bills', () => {
-    render(<UpcomingBillsWidget policies={[]} />);
+    render(<UpcomingBillsWidget recurringItems={[]} />);
     expect(screen.getByText(/no upcoming renewals/i)).toBeInTheDocument();
   });
 
   it('calls onViewAll callback when View All button is clicked', () => {
     const onViewAll = vi.fn();
-    render(<UpcomingBillsWidget policies={samplePolicies} onViewAll={onViewAll} />);
+    render(<UpcomingBillsWidget recurringItems={sampleItems} onViewAll={onViewAll} />);
 
     const viewAllBtn = screen.getByRole('button', { name: /view all/i });
     fireEvent.click(viewAllBtn);
@@ -520,7 +520,7 @@ describe('DashboardPage', () => {
     vi.spyOn(financeService, 'getAccounts').mockResolvedValue(sampleAccounts);
     vi.spyOn(financeService, 'getLoans').mockResolvedValue(sampleLoans);
     vi.spyOn(financeService, 'getGoals').mockResolvedValue(sampleGoals);
-    vi.spyOn(financeService, 'getPolicies').mockResolvedValue(samplePolicies);
+    vi.spyOn(financeService, 'getRecurringItems').mockResolvedValue(sampleItems);
     vi.spyOn(financeService, 'getExpenses').mockResolvedValue(sampleExpenses);
     vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue(sampleMonthlyBudget);
   });

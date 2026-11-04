@@ -16,7 +16,7 @@ import type {
   UpdateCategoryInput,
   CreateExpenseInput,
   CreateGoalInput,
-  CreatePolicyInput,
+  CreateRecurringItemInput,
   Expense,
   ExpenseFilter,
   Household,
@@ -27,7 +27,7 @@ import type {
   MonthlyBudgetCategoryDetail,
   MonthlyBudgetDetail,
   Perspective,
-  RecurringPolicy,
+  RecurringItem,
   SavingsGoal,
   UpdateExpenseInput,
   CreditCard,
@@ -46,7 +46,7 @@ import {
   calculateSharedExpenseSettlement,
   calculateGoalPacing,
   calculateCPFAndNetPay,
-  calculateMemberPolicyDeductions,
+  calculateMemberRecurringDeductions,
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
@@ -201,12 +201,12 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const activeGoals = (goalsData || []) as SavingsGoal[];
 
     // 7. Recurring Policies
-    const { data: policiesData, error: polError } = await client
-      .from('recurring_policies')
+    const { data: recurringItemsData, error: polError } = await client
+      .from('recurring_items')
       .select('*')
       .eq('household_id', household.id);
     if (polError) throw polError;
-    const upcomingBills = (policiesData || []) as RecurringPolicy[];
+    const upcomingBills = (recurringItemsData || []) as RecurringItem[];
 
     return {
       household,
@@ -670,10 +670,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       catAllocData = (allocRows as unknown as CategoryAllocRow[]) || [];
     } else {
       // Synthesize budget from base_budget_profiles + base_profile_allocations for new months
-      const [profs, allCats, policies] = await Promise.all([
+      const [profs, allCats, recurringItems] = await Promise.all([
         this.getBaseProfiles(),
         this.getCategories(),
-        this.getPolicies(),
+        this.getRecurringItems(),
       ]);
       const baseProfile =
         profs.find((p) => !memberId || p.owner_id === memberId) || profs[0];
@@ -683,7 +683,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
       const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberPolicyDeductions(policies, ownerId);
+        calculateMemberRecurringDeductions(recurringItems, ownerId);
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
       ) / 100;
@@ -718,26 +718,26 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
 
     const nextMonth = addMonths(month, 1);
-    const [{ data: expensesData, error: expError }, policies] = await Promise.all([
+    const [{ data: expensesData, error: expError }, recurringItems] = await Promise.all([
       client
         .from('expenses')
         .select('*')
         .gte('date', `${month}-01`)
         .lt('date', `${nextMonth}-01`),
-      this.getPolicies(),
+      this.getRecurringItems(),
     ]);
     if (expError) throw expError;
 
     const expenses = (expensesData || []) as Expense[];
-    if (budgetData && !budget.is_locked && policies && policies.length > 0) {
-      const hasTaxOrInsPolicies = policies.some(
+    if (budgetData && !budget.is_locked && recurringItems && recurringItems.length > 0) {
+      const hasTaxOrInsItems = recurringItems.some(
         (p) =>
           (p.type === 'tax' || p.type === 'insurance') &&
           (!budget.owner_id || p.owner_id === budget.owner_id || p.owner_id === 'joint')
       );
-      if (hasTaxOrInsPolicies) {
-        const { taxesMonthly, insuranceMonthly } = calculateMemberPolicyDeductions(
-          policies,
+      if (hasTaxOrInsItems) {
+        const { taxesMonthly, insuranceMonthly } = calculateMemberRecurringDeductions(
+          recurringItems,
           budget.owner_id
         );
         budget = {
@@ -760,7 +760,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         }));
       }
     }
-    const subscriptionItems = (policies || []).filter(
+    const subscriptionItems = (recurringItems || []).filter(
       (p) =>
         p.type === 'subscription' &&
         (p.owner_id === budget.owner_id || p.owner_id === 'joint')
@@ -1110,14 +1110,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     return data as SavingsGoal;
   }
 
-  public async getPolicies(): Promise<RecurringPolicy[]> {
+  public async getRecurringItems(): Promise<RecurringItem[]> {
     const client = getClient();
-    const { data, error } = await client.from('recurring_policies').select('*');
+    const { data, error } = await client.from('recurring_items').select('*');
     if (error) throw error;
-    return (data || []) as RecurringPolicy[];
+    return (data || []) as RecurringItem[];
   }
 
-  public async addPolicy(input: CreatePolicyInput): Promise<RecurringPolicy> {
+  public async addRecurringItem(input: CreateRecurringItemInput): Promise<RecurringItem> {
     const client = getClient();
     const householdId = isValidUuid(input.household_id)
       ? input.household_id
@@ -1128,7 +1128,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         : Math.round(input.amount * 100) / 100;
 
     const { data, error } = await client
-      .from('recurring_policies')
+      .from('recurring_items')
       .insert({
         household_id: householdId,
         owner_id: input.owner_id === 'joint' || !input.owner_id ? null : input.owner_id,
@@ -1145,19 +1145,19 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .select()
       .single();
     if (error) throw error;
-    return data as RecurringPolicy;
+    return data as RecurringItem;
   }
 
-  public async updatePolicy(
+  public async updateRecurringItem(
     id: string,
-    updates: Partial<RecurringPolicy>
-  ): Promise<RecurringPolicy> {
+    updates: Partial<RecurringItem>
+  ): Promise<RecurringItem> {
     const client = getClient();
 
-    const finalUpdates: Partial<RecurringPolicy> = { ...updates };
+    const finalUpdates: Partial<RecurringItem> = { ...updates };
     if (updates.amount !== undefined || updates.frequency !== undefined) {
       const { data: existing, error: fetchErr } = await client
-        .from('recurring_policies')
+        .from('recurring_items')
         .select('*')
         .eq('id', id)
         .single();
@@ -1175,18 +1175,18 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
 
     const { data, error } = await client
-      .from('recurring_policies')
+      .from('recurring_items')
       .update(finalUpdates)
       .eq('id', id)
       .select()
       .single();
     if (error) throw error;
-    return data as RecurringPolicy;
+    return data as RecurringItem;
   }
 
-  public async deletePolicy(id: string): Promise<void> {
+  public async deleteRecurringItem(id: string): Promise<void> {
     const client = getClient();
-    const { error } = await client.from('recurring_policies').delete().eq('id', id);
+    const { error } = await client.from('recurring_items').delete().eq('id', id);
     if (error) throw error;
   }
 

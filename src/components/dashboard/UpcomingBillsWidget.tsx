@@ -19,16 +19,16 @@ import {
     MONTH_NAMES_FULL as MONTH_NAMES,
 } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
-import type { RecurringPolicy, RecurringPolicyType } from "../../types/finance";
+import type { RecurringItem, RecurringItemType } from "../../types/finance";
 
 export interface UpcomingBillsWidgetProps {
-    policies?: RecurringPolicy[];
+    recurringItems?: RecurringItem[];
     onViewAll?: () => void;
     className?: string;
 }
 
 export function UpcomingBillsWidget({
-    policies = [],
+    recurringItems = [],
     onViewAll,
     className = "",
 }: UpcomingBillsWidgetProps) {
@@ -36,11 +36,11 @@ export function UpcomingBillsWidget({
     const currentMonthNum = sgNow.getMonth() + 1; // 1 - 12
     const nextMonthNum = (currentMonthNum % 12) + 1;
 
-    // Filter and sort policies by due urgency
-    const sortedPolicies = useMemo(() => {
-        return [...policies].sort((a, b) => {
+    // Filter and sort recurring items by due urgency
+    const sortedItems = useMemo(() => {
+        return [...recurringItems].sort((a, b) => {
             // Prioritize current month, then next month, then other months
-            const getPriority = (p: RecurringPolicy) => {
+            const getPriority = (p: RecurringItem) => {
                 if (p.frequency === "monthly") return 3;
                 if (p.payment_month === currentMonthNum) return 1;
                 if (p.payment_month === nextMonthNum) return 2;
@@ -48,11 +48,11 @@ export function UpcomingBillsWidget({
             };
             return getPriority(a) - getPriority(b);
         });
-    }, [policies, currentMonthNum, nextMonthNum]);
+    }, [recurringItems, currentMonthNum, nextMonthNum]);
 
-    const displayPolicies = sortedPolicies.slice(0, 3);
+    const displayItems = sortedItems.slice(0, 3);
 
-    const getTypeBadge = (type: RecurringPolicyType) => {
+    const getTypeBadge = (type: RecurringItemType) => {
         switch (type) {
             case "insurance":
                 return (
@@ -79,7 +79,7 @@ export function UpcomingBillsWidget({
         }
     };
 
-    const getDueStatus = (p: RecurringPolicy) => {
+    const getDueStatus = (p: RecurringItem) => {
         if (p.frequency === "monthly") {
             return { text: "Monthly active", urgent: false };
         }
@@ -112,7 +112,7 @@ export function UpcomingBillsWidget({
                             Upcoming Renewals
                         </h3>
                         <p className="text-xs font-semibold text-(--text-muted)">
-                            Insurance, tax &amp; policy alerts
+                            Insurance, tax &amp; recurring item alerts
                         </p>
                     </div>
                 </div>
@@ -134,7 +134,7 @@ export function UpcomingBillsWidget({
 
             {/* Content */}
             <div className="mt-4">
-                {displayPolicies.length === 0 ? (
+                {displayItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-(--border-ink) py-8 text-center bg-(--bg-cream)">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-lg mb-2">
                             📋
@@ -143,18 +143,18 @@ export function UpcomingBillsWidget({
                             No upcoming renewals
                         </p>
                         <p className="mt-1 text-xs text-(--text-muted) max-w-xs font-medium">
-                            Add recurring insurance policies or annual IRAS
+                            Add recurring insurance recurring items or annual IRAS
                             taxes to track renewal dates.
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-2.5">
-                        {displayPolicies.map((policy) => {
-                            const due = getDueStatus(policy);
+                        {displayItems.map((recurringItem) => {
+                            const due = getDueStatus(recurringItem);
 
                             return (
                                 <div
-                                    key={policy.id}
+                                    key={recurringItem.id}
                                     className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-card)"
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -164,10 +164,10 @@ export function UpcomingBillsWidget({
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <TruncatedText
-                                                    text={policy.name}
+                                                    text={recurringItem.name}
                                                     className="text-sm font-bold text-(--text-ink) font-display"
                                                 />
-                                                {getTypeBadge(policy.type)}
+                                                {getTypeBadge(recurringItem.type)}
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span
@@ -180,7 +180,7 @@ export function UpcomingBillsWidget({
                                                     {due.text}
                                                 </span>
                                                 <span className="text-[11px] font-medium text-(--text-muted) capitalize">
-                                                    • {policy.frequency}
+                                                    • {recurringItem.frequency}
                                                 </span>
                                             </div>
                                         </div>
@@ -188,13 +188,13 @@ export function UpcomingBillsWidget({
 
                                     <div className="text-right shrink-0">
                                         <div className="text-sm font-black text-(--text-ink) font-mono-num">
-                                            {formatSGD(policy.amount)}
+                                            {formatSGD(recurringItem.amount)}
                                         </div>
-                                        {policy.frequency === "annually" && (
+                                        {recurringItem.frequency === "annually" && (
                                             <div className="text-[10px] font-mono-num text-(--text-muted)">
                                                 ~
                                                 {formatSGD(
-                                                    policy.monthly_amortized_amount,
+                                                    recurringItem.monthly_amortized_amount,
                                                 )}
                                                 /mo
                                             </div>
