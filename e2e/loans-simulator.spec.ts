@@ -4,8 +4,9 @@ test.describe('Loans & Prepayment Simulator Flow', () => {
   test('should display HDB loan and dynamically calculate prepayment interest savings', async ({ page }) => {
     await page.goto('/loans');
 
-    // Verify page heading
-    await expect(page.getByRole('heading', { level: 1, name: /Loans & Debt Freedom/i })).toBeVisible();
+    // Loans lives under the Plan page's Loans tab
+    await expect(page.getByRole('heading', { level: 1, name: /^Plan$/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Loans/i })).toHaveAttribute('aria-selected', 'true');
 
     // Verify HDB loan card displays interest rate 2.60%
     await expect(page.getByText('2.60%')).toBeVisible();
