@@ -15,7 +15,7 @@ import { CreditCard } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
 import {
     PageHeader,
-    LoadingCard,
+    LoansSkeleton,
     EmptyStateCard,
     SegmentedTabs,
     type TabItem,
@@ -183,7 +183,7 @@ export function LoansPage({ className = "", embedded = false }: LoansPageProps) 
     if (isLoading) {
         return (
             <div className={`space-y-4 ${className}`}>
-                <LoadingCard message="Loading loan amortization schedules & payment engine..." />
+                <LoansSkeleton />
             </div>
         );
     }

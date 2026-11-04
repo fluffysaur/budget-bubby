@@ -19,7 +19,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, TruncatedText, LoadingCard } from "../components/ui";
+import { PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
 import {
     useAccountsQuery,
     useLoansQuery,
@@ -30,7 +30,8 @@ import {
     useCategoriesQuery,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
-import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
+import { formatDisplayDate } from "../lib/dateUtils";
+import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { mockCategories, mockMembers } from "../data/mockSeedData";
 import { isSpendableCategory } from "../lib/financialFormulas";
 import { NetWorthHeroCard } from "../components/dashboard/NetWorthHeroCard";
@@ -65,7 +66,7 @@ export function DashboardPage({
         ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
     const isHousehold = perspective === "household";
 
-    const currentMonth = getCurrentMonth();
+    const currentMonth = useCurrentMonth();
     const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
 
     // TanStack Query Cached Data Hooks
@@ -73,8 +74,9 @@ export function DashboardPage({
     const { data: loansData } = useLoansQuery();
     const { data: goalsData } = useGoalsQuery();
     const { data: recurringItemsData } = useRecurringItemsQuery();
-    const { data: expensesData } = useExpensesQuery();
-    const { data: budgetData } = useMonthlyBudgetQuery(
+    const { data: expensesData, isLoading: expensesLoading } =
+        useExpensesQuery();
+    const { data: budgetData, isLoading: budgetLoading } = useMonthlyBudgetQuery(
         currentMonth,
         targetMemberId,
     );
@@ -88,8 +90,11 @@ export function DashboardPage({
     const monthlyBudget = budgetData || null;
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
 
-    // Only show loading spinner on initial cold load if primary data has not arrived yet
-    const isLoading = accountsLoading && !accountsData;
+    // Show skeleton until the figures the overview renders (balances, budget, spend) have data for the current keys
+    const isLoading =
+        (accountsLoading && !accountsData) ||
+        (budgetLoading && !budgetData) ||
+        (expensesLoading && !expensesData);
 
     // Modal States
     const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
@@ -230,7 +235,7 @@ export function DashboardPage({
 
             {/* Loading Indicator */}
             {isLoading ? (
-                <LoadingCard message="Loading household overview..." />
+                <DashboardSkeleton />
             ) : (
                 <>
                     {/* GAMIFIED DAILY CHECK-IN STREAK BAR */}

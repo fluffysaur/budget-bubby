@@ -30,9 +30,9 @@ import {
 import {
     addMonths,
     formatDisplayMonth,
-    getCurrentMonth,
     MONTH_NAMES_SHORT as MONTH_NAMES,
 } from "../../lib/dateUtils";
+import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
 export interface MonthPickerProps {
     selectedMonth: string; // 'YYYY-MM'
@@ -45,7 +45,7 @@ export function MonthPicker({
     onChangeMonth,
     className = "",
 }: MonthPickerProps) {
-    const currentMonth = getCurrentMonth();
+    const currentMonth = useCurrentMonth();
 
     const [isOpen, setIsOpen] = useState(false);
     const [navYear, setNavYear] = useState<number>(() => {

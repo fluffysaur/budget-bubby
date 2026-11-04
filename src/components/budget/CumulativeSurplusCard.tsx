@@ -18,7 +18,6 @@ import {
     PiggyBank,
     Sparkles,
     Calendar,
-    Loader2,
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
@@ -30,6 +29,7 @@ import { calculateCumulativeSurplus } from "../../lib/financialFormulas";
 import { financeService } from "../../services/financeService";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Button } from "../ui/Button";
+import { Skeleton, SkeletonGroup } from "../ui/Skeleton";
 import {
     SurplusSweepModal,
     type SurplusSweepAllocation,
@@ -191,12 +191,21 @@ export function CumulativeSurplusCard({
 
     if (loading) {
         return (
-            <div
+            <SkeletonGroup
+                label="Loading surplus"
                 data-testid="cumulative-surplus-card"
-                className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex items-center justify-center ${className}`}
+                className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-(--shadow-cute) ${className}`}
             >
-                <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-            </div>
+                <div className="flex items-center gap-2.5">
+                    <Skeleton className="h-8 w-8 rounded-xl shrink-0" />
+                    <Skeleton className="h-4 w-36" />
+                </div>
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Skeleton className="h-16 w-full rounded-xl" />
+                    <Skeleton className="h-16 w-full rounded-xl" />
+                </div>
+                <Skeleton className="mt-4 h-20 w-full rounded-xl" />
+            </SkeletonGroup>
         );
     }
 

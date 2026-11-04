@@ -12,7 +12,8 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 import { TrendingUp } from "lucide-react";
 import type { Account, Loan } from "../../types/finance";
 import { formatSGD } from "../../lib/currency";
-import { getCurrentMonth, addMonths, formatDisplayMonth } from "../../lib/dateUtils";
+import { addMonths, formatDisplayMonth } from "../../lib/dateUtils";
+import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Card } from "../ui/Card";
 
@@ -74,6 +75,7 @@ function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
 }
 
 export function NetWorthChart({ data, accounts, loans, className = "" }: NetWorthChartProps) {
+    const currentM = useCurrentMonth();
     const chartData = useMemo<NetWorthDataPoint[]>(() => {
         if (data && data.length > 0) {
             return data;
@@ -90,7 +92,6 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
             ) / 100;
 
         // Generate a 5-month historical progression leading up to current month
-        const currentM = getCurrentMonth();
         const months = [-4, -3, -2, -1, 0].map((offset) => formatDisplayMonth(addMonths(currentM, offset)));
         const assetMultipliers = [0.93, 0.95, 0.97, 0.985, 1.0];
         const liabilityIncrements = currentLiabilities > 0 ? [10660, 7995, 5330, 2665, 0] : [0, 0, 0, 0, 0];
@@ -112,7 +113,7 @@ export function NetWorthChart({ data, accounts, loans, className = "" }: NetWort
                 netWorth,
             };
         });
-    }, [data, accounts, loans]);
+    }, [data, accounts, loans, currentM]);
 
     const latestPoint = chartData[chartData.length - 1];
 

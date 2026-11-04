@@ -32,7 +32,7 @@ import { mockCategories, mockMembers } from '../../data/mockSeedData';
 import { EditExpenseModal } from './EditExpenseModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
-import { LoadingCard } from '../ui/LoadingCard';
+import { ExpenseRowsSkeleton } from '../ui/PageSkeletons';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { ExpenseFilterBar } from './ExpenseFilterBar';
@@ -224,12 +224,6 @@ export function ExpenseListTable({
   const startIndex = totalItems === 0 ? 0 : (validCurrentPage - 1) * activePageSize + 1;
   const endIndex = Math.min(totalItems, validCurrentPage * activePageSize);
 
-  if (isLoading) {
-    return (
-      <LoadingCard message="Loading transactions..." />
-    );
-  }
-
   // Render sort header icon
   const renderSortIcon = (field: ExpenseSortField) => {
     if (activeSortBy !== field) {
@@ -306,8 +300,10 @@ export function ExpenseListTable({
           </div>
         )}
 
-        {/* Ledger Body: Empty State or Table + Cards */}
-        {expenses.length === 0 ? (
+        {/* Ledger Body: Skeleton, Empty State or Table + Cards */}
+        {isLoading ? (
+          <ExpenseRowsSkeleton />
+        ) : expenses.length === 0 ? (
           <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-(--shadow-(--shadow-cute-sm)) mb-3">
               <Receipt className="h-6 w-6" />

@@ -253,11 +253,16 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       const goalsBefore = await mockFinanceService.getGoals();
       const initialCount = goalsBefore.length;
 
+      // Target 12 months out: S$4,500 left at S$500/mo needs 9, so it stays on track whatever today is.
+      const target = new Date();
+      target.setMonth(target.getMonth() + 12, 1);
+      const targetDate = target.toISOString().slice(0, 10);
+
       const newGoal = await mockFinanceService.addGoal({
         title: 'Kyoto Holiday Fund',
         target_amount: 6000.0,
         saved_so_far: 1500.0,
-        target_date: '2027-07-01',
+        target_date: targetDate,
         monthly_contribution: 500.0,
         emoji: '⛩️',
       });

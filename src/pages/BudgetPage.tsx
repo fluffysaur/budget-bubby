@@ -24,7 +24,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, LoadingCard } from '../components/ui';
+import { PageHeader, Button, StatCard, BudgetContentSkeleton } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import {
   useCategoriesQuery,
@@ -35,6 +35,7 @@ import {
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
 import { getCurrentMonth } from '../lib/dateUtils';
+import { useFollowCurrentMonth } from '../hooks/useCurrentMonth';
 import { isValidUuid } from '../lib/uuid';
 import { isSpendableCategory } from '../lib/financialFormulas';
 import { mockBaseProfiles, mockBaseAllocations, mockCategories } from '../data/mockSeedData';
@@ -63,7 +64,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
   const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
 
   // State
-  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
+  useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
   // Cached Metadata Queries
   const { data: categoriesData } = useCategoriesQuery();
@@ -306,8 +308,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         <PageHeader
           title="Budget"
           actions={
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="flex-1 sm:flex-initial">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto" data-testid="budget-header-actions">
+              <div className="w-full sm:w-auto">
                 <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
               </div>
 
@@ -315,17 +317,16 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 variant="secondary"
                 leftIcon={<Settings className="h-4 w-4 text-slate-500" strokeWidth={2.5} />}
                 onClick={() => handleOpenEditor()}
-                className="shrink-0 justify-center"
+                className="w-full sm:w-auto min-h-11 sm:min-h-0 shrink-0 justify-center"
               >
-                <span className="hidden sm:inline">Edit Budget</span>
-                <span className="sm:hidden">Edit</span>
+                Edit Budget
               </Button>
             </div>
           }
         />
       ) : (
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 sm:flex-initial">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2" data-testid="budget-header-actions">
+          <div className="w-full sm:w-auto">
             <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
           </div>
 
@@ -334,10 +335,9 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
             size="sm"
             leftIcon={<Settings className="h-3.5 w-3.5 text-slate-500" strokeWidth={2.5} />}
             onClick={() => handleOpenEditor()}
-            className="shrink-0 justify-center"
+            className="w-full sm:w-auto min-h-11 sm:min-h-0 shrink-0 justify-center"
           >
-            <span className="hidden sm:inline">Edit Budget</span>
-            <span className="sm:hidden">Edit</span>
+            Edit Budget
           </Button>
         </div>
       )}
@@ -350,6 +350,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 1: Gross Salary */}
         <StatCard
           title="Gross"
+          loading={isLoading}
           value={formatSGD(totalGross, { showCents: false })}
           tooltip="Base salary plus any monthly bonus before deductions."
           icon={<DollarSign className="h-4 w-4" />}
@@ -359,6 +360,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 2: Total Deductions */}
         <StatCard
           title="Deductions"
+          loading={isLoading}
           value={<span className="text-rose-600 dark:text-rose-400">-{formatSGD(totalDeductions, { showCents: false })}</span>}
           tooltip="Employee CPF contribution (20%) + amortized monthly Taxes & Insurance."
           icon={<TrendingDown className="h-4 w-4" />}
@@ -368,6 +370,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 3: Disposable Pool */}
         <StatCard
           title="Take-Home"
+          loading={isLoading}
           value={formatSGD(disposablePool, { showCents: false })}
           tooltip="Net take-home pay after CPF, taxes, and insurance available for category allocations."
           icon={<Wallet className="h-4 w-4" />}
@@ -377,6 +380,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 4: Actual Spent & Remaining */}
         <StatCard
           title="Spent"
+          loading={isLoading}
           value={formatSGD(totalSpent, { showCents: false })}
           subtitle={
             <span
@@ -397,7 +401,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
       {/* Loading Indicator */}
       {isLoading ? (
-        <LoadingCard message="Loading budget details..." />
+        <BudgetContentSkeleton />
       ) : (
         <>
           {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}

@@ -56,6 +56,20 @@ export function getCurrentMonth(): string {
     return formatMonth(d);
 }
 
+const SINGAPORE_UTC_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+/**
+ * Returns milliseconds from `now` until the start of the next calendar month
+ * in Singapore time (UTC+8, no DST).
+ */
+export function msUntilNextMonth(now: Date = new Date()): number {
+    const sg = new Date(now.getTime() + SINGAPORE_UTC_OFFSET_MS);
+    const nextMonthStartUtc =
+        Date.UTC(sg.getUTCFullYear(), sg.getUTCMonth() + 1, 1) -
+        SINGAPORE_UTC_OFFSET_MS;
+    return nextMonthStartUtc - now.getTime();
+}
+
 /**
  * Returns today's date in 'YYYY-MM-DD' format.
  */

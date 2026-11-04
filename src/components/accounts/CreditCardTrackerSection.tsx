@@ -12,6 +12,7 @@ import {
     useState,
     useEffect,
     useCallback,
+    useRef,
     useMemo,
     type FormEvent,
 } from "react";
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { StatCard } from "../ui/StatCard";
+import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { financeService } from "../../services/financeService";
@@ -43,6 +45,7 @@ import {
     formatDisplayDate,
     addMonths,
 } from "../../lib/dateUtils";
+import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
 import type {
     CreditCard,
@@ -119,15 +122,16 @@ export function CreditCardTrackerSection({
     activeMemberId,
     className = "",
 }: CreditCardTrackerSectionProps) {
-    const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-        // Default to 2026-10 or current month
-        const cur = getCurrentMonth();
-        return cur.startsWith("2026") ? cur : "2026-10";
-    });
+    const [selectedMonth, setSelectedMonth] =
+        useState<string>(getCurrentMonth);
+    useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
     const [cards, setCards] = useState<CreditCard[]>([]);
     const [statements, setStatements] = useState<CreditCardStatement[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    // Month whose data is currently loaded; skeletons show until it matches selectedMonth
+    const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
+    const isLoading = loadedMonth !== selectedMonth;
+    const latestMonthRef = useRef<string>(selectedMonth);
 
     // Card modal states
     const [isAddEditCardOpen, setIsAddEditCardOpen] = useState<boolean>(false);
@@ -149,18 +153,22 @@ export function CreditCardTrackerSection({
     const [cardToDelete, setCardToDelete] = useState<CreditCard | null>(null);
 
     const loadData = useCallback(async () => {
+        latestMonthRef.current = selectedMonth;
         try {
-            setIsLoading(true);
             const [allCards, monthStatements] = await Promise.all([
                 financeService.getCreditCards(),
                 financeService.getCreditCardStatements(selectedMonth),
             ]);
+            // Ignore responses for a month the user has already switched away from
+            if (latestMonthRef.current !== selectedMonth) return;
             setCards(allCards || []);
             setStatements(monthStatements || []);
         } catch (err) {
             console.error("Failed to load credit cards or statements:", err);
         } finally {
-            setIsLoading(false);
+            if (latestMonthRef.current === selectedMonth) {
+                setLoadedMonth(selectedMonth);
+            }
         }
     }, [selectedMonth]);
 
@@ -326,9 +334,12 @@ export function CreditCardTrackerSection({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
+                <div
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto sm:shrink-0"
+                    data-testid="credit-card-header-actions"
+                >
                     {/* Month Stepper */}
-                    <div className="flex items-center gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-(--shadow-(--shadow-cute)-sm)">
+                    <div className="flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-(--shadow-cute-sm)">
                         <button
                             type="button"
                             aria-label="Previous Month"
@@ -358,6 +369,7 @@ export function CreditCardTrackerSection({
                         variant="primary"
                         size="sm"
                         aria-label="Add Credit Card"
+                        className="w-full sm:w-auto min-h-11 sm:min-h-0 justify-center"
                         leftIcon={<Plus className="h-4 w-4 stroke-3" />}
                         onClick={() => {
                             setCardToEdit(null);
@@ -373,6 +385,7 @@ export function CreditCardTrackerSection({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     title="Total CC Bill Due this Month"
+                    loading={isLoading}
                     value={formatSGD(totalBillDue)}
                     subtitle={`Across ${filteredCards.length} configured card${filteredCards.length === 1 ? "" : "s"}`}
                     icon={<ReceiptText className="h-4 w-4" />}
@@ -381,6 +394,7 @@ export function CreditCardTrackerSection({
 
                 <StatCard
                     title="Total Paid"
+                    loading={isLoading}
                     value={formatSGD(totalPaid)}
                     subtitle="Cleared statements"
                     icon={<FileCheck2 className="h-4 w-4" />}
@@ -389,6 +403,7 @@ export function CreditCardTrackerSection({
 
                 <StatCard
                     title="Total Unpaid"
+                    loading={isLoading}
                     value={formatSGD(totalUnpaid)}
                     subtitle={
                         totalUnpaid > 0
@@ -406,9 +421,7 @@ export function CreditCardTrackerSection({
 
             {/* Card Listing */}
             {isLoading ? (
-                <div className="flex items-center justify-center p-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-400 text-xs">
-                    Loading credit cards &amp; statements...
-                </div>
+                <CreditCardListSkeleton />
             ) : filteredCards.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
                     <CreditCardIcon className="h-10 w-10 text-slate-400 mb-3" />
