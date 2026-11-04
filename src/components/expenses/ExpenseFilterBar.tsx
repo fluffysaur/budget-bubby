@@ -27,7 +27,8 @@ import type {
 } from "../../types/finance";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import { Select } from "../ui/Select";
-import { formatShortMonth, getCurrentMonth } from "../../lib/dateUtils";
+import { formatShortMonth } from "../../lib/dateUtils";
+import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
 export interface ExpenseFilterBarProps {
     filter: ExpenseFilter;
@@ -55,6 +56,7 @@ export function ExpenseFilterBar({
     embeddedInCard = false,
 }: ExpenseFilterBarProps) {
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+    const currentMonth = useCurrentMonth();
 
     const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
         onFilterChange({
@@ -121,17 +123,17 @@ export function ExpenseFilterBar({
         if (filter.categoryId) count++;
         if (filter.payerId) count++;
         if (filter.isShared !== undefined) count++;
-        if (filter.month && filter.month !== getCurrentMonth()) count++;
+        if (filter.month && filter.month !== currentMonth) count++;
         if (filter.tag) count++;
         return count;
-    }, [filter]);
+    }, [filter, currentMonth]);
 
     const hasActiveFilters = Boolean(
         filter.search ||
         filter.categoryId ||
         filter.payerId ||
         filter.isShared !== undefined ||
-        (filter.month && filter.month !== getCurrentMonth()) ||
+        (filter.month && filter.month !== currentMonth) ||
         filter.tag,
     );
 
@@ -173,7 +175,7 @@ export function ExpenseFilterBar({
             });
         }
 
-        if (filter.month && filter.month !== getCurrentMonth()) {
+        if (filter.month && filter.month !== currentMonth) {
             chips.push({
                 id: "month",
                 label: formatShortMonth(filter.month),
@@ -190,7 +192,7 @@ export function ExpenseFilterBar({
         }
 
         return chips;
-    }, [filter, categories, members, onFilterChange]);
+    }, [filter, categories, members, onFilterChange, currentMonth]);
 
     const containerStyle = embeddedInCard
         ? `w-full min-w-0 transition-colors ${className}`

@@ -30,7 +30,8 @@ import {
     useCategoriesQuery,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
-import { getCurrentMonth, formatDisplayDate } from "../lib/dateUtils";
+import { formatDisplayDate } from "../lib/dateUtils";
+import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { mockCategories, mockMembers } from "../data/mockSeedData";
 import { isSpendableCategory } from "../lib/financialFormulas";
 import { NetWorthHeroCard } from "../components/dashboard/NetWorthHeroCard";
@@ -65,7 +66,7 @@ export function DashboardPage({
         ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
     const isHousehold = perspective === "household";
 
-    const currentMonth = getCurrentMonth();
+    const currentMonth = useCurrentMonth();
     const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
 
     // TanStack Query Cached Data Hooks
