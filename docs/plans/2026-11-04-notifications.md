@@ -1,7 +1,7 @@
 # Notifications Overhaul Plan
 
 Date: 2026-11-04
-Status: Phase 1 implemented on `fix/notification-dedup` (uncommitted). Phases 2 and 3 not started.
+Status: Phase 1 in PR #10. Phase 2 implemented on `feat/cc-due-reminders` (stacked on Phase 1, uncommitted). Phase 3 not started.
 
 ## Problem
 
@@ -124,7 +124,7 @@ create index if not exists idx_notification_log_created_at on notification_log(c
 
 ## Phase 2: Settings (`feat/cc-due-reminders`)
 
-### Migration `20261105091000_notification_preferences_timing.sql`
+### Migration `20261105110000_notification_preferences_timing.sql`
 
 ```sql
 alter table notification_preferences
@@ -146,8 +146,11 @@ alter table notification_preferences
     - Replace the `cc_due_days_before` input with toggle chips: `7d`, `3d`, `1d`, `Due day`.
     - Add a check-in time picker and quiet-hours start and end pickers.
     - Toggle descriptions stay under 8 words.
-- Rules read `cc_due_reminder_days` and the check-in time. Quiet hours are enforced only in Phase 3. The browser sends pushes only when the app is open, so Phase 2 doesn't apply them.
-- Check that preference saves now reach the database, given the missing `haptics_enabled` column.
+- Rules read `cc_due_reminder_days` and the check-in time (also used for the couple streak reminder).
+- Quiet hours are already respected by the browser sender: during quiet hours nothing is claimed, so held reminders push on the first app open after they end. Phase 3 moves this to the server.
+- Turning chips on or off also writes `cc_due_days_before` as the largest selected offset (clamped to 1–14), so the old frontend keeps a sensible value.
+- Reading preferences fills fields missing from older rows with defaults and trims Postgres `time` values to `HH:MM`.
+- The preference save now checks the Supabase error instead of ignoring it. The migration adds the missing `haptics_enabled` column, which was making every save fail.
 
 ### Tests
 

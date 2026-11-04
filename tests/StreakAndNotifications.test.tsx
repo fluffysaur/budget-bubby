@@ -31,8 +31,12 @@ import {
   migrateLegacyDismissals,
   computeActiveReminders,
   getDueStage,
+  getCcDueReminderDays,
+  isWithinQuietHours,
+  timeToMinutes,
   checkAndPromptInitialNotificationPermission,
 } from '../src/lib/notificationScheduler';
+import { getDefaultNotificationPreferences } from '../src/data/mockSeedData';
 import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
 import { getTodayDateString, getCurrentMonth } from '../src/lib/dateUtils';
 import type {
@@ -1007,6 +1011,94 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
   });
 
   // =========================================================================
+  // 3b. Timing: check-in time and quiet hours
+  // =========================================================================
+  describe('Notification Timing', () => {
+    const streak: StreakSummary = {
+      currentStreak: 1,
+      longestStreak: 1,
+      checkedInToday: false,
+      coupleStreak: 0,
+    };
+
+    it('starts the check-in reminder at the member check-in time', () => {
+      expect(checkDailyCheckinReminder(streak, 19, 'mem-1', '2026-10-28', '20:00')).toBeNull();
+      expect(checkDailyCheckinReminder(streak, 20, 'mem-1', '2026-10-28', '20:00')).not.toBeNull();
+      expect(checkDailyCheckinReminder(streak, 7, 'mem-1', '2026-10-28', '07:00')).not.toBeNull();
+    });
+
+    it('starts the couple streak reminder at the check-in time', () => {
+      const members: HouseholdMember[] = [
+        { id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' },
+        { id: 'mem-2', household_id: 'hh-1', display_name: 'Rachel', role: 'member' },
+      ];
+      const checkins: DailyCheckin[] = [
+        { id: 'c', household_id: 'hh-1', member_id: 'mem-1', checkin_date: '2026-10-28', type: 'no_spend' },
+      ];
+      expect(checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 20, '2026-10-28', '21:00')).toBeNull();
+      expect(checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 21, '2026-10-28', '21:00')).not.toBeNull();
+    });
+
+    it('detects quiet hours, including windows past midnight', () => {
+      expect(timeToMinutes('18:30')).toBe(1110);
+      expect(timeToMinutes('18:30:00')).toBe(1110);
+      expect(timeToMinutes('bad')).toBeNull();
+
+      // 22:00 -> 08:00 wraps midnight
+      expect(isWithinQuietHours(timeToMinutes('23:15')!, '22:00', '08:00')).toBe(true);
+      expect(isWithinQuietHours(timeToMinutes('03:00')!, '22:00', '08:00')).toBe(true);
+      expect(isWithinQuietHours(timeToMinutes('08:00')!, '22:00', '08:00')).toBe(false);
+      expect(isWithinQuietHours(timeToMinutes('21:59')!, '22:00', '08:00')).toBe(false);
+      // Same-day window
+      expect(isWithinQuietHours(timeToMinutes('13:00')!, '12:00', '14:00')).toBe(true);
+      expect(isWithinQuietHours(timeToMinutes('14:00')!, '12:00', '14:00')).toBe(false);
+      // Equal start and end disables quiet hours
+      expect(isWithinQuietHours(timeToMinutes('13:00')!, '12:00', '12:00')).toBe(false);
+    });
+
+    it('falls back to the legacy lead time for rows without cc_due_reminder_days', () => {
+      const base = getDefaultNotificationPreferences('mem-1');
+      expect(getCcDueReminderDays(base)).toEqual([7, 3, 1, 0]);
+      expect(getCcDueReminderDays({ ...base, cc_due_reminder_days: undefined, cc_due_days_before: 5 })).toEqual([5]);
+      expect(getCcDueReminderDays({ ...base, cc_due_reminder_days: [] })).toEqual([]);
+    });
+
+    it('holds pushes during quiet hours and sends them after', async () => {
+      const showNotificationMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(window, 'Notification', {
+        value: class MockNotification {
+          static permission = 'granted';
+          static requestPermission = vi.fn().mockResolvedValue('granted');
+        },
+        configurable: true,
+        writable: true,
+      });
+      Object.defineProperty(navigator, 'serviceWorker', {
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({ showNotification: showNotificationMock }),
+        },
+        configurable: true,
+      });
+
+      const memberId = 'mem-00000000-0011';
+      await financeService.updateNotificationPreferences(memberId, {
+        quiet_hours_start: '18:00',
+        quiet_hours_end: '20:00',
+      });
+      const referenceDate = new Date('2026-10-29T19:00:00');
+
+      // 19:00 is inside 18:00-20:00: nothing pushed
+      const active = await evaluateAndDispatchReminders({ memberId, currentHour: 19, referenceDate });
+      expect(active.length).toBeGreaterThan(0);
+      expect(showNotificationMock).not.toHaveBeenCalled();
+
+      // 20:00: quiet hours over, held reminders push
+      await evaluateAndDispatchReminders({ memberId, currentHour: 20, referenceDate });
+      expect(showNotificationMock).toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
   // 4. Notification Settings Modal
   // =========================================================================
   describe('NotificationSettingsModal Component', () => {
@@ -1020,10 +1112,10 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(screen.getByText('Push Notifications')).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Sound Effects' })).toBeInTheDocument();
 
-      // Custom thresholds inputs exist
-      const ccLeadInput = screen.getByTestId('input-cc-lead-days');
-      expect(ccLeadInput).toBeInTheDocument();
-      expect(ccLeadInput).toHaveValue(5);
+      // CC due chips: all on by default
+      for (const day of [7, 3, 1, 0]) {
+        expect(await screen.findByTestId(`chip-cc-due-${day}`)).toHaveAttribute('aria-pressed', 'true');
+      }
 
       const budgetWarningInput = screen.getByTestId('input-budget-warning-pct');
       expect(budgetWarningInput).toBeInTheDocument();
@@ -1031,14 +1123,34 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       const updateSpy = vi.spyOn(financeService, 'updateNotificationPreferences');
 
-      // Change CC lead days
+      // Turning off 7d keeps the legacy lead time in sync with the largest offset
       await act(async () => {
-        fireEvent.change(ccLeadInput, { target: { value: '7' } });
+        fireEvent.click(screen.getByTestId('chip-cc-due-7'));
       });
-
       expect(updateSpy).toHaveBeenCalledWith(
         'mem-00000000-0011',
-        expect.objectContaining({ cc_due_days_before: 7 })
+        expect.objectContaining({ cc_due_reminder_days: [3, 1, 0], cc_due_days_before: 3 })
+      );
+      expect(screen.getByTestId('chip-cc-due-7')).toHaveAttribute('aria-pressed', 'false');
+
+      // Timing fields
+      expect(screen.getByTestId('input-checkin-time')).toHaveValue('18:00');
+      expect(screen.getByText('Daily 6:00 PM reminder to log spend')).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('input-checkin-time'), { target: { value: '20:30' } });
+      });
+      expect(updateSpy).toHaveBeenCalledWith(
+        'mem-00000000-0011',
+        expect.objectContaining({ checkin_time: '20:30' })
+      );
+      expect(screen.getByText('Daily 8:30 PM reminder to log spend')).toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.change(screen.getByTestId('input-quiet-start'), { target: { value: '23:00' } });
+      });
+      expect(updateSpy).toHaveBeenCalledWith(
+        'mem-00000000-0011',
+        expect.objectContaining({ quiet_hours_start: '23:00' })
       );
 
       // Reset to defaults
@@ -1049,7 +1161,11 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         'mem-00000000-0011',
-        expect.objectContaining({ cc_due_days_before: 5, budget_warning_pct: 80 })
+        expect.objectContaining({
+          cc_due_reminder_days: [7, 3, 1, 0],
+          checkin_time: '18:00',
+          budget_warning_pct: 80,
+        })
       );
 
       // Click Done

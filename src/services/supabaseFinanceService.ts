@@ -83,6 +83,26 @@ function getClient() {
   return supabase;
 }
 
+/**
+ * Fills fields missing from older rows with defaults and trims Postgres
+ * `time` values ("18:00:00") to "HH:MM".
+ */
+function normalizeNotificationPreferences(
+  row: Record<string, unknown>,
+  memberId: string,
+  householdId: string
+): NotificationPreferences {
+  const prefs = {
+    ...getDefaultNotificationPreferences(memberId, householdId),
+    ...(row as Partial<NotificationPreferences>),
+  };
+  for (const key of ['checkin_time', 'quiet_hours_start', 'quiet_hours_end'] as const) {
+    const value = prefs[key];
+    if (typeof value === 'string') prefs[key] = value.slice(0, 5);
+  }
+  return prefs;
+}
+
 export class SupabaseFinanceServiceImpl implements FinanceService {
   private async getHouseholdId(): Promise<string> {
     const client = getClient();
@@ -1423,10 +1443,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         .maybeSingle();
 
       if (!error && data) {
+        const prefs = normalizeNotificationPreferences(data, memberId, householdId);
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(cacheKey, JSON.stringify(data));
+          window.localStorage.setItem(cacheKey, JSON.stringify(prefs));
         }
-        return data as NotificationPreferences;
+        return prefs;
       }
 
       // If no row exists yet, insert defaults
@@ -1438,10 +1459,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         .single();
 
       if (!insertError && inserted) {
+        const prefs = normalizeNotificationPreferences(inserted, memberId, householdId);
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(cacheKey, JSON.stringify(inserted));
+          window.localStorage.setItem(cacheKey, JSON.stringify(prefs));
         }
-        return inserted as NotificationPreferences;
+        return prefs;
+      }
+      if (insertError) {
+        console.warn('Failed to create notification preferences:', insertError.message);
       }
     } catch (err) {
       console.debug('Failed to fetch notification preferences from Supabase, checking cache:', err);
@@ -1476,7 +1501,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
     try {
       const client = getClient();
-      await client
+      const { error } = await client
         .from('notification_preferences')
         .upsert(
           {
@@ -1486,6 +1511,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
           },
           { onConflict: 'member_id' }
         );
+      if (error) throw error;
     } catch (err) {
       console.debug('Failed to update notification preferences in Supabase:', err);
     }

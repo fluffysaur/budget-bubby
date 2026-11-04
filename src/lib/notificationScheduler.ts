@@ -23,6 +23,9 @@ import {
     checkRecurringBillsReminders,
     checkGoalPacingReminders,
     checkMonthlyBudgetReviewReminder,
+    currentMinutes,
+    isWithinQuietHours,
+    DEFAULT_CC_DUE_REMINDER_DAYS,
     type AppReminder,
 } from "./reminders/rules";
 import type { NotificationPreferences } from "../types/finance";
@@ -74,6 +77,16 @@ export async function migrateLegacyDismissals(memberId: string): Promise<void> {
 // Core Notification Computing & Dispatching Engine
 // =============================================================================
 
+/**
+ * CC due reminder offsets. Rows saved before cc_due_reminder_days existed
+ * fall back to the legacy single lead time.
+ */
+export function getCcDueReminderDays(prefs: NotificationPreferences): number[] {
+    if (Array.isArray(prefs.cc_due_reminder_days)) return prefs.cc_due_reminder_days;
+    if (prefs.cc_due_days_before) return [prefs.cc_due_days_before];
+    return DEFAULT_CC_DUE_REMINDER_DAYS;
+}
+
 export interface ComputeRemindersOptions {
     memberId?: string;
     currentHour?: number;
@@ -122,10 +135,17 @@ export async function computeActiveReminders(
 
         const members = overview.members || [];
         const candidates: (AppReminder | null)[] = [];
+        const ccDueDays = getCcDueReminderDays(prefs);
 
         if (prefs.streak_and_logging) {
             candidates.push(
-                checkDailyCheckinReminder(streak, options?.currentHour, memberId, todayStr),
+                checkDailyCheckinReminder(
+                    streak,
+                    options?.currentHour,
+                    memberId,
+                    todayStr,
+                    prefs.checkin_time,
+                ),
             );
         }
 
@@ -135,12 +155,7 @@ export async function computeActiveReminders(
 
         if (prefs.cc_payment_due) {
             candidates.push(
-                ...checkCreditCardDueReminders(
-                    statements,
-                    todayStr,
-                    prefs.cc_due_days_before || 5,
-                    memberId,
-                ),
+                ...checkCreditCardDueReminders(statements, todayStr, ccDueDays, memberId),
             );
         }
 
@@ -165,6 +180,7 @@ export async function computeActiveReminders(
                     memberId,
                     options?.currentHour,
                     todayStr,
+                    prefs.checkin_time,
                 ),
             );
         }
@@ -282,7 +298,16 @@ export async function evaluateAndDispatchReminders(
 
     const reminders = await computeActiveReminders(options);
 
+    // During quiet hours nothing is claimed, so held reminders push on the
+    // first evaluation after quiet hours end.
+    const quiet = isWithinQuietHours(
+        currentMinutes(options?.currentHour, options?.referenceDate),
+        prefs.quiet_hours_start,
+        prefs.quiet_hours_end,
+    );
+
     if (
+        !quiet &&
         prefs.push_enabled &&
         typeof window !== "undefined" &&
         "Notification" in window &&
