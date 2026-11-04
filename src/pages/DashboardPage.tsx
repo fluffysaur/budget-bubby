@@ -19,7 +19,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, TruncatedText, LoadingCard } from "../components/ui";
+import { PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
 import {
     useAccountsQuery,
     useLoansQuery,
@@ -74,8 +74,9 @@ export function DashboardPage({
     const { data: loansData } = useLoansQuery();
     const { data: goalsData } = useGoalsQuery();
     const { data: policiesData } = usePoliciesQuery();
-    const { data: expensesData } = useExpensesQuery();
-    const { data: budgetData } = useMonthlyBudgetQuery(
+    const { data: expensesData, isLoading: expensesLoading } =
+        useExpensesQuery();
+    const { data: budgetData, isLoading: budgetLoading } = useMonthlyBudgetQuery(
         currentMonth,
         targetMemberId,
     );
@@ -89,8 +90,11 @@ export function DashboardPage({
     const monthlyBudget = budgetData || null;
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
 
-    // Only show loading spinner on initial cold load if primary data has not arrived yet
-    const isLoading = accountsLoading && !accountsData;
+    // Show skeleton until the figures the overview renders (balances, budget, spend) have data for the current keys
+    const isLoading =
+        (accountsLoading && !accountsData) ||
+        (budgetLoading && !budgetData) ||
+        (expensesLoading && !expensesData);
 
     // Modal States
     const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
@@ -231,7 +235,7 @@ export function DashboardPage({
 
             {/* Loading Indicator */}
             {isLoading ? (
-                <LoadingCard message="Loading household overview..." />
+                <DashboardSkeleton />
             ) : (
                 <>
                     {/* GAMIFIED DAILY CHECK-IN STREAK BAR */}

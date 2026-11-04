@@ -367,6 +367,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         {/* Card 1: Spendable Remaining (Primary Card) */}
         <StatCard
           title="Spendable"
+          loading={isLoading}
           value={formatSGD(spendablePacing.spendableRemaining)}
           subtitle={
             spendablePacing.isCurrentMonth
@@ -423,6 +424,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         {/* Card 2: Total Spent */}
         <StatCard
           title="Spent"
+          loading={isLoading}
           value={formatSGD(totalSpent)}
           subtitle={`${expenses.length} transaction${expenses.length === 1 ? '' : 's'}`}
           icon={<Receipt className="h-4 w-4" />}
@@ -432,6 +434,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         {/* Card 3: Shared Spending */}
         <StatCard
           title="Shared"
+          loading={isLoading}
           value={formatSGD(totalShared)}
           tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
           icon={<ArrowRightLeft className="h-4 w-4" />}
@@ -441,6 +444,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         {/* Card 4: Unsettled Balance (Who Owes Whom) */}
         <StatCard
           title="Unsettled"
+          loading={isLoading}
           value={formatSGD(settlement.netBalance)}
           subtitle={settlement.settlementText}
           icon={settlement.netBalance === 0 ? <CheckCircle2 className="h-4 w-4" /> : <Scale className="h-4 w-4" />}

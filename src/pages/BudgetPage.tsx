@@ -24,7 +24,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, LoadingCard } from '../components/ui';
+import { PageHeader, Button, StatCard, BudgetContentSkeleton } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import {
   useCategoriesQuery,
@@ -338,6 +338,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 1: Gross Salary */}
         <StatCard
           title="Gross"
+          loading={isLoading}
           value={formatSGD(totalGross, { showCents: false })}
           tooltip="Base salary plus any monthly bonus before deductions."
           icon={<DollarSign className="h-4 w-4" />}
@@ -347,6 +348,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 2: Total Deductions */}
         <StatCard
           title="Deductions"
+          loading={isLoading}
           value={<span className="text-rose-600 dark:text-rose-400">-{formatSGD(totalDeductions, { showCents: false })}</span>}
           tooltip="Employee CPF contribution (20%) + amortized monthly Taxes & Insurance."
           icon={<TrendingDown className="h-4 w-4" />}
@@ -356,6 +358,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 3: Disposable Pool */}
         <StatCard
           title="Take-Home"
+          loading={isLoading}
           value={formatSGD(disposablePool, { showCents: false })}
           tooltip="Net take-home pay after CPF, taxes, and insurance available for category allocations."
           icon={<Wallet className="h-4 w-4" />}
@@ -365,6 +368,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         {/* Card 4: Actual Spent & Remaining */}
         <StatCard
           title="Spent"
+          loading={isLoading}
           value={formatSGD(totalSpent, { showCents: false })}
           subtitle={
             <span
@@ -385,7 +389,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
       {/* Loading Indicator */}
       {isLoading ? (
-        <LoadingCard message="Loading budget details..." />
+        <BudgetContentSkeleton />
       ) : (
         <>
           {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
