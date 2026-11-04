@@ -38,6 +38,8 @@ import type {
   CheckinType,
   StreakSummary,
   NotificationPreferences,
+  NotificationLogEntry,
+  NotificationLogRef,
   UpdateNotificationPreferencesInput,
 } from '../types/finance';
 import { getDefaultNotificationPreferences } from '../data/mockSeedData';
@@ -57,6 +59,12 @@ import {
 } from '../lib/recurringItems';
 import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
+import {
+  getLocalNotificationLog,
+  claimLocalNotificationSend,
+  markLocalNotificationsRead,
+  dismissLocalNotification,
+} from './localNotificationLog';
 import type { FinanceService } from './financeService';
 
 export const PRESET_DEFAULT_CATEGORIES = [
@@ -1510,6 +1518,90 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       );
     }
     return updated;
+  }
+
+  // Notification Log
+  // Falls back to the device-local log if the table can't be reached
+  // (for example, before the notification_log migration is applied).
+  public async getNotificationLog(memberId: string): Promise<NotificationLogEntry[]> {
+    try {
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await getClient()
+        .from('notification_log')
+        .select('reminder_key, type, sent_at, read_at, dismissed_at, created_at')
+        .eq('member_id', memberId)
+        .gte('created_at', since);
+      if (error) throw error;
+      return (data || []) as NotificationLogEntry[];
+    } catch (err) {
+      console.debug('Failed to fetch notification log, using local log:', err);
+      return getLocalNotificationLog(memberId);
+    }
+  }
+
+  public async claimNotificationSend(memberId: string, ref: NotificationLogRef): Promise<boolean> {
+    try {
+      const householdId = await this.getHouseholdId();
+      // Insert-or-ignore: a returned row means this caller owns the send
+      const { data, error } = await getClient()
+        .from('notification_log')
+        .upsert(
+          {
+            household_id: householdId,
+            member_id: memberId,
+            reminder_key: ref.key,
+            type: ref.type,
+            sent_at: new Date().toISOString(),
+          },
+          { onConflict: 'member_id,reminder_key', ignoreDuplicates: true }
+        )
+        .select('id');
+      if (error) throw error;
+      return (data || []).length > 0;
+    } catch (err) {
+      console.debug('Failed to claim notification send, using local log:', err);
+      return claimLocalNotificationSend(memberId, ref);
+    }
+  }
+
+  public async markNotificationsRead(memberId: string, refs: NotificationLogRef[]): Promise<void> {
+    if (refs.length === 0) return;
+    await this.upsertNotificationLog(memberId, refs, { read_at: new Date().toISOString() }, () =>
+      markLocalNotificationsRead(memberId, refs)
+    );
+  }
+
+  public async dismissNotification(memberId: string, ref: NotificationLogRef): Promise<void> {
+    await this.upsertNotificationLog(memberId, [ref], { dismissed_at: new Date().toISOString() }, () =>
+      dismissLocalNotification(memberId, ref)
+    );
+  }
+
+  private async upsertNotificationLog(
+    memberId: string,
+    refs: NotificationLogRef[],
+    patch: { read_at?: string; dismissed_at?: string },
+    fallback: () => void
+  ): Promise<void> {
+    try {
+      const householdId = await this.getHouseholdId();
+      const { error } = await getClient()
+        .from('notification_log')
+        .upsert(
+          refs.map((ref) => ({
+            household_id: householdId,
+            member_id: memberId,
+            reminder_key: ref.key,
+            type: ref.type,
+            ...patch,
+          })),
+          { onConflict: 'member_id,reminder_key' }
+        );
+      if (error) throw error;
+    } catch (err) {
+      console.debug('Failed to update notification log, using local log:', err);
+      fallback();
+    }
   }
 }
 

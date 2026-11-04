@@ -25,11 +25,12 @@ import {
   checkGoalPacingReminders,
   checkMonthlyBudgetReviewReminder,
   evaluateAndDispatchReminders,
-  clearInFlightDispatches,
   requestNotificationPermission,
   dispatchPWANotification,
-  dismissReminderId,
   getDismissedReminderIds,
+  migrateLegacyDismissals,
+  computeActiveReminders,
+  getDueStage,
   checkAndPromptInitialNotificationPermission,
 } from '../src/lib/notificationScheduler';
 import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
@@ -194,8 +195,9 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       );
       expect(reminderEvening).not.toBeNull();
       expect(reminderEvening?.type).toBe('daily_checkin');
-      expect(reminderEvening?.title).toContain('Evening');
-      expect(reminderEvening?.actionLabel).toBe('Check In Now');
+      expect(reminderEvening?.title).toBe("Log Today's Spend");
+      expect(reminderEvening?.message).toBe('Keep your 2-day streak.');
+      expect(reminderEvening?.actionLabel).toBe('Add Expense');
 
       // Checked in today -> no reminder even in evening
       const reminderNone = checkDailyCheckinReminder(
@@ -231,7 +233,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const r1 = checkBalanceUpdateReminder(emptySnapshots, firstDay);
       expect(r1).not.toBeNull();
       expect(r1?.type).toBe('balance_update');
-      expect(r1?.actionLabel).toBe('Update Balances');
+      expect(r1?.title).toBe('Update Balances');
+      expect(r1?.actionLabel).toBe('Update');
 
       // Missing on 15th -> no reminder (only 1st or end of month)
       const rMid = checkBalanceUpdateReminder(emptySnapshots, midDay);
@@ -313,10 +316,43 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       const alerts = checkCreditCardDueReminders(statements, today);
       expect(alerts).toHaveLength(1);
-      expect(alerts[0].title).toBe('Credit Card Payment Due');
-      expect(alerts[0].message).toContain('DBS Altitude');
-      expect(alerts[0].message).toContain('due in 3 days');
-      expect(alerts[0].actionLabel).toBe('View CC Bill');
+      expect(alerts[0].title).toBe('DBS Altitude Due in 3 Days');
+      expect(alerts[0].message).toBe('S$1,245.50 statement');
+      expect(alerts[0].actionLabel).toBe('View Bill');
+      expect(alerts[0].id).toBe('reminder-cc-due-stmt-1-d5');
+    });
+
+    it('escalates credit card due reminders through each configured offset', () => {
+      expect(getDueStage(8, [7, 3, 1, 0])).toBeNull();
+      expect(getDueStage(7, [7, 3, 1, 0])).toBe('d7');
+      expect(getDueStage(5, [7, 3, 1, 0])).toBe('d7');
+      expect(getDueStage(2, [7, 3, 1, 0])).toBe('d3');
+      expect(getDueStage(1, [7, 3, 1, 0])).toBe('d1');
+      expect(getDueStage(0, [7, 3, 1, 0])).toBe('d0');
+      expect(getDueStage(-1, [7, 3, 1, 0])).toBe('overdue');
+      // Offsets turned off never fire
+      expect(getDueStage(5, [1, 0])).toBeNull();
+
+      const stmt: CreditCardStatement = {
+        id: 'stmt-esc',
+        household_id: 'hh-00000000-0001',
+        card_id: 'card-1',
+        month: '2026-10',
+        statement_amount: 100,
+        due_date: '2026-10-28',
+        is_paid: false,
+      };
+      const ids = ['2026-10-21', '2026-10-24', '2026-10-25', '2026-10-27', '2026-10-28', '2026-10-29'].map(
+        (day) => checkCreditCardDueReminders([stmt], day, [7, 3, 1, 0])[0]?.id
+      );
+      expect(ids).toEqual([
+        'reminder-cc-due-stmt-esc-d7',
+        'reminder-cc-due-stmt-esc-d7',
+        'reminder-cc-due-stmt-esc-d3',
+        'reminder-cc-due-stmt-esc-d1',
+        'reminder-cc-due-stmt-esc-d0',
+        'reminder-cc-due-stmt-esc-overdue',
+      ]);
     });
 
     it('dispatches PWA notification when permitted', async () => {
@@ -408,12 +444,12 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       const popover = screen.getByTestId('notification-center-popover');
       expect(popover).toBeInTheDocument();
-      expect(screen.getByText('Notifications & Reminders')).toBeInTheDocument();
+      expect(screen.getByText('Notifications')).toBeInTheDocument();
 
-      // Check In action button
-      const checkinActionBtn = screen.getByTestId('reminder-action-check_in');
-      expect(checkinActionBtn).toBeInTheDocument();
-      expect(checkinActionBtn.textContent).toContain('Check In Now');
+      // Opening the bell marks reminders read and clears the badge
+      await waitFor(() => {
+        expect(screen.queryByTestId('notification-badge-count')).not.toBeInTheDocument();
+      });
 
       const recordSpy = vi.spyOn(financeService, 'recordDailyCheckin').mockResolvedValueOnce({
         id: 'chk-quick-notif',
@@ -423,12 +459,26 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         type: 'no_spend',
       });
 
-      // Click "Check In Now"
+      // "Add Expense" opens the add-expense flow and does NOT record a check-in
+      const quickAddListener = vi.fn();
+      window.addEventListener('openQuickAdd', quickAddListener);
+      const checkinActionBtn = screen.getByTestId('reminder-action-check_in');
+      expect(checkinActionBtn.textContent).toContain('Add Expense');
       await act(async () => {
         fireEvent.click(checkinActionBtn);
       });
+      window.removeEventListener('openQuickAdd', quickAddListener);
+      expect(quickAddListener).toHaveBeenCalledTimes(1);
+      expect(recordSpy).not.toHaveBeenCalled();
 
-      expect(recordSpy).toHaveBeenCalled();
+      // Reopen; "No Spend" records an explicit no-spend check-in
+      await act(async () => {
+        fireEvent.click(bellBtn);
+      });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('reminder-action-no-spend'));
+      });
+      expect(recordSpy).toHaveBeenCalledWith('mem-00000000-0011', getTodayDateString(), 'no_spend');
 
       // Check CC Action button
       const ccActionBtns = screen.getAllByTestId('reminder-action-view_cc');
@@ -468,17 +518,43 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(screen.queryByTestId('notification-center-mobile-overlay')).not.toBeInTheDocument();
     });
 
-    it('persists dismissed reminder IDs per member in localStorage', () => {
+    it('stores dismissals in the notification log per member', async () => {
       const memberId = 'mem-test-dismiss';
+      await financeService.dismissNotification(memberId, { key: 'rem-1', type: 'budget_limit' });
+      await financeService.dismissNotification(memberId, { key: 'rem-2', type: 'budget_limit' });
+
+      const dismissed = (await financeService.getNotificationLog(memberId))
+        .filter((e) => e.dismissed_at)
+        .map((e) => e.reminder_key);
+      expect(dismissed).toEqual(expect.arrayContaining(['rem-1', 'rem-2']));
+      expect(dismissed).not.toContain('rem-3');
+      expect(await financeService.getNotificationLog('mem-other')).toHaveLength(0);
+    });
+
+    it('migrates legacy localStorage dismissals into the notification log', async () => {
+      const memberId = 'mem-test-legacy';
+      localStorage.setItem(`bb_notif_dismissed_${memberId}`, JSON.stringify(['old-1', 'old-2']));
+
+      await migrateLegacyDismissals(memberId);
+
       expect(getDismissedReminderIds(memberId).size).toBe(0);
+      const keys = (await financeService.getNotificationLog(memberId))
+        .filter((e) => e.dismissed_at)
+        .map((e) => e.reminder_key);
+      expect(keys).toEqual(expect.arrayContaining(['old-1', 'old-2']));
+    });
 
-      dismissReminderId(memberId, 'rem-1');
-      dismissReminderId(memberId, 'rem-2');
+    it('hides dismissed reminders from computeActiveReminders', async () => {
+      const memberId = 'mem-00000000-0011';
+      const referenceDate = new Date('2026-10-29T19:00:00');
+      const before = await computeActiveReminders({ memberId, currentHour: 19, referenceDate });
+      const checkin = before.find((r) => r.type === 'daily_checkin');
+      expect(checkin).toBeDefined();
 
-      const dismissed = getDismissedReminderIds(memberId);
-      expect(dismissed.has('rem-1')).toBe(true);
-      expect(dismissed.has('rem-2')).toBe(true);
-      expect(dismissed.has('rem-3')).toBe(false);
+      await financeService.dismissNotification(memberId, { key: checkin!.id, type: checkin!.type });
+
+      const after = await computeActiveReminders({ memberId, currentHour: 19, referenceDate });
+      expect(after.find((r) => r.id === checkin!.id)).toBeUndefined();
     });
 
     it('prompts initial notification permission on first launch', async () => {
@@ -555,7 +631,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const r2 = checkMissingCreditCardStatements(cards, statements, new Date('2026-10-26T12:00:00'));
       expect(r2).toHaveLength(1);
       expect(r2[0].type).toBe('credit_card_missing_stmt');
-      expect(r2[0].message).toContain('OCBC 365');
+      expect(r2[0].title).toBe('OCBC 365 Statement Needed');
+      expect(r2[0].message).toBe('Cycle closed on day 25.');
     });
 
     it('checkPartnerSharedSpendReminders alerts for recent unsettled expenses paid by partner', () => {
@@ -592,9 +669,37 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const reminders = checkPartnerSharedSpendReminders(expenses, members, 'mem-1', '2026-10-28');
       expect(reminders).toHaveLength(1);
       expect(reminders[0].type).toBe('partner_shared_spend');
-      expect(reminders[0].title).toContain('Rachel Logged Shared Spend');
-      expect(reminders[0].message).toContain('Din Tai Fung');
-      expect(reminders[0].message).toContain('SGD 40.00');
+      expect(reminders[0].title).toBe('Rachel Logged Din Tai Fung');
+      expect(reminders[0].message).toBe('Your share: S$40.00');
+    });
+
+    it('checkPartnerSharedSpendReminders sends one daily summary for several expenses', () => {
+      const members: HouseholdMember[] = [
+        { id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' },
+        { id: 'mem-2', household_id: 'hh-1', display_name: 'Rachel', role: 'member' },
+      ];
+      const shared = {
+        household_id: 'hh-1',
+        payer_id: 'mem-2',
+        is_shared: true,
+        split_ratio: 0.5,
+        settled: false,
+      };
+      const expenses: Expense[] = [
+        { ...shared, id: 'exp-a', date: '2026-10-26', item: 'Dinner', amount: 60 },
+        { ...shared, id: 'exp-b', date: '2026-10-27', item: 'Taxi', amount: 20 },
+        { ...shared, id: 'exp-c', date: '2026-10-28', item: 'Groceries', amount: 100 },
+      ];
+
+      const day1 = checkPartnerSharedSpendReminders(expenses, members, 'mem-1', '2026-10-28');
+      expect(day1).toHaveLength(1);
+      expect(day1[0].title).toBe('Rachel Logged 3 Expenses');
+      expect(day1[0].message).toBe('Your share: S$90.00');
+      expect(day1[0].id).toBe('reminder-partner-spend-mem-1-mem-2-2026-10-28');
+
+      // Next day is a new summary key
+      const day2 = checkPartnerSharedSpendReminders(expenses, members, 'mem-1', '2026-10-29');
+      expect(day2[0].id).toBe('reminder-partner-spend-mem-1-mem-2-2026-10-29');
     });
 
     it('checkSettlementReminder triggers when net balance exceeds threshold or month-end', () => {
@@ -611,7 +716,16 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const rExceed = checkSettlementReminder(summary, 200, new Date('2026-10-15T12:00:00'));
       expect(rExceed).not.toBeNull();
       expect(rExceed?.type).toBe('settlement_due');
-      expect(rExceed?.message).toContain('SGD 250.00');
+      expect(rExceed?.message).toBe('S$250.00 unsettled');
+
+      // Balance changes within the month keep the same key (one push per month)
+      const rExceedLater = checkSettlementReminder(
+        { ...summary, netBalance: 310 },
+        200,
+        new Date('2026-10-20T12:00:00')
+      );
+      expect(rExceedLater?.id).toBe(rExceed?.id);
+      expect(rExceed?.id).toBe('reminder-settlement-2026-10');
 
       // Below threshold and mid-month -> null
       const summarySmall: SettlementSummary = {
@@ -625,6 +739,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const rSmallEnd = checkSettlementReminder(summarySmall, 200, new Date('2026-10-28T12:00:00'));
       expect(rSmallEnd).not.toBeNull();
       expect(rSmallEnd?.type).toBe('settlement_due');
+      // Month-end reminder has its own key
+      expect(rSmallEnd?.id).toBe('reminder-settlement-monthend-2026-10');
     });
 
     it('checkCoupleStreakRiskReminder alerts in evening when active member checked in but partner has not', () => {
@@ -651,8 +767,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const rEvening = checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 19, '2026-10-28');
       expect(rEvening).not.toBeNull();
       expect(rEvening?.type).toBe('couple_streak_risk');
-      expect(rEvening?.title).toContain('Couple Streak At Risk!');
-      expect(rEvening?.message).toContain('Rachel');
+      expect(rEvening?.title).toBe('Couple Streak at Risk');
+      expect(rEvening?.message).toBe("Rachel hasn't checked in today.");
     });
 
     it('checkBudgetLimitReminders alerts for spendable categories nearing or exceeding cap', () => {
@@ -715,8 +831,26 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       const alerts = checkBudgetLimitReminders(monthlyBudget, 80);
       expect(alerts).toHaveLength(2);
-      expect(alerts.find((a) => a.title.includes('Exceeded'))).toBeDefined();
-      expect(alerts.find((a) => a.title.includes('Nearing'))).toBeDefined();
+      const exceeded = alerts.find((a) => a.severity === 'alert');
+      const nearing = alerts.find((a) => a.severity === 'warning');
+      expect(exceeded?.title).toBe('Dining Out Over Budget');
+      expect(exceeded?.message).toBe('S$50.00 over (113%)');
+      expect(nearing?.title).toBe('Groceries at 84%');
+      expect(nearing?.message).toBe('S$80.00 left');
+
+      // Same key all month regardless of the exact percentage
+      const later = checkBudgetLimitReminders(
+        {
+          ...monthlyBudget,
+          categories: monthlyBudget.categories.map((c) =>
+            c.category_id === 'cat-groceries' ? { ...c, actualSpent: 470 } : c
+          ),
+        },
+        80
+      );
+      expect(later.find((a) => a.severity === 'warning')?.id).toBe(nearing?.id);
+      expect(nearing?.id).toBe('reminder-budget-nearing-cat-groceries-2026-10');
+      expect(exceeded?.id).toBe('reminder-budget-exceeded-cat-dining-2026-10');
     });
 
     it('checkRecurringBillsReminders alerts for annual recurring items due in current month', () => {
@@ -749,8 +883,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const rOct = checkRecurringBillsReminders(recurringItems, new Date('2026-10-15T12:00:00'));
       expect(rOct).toHaveLength(1);
       expect(rOct[0].type).toBe('recurring_bill_due');
-      expect(rOct[0].message).toContain('Manulife');
-      expect(rOct[0].message).toContain('due in 10 days');
+      expect(rOct[0].title).toBe('Manulife LifeReady Plus Renews in 10 Days');
+      expect(rOct[0].message).toBe('S$2,400.00 insurance');
       expect(rOct[0].id).toBe('reminder-recurring-pol-1-2026-10-25');
     });
 
@@ -772,8 +906,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       // 28 Nov 2026: day 31 clamps to 30 Nov -> due in 2 days; day 10 is 12 days away
       const r = checkRecurringBillsReminders(recurringItems, new Date('2026-11-28T09:00:00'));
       expect(r).toHaveLength(1);
-      expect(r[0].message).toContain('SP Utilities');
-      expect(r[0].message).toContain('due in 2 days');
+      expect(r[0].title).toBe('SP Utilities Due in 2 Days');
+      expect(r[0].message).toBe('S$90.00 bill');
       expect(r[0].id).toBe('reminder-recurring-bill-31-2026-11-30');
     });
 
@@ -795,7 +929,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(checkRecurringBillsReminders(recurringItems, new Date('2026-11-04T09:00:00'))).toHaveLength(0);
       const r = checkRecurringBillsReminders(recurringItems, new Date('2026-11-25T09:00:00'));
       expect(r).toHaveLength(1);
-      expect(r[0].message).toContain('due in 25 days');
+      expect(r[0].title).toBe('Year End Shield Renews in 25 Days');
     });
 
     it('checkGoalPacingReminders alerts when savings goals are behind target or achieved', () => {
@@ -824,10 +958,19 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         },
       ];
 
-      const r = checkGoalPacingReminders(goals);
+      const r = checkGoalPacingReminders(goals, new Date('2026-10-15T12:00:00'));
       expect(r).toHaveLength(2);
-      expect(r.some((g) => g.title.includes('Behind'))).toBe(true);
-      expect(r.some((g) => g.title.includes('Achieved'))).toBe(true);
+      const behind = r.find((g) => g.data?.goalId === 'goal-1');
+      const achieved = r.find((g) => g.data?.goalId === 'goal-2');
+      expect(behind?.title).toBe('Japan Holiday Behind Pace');
+      expect(behind?.message).toBe('S$2,000.00 of S$6,000.00 saved');
+      expect(achieved?.title).toBe('Goal Reached: Emergency Fund');
+
+      // Behind: new key each month. Achieved: one key forever.
+      const nextMonth = checkGoalPacingReminders(goals, new Date('2026-11-02T12:00:00'));
+      expect(behind?.id).toBe('reminder-goal-behind-goal-1-2026-10');
+      expect(nextMonth.find((g) => g.data?.goalId === 'goal-1')?.id).toBe('reminder-goal-behind-goal-1-2026-11');
+      expect(nextMonth.find((g) => g.data?.goalId === 'goal-2')?.id).toBe(achieved?.id);
     });
 
     it('checkMonthlyBudgetReviewReminder triggers on days 1-5 when budget is unlocked', () => {
@@ -855,6 +998,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const rDay3 = checkMonthlyBudgetReviewReminder(monthlyBudget, new Date('2026-11-03T12:00:00'));
       expect(rDay3).not.toBeNull();
       expect(rDay3?.type).toBe('monthly_budget_review');
+      expect(rDay3?.title).toBe('Review Nov Budget');
 
       // Day 10 -> no reminder
       const rDay10 = checkMonthlyBudgetReviewReminder(monthlyBudget, new Date('2026-11-10T12:00:00'));
@@ -960,7 +1104,6 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
     beforeEach(() => {
       sessionStorage.clear();
       localStorage.clear();
-      clearInFlightDispatches();
     });
 
     it('prevents double-firing when evaluateAndDispatchReminders is called concurrently', async () => {
@@ -1043,6 +1186,39 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       // Daily check-in notification should have fired EXACTLY ONCE
       expect(showNotificationMock).toHaveBeenCalledTimes(1);
+
+      // A new session (sessionStorage cleared, like reopening the PWA) does not push again
+      sessionStorage.clear();
+      await evaluateAndDispatchReminders({ memberId: 'mem-1', currentHour: 19 });
+      expect(showNotificationMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not push a dismissed reminder', async () => {
+      const showNotificationMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(window, 'Notification', {
+        value: class MockNotification {
+          static permission = 'granted';
+          static requestPermission = vi.fn().mockResolvedValue('granted');
+        },
+        configurable: true,
+        writable: true,
+      });
+      Object.defineProperty(navigator, 'serviceWorker', {
+        value: {
+          getRegistration: vi.fn().mockResolvedValue({ showNotification: showNotificationMock }),
+        },
+        configurable: true,
+      });
+
+      const memberId = 'mem-00000000-0011';
+      const referenceDate = new Date('2026-10-29T19:00:00');
+      const active = await computeActiveReminders({ memberId, currentHour: 19, referenceDate });
+      for (const r of active) {
+        await financeService.dismissNotification(memberId, { key: r.id, type: r.type });
+      }
+
+      await evaluateAndDispatchReminders({ memberId, currentHour: 19, referenceDate });
+      expect(showNotificationMock).not.toHaveBeenCalled();
     });
 
     it('strictly scopes credit card due reminders to active member', () => {
@@ -1093,12 +1269,12 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       // For mem-1: only mem-1's card
       const alertsMem1 = checkCreditCardDueReminders(statements, today, 5, 'mem-1');
       expect(alertsMem1).toHaveLength(1);
-      expect(alertsMem1[0].message).toContain('Yi Jia Card');
+      expect(alertsMem1[0].title).toContain('Yi Jia Card');
 
       // For mem-2: only mem-2's card
       const alertsMem2 = checkCreditCardDueReminders(statements, today, 5, 'mem-2');
       expect(alertsMem2).toHaveLength(1);
-      expect(alertsMem2[0].message).toContain('Rachel Card');
+      expect(alertsMem2[0].title).toContain('Rachel Card');
     });
 
     it('strictly scopes missing credit card statements to active member', () => {
@@ -1132,11 +1308,11 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       const alertsMem1 = checkMissingCreditCardStatements(cards, statements, testDate, 'mem-1');
       expect(alertsMem1).toHaveLength(1);
-      expect(alertsMem1[0].message).toContain('Yi Jia Card');
+      expect(alertsMem1[0].title).toContain('Yi Jia Card');
 
       const alertsMem2 = checkMissingCreditCardStatements(cards, statements, testDate, 'mem-2');
       expect(alertsMem2).toHaveLength(1);
-      expect(alertsMem2[0].message).toContain('Rachel Card');
+      expect(alertsMem2[0].title).toContain('Rachel Card');
     });
 
     it('strictly scopes recurring bills to active member', () => {
@@ -1170,11 +1346,11 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       const testDate = new Date('2026-10-15T12:00:00');
       const alertsMem1 = checkRecurringBillsReminders(recurringItems, testDate, 'mem-1');
       expect(alertsMem1).toHaveLength(1);
-      expect(alertsMem1[0].message).toContain('Yi Jia Life Insurance');
+      expect(alertsMem1[0].title).toContain('Yi Jia Life Insurance');
 
       const alertsMem2 = checkRecurringBillsReminders(recurringItems, testDate, 'mem-2');
       expect(alertsMem2).toHaveLength(1);
-      expect(alertsMem2[0].message).toContain('Rachel Health Insurance');
+      expect(alertsMem2[0].title).toContain('Rachel Health Insurance');
     });
 
     it('surfaces goal pacing reminders across household goals to keep both partners aligned', () => {
@@ -1225,17 +1401,19 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       const testDate = new Date('2026-10-15T12:00:00');
 
-      // Debtor (mem-2) sees "You owe Yi Jia SGD 250.00"
+      // Debtor (mem-2) sees "You Owe Yi Jia"
       const debtorReminder = checkSettlementReminder(summary, 200, testDate, 'mem-2');
       expect(debtorReminder).not.toBeNull();
-      expect(debtorReminder?.message).toContain('You owe Yi Jia SGD 250.00');
+      expect(debtorReminder?.title).toBe('You Owe Yi Jia');
+      expect(debtorReminder?.message).toBe('S$250.00 to settle');
       expect(debtorReminder?.actionLabel).toBe('Settle Up');
 
-      // Creditor (mem-1) sees "Rachel owes you SGD 250.00"
+      // Creditor (mem-1) sees "Rachel Owes You"
       const creditorReminder = checkSettlementReminder(summary, 200, testDate, 'mem-1');
       expect(creditorReminder).not.toBeNull();
-      expect(creditorReminder?.message).toContain('Rachel owes you SGD 250.00');
-      expect(creditorReminder?.actionLabel).toBe('View Settlement');
+      expect(creditorReminder?.title).toBe('Rachel Owes You');
+      expect(creditorReminder?.message).toBe('S$250.00 to settle');
+      expect(creditorReminder?.actionLabel).toBe('View');
     });
 
     it('scopes reminder IDs with memberId to prevent cross-member collisions', () => {

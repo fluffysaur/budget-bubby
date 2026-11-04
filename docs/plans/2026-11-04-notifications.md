@@ -1,0 +1,252 @@
+# Notifications Overhaul Plan
+
+Date: 2026-11-04
+Status: Phase 1 implemented on `fix/notification-dedup` (uncommitted). Phases 2 and 3 not started.
+
+## Problem
+
+Notifications are worked out in the browser on every app launch
+([`src/lib/notificationScheduler.ts`](../../src/lib/notificationScheduler.ts)).
+Push dedup is kept in `sessionStorage` (`bb_notif_dispatched_*`), which is
+cleared whenever the PWA is closed, so every active alert is pushed again on
+each cold launch. For example, "Dining Nearing Cap" arrives again the next day.
+
+Other issues found:
+
+| Issue | Where |
+|---|---|
+| Settlement reminder ID includes `Math.floor(netBalance)`, so every new shared expense creates a "new" alert | `checkSettlementReminder` |
+| Goal-behind ID has no time key, so once it's dismissed it never comes back | `checkGoalPacingReminders` |
+| One push per partner shared expense (noisy) | `checkPartnerSharedSpendReminders` |
+| Dismissals are stored per device in `localStorage` | `dismissReminderId` |
+| No server push. The "6 PM check-in" only fires if the app is opened after 6 PM | whole engine |
+| "Check In Now" silently records a `no_spend` check-in | `NotificationCenterPopover.handleAction` |
+| Month/day keys use `toISOString()` (UTC) when a `referenceDate` is passed, not SGT | `computeActiveReminders`, several checkers |
+| `haptics_enabled` is in the `NotificationPreferences` type but no migration adds the column, so preference upserts probably fail and silently fall back to `localStorage` (verify) | `20261029_notification_preferences.sql`, `supabaseFinanceService.updateNotificationPreferences` |
+| Copy breaks the concise copy rule ("Daily Spend Check-in (Evening)", "Couple Streak At Risk! 🔥") | all checkers |
+
+## Decisions
+
+1. **Sent, read and dismissed state lives in Supabase** (`notification_log`), per member, shared across devices.
+2. **Push once per cycle, keep it in the bell.** A push fires once per reminder key. The bell keeps showing an alert while its condition is still true and it hasn't been dismissed.
+3. **Budget limits:** one push at "nearing" (≥ warning %) and one at "exceeded" (≥ 100%), per category per month. Going back and forth over the line in the same month doesn't push again. Changing the warning % mid-month doesn't push again.
+4. **Once-per rule for each type:**
+
+    | Type | Reminder key (once per…) | Recipient |
+    |---|---|---|
+    | `daily_checkin` | `checkin-{member}-{date}` | owner |
+    | `balance_update` | `balance-{member}-{month}` | owner |
+    | `credit_card_due` | `cc-due-{stmt}-d{offset}` for each configured offset (7/3/1/0), plus `cc-due-{stmt}-overdue` | card owner |
+    | `credit_card_missing_stmt` | `cc-missing-{card}-{month}` | card owner |
+    | `partner_shared_spend` | `partner-spend-{member}-{date}`: one daily summary | partner who didn't pay |
+    | `settlement_due` | `settlement-{member}-{month}` (threshold crossed) and `settlement-monthend-{member}-{month}` | both |
+    | `couple_streak_risk` | `couple-streak-{member}-{date}` | member who has checked in |
+    | `budget_limit` | `budget-{nearing\|exceeded}-{member}-{category}-{month}` | owner |
+    | `recurring_bill_due` | `recurring-{item}-{dueDate}` | owner |
+    | `goal_pacing` (behind) | `goal-behind-{goal}-{month}` | both |
+    | `goal_pacing` (achieved) | `goal-achieved-{goal}` | both |
+    | `monthly_budget_review` | `budget-review-{member}-{month}` | owner |
+
+    All dates and months are in Singapore time.
+
+    As built, IDs keep the existing `reminder-…` prefix, so old dismissals carry over. Only CC due, settlement, goal behind and partner spend got new IDs (for example `reminder-cc-due-{stmt}-d3`, `reminder-settlement-monthend-{member}-{month}`).
+
+5. **CC due offsets** are chips in Settings: 7, 3 and 1 days before, plus the due day. All are on by default and each can be turned off. A push fires for the most urgent offset reached that hasn't been sent yet, so opening the app first at 2 days out sends `d3` only.
+6. **"Check In Now"** is replaced by two buttons on the check-in reminder card: **No Spend** (records an explicit no-spend check-in) and **Add Expense** (opens Quick Add). No check-in sheet exists, so the card serves as one. The couple-streak reminder's action now opens the dashboard instead of recording a check-in.
+7. **Permission prompt** stays on first launch (unchanged).
+8. **Copy pass:** titles ≤ 6 words and one short message, with no filler or emoji. Examples: `Dining at 85%` / `S$120 left`. `Citi Due in 3 Days` / `S$1,240 statement`.
+9. **Bell number** counts unread alerts. Opening the bell or tapping a push marks alerts read.
+10. **Real scheduled pushes:** a server-side cron sends every push, and the browser stops sending pushes. The bell still works out its list live from the data.
+11. **Timing (SGT):** the cron runs every hour.
+    - Routine alerts are bundled into one push at about 9 AM.
+    - Check-in and couple streak alerts go at the member's check-in time (default 6 PM).
+    - Budget and settlement-threshold alerts go on the next hourly run.
+    - Urgent alerts (CC due in ≤ 1 day, budget exceeded) always push on their own.
+    - Quiet hours (default 10 PM to 8 AM) hold pushes until they end.
+    - Check-in time and quiet hours are adjustable.
+12. **Tapping a push** opens the relevant screen (budget category, card statement, recurring item, goal) and marks the alert read.
+13. **Devices:** one Android (Chrome) and one iPhone, both installed on the Home Screen. No install hint is needed.
+14. **Rollout:** all changes are additive, so no compatibility view is needed. A brief overlap with the old on-launch pushes is acceptable until both phones update.
+15. **Retention:** the cron deletes `notification_log` rows older than 90 days.
+16. **Migrations** are added as files only. The user applies them to the live database.
+
+## Phase 1: Fix repeats (`fix/notification-dedup`)
+
+Goal: each push fires once per cycle, using the existing browser-based sending.
+
+### Migration `20261105100000_notification_log.sql`
+
+```sql
+create table if not exists notification_log (
+    id uuid primary key default gen_random_uuid(),
+    household_id uuid not null references households(id) on delete cascade,
+    member_id uuid not null references household_members(id) on delete cascade,
+    reminder_key text not null,
+    type text not null,
+    sent_at timestamptz,
+    read_at timestamptz,
+    dismissed_at timestamptz,
+    created_at timestamptz not null default now(),
+    constraint unique_member_reminder_key unique (member_id, reminder_key)
+);
+create index if not exists idx_notification_log_member_id on notification_log(member_id);
+create index if not exists idx_notification_log_created_at on notification_log(created_at);
+-- RLS: same "Allow household access" policy as recurring_items (is_household_member)
+```
+
+### Code
+
+- **Split the engine** so the pure rules can be reused by the Edge Function in Phase 3:
+    - `src/lib/reminders/rules.ts`: the pure `check*` functions. They take data, preferences and an SGT reference date, and return `AppReminder[]` with the new keys from Decision 4. They don't import `financeService` or `window`.
+    - [`src/lib/notificationScheduler.ts`](../../src/lib/notificationScheduler.ts): only fetching and dispatching.
+- **Fix SGT handling:** replace every `referenceDate.toISOString().slice(...)` with SGT-aware `dateUtils` helpers.
+- **Add service methods** to `financeService`, implemented in both `supabaseFinanceService` and `mockFinanceService`:
+    - `getNotificationLog(memberId, keys?)`
+    - `claimNotificationSend(memberId, reminder)`: `upsert … onConflict: member_id,reminder_key, ignoreDuplicates: true` then `.select()`. A returned row means this caller owns the send. An empty result means it was already sent or dismissed.
+    - `markNotificationsRead(memberId, keys)` and `dismissNotification(memberId, key)`: upserts that set `read_at` / `dismissed_at`.
+- **`evaluateAndDispatchReminders`:** push only when `claimNotificationSend` returns a row. Remove the `sessionStorage` and `inFlightDispatches` dedup.
+- **Move dismissals:** the bell reads dismissed and read state from `notification_log`. On first load, migrate the existing `bb_notif_dismissed_{member}` entries into the table (best effort), then delete the key.
+- **Fallback:** `src/services/localNotificationLog.ts` is the mock service's store, and the Supabase service falls back to it if `notification_log` can't be reached (for example, before the migration is applied).
+- **Rule changes:** settlement key (no balance in the key), goal-behind month key, partner-spend daily summary (one reminder that lists the count and total), and CC due offsets. Phase 1 uses `[cc_due_days_before]` until Phase 2 adds the array.
+- **[`NotificationCenterPopover.tsx`](../../src/components/layout/NotificationCenterPopover.tsx):**
+    - Badge shows unread count. Opening the bell marks visible alerts read.
+    - "Check In Now" opens the check-in sheet.
+- **Copy pass** over all titles, messages and action labels, following the copy rule.
+
+### Tests
+
+- Unit tests in `tests/` for each rule: key stability across days in the same cycle, and new keys in the next cycle.
+- Budget: nearing → exceeded → drop below → exceeded again in the same month sends 2 pushes in total.
+- Settlement: the balance changes within a month and still sends only 1 push.
+- `claimNotificationSend` is idempotent in the mock service. Calling dispatch twice sends 1 push.
+- Update `tests/StreakAndNotifications.test.tsx` to the new copy and keys.
+- E2E: open the bell, then check that the badge clears and a dismissed alert stays dismissed after reload.
+
+## Phase 2: Settings (`feat/cc-due-reminders`)
+
+### Migration `20261105091000_notification_preferences_timing.sql`
+
+```sql
+alter table notification_preferences
+    add column if not exists cc_due_reminder_days integer[] not null default '{7,3,1,0}',
+    add column if not exists checkin_time time not null default '18:00',
+    add column if not exists quiet_hours_start time not null default '22:00',
+    add column if not exists quiet_hours_end time not null default '08:00',
+    add column if not exists haptics_enabled boolean not null default true;
+alter table notification_preferences
+    add constraint notification_preferences_cc_due_days_check
+    check (cc_due_reminder_days <@ array[0,1,2,3,4,5,6,7,14]);
+-- Keep cc_due_days_before for the deployed frontend. Drop it in a later migration.
+```
+
+### Code
+
+- Add the new fields to `NotificationPreferences` and to the defaults in both services and `evaluateAndDispatchReminders`.
+- [`NotificationSettingsModal.tsx`](../../src/components/layout/NotificationSettingsModal.tsx):
+    - Replace the `cc_due_days_before` input with toggle chips: `7d`, `3d`, `1d`, `Due day`.
+    - Add a check-in time picker and quiet-hours start and end pickers.
+    - Toggle descriptions stay under 8 words.
+- Rules read `cc_due_reminder_days` and the check-in time. Quiet hours are enforced only in Phase 3. The browser sends pushes only when the app is open, so Phase 2 doesn't apply them.
+- Check that preference saves now reach the database, given the missing `haptics_enabled` column.
+
+### Tests
+
+- The CC offset picker chooses the most urgent offset reached, and offsets that are turned off never fire.
+- The settings modal saves and reloads all new fields.
+
+## Phase 3: Real scheduled pushes (`feat/server-push`)
+
+### Spike first (half a day)
+
+- Confirm the Supabase Edge Runtime can import `src/lib/reminders/*` from outside `supabase/functions`, including extensionless imports. If it can't, move the pure rules to `supabase/functions/_shared/reminders/` and import them from the frontend through a Vite alias.
+- List the server-side data each rule needs:
+    - category `actualSpent` (today worked out in `supabaseFinanceService.getMonthlyBudget`)
+    - goal `status`
+    - `settlementSummary`
+    - streaks and check-ins
+- Decide whether to pull those calculations out into shared pure modules or rewrite them as SQL views. Prefer pulling them out, so there's one source of truth.
+
+### Migration `20261105092000_push_subscriptions.sql`
+
+```sql
+create table if not exists push_subscriptions (
+    id uuid primary key default gen_random_uuid(),
+    household_id uuid not null references households(id) on delete cascade,
+    member_id uuid not null references household_members(id) on delete cascade,
+    endpoint text not null unique,
+    p256dh text not null,
+    auth text not null,
+    user_agent text,
+    created_at timestamptz not null default now(),
+    last_seen_at timestamptz not null default now()
+);
+-- RLS: household access, same as other tables
+```
+
+### Migration `20261105093000_notification_cron.sql`
+
+- `create extension if not exists pg_cron; create extension if not exists pg_net;`
+- Schedule `0 * * * *` (hourly). It calls `net.http_post` to `/functions/v1/send-reminders`, with the URL and `CRON_SECRET` read from Supabase Vault.
+- Schedule a daily cleanup: `delete from notification_log where created_at < now() - interval '90 days'`.
+
+### Service worker
+
+- Switch `vite-plugin-pwa` to `strategies: 'injectManifest'`, `srcDir: 'src'`, `filename: 'sw.ts'`.
+- Add dev dependencies `workbox-precaching`, `workbox-routing`, `workbox-strategies`, `workbox-expiration` and `workbox-cacheable-response` (approved).
+- `src/sw.ts` contains:
+    - `precacheAndRoute(self.__WB_MANIFEST)`
+    - the existing Google Fonts caching rules, ported from `vite.config.ts`
+    - the existing `registerType: 'prompt'` update flow, kept working with `PWAUpdateToast`
+    - a `push` handler that shows the notification, with `data.url` and `data.keys`
+    - a `notificationclick` handler that focuses or opens the client at `data.url`, then posts `{ type: 'mark-read', keys }` to the app
+
+### Subscribing
+
+- `src/lib/pushSubscription.ts` handles subscriptions:
+    - When permission is granted and `push_enabled` is on, call `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: VITE_VAPID_PUBLIC_KEY })` and upsert into `push_subscriptions`.
+    - Refresh `last_seen_at` on launch.
+    - When `push_enabled` is turned off, unsubscribe and delete the row.
+
+### Edge Function `supabase/functions/send-reminders`
+
+- Reject requests without a valid `Authorization: Bearer ${CRON_SECRET}`.
+- Run with the service role and work through every household member:
+    1. Load preferences and data, then run the shared rules at "now" in SGT.
+    2. Choose which alerts go out this hour:
+        - routine alerts at the 9 AM bundle
+        - check-in and couple streak at `checkin_time`
+        - budget and settlement threshold on any run
+        - nothing during quiet hours; held alerts go out on the first run after quiet hours end
+    3. For each chosen alert, call `claimNotificationSend` (insert … on conflict do nothing).
+    4. Send the claimed alerts:
+        - urgent ones on their own
+        - the others as one summary (`3 Reminders` / `Citi due in 3 days, Netflix due tomorrow, …`)
+    5. Send through `npm:web-push` to every subscription the member has. Delete subscriptions that return 404 or 410.
+- Secrets: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`. Set `VITE_VAPID_PUBLIC_KEY` in Vercel.
+
+### Client changes
+
+- Remove the browser push from `evaluateAndDispatchReminders`. The bell keeps `computeActiveReminders` for the live list.
+- Handle the `mark-read` message from the service worker. Make sure each deep link (`?category=`, `?statement=`, `?item=`, `?goal=`) opens and highlights its target.
+
+### Tests
+
+- Edge Function unit tests for the selection logic: quiet hours, check-in time, 9 AM bundling, urgent alerts sent on their own, and claim idempotency.
+- Manual check on both devices: a test push via the function's dry-run flag, tapping it opens the right screen, and the bell clears.
+
+## Rollout
+
+1. Merge Phase 1, then apply `notification_log` and deploy. Repeats stop at this point.
+2. Merge Phase 2, then apply the timing migration and deploy.
+3. Phase 3:
+    1. Generate VAPID keys and set the secrets and the Vercel env.
+    2. Deploy the Edge Function.
+    3. Apply the `push_subscriptions` migration, then the cron migration.
+    4. Deploy the frontend.
+    5. Open the app once on each phone to subscribe.
+4. In a later migration, drop `cc_due_days_before` once every client is on the new version.
+
+## Out of scope
+
+- Email or SMS channels.
+- Real-time push on every partner expense (replaced by the daily summary).

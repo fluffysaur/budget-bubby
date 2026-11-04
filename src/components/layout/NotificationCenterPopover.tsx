@@ -7,7 +7,8 @@
  *   - Mobile (< sm): Full-screen dedicated overlay portal (prevents edge-clipping on all devices)
  *   - Desktop (>= sm): Anchored floating popover dropdown
  * - Direct deep-links to appropriate tabs (accounts, expenses, budget, recurring, goals)
- * - Persistent per-member dismissal (stored in localStorage)
+ * - Read and dismiss state stored per member in the notification log
+ * - Badge counts unread reminders; opening the bell marks them read
  * - PWA push permission opt-in banner
  */
 
@@ -31,12 +32,13 @@ import {
 import {
     computeActiveReminders,
     requestNotificationPermission,
-    dismissReminderId,
-    getDismissedReminderIds,
     checkAndPromptInitialNotificationPermission,
     evaluateAndDispatchReminders,
+    migrateLegacyDismissals,
     type AppReminder,
 } from "../../lib/notificationScheduler";
+import { Button } from "../ui/Button";
+import { TruncatedText } from "../ui/TruncatedText";
 import { financeService } from "../../services/financeService";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
@@ -79,6 +81,7 @@ export function NotificationCenterPopover({
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [reminders, setReminders] = useState<AppReminder[]>([]);
     const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+    const [readIds, setReadIds] = useState<Set<string>>(new Set());
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -94,15 +97,24 @@ export function NotificationCenterPopover({
         }
     }, []);
 
+    const loadReadIds = useCallback(async () => {
+        const log = await financeService.getNotificationLog(activeMemberId);
+        return new Set(log.filter((entry) => entry.read_at).map((entry) => entry.reminder_key));
+    }, [activeMemberId]);
+
     // Load active reminders for current member
     const loadReminders = useCallback(async () => {
         try {
-            const active = await computeActiveReminders({ memberId: activeMemberId });
+            const [active, read] = await Promise.all([
+                computeActiveReminders({ memberId: activeMemberId }),
+                loadReadIds(),
+            ]);
             setReminders(active);
+            setReadIds(read);
         } catch (err) {
             console.error("Failed to load reminders:", err);
         }
-    }, [activeMemberId]);
+    }, [activeMemberId, loadReadIds]);
 
     // Load reminders and dispatch push notifications cleanly for active member without double-firing
     useEffect(() => {
@@ -110,16 +122,24 @@ export function NotificationCenterPopover({
 
         // Reset reminders on active member change to prevent cross-user leak
         setReminders([]);
-        setDismissedIds(getDismissedReminderIds(activeMemberId));
+        setDismissedIds(new Set());
+        setReadIds(new Set());
 
         checkAndPromptInitialNotificationPermission().then((res) => {
             if (res && isMounted) setPermission(res);
         });
 
-        evaluateAndDispatchReminders({ memberId: activeMemberId })
-            .then((active) => {
+        migrateLegacyDismissals(activeMemberId)
+            .then(() =>
+                Promise.all([
+                    evaluateAndDispatchReminders({ memberId: activeMemberId }),
+                    loadReadIds(),
+                ]),
+            )
+            .then(([active, read]) => {
                 if (isMounted) {
                     setReminders(active);
+                    setReadIds(read);
                 }
             })
             .catch((err) => {
@@ -129,7 +149,7 @@ export function NotificationCenterPopover({
         return () => {
             isMounted = false;
         };
-    }, [activeMemberId]);
+    }, [activeMemberId, loadReadIds]);
 
     // Listen for global notification preference updates
     useEffect(() => {
@@ -189,14 +209,45 @@ export function NotificationCenterPopover({
     // Filter out dismissed reminders
     const visibleReminders = reminders.filter((r) => !dismissedIds.has(r.id));
     const count = visibleReminders.length;
+    const unreadCount = visibleReminders.filter((r) => !readIds.has(r.id)).length;
 
-    const handleDismiss = (id: string) => {
-        dismissReminderId(activeMemberId, id);
-        setDismissedIds((prev) => {
-            const next = new Set(prev);
-            next.add(id);
-            return next;
-        });
+    // Opening the bell marks every visible reminder as read
+    const handleToggleOpen = () => {
+        const opening = !isOpen;
+        setIsOpen(opening);
+        if (!opening) return;
+        const unread = visibleReminders.filter((r) => !readIds.has(r.id));
+        if (unread.length === 0) return;
+        setReadIds((prev) => new Set([...prev, ...unread.map((r) => r.id)]));
+        financeService
+            .markNotificationsRead(
+                activeMemberId,
+                unread.map((r) => ({ key: r.id, type: r.type })),
+            )
+            .catch((err) => console.debug("Failed to mark reminders read:", err));
+    };
+
+    const handleDismiss = (reminder: AppReminder) => {
+        setDismissedIds((prev) => new Set([...prev, reminder.id]));
+        financeService
+            .dismissNotification(activeMemberId, { key: reminder.id, type: reminder.type })
+            .catch((err) => console.debug("Failed to dismiss reminder:", err));
+    };
+
+    // Explicit "No Spend" check-in from the daily check-in reminder
+    const handleNoSpend = async (reminder: AppReminder) => {
+        setIsProcessing(true);
+        try {
+            await financeService.recordDailyCheckin(activeMemberId, getTodayDateString(), "no_spend");
+            playChaChingSound();
+            handleDismiss(reminder);
+            await refreshData();
+            await loadReminders();
+        } catch (err) {
+            console.error("Failed to record no-spend check-in:", err);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleRequestPermission = async () => {
@@ -209,12 +260,13 @@ export function NotificationCenterPopover({
         setIsProcessing(true);
         try {
             if (reminder.actionType === "check_in") {
-                const today = getTodayDateString();
-                await financeService.recordDailyCheckin(activeMemberId, today, "no_spend");
-                playChaChingSound();
-                handleDismiss(reminder.id);
-                await refreshData();
-                await loadReminders();
+                setIsOpen(false);
+                if (reminder.type === "daily_checkin") {
+                    // Open the add-expense flow; never record a check-in silently
+                    window.dispatchEvent(new Event("openQuickAdd"));
+                } else if (onNavigateTab) {
+                    onNavigateTab("dashboard");
+                }
             } else if (reminder.actionType === "update_balances") {
                 setIsOpen(false);
                 if (onOpenUpdateBalances) {
@@ -297,7 +349,7 @@ export function NotificationCenterPopover({
             {permission === "default" && (
                 <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-(--pastel-mint)/40 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
                     <div className="text-[11px] text-[#14532d] dark:text-[#86efac] font-bold">
-                        Enable PWA reminders on this device?
+                        Get alerts on this device?
                     </div>
                     <button
                         type="button"
@@ -317,10 +369,10 @@ export function NotificationCenterPopover({
                         <CheckCircle2 className="h-6 w-6" strokeWidth={2.5} />
                     </div>
                     <p className="text-sm font-black text-(--text-ink)">
-                        All caught up!
+                        No Reminders
                     </p>
                     <p className="text-xs text-(--text-muted) font-medium mt-0.5">
-                        No pending check-ins or due reminders today.
+                        You're all caught up.
                     </p>
                 </div>
             ) : (
@@ -332,19 +384,27 @@ export function NotificationCenterPopover({
                             className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm) transition-all"
                         >
                             <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2">
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
                                     {getReminderIcon(reminder.type)}
-                                    <h4 className="text-xs font-bold text-(--text-ink)">
-                                        {reminder.title}
-                                    </h4>
+                                    <TruncatedText
+                                        text={reminder.title}
+                                        className="text-xs font-bold text-(--text-ink)"
+                                    />
+                                    {!readIds.has(reminder.id) && (
+                                        <span
+                                            data-testid={`reminder-unread-${reminder.id}`}
+                                            aria-label="Unread"
+                                            className="h-2 w-2 shrink-0 rounded-full bg-(--accent-coral)"
+                                        />
+                                    )}
                                 </div>
 
                                 <button
                                     type="button"
                                     data-testid={`reminder-dismiss-${reminder.id}`}
                                     aria-label="Dismiss reminder"
-                                    onClick={() => handleDismiss(reminder.id)}
-                                    className="text-(--text-muted) hover:text-(--text-ink) p-0.5 cursor-pointer"
+                                    onClick={() => handleDismiss(reminder)}
+                                    className="shrink-0 text-(--text-muted) hover:text-(--text-ink) p-0.5 cursor-pointer"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -354,17 +414,28 @@ export function NotificationCenterPopover({
                                 {reminder.message}
                             </p>
 
-                            <div className="mt-3 flex items-center justify-end">
-                                <button
-                                    type="button"
+                            <div className="mt-3 flex items-center justify-end gap-2">
+                                {reminder.type === "daily_checkin" && (
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        data-testid="reminder-action-no-spend"
+                                        disabled={isProcessing}
+                                        onClick={() => handleNoSpend(reminder)}
+                                    >
+                                        No Spend
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="primary"
+                                    size="sm"
                                     data-testid={`reminder-action-${reminder.actionType}`}
                                     disabled={isProcessing}
                                     onClick={() => handleAction(reminder)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none text-xs font-black transition-all cursor-pointer disabled:opacity-50"
+                                    rightIcon={<ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />}
                                 >
-                                    <span>{reminder.actionLabel}</span>
-                                    <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
-                                </button>
+                                    {reminder.actionLabel}
+                                </Button>
                             </div>
                         </div>
                     ))}
@@ -379,19 +450,19 @@ export function NotificationCenterPopover({
             <button
                 type="button"
                 data-testid="notification-bell-btn"
-                aria-label={`Notifications and reminders (${count} active)`}
+                aria-label={`Notifications (${unreadCount} unread)`}
                 aria-expanded={isOpen}
-                onClick={() => setIsOpen((prev) => !prev)}
+                onClick={handleToggleOpen}
                 className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
             >
                 <Bell className="h-4 w-4" strokeWidth={2.5} />
 
-                {count > 0 && (
+                {unreadCount > 0 && (
                     <span
                         data-testid="notification-badge-count"
                         className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#f76b57] border border-(--border-ink) px-1 text-[10px] font-black text-white shadow-(--shadow-cute-sm) animate-in zoom-in-75 font-mono-num"
                     >
-                        {count}
+                        {unreadCount}
                     </span>
                 )}
             </button>
@@ -413,7 +484,7 @@ export function NotificationCenterPopover({
                             </div>
 
                             <h3 className="text-xs font-black text-(--text-ink) font-display">
-                                Notifications & Reminders
+                                Notifications
                             </h3>
 
                             {count > 0 && (
@@ -461,7 +532,7 @@ export function NotificationCenterPopover({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-sm font-black text-(--text-ink) font-display">
-                                        Notifications & Reminders
+                                        Notifications
                                     </h2>
                                     {count > 0 && (
                                         <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
