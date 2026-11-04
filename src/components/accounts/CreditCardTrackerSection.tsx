@@ -326,9 +326,12 @@ export function CreditCardTrackerSection({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
+                <div
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto sm:shrink-0"
+                    data-testid="credit-card-header-actions"
+                >
                     {/* Month Stepper */}
-                    <div className="flex items-center gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-(--shadow-(--shadow-cute)-sm)">
+                    <div className="flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-(--shadow-cute-sm)">
                         <button
                             type="button"
                             aria-label="Previous Month"
@@ -358,6 +361,7 @@ export function CreditCardTrackerSection({
                         variant="primary"
                         size="sm"
                         aria-label="Add Credit Card"
+                        className="w-full sm:w-auto min-h-11 sm:min-h-0 justify-center"
                         leftIcon={<Plus className="h-4 w-4 stroke-3" />}
                         onClick={() => {
                             setCardToEdit(null);

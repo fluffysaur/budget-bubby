@@ -294,8 +294,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         <PageHeader
           title="Budget"
           actions={
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="flex-1 sm:flex-initial">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto" data-testid="budget-header-actions">
+              <div className="w-full sm:w-auto">
                 <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
               </div>
 
@@ -303,17 +303,16 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 variant="secondary"
                 leftIcon={<Settings className="h-4 w-4 text-slate-500" strokeWidth={2.5} />}
                 onClick={() => handleOpenEditor()}
-                className="shrink-0 justify-center"
+                className="w-full sm:w-auto min-h-11 sm:min-h-0 shrink-0 justify-center"
               >
-                <span className="hidden sm:inline">Edit Budget</span>
-                <span className="sm:hidden">Edit</span>
+                Edit Budget
               </Button>
             </div>
           }
         />
       ) : (
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 sm:flex-initial">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2" data-testid="budget-header-actions">
+          <div className="w-full sm:w-auto">
             <MonthPicker selectedMonth={selectedMonth} onChangeMonth={setSelectedMonth} />
           </div>
 
@@ -322,10 +321,9 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
             size="sm"
             leftIcon={<Settings className="h-3.5 w-3.5 text-slate-500" strokeWidth={2.5} />}
             onClick={() => handleOpenEditor()}
-            className="shrink-0 justify-center"
+            className="w-full sm:w-auto min-h-11 sm:min-h-0 shrink-0 justify-center"
           >
-            <span className="hidden sm:inline">Edit Budget</span>
-            <span className="sm:hidden">Edit</span>
+            Edit Budget
           </Button>
         </div>
       )}
