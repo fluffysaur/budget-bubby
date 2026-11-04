@@ -152,8 +152,7 @@ describe("supabaseFinanceService recurring spend by category", () => {
     const budgetId = "00000000-0000-0000-0000-000000000701";
 
     function chain(result: unknown) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const obj: any = {};
+        const obj: Record<string, unknown> = {};
         for (const m of ["select", "eq", "gte", "lt", "limit", "order"]) {
             obj[m] = vi.fn(() => obj);
         }
