@@ -26,9 +26,13 @@ dist-ssr
 
 # Environment & Private Data
 .env*
+!.env.example
 *.private.sql
 seed.private.sql
 .superpowers/
+
+# Supabase CLI local state (project link)
+supabase/.temp/
 
 # Playwright Test Artifacts
 playwright-report/
