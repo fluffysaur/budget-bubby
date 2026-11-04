@@ -1,7 +1,7 @@
 # UI Overhaul Plan
 
 Date: 2026-11-04
-Status: Agreed, in progress (PRs 2–3 merged, PR 4 ready for review)
+Status: Agreed, in progress (PRs 2–4 merged, PR 5 ready for review)
 
 ## Problem
 
@@ -111,6 +111,14 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
     - `--text-faint` is now `#6e645d` (light) and `#a0968e` (dark), and passes AA on every background. It used to measure 3.2–4.1.
     - 46 uses of `text-slate-400` (2.2–2.6 in light mode) are replaced with `--text-faint`.
     - The net-worth chart's axis labels use `--text-faint`.
+
+## PR 5 notes
+
+- **Always visible:** Amount, Category (or Goal when funding from a goal) and Description. The title is "Add Expense".
+- **"More" is closed by default** and holds date and time, payer and split, currency and FX, fund-from-goal, remarks and tags.
+- **Its toggle summarises the defaults**, e.g. `Today · Yi Jia · Shared`. It opens on its own when remarks, tags, a foreign currency or goal funding are set.
+- **Split default:** an explicit prop, else the last split used (`budget_bubby_last_split_v1`), else Shared in Combined view and Personal otherwise.
+- **Fast Log:** `FastLogWidget` is deleted, and `/fast-log` now opens the Add Expense sheet over Home.
 
 ## Follow-ups found during the work
 
