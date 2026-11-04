@@ -496,7 +496,7 @@ describe('BaseProfileEditorModal', () => {
     expect(lockBtn).toHaveAttribute('title', expect.stringMatching(/unlock/i));
   });
 
-  it('displays read-only monthly taxes and insurance cards with Manage in Policies button', () => {
+  it('displays read-only monthly taxes and insurance cards with Manage in Recurring button', () => {
     const onManageRecurring = vi.fn();
     render(
       <BaseProfileEditorModal
@@ -514,7 +514,7 @@ describe('BaseProfileEditorModal', () => {
     expect(screen.getByTestId('readonly-monthly-taxes')).toHaveTextContent(/150\.00/);
     expect(screen.getByTestId('readonly-monthly-insurance')).toHaveTextContent(/350\.00/);
 
-    const manageBtn = screen.getByRole('button', { name: /manage in policies/i });
+    const manageBtn = screen.getByRole('button', { name: /manage in recurring/i });
     expect(manageBtn).toBeInTheDocument();
     fireEvent.click(manageBtn);
     expect(onManageRecurring).toHaveBeenCalled();

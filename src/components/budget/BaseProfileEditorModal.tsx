@@ -800,7 +800,7 @@ export function BaseProfileEditorModal({
                             </div>
                         </div>
 
-                        {/* Section 2: Fixed Monthly Deductions (Managed in Policies) */}
+                        {/* Section 2: Fixed Monthly Deductions (Managed in Recurring) */}
                         <div className="space-y-2.5">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
@@ -816,7 +816,7 @@ export function BaseProfileEditorModal({
                                     }}
                                     className="inline-flex items-center gap-1 text-[11px] font-bold text-(--text-muted) hover:text-(--text-ink) hover:underline transition-colors cursor-pointer"
                                 >
-                                    <span>Manage in Policies</span>
+                                    <span>Manage in Recurring</span>
                                     <ArrowUpRight className="h-3 w-3" />
                                 </button>
                             </div>
@@ -838,7 +838,7 @@ export function BaseProfileEditorModal({
                                         </span>
                                     </div>
                                     <span className="block text-[10px] text-(--text-muted) mt-1">
-                                        From active tax recurring items
+                                        From tax items
                                     </span>
                                 </div>
 
@@ -858,7 +858,7 @@ export function BaseProfileEditorModal({
                                         </span>
                                     </div>
                                     <span className="block text-[10px] text-(--text-muted) mt-1">
-                                        From active insurance recurring items
+                                        From insurance items
                                     </span>
                                 </div>
                             </div>

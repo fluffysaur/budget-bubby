@@ -205,7 +205,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (goalError) throw goalError;
     const activeGoals = (goalsData || []) as SavingsGoal[];
 
-    // 7. Recurring Policies
+    // 7. Recurring Items
     const { data: recurringItemsData, error: polError } = await client
       .from('recurring_items')
       .select('*')

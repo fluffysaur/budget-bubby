@@ -1,11 +1,11 @@
 /**
  * AddRecurringModal Component
- * Dialog modal for creating or editing recurring items, taxes, and subscriptions.
+ * Dialog modal for creating or editing recurring items (insurance, tax, subscriptions, bills, other).
  * Features:
  * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
  * - Pre-filling for editing existing recurring items
  * - Field validation (Name required, positive Amount)
- * - Frequency selector with conditional renewal month input
+ * - Frequency selector with conditional renewal month, due day and spend category
  * - Owner selector (Yi Jia, Rachel, Joint)
  */
 
@@ -154,13 +154,13 @@ export function AddRecurringModal({
 
         const trimmedName = name.trim();
         if (!trimmedName) {
-            setErrorMessage("Policy name is required.");
+            setErrorMessage("Name is required.");
             return;
         }
 
         const numericAmount = parseFloat(amount);
         if (isNaN(numericAmount) || numericAmount <= 0) {
-            setErrorMessage("Valid premium amount is required.");
+            setErrorMessage("Valid amount is required.");
             return;
         }
 
@@ -223,13 +223,13 @@ export function AddRecurringModal({
                     id="modal-headline"
                     title={
                         isEditing
-                            ? "Edit Recurring Policy"
-                            : "Add Recurring Policy"
+                            ? "Edit Recurring"
+                            : "Add Recurring"
                     }
                     subtitle={
                         isEditing
-                            ? "Update renewal dates or premium amounts"
-                            : "Track insurance, tax obligations, or recurring subscriptions"
+                            ? "Update amount or due date"
+                            : "Insurance, tax, subscriptions & bills"
                     }
                     icon={<Shield className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
@@ -242,18 +242,18 @@ export function AddRecurringModal({
                         <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
-                    {/* Policy Name */}
+                    {/* Name */}
                     <div>
                         <label
                             htmlFor="recurring-name"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Policy Name *
+                            Name *
                         </label>
                         <input
                             id="recurring-name"
                             type="text"
-                            placeholder="e.g. AIA Guaranteed Protect Plus, IncomeShield"
+                            placeholder="e.g. Netflix, gym, phone plan, cloud storage"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="w-full px-3.5 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
@@ -328,7 +328,7 @@ export function AddRecurringModal({
                                 htmlFor="recurring-amount"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Premium Amount *
+                                Amount *
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
@@ -418,7 +418,7 @@ export function AddRecurringModal({
                             htmlFor="recurring-start-date"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Policy Inception / Start Date (Optional)
+                            Start Date (Optional)
                         </label>
                         <input
                             id="recurring-start-date"
@@ -463,7 +463,7 @@ export function AddRecurringModal({
                         disabled={isSubmitting}
                         isLoading={isSubmitting}
                     >
-                        {isSubmitting ? "Saving..." : "Save Policy"}
+                        {isSubmitting ? "Saving..." : "Save"}
                     </Button>
                 </ModalFooter>
             </form>

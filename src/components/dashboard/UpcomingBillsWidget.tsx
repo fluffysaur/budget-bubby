@@ -1,7 +1,7 @@
 /**
  * UpcomingBillsWidget Component
- * Displays upcoming renewal alerts / recurring bills due in the current
- * and upcoming month (e.g. Manulife, IncomeShield, IRAS tax, subscriptions).
+ * Shows the next recurring items due (insurance, tax, subscriptions,
+ * bills and other), sorted by due date.
  */
 
 import { useMemo } from "react";
@@ -61,7 +61,7 @@ export function UpcomingBillsWidget({
     return (
         <div
             role="region"
-            aria-label="Upcoming Bills and Renewals"
+            aria-label="Upcoming Bills"
             className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
         >
             {/* Header */}
@@ -72,10 +72,10 @@ export function UpcomingBillsWidget({
                     </div>
                     <div className="min-w-0">
                         <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
-                            Upcoming Renewals
+                            Upcoming Bills
                         </h3>
                         <p className="text-xs font-semibold text-(--text-muted)">
-                            Insurance, tax &amp; recurring item alerts
+                            Next due from Recurring
                         </p>
                     </div>
                 </div>
@@ -103,11 +103,10 @@ export function UpcomingBillsWidget({
                             📋
                         </div>
                         <p className="text-sm font-bold text-(--text-ink) font-display">
-                            No upcoming renewals
+                            Nothing Due
                         </p>
                         <p className="mt-1 text-xs text-(--text-muted) max-w-xs font-medium">
-                            Add recurring insurance recurring items or annual IRAS
-                            taxes to track renewal dates.
+                            Add a recurring item to track due dates.
                         </p>
                     </div>
                 ) : (

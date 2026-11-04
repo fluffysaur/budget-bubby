@@ -5,7 +5,7 @@
  * 2. Spend (Expenses & Budget)
  * +  Quick Add Expense (FAB)
  * 3. Balances (Accounts & Net Worth)
- * 4. Plan (Goals, Loans & Policies)
+ * 4. Plan (Goals, Loans & Recurring)
  */
 
 import { LayoutDashboard, Plus, Receipt, Landmark, Compass } from "lucide-react";

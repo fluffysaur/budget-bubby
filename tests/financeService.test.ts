@@ -238,7 +238,7 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
     });
   });
 
-  describe('Savings Goals & Liabilities & Policies', () => {
+  describe('Savings Goals & Liabilities & Recurring', () => {
     it('fetches loans and recurring items', async () => {
       const loans = await mockFinanceService.getLoans();
       expect(loans.length).toBeGreaterThan(0);

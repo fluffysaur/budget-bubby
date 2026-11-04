@@ -1,10 +1,10 @@
 /**
  * RenewalCalendar Component
- * Visual 12-Month Renewal Calendar & Outlay Map:
+ * 12-month calendar of recurring outlay:
  * - Jan - Dec timeline displaying total cash outlay required for each calendar month.
  * - Highlights heavy renewal months (e.g., September Manulife $3,200, October IncomeShield $1,600).
  * - Visual indicator badge and ring for current calendar month.
- * - Displays recurring item cards/chips in their designated renewal month.
+ * - Displays recurring item chips in their due month, with "Due in X days" for the current month.
  */
 
 import { useMemo } from "react";
@@ -154,11 +154,10 @@ export function RenewalCalendar({
                     </div>
                     <div>
                         <h3 className="text-base font-bold text-(--text-ink) font-display">
-                            Annual Renewal Timeline &amp; Cash Outlay Map
+                            Renewal Calendar
                         </h3>
                         <p className="text-xs text-(--text-muted)">
-                            12-Month distribution of annual lump sums and
-                            monthly recurring commitments
+                            12-month outlay
                         </p>
                     </div>
                 </div>
@@ -237,11 +236,11 @@ export function RenewalCalendar({
                                 </p>
                             </div>
 
-                            {/* Policy Chips in this Month */}
+                            {/* Recurring Item Chips in this Month */}
                             <div className="flex-1 flex flex-col gap-2 min-h-[68px]">
                                 {m.recurringItems.length === 0 ? (
                                     <div className="flex-1 flex items-center justify-center text-[11px] text-(--text-muted) italic">
-                                        No renewals
+                                        Nothing due
                                     </div>
                                 ) : (
                                     m.recurringItems.map((p) => {

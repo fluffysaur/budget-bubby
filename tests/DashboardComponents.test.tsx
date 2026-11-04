@@ -528,7 +528,7 @@ describe('UpcomingBillsWidget', () => {
 
   it('renders empty state when no upcoming bills', () => {
     render(<UpcomingBillsWidget recurringItems={[]} />);
-    expect(screen.getByText(/no upcoming renewals/i)).toBeInTheDocument();
+    expect(screen.getByText(/nothing due/i)).toBeInTheDocument();
   });
 
   it('calls onViewAll callback when View All button is clicked', () => {

@@ -2,7 +2,7 @@
  * Desktop Sidebar Navigation
  * Fixed-width sidebar for desktop viewports providing grouped navigation:
  * - Core Daily & Monthly tabs (Dashboard, Expenses, Budget, Accounts & Net Worth)
- * - Long-Term Plan tabs (Plan Overview, Goals, Loans, Recurring & Policies)
+ * - Long-Term Plan tabs (Plan Overview, Goals, Loans, Recurring)
  */
 
 import type { ComponentType } from "react";

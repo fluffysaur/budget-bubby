@@ -399,8 +399,8 @@ export function NotificationSettingsModal({
                                     {/* Recurring Bills Due */}
                                     <CategoryToggleRow
                                         icon={<CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />}
-                                        title="Recurring Bills &amp; Policy Renewals"
-                                        description="Alert for upcoming bills and taxes"
+                                        title="Recurring Bills"
+                                        description="Remind before recurring items are due"
                                         isChecked={prefs.recurring_bills_due}
                                         testId="toggle-recurring-bills"
                                         onChange={(val) => handleUpdate({ recurring_bills_due: val })}

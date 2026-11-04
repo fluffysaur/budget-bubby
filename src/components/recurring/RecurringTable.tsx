@@ -1,20 +1,21 @@
 /**
  * RecurringTable Component
- * Table displaying recurring insurance recurring items, taxes, and subscriptions.
+ * Table of recurring items: insurance, tax, subscriptions, bills and other.
  * Features:
- * - Columns: Policy Name, Type badge, Insured/Owner, Frequency, Premium Amount, Monthly Amortized Outflow, Renewal Month, Actions
+ * - Columns: Name, Type badge, Owner, Frequency, Amount, Monthly Amortized, Due, Actions
  * - Search by recurring item name or notes
  * - Filter by type (All, Insurance, Tax, Subscription, Bill, Other)
- * - Empty state with clear filters option
+ * - Empty states: no items (add CTA) and no matches (clear filters)
  * - Edit and Delete actions
  */
 
 import { useState, useMemo } from "react";
-import { Pencil, Trash2, Search, AlertCircle } from "lucide-react";
+import { Pencil, Trash2, Search, AlertCircle, Plus } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import { MONTH_NAMES_SHORT as MONTH_NAMES } from "../../lib/dateUtils";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TruncatedText } from "../ui/TruncatedText";
+import { Button } from "../ui/Button";
 import { RecurringTypeBadge } from "./RecurringTypeBadge";
 import {
     RECURRING_ITEM_TYPES,
@@ -26,6 +27,8 @@ export interface RecurringTableProps {
     recurringItems: RecurringItem[];
     onEdit?: (recurringItem: RecurringItem) => void;
     onDelete?: (itemId: string) => void;
+    /** Shown as the empty-state CTA when there are no items at all */
+    onAdd?: () => void;
     className?: string;
 }
 
@@ -33,6 +36,7 @@ export function RecurringTable({
     recurringItems,
     onEdit,
     onDelete,
+    onAdd,
     className = "",
 }: RecurringTableProps) {
     const [searchTerm, setSearchTerm] = useState<string>("");
@@ -62,6 +66,8 @@ export function RecurringTable({
             return true;
         });
     }, [recurringItems, selectedType, searchTerm]);
+
+    const hasNoItems = recurringItems.length === 0;
 
     // Helper for owner label
     const getOwnerLabel = (ownerId: string) => {
@@ -93,7 +99,7 @@ export function RecurringTable({
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search recurring items or notes..."
+                        placeholder="Search name or notes..."
                         className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-(--shadow-cute-sm) focus:outline-none focus:shadow-(--shadow-cute) transition-all"
                     />
                     {searchTerm && (
@@ -120,7 +126,7 @@ export function RecurringTable({
                     onChange={(typeId) => setSelectedType(typeId as "all" | RecurringItemType)}
                     accent="butter"
                     size="sm"
-                    ariaLabel="Policy type filter"
+                    ariaLabel="Recurring type filter"
                 />
             </div>
 
@@ -130,7 +136,7 @@ export function RecurringTable({
                     <thead>
                         <tr className="border-b-2 border-(--border-ink) bg-(--bg-cream) text-xs font-bold text-(--text-ink) uppercase tracking-wider font-display">
                             <th scope="col" className="py-3.5 px-4">
-                                Policy Name
+                                Name
                             </th>
                             <th scope="col" className="py-3.5 px-4">
                                 Type
@@ -142,7 +148,7 @@ export function RecurringTable({
                                 Frequency
                             </th>
                             <th scope="col" className="py-3.5 px-4 text-right">
-                                Premium
+                                Amount
                             </th>
                             <th scope="col" className="py-3.5 px-4 text-right">
                                 Monthly Amortized
@@ -164,24 +170,46 @@ export function RecurringTable({
                                 >
                                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-60" />
                                     <p className="font-bold text-base text-(--text-ink) font-display">
-                                        No recurring items found
+                                        {hasNoItems
+                                            ? "Nothing Recurring"
+                                            : "No Matches"}
                                     </p>
                                     <p className="text-xs text-(--text-muted) mt-1">
-                                        Try adjusting your search query or
-                                        filter selection.
+                                        {hasNoItems
+                                            ? "Add a bill or subscription to start tracking."
+                                            : "Try another search or filter."}
                                     </p>
-                                    {(searchTerm || selectedType !== "all") && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setSearchTerm("");
-                                                setSelectedType("all");
-                                            }}
-                                            className="mt-3 inline-flex items-center text-xs font-bold text-(--text-ink) underline cursor-pointer"
-                                        >
-                                            Clear active filters
-                                        </button>
-                                    )}
+                                    {hasNoItems
+                                        ? onAdd && (
+                                              <Button
+                                                  variant="primary"
+                                                  size="sm"
+                                                  className="mt-3"
+                                                  leftIcon={
+                                                      <Plus
+                                                          className="w-3.5 h-3.5"
+                                                          strokeWidth={2.5}
+                                                      />
+                                                  }
+                                                  onClick={onAdd}
+                                              >
+                                                  Add Recurring
+                                              </Button>
+                                          )
+                                        : (searchTerm ||
+                                              selectedType !== "all") && (
+                                              <Button
+                                                  variant="secondary"
+                                                  size="sm"
+                                                  className="mt-3"
+                                                  onClick={() => {
+                                                      setSearchTerm("");
+                                                      setSelectedType("all");
+                                                  }}
+                                              >
+                                                  Clear Filters
+                                              </Button>
+                                          )}
                                 </td>
                             </tr>
                         ) : (
@@ -208,7 +236,7 @@ export function RecurringTable({
                                         key={recurringItem.id}
                                         className="hover:bg-(--bg-cream)/70 transition-colors"
                                     >
-                                        {/* Policy Name & Notes */}
+                                        {/* Name & Notes */}
                                         <td className="py-3.5 px-4 font-bold text-(--color-ink) dark:text-white">
                                             <div className="min-w-0 max-w-65">
                                                 <TruncatedText
@@ -243,7 +271,7 @@ export function RecurringTable({
                                             {recurringItem.frequency}
                                         </td>
 
-                                        {/* Premium Amount */}
+                                        {/* Amount */}
                                         <td className="py-3 px-4 whitespace-nowrap text-right font-bold font-mono-num text-(--color-ink) dark:text-white">
                                             {formatSGD(recurringItem.amount)}
                                         </td>

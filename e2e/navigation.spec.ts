@@ -64,10 +64,10 @@ test.describe('Navigation and Perspective Switching', () => {
     await expect(page).toHaveURL(/\/loans/);
     await expect(page.getByRole('heading', { level: 1, name: /Loans & Debt Freedom/i })).toBeVisible();
 
-    // Navigate to Recurring & Policies
-    await page.getByRole('button', { name: /Recurring & Policies/i }).click();
+    // Navigate to Recurring
+    await page.getByRole('button', { name: /^Recurring/i }).click();
     await expect(page).toHaveURL(/\/recurring/);
-    await expect(page.getByRole('heading', { level: 1, name: /Recurring Policies & Taxes/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /^Recurring$/i })).toBeVisible();
 
     // Navigate back to Dashboard
     await page.getByRole('button', { name: /^Dashboard/i }).click();

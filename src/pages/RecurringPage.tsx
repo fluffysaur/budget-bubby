@@ -1,6 +1,6 @@
 /**
  * RecurringPage Component
- * Recurring Policies, Taxes & Annual Renewal Calendar Center:
+ * Recurring items (insurance, tax, subscriptions, bills, other) & renewal calendar:
  * - 4 Summary metric cards: Total Annual Outflow, Monthly Amortized Outflow, Upcoming Renewal, Heaviest Month
  * - Perspective filtering (Combined Household vs Yi Jia vs Rachel)
  * - 12-Month RenewalCalendar timeline
@@ -15,11 +15,11 @@ import {
     TrendingDown,
     CalendarCheck,
     Flame,
-    AlertCircle,
     RefreshCw,
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
 import { PageHeader, Button, StatCard, Card } from "../components/ui";
+import { Alert } from "../components/ui/Alert";
 import {
     useCategoriesQuery,
     useRecurringItemsQuery,
@@ -52,7 +52,7 @@ export function RecurringPage({
         refreshData: refreshHousehold,
     } = useHousehold();
 
-    // Cached Policies Query
+    // Cached Recurring Items Query
     const {
         data: recurringItemsData,
         isLoading: recurringItemsLoading,
@@ -202,7 +202,7 @@ export function RecurringPage({
             await financeService.deleteRecurringItem(itemId);
             await refreshHousehold();
         } catch (err: unknown) {
-            console.error("Failed to delete recurringItem:", err);
+            console.error("Failed to delete recurring item:", err);
             setActionError(
                 err instanceof Error ? err.message : "Failed to delete recurring item",
             );
@@ -248,7 +248,7 @@ export function RecurringPage({
                                 }
                                 onClick={handleOpenAddModal}
                             >
-                                Add Policy
+                                Add Recurring
                             </Button>
                         </div>
                     }
@@ -276,19 +276,14 @@ export function RecurringPage({
                             }
                             onClick={handleOpenAddModal}
                         >
-                            Add Policy
+                            Add Recurring
                         </Button>
                     </div>
                 </div>
             )}
 
             {/* Error Banner */}
-            {errorMessage && (
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-200 text-sm">
-                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
-                    <p className="flex-1">{errorMessage}</p>
-                </div>
-            )}
+            {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
 
             {/* 4 Summary Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -296,7 +291,7 @@ export function RecurringPage({
                 <StatCard
                     title="Annual Outflow"
                     value={formatSGD(totalAnnualOutflow)}
-                    subtitle={`${inScopeItems.length} tracked recurring items`}
+                    subtitle={`${inScopeItems.length} items`}
                     icon={<DollarSign className="w-4 h-4" />}
                     iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
                 />
@@ -305,7 +300,7 @@ export function RecurringPage({
                 <StatCard
                     title="Monthly Amortized"
                     value={`${formatSGD(monthlyAmortizedOutflow)}/mo`}
-                    subtitle="Monthly deduction impact"
+                    subtitle="Insurance & tax"
                     icon={<TrendingDown className="w-4 h-4" />}
                     iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
                 />
@@ -337,7 +332,7 @@ export function RecurringPage({
                     subtitle={
                         heaviestMonthAmount > 0
                             ? `${formatSGD(heaviestMonthAmount)} total`
-                            : "No annual recurring items"
+                            : "No annual items"
                     }
                     icon={<Flame className="w-4 h-4" />}
                     iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
@@ -349,14 +344,14 @@ export function RecurringPage({
                 <RenewalCalendar recurringItems={inScopeItems} />
             </Card>
 
-            {/* Policy Table */}
+            {/* Recurring Table */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                        Active Policies &amp; Schedules
+                        All Recurring
                     </h2>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {inScopeItems.length} recurringItem records in scope
+                        {inScopeItems.length} items
                     </span>
                 </div>
 
@@ -364,10 +359,11 @@ export function RecurringPage({
                     recurringItems={inScopeItems}
                     onEdit={handleEditItem}
                     onDelete={handleDeleteItem}
+                    onAdd={handleOpenAddModal}
                 />
             </div>
 
-            {/* Add / Edit Policy Modal */}
+            {/* Add / Edit Recurring Modal */}
             <AddRecurringModal
                 isOpen={isModalOpen}
                 initialItem={editingItem}

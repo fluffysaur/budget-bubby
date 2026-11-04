@@ -9,7 +9,7 @@
  *   4. Missing Credit Card Statement (card billing cycle closed without logged statement)
  *   5. Partner / Shared Spend (new shared spend logged by partner, settlement balance threshold, couple streak risk)
  *   6. Budget Limit Alerts (nearing/exceeded spendable category cap)
- *   7. Recurring Bills Due (insurance, tax, subscription renewals this month)
+ *   7. Recurring Bills Due (any recurring item due soon, by due day)
  *   8. Savings Goal Pacing (behind schedule or achieved)
  *   9. Monthly Budget Review (early month budget review prompt)
  * - Dispatches Service Worker PWA notifications when permitted
