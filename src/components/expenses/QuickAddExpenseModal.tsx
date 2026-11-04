@@ -1,16 +1,14 @@
 /**
- * Quick Add Expense Modal
- * Fast, mobile-optimized modal with:
- * - AnimatedModal wrapper + standardized ModalHeader / ModalBody / ModalFooter
- * - CentsFirstAmountInput (ATM cashier-style digits input)
- * - Multi-currency FX conversion (SGD, VND, JPY, MYR, THB, USD, EUR, etc.) with live preview
- * - 2-button segmented toggle: 👤 Personal | 👥 Shared (50/50)
- * - Smart category auto-detection on typing
- * - 1-tap Date chips (Today, Yesterday, 2d ago) + compact date picker
- * - Expandable "More options" accordion for secondary details:
- *   - Inline remarks/notes input
- *   - Tag picker (#tags) with up to 3 most recent global tags
- *   - "Funded by Goal" linking
+ * Add Expense Modal
+ * Minimal by default: Amount, Category and Description.
+ * Everything else sits in a collapsed "More" section with smart defaults
+ * (today, current member as payer, last split used), summarised on its toggle:
+ * - Date chips (Today, Yesterday, 2d ago) + date/time pickers
+ * - Payer and Personal / Shared (50/50) split
+ * - Currency with FX conversion
+ * - Fund from Savings Goal
+ * - Remarks and #tags
+ * "More" opens automatically when any of its non-default fields is set.
  */
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
@@ -21,6 +19,7 @@ import {
     getTodayDateString,
     getSingaporeDate,
     formatISODate,
+    formatDisplayDate,
     getCurrentSingaporeTime,
 } from "../../lib/dateUtils";
 import { isSpendableCategory } from "../../lib/financialFormulas";
@@ -59,6 +58,26 @@ export interface QuickAddExpenseModalProps {
 }
 
 const GLOBAL_RECENT_TAGS_STORAGE_KEY = "budget_bubby_recent_tags_global_v2";
+const LAST_SPLIT_STORAGE_KEY = "budget_bubby_last_split_v1";
+
+function getStoredLastSplit(): boolean | undefined {
+    try {
+        const raw = window.localStorage.getItem(LAST_SPLIT_STORAGE_KEY);
+        if (raw === "shared") return true;
+        if (raw === "personal") return false;
+    } catch {
+        // Ignore localStorage errors
+    }
+    return undefined;
+}
+
+function storeLastSplit(isShared: boolean) {
+    try {
+        window.localStorage.setItem(LAST_SPLIT_STORAGE_KEY, isShared ? "shared" : "personal");
+    } catch {
+        // Ignore localStorage errors
+    }
+}
 
 // Category keyword matching rules for smart auto-detection
 const KEYWORD_CATEGORY_MAP: { keywords: string[]; categoryKey: string }[] = [
@@ -226,11 +245,10 @@ export function QuickAddExpenseModal({
         [categories],
     );
 
-    // Default to Personal when in Personal perspective, or Shared when in Combined view (unless overridden)
-    const resolvedDefaultShared =
-        defaultShared !== undefined
-            ? defaultShared
-            : perspective === "household";
+    // Split default: explicit prop, else the last split used, else Shared in Combined / Personal otherwise
+    const resolveDefaultShared = () =>
+        defaultShared ?? getStoredLastSplit() ?? perspective === "household";
+    const resolvedDefaultShared = resolveDefaultShared();
 
     // Amount & Currency State
     const [amount, setAmount] = useState<number>(0);
@@ -321,9 +339,7 @@ export function QuickAddExpenseModal({
                     (activeMember ? activeMember.id : members[0]?.id || ""),
             );
             setIsShared(
-                defaultShared !== undefined
-                    ? defaultShared
-                    : perspective === "household",
+                defaultShared ?? getStoredLastSplit() ?? perspective === "household",
             );
             setDate(getTodayDateString());
             setTime(getCurrentSingaporeTime());
@@ -412,9 +428,12 @@ export function QuickAddExpenseModal({
             .slice(0, 3);
     }, [recentTagsList, tags]);
 
-    // Count active items in the "More options" accordion
+    // Count non-default values hidden in "More" (they keep it open)
     const moreOptionsActiveCount =
-        (remarks.trim() ? 1 : 0) + (tags.length > 0 ? 1 : 0);
+        (remarks.trim() ? 1 : 0) +
+        (tags.length > 0 ? 1 : 0) +
+        (currencyCode !== "SGD" ? 1 : 0) +
+        (isGoalSpend ? 1 : 0);
 
     // Auto-expand accordion if any nested fields have active values
     const isAccordionExpanded = showMoreOptions || moreOptionsActiveCount > 0;
@@ -431,6 +450,27 @@ export function QuickAddExpenseModal({
         d.setDate(d.getDate() - 2);
         return formatISODate(d);
     }, []);
+
+    // One-line summary of the defaults hidden in "More", e.g. "Today · Yi Jia · Shared"
+    const moreSummary = useMemo(() => {
+        const dateLabel =
+            date === todayStr
+                ? "Today"
+                : date === yesterdayStr
+                  ? "Yesterday"
+                  : date === twoDaysAgoStr
+                    ? "2d ago"
+                    : formatDisplayDate(date);
+        const payerName = members.find((m) => m.id === payerId)?.display_name;
+        return [
+            dateLabel,
+            payerName,
+            isShared ? "Shared" : "Personal",
+            currencyCode !== "SGD" ? currencyCode : null,
+        ]
+            .filter(Boolean)
+            .join(" · ");
+    }, [date, todayStr, yesterdayStr, twoDaysAgoStr, members, payerId, isShared, currencyCode]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -478,6 +518,8 @@ export function QuickAddExpenseModal({
 
             const created = await financeService.addExpense(input);
 
+            storeLastSplit(isShared);
+
             // Persist tags globally for recent quick suggestions
             if (tags.length > 0) {
                 storeRecentTags(tags);
@@ -508,7 +550,7 @@ export function QuickAddExpenseModal({
                 className="flex flex-col min-h-0 flex-1 overflow-hidden"
             >
                 <ModalHeader
-                    title="Quick Add Expense"
+                    title="Add Expense"
                     icon={<Plus className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
@@ -529,29 +571,6 @@ export function QuickAddExpenseModal({
                             >
                                 Amount
                             </label>
-
-                            {/* Inline Currency Selector Dropdown Pill */}
-                            <div className="relative flex items-center">
-                                <select
-                                    aria-label="Select currency"
-                                    value={currencyCode}
-                                    onChange={(e) => {
-                                        setCurrencyCode(e.target.value);
-                                        setCustomExchangeRate(undefined);
-                                    }}
-                                    className="appearance-none rounded-full bg-(--bg-canvas) text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                >
-                                    {SUPPORTED_CURRENCIES.map((c) => (
-                                        <option key={c.code} value={c.code}>
-                                            {c.flag} {c.code} ({c.symbol})
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown
-                                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
-                                    strokeWidth={2.5}
-                                />
-                            </div>
                         </div>
 
                         {/* ATM / Cashier Cents-First Amount Input */}
@@ -564,110 +583,7 @@ export function QuickAddExpenseModal({
                             autoFocus
                         />
 
-                        {/* Foreign Currency Live Conversion Preview & Editable Rate */}
-                        {currencyCode !== "SGD" && (
-                            <FxRateField
-                                currencyCode={currencyCode}
-                                foreignAmount={amount}
-                                customRate={customExchangeRate}
-                                onCustomRateChange={setCustomExchangeRate}
-                            />
-                        )}
                     </div>
-
-                    {/* Goal Spend Full-Width Toggle Card */}
-                    {activeGoals.length > 0 && (
-                        <div
-                            onClick={() => {
-                                const next = !isGoalSpend;
-                                setIsGoalSpend(next);
-                                if (
-                                    next &&
-                                    !selectedGoalId &&
-                                    activeGoals.length > 0
-                                ) {
-                                    setSelectedGoalId(activeGoals[0].id);
-                                }
-                                if (!next) {
-                                    setSelectedGoalId("");
-                                }
-                            }}
-                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-(--shadow-cute-sm) ${
-                                isGoalSpend
-                                    ? "bg-(--pastel-lilac-light) border-(--border-ink)"
-                                    : "bg-(--bg-card) border-(--border-subtle) hover:border-(--border-ink)"
-                            }`}
-                        >
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div
-                                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-(--border-ink) ${
-                                        isGoalSpend
-                                            ? "bg-(--pastel-lilac)"
-                                            : "bg-(--bg-canvas)"
-                                    }`}
-                                >
-                                    <Target
-                                        strokeWidth={2.5}
-                                        className={`h-4 w-4 ${
-                                            isGoalSpend
-                                                ? "text-(--text-ink)"
-                                                : "text-(--text-muted)"
-                                        }`}
-                                    />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="text-xs font-black text-(--text-ink) font-display flex items-center gap-1.5">
-                                        <span>Fund from Savings Goal</span>
-                                        {isGoalSpend && (
-                                            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac) px-1.5 py-0.2 rounded border border-(--border-ink)">
-                                                Active
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-[10px] text-(--text-muted) truncate mt-0.5">
-                                        Excludes from monthly budget caps
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Tactile Sliding Switch Pill */}
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={isGoalSpend}
-                                aria-label="Fund from Savings Goal"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const next = !isGoalSpend;
-                                    setIsGoalSpend(next);
-                                    if (
-                                        next &&
-                                        !selectedGoalId &&
-                                        activeGoals.length > 0
-                                    ) {
-                                        setSelectedGoalId(activeGoals[0].id);
-                                    }
-                                    if (!next) {
-                                        setSelectedGoalId("");
-                                    }
-                                }}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    isGoalSpend
-                                        ? "bg-(--pastel-lilac)"
-                                        : "bg-slate-200 dark:bg-slate-700"
-                                }`}
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-(--shadow-cute-sm) border border-(--border-ink) transition duration-200 ease-in-out ${
-                                        isGoalSpend
-                                            ? "translate-x-5"
-                                            : "translate-x-0.5"
-                                    }`}
-                                />
-                            </button>
-                        </div>
-                    )}
 
                     {/* Category or Goal Selection */}
                     <div>
@@ -798,7 +714,7 @@ export function QuickAddExpenseModal({
                             htmlFor="expense-item"
                             className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Item / Description
+                            Description
                         </label>
                         <input
                             id="expense-item"
@@ -813,175 +729,7 @@ export function QuickAddExpenseModal({
                         />
                     </div>
 
-                    {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
-                    <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-(--shadow-cute-sm)">
-                        {/* Payer Toggle */}
-                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                            <span className="text-[11px] font-bold text-(--text-muted)">
-                                Payer:
-                            </span>
-                            <div
-                                className="flex gap-1.5"
-                                aria-label="Payer Selection"
-                            >
-                                {members.map((member) => {
-                                    const isSelected = payerId === member.id;
-                                    return (
-                                        <button
-                                            key={member.id}
-                                            type="button"
-                                            aria-pressed={isSelected}
-                                            onClick={() =>
-                                                setPayerId(member.id)
-                                            }
-                                            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                                                isSelected
-                                                    ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
-                                                    : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
-                                            }`}
-                                        >
-                                            <span>
-                                                {member.avatar_url || "👤"}
-                                            </span>
-                                            <span>{member.display_name}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* 2-Button Segmented Personal / Shared Toggle */}
-                        <div>
-                            {/* Hidden input for backwards-compatibility with test queries */}
-                            <input
-                                id="expense-shared-toggle"
-                                type="checkbox"
-                                aria-label="Shared"
-                                checked={isShared}
-                                onChange={(e) => setIsShared(e.target.checked)}
-                                className="sr-only"
-                            />
-
-                            <div
-                                role="group"
-                                aria-label="Expense Split Type"
-                                className="flex rounded-xl bg-(--bg-canvas) p-1 border-2 border-(--border-ink)"
-                            >
-                                <button
-                                    type="button"
-                                    aria-pressed={!isShared}
-                                    onClick={() => setIsShared(false)}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                                        !isShared
-                                            ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
-                                            : "text-(--text-muted) hover:text-(--text-ink)"
-                                    }`}
-                                >
-                                    <span>👤</span>
-                                    <span>Personal</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-pressed={isShared}
-                                    onClick={() => setIsShared(true)}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                                        isShared
-                                            ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
-                                            : "text-(--text-muted) hover:text-(--text-ink)"
-                                    }`}
-                                >
-                                    <span>👥</span>
-                                    <span>Shared (50/50)</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 1-Tap Date Chips + Compact Date & Time Pickers */}
-                    <div className="space-y-1.5">
-                        <label
-                            htmlFor="expense-date"
-                            className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)"
-                        >
-                            Date & Time
-                        </label>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <button
-                                type="button"
-                                aria-pressed={date === todayStr}
-                                onClick={() => {
-                                    setDate(todayStr);
-                                    setTime(getCurrentSingaporeTime());
-                                }}
-                                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                                    date === todayStr
-                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
-                                        : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
-                                }`}
-                            >
-                                Today
-                            </button>
-                            <button
-                                type="button"
-                                aria-pressed={date === yesterdayStr}
-                                onClick={() => setDate(yesterdayStr)}
-                                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                                    date === yesterdayStr
-                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
-                                        : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
-                                }`}
-                            >
-                                Yesterday
-                            </button>
-                            <button
-                                type="button"
-                                aria-pressed={date === twoDaysAgoStr}
-                                onClick={() => setDate(twoDaysAgoStr)}
-                                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                                    date === twoDaysAgoStr
-                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
-                                        : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
-                                }`}
-                            >
-                                2d ago
-                            </button>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                            <div className="relative flex items-center flex-1 min-w-32">
-                                <input
-                                    id="expense-date"
-                                    type="date"
-                                    aria-label="Custom Date"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    required
-                                    className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <input
-                                    id="expense-time"
-                                    type="time"
-                                    aria-label="Expense Time"
-                                    value={time}
-                                    onChange={(e) => setTime(e.target.value)}
-                                    className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setTime(getCurrentSingaporeTime())
-                                    }
-                                    className="rounded-lg px-2 py-1 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border border-(--border-subtle) transition-all cursor-pointer"
-                                    title="Reset to current time"
-                                >
-                                    Now
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Expandable "More options" accordion */}
+                    {/* "More": secondary fields with their defaults summarised */}
                     <div className="border-t border-(--border-subtle) pt-2">
                         <button
                             type="button"
@@ -989,10 +737,16 @@ export function QuickAddExpenseModal({
                             aria-expanded={isAccordionExpanded}
                             className="flex w-full items-center justify-between py-2 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                         >
-                            <div className="flex items-center gap-2">
-                                <span>More options (notes, tags, goal)</span>
+                            <div className="flex min-w-0 items-center gap-2">
+                                <span className="shrink-0">More</span>
+                                <span
+                                    data-testid="expense-more-summary"
+                                    className="truncate font-semibold text-(--text-faint)"
+                                >
+                                    {moreSummary}
+                                </span>
                                 {moreOptionsActiveCount > 0 && (
-                                    <span className="rounded-full bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) px-2 py-0.5 text-[10px] font-bold">
+                                    <span className="shrink-0 rounded-full bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) px-2 py-0.5 text-[10px] font-bold">
                                         {moreOptionsActiveCount} active
                                     </span>
                                 )}
@@ -1011,6 +765,306 @@ export function QuickAddExpenseModal({
                                     : "hidden"
                             }
                         >
+                            {/* 1-Tap Date Chips + Compact Date & Time Pickers */}
+                            <div className="space-y-1.5">
+                                <label
+                                    htmlFor="expense-date"
+                                    className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)"
+                                >
+                                    Date & Time
+                                </label>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <button
+                                        type="button"
+                                        aria-pressed={date === todayStr}
+                                        onClick={() => {
+                                            setDate(todayStr);
+                                            setTime(getCurrentSingaporeTime());
+                                        }}
+                                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                            date === todayStr
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
+                                        }`}
+                                    >
+                                        Today
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={date === yesterdayStr}
+                                        onClick={() => setDate(yesterdayStr)}
+                                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                            date === yesterdayStr
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
+                                        }`}
+                                    >
+                                        Yesterday
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={date === twoDaysAgoStr}
+                                        onClick={() => setDate(twoDaysAgoStr)}
+                                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                            date === twoDaysAgoStr
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
+                                        }`}
+                                    >
+                                        2d ago
+                                    </button>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                                    <div className="relative flex items-center flex-1 min-w-32">
+                                        <input
+                                            id="expense-date"
+                                            type="date"
+                                            aria-label="Custom Date"
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            required
+                                            className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <input
+                                            id="expense-time"
+                                            type="time"
+                                            aria-label="Expense Time"
+                                            value={time}
+                                            onChange={(e) => setTime(e.target.value)}
+                                            className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setTime(getCurrentSingaporeTime())
+                                            }
+                                            className="rounded-lg px-2 py-1 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border border-(--border-subtle) transition-all cursor-pointer"
+                                            title="Reset to current time"
+                                        >
+                                            Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
+                            <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-(--shadow-cute-sm)">
+                                {/* Payer Toggle */}
+                                <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                    <span className="text-[11px] font-bold text-(--text-muted)">
+                                        Payer:
+                                    </span>
+                                    <div
+                                        className="flex gap-1.5"
+                                        aria-label="Payer Selection"
+                                    >
+                                        {members.map((member) => {
+                                            const isSelected = payerId === member.id;
+                                            return (
+                                                <button
+                                                    key={member.id}
+                                                    type="button"
+                                                    aria-pressed={isSelected}
+                                                    onClick={() =>
+                                                        setPayerId(member.id)
+                                                    }
+                                                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                                        isSelected
+                                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                            : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
+                                                    }`}
+                                                >
+                                                    <span>
+                                                        {member.avatar_url || "👤"}
+                                                    </span>
+                                                    <span>{member.display_name}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* 2-Button Segmented Personal / Shared Toggle */}
+                                <div>
+                                    {/* Hidden input for backwards-compatibility with test queries */}
+                                    <input
+                                        id="expense-shared-toggle"
+                                        type="checkbox"
+                                        aria-label="Shared"
+                                        checked={isShared}
+                                        onChange={(e) => setIsShared(e.target.checked)}
+                                        className="sr-only"
+                                    />
+
+                                    <div
+                                        role="group"
+                                        aria-label="Expense Split Type"
+                                        className="flex rounded-xl bg-(--bg-canvas) p-1 border-2 border-(--border-ink)"
+                                    >
+                                        <button
+                                            type="button"
+                                            aria-pressed={!isShared}
+                                            onClick={() => setIsShared(false)}
+                                            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                                !isShared
+                                                    ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                    : "text-(--text-muted) hover:text-(--text-ink)"
+                                            }`}
+                                        >
+                                            <span>👤</span>
+                                            <span>Personal</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            aria-pressed={isShared}
+                                            onClick={() => setIsShared(true)}
+                                            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                                isShared
+                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                    : "text-(--text-muted) hover:text-(--text-ink)"
+                                            }`}
+                                        >
+                                            <span>👥</span>
+                                            <span>Shared (50/50)</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Currency */}
+                            <div>
+                                <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
+                                    Currency
+                                </span>
+                                    {/* Inline Currency Selector Dropdown Pill */}
+                                    <div className="relative flex w-fit items-center">
+                                        <select
+                                            aria-label="Select currency"
+                                            value={currencyCode}
+                                            onChange={(e) => {
+                                                setCurrencyCode(e.target.value);
+                                                setCustomExchangeRate(undefined);
+                                            }}
+                                            className="appearance-none rounded-full bg-(--bg-canvas) text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                        >
+                                            {SUPPORTED_CURRENCIES.map((c) => (
+                                                <option key={c.code} value={c.code}>
+                                                    {c.flag} {c.code} ({c.symbol})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                            strokeWidth={2.5}
+                                        />
+                                    </div>
+                                {/* Foreign Currency Live Conversion Preview & Editable Rate */}
+                                {currencyCode !== "SGD" && (
+                                    <FxRateField
+                                        currencyCode={currencyCode}
+                                        foreignAmount={amount}
+                                        customRate={customExchangeRate}
+                                        onCustomRateChange={setCustomExchangeRate}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Goal Spend Full-Width Toggle Card */}
+                            {activeGoals.length > 0 && (
+                                <div
+                                    onClick={() => {
+                                        const next = !isGoalSpend;
+                                        setIsGoalSpend(next);
+                                        if (
+                                            next &&
+                                            !selectedGoalId &&
+                                            activeGoals.length > 0
+                                        ) {
+                                            setSelectedGoalId(activeGoals[0].id);
+                                        }
+                                        if (!next) {
+                                            setSelectedGoalId("");
+                                        }
+                                    }}
+                                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-(--shadow-cute-sm) ${
+                                        isGoalSpend
+                                            ? "bg-(--pastel-lilac-light) border-(--border-ink)"
+                                            : "bg-(--bg-card) border-(--border-subtle) hover:border-(--border-ink)"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                        <div
+                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-(--border-ink) ${
+                                                isGoalSpend
+                                                    ? "bg-(--pastel-lilac)"
+                                                    : "bg-(--bg-canvas)"
+                                            }`}
+                                        >
+                                            <Target
+                                                strokeWidth={2.5}
+                                                className={`h-4 w-4 ${
+                                                    isGoalSpend
+                                                        ? "text-(--text-ink)"
+                                                        : "text-(--text-muted)"
+                                                }`}
+                                            />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-xs font-black text-(--text-ink) font-display flex items-center gap-1.5">
+                                                <span>Fund from Savings Goal</span>
+                                                {isGoalSpend && (
+                                                    <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac) px-1.5 py-0.2 rounded border border-(--border-ink)">
+                                                        Active
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] text-(--text-muted) truncate mt-0.5">
+                                                Excludes from monthly budget caps
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Tactile Sliding Switch Pill */}
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={isGoalSpend}
+                                        aria-label="Fund from Savings Goal"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const next = !isGoalSpend;
+                                            setIsGoalSpend(next);
+                                            if (
+                                                next &&
+                                                !selectedGoalId &&
+                                                activeGoals.length > 0
+                                            ) {
+                                                setSelectedGoalId(activeGoals[0].id);
+                                            }
+                                            if (!next) {
+                                                setSelectedGoalId("");
+                                            }
+                                        }}
+                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            isGoalSpend
+                                                ? "bg-(--pastel-lilac)"
+                                                : "bg-slate-200 dark:bg-slate-700"
+                                        }`}
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-(--shadow-cute-sm) border border-(--border-ink) transition duration-200 ease-in-out ${
+                                                isGoalSpend
+                                                    ? "translate-x-5"
+                                                    : "translate-x-0.5"
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Dedicated Inline Remarks / Notes */}
                             <div>
                                 <label

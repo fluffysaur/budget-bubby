@@ -11,7 +11,6 @@ import {
   BulkAddExpenseModal,
   parseBulkExpenseText,
 } from '../src/components/expenses/BulkAddExpenseModal';
-import { FastLogWidget } from '../src/components/expenses/FastLogWidget';
 import { ExpenseListTable } from '../src/components/expenses/ExpenseListTable';
 import { CentsFirstAmountInput } from '../src/components/expenses/CentsFirstAmountInput';
 import { financeService } from '../src/services/financeService';
@@ -526,54 +525,7 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
   });
 
   /* ------------------------------------------------------------------ */
-  /* 5. FastLogWidget Component                                         */
-  /* ------------------------------------------------------------------ */
-  describe('FastLogWidget', () => {
-    it('allows 1-tap rapid amount entry, category selection, and logging', async () => {
-      const addSpy = vi.spyOn(financeService, 'addExpense').mockResolvedValue(testExpense);
-      const onLoggedMock = vi.fn();
-
-      render(
-        <FastLogWidget
-          onExpenseLogged={onLoggedMock}
-          categories={mockCategories}
-          members={mockMembers}
-        />
-      );
-
-      // Enter 10.05 via keypad: 1 -> 0 -> 0 -> 5
-      fireEvent.click(screen.getByRole('button', { name: '1' }));
-      fireEvent.click(screen.getByRole('button', { name: '0' }));
-      fireEvent.click(screen.getByRole('button', { name: '0' }));
-      fireEvent.click(screen.getByRole('button', { name: '5' }));
-
-      // Tap 'Transport' category pill
-      const transportBtn = screen.getByRole('button', { name: /Transport/i });
-      fireEvent.click(transportBtn);
-
-      // Tap 'Grab' quick tag
-      const grabTag = screen.getByRole('button', { name: 'Grab' });
-      fireEvent.click(grabTag);
-
-      // Tap Log button
-      const logBtn = screen.getByRole('button', { name: /Log S\$/i });
-      fireEvent.click(logBtn);
-
-      await waitFor(() => {
-        expect(addSpy).toHaveBeenCalledWith(
-          expect.objectContaining({
-            amount: 10.05,
-            item: 'Grab',
-            tags: ['Grab'],
-          })
-        );
-        expect(onLoggedMock).toHaveBeenCalled();
-      });
-    });
-  });
-
-  /* ------------------------------------------------------------------ */
-  /* 6. ExpenseListTable Sorting & Pagination                           */
+  /* 5. ExpenseListTable Sorting & Pagination                           */
   /* ------------------------------------------------------------------ */
   describe('ExpenseListTable Sorting & Pagination', () => {
     const expensesList: Expense[] = [

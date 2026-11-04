@@ -7,7 +7,6 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ExpenseListTable } from '../src/components/expenses/ExpenseListTable';
 import { QuickAddExpenseModal } from '../src/components/expenses/QuickAddExpenseModal';
 import { EditExpenseModal } from '../src/components/expenses/EditExpenseModal';
-import { FastLogWidget } from '../src/components/expenses/FastLogWidget';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { financeService } from '../src/services/financeService';
 import { mockCategories, mockMembers } from '../src/data/mockSeedData';
@@ -215,53 +214,6 @@ describe('Expense Time Feature & Intraday Sorting', () => {
       'exp-morning',
       expect.objectContaining({
         time: '09:15',
-      })
-    );
-  });
-
-  it('auto-stamps current time in FastLogWidget', async () => {
-    const addExpenseSpy = vi.spyOn(financeService, 'addExpense').mockResolvedValue({
-      id: 'exp-fast-1',
-      household_id: 'hh-1',
-      payer_id: mockMembers[0].id,
-      date: '2026-10-29',
-      time: '14:20',
-      item: 'Lunch',
-      amount: 12.0,
-      is_shared: true,
-      split_ratio: 0.5,
-      settled: false,
-    });
-
-    render(
-      <FastLogWidget
-        categories={mockCategories}
-        members={mockMembers}
-      />
-    );
-
-    // Preset chips: +10 and +2 for $12.00
-    const chip10 = screen.getByRole('button', { name: '+10' });
-    const chip2 = screen.getByRole('button', { name: '+2' });
-
-    fireEvent.click(chip10);
-    fireEvent.click(chip2);
-
-    // Select tag "Lunch"
-    const lunchTag = screen.getByRole('button', { name: 'Lunch' });
-    fireEvent.click(lunchTag);
-
-    // Click Log button
-    const logBtn = screen.getByRole('button', { name: /log s\$12\.00/i });
-    await act(async () => {
-      fireEvent.click(logBtn);
-    });
-
-    expect(addExpenseSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        item: 'Lunch',
-        amount: 12,
-        time: expect.stringMatching(/^\d{2}:\d{2}$/),
       })
     );
   });

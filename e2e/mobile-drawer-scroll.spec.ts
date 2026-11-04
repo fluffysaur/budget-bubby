@@ -76,7 +76,7 @@ test.describe('Mobile Drawer Scrolling & Viewport Layout', () => {
     await page.waitForTimeout(300);
 
     // Verify header and footer are visible within viewport
-    await expect(dialog.getByRole('heading', { level: 2, name: /Quick Add Expense/i })).toBeVisible();
+    await expect(dialog.getByRole('heading', { level: 2, name: /^Add Expense$/i })).toBeVisible();
     const addExpenseBtn = dialog.getByRole('button', { name: /Add Expense/i });
     await expect(addExpenseBtn).toBeVisible();
 

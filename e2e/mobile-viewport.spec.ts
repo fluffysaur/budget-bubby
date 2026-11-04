@@ -25,7 +25,7 @@ test.describe('Mobile Viewport & Bottom Navigation', () => {
     await quickAddFab.click();
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible();
-    await expect(modal.getByRole('heading', { level: 2, name: /Quick Add Expense/i })).toBeVisible();
+    await expect(modal.getByRole('heading', { level: 2, name: /^Add Expense$/i })).toBeVisible();
 
     // Close modal via Escape key or close button
     await page.keyboard.press('Escape');

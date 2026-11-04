@@ -98,7 +98,7 @@ function AppLayoutInner() {
     const segment = location.pathname.replace(/^\//, '').split('/')[0];
     if (!segment || segment === 'dashboard') return 'dashboard';
     if (['goals', 'loans', 'recurring'].includes(segment)) return 'plan';
-    if (['spend', 'expenses', 'budget', 'fast-log'].includes(segment)) return 'spend';
+    if (['spend', 'expenses', 'budget'].includes(segment)) return 'spend';
     return segment;
   }, [location.pathname]);
 
@@ -194,7 +194,7 @@ function AppLayoutInner() {
                 <Route path="/spend" element={<SpendPage onNavigateTab={handleSelectTab} />} />
                 <Route path="/budget" element={<SpendPage initialTab="budget" onNavigateTab={handleSelectTab} />} />
                 <Route path="/expenses" element={<SpendPage initialTab="expenses" onNavigateTab={handleSelectTab} />} />
-                <Route path="/fast-log" element={<FastLogPage onNavigateTab={handleSelectTab} />} />
+                <Route path="/fast-log" element={<FastLogPage onOpenQuickAdd={handleOpenQuickAdd} />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
                 <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />

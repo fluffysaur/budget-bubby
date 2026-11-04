@@ -475,7 +475,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     expect(screen.queryByRole('group', { name: /quick tags/i })).not.toBeInTheDocument();
 
     // 2. Expand accordion
-    const moreOptionsToggle = screen.getByRole('button', { name: /more options/i });
+    const moreOptionsToggle = screen.getByRole('button', { name: /^more/i });
     expect(moreOptionsToggle).toBeInTheDocument();
     fireEvent.click(moreOptionsToggle);
 

@@ -14,7 +14,7 @@ test.describe('Quick Add Expense Flow', () => {
     // Verify modal is visible
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible();
-    await expect(modal.getByRole('heading', { level: 2, name: /Quick Add Expense/i })).toBeVisible();
+    await expect(modal.getByRole('heading', { level: 2, name: /^Add Expense$/i })).toBeVisible();
 
     // Fill amount
     const amountInput = modal.locator('input[placeholder="0.00"]');
