@@ -11,6 +11,7 @@ import type {
     ExpenseFilter,
     HouseholdOverview,
     Account,
+    AccountSnapshot,
     SavingsGoal,
     RecurringItem,
     Expense,
@@ -59,6 +60,14 @@ export function useAccountsQuery(perspective?: Perspective) {
     return useQuery<Account[]>({
         queryKey: queryKeys.accounts(perspective),
         queryFn: () => financeService.getAccounts(perspective || "household"),
+    });
+}
+
+/** Balance snapshots for every account visible in the perspective (net-worth history). */
+export function useAccountSnapshotsQuery(perspective?: Perspective) {
+    return useQuery<AccountSnapshot[]>({
+        queryKey: ["finance", "account-snapshots", perspective ?? "household"],
+        queryFn: () => financeService.getAllAccountSnapshots(perspective || "household"),
     });
 }
 
