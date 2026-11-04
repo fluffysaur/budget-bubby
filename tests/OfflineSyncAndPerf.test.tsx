@@ -378,7 +378,7 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
 
       // Lazy DashboardPage renders successfully through Suspense
       await waitFor(() => {
-        expect(screen.getByRole("region", { name: "Net Worth Summary" })).toBeInTheDocument();
+        expect(screen.getByRole("region", { name: "Left to Spend" })).toBeInTheDocument();
       }, { timeout: 5000 });
     });
 

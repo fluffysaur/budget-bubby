@@ -26,6 +26,8 @@ export interface CategoryLimitWarningBannerProps {
   categories?: MonthlyBudgetCategoryDetail[];
   className?: string;
   onNavigateCategory?: (categoryId: string) => void;
+  /** Show only the most urgent alert, with a "+N more" link for the rest. */
+  single?: boolean;
 }
 
 interface ToastAlert {
@@ -39,6 +41,7 @@ export function CategoryLimitWarningBanner({
   categories = [],
   className = '',
   onNavigateCategory,
+  single = false,
 }: CategoryLimitWarningBannerProps) {
     const household = useOptionalHousehold();
     const activeMember = household?.activeMember;
@@ -217,6 +220,20 @@ export function CategoryLimitWarningBanner({
 
   const hasAnyAlerts = exceededAlerts.length > 0 || warningAlerts.length > 0;
 
+  // In single mode, keep only the most urgent alert: worst overspend, else closest to cap
+  const { shownExceeded, shownWarning, hiddenCount } = useMemo(() => {
+    if (!single) {
+      return { shownExceeded: exceededAlerts, shownWarning: warningAlerts, hiddenCount: 0 };
+    }
+    const total = exceededAlerts.length + warningAlerts.length;
+    if (exceededAlerts.length > 0) {
+      const worst = [...exceededAlerts].sort((a, b) => b.over - a.over).slice(0, 1);
+      return { shownExceeded: worst, shownWarning: [], hiddenCount: total - 1 };
+    }
+    const closest = [...warningAlerts].sort((a, b) => b.percentage - a.percentage).slice(0, 1);
+    return { shownExceeded: [], shownWarning: closest, hiddenCount: total - closest.length };
+  }, [single, exceededAlerts, warningAlerts]);
+
   return (
     <>
       {/* Immediate Toast Notification (Floating) */}
@@ -275,7 +292,7 @@ export function CategoryLimitWarningBanner({
           className={`space-y-2.5 ${className}`}
         >
           {/* Exceeded Cap Alert (Rose) */}
-          {exceededAlerts.length > 0 && (
+          {shownExceeded.length > 0 && (
             <div
               data-testid="category-limit-exceeded-banner"
               className="p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fff1ee] dark:bg-[#3b1c19] text-[#9a1b1b] dark:text-[#fca5a5] shadow-(--shadow-cute-sm) transition-all"
@@ -291,7 +308,7 @@ export function CategoryLimitWarningBanner({
                     </span>
                   </div>
                   <div className="space-y-1">
-                    {exceededAlerts.map((item) => (
+                    {shownExceeded.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between gap-2 text-xs font-bold text-[#9a1b1b] dark:text-[#fca5a5] flex-wrap"
@@ -311,7 +328,7 @@ export function CategoryLimitWarningBanner({
           )}
 
           {/* Nearing Cap Warning (Amber) */}
-          {warningAlerts.length > 0 && (
+          {shownWarning.length > 0 && (
             <div
               data-testid="category-limit-nearing-banner"
               className="p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fffbeb] dark:bg-[#382f18] text-[#92400e] dark:text-[#fde68a] shadow-(--shadow-cute-sm) transition-all"
@@ -327,7 +344,7 @@ export function CategoryLimitWarningBanner({
                     </span>
                   </div>
                   <div className="space-y-1">
-                    {warningAlerts.map((item) => (
+                    {shownWarning.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between gap-2 text-xs font-bold text-[#92400e] dark:text-[#fde68a] flex-wrap"
@@ -351,6 +368,18 @@ export function CategoryLimitWarningBanner({
                 </div>
               </div>
             </div>
+          )}
+
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              data-testid="category-limit-more"
+              onClick={() => onNavigateCategory?.('')}
+              className="inline-flex items-center gap-1 px-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+            >
+              <span>+{hiddenCount} more</span>
+              <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
+            </button>
           )}
         </div>
       )}

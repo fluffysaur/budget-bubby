@@ -572,7 +572,7 @@ describe('BudgetPage', () => {
     });
   });
 
-  it('adapts when perspective changes between members and household', async () => {
+  it('renders in member and household perspectives without a perspective badge', async () => {
     const { rerender } = render(
       <HouseholdProvider initialPerspective="yijia">
         <BudgetPage />
@@ -580,8 +580,10 @@ describe('BudgetPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText(/yi jia/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Budget Waterfall Breakdown/i)).toBeInTheDocument();
     });
+    // Perspective is shown only in the header, not as a badge on the page
+    expect(screen.queryByText(/^Yi Jia$/)).not.toBeInTheDocument();
 
     rerender(
       <HouseholdProvider initialPerspective="household">
@@ -590,8 +592,9 @@ describe('BudgetPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText(/household|combined/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Budget Waterfall Breakdown/i)).toBeInTheDocument();
     });
+    expect(screen.queryByText(/^Combined Household$/)).not.toBeInTheDocument();
   });
 
   it('opens BaseProfileEditorModal when clicking edit profile button', async () => {

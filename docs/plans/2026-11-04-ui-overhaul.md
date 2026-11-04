@@ -1,7 +1,7 @@
 # UI Overhaul Plan
 
 Date: 2026-11-04
-Status: Agreed, in progress (PR 2 ready for review)
+Status: Agreed, in progress (PR 2 merged, PR 3 ready for review)
 
 ## Problem
 
@@ -82,9 +82,19 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
 - **PR 3** edits `AppHeader` (perspective switch, streak chip), which hosts `NotificationCenterPopover`. Don't change the popover itself. The notifications work owns it, its copy, and the check-in sheet.
 - **PR 6** should leave `NotificationSettingsModal` until notifications Phase 2 has merged, then convert it.
 
+## PR 3 notes
+
+- **Perspective switch:** the header already had the only switcher (a menu on mobile, pills on desktop), so it stays as it is. Removed the leftover badges on the net-worth hero and the Budget waterfall, and deleted `PerspectiveBanner`.
+- **No Add Expense button on Home:** the bottom nav's Quick Add (mobile) and the header's Add Expense (desktop) are always one tap away, so a third button would be clutter.
+- **Settlement:** the Expenses "Unsettled" card gets a Settle Up button with a confirmation. `SettlementWidget` is deleted.
+- **Net worth and goals:** Accounts and Plan > Goals already show these, so `NetWorthHeroCard` and `SharedGoalsOverview` are deleted rather than moved.
+- **Streak:** a header chip shows the count. Tapping it opens the existing `DailyCheckinStreakBar` in a popover.
+- **Alerts:** `CategoryLimitWarningBanner` gains a `single` mode that shows only the most urgent alert plus "+N more". Budget still shows every alert.
+
 ## Follow-ups found during the work
 
 - **Fake net-worth history:** when no data is passed, `NetWorthChart` invents the previous 4 months by multiplying today's total by 0.93–0.985. Replace this with real `account_snapshots` history (the unused `calculateMonthlyBalanceTrends` already does that), or hide the chart until there is history.
+- **Home vs Spend mismatch:** in Combined view, Home's Left to Spend uses the first member's budget, while Spend > Expenses shows the household figure (demo: S$1,676 vs S$4,000). This behaviour already existed before PR 3.
 - **Card debt in net worth:** optionally count unpaid credit-card statements as liabilities. That would be a new behaviour, so it's a separate decision.
 
 ## Out of scope
