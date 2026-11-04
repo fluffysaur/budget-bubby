@@ -6,7 +6,7 @@
  * - ExpensesPage
  */
 
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { QuickAddExpenseModal } from '../src/components/expenses/QuickAddExpenseModal';
@@ -99,7 +99,7 @@ describe('QuickAddExpenseModal', () => {
     });
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Quick Add Expense')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Add Expense' })).toBeInTheDocument();
 
     const amountInput = screen.getByLabelText(/amount/i);
     expect(amountInput).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('QuickAddExpenseModal', () => {
     expect(screen.getByRole('button', { name: /transport/i })).toBeInTheDocument();
 
     // Verify payer options exist
-    expect(screen.getByRole('button', { name: /yi jia/i })).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Payer Selection')).getByRole('button', { name: /yi jia/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /rachel/i })).toBeInTheDocument();
 
     // Verify 50/50 shared toggle exists
@@ -532,7 +532,7 @@ describe('ExpensesPage Integration', () => {
     });
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Quick Add Expense')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Add Expense' })).toBeInTheDocument();
 
     // Close modal
     const closeBtn = screen.getByRole('button', { name: /close modal/i });

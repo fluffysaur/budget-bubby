@@ -134,7 +134,15 @@ describe("App Integration & Routing", () => {
         });
     });
 
-    it("clicking mobile Quick Add FAB opens the Quick Add Expense modal", async () => {
+    it("/fast-log opens the Add Expense sheet over Home", async () => {
+        render(<App initialEntries={["/fast-log"]} />);
+        await waitFor(() => {
+            expect(screen.getByRole("heading", { name: "Add Expense" })).toBeInTheDocument();
+        });
+        expect(await screen.findByRole("heading", { level: 1, name: "Home", hidden: true })).toBeInTheDocument();
+    });
+
+    it("clicking mobile Quick Add FAB opens the Add Expense modal", async () => {
         render(<App initialEntries={["/"]} />);
 
         // Mobile FAB button
@@ -146,7 +154,7 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             expect(screen.getByRole("dialog")).toBeInTheDocument();
-            expect(screen.getByText("Quick Add Expense")).toBeInTheDocument();
+            expect(screen.getByRole("heading", { name: "Add Expense" })).toBeInTheDocument();
         });
 
         // Close modal
