@@ -352,6 +352,30 @@ describe('DashboardPage', () => {
     expect(screen.queryByTestId('daily-checkin-streak-bar')).not.toBeInTheDocument();
   });
 
+  it('shows the combined household total in the Combined view', async () => {
+    const budgetSpy = vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue({
+      ...sampleMonthlyBudget,
+      spendableAllocated: 1000,
+      spendableSpent: 250,
+      spendableRemaining: 750,
+    });
+
+    await act(async () => {
+      render(
+        <HouseholdProvider initialPerspective="household">
+          <DashboardPage />
+        </HouseholdProvider>
+      );
+    });
+
+    // Two members, each S$750 left => S$1,500 left in total
+    await waitFor(() => {
+      expect(screen.getByTestId('left-to-spend-amount')).toHaveTextContent('S$1,500.00');
+    });
+    const requestedMembers = new Set(budgetSpy.mock.calls.map((c) => c[1]));
+    expect(requestedMembers.size).toBeGreaterThanOrEqual(2);
+  });
+
   it('uses the same layout in a personal perspective', async () => {
     await act(async () => {
       render(

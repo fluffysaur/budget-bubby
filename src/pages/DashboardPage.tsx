@@ -14,7 +14,7 @@ import { useHousehold } from "../context/HouseholdContext";
 import { Card, PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
 import {
     useRecurringItemsQuery,
-    useMonthlyBudgetQuery,
+    useBudgetDetailQuery,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
@@ -32,19 +32,22 @@ export function DashboardPage({
     className = "",
     onNavigateTab,
 }: DashboardPageProps) {
-    const { activeMember, members: ctxMembers } = useHousehold();
+    const { perspective, activeMember, members: ctxMembers } = useHousehold();
 
     const members =
         ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
 
     const currentMonth = useCurrentMonth();
-    const targetMemberId = activeMember ? activeMember.id : members[0]?.id;
+    const memberIds = useMemo(() => members.map((m) => m.id), [members]);
 
     // TanStack Query Cached Data Hooks
     const { data: recurringItemsData } = useRecurringItemsQuery();
-    const { data: budgetData, isLoading: budgetLoading } = useMonthlyBudgetQuery(
+    // Combined view shows the household total, same as Budget
+    const { data: budgetData, isLoading: budgetLoading } = useBudgetDetailQuery(
         currentMonth,
-        targetMemberId,
+        perspective,
+        activeMember?.id,
+        memberIds,
     );
 
     const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
