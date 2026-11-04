@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Delete } from 'lucide-react';
+import { isZeroDecimalCurrency } from '../../lib/currencyConverter';
 
 export interface CentsFirstAmountInputProps {
   value?: number;
@@ -34,8 +35,6 @@ export interface CentsFirstAmountInputProps {
   'aria-label'?: string;
 }
 
-const ZERO_DECIMAL_CURRENCIES = ['VND', 'JPY', 'KRW', 'IDR'];
-
 export function CentsFirstAmountInput({
   value,
   onChange,
@@ -50,7 +49,7 @@ export function CentsFirstAmountInput({
   inputRef,
   'aria-label': ariaLabelProp,
 }: CentsFirstAmountInputProps) {
-  const isZeroDecimal = ZERO_DECIMAL_CURRENCIES.includes((currencyCode || '').toUpperCase());
+  const isZeroDecimal = isZeroDecimalCurrency(currencyCode);
 
   // Value stored in integer units (cents for decimal currencies, whole units for zero-decimal)
   const [internalUnits, setInternalUnits] = useState<number>(() => {

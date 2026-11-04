@@ -34,8 +34,11 @@ import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import {
     SUPPORTED_CURRENCIES,
+    buildExpenseFxFields,
     convertToSGD,
 } from "../../lib/currencyConverter";
+import { useFxRates } from "../../hooks/useFxRates";
+import { FxRateInput } from "./FxRateField";
 import { formatSGD } from "../../lib/currency";
 import {
     getTodayDateString,
@@ -169,8 +172,25 @@ export function BulkAddExpenseModal({
         createDefaultRow("row-2", isSharedDefault),
         createDefaultRow("row-3", isSharedDefault),
     ]);
+    // One rate per foreign currency, applied to every row in that currency.
+    const [rateOverrides, setRateOverrides] = useState<
+        Record<string, number | undefined>
+    >({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const foreignCurrencies = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    rows
+                        .map((r) => r.currency)
+                        .filter((c) => c && c !== "SGD"),
+                ),
+            ),
+        [rows],
+    );
+    useFxRates(foreignCurrencies.length > 0);
 
     const prevIsOpenRef = useRef(false);
     const prevPayerIdPropRef = useRef(defaultPayerId);
@@ -188,6 +208,7 @@ export function BulkAddExpenseModal({
                 createDefaultRow("row-2", isSharedDefault),
                 createDefaultRow("row-3", isSharedDefault),
             ]);
+            setRateOverrides({});
             setErrorMessage(null);
         }
         prevIsOpenRef.current = isOpen;
@@ -262,7 +283,7 @@ export function BulkAddExpenseModal({
     };
 
     // Compute total count, goal-funded count & estimated SGD total
-    const summary = useMemo(() => {
+    const summary = (() => {
         let count = 0;
         let goalCount = 0;
         let totalSGD = 0;
@@ -274,7 +295,11 @@ export function BulkAddExpenseModal({
                 if (r.goalId) {
                     goalCount++;
                 }
-                const { amountInSGD } = convertToSGD(num, r.currency);
+                const { amountInSGD } = convertToSGD(
+                    num,
+                    r.currency,
+                    rateOverrides[r.currency],
+                );
                 totalSGD += amountInSGD;
             }
         }
@@ -283,7 +308,7 @@ export function BulkAddExpenseModal({
             goalCount,
             totalSGD: Math.round(totalSGD * 100) / 100,
         };
-    }, [rows]);
+    })();
 
     // Submit all valid rows
     const handleSubmit = async () => {
@@ -310,10 +335,6 @@ export function BulkAddExpenseModal({
                     typeof r.amount === "number"
                         ? r.amount
                         : parseFloat(r.amount);
-                const { amountInSGD, exchangeRate } = convertToSGD(
-                    num,
-                    r.currency,
-                );
                 return {
                     payer_id: payerId,
                     category_id: r.goalId ? null : r.categoryId || null,
@@ -321,10 +342,11 @@ export function BulkAddExpenseModal({
                     date: r.date || today,
                     time: r.time || getCurrentSingaporeTime(),
                     item: r.item.trim(),
-                    amount: amountInSGD,
-                    original_amount: r.currency !== "SGD" ? num : null,
-                    original_currency: r.currency,
-                    exchange_rate: r.currency !== "SGD" ? exchangeRate : null,
+                    ...buildExpenseFxFields(
+                        num,
+                        r.currency,
+                        rateOverrides[r.currency],
+                    ),
                     is_shared: r.isShared,
                     split_ratio: r.isShared ? 0.5 : 0.5,
                     tags: r.tags || [],
@@ -812,6 +834,26 @@ export function BulkAddExpenseModal({
                                 <Plus className="h-4 w-4" strokeWidth={2.5} />
                                 <span>+ Add Row</span>
                             </button>
+                        </div>
+                    )}
+                    {foreignCurrencies.length > 0 && (
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-(--pastel-butter-light) p-2.5 text-xs text-(--text-ink) border border-(--border-ink)">
+                            <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                                Rates
+                            </span>
+                            {foreignCurrencies.map((code) => (
+                                <FxRateInput
+                                    key={code}
+                                    currencyCode={code}
+                                    customRate={rateOverrides[code]}
+                                    onCustomRateChange={(rate) =>
+                                        setRateOverrides((prev) => ({
+                                            ...prev,
+                                            [code]: rate,
+                                        }))
+                                    }
+                                />
+                            ))}
                         </div>
                     )}
                 </ModalBody>

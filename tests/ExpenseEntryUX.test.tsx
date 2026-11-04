@@ -173,9 +173,8 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     const amountInput = screen.getByLabelText(/amount/i);
     fireEvent.change(amountInput, { target: { value: '250000' } });
 
-    // Check live preview text: ≈ S$13.23
-    expect(screen.getByText(/converted:/i)).toBeInTheDocument();
-    expect(screen.getByText(/≈ S\$13\.23/)).toBeInTheDocument();
+    // Check live preview: ≈ S$13.23
+    expect(screen.getByLabelText(/converted sgd/i)).toHaveValue(13.23);
 
     // Check exchange rate input is present
     const rateInput = screen.getByLabelText(/exchange rate/i) as HTMLInputElement;
@@ -249,7 +248,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.change(rateInput, { target: { value: '100' } });
 
     // Check preview updated to S$10.00
-    expect(screen.getByText(/≈ S\$10\.00/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/converted sgd/i)).toHaveValue(10);
 
     fireEvent.change(screen.getByLabelText(/item|description/i), { target: { value: 'Coffee in Tokyo' } });
 
