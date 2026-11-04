@@ -2,6 +2,8 @@
  * Recurring item helpers:
  * - Due-day clamping to short months (incl. leap years)
  * - Next due date / days-until-due for monthly and annual schedules
+ * - Per-category recurring spend (monthly full, annual amortized,
+ *   start/end range, uncategorized, deduction types excluded)
  * - Type classification (insurance/tax deduct; subscription/bill/other spend)
  */
 import { describe, it, expect } from "vitest";
@@ -13,6 +15,10 @@ import {
     formatDueInDays,
 } from "../src/lib/dateUtils";
 import {
+    calculateRecurringCategorySpend,
+    findDefaultRecurringCategoryId,
+    getRecurringMonthlyAmount,
+    isRecurringItemActiveInMonth,
     isDeductionType,
     resolveDueDay,
     isSpendType,
@@ -23,6 +29,7 @@ import { calculateMemberRecurringDeductions } from "../src/lib/financialFormulas
 import type { RecurringItem } from "../src/types/finance";
 
 const YJ = "mem-yj";
+const RC = "mem-rc";
 
 function makeItem(overrides: Partial<RecurringItem>): RecurringItem {
     return {
@@ -39,6 +46,7 @@ function makeItem(overrides: Partial<RecurringItem>): RecurringItem {
         notes: null,
         monthly_amortized_amount: 10,
         due_day: 1,
+        category_id: null,
         ...overrides,
     };
 }
@@ -182,5 +190,119 @@ describe("Recurring item types", () => {
             taxesMonthly: 200,
             insuranceMonthly: 100,
         });
+    });
+});
+
+describe("Recurring monthly amount & active range", () => {
+    it("monthly items count in full, annual items amortized", () => {
+        expect(getRecurringMonthlyAmount(makeItem({ amount: 25, monthly_amortized_amount: 25 }))).toBe(25);
+        expect(
+            getRecurringMonthlyAmount(
+                makeItem({ frequency: "annually", amount: 1200, monthly_amortized_amount: 100 }),
+            ),
+        ).toBe(100);
+        expect(
+            getRecurringMonthlyAmount(
+                makeItem({
+                    frequency: "annually",
+                    amount: 120,
+                    monthly_amortized_amount: undefined as unknown as number,
+                }),
+            ),
+        ).toBe(10);
+    });
+
+    it("respects start_date and end_date at month granularity", () => {
+        const item = makeItem({ start_date: "2026-03-15", end_date: "2026-08-02" });
+        expect(isRecurringItemActiveInMonth(item, "2026-02")).toBe(false);
+        expect(isRecurringItemActiveInMonth(item, "2026-03")).toBe(true);
+        expect(isRecurringItemActiveInMonth(item, "2026-08")).toBe(true);
+        expect(isRecurringItemActiveInMonth(item, "2026-09")).toBe(false);
+        expect(isRecurringItemActiveInMonth(makeItem({}), "1999-01")).toBe(true);
+    });
+});
+
+describe("calculateRecurringCategorySpend", () => {
+    const LIFESTYLE = "cat-lifestyle";
+    const UTILITIES = "cat-utilities";
+
+    const items: RecurringItem[] = [
+        makeItem({ id: "netflix", type: "subscription", amount: 20, monthly_amortized_amount: 20, category_id: LIFESTYLE }),
+        makeItem({ id: "gym", type: "bill", amount: 120, monthly_amortized_amount: 120, category_id: LIFESTYLE }),
+        makeItem({ id: "power", type: "bill", amount: 90, monthly_amortized_amount: 90, category_id: UTILITIES }),
+        makeItem({
+            id: "cloud",
+            type: "other",
+            frequency: "annually",
+            payment_month: 3,
+            amount: 120,
+            monthly_amortized_amount: 10,
+            category_id: UTILITIES,
+        }),
+        makeItem({ id: "misc", type: "other", amount: 5, monthly_amortized_amount: 5, category_id: null }),
+        makeItem({ id: "ins", type: "insurance", amount: 1200, frequency: "annually", monthly_amortized_amount: 100, category_id: LIFESTYLE }),
+        makeItem({ id: "rachel-sub", owner_id: RC, amount: 15, monthly_amortized_amount: 15, category_id: LIFESTYLE }),
+        makeItem({ id: "joint-bill", owner_id: "joint", type: "bill", amount: 40, monthly_amortized_amount: 40, category_id: UTILITIES }),
+        makeItem({ id: "future", amount: 50, monthly_amortized_amount: 50, start_date: "2026-12-01", category_id: LIFESTYLE }),
+        makeItem({ id: "ended", amount: 60, monthly_amortized_amount: 60, end_date: "2026-10-31", category_id: LIFESTYLE }),
+    ];
+
+    it("sums monthly items in full and annual items amortized per category", () => {
+        const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        expect(res.byCategory[LIFESTYLE].total).toBe(140); // netflix + gym
+        expect(res.byCategory[UTILITIES].total).toBe(140); // power 90 + cloud 10 + joint 40
+        expect(res.byCategory[LIFESTYLE].items.map((i) => i.id)).toEqual(["netflix", "gym"]);
+    });
+
+    it("puts items with no category under uncategorized and counts them in total", () => {
+        const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        expect(res.uncategorized.total).toBe(5);
+        expect(res.uncategorized.items.map((i) => i.id)).toEqual(["misc"]);
+        expect(res.total).toBe(285);
+    });
+
+    it("excludes insurance/tax and items outside their active range", () => {
+        const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        const ids = [
+            ...Object.values(res.byCategory).flatMap((b) => b.items),
+            ...res.uncategorized.items,
+        ].map((i) => i.id);
+        expect(ids).not.toContain("ins");
+        expect(ids).not.toContain("future");
+        expect(ids).not.toContain("ended");
+        expect(ids).not.toContain("rachel-sub");
+
+        const dec = calculateRecurringCategorySpend(items, "2026-12", { ownerId: YJ });
+        expect(dec.byCategory[LIFESTYLE].items.map((i) => i.id)).toContain("future");
+        const oct = calculateRecurringCategorySpend(items, "2026-10", { ownerId: YJ });
+        expect(oct.byCategory[LIFESTYLE].items.map((i) => i.id)).toContain("ended");
+    });
+
+    it("treats categories outside the budget as uncategorized", () => {
+        const res = calculateRecurringCategorySpend(items, "2026-11", {
+            ownerId: YJ,
+            knownCategoryIds: [LIFESTYLE],
+        });
+        expect(res.byCategory[UTILITIES]).toBeUndefined();
+        expect(res.uncategorized.total).toBe(145); // misc 5 + utilities 140
+        expect(res.total).toBe(285);
+    });
+
+    it("includes every owner when no owner is given", () => {
+        const res = calculateRecurringCategorySpend(items, "2026-11");
+        expect(res.byCategory[LIFESTYLE].total).toBe(155);
+    });
+});
+
+describe("findDefaultRecurringCategoryId", () => {
+    it("matches the lifestyle category case-insensitively", () => {
+        expect(
+            findDefaultRecurringCategoryId([
+                { id: "a", name: "Food" },
+                { id: "b", name: "My LifeStyle" },
+            ]),
+        ).toBe("b");
+        expect(findDefaultRecurringCategoryId([{ id: "a", name: "Food" }])).toBeNull();
+        expect(findDefaultRecurringCategoryId([])).toBeNull();
     });
 });

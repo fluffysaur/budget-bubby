@@ -5,7 +5,7 @@
  * - Selected month navigation ('YYYY-MM')
  * - Active perspective (Combined Household vs Yi Jia vs Rachel)
  * - High-level financial metric cards
- * - Spendable Category spending meters (Food, Lifestyle, Transport, Buffer) with Lifestyle subscription tooltip
+ * - Spendable Category spending meters (Food, Lifestyle, Transport, Buffer) with recurring item tooltips
  * - Collapsible Wealth & Fixed Allocations (Investments, Savings, Tithing)
  * - Visual Budget Waterfall breakdown
  * - Notion-style Bonus Allocation helper (AWS/Performance bonus calculator)
@@ -45,6 +45,7 @@ import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorMo
 import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
 import { CategoryLimitWarningBanner } from '../components/budget/CategoryLimitWarningBanner';
 import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCard';
+import { UncategorizedRecurringRow } from '../components/budget/UncategorizedRecurringRow';
 import type {
   BaseBudgetProfile,
   MonthlyBudget,
@@ -143,8 +144,9 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 const spent = Math.round(((existing.actualSpent || 0) + (item.actualSpent || 0)) * 100) / 100;
                 const remaining = Math.round((allocated - spent) * 100) / 100;
                 const pct = combinedAfter > 0 ? allocated / combinedAfter : 0;
-                const subSpent = (existing.subscriptionSpent || 0) + (item.subscriptionSpent || 0);
-                const subItems = [...(existing.subscriptionItems || []), ...(item.subscriptionItems || [])];
+                const recurringSpent =
+                  Math.round(((existing.recurringSpent || 0) + (item.recurringSpent || 0)) * 100) / 100;
+                const recurringItems = [...(existing.recurringItems || []), ...(item.recurringItems || [])];
 
                 categoryMap.set(item.category_id, {
                   ...existing,
@@ -152,8 +154,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                   actualSpent: spent,
                   remaining,
                   percentage: pct,
-                  subscriptionSpent: subSpent,
-                  subscriptionItems: subItems,
+                  recurringSpent,
+                  recurringItems,
                 });
               } else {
                 const pct = combinedAfter > 0 ? item.allocated_amount / combinedAfter : item.percentage;
@@ -170,8 +172,16 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           }
 
           const combinedCategories = Array.from(categoryMap.values());
+          const uncategorizedRecurringSpent = Math.round(
+            memberBudgets.reduce((sum, mb) => sum + (mb.uncategorizedRecurringSpent || 0), 0) * 100
+          ) / 100;
+          const uncategorizedRecurringItems = memberBudgets.flatMap(
+            (mb) => mb.uncategorizedRecurringItems || []
+          );
           const totalSpent = Math.round(
-            combinedCategories.reduce((sum, c) => sum + (c.actualSpent || 0), 0) * 100
+            (combinedCategories.reduce((sum, c) => sum + (c.actualSpent || 0), 0) +
+              uncategorizedRecurringSpent) *
+              100
           ) / 100;
           const totalRemaining = Math.round((combinedAfter - totalSpent) * 100) / 100;
 
@@ -181,6 +191,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
             disposablePool: combinedAfter,
             totalSpent,
             totalRemaining,
+            uncategorizedRecurringSpent,
+            uncategorizedRecurringItems,
           };
         }
       }
@@ -435,6 +447,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 categories={spendableCats.length > 0 ? spendableCats : budgetDetail?.categories || []}
               />
             )}
+
+            <UncategorizedRecurringRow
+              amount={budgetDetail?.uncategorizedRecurringSpent ?? 0}
+              items={budgetDetail?.uncategorizedRecurringItems}
+            />
           </div>
 
           {/* Cumulative Spending Surplus / Deficit Card */}

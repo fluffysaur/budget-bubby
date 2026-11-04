@@ -12,6 +12,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Shield } from "lucide-react";
 import type {
+    Category,
     RecurringItem,
     RecurringItemType,
     RecurringFrequency,
@@ -29,6 +30,10 @@ import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import {
+    findDefaultRecurringCategoryId,
+    isSpendType,
+} from "../../lib/recurringItems";
 import { Alert } from "../ui/Alert";
 
 function useSafeHousehold() {
@@ -57,7 +62,11 @@ export interface AddRecurringModalProps {
         itemData: CreateRecurringItemInput & { id?: string },
     ) => void | Promise<void>;
     initialItem?: RecurringItem | null;
+    /** Budget categories for the spend category picker (subscription/bill/other) */
+    categories?: Category[];
 }
+
+const EMPTY_CATEGORIES: Category[] = [];
 
 const MONTH_OPTIONS = MONTH_NAMES_FULL.map((label, idx) => ({
     value: idx + 1,
@@ -69,6 +78,7 @@ export function AddRecurringModal({
     onClose,
     onSave,
     initialItem = null,
+    categories = EMPTY_CATEGORIES,
 }: AddRecurringModalProps) {
     const { members, activeMember } = useSafeHousehold();
 
@@ -90,6 +100,8 @@ export function AddRecurringModal({
     const [dueDay, setDueDay] = useState<string>("");
     const [startDate, setStartDate] = useState<string>("");
     const [notes, setNotes] = useState<string>("");
+    // null = not chosen yet, falls back to the household's lifestyle category
+    const [categoryId, setCategoryId] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -112,6 +124,7 @@ export function AddRecurringModal({
                         : "",
                 );
                 setNotes(initialItem.notes || "");
+                setCategoryId(initialItem.category_id ?? "");
             } else {
                 setName("");
                 setType("insurance");
@@ -122,6 +135,7 @@ export function AddRecurringModal({
                 setDueDay("");
                 setStartDate("");
                 setNotes("");
+                setCategoryId(null);
             }
             setErrorMessage(null);
             setIsSubmitting(false);
@@ -129,6 +143,10 @@ export function AddRecurringModal({
     }, [isOpen, initialItem, defaultOwnerId]);
 
     if (!isOpen) return null;
+
+    const showCategory = isSpendType(type);
+    const selectedCategoryId =
+        categoryId ?? findDefaultRecurringCategoryId(categories) ?? "";
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -173,6 +191,7 @@ export function AddRecurringModal({
                 payment_month:
                     frequency === "annually" ? Number(paymentMonth) : null,
                 due_day: trimmedDueDay ? numericDueDay : null,
+                category_id: showCategory ? selectedCategoryId || null : null,
                 start_date: startDate || null,
                 notes: notes.trim() || null,
             };
@@ -281,6 +300,26 @@ export function AddRecurringModal({
                             </Select>
                         </div>
                     </div>
+
+                    {/* Spend category (subscription / bill / other only) */}
+                    {showCategory && (
+                        <div>
+                            <Select
+                                id="recurring-category"
+                                label="Category"
+                                value={selectedCategoryId}
+                                onChange={(e) => setCategoryId(e.target.value)}
+                                className="bg-(--bg-canvas)"
+                            >
+                                <option value="">No category</option>
+                                {categories.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+                    )}
 
                     {/* Amount & Frequency grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

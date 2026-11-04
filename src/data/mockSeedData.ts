@@ -615,6 +615,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 3.5,
     due_day: 1,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0606',
@@ -630,6 +631,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 4.99,
     due_day: 5,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0607',
@@ -645,6 +647,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 9.65,
     due_day: 12,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0608',
@@ -660,6 +663,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     notes: 'Monthly Lifestyle subscription',
     monthly_amortized_amount: 28.99,
     due_day: 20,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
   {
     id: 'pol-00000000-0609',
@@ -675,6 +679,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
     notes: 'Monthly mobile plan',
     monthly_amortized_amount: 0.0,
     due_day: 28,
+    category_id: 'cat-00000000-0102', // Lifestyle
   },
 ];
 

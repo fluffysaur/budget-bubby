@@ -20,7 +20,10 @@ import {
 } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
 import { PageHeader, Button, StatCard, Card } from "../components/ui";
-import { useRecurringItemsQuery } from "../hooks/useFinanceQueries";
+import {
+    useCategoriesQuery,
+    useRecurringItemsQuery,
+} from "../hooks/useFinanceQueries";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { isDeductionType } from "../lib/recurringItems";
@@ -56,6 +59,8 @@ export function RecurringPage({
         error: recurringItemsError,
     } = useRecurringItemsQuery();
     const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
+    const { data: categoriesData } = useCategoriesQuery();
+    const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = recurringItemsLoading && !recurringItemsData;
     const [actionError, setActionError] = useState<string | null>(null);
     const errorMessage =
@@ -366,6 +371,7 @@ export function RecurringPage({
             <AddRecurringModal
                 isOpen={isModalOpen}
                 initialItem={editingItem}
+                categories={categories}
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSaveItem}
             />

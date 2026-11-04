@@ -3,7 +3,7 @@
  * Visual category meters with:
  * - Progress bar indicator
  * - Budgeted vs actual spent vs remaining
- * - Auto-deducted monthly subscription breakdown tooltip (for Lifestyle)
+ * - Recurring subscription/bill/other breakdown tooltip per category
  * - Color-coded status:
  *   - Green: <= 80% (On Track)
  *   - Amber: 81-100% (Near Limit)
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { formatSGD } from '../../lib/currency';
 import { formatAllocationPercent } from '../../lib/financialFormulas';
+import { getRecurringMonthlyAmount } from '../../lib/recurringItems';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { TruncatedText } from '../ui/TruncatedText';
 import { EmptyStateCard } from '../ui/EmptyStateCard';
@@ -105,8 +106,8 @@ export function CategoryProgressList({
           const actual = catDetail.actualSpent || 0;
           const remaining =
             catDetail.remaining !== undefined ? catDetail.remaining : allocated - actual;
-          const subSpent = catDetail.subscriptionSpent || 0;
-          const subItems = catDetail.subscriptionItems || [];
+          const subSpent = catDetail.recurringSpent || 0;
+          const subItems = catDetail.recurringItems || [];
 
           const spentPercentage =
             allocated > 0 ? (actual / allocated) * 100 : actual > 0 ? 100 : 0;
@@ -163,18 +164,18 @@ export function CategoryProgressList({
                       </span>
                       {subSpent > 0 && (
                         <TooltipPopover
-                          label={`${categoryName} Subscriptions Breakdown`}
-                          title="Subscriptions"
+                          label={`${categoryName} Recurring Breakdown`}
+                          title="Recurring"
                         >
                           <div className="space-y-1">
                             <p>
-                              Includes <strong>{formatSGD(subSpent)}/mo</strong> from active subscriptions:
+                              Includes <strong>{formatSGD(subSpent)}/mo</strong> from recurring items:
                             </p>
                             {subItems.length > 0 && (
                               <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
                                 {subItems.map((s) => (
-                                  <li key={s.name}>
-                                    {s.name}: {formatSGD(s.amount)}
+                                  <li key={s.id}>
+                                    {s.name}: {formatSGD(getRecurringMonthlyAmount(s))}
                                   </li>
                                 ))}
                               </ul>
@@ -186,7 +187,7 @@ export function CategoryProgressList({
                     {subSpent > 0 && (
                       <div className="flex items-center gap-1 text-[10px] font-medium text-(--text-muted)">
                         <Repeat className="h-2.5 w-2.5 text-purple-600 dark:text-purple-400" />
-                        <span>Includes {formatSGD(subSpent)} recurring subs</span>
+                        <span>Includes {formatSGD(subSpent)} recurring</span>
                       </div>
                     )}
                   </div>

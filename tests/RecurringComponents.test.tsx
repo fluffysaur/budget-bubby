@@ -480,6 +480,48 @@ describe('AddRecurringModal Component', () => {
     );
   });
 
+  it('shows a category picker only for subscription, bill and other, defaulting to Lifestyle', async () => {
+    const categories = [
+      { id: 'cat-food', household_id: 'hh-01', name: 'Food', color: '#000', icon: 'utensils', is_system: false },
+      { id: 'cat-life', household_id: 'hh-01', name: 'Lifestyle', color: '#000', icon: 'sparkles', is_system: false },
+    ];
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} categories={categories} />);
+
+    // Insurance (default type) hides the category picker
+    expect(screen.queryByLabelText(/^Category$/i)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Type/i), { target: { value: 'bill' } });
+    const categorySelect = screen.getByLabelText(/^Category$/i) as HTMLSelectElement;
+    expect(categorySelect.value).toBe('cat-life');
+
+    fireEvent.change(categorySelect, { target: { value: 'cat-food' } });
+    fireEvent.change(screen.getByLabelText(/Policy Name/i), { target: { value: 'Meal Plan' } });
+    fireEvent.change(screen.getByLabelText(/Premium Amount/i), { target: { value: '120' } });
+    fireEvent.change(screen.getByLabelText(/Frequency/i), { target: { value: 'monthly' } });
+    fireEvent.change(screen.getByLabelText(/Due Day/i), { target: { value: '5' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save Policy/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'bill', category_id: 'cat-food', due_day: 5 })
+    );
+  });
+
+  it('sends no category for insurance and tax', async () => {
+    const categories = [
+      { id: 'cat-life', household_id: 'hh-01', name: 'Lifestyle', color: '#000', icon: 'sparkles', is_system: false },
+    ];
+    const onSave = vi.fn();
+    render(<AddRecurringModal isOpen={true} onClose={vi.fn()} onSave={onSave} categories={categories} />);
+    fireEvent.change(screen.getByLabelText(/Policy Name/i), { target: { value: 'Shield' } });
+    fireEvent.change(screen.getByLabelText(/Premium Amount/i), { target: { value: '600' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save Policy/i }));
+    });
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ type: 'insurance', category_id: null }));
+  });
+
   it('pre-fills fields when editing existing recurring item', () => {
     render(
       <AddRecurringModal

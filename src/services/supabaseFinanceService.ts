@@ -50,7 +50,11 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
-import { resolveDueDay } from '../lib/recurringItems';
+import {
+  calculateRecurringCategorySpend,
+  isSpendType,
+  resolveDueDay,
+} from '../lib/recurringItems';
 import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import type { FinanceService } from './financeService';
@@ -761,23 +765,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         }));
       }
     }
-    const subscriptionItems = (recurringItems || []).filter(
-      (p) =>
-        p.type === 'subscription' &&
-        (p.owner_id === budget.owner_id || p.owner_id === 'joint')
-    );
-    const totalSubscriptionMonthly = Math.round(
-      subscriptionItems.reduce(
-        (sum, p) => sum + Number(p.monthly_amortized_amount ?? p.amount ?? 0),
-        0
-      ) * 100
-    ) / 100;
+    // Recurring subscription/bill/other spend for this member and month, by category
+    const recurringSpend = calculateRecurringCategorySpend(recurringItems || [], month, {
+      ownerId: budget.owner_id,
+      knownCategoryIds: (catAllocData || []).map((row) => row.category_id),
+    });
 
     const categories: MonthlyBudgetCategoryDetail[] = (catAllocData || []).map((row) => {
       const catObj: Category | undefined = row.categories;
-      const isLifestyle = Boolean(
-        catObj && catObj.name.toLowerCase().includes('lifestyle')
-      );
 
       // Exclude goal-funded expenses from normal monthly spendable category caps
       const expenseShareSum = expenses
@@ -787,8 +782,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
           0
         );
 
-      const subSpent = isLifestyle ? totalSubscriptionMonthly : 0;
-      const roundedSpent = Math.round((expenseShareSum + subSpent) * 100) / 100;
+      const recurring = recurringSpend.byCategory[row.category_id];
+      const recurringSpent = recurring?.total ?? 0;
+      const roundedSpent = Math.round((expenseShareSum + recurringSpent) * 100) / 100;
       const remaining = Math.round((Number(row.allocated_amount) - roundedSpent) * 100) / 100;
 
       return {
@@ -800,13 +796,17 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         category: catObj,
         actualSpent: roundedSpent,
         remaining,
-        subscriptionSpent: subSpent,
-        subscriptionItems: isLifestyle ? subscriptionItems : undefined,
+        recurringSpent,
+        recurringItems: recurring?.items,
       };
     });
 
+    const uncategorizedRecurringSpent = recurringSpend.uncategorized.total;
+
     const totalSpent = Math.round(
-      categories.reduce((sum, c) => sum + (c.actualSpent || 0), 0) * 100
+      (categories.reduce((sum, c) => sum + (c.actualSpent || 0), 0) +
+        uncategorizedRecurringSpent) *
+        100
     ) / 100;
     const disposablePool = Number(budget.after_deductions);
     const totalRemaining = Math.round((disposablePool - totalSpent) * 100) / 100;
@@ -835,6 +835,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       spendableSpent,
       spendableRemaining,
       allocationTotal,
+      uncategorizedRecurringSpent,
+      uncategorizedRecurringItems: recurringSpend.uncategorized.items,
     };
   }
 
@@ -1143,6 +1145,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         notes: input.notes || null,
         monthly_amortized_amount: monthlyAmortized,
         due_day: resolveDueDay(input.frequency, input.due_day),
+        category_id: isSpendType(input.type) ? input.category_id ?? null : null,
       })
       .select()
       .single();
@@ -1157,6 +1160,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const client = getClient();
 
     const finalUpdates: Partial<RecurringItem> = { ...updates };
+    delete finalUpdates.id;
+    // Insurance/tax reduce take-home pay and never count toward a spend category
+    if (updates.type && !isSpendType(updates.type)) {
+      finalUpdates.category_id = null;
+    }
     if (updates.amount !== undefined || updates.frequency !== undefined) {
       const { data: existing, error: fetchErr } = await client
         .from('recurring_items')

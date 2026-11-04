@@ -59,7 +59,12 @@ import {
   getMemberExpenseShare,
   isSpendableCategory,
 } from '../lib/financialFormulas';
-import { resolveDueDay } from '../lib/recurringItems';
+import {
+  calculateRecurringCategorySpend,
+  findDefaultRecurringCategoryId,
+  isSpendType,
+  resolveDueDay,
+} from '../lib/recurringItems';
 import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 
@@ -101,6 +106,13 @@ function loadInitialData(): MockSeedDataset {
       ...dataset.recurringItems,
       ...cloneDeep(mockSubscriptionItems),
     ];
+  }
+  // Backfill spend categories for subscriptions persisted before category_id existed
+  const defaultRecurringCategoryId = findDefaultRecurringCategoryId(dataset.categories);
+  for (const item of dataset.recurringItems) {
+    if (item.category_id === undefined) {
+      item.category_id = item.type === 'subscription' ? defaultRecurringCategoryId : null;
+    }
   }
 
   if (!dataset.creditCards) {
@@ -599,25 +611,19 @@ class MockFinanceServiceImpl implements FinanceService {
       budgetCategories = generated;
     }
 
-    // Active monthly subscriptions for this member
-    const subscriptionItems = this.state.recurringItems.filter(
-      (p) =>
-        p.type === 'subscription' &&
-        (p.owner_id === budget!.owner_id || p.owner_id === 'joint')
+    // Recurring subscription/bill/other spend for this member and month, by category
+    const recurringSpend = calculateRecurringCategorySpend(
+      this.state.recurringItems,
+      month,
+      {
+        ownerId: budget!.owner_id,
+        knownCategoryIds: budgetCategories.map((bc) => bc.category_id),
+      }
     );
-    const totalSubscriptionMonthly = Math.round(
-      subscriptionItems.reduce(
-        (sum, p) => sum + (p.monthly_amortized_amount ?? p.amount ?? 0),
-        0
-      ) * 100
-    ) / 100;
 
     // Calculate actual spent per category for this owner and month (including 50% share of shared expenses)
     const categoryDetails: MonthlyBudgetCategoryDetail[] = budgetCategories.map((bc) => {
       const category = this.state.categories.find((cat) => cat.id === bc.category_id);
-      const isLifestyle = Boolean(
-        category && category.name.toLowerCase().includes('lifestyle')
-      );
 
       // Exclude goal-funded expenses from normal monthly spendable category caps
       const expenseShareSum = this.state.expenses
@@ -627,8 +633,9 @@ class MockFinanceServiceImpl implements FinanceService {
           0
         );
 
-      const subSpent = isLifestyle ? totalSubscriptionMonthly : 0;
-      const actualSpent = Math.round((expenseShareSum + subSpent) * 100) / 100;
+      const recurring = recurringSpend.byCategory[bc.category_id];
+      const recurringSpent = recurring?.total ?? 0;
+      const actualSpent = Math.round((expenseShareSum + recurringSpent) * 100) / 100;
       const remaining = Math.round((bc.allocated_amount - actualSpent) * 100) / 100;
 
       return {
@@ -636,13 +643,17 @@ class MockFinanceServiceImpl implements FinanceService {
         category: category ? cloneDeep(category) : undefined,
         actualSpent,
         remaining,
-        subscriptionSpent: subSpent,
-        subscriptionItems: isLifestyle ? cloneDeep(subscriptionItems) : undefined,
+        recurringSpent,
+        recurringItems: recurring ? cloneDeep(recurring.items) : undefined,
       };
     });
 
+    const uncategorizedRecurringSpent = recurringSpend.uncategorized.total;
+
     const totalSpent = Math.round(
-      categoryDetails.reduce((sum, c) => sum + (c.actualSpent || 0), 0) * 100
+      (categoryDetails.reduce((sum, c) => sum + (c.actualSpent || 0), 0) +
+        uncategorizedRecurringSpent) *
+        100
     ) / 100;
 
     const disposablePool = budget.after_deductions;
@@ -673,6 +684,8 @@ class MockFinanceServiceImpl implements FinanceService {
       spendableSpent,
       spendableRemaining,
       allocationTotal,
+      uncategorizedRecurringSpent,
+      uncategorizedRecurringItems: cloneDeep(recurringSpend.uncategorized.items),
     };
   }
 
@@ -927,6 +940,7 @@ class MockFinanceServiceImpl implements FinanceService {
       notes: input.notes || null,
       monthly_amortized_amount: monthlyAmortized,
       due_day: resolveDueDay(input.frequency, input.due_day),
+      category_id: isSpendType(input.type) ? input.category_id ?? null : null,
     };
 
     this.state.recurringItems.push(newItem);
@@ -945,6 +959,10 @@ class MockFinanceServiceImpl implements FinanceService {
     }
 
     Object.assign(recurringItem, updates);
+    // Insurance/tax reduce take-home pay and never count toward a spend category
+    if (!isSpendType(recurringItem.type)) {
+      recurringItem.category_id = null;
+    }
 
     // Recompute monthly_amortized_amount if amount or frequency changed
     if (updates.amount !== undefined || updates.frequency !== undefined) {

@@ -46,6 +46,7 @@ import {
     formatShortMonth,
 } from "./dateUtils";
 import { formatSGD } from "./currency";
+import { calculateRecurringCategorySpend } from "./recurringItems";
 
 /**
  * 1. Calculates Singapore CPF deduction (default 20% employee rate) and net take-home pay.
@@ -510,7 +511,7 @@ export function calculateMonthlyBalanceTrends(
 
 /**
  * 10. Calculates Monthly Expense Trends, 3/6-month rolling averages, and Per-Category Monthly Averages.
- * Automatically includes monthly subscriptions under the Lifestyle category.
+ * Includes recurring subscription/bill/other spend under each item's own category.
  */
 export function calculateExpenseTrends(
     expenses: Expense[],
@@ -529,24 +530,9 @@ export function calculateExpenseTrends(
 
     // Spendable categories
     const spendableCats = categories.filter((c) => isSpendableCategory(c));
-    const lifestyleCat =
-        spendableCats.find((c) => c.name.toLowerCase().includes("lifestyle")) ||
-        spendableCats[0];
-
-    // Monthly subscriptions in scope
-    const activeSubs = (recurringItems || []).filter((p) => {
-        if (p.type !== "subscription") return false;
-        if (perspective === "household" || !memberId) return true;
-        return p.owner_id === memberId || p.owner_id === "joint";
-    });
-    const monthlySubTotal =
-        Math.round(
-            activeSubs.reduce(
-                (sum, s) =>
-                    sum + Number(s.monthly_amortized_amount || s.amount || 0),
-                0,
-            ) * 100,
-        ) / 100;
+    const spendableIds = new Set(spendableCats.map((c) => c.id));
+    const recurringOwnerId =
+        perspective === "household" || !memberId ? undefined : memberId;
 
     const monthlySeries: MonthlyExpenseTrendPoint[] = months.map((m) => {
         const byCategory: Record<string, number> = {};
@@ -575,13 +561,26 @@ export function calculateExpenseTrends(
                 Math.round(((byCategory[catKey] || 0) + share) * 100) / 100;
         }
 
-        // Add monthly subscriptions to Lifestyle category if applicable
-        if (lifestyleCat && monthlySubTotal > 0) {
-            byCategory[lifestyleCat.id] =
-                Math.round(
-                    ((byCategory[lifestyleCat.id] || 0) + monthlySubTotal) *
-                        100,
-                ) / 100;
+        // Add recurring subscription/bill/other spend to its own spendable category
+        // (uncategorized items fall back like uncategorized expenses)
+        const recurring = calculateRecurringCategorySpend(recurringItems, m, {
+            ownerId: recurringOwnerId,
+            knownCategoryIds: categories.map((c) => c.id),
+        });
+        let recurringSpent = 0;
+        const addRecurring = (catKey: string, amount: number) => {
+            byCategory[catKey] =
+                Math.round(((byCategory[catKey] || 0) + amount) * 100) / 100;
+            recurringSpent += amount;
+        };
+        for (const [catId, bucket] of Object.entries(recurring.byCategory)) {
+            if (spendableIds.has(catId)) addRecurring(catId, bucket.total);
+        }
+        if (recurring.uncategorized.total > 0) {
+            addRecurring(
+                spendableCats[0]?.id || "uncategorized",
+                recurring.uncategorized.total,
+            );
         }
 
         const totalSpent =
@@ -594,7 +593,7 @@ export function calculateExpenseTrends(
             month: m,
             label: formatShortMonth(m),
             totalSpent,
-            subscriptionsSpent: monthlySubTotal,
+            recurringSpent: Math.round(recurringSpent * 100) / 100,
             byCategory,
         };
     });

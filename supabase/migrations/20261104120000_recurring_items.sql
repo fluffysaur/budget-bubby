@@ -4,7 +4,8 @@
 --   1. Renames the table, its indexes, constraints and RLS policy.
 --   2. Widens the type check to include 'bill' and 'other'.
 --   3. Adds due_day (1-31, required for monthly items).
---   4. Creates a temporary recurring_policies compatibility view so the
+--   4. Adds category_id (budget category the item's spend counts toward).
+--   5. Creates a temporary recurring_policies compatibility view so the
 --      previously deployed frontend keeps working during rollout.
 -- ==============================================================================
 
@@ -72,13 +73,32 @@ alter table recurring_items
     add constraint recurring_items_monthly_due_day_check
     check (frequency <> 'monthly' or due_day is not null);
 
--- 4. Temporary compatibility view -----------------------------------------------
+-- 4. Spend category -------------------------------------------------------------
+alter table recurring_items
+    add column if not exists category_id uuid references categories(id) on delete set null;
+
+create index if not exists idx_recurring_items_category_id on recurring_items(category_id);
+
+-- Backfill: subscriptions previously counted toward the household's Lifestyle category
+update recurring_items ri
+set category_id = (
+    select c.id
+    from categories c
+    where c.household_id = ri.household_id
+      and c.name ilike '%lifestyle%'
+    order by c.name
+    limit 1
+)
+where ri.type = 'subscription'
+  and ri.category_id is null;
+
+-- 5. Temporary compatibility view -----------------------------------------------
 -- TEMPORARY: lets the previously deployed frontend keep using
 -- .from('recurring_policies') for reads and writes while the new frontend
 -- (which uses recurring_items) rolls out. It will be dropped in a later
 -- migration once the new frontend is deployed everywhere.
 -- Simple single-table select, so Postgres keeps it auto-updatable; omitted
--- columns fall back to the base table defaults.
+-- columns (id, due_day, category_id) fall back to the base table defaults.
 -- security_invoker makes the base table's RLS apply to the caller.
 create or replace view recurring_policies
 with (security_invoker = true)

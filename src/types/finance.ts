@@ -141,8 +141,9 @@ export interface MonthlyBudgetCategoryDetail extends MonthlyBudgetCategory {
   category?: Category;
   actualSpent?: number;
   remaining?: number;
-  subscriptionSpent?: number;
-  subscriptionItems?: RecurringItem[];
+  /** Monthly spend from subscription/bill/other recurring items in this category */
+  recurringSpent?: number;
+  recurringItems?: RecurringItem[];
 }
 
 export interface MonthlyBudgetDetail {
@@ -155,6 +156,9 @@ export interface MonthlyBudgetDetail {
   spendableSpent?: number;
   spendableRemaining?: number;
   allocationTotal?: number;
+  /** Recurring subscription/bill/other spend with no budget category (counted in totalSpent) */
+  uncategorizedRecurringSpent?: number;
+  uncategorizedRecurringItems?: RecurringItem[];
 }
 
 export interface Expense {
@@ -411,6 +415,7 @@ export interface RecurringItem {
   notes?: string | null;
   monthly_amortized_amount: number;
   due_day?: number | null; // 1 - 31, clamped to short months; required for monthly items
+  category_id?: string | null; // budget category for subscription/bill/other spend
 }
 
 export interface CreateRecurringItemInput {
@@ -425,6 +430,7 @@ export interface CreateRecurringItemInput {
   end_date?: string | null;
   notes?: string | null;
   due_day?: number | null; // 1 - 31
+  category_id?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -520,7 +526,7 @@ export interface MonthlyExpenseTrendPoint {
   month: string; // 'YYYY-MM'
   label: string; // 'Sep 2026'
   totalSpent: number;
-  subscriptionsSpent: number;
+  recurringSpent: number;
   byCategory: Record<string, number>;
 }
 
