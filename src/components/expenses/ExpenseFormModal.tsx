@@ -1,19 +1,22 @@
 /**
- * Add Expense Modal
- * Minimal by default: Amount, Category and Description.
+ * Expense Form Modal: the one form for adding and editing expenses.
+ * - Add mode (default), optionally opened with a savings goal pre-selected
+ *   (e.g. from a goal card's Spend button).
+ * - Edit mode when `expense` is passed.
+ *
+ * Minimal by default: Amount, Budget | Goal funding with its picker, and Description.
  * Everything else sits in a collapsed "More" section with smart defaults
  * (today, current member as payer, last split used), summarised on its toggle:
  * - Date chips (Today, Yesterday, 2d ago) + date/time pickers
- * - Payer and Personal / Shared (50/50) split
+ * - Payer and Personal / Shared split (custom partner share slider)
  * - Currency with FX conversion
- * - Fund from Savings Goal
  * - Remarks and #tags
  * "More" opens automatically when any of its non-default fields is set.
  */
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
-import { Plus, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
-import { useHousehold } from "../../context/HouseholdContext";
+import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
 import {
     getTodayDateString,
@@ -27,6 +30,7 @@ import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import {
     SUPPORTED_CURRENCIES,
     buildExpenseFxFields,
+    convertToSGD,
 } from "../../lib/currencyConverter";
 import { FxRateField } from "./FxRateField";
 import type {
@@ -34,6 +38,7 @@ import type {
     HouseholdMember,
     Expense,
     CreateExpenseInput,
+    UpdateExpenseInput,
     SavingsGoal,
 } from "../../types/finance";
 import {
@@ -44,18 +49,31 @@ import {
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
+import { SegmentedTabs } from "../ui/SegmentedTabs";
+import { TooltipPopover } from "../ui/TooltipPopover";
+import { CurrencyText } from "../ui/CurrencyText";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 
-export interface QuickAddExpenseModalProps {
+export interface ExpenseFormModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** Pass an expense to open the form in Edit mode. */
+    expense?: Expense | null;
+    /** Add mode: open with Goal funding on and this goal picked. */
+    initialGoalId?: string;
     onExpenseAdded?: (expense: Expense) => void;
+    onExpenseUpdated?: (expense: Expense) => void;
     defaultPayerId?: string;
     defaultShared?: boolean;
     categories?: Category[];
     members?: HouseholdMember[];
     goals?: SavingsGoal[];
 }
+
+type FundingSource = "budget" | "goal";
+
+// Goal chips shown before "+ More"
+const GOAL_CHIP_LIMIT = 4;
 
 const GLOBAL_RECENT_TAGS_STORAGE_KEY = "budget_bubby_recent_tags_global_v2";
 const LAST_SPLIT_STORAGE_KEY = "budget_bubby_last_split_v1";
@@ -212,17 +230,25 @@ function storeRecentTags(newTags: string[]) {
     }
 }
 
-export function QuickAddExpenseModal({
+export function ExpenseFormModal({
     isOpen,
     onClose,
+    expense,
+    initialGoalId,
     onExpenseAdded,
+    onExpenseUpdated,
     defaultPayerId,
     defaultShared,
     categories: propCategories,
     members: propMembers,
     goals: propGoals,
-}: QuickAddExpenseModalProps) {
-    const { members: ctxMembers, activeMember, perspective } = useHousehold();
+}: ExpenseFormModalProps) {
+    // Optional so the form also works outside a HouseholdProvider (e.g. edit from a bare list)
+    const household = useOptionalHousehold();
+    const ctxMembers = household?.members;
+    const activeMember = household?.activeMember ?? null;
+    const perspective = household?.perspective ?? "household";
+    const isEditMode = Boolean(expense);
 
     const members =
         propMembers && propMembers.length > 0
@@ -274,6 +300,8 @@ export function QuickAddExpenseModal({
         return members[0]?.id || "";
     });
     const [isShared, setIsShared] = useState<boolean>(resolvedDefaultShared);
+    // Partner's share of a shared expense (0.5 = 50/50)
+    const [splitRatio, setSplitRatio] = useState<number>(0.5);
 
     // Date, Time & Notes State
     const [date, setDate] = useState<string>(getTodayDateString());
@@ -287,10 +315,9 @@ export function QuickAddExpenseModal({
         getStoredRecentTags(),
     );
 
-    // Goals State
-    const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(
-        propGoals || [],
-    );
+    // Goals State (all goals: achieved goals are fully funded pots you can still spend from)
+    const [goals, setGoals] = useState<SavingsGoal[]>(propGoals || []);
+    // Kept when switching to Budget, so switching back restores the pick
     const [selectedGoalId, setSelectedGoalId] = useState<string>("");
     const [isGoalSpend, setIsGoalSpend] = useState<boolean>(false);
     const [showMoreGoals, setShowMoreGoals] = useState<boolean>(false);
@@ -302,10 +329,10 @@ export function QuickAddExpenseModal({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Fetch active goals if not supplied in props
+    // Fetch goals if not supplied in props
     useEffect(() => {
         if (propGoals) {
-            setActiveGoals(propGoals);
+            setGoals(propGoals);
             return;
         }
         let isMounted = true;
@@ -313,7 +340,7 @@ export function QuickAddExpenseModal({
             .getGoals()
             .then((g) => {
                 if (isMounted && g) {
-                    setActiveGoals(g);
+                    setGoals(g);
                 }
             })
             .catch(() => {});
@@ -324,7 +351,50 @@ export function QuickAddExpenseModal({
 
     // Reset form and sync recent tags on open
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && expense) {
+            // Edit mode: load the expense
+            const origCurrency = expense.original_currency || "SGD";
+            const savedRate = Number(expense.exchange_rate);
+            setCurrencyCode(origCurrency);
+            setCustomExchangeRate(
+                origCurrency !== "SGD" && savedRate > 0 ? savedRate : undefined,
+            );
+            setAmount(
+                expense.original_amount !== undefined &&
+                    expense.original_amount !== null
+                    ? expense.original_amount
+                    : expense.amount,
+            );
+            setItem(expense.item);
+            const existingCategory = categories.find(
+                (c) => c.id === expense.category_id,
+            );
+            setCategoryId(expense.category_id || "");
+            // Don't let description edits re-guess the category
+            setCategoryManuallySelected(true);
+            // Show all categories when the current one isn't a spendable one
+            setShowMoreCategories(
+                Boolean(existingCategory) &&
+                    !isSpendableCategory(existingCategory as Category),
+            );
+            setPayerId(expense.payer_id || members[0]?.id || "");
+            setIsShared(expense.is_shared);
+            setSplitRatio(
+                expense.is_shared ? (expense.split_ratio ?? 0.5) : 0.5,
+            );
+            setDate(expense.date);
+            setTime(expense.time || "");
+            setRemarks(expense.remarks || "");
+            setTags(expense.tags ? [...expense.tags] : []);
+            setNewTagInput("");
+            setSelectedGoalId(expense.goal_id || "");
+            setIsGoalSpend(Boolean(expense.goal_id));
+            setShowMoreGoals(false);
+            setShowMoreOptions(false);
+            setRecentTagsList(getStoredRecentTags());
+            setErrorMessage(null);
+            setIsSubmitting(false);
+        } else if (isOpen) {
             setAmount(0);
             setCurrencyCode("SGD");
             setCustomExchangeRate(undefined);
@@ -341,13 +411,14 @@ export function QuickAddExpenseModal({
             setIsShared(
                 defaultShared ?? getStoredLastSplit() ?? perspective === "household",
             );
+            setSplitRatio(0.5);
             setDate(getTodayDateString());
             setTime(getCurrentSingaporeTime());
             setRemarks("");
             setTags([]);
             setNewTagInput("");
-            setSelectedGoalId("");
-            setIsGoalSpend(false);
+            setSelectedGoalId(initialGoalId || "");
+            setIsGoalSpend(Boolean(initialGoalId));
             setShowMoreGoals(false);
             setShowMoreOptions(false);
             setRecentTagsList(getStoredRecentTags());
@@ -356,6 +427,8 @@ export function QuickAddExpenseModal({
         }
     }, [
         isOpen,
+        expense,
+        initialGoalId,
         defaultPayerId,
         defaultShared,
         activeMember,
@@ -404,7 +477,11 @@ export function QuickAddExpenseModal({
         if (!trimmed) return;
         const clean = trimmed.replace(/^#/, "");
         const formatted = `#${clean}`;
-        if (!tags.includes(formatted)) {
+        // Older tags may be stored without "#", so compare without it
+        const alreadyTagged = tags.some(
+            (t) => t.replace(/^#/, "").toLowerCase() === clean.toLowerCase(),
+        );
+        if (!alreadyTagged) {
             setTags([...tags, formatted]);
         }
         setNewTagInput("");
@@ -428,12 +505,43 @@ export function QuickAddExpenseModal({
             .slice(0, 3);
     }, [recentTagsList, tags]);
 
+    const hasCustomSplit = isShared && splitRatio !== 0.5;
+
     // Count non-default values hidden in "More" (they keep it open)
     const moreOptionsActiveCount =
         (remarks.trim() ? 1 : 0) +
         (tags.length > 0 ? 1 : 0) +
         (currencyCode !== "SGD" ? 1 : 0) +
-        (isGoalSpend ? 1 : 0);
+        (hasCustomSplit ? 1 : 0);
+
+    // Partner's share preview for the split slider
+    const amountInSGD = convertToSGD(
+        amount,
+        currencyCode,
+        customExchangeRate,
+    ).amountInSGD;
+
+    // Show the Budget | Goal switch only when there are goals to fund from
+    const showFundingSwitch = goals.length > 0 || isGoalSpend;
+
+    // First few goals, plus the selected one if it would otherwise be hidden
+    const visibleGoals = useMemo(() => {
+        if (showMoreGoals || goals.length <= GOAL_CHIP_LIMIT) return goals;
+        const firstGoals = goals.slice(0, GOAL_CHIP_LIMIT);
+        const selected = goals.find((g) => g.id === selectedGoalId);
+        return selected && !firstGoals.includes(selected)
+            ? [...firstGoals, selected]
+            : firstGoals;
+    }, [goals, showMoreGoals, selectedGoalId]);
+
+    const handleFundingChange = (source: FundingSource) => {
+        const toGoal = source === "goal";
+        setIsGoalSpend(toGoal);
+        // Pre-select only when there's no choice to make
+        if (toGoal && !selectedGoalId && goals.length === 1) {
+            setSelectedGoalId(goals[0].id);
+        }
+    };
 
     // Auto-expand accordion if any nested fields have active values
     const isAccordionExpanded = showMoreOptions || moreOptionsActiveCount > 0;
@@ -462,15 +570,20 @@ export function QuickAddExpenseModal({
                     ? "2d ago"
                     : formatDisplayDate(date);
         const payerName = members.find((m) => m.id === payerId)?.display_name;
+        const splitLabel = !isShared
+            ? "Personal"
+            : splitRatio !== 0.5
+              ? `Shared ${Math.round((1 - splitRatio) * 100)}/${Math.round(splitRatio * 100)}`
+              : "Shared";
         return [
             dateLabel,
             payerName,
-            isShared ? "Shared" : "Personal",
+            splitLabel,
             currencyCode !== "SGD" ? currencyCode : null,
         ]
             .filter(Boolean)
             .join(" · ");
-    }, [date, todayStr, yesterdayStr, twoDaysAgoStr, members, payerId, isShared, currencyCode]);
+    }, [date, todayStr, yesterdayStr, twoDaysAgoStr, members, payerId, isShared, splitRatio, currencyCode]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -495,25 +608,56 @@ export function QuickAddExpenseModal({
             return;
         }
 
+        // A budget expense needs a category. Old uncategorised expenses can
+        // still be edited, unless they're being moved off a goal.
+        if (
+            !isGoalSpend &&
+            !categoryId &&
+            categories.length > 0 &&
+            (!expense || expense.goal_id)
+        ) {
+            setErrorMessage("Please pick a category for this expense");
+            return;
+        }
+
+        const sharedFields = {
+            payer_id: payerId,
+            category_id: isGoalSpend ? null : categoryId || null,
+            item: item.trim(),
+            ...buildExpenseFxFields(amount, currencyCode, customExchangeRate),
+            remarks: remarks.trim() ? remarks.trim() : null,
+            is_shared: isShared,
+            split_ratio: isShared ? splitRatio : 0.0,
+            goal_id: isGoalSpend ? selectedGoalId || null : null,
+        };
+
         try {
             setIsSubmitting(true);
 
+            if (expense) {
+                const updates: UpdateExpenseInput = {
+                    ...sharedFields,
+                    date: date || expense.date,
+                    time: time || null,
+                    tags: tags.map((t) => t.trim()).filter(Boolean),
+                };
+                const updated = await financeService.updateExpense(
+                    expense.id,
+                    updates,
+                );
+                if (tags.length > 0) {
+                    storeRecentTags(tags);
+                }
+                onExpenseUpdated?.(updated);
+                onClose();
+                return;
+            }
+
             const input: CreateExpenseInput = {
-                payer_id: payerId,
-                category_id: isGoalSpend ? null : categoryId || null,
+                ...sharedFields,
                 date: date || todayStr,
                 time: time || getCurrentSingaporeTime(),
-                item: item.trim(),
-                ...buildExpenseFxFields(
-                    amount,
-                    currencyCode,
-                    customExchangeRate,
-                ),
-                remarks: remarks.trim() ? remarks.trim() : null,
-                is_shared: isShared,
-                split_ratio: isShared ? 0.5 : 0.0,
                 tags: tags.length > 0 ? tags : undefined,
-                goal_id: isGoalSpend ? selectedGoalId || null : null,
             };
 
             const created = await financeService.addExpense(input);
@@ -550,9 +694,19 @@ export function QuickAddExpenseModal({
                 className="flex flex-col min-h-0 flex-1 overflow-hidden"
             >
                 <ModalHeader
-                    title="Add Expense"
-                    icon={<Plus className="h-4.5 w-4.5" strokeWidth={2.5} />}
-                    iconBgColor="bg-(--pastel-lilac-light)"
+                    title={isEditMode ? "Edit Expense" : "Add Expense"}
+                    icon={
+                        isEditMode ? (
+                            <Save className="h-4.5 w-4.5" strokeWidth={2.5} />
+                        ) : (
+                            <Plus className="h-4.5 w-4.5" strokeWidth={2.5} />
+                        )
+                    }
+                    iconBgColor={
+                        isEditMode
+                            ? "bg-(--pastel-butter-light)"
+                            : "bg-(--pastel-lilac-light)"
+                    }
                     onClose={onClose}
                 />
 
@@ -585,15 +739,47 @@ export function QuickAddExpenseModal({
 
                     </div>
 
-                    {/* Category or Goal Selection */}
+                    {/* Funding source (Budget | Goal) with its picker right below */}
                     <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                                {isGoalSpend ? "Goal" : "Category"}
-                            </span>
-                            <div>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                            {showFundingSwitch ? (
+                                <div className="flex min-w-0 items-center gap-1">
+                                    <SegmentedTabs<FundingSource>
+                                        size="sm"
+                                        ariaLabel="Funding Source"
+                                        activeTab={isGoalSpend ? "goal" : "budget"}
+                                        onChange={handleFundingChange}
+                                        tabs={[
+                                            { id: "budget", label: "Budget" },
+                                            {
+                                                id: "goal",
+                                                label: "Goal",
+                                                icon: (
+                                                    <Target
+                                                        className="h-3.5 w-3.5"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                ),
+                                            },
+                                        ]}
+                                    />
+                                    <TooltipPopover
+                                        title="Goal Funding"
+                                        ariaLabel="Goal funding info"
+                                        align="left"
+                                        className="shrink-0"
+                                    >
+                                        Goal spends draw from the goal's savings and are excluded from monthly budget caps.
+                                    </TooltipPopover>
+                                </div>
+                            ) : (
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                                    Category
+                                </span>
+                            )}
+                            <div className="shrink-0">
                                 {isGoalSpend
-                                    ? activeGoals.length > 4 && (
+                                    ? goals.length > GOAL_CHIP_LIMIT && (
                                           <button
                                               type="button"
                                               onClick={() =>
@@ -605,7 +791,7 @@ export function QuickAddExpenseModal({
                                           >
                                               {showMoreGoals
                                                   ? "Show less"
-                                                  : `+ More (${activeGoals.length - 4})`}
+                                                  : `+ More (${goals.length - GOAL_CHIP_LIMIT})`}
                                           </button>
                                       )
                                     : allocationCategories.length > 0 && (
@@ -631,15 +817,12 @@ export function QuickAddExpenseModal({
                                 className="flex flex-wrap gap-1.5"
                                 aria-label="Goal Selection"
                             >
-                                {activeGoals.length === 0 ? (
+                                {goals.length === 0 ? (
                                     <p className="text-xs text-(--text-muted) py-1">
-                                        No active savings goals found.
+                                        No savings goals found.
                                     </p>
                                 ) : (
-                                    (showMoreGoals
-                                        ? activeGoals
-                                        : activeGoals.slice(0, 4)
-                                    ).map((g) => {
+                                    visibleGoals.map((g) => {
                                         const isSelected =
                                             selectedGoalId === g.id;
                                         return (
@@ -927,10 +1110,53 @@ export function QuickAddExpenseModal({
                                             }`}
                                         >
                                             <span>👥</span>
-                                            <span>Shared (50/50)</span>
+                                            <span>Shared</span>
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Partner's share of a shared expense */}
+                                {isShared && (
+                                    <div className="space-y-1 pt-1">
+                                        <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-(--text-muted)">
+                                            <label htmlFor="expense-split-ratio">
+                                                Partner's share
+                                            </label>
+                                            <span className="shrink-0 text-(--text-ink)">
+                                                {Math.round(splitRatio * 100)}% (
+                                                <CurrencyText
+                                                    amount={amountInSGD * splitRatio}
+                                                />
+                                                )
+                                            </span>
+                                        </div>
+                                        <input
+                                            id="expense-split-ratio"
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.05"
+                                            value={splitRatio}
+                                            onChange={(e) =>
+                                                setSplitRatio(
+                                                    parseFloat(e.target.value),
+                                                )
+                                            }
+                                            className="w-full cursor-pointer accent-(--pastel-lilac)"
+                                        />
+                                        <div className="flex justify-between text-[10px] text-(--text-muted)">
+                                            <span>0%</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSplitRatio(0.5)}
+                                                className="font-semibold text-(--text-ink) hover:underline cursor-pointer"
+                                            >
+                                                50/50
+                                            </button>
+                                            <span>100%</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Currency */}
@@ -971,100 +1197,6 @@ export function QuickAddExpenseModal({
                                 )}
                             </div>
 
-                            {/* Goal Spend Full-Width Toggle Card */}
-                            {activeGoals.length > 0 && (
-                                <div
-                                    onClick={() => {
-                                        const next = !isGoalSpend;
-                                        setIsGoalSpend(next);
-                                        if (
-                                            next &&
-                                            !selectedGoalId &&
-                                            activeGoals.length > 0
-                                        ) {
-                                            setSelectedGoalId(activeGoals[0].id);
-                                        }
-                                        if (!next) {
-                                            setSelectedGoalId("");
-                                        }
-                                    }}
-                                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-(--shadow-cute-sm) ${
-                                        isGoalSpend
-                                            ? "bg-(--pastel-lilac-light) border-(--border-ink)"
-                                            : "bg-(--bg-card) border-(--border-subtle) hover:border-(--border-ink)"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <div
-                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-(--border-ink) ${
-                                                isGoalSpend
-                                                    ? "bg-(--pastel-lilac)"
-                                                    : "bg-(--bg-canvas)"
-                                            }`}
-                                        >
-                                            <Target
-                                                strokeWidth={2.5}
-                                                className={`h-4 w-4 ${
-                                                    isGoalSpend
-                                                        ? "text-(--text-ink)"
-                                                        : "text-(--text-muted)"
-                                                }`}
-                                            />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="text-xs font-black text-(--text-ink) font-display flex items-center gap-1.5">
-                                                <span>Fund from Savings Goal</span>
-                                                {isGoalSpend && (
-                                                    <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac) px-1.5 py-0.2 rounded border border-(--border-ink)">
-                                                        Active
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-[10px] text-(--text-muted) truncate mt-0.5">
-                                                Excludes from monthly budget caps
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Tactile Sliding Switch Pill */}
-                                    <button
-                                        type="button"
-                                        role="switch"
-                                        aria-checked={isGoalSpend}
-                                        aria-label="Fund from Savings Goal"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const next = !isGoalSpend;
-                                            setIsGoalSpend(next);
-                                            if (
-                                                next &&
-                                                !selectedGoalId &&
-                                                activeGoals.length > 0
-                                            ) {
-                                                setSelectedGoalId(activeGoals[0].id);
-                                            }
-                                            if (!next) {
-                                                setSelectedGoalId("");
-                                            }
-                                        }}
-                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                            isGoalSpend
-                                                ? "bg-(--pastel-lilac)"
-                                                : "bg-slate-200 dark:bg-slate-700"
-                                        }`}
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-(--shadow-cute-sm) border border-(--border-ink) transition duration-200 ease-in-out ${
-                                                isGoalSpend
-                                                    ? "translate-x-5"
-                                                    : "translate-x-0.5"
-                                            }`}
-                                        />
-                                    </button>
-                                </div>
-                            )}
-
                             {/* Dedicated Inline Remarks / Notes */}
                             <div>
                                 <label
@@ -1099,7 +1231,7 @@ export function QuickAddExpenseModal({
                                                 key={tag}
                                                 className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) px-2.5 py-0.5 text-[11px] font-bold"
                                             >
-                                                <span>{tag}</span>
+                                                <span>#{tag.replace(/^#/, "")}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -1187,9 +1319,15 @@ export function QuickAddExpenseModal({
                         type="submit"
                         disabled={isSubmitting}
                         isLoading={isSubmitting}
-                        leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+                        leftIcon={
+                            isEditMode ? (
+                                <Save className="h-4 w-4" strokeWidth={2.5} />
+                            ) : (
+                                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                            )
+                        }
                     >
-                        {isSubmitting ? "Saving..." : "Add Expense"}
+                        {isSubmitting ? "Saving..." : isEditMode ? "Save" : "Add"}
                     </Button>
                 </ModalFooter>
             </form>
@@ -1197,4 +1335,4 @@ export function QuickAddExpenseModal({
     );
 }
 
-export default QuickAddExpenseModal;
+export default ExpenseFormModal;

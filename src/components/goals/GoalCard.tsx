@@ -7,7 +7,7 @@
  * - Pacing indicator badge (Achieved, On Track, Behind)
  * - Monthly current contribution vs needed pace
  * - Target date and remaining months countdown
- * - '+ Spend from Goal' button to trigger quick spend logger
+ * - '+ Spend from Goal' button opens Add Expense with this goal picked
  * - List of linked expenses funded by this goal
  * - Quick Deposit and Edit actions
  */

@@ -42,7 +42,7 @@ import {
   detectUnspentMonthEndSurplus,
 } from '../lib/financialFormulas';
 import { mockCategories, mockMembers, mockBaseProfiles, mockBaseAllocations } from '../data/mockSeedData';
-import { QuickAddExpenseModal } from '../components/expenses/QuickAddExpenseModal';
+import { ExpenseFormModal } from '../components/expenses/ExpenseFormModal';
 import { BulkAddExpenseModal } from '../components/expenses/BulkAddExpenseModal';
 import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
 import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
@@ -569,7 +569,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
       />
 
       {/* Quick Add Expense Modal */}
-      <QuickAddExpenseModal
+      <ExpenseFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onExpenseAdded={handleExpenseAdded}

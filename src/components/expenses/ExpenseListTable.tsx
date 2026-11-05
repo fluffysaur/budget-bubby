@@ -28,7 +28,7 @@ import {
 import { formatForeignAmount } from '../../lib/currencyConverter';
 import { formatDisplayDate, formatTime12h, extractTimeFromISO } from '../../lib/dateUtils';
 import { mockCategories, mockMembers } from '../../data/mockSeedData';
-import { EditExpenseModal } from './EditExpenseModal';
+import { ExpenseFormModal } from './ExpenseFormModal';
 import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
 import { ExpenseRowsSkeleton } from '../ui/PageSkeletons';
@@ -601,13 +601,14 @@ export function ExpenseListTable({
 
       {/* Edit Expense Modal */}
       {editingExpense && (
-        <EditExpenseModal
+        <ExpenseFormModal
           isOpen={Boolean(editingExpense)}
           onClose={() => setEditingExpense(null)}
           expense={editingExpense}
           categories={categories}
           members={members}
-          onSave={(updated) => {
+          goals={internalGoals}
+          onExpenseUpdated={(updated) => {
             onExpenseSaved?.(updated);
             setEditingExpense(null);
           }}

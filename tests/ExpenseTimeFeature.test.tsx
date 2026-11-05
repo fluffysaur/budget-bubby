@@ -5,8 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ExpenseListTable } from '../src/components/expenses/ExpenseListTable';
-import { QuickAddExpenseModal } from '../src/components/expenses/QuickAddExpenseModal';
-import { EditExpenseModal } from '../src/components/expenses/EditExpenseModal';
+import { ExpenseFormModal } from '../src/components/expenses/ExpenseFormModal';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { financeService } from '../src/services/financeService';
 import { mockCategories, mockMembers } from '../src/data/mockSeedData';
@@ -123,7 +122,7 @@ describe('Expense Time Feature & Intraday Sorting', () => {
     expect(itemRows[2].textContent).toContain('Morning Kopi & Toast');
   });
 
-  it('pre-fills time in QuickAddExpenseModal and allows manual editing with Now button', async () => {
+  it('pre-fills time in ExpenseFormModal and allows manual editing with Now button', async () => {
     const addExpenseSpy = vi.spyOn(financeService, 'addExpense').mockResolvedValue({
       id: 'exp-new-1',
       household_id: 'hh-1',
@@ -139,7 +138,7 @@ describe('Expense Time Feature & Intraday Sorting', () => {
 
     render(
       <HouseholdProvider>
-        <QuickAddExpenseModal
+        <ExpenseFormModal
           isOpen={true}
           onClose={vi.fn()}
           categories={mockCategories}
@@ -167,7 +166,7 @@ describe('Expense Time Feature & Intraday Sorting', () => {
     fireEvent.keyDown(amountInput, { key: '0' });
 
     // Submit
-    const submitBtn = screen.getByRole('button', { name: /add expense/i });
+    const submitBtn = screen.getByRole('button', { name: /^add$/i });
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -180,7 +179,7 @@ describe('Expense Time Feature & Intraday Sorting', () => {
     );
   });
 
-  it('populates and saves updated time in EditExpenseModal', async () => {
+  it('populates and saves updated time in edit mode', async () => {
     const updateExpenseSpy = vi.spyOn(financeService, 'updateExpense').mockResolvedValue({
       ...sampleExpenses[0],
       time: '09:15',
@@ -189,13 +188,13 @@ describe('Expense Time Feature & Intraday Sorting', () => {
     const onSave = vi.fn();
 
     render(
-      <EditExpenseModal
+      <ExpenseFormModal
         isOpen={true}
         onClose={vi.fn()}
         expense={sampleExpenses[0]}
         categories={mockCategories}
         members={mockMembers}
-        onSave={onSave}
+        onExpenseUpdated={onSave}
       />
     );
 
@@ -205,7 +204,7 @@ describe('Expense Time Feature & Intraday Sorting', () => {
     // Edit to 09:15
     fireEvent.change(timeInput, { target: { value: '09:15' } });
 
-    const saveBtn = screen.getByRole('button', { name: /save changes/i });
+    const saveBtn = screen.getByRole('button', { name: /^save$/i });
     await act(async () => {
       fireEvent.click(saveBtn);
     });

@@ -1,6 +1,6 @@
 /**
  * Unit & Integration Tests for Task 6 Expense Components:
- * - QuickAddExpenseModal
+ * - ExpenseFormModal
  * - ExpenseFilterBar
  * - ExpenseListTable
  * - ExpensesPage
@@ -9,7 +9,7 @@
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
-import { QuickAddExpenseModal } from '../src/components/expenses/QuickAddExpenseModal';
+import { ExpenseFormModal } from '../src/components/expenses/ExpenseFormModal';
 import { ExpenseFilterBar } from '../src/components/expenses/ExpenseFilterBar';
 import { ExpenseListTable } from '../src/components/expenses/ExpenseListTable';
 import { ExpensesPage } from '../src/pages/ExpensesPage';
@@ -62,7 +62,7 @@ const sampleExpenses: Expense[] = [
   },
 ];
 
-describe('QuickAddExpenseModal', () => {
+describe('ExpenseFormModal', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -71,7 +71,7 @@ describe('QuickAddExpenseModal', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={false}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -88,7 +88,7 @@ describe('QuickAddExpenseModal', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -138,7 +138,7 @@ describe('QuickAddExpenseModal', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={onClose}
             onExpenseAdded={onExpenseAdded}
@@ -170,7 +170,7 @@ describe('QuickAddExpenseModal', () => {
     fireEvent.change(remarksInput, { target: { value: 'Movie night snacks' } });
 
     // Submit form
-    const submitBtn = screen.getByRole('button', { name: /save expense|add expense/i });
+    const submitBtn = screen.getByRole('button', { name: /^add$/i });
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -213,7 +213,7 @@ describe('QuickAddExpenseModal', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -234,7 +234,7 @@ describe('QuickAddExpenseModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /lifestyle/i }));
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /save expense|add expense/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
     });
 
     await waitFor(() => {
@@ -254,7 +254,7 @@ describe('QuickAddExpenseModal', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -265,7 +265,7 @@ describe('QuickAddExpenseModal', () => {
     });
 
     // Click submit with 0 amount and empty item
-    const submitBtn = screen.getByRole('button', { name: /save expense|add expense/i });
+    const submitBtn = screen.getByRole('button', { name: /^add$/i });
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -279,7 +279,7 @@ describe('QuickAddExpenseModal', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={onClose}
             categories={mockCategories}

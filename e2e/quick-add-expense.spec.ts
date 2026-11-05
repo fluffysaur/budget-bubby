@@ -37,7 +37,7 @@ test.describe('Quick Add Expense Flow', () => {
     }
 
     // Submit the form
-    await modal.getByRole('button', { name: /^Add Expense$/i }).click();
+    await modal.getByRole('button', { name: /^Add$/i }).click();
 
     // Modal should close
     await expect(modal).not.toBeVisible();
