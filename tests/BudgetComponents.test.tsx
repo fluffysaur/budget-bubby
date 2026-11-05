@@ -602,8 +602,8 @@ describe('BudgetPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /^budget$/i })).toBeInTheDocument();
-      expect(screen.getAllByText(/gross pay|gross salary/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/disposable pool|after deductions/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/^gross$|gross salary/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/^take-home$|after deductions/i).length).toBeGreaterThan(0);
     });
   });
 
