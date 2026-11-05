@@ -60,6 +60,7 @@ import {
 } from '../lib/recurringItems';
 import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
+import { PartialBulkAddError } from './bulkAddError';
 import {
   getLocalNotificationLog,
   claimLocalNotificationSend,
@@ -1049,8 +1050,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   public async bulkAddExpenses(expenses: CreateExpenseInput[]): Promise<Expense[]> {
     const created: Expense[] = [];
     for (const item of expenses) {
-      const exp = await this.addExpense(item);
-      created.push(exp);
+      try {
+        created.push(await this.addExpense(item));
+      } catch (err) {
+        // Report what was saved so callers do not re-send those rows
+        if (created.length > 0) throw new PartialBulkAddError(created, err);
+        throw err;
+      }
     }
     return created;
   }
