@@ -117,6 +117,7 @@ export function useBudgetDetailQuery(
     perspective: Perspective,
     activeMemberId: string | undefined,
     memberIds: string[],
+    options: { enabled?: boolean } = {},
 ) {
     const isCombined = perspective === "household" && memberIds.length > 0;
     return useQuery<MonthlyBudgetDetail | null>({
@@ -138,7 +139,7 @@ export function useBudgetDetailQuery(
             }
             return financeService.getMonthlyBudget(month, activeMemberId ?? memberIds[0]);
         },
-        enabled: Boolean(month),
+        enabled: Boolean(month) && options.enabled !== false,
     });
 }
 

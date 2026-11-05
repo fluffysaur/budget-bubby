@@ -55,6 +55,8 @@ export interface AppEventMap {
     expenseAdded: ExpenseAddedDetail;
     "bubby:react": { kind: BubbyReaction };
     "bubby:open-sheet": { accessoryId?: string };
+    /** Equipped accessories changed on this device. */
+    "bubby:prefs-changed": Record<string, never>;
     "delight:milestone": MilestoneDetail;
     "inbox:items-arrived": { newCount: number; pendingCount: number };
     "inbox:item-confirmed": {
