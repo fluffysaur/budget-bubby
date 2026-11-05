@@ -32,7 +32,11 @@ import { useCategoriesQuery } from './hooks/useFinanceQueries';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
-import { ExpenseFormModal } from './components/expenses/ExpenseFormModal';
+import {
+  ExpenseFormModal,
+  type ExpenseFormInitialValues,
+} from './components/expenses/ExpenseFormModal';
+import { useQuickAddDeepLink } from './hooks/useQuickAddDeepLink';
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
@@ -90,6 +94,9 @@ function AppLayoutInner() {
   const { refreshData, members } = useHousehold();
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
+  const [quickAddValues, setQuickAddValues] = useState<
+    ExpenseFormInitialValues | undefined
+  >(undefined);
   const { data: categoriesData } = useCategoriesQuery();
   const categories = categoriesData || [];
 
@@ -118,12 +125,25 @@ function AppLayoutInner() {
   );
 
   const handleOpenQuickAdd = useCallback(() => {
+    setQuickAddValues(undefined);
     setIsQuickAddOpen(true);
   }, []);
 
+  const openQuickAddWithValues = useCallback(
+    (initialValues?: ExpenseFormInitialValues) => {
+      setQuickAddValues(initialValues);
+      setIsQuickAddOpen(true);
+    },
+    []
+  );
+
   const handleCloseQuickAdd = useCallback(() => {
     setIsQuickAddOpen(false);
+    setQuickAddValues(undefined);
   }, []);
+
+  // /expenses?action=new&amount=…&merchant=… (PWA shortcut, capture fallback)
+  useQuickAddDeepLink(openQuickAddWithValues);
 
   const handleExpenseAdded = useCallback(
     async (_newExpense: Expense) => {
@@ -148,6 +168,7 @@ function AppLayoutInner() {
       if (e.key === 'c' || e.key === 'C') {
         if (!e.metaKey && !e.ctrlKey && !e.altKey) {
           e.preventDefault();
+          setQuickAddValues(undefined);
           setIsQuickAddOpen((prev) => !prev);
         }
       }
@@ -159,7 +180,11 @@ function AppLayoutInner() {
 
   // Allow other pages to open Quick Add via custom event
   useEffect(() => {
-    const handleGlobalOpen = () => setIsQuickAddOpen(true);
+    const handleGlobalOpen = (e: Event) => {
+      const detail = (e as CustomEvent<ExpenseFormInitialValues | undefined>).detail;
+      setQuickAddValues(detail && typeof detail === 'object' ? detail : undefined);
+      setIsQuickAddOpen(true);
+    };
     window.addEventListener('openQuickAdd', handleGlobalOpen);
     return () => window.removeEventListener('openQuickAdd', handleGlobalOpen);
   }, []);
@@ -218,6 +243,7 @@ function AppLayoutInner() {
       <ExpenseFormModal
         isOpen={isQuickAddOpen}
         onClose={handleCloseQuickAdd}
+        initialValues={quickAddValues}
         onExpenseAdded={handleExpenseAdded}
         categories={categories}
         members={members}

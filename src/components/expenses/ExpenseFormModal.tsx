@@ -62,6 +62,8 @@ export interface ExpenseFormModalProps {
     expense?: Expense | null;
     /** Add mode: open with Goal funding on and this goal picked. */
     initialGoalId?: string;
+    /** Add mode: prefill fields (deep link, inbox item). */
+    initialValues?: ExpenseFormInitialValues;
     onExpenseAdded?: (expense: Expense) => void;
     onExpenseUpdated?: (expense: Expense) => void;
     defaultPayerId?: string;
@@ -70,6 +72,22 @@ export interface ExpenseFormModalProps {
     members?: HouseholdMember[];
     goals?: SavingsGoal[];
 }
+
+export type ExpenseFormInitialValues = Partial<
+    Pick<
+        CreateExpenseInput,
+        | "amount"
+        | "item"
+        | "date"
+        | "time"
+        | "original_currency"
+        | "original_amount"
+        | "remarks"
+        | "category_id"
+        | "payer_id"
+        | "is_shared"
+    >
+>;
 
 type FundingSource = "budget" | "goal";
 
@@ -145,6 +163,7 @@ export function ExpenseFormModal({
     onClose,
     expense,
     initialGoalId,
+    initialValues,
     onExpenseAdded,
     onExpenseUpdated,
     defaultPayerId,
@@ -334,11 +353,47 @@ export function ExpenseFormModal({
             setRecentTagsList(getStoredRecentTags());
             setErrorMessage(null);
             setIsSubmitting(false);
+
+            if (initialValues) {
+                const foreign =
+                    initialValues.original_currency &&
+                    initialValues.original_currency !== "SGD";
+                if (foreign) {
+                    setCurrencyCode(initialValues.original_currency as string);
+                    setAmount(
+                        initialValues.original_amount ??
+                            initialValues.amount ??
+                            0,
+                    );
+                } else if (initialValues.amount) {
+                    setAmount(initialValues.amount);
+                }
+                if (initialValues.item) {
+                    setItem(initialValues.item);
+                    const guessed = guessCategoryId(
+                        initialValues.item,
+                        categories,
+                    );
+                    if (guessed) setCategoryId(guessed);
+                }
+                if (initialValues.category_id) {
+                    setCategoryId(initialValues.category_id);
+                    setCategoryManuallySelected(true);
+                }
+                if (initialValues.payer_id) setPayerId(initialValues.payer_id);
+                if (initialValues.is_shared !== undefined) {
+                    setIsShared(initialValues.is_shared);
+                }
+                if (initialValues.date) setDate(initialValues.date);
+                if (initialValues.time) setTime(initialValues.time);
+                if (initialValues.remarks) setRemarks(initialValues.remarks);
+            }
         }
     }, [
         isOpen,
         expense,
         initialGoalId,
+        initialValues,
         defaultPayerId,
         defaultShared,
         activeMember,
