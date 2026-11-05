@@ -44,6 +44,7 @@ import {
     toSingaporeMonth,
 } from "./dateUtils";
 import { formatSGD } from "./currency";
+import { isValidUuid } from "./uuid";
 import { calculateRecurringCategorySpend } from "./recurringItems";
 
 /**
@@ -232,6 +233,11 @@ export function calculateGoalPacing(
     };
 }
 
+const looksLikeUuid = (value: string): boolean => isValidUuid(value);
+
+/** Name fragments that mark a category as a set-aside allocation when no explicit group is stored. */
+const ALLOCATION_NAME_HINTS = ["invest", "saving", "tith", "allowance"];
+
 /**
  * 7. Determines whether a category belongs to day-to-day Spendable Budget
  * ('Food', 'Lifestyle', 'Transport', 'Buffer') vs. Wealth/Fixed Allocations
@@ -248,15 +254,11 @@ export function isSpendableCategory(
         return isSpendableCategory(categoryOrName.name);
     }
 
+    // A bare UUID carries no name information; treat it as spendable.
+    if (looksLikeUuid(categoryOrName)) return true;
+
     const clean = categoryOrName.toLowerCase().trim();
-    if (
-        clean.includes("invest") ||
-        clean.includes("saving") ||
-        clean.includes("tith")
-    ) {
-        return false;
-    }
-    return true;
+    return !ALLOCATION_NAME_HINTS.some((hint) => clean.includes(hint));
 }
 
 /**
