@@ -3,19 +3,36 @@
  * - Checks in the logged-in member for today after every log
  * - Routes inbox triage to a soft routine cue (no per-item toast)
  * - Keeps the per-device high-water mark and snapshot in bb_bubby_v1
+ * - Diffs stage and unlocks against what this device has seen and plays
+ *   the "Bubby grew!" / "New: Kopi Cup" moments
+ * - Hosts milestone confetti and toasts
  */
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBubby } from "../../hooks/useBubby";
 import { useActivityCheckins } from "../../hooks/useActivityCheckins";
-import { onAppEvent } from "../../lib/appEvents";
+import { emitAppEvent, onAppEvent, type MilestoneDetail } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
 import { readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
+import { STAGES, HATCHLING_STAGE } from "../../lib/bubby/growth";
+import { getAccessory } from "../../lib/bubby/accessories";
+import { ConfettiBurst } from "../ui/ConfettiBurst";
+import { MilestoneToast } from "./MilestoneToast";
+
+interface QueuedToast extends MilestoneDetail {
+    id: number;
+}
+
+const MAX_QUEUED_TOASTS = 3;
 
 export function DelightHost() {
     useActivityCheckins();
     const bubby = useBubby();
-    const { isReady, state, equipped } = bubby;
+    const { isReady, state, equipped, unlocked } = bubby;
+
+    const [toasts, setToasts] = useState<QueuedToast[]>([]);
+    const [burstKey, setBurstKey] = useState(0);
+    const toastSeq = useRef(0);
 
     // High-water mark and a snapshot for components outside the providers
     useEffect(() => {
@@ -32,6 +49,47 @@ export function DelightHost() {
         }
     }, [isReady, state.derivedPoints, state.stage, equipped]);
 
+    // Stage-ups and unlocks, once per device
+    useEffect(() => {
+        if (!isReady) return;
+        const store = readBubbyStore();
+        const seenStage = store.seenStage ?? 0;
+
+        if (state.stage > seenStage) {
+            const hatched = state.stage >= HATCHLING_STAGE && seenStage < HATCHLING_STAGE;
+            const stageName = STAGES[state.stage].name;
+            feedback.milestone("stage-up", {
+                dedupeKey: `stage:${state.stage}`,
+                title: hatched ? "Bubby hatched!" : "Bubby grew!",
+                subtitle: state.stage === STAGES.length - 1 ? "Fully grown" : `Now a ${stageName}`,
+                primary: { label: "Meet Bubby", event: "bubby:open-sheet" },
+            });
+        }
+        if (state.stage !== store.seenStage) {
+            updateBubbyStore({ seenStage: Math.max(state.stage, seenStage) });
+        }
+
+        const seen = store.seenAccessories;
+        if (!seen) {
+            // First run on this device: learn what is already unlocked silently
+            updateBubbyStore({ seenAccessories: unlocked });
+            return;
+        }
+        const fresh = unlocked.filter((id) => !seen.includes(id));
+        if (fresh.length > 0) {
+            const first = getAccessory(fresh[0]);
+            if (first) {
+                feedback.milestone("unlock", {
+                    dedupeKey: `unlock:${first.id}`,
+                    title: `New: ${first.label}`,
+                    subtitle: fresh.length > 1 ? `+${fresh.length - 1} more to try` : "Ready to wear",
+                    primary: { label: "Try it on", event: "bubby:open-sheet", accessoryId: first.id },
+                });
+            }
+            updateBubbyStore({ seenAccessories: Array.from(new Set([...seen, ...fresh])) });
+        }
+    }, [isReady, state.stage, unlocked]);
+
     // Inbox triage: a soft pop and a nod per item, never a toast
     useEffect(() => {
         const offs = [
@@ -41,7 +99,56 @@ export function DelightHost() {
         return () => offs.forEach((off) => off());
     }, []);
 
-    return null;
+    // Milestone confetti and toasts
+    useEffect(
+        () =>
+            onAppEvent("delight:milestone", (detail) => {
+                if (detail.confetti) setBurstKey((k) => k + 1);
+                if (detail.title) {
+                    toastSeq.current += 1;
+                    const id = toastSeq.current;
+                    setToasts((prev) => [...prev, { ...detail, id }].slice(-MAX_QUEUED_TOASTS));
+                }
+            }),
+        [],
+    );
+
+    const clearBurst = useCallback(() => setBurstKey(0), []);
+    const shiftToast = useCallback(() => setToasts((prev) => prev.slice(1)), []);
+    const acknowledge = useCallback(() => {
+        feedback.routine("acknowledge");
+        shiftToast();
+    }, [shiftToast]);
+
+    const current = toasts[0];
+
+    return (
+        <>
+            {burstKey > 0 && <ConfettiBurst key={burstKey} onDone={clearBurst} />}
+            {current && (
+                <MilestoneToast
+                    key={current.id}
+                    title={current.title ?? ""}
+                    subtitle={current.subtitle}
+                    stage={state.stage}
+                    equipped={equipped as Record<string, string>}
+                    primaryLabel={current.primary?.label}
+                    onPrimary={
+                        current.primary?.event
+                            ? () => {
+                                  emitAppEvent("bubby:open-sheet", {
+                                      accessoryId: current.primary?.accessoryId,
+                                  });
+                                  shiftToast();
+                              }
+                            : undefined
+                    }
+                    onAcknowledge={acknowledge}
+                    onTimeout={shiftToast}
+                />
+            )}
+        </>
+    );
 }
 
 export default DelightHost;
