@@ -8,6 +8,7 @@
  * 5. Savings Goal Pacing Indicator
  */
 
+import { BONUS_SPLIT_BUCKETS, DEFAULT_BONUS_SPLIT } from "./bonusFormulas";
 import type {
     Account,
     AccountSnapshot,
@@ -618,13 +619,14 @@ export function calculateBonusAllocation(
     const cpfDeduction = Math.round(safeGross * cpfRate * 100) / 100;
     const afterCpf = Math.round((safeGross - cpfDeduction) * 100) / 100;
 
-    const splits = customSplits || [
-        { name: "Tithing", percentage: 0.1, color: "#8B5CF6" },
-        { name: "Goals", percentage: 0.4, color: "#3B82F6" },
-        { name: "Savings", percentage: 0.1, color: "#6366F1" },
-        { name: "Investments", percentage: 0.2, color: "#10B981" },
-        { name: "Lifestyle", percentage: 0.2, color: "#EC4899" },
-    ];
+    const splits =
+        customSplits ||
+        BONUS_SPLIT_BUCKETS.map((bucket) => ({
+            name: bucket.label,
+            percentage:
+                DEFAULT_BONUS_SPLIT.find((s) => s.key === bucket.key)?.pct ?? 0,
+            color: bucket.color,
+        }));
 
     return {
         grossBonus: safeGross,
