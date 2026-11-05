@@ -108,6 +108,16 @@ export function useBubbyReaction(stage: number): BubbyReaction | null {
     return reaction?.kind ?? null;
 }
 
+/** All members' check-ins, shared by Bubby and the streak chip. */
+export function useHouseholdCheckinsQuery() {
+    return useQuery<DailyCheckin[]>({
+        queryKey: queryKeys.dailyCheckins(),
+        queryFn: () => financeService.getDailyCheckins(),
+        staleTime: 60_000,
+        refetchOnWindowFocus: true,
+    });
+}
+
 export interface UseBubbyResult {
     isReady: boolean;
     state: BubbyState;
@@ -132,12 +142,7 @@ export function useBubby(): UseBubbyResult {
     // Per-device store; refreshed whenever this device changes it
     const [store, setStore] = useState(readBubbyStore);
 
-    const { data, isSuccess } = useQuery<DailyCheckin[]>({
-        queryKey: queryKeys.dailyCheckins(),
-        queryFn: () => financeService.getDailyCheckins(),
-        staleTime: 60_000,
-        refetchOnWindowFocus: true,
-    });
+    const { data, isSuccess } = useHouseholdCheckinsQuery();
     const checkins = data ?? EMPTY_CHECKINS;
 
     const memberIds = useMemo(() => members.map((m) => m.id), [members]);

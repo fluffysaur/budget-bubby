@@ -12,7 +12,10 @@ import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLim
 import { StreakChip } from "../src/components/layout/StreakChip";
 import { ExpensesPage } from "../src/pages/ExpensesPage";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
+import { AuthProvider } from "../src/context/AuthContext";
 import { financeService } from "../src/services/financeService";
+import { mockMembers } from "../src/data/mockSeedData";
+import { addDays, toSgtDateString } from "../src/lib/bubby/dates";
 import type { HouseholdOverview, MonthlyBudgetCategoryDetail } from "../src/types/finance";
 
 vi.mock("../src/lib/soundEffects", () => ({
@@ -140,13 +143,18 @@ describe("StreakChip", () => {
     });
 
     it("shows the streak count and opens the check-in bar on tap", async () => {
-        vi.spyOn(financeService, "getStreakSummary").mockResolvedValue({
-            currentStreak: 5,
-            longestStreak: 9,
-            checkedInToday: true,
-            coupleStreak: 2,
-            lastCheckinDate: null,
-        });
+        // StreakChip reads the shared household check-ins query
+        const memberId = mockMembers[0].id;
+        const today = toSgtDateString();
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(
+            [0, 1, 2, 3, 4].map((i) => ({
+                id: `chk-${i}`,
+                household_id: "hh-01",
+                member_id: memberId,
+                checkin_date: addDays(today, -i),
+                type: "expense" as const,
+            })),
+        );
 
         await act(async () => {
             render(
@@ -168,5 +176,32 @@ describe("StreakChip", () => {
 
         fireEvent.keyDown(document, { key: "Escape" });
         expect(screen.queryByRole("dialog", { name: "Check-in Streak" })).not.toBeInTheDocument();
+    });
+
+    it("counts the logged-in partner's streak in Combined view, not the first member's", async () => {
+        const rachel = mockMembers.find((m) => m.display_name === "Rachel")!;
+        const today = toSgtDateString();
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([
+            ...[0, 1, 2].map((i) => ({
+                id: `r-${i}`,
+                household_id: "hh-01",
+                member_id: rachel.id,
+                checkin_date: addDays(today, -i),
+                type: "expense" as const,
+            })),
+            { id: "y-0", household_id: "hh-01", member_id: mockMembers[0].id, checkin_date: today, type: "expense" as const },
+        ]);
+
+        await act(async () => {
+            render(
+                <AuthProvider initialAuthenticated initialPartner="rachel">
+                    <HouseholdProvider defaultPerspective="household">
+                        <StreakChip />
+                    </HouseholdProvider>
+                </AuthProvider>,
+            );
+        });
+
+        expect(await screen.findByRole("button", { name: /3-day streak, checked in today/i })).toBeInTheDocument();
     });
 });

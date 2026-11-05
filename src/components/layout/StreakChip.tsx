@@ -1,55 +1,45 @@
 /**
  * StreakChip
- * Compact header chip showing the active member's daily check-in streak.
+ * Compact header chip showing the logged-in member's daily check-in streak.
+ * Reads the shared household check-ins query (the same one Bubby uses), so
+ * it refreshes with every log and on resume with no extra fetches.
  * Tapping it opens a popover with the full DailyCheckinStreakBar
  * (7-day dots, couple streak, and the no-spend check-in action).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Flame } from "lucide-react";
 import { useHousehold } from "../../context/HouseholdContext";
-import { financeService } from "../../services/financeService";
+import { useHouseholdCheckinsQuery, useSgtClock } from "../../hooks/useBubby";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
+import { memberStreak } from "../../lib/bubby/growth";
+import { emitAppEvent } from "../../lib/appEvents";
 import { DailyCheckinStreakBar } from "../dashboard/DailyCheckinStreakBar";
+import { Button } from "../ui/Button";
 
 export interface StreakChipProps {
     className?: string;
 }
 
 export function StreakChip({ className = "" }: StreakChipProps) {
-    const { activeMember, members, refreshData } = useHousehold();
-    const memberId = useMemo(
-        () => activeMember?.id || members?.[0]?.id,
-        [activeMember, members],
-    );
+    const { refreshData } = useHousehold();
+    const { me } = useLoggedInMember();
+    const memberId = me?.id;
+    const { today } = useSgtClock();
+    const { data: checkins } = useHouseholdCheckinsQuery();
 
-    const [streak, setStreak] = useState<number | null>(null);
-    const [checkedInToday, setCheckedInToday] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const loadStreak = useCallback(async () => {
-        if (!memberId) return;
-        try {
-            const summary = await financeService.getStreakSummary(memberId);
-            setStreak(summary.currentStreak);
-            setCheckedInToday(summary.checkedInToday);
-        } catch (err) {
-            console.error("Failed to load streak:", err);
-        }
-    }, [memberId]);
-
-    useEffect(() => {
-        loadStreak();
-    }, [loadStreak]);
-
-    // Logging an expense counts as a check-in, so refresh the count
-    useEffect(() => {
-        const handleExpenseAdded = () => {
-            loadStreak();
+    const { count, checkedInToday } = useMemo(() => {
+        if (!memberId || !checkins) return { count: 0, checkedInToday: false };
+        return {
+            count: memberStreak(checkins, memberId, today),
+            checkedInToday: checkins.some(
+                (c) => c.member_id === memberId && c.checkin_date === today,
+            ),
         };
-        window.addEventListener("expenseAdded", handleExpenseAdded);
-        return () => window.removeEventListener("expenseAdded", handleExpenseAdded);
-    }, [loadStreak]);
+    }, [checkins, memberId, today]);
 
     // Close on outside tap or Escape
     useEffect(() => {
@@ -73,8 +63,6 @@ export function StreakChip({ className = "" }: StreakChipProps) {
     }, [isOpen]);
 
     if (!memberId) return null;
-
-    const count = streak ?? 0;
 
     return (
         <div ref={containerRef} className={`relative ${className}`}>
@@ -104,11 +92,23 @@ export function StreakChip({ className = "" }: StreakChipProps) {
                 >
                     <DailyCheckinStreakBar
                         memberId={memberId}
-                        onCheckinSuccess={async () => {
-                            await loadStreak();
-                            await refreshData();
+                        onCheckinSuccess={() => {
+                            void refreshData();
                         }}
                     />
+                    <div className="mt-2 flex justify-end">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="min-h-11"
+                            onClick={() => {
+                                setIsOpen(false);
+                                emitAppEvent("bubby:open-sheet", {});
+                            }}
+                        >
+                            See Bubby
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>
