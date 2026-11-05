@@ -32,6 +32,7 @@ import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
+import { resolveLoggedInMember } from "../../lib/members";
 import {
     SUPPORTED_CURRENCIES,
     buildExpenseFxFields,
@@ -105,15 +106,7 @@ export function BulkAddExpenseModal({
     const resolvedDefaultPayerId = useMemo(() => {
         if (defaultPayerId) return defaultPayerId;
         if (activeMember) return activeMember.id;
-        if (loggedInPartner) {
-            const match = members.find((m) =>
-                m.display_name
-                    .toLowerCase()
-                    .includes(loggedInPartner.toLowerCase()),
-            );
-            if (match) return match.id;
-        }
-        return members[0]?.id || "";
+        return resolveLoggedInMember(members, loggedInPartner)?.id || "";
     }, [defaultPayerId, activeMember, loggedInPartner, members]);
 
     const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(
@@ -368,6 +361,7 @@ export function BulkAddExpenseModal({
                                     ? created[0].item
                                     : `${created.length} expenses logged`,
                             amount: totalAmount,
+                            source: "bulk",
                         },
                     }),
                 );

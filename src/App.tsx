@@ -37,6 +37,7 @@ import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessC
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
 import { PullToRefresh } from './components/ui/PullToRefresh';
+import { useActivityCheckins } from './hooks/useActivityCheckins';
 import type { Expense } from './types/finance';
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -88,6 +89,7 @@ function AppLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const { refreshData, members } = useHousehold();
+  useActivityCheckins();
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const { data: categoriesData } = useCategoriesQuery();

@@ -672,7 +672,9 @@ export function ExpenseFormModal({
             // Dispatch global event for celebration toast, sound & category alerts
             if (typeof window !== "undefined") {
                 window.dispatchEvent(
-                    new CustomEvent("expenseAdded", { detail: created }),
+                    new CustomEvent("expenseAdded", {
+                        detail: { ...created, source: "form" },
+                    }),
                 );
             }
 
