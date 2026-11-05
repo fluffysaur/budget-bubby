@@ -1,6 +1,6 @@
 /**
  * Expense Ledger Tools:
- * Edit/Delete Modals, Sort, Pagination, Fast Log and Bulk Log
+ * Edit/Delete Modals, Sort, Pagination, Fast Log and Bulk Add
  */
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -75,7 +75,7 @@ const testGoalExpense: Expense = {
   created_at: '2026-10-26T14:00:00Z',
 };
 
-describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
+describe('Ledger Power Tools, Fast Log & Bulk Add', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
