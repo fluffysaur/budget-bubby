@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { CentsFirstAmountInput } from '../src/components/expenses/CentsFirstAmountInput';
-import { QuickAddExpenseModal } from '../src/components/expenses/QuickAddExpenseModal';
+import { ExpenseFormModal } from '../src/components/expenses/ExpenseFormModal';
 import { ExpenseSuccessCelebration } from '../src/components/expenses/ExpenseSuccessCelebration';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { financeService } from '../src/services/financeService';
@@ -108,7 +108,7 @@ describe('CentsFirstAmountInput Component', () => {
   });
 });
 
-describe('QuickAddExpenseModal Currency Conversion & UX', () => {
+describe('ExpenseFormModal Currency Conversion & UX', () => {
   const sampleGoals: SavingsGoal[] = [
     {
       id: 'goal-vietnam-trip',
@@ -154,7 +154,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={onClose}
             onExpenseAdded={onExpenseAdded}
@@ -186,7 +186,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.change(itemInput, { target: { value: 'Pho Bo in Hanoi' } });
 
     // Submit Form
-    const submitBtn = screen.getByRole('button', { name: /add expense/i });
+    const submitBtn = screen.getByRole('button', { name: /^add$/i });
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -227,7 +227,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -253,7 +253,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.change(screen.getByLabelText(/item|description/i), { target: { value: 'Coffee in Tokyo' } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /add expense/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
     });
 
     await waitFor(() => {
@@ -268,7 +268,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     });
   });
 
-  it('supports the 2-button segmented toggle: Personal vs Shared (50/50)', async () => {
+  it('supports the 2-button segmented toggle: Personal vs Shared', async () => {
     const addExpenseSpy = vi.spyOn(financeService, 'addExpense').mockResolvedValueOnce({
       id: 'exp-split-1',
       household_id: 'hh-00000000-0001',
@@ -286,7 +286,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -297,7 +297,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     });
 
     const personalBtn = screen.getByRole('button', { name: /personal/i });
-    const sharedBtn = screen.getByRole('button', { name: /shared \(50\/50\)/i });
+    const sharedBtn = screen.getByRole('button', { name: /^👥 ?shared$/i });
 
     expect(personalBtn).toBeInTheDocument();
     expect(sharedBtn).toBeInTheDocument();
@@ -311,7 +311,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.change(screen.getByLabelText(/item|description/i), { target: { value: 'Solo Snack' } });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /add expense/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
     });
 
     await waitFor(() => {
@@ -328,7 +328,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -369,7 +369,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -407,7 +407,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -428,14 +428,13 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     fireEvent.click(screen.getByRole('button', { name: /\+ tag/i }));
     expect(screen.getByText('#VietnamTrip')).toBeInTheDocument();
 
-    // Toggle Goal Spend and select goal
-    const goalSpendSwitch = screen.getByRole('switch', { name: /fund from savings goal/i });
-    fireEvent.click(goalSpendSwitch);
+    // Switch funding to Goal and select goal
+    fireEvent.click(screen.getByRole('tab', { name: /goal/i }));
     const goalChip = screen.getByRole('button', { name: /vietnam trip/i });
     fireEvent.click(goalChip);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /add expense/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
     });
 
     await waitFor(() => {
@@ -443,6 +442,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
         expect.objectContaining({
           tags: ['#VietnamTrip'],
           goal_id: 'goal-vietnam-trip',
+          category_id: null,
           remarks: 'Tasty street food',
         })
       );
@@ -459,7 +459,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -491,7 +491,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     expect(screen.getByText('#Dinner')).toBeInTheDocument();
   });
 
-  it('renders dedicated "Fund from Savings Goal" toggle row and shows "+ More" button when > 4 goals', async () => {
+  it('shows a Budget | Goal switch in the picker header and "+ More" when > 4 goals', async () => {
     const manyGoals = [
       ...sampleGoals,
       {
@@ -543,7 +543,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -554,23 +554,24 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
       );
     });
 
-    // 1. Initial state: Category is visible, toggle row is present
-    expect(screen.getByText('Fund from Savings Goal')).toBeInTheDocument();
-    expect(screen.getByText('Excludes from monthly budget caps')).toBeInTheDocument();
-    expect(screen.getByText('Category')).toBeInTheDocument();
+    // 1. Budget | Goal switch sits in the picker header, Budget active
+    const budgetTab = screen.getByRole('tab', { name: /budget/i });
+    const goalTab = screen.getByRole('tab', { name: /goal/i });
+    expect(budgetTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByText('Fund from Savings Goal')).not.toBeInTheDocument();
 
-    // 2. Toggle ON
-    const switchEl = screen.getByRole('switch', { name: /fund from savings goal/i });
-    expect(switchEl).toHaveAttribute('aria-checked', 'false');
-    fireEvent.click(switchEl);
-    expect(switchEl).toHaveAttribute('aria-checked', 'true');
+    // 2. Switch to Goal: chips swap in place, nothing pre-selected with several goals
+    fireEvent.click(goalTab);
+    expect(goalTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByLabelText('Goal Selection')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Category Selection')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /vietnam trip/i })).toHaveAttribute('aria-pressed', 'false');
 
-    // 3. Header swaps to "Goal" and shows "+ More (1)" button (5 goals total - 4 visible)
-    expect(screen.getByText('Goal')).toBeInTheDocument();
+    // 3. "+ More (1)" button (5 goals total - 4 visible)
     const moreBtn = screen.getByRole('button', { name: /\+ more \(1\)/i });
-    expect(moreBtn).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /tech upgrade/i })).not.toBeInTheDocument();
 
-    // 4. Click "+ More" -> expands to all 6 goals, button becomes "Show less"
+    // 4. Click "+ More" -> expands to all 5 goals, button becomes "Show less"
     fireEvent.click(moreBtn);
     expect(screen.getByRole('button', { name: /tech upgrade/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /show less/i })).toBeInTheDocument();
@@ -598,7 +599,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
     await act(async () => {
       render(
         <HouseholdProvider>
-          <QuickAddExpenseModal
+          <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             categories={mockCategories}
@@ -613,7 +614,7 @@ describe('QuickAddExpenseModal Currency Conversion & UX', () => {
       target: { value: 'Kaya Toast Set' },
     });
 
-    const submitBtn = screen.getByRole('button', { name: /add expense/i });
+    const submitBtn = screen.getByRole('button', { name: /^add$/i });
     await act(async () => {
       fireEvent.click(submitBtn);
     });

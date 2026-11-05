@@ -37,7 +37,7 @@ import { formatSGD } from "../lib/currency";
 import { GoalCard } from "../components/goals/GoalCard";
 import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
 import { QuickDepositModal } from "../components/goals/QuickDepositModal";
-import { SpendFromGoalModal } from "../components/goals/SpendFromGoalModal";
+import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import type { SavingsGoal, Expense } from "../types/finance";
 
 export interface GoalsPageProps {
@@ -474,18 +474,19 @@ export function GoalsPage({
                 onDepositSaved={handleDepositSaved}
             />
 
-            {/* Spend from Goal Modal */}
-            <SpendFromGoalModal
+            {/* Spend from Goal: the Add Expense form with this goal picked */}
+            <ExpenseFormModal
                 isOpen={isSpendOpen}
                 onClose={() => {
                     setIsSpendOpen(false);
                     setSpendGoal(null);
                 }}
-                goal={spendGoal}
+                initialGoalId={spendGoal?.id}
                 categories={categories}
                 members={overview?.members || ctxMembers}
+                goals={goals}
                 defaultPayerId={activeMember?.id}
-                onSpendSaved={handleSpendSaved}
+                onExpenseAdded={handleSpendSaved}
             />
         </div>
     );

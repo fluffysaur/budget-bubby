@@ -5,8 +5,8 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EditExpenseModal } from '../src/components/expenses/EditExpenseModal';
 import { DeleteExpenseModal } from '../src/components/expenses/DeleteExpenseModal';
+import { ExpenseFormModal } from '../src/components/expenses/ExpenseFormModal';
 import {
   BulkAddExpenseModal,
   parseBulkExpenseText,
@@ -121,12 +121,12 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
   });
 
   /* ------------------------------------------------------------------ */
-  /* 2. EditExpenseModal Component                                      */
+  /* 2. ExpenseFormModal (edit mode)                                   */
   /* ------------------------------------------------------------------ */
-  describe('EditExpenseModal', () => {
+  describe('ExpenseFormModal (edit mode)', () => {
     it('populates fields with the existing expense details', () => {
       render(
-        <EditExpenseModal
+        <ExpenseFormModal
           isOpen={true}
           onClose={vi.fn()}
           expense={testExpense}
@@ -153,22 +153,22 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
       const onCloseMock = vi.fn();
 
       render(
-        <EditExpenseModal
+        <ExpenseFormModal
           isOpen={true}
           onClose={onCloseMock}
           expense={testExpense}
-          onSave={onSaveMock}
+          onExpenseUpdated={onSaveMock}
           categories={mockCategories}
           members={mockMembers}
         />
       );
 
       // Change description
-      const itemInput = screen.getByLabelText(/Item Description/i);
+      const itemInput = screen.getByLabelText(/^Description$/i);
       fireEvent.change(itemInput, { target: { value: 'Maxwell Roast Duck' } });
 
       // Submit form
-      const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+      const saveBtn = screen.getByRole('button', { name: /^Save$/i });
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
@@ -185,7 +185,7 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
 
     it('allows toggling shared split and adding a new tag', async () => {
       render(
-        <EditExpenseModal
+        <ExpenseFormModal
           isOpen={true}
           onClose={vi.fn()}
           expense={testExpense}
@@ -195,9 +195,9 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
       );
 
       // Add tag
-      const tagInput = screen.getByPlaceholderText(/Add tag/i);
+      const tagInput = screen.getByPlaceholderText(/VietnamTrip/i);
       fireEvent.change(tagInput, { target: { value: 'Foodie' } });
-      fireEvent.click(screen.getByRole('button', { name: '+ Add' }));
+      fireEvent.click(screen.getByRole('button', { name: '+ Tag' }));
 
       expect(screen.getByText('#Foodie')).toBeInTheDocument();
     });
@@ -653,7 +653,7 @@ describe('Ledger Power Tools, Fast Log & Bulk Log', () => {
       expect(screen.getByText('21–40')).toBeInTheDocument();
     });
 
-    it('opens EditExpenseModal when clicking edit button', () => {
+    it('opens the edit form when clicking edit button', () => {
       render(
         <ExpenseListTable
           expenses={[testExpense]}

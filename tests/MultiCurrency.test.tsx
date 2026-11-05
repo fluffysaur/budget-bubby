@@ -4,7 +4,7 @@
 
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { EditExpenseModal } from "../src/components/expenses/EditExpenseModal";
+import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { financeService } from "../src/services/financeService";
 import { mockCategories, mockMembers } from "../src/data/mockSeedData";
 import type { Expense } from "../src/types/finance";
@@ -30,7 +30,7 @@ const jpyExpense: Expense = {
 
 function renderEdit(expense: Expense = jpyExpense) {
     return render(
-        <EditExpenseModal
+        <ExpenseFormModal
             isOpen={true}
             onClose={vi.fn()}
             expense={expense}
@@ -40,7 +40,7 @@ function renderEdit(expense: Expense = jpyExpense) {
     );
 }
 
-describe("EditExpenseModal multi-currency", () => {
+describe("ExpenseFormModal (edit mode) multi-currency", () => {
     beforeEach(() => {
         localStorage.clear();
         vi.stubGlobal(
@@ -66,10 +66,10 @@ describe("EditExpenseModal multi-currency", () => {
             .mockResolvedValue(jpyExpense);
         renderEdit();
 
-        fireEvent.change(screen.getByLabelText(/Item Description/i), {
+        fireEvent.change(screen.getByLabelText(/^Description$/i), {
             target: { value: "Ichiran Ramen Tokyo" },
         });
-        fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+        fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
 
         await waitFor(() => {
             expect(updateSpy).toHaveBeenCalledWith(
@@ -95,7 +95,7 @@ describe("EditExpenseModal multi-currency", () => {
         });
         expect(screen.getByLabelText(/Exchange rate/i)).toHaveValue(125);
 
-        fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+        fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
         await waitFor(() => {
             expect(updateSpy).toHaveBeenCalledWith(
                 jpyExpense.id,
@@ -116,7 +116,7 @@ describe("EditExpenseModal multi-currency", () => {
             exchange_rate: 1,
         });
 
-        fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
+        fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
         await waitFor(() => {
             expect(updateSpy).toHaveBeenCalledWith(
                 jpyExpense.id,

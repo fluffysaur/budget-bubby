@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { SpendTagsOverviewCard } from '../src/components/expenses/SpendTagsOverviewCard';
 import { GoalCard } from '../src/components/goals/GoalCard';
-import { SpendFromGoalModal } from '../src/components/goals/SpendFromGoalModal';
+import { ExpenseFormModal } from '../src/components/expenses/ExpenseFormModal';
 import { financeService } from '../src/services/financeService';
 import { mockFinanceService } from '../src/services/mockFinanceService';
 import { formatSGD } from '../src/lib/currency';
@@ -200,39 +200,46 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
     expect(screen.getByRole('button', { name: /\+ Spend from Wedding/i })).toBeInTheDocument();
   });
 
-  it('draws down from goal balance when spending from goal via SpendFromGoalModal', async () => {
-    const onSpendSaved = vi.fn();
+  it('spends from a goal via the Add Expense form with the goal pre-selected', async () => {
+    const addSpy = vi.spyOn(financeService, 'addExpense');
+    const onExpenseAdded = vi.fn();
     const onClose = vi.fn();
+    const otherGoal: SavingsGoal = { ...weddingGoal, id: 'goal-other', title: 'Japan Trip', emoji: '✈️' };
 
     render(
-      <SpendFromGoalModal
+      <ExpenseFormModal
         isOpen={true}
         onClose={onClose}
-        goal={weddingGoal}
+        initialGoalId={weddingGoal.id}
+        goals={[otherGoal, weddingGoal]}
         members={testMembers}
-        onSpendSaved={onSpendSaved}
+        onExpenseAdded={onExpenseAdded}
       />
     );
 
-    expect(screen.getByText(/Spend from Wedding/i)).toBeInTheDocument();
-    expect(screen.getByText('#Wedding')).toBeInTheDocument();
+    // Same Add Expense form, Goal funding on, the goal picked, no auto-tag
+    expect(screen.getByRole('heading', { name: 'Add Expense' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /goal/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: /wedding/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('#Wedding')).not.toBeInTheDocument();
 
-    // Fill in amount: $2,500
-    const amountInput = screen.getByLabelText(/Amount to Spend/i);
-    fireEvent.change(amountInput, { target: { value: '2500' } });
-
-    // Fill in description
-    const itemInput = screen.getByLabelText(/Item \/ Description/i);
-    fireEvent.change(itemInput, { target: { value: 'Wedding Photographer Deposit' } });
-
-    // Submit
-    const submitBtn = screen.getByRole('button', { name: /Log & Deduct from Goal/i });
-    fireEvent.click(submitBtn);
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '2500' } });
+    fireEvent.change(screen.getByLabelText(/^Description$/i), {
+      target: { value: 'Wedding Photographer Deposit' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }));
 
     await waitFor(() => {
-      expect(onSpendSaved).toHaveBeenCalled();
+      expect(onExpenseAdded).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
+    expect(addSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        goal_id: weddingGoal.id,
+        category_id: null,
+        tags: undefined,
+      }),
+    );
 
     // Verify that goal saved_so_far represents total saved and does not deduct milestone progress:
     const goals = await financeService.getGoals();

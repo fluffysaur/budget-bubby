@@ -32,7 +32,7 @@ import { useCategoriesQuery } from './hooks/useFinanceQueries';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
-import { QuickAddExpenseModal } from './components/expenses/QuickAddExpenseModal';
+import { ExpenseFormModal } from './components/expenses/ExpenseFormModal';
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
@@ -215,7 +215,7 @@ function AppLayoutInner() {
       />
 
       {/* Global Quick Add Expense Modal */}
-      <QuickAddExpenseModal
+      <ExpenseFormModal
         isOpen={isQuickAddOpen}
         onClose={handleCloseQuickAdd}
         onExpenseAdded={handleExpenseAdded}

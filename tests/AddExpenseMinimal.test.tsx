@@ -7,7 +7,7 @@
 
 import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { QuickAddExpenseModal } from "../src/components/expenses/QuickAddExpenseModal";
+import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { financeService } from "../src/services/financeService";
 import { mockCategories, mockMembers } from "../src/data/mockSeedData";
@@ -21,11 +21,11 @@ vi.mock("../src/lib/soundEffects", () => ({
     initAudioUnlock: vi.fn(),
 }));
 
-async function renderModal(props: Partial<React.ComponentProps<typeof QuickAddExpenseModal>> = {}) {
+async function renderModal(props: Partial<React.ComponentProps<typeof ExpenseFormModal>> = {}) {
     await act(async () => {
         render(
             <HouseholdProvider initialPerspective="yijia">
-                <QuickAddExpenseModal
+                <ExpenseFormModal
                     isOpen
                     onClose={vi.fn()}
                     categories={mockCategories}
@@ -88,7 +88,7 @@ describe("Add Expense minimal layout", () => {
         );
 
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: /^Add Expense$/ }));
+            fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
         });
         await waitFor(() => expect(addSpy).toHaveBeenCalled());
         expect(addSpy.mock.calls[0][0].is_shared).toBe(true);
