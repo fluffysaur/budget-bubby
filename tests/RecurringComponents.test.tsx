@@ -11,15 +11,13 @@
  * 2. RecurringTable component:
  *    - Renders all columns, type badges, formatSGD amounts
  *    - Filters by search term
- *    - Filters by recurring item type
+ *    - Filters by recurring item type and status (Active / Ended / All)
  *    - Empty state
  *    - Edit and Delete action callbacks
  * 3. RenewalCalendar component:
- *    - Renders 12 months (Jan to Dec)
- *    - Computes and displays monthly cash outlay totals
- *    - Visual indicator for current calendar month
- *    - Highlights heavy premium renewal months
- *    - Displays recurring item chips with provider/name and amount
+ *    - Renders 12 month cards with compact totals and a proportional fill
+ *    - Selected month panel lists annual then monthly items
+ *    - Year stepper respects start/end dates and jumps back to this year
  * 4. AddRecurringModal component:
  *    - Open/closed visibility
  *    - Required field validation (name, amount)
@@ -29,7 +27,7 @@
  * 5. Service Layer:
  *    - addRecurringItem, updateRecurringItem, deleteRecurringItem on mockFinanceService / financeService
  * 6. RecurringPage component:
- *    - 4 summary metric cards (Total Annual Outflow, Monthly Amortized Outflow, Upcoming Renewal, Heaviest Month)
+ *    - 2 summary cards (Annual Outflow, Next Renewal)
  *    - Perspective filtering (household vs yijia vs rachel)
  *    - Modal opening, recurring item addition, editing, and deletion flow
  */
@@ -44,6 +42,11 @@ import { RecurringPage } from '../src/pages/RecurringPage';
 import { financeService } from '../src/services/financeService';
 import { mockFinanceService } from '../src/services/mockFinanceService';
 import { formatSGD } from '../src/lib/currency';
+import {
+  buildYearOutlay,
+  findNextRenewal,
+  getRecurringItemStatus,
+} from '../src/lib/recurringItems';
 import type { RecurringItem, CreateRecurringItemInput } from '../src/types/finance';
 
 const sampleItems: RecurringItem[] = [
@@ -191,7 +194,8 @@ describe('RecurringTable Component', () => {
     expect(badges.length).toBeGreaterThan(0);
 
     // Currency values
-    expect(screen.getByText(formatSGD(3200.0))).toBeInTheDocument();
+    // Amount renders twice: mobile row and desktop column
+    expect(screen.getAllByText(formatSGD(3200.0)).length).toBe(2);
     expect(screen.getByText(formatSGD(266.67))).toBeInTheDocument();
   });
 
@@ -220,15 +224,15 @@ describe('RecurringTable Component', () => {
       />
     );
 
-    // Select Subscription filter
-    const subscriptionFilter = screen.getByRole('tab', { name: /subscription/i });
-    fireEvent.click(subscriptionFilter);
+    fireEvent.change(screen.getByLabelText(/Type filter/i), {
+      target: { value: 'subscription' },
+    });
 
     expect(screen.getByText('Spotify Family Plan')).toBeInTheDocument();
     expect(screen.queryByText('Manulife - Lifeready 25 Plus')).not.toBeInTheDocument();
   });
 
-  it('shows Bill and Other badges and filter tabs', () => {
+  it('shows Bill and Other badges and filters by them', () => {
     const extraItems: RecurringItem[] = [
       ...sampleItems,
       {
@@ -250,12 +254,12 @@ describe('RecurringTable Component', () => {
     expect(badges).toContain('Bill');
     expect(badges).toContain('Other');
 
-    fireEvent.click(screen.getByRole('tab', { name: /^bill$/i }));
+    fireEvent.change(screen.getByLabelText(/Type filter/i), { target: { value: 'bill' } });
     expect(screen.getByText('SP Group Utilities')).toBeInTheDocument();
     expect(screen.queryByText('Cloud Storage')).not.toBeInTheDocument();
     expect(screen.queryByText('Spotify Family Plan')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: /^other$/i }));
+    fireEvent.change(screen.getByLabelText(/Type filter/i), { target: { value: 'other' } });
     expect(screen.getByText('Cloud Storage')).toBeInTheDocument();
     expect(screen.queryByText('SP Group Utilities')).not.toBeInTheDocument();
   });
@@ -284,6 +288,39 @@ describe('RecurringTable Component', () => {
     expect(screen.getByText(/No Matches/i)).toBeInTheDocument();
   });
 
+  it('filters by status: Active by default, Ended dims with a badge', () => {
+    const today = new Date(2026, 10, 5); // 5 Nov 2026
+    const items: RecurringItem[] = [
+      sampleItems[0],
+      { ...sampleItems[4], id: 'ri-ended', name: 'Old Gym', end_date: '2026-03-31' },
+      { ...sampleItems[4], id: 'ri-future', name: 'New Plan', start_date: '2027-03-01' },
+    ];
+    render(<RecurringTable recurringItems={items} referenceDate={today} />);
+
+    // Active (default) hides ended items, keeps not-yet-started ones
+    expect(screen.queryByText('Old Gym')).not.toBeInTheDocument();
+    expect(screen.getByText('New Plan')).toBeInTheDocument();
+    expect(screen.getByText("Starts Mar '27")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status filter/i), { target: { value: 'ended' } });
+    expect(screen.getByText('Old Gym')).toBeInTheDocument();
+    expect(screen.getByText('Ended', { selector: ':not(option)' })).toBeInTheDocument();
+    expect(screen.queryByText('New Plan')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Status filter/i), { target: { value: 'all' } });
+    expect(screen.getByText('Old Gym')).toBeInTheDocument();
+    expect(screen.getByText('Manulife - Lifeready 25 Plus')).toBeInTheDocument();
+  });
+
+  it('shows a title with a count that follows the filters', () => {
+    render(<RecurringTable title="All Recurring" recurringItems={sampleItems} />);
+    expect(screen.getByRole('heading', { name: 'All Recurring' })).toBeInTheDocument();
+    expect(screen.getByText('5 items')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Type filter/i), { target: { value: 'tax' } });
+    expect(screen.getByText('2 of 5 items')).toBeInTheDocument();
+  });
+
   it('triggers onEdit and onDelete callbacks', () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
@@ -306,56 +343,96 @@ describe('RecurringTable Component', () => {
   });
 });
 
+describe('Recurring year helpers', () => {
+  it('reports active, upcoming and ended status by month', () => {
+    const item = { ...sampleItems[0], start_date: '2026-03-01', end_date: '2027-02-28' };
+    expect(getRecurringItemStatus(item, '2026-02')).toBe('upcoming');
+    expect(getRecurringItemStatus(item, '2026-03')).toBe('active');
+    expect(getRecurringItemStatus(item, '2027-02')).toBe('active');
+    expect(getRecurringItemStatus(item, '2027-03')).toBe('ended');
+  });
+
+  it('builds a year of outlay that respects start and end dates', () => {
+    const months = buildYearOutlay(sampleItems, 2026);
+    expect(months).toHaveLength(12);
+    expect(months[8].total).toBe(3219.98); // Sep
+    expect(months[8].annualItems.map((i) => i.id)).toEqual(['pol-01']);
+    expect(months[8].monthlyItems.map((i) => i.id)).toEqual(['pol-05']);
+    expect(months[4].total).toBe(2919.98); // May
+
+    // Income tax items end in Apr 2027, so May 2027 only has Spotify
+    const next = buildYearOutlay(sampleItems, 2027);
+    expect(next[4].total).toBe(19.98);
+
+    // Before Spotify started (2023) and Manulife (2020-09), 2019 is empty
+    expect(buildYearOutlay(sampleItems, 2019).every((m) => m.total === 0)).toBe(true);
+  });
+
+  it('finds the next renewal, skipping ended and not-yet-started items', () => {
+    const today = new Date(2026, 10, 5); // 5 Nov 2026
+    const next = findNextRenewal(sampleItems, today);
+    // Income tax (May) ends Apr 2027, so the next one is Manulife in Sep 2027
+    expect(next?.item.id).toBe('pol-01');
+    expect(next?.date.getFullYear()).toBe(2027);
+    expect(next?.date.getMonth()).toBe(8);
+
+    const future = { ...sampleItems[1], id: 'future', payment_month: 12, start_date: '2028-01-01' };
+    expect(findNextRenewal([future], today)?.date.getFullYear()).toBe(2028);
+    expect(findNextRenewal([], today)).toBeNull();
+  });
+});
+
 describe('RenewalCalendar Component', () => {
-  it('renders all 12 months with their outlay totals', () => {
-    render(
-      <RenewalCalendar
-        recurringItems={sampleItems}
-        currentMonth={9} // September
-      />
-    );
+  const today = new Date(2026, 8, 10); // 10 Sep 2026
 
-    // 12 months
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    for (const month of monthNames) {
-      expect(screen.getAllByText(new RegExp(month, 'i')).length).toBeGreaterThan(0);
+  it('renders 12 month cards with compact totals', () => {
+    render(<RenewalCalendar recurringItems={sampleItems} referenceDate={today} />);
+
+    for (const month of ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']) {
+      expect(screen.getByText(month)).toBeInTheDocument();
     }
-
-    // Cash outlay for Sep ($3,219.98) and May ($2,919.98)
-    expect(screen.getByText(formatSGD(3219.98))).toBeInTheDocument();
-    expect(screen.getByText(formatSGD(2919.98))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /September 2026/i })).toHaveTextContent('S$3.2k');
+    expect(screen.getByRole('button', { name: /May 2026/i })).toHaveTextContent('S$2.9k');
+    expect(screen.queryByText(/Heavy/i)).not.toBeInTheDocument();
   });
 
-  it('highlights current calendar month and heavy renewal months', () => {
-    render(
-      <RenewalCalendar
-        recurringItems={sampleItems}
-        currentMonth={9} // September
-      />
-    );
-
-    // Current month indicator
-    expect(screen.getAllByText(/Current/i).length).toBeGreaterThan(0);
-
-    // Heavy renewal indicator for September (highest outlay)
-    expect(screen.getAllByText(/Heavy/i).length).toBeGreaterThan(0);
+  it('fills each card relative to the biggest month', () => {
+    render(<RenewalCalendar recurringItems={sampleItems} referenceDate={today} />);
+    const fills = screen.getAllByTestId('month-fill');
+    expect(fills[8]).toHaveStyle({ height: '100%' }); // Sep is the peak
+    expect(parseFloat(fills[9].style.height)).toBeCloseTo((1619.98 / 3219.98) * 100, 1);
   });
 
-  it('displays recurring item cards/chips in their designated renewal month', () => {
-    render(
-      <RenewalCalendar
-        recurringItems={sampleItems}
-        currentMonth={9}
-      />
-    );
-
-    // Manulife in September
+  it('selects the current month and lists annual items before monthly ones', () => {
+    render(<RenewalCalendar recurringItems={sampleItems} referenceDate={today} />);
+    expect(screen.getByRole('button', { name: /September 2026/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('September 2026')).toBeInTheDocument();
     expect(screen.getByText(/Manulife/i)).toBeInTheDocument();
-    // Enhanced Incomeshield in October
+    expect(screen.getByText('Monthly')).toBeInTheDocument();
+    expect(screen.getByText('Spotify Family Plan')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /October 2026/i }));
+    expect(screen.getByText('October 2026')).toBeInTheDocument();
     expect(screen.getByText(/Incomeshield/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Manulife/i)).not.toBeInTheDocument();
+  });
+
+  it('steps between years and jumps back to this year', () => {
+    render(<RenewalCalendar recurringItems={sampleItems} referenceDate={today} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Next year/i }));
+    // Income tax ended in Apr 2027
+    expect(screen.getByRole('button', { name: /May 2027/i })).toHaveTextContent('S$20');
+
+    fireEvent.click(screen.getByRole('button', { name: /jump to 2026/i }));
+    expect(screen.getByRole('button', { name: /May 2026/i })).toBeInTheDocument();
+
+    // Empty years are allowed
+    for (let i = 0; i < 10; i++) {
+      fireEvent.click(screen.getByRole('button', { name: /Previous year/i }));
+    }
+    expect(screen.getByText('September 2016')).toBeInTheDocument();
+    expect(screen.getByText('Nothing due')).toBeInTheDocument();
   });
 });
 
@@ -603,7 +680,7 @@ describe('RecurringPage Component', () => {
     mockFinanceService.resetState();
   });
 
-  it('renders 4 summary metric cards: Total Annual, Monthly Amortized, Upcoming Renewal, Heaviest Month', async () => {
+  it('renders 2 summary cards: Annual Outflow and Next Renewal', async () => {
     render(
       <HouseholdProvider initialPerspective="household">
         <RecurringPage />
@@ -613,9 +690,11 @@ describe('RecurringPage Component', () => {
     // Verify metric card labels
     await waitFor(() => {
       expect(screen.getByText(/Annual Outflow/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/Monthly Amortized/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText(/Next Renewal/i)).toBeInTheDocument();
-      expect(screen.getByText(/Heaviest Month/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Heaviest Month/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/^Calendar$/)).toBeInTheDocument();
     });
   });
 

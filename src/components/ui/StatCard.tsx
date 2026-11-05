@@ -82,7 +82,7 @@ export function StatCard({
                 </div>
 
                 <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between gap-1 sm:gap-2 flex-wrap min-w-0">
-                    <div className={`${MONEY_BASE_CLASSES} ${MONEY_SIZE_CLASSES.lg} text-(--text-ink)`}>
+                    <div className={`min-w-0 max-w-full ${MONEY_BASE_CLASSES} ${MONEY_SIZE_CLASSES.lg} text-(--text-ink)`}>
                         {loading ? <SkeletonStatValue /> : value}
                     </div>
                     {badge && !loading && (

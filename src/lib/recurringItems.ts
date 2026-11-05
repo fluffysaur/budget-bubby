@@ -19,7 +19,7 @@ import type {
     RecurringItem,
     RecurringItemType,
 } from "../types/finance";
-import { formatMonth } from "./dateUtils";
+import { formatMonth, getNextDueDate } from "./dateUtils";
 import type { BadgeVariant } from "../components/ui/Badge";
 
 export const RECURRING_TYPE_ICONS: Record<RecurringItemType, LucideIcon> = {
@@ -189,4 +189,104 @@ export function findDefaultRecurringCategoryId(
         c.name.toLowerCase().includes("lifestyle"),
     );
     return match?.id ?? null;
+}
+
+export type RecurringItemStatus = "active" | "upcoming" | "ended";
+
+/**
+ * Where an item sits relative to `month` ('YYYY-MM'): not started yet,
+ * active, or past its end date.
+ */
+export function getRecurringItemStatus(
+    item: RecurringItem,
+    month: string,
+): RecurringItemStatus {
+    const target = formatMonth(month);
+    if (item.end_date && formatMonth(item.end_date) < target) {
+        return "ended";
+    }
+    if (item.start_date && formatMonth(item.start_date) > target) {
+        return "upcoming";
+    }
+    return "active";
+}
+
+export interface RecurringMonthOutlay {
+    month: number; // 1 - 12
+    total: number;
+    annualItems: RecurringItem[];
+    monthlyItems: RecurringItem[];
+}
+
+/**
+ * Cash due in each month of `year`, counting an item only in months where
+ * it is active (start/end dates). Monthly items count every active month;
+ * annual items count in their payment month.
+ */
+export function buildYearOutlay(
+    items: RecurringItem[],
+    year: number,
+): RecurringMonthOutlay[] {
+    return Array.from({ length: 12 }, (_, idx) => {
+        const month = idx + 1;
+        const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+        const annualItems: RecurringItem[] = [];
+        const monthlyItems: RecurringItem[] = [];
+        let total = 0;
+
+        for (const item of items) {
+            if (!isRecurringItemActiveInMonth(item, monthKey)) continue;
+            if (item.frequency === "monthly") {
+                monthlyItems.push(item);
+                total += Number(item.amount) || 0;
+            } else if (item.payment_month === month) {
+                annualItems.push(item);
+                total += Number(item.amount) || 0;
+            }
+        }
+
+        annualItems.sort((a, b) => b.amount - a.amount);
+        monthlyItems.sort((a, b) => b.amount - a.amount);
+        return { month, total: round2(total), annualItems, monthlyItems };
+    });
+}
+
+export interface NextRenewal {
+    item: RecurringItem;
+    date: Date;
+}
+
+/**
+ * The soonest upcoming annual renewal on or after `today`, skipping
+ * renewals that fall before an item's start date or after its end date.
+ */
+export function findNextRenewal(
+    items: RecurringItem[],
+    today: Date,
+): NextRenewal | null {
+    let best: NextRenewal | null = null;
+
+    for (const item of items) {
+        if (item.frequency !== "annually" || !item.payment_month) continue;
+
+        // Check this year's renewal onwards, plus the first year after a future start
+        const startYear = item.start_date
+            ? Number(formatMonth(item.start_date).slice(0, 4))
+            : today.getFullYear();
+        const firstYear = Math.max(today.getFullYear(), startYear);
+        for (const year of [firstYear, firstYear + 1]) {
+            const date = getNextDueDate(item, new Date(year, 0, 1));
+            if (!date || date < startOfDay(today)) continue;
+            if (!isRecurringItemActiveInMonth(item, formatMonth(date)))
+                continue;
+            if (!best || date < best.date) best = { item, date };
+            break;
+        }
+    }
+
+    return best;
+}
+
+function startOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

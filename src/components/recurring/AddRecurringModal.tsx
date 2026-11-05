@@ -7,6 +7,7 @@
  * - Field validation (Name required, positive Amount)
  * - Frequency selector with conditional renewal month, due day and spend category
  * - Owner selector (Yi Jia, Rachel, Joint)
+ * - Optional start and end dates (end must be on or after start)
  */
 
 import { useState, useEffect, type FormEvent } from "react";
@@ -99,6 +100,7 @@ export function AddRecurringModal({
     const [paymentMonth, setPaymentMonth] = useState<number>(1);
     const [dueDay, setDueDay] = useState<string>("");
     const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
     const [notes, setNotes] = useState<string>("");
     // null = not chosen yet, falls back to the household's lifestyle category
     const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -123,6 +125,11 @@ export function AddRecurringModal({
                         ? initialItem.start_date.substring(0, 10)
                         : "",
                 );
+                setEndDate(
+                    initialItem.end_date
+                        ? initialItem.end_date.substring(0, 10)
+                        : "",
+                );
                 setNotes(initialItem.notes || "");
                 setCategoryId(initialItem.category_id ?? "");
             } else {
@@ -134,6 +141,7 @@ export function AddRecurringModal({
                 setPaymentMonth(1);
                 setDueDay("");
                 setStartDate("");
+                setEndDate("");
                 setNotes("");
                 setCategoryId(null);
             }
@@ -180,6 +188,11 @@ export function AddRecurringModal({
             return;
         }
 
+        if (startDate && endDate && endDate < startDate) {
+            setErrorMessage("End date must be on or after start date.");
+            return;
+        }
+
         try {
             setIsSubmitting(true);
             const payload: CreateRecurringItemInput & { id?: string } = {
@@ -193,6 +206,7 @@ export function AddRecurringModal({
                 due_day: trimmedDueDay ? numericDueDay : null,
                 category_id: showCategory ? selectedCategoryId || null : null,
                 start_date: startDate || null,
+                end_date: endDate || null,
                 notes: notes.trim() || null,
             };
 
@@ -412,20 +426,26 @@ export function AddRecurringModal({
                         </div>
                     </div>
 
-                    {/* Start Date */}
-                    <div>
-                        <label
-                            htmlFor="recurring-start-date"
-                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                        >
-                            Start Date (Optional)
-                        </label>
-                        <input
+                    {/* Start & End Dates */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <Input
                             id="recurring-start-date"
+                            label="Start (Optional)"
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3 py-2 text-xs font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            mono
+                            className="bg-(--bg-canvas)"
+                        />
+                        <Input
+                            id="recurring-end-date"
+                            label="End (Optional)"
+                            type="date"
+                            min={startDate || undefined}
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            mono
+                            className="bg-(--bg-canvas)"
                         />
                     </div>
 
