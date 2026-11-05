@@ -23,7 +23,7 @@ import { Card } from "../ui/Card";
 import { financeService } from "../../services/financeService";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
-import { haptics } from "../../lib/haptics";
+import { feedback } from "../../lib/delight/feedback";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import type { Expense, Category, HouseholdMember } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
@@ -62,7 +62,7 @@ export function DeleteExpenseModal({
         try {
             setIsDeleting(true);
             setErrorMessage(null);
-            haptics.destructive();
+            feedback.routine("delete");
             onDeleted?.(expense.id);
             await financeService.deleteExpense(expense.id);
             onClose();

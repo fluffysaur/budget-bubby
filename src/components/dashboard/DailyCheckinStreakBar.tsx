@@ -15,8 +15,8 @@ import { Flame, Check, Sparkles, Heart, Loader2 } from 'lucide-react';
 import { useHousehold } from '../../context/HouseholdContext';
 import { financeService } from '../../services/financeService';
 import { getTodayDateString, formatISODate } from '../../lib/dateUtils';
-import { playChaChingSound } from '../../lib/soundEffects';
-import { haptics } from '../../lib/haptics';
+import { feedback } from '../../lib/delight/feedback';
+import { emitAppEvent } from '../../lib/appEvents';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { Skeleton, SkeletonGroup } from '../ui/Skeleton';
 import type { DailyCheckin, StreakSummary } from '../../types/finance';
@@ -94,9 +94,14 @@ export function DailyCheckinStreakBar({
         'no_spend'
       );
 
-      // Audio & haptic celebration
-      playChaChingSound();
-      haptics.celebrate();
+      // Cha-ching, celebrate haptic and Bubby munching a coin
+      feedback.routine('no-spend');
+      emitAppEvent('day:logged', {
+        memberId: resolvedMemberId,
+        date: today,
+        source: 'no_spend',
+        firstForDate: true,
+      });
 
       // Optimistic update
       setStreak((prev) => ({
@@ -280,7 +285,7 @@ export function DailyCheckinStreakBar({
                     day.isCheckedIn
                       ? 'bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) scale-105'
                       : 'border-(--border-subtle) bg-(--bg-cream) text-(--text-muted)'
-                  }`}
+                  } ${day.isToday && day.isCheckedIn ? 'animate-pill-pop' : ''}`}
                 >
                   {day.isCheckedIn ? (
                     <Check className="h-3.5 w-3.5 stroke-3" />
