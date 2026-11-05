@@ -659,7 +659,7 @@ export function ManageCategoriesModal({
                                                                         .value,
                                                                 )
                                                             }
-                                                            className="w-full pl-7 pr-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden font-mono"
+                                                            className="w-full pl-7 pr-2 py-1 text-right text-base sm:text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden font-mono"
                                                             title="Set fixed monthly dollar amount (auto-converts to %)"
                                                         />
                                                     </div>
@@ -691,7 +691,7 @@ export function ManageCategoriesModal({
                                                                     cat.id,
                                                                 )
                                                             }
-                                                            className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
+                                                            className="w-full pr-5 pl-2 py-1 text-right text-base sm:text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
                                                         />
                                                         <span className="absolute right-1.5 top-1.5 text-[11px] text-(--text-faint)">
                                                             %
@@ -775,7 +775,7 @@ export function ManageCategoriesModal({
                                                 setName(e.target.value)
                                             }
                                             placeholder="e.g. Groceries, Gym, Rent"
-                                            className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                            className="w-full px-3.5 py-2 text-base sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                                         />
                                     </div>
 

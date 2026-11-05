@@ -433,7 +433,7 @@ export function BulkAddExpenseModal({
                                     aria-label="Payer for all expenses"
                                     value={payerId}
                                     onChange={(e) => setPayerId(e.target.value)}
-                                    className="appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) pl-3 pr-8 py-1 text-base sm:text-xs font-bold text-(--text-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 >
                                     {members.map((m) => (
                                         <option key={m.id} value={m.id}>
@@ -486,7 +486,7 @@ export function BulkAddExpenseModal({
                                 value={pasteText}
                                 onChange={(e) => setPasteText(e.target.value)}
                                 placeholder="Paste multi-line transactions here..."
-                                className="w-full rounded-2xl border-2 border-(--border-subtle) focus:border-(--border-ink) bg-(--bg-card) p-4 font-mono text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="w-full rounded-2xl border-2 border-(--border-subtle) focus:border-(--border-ink) bg-(--bg-card) p-4 font-mono text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             />
 
                             <div className="flex justify-end">
@@ -560,7 +560,7 @@ export function BulkAddExpenseModal({
                                                                 },
                                                             )
                                                         }
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                                                     />
                                                 </td>
 
@@ -580,7 +580,7 @@ export function BulkAddExpenseModal({
                                                                 },
                                                             )
                                                         }
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-mono-num font-semibold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                                                     />
                                                 </td>
 
@@ -609,7 +609,7 @@ export function BulkAddExpenseModal({
                                                                 },
                                                             )
                                                         }
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-bold font-mono-num text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-base sm:text-xs font-bold font-mono-num text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                                                     />
                                                 </td>
 
@@ -630,7 +630,7 @@ export function BulkAddExpenseModal({
                                                                     },
                                                                 )
                                                             }
-                                                            className="w-full appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) pl-2 pr-6 py-1.5 text-xs font-bold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
+                                                            className="w-full appearance-none rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) pl-2 pr-6 py-1.5 text-base sm:text-xs font-bold text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer"
                                                         >
                                                             {SUPPORTED_CURRENCIES.map(
                                                                 (c) => (
@@ -671,7 +671,7 @@ export function BulkAddExpenseModal({
                                                                         .value,
                                                                 )
                                                             }
-                                                            className={`w-full appearance-none rounded-xl border pl-2 pr-6 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer ${
+                                                            className={`w-full appearance-none rounded-xl border pl-2 pr-6 py-1.5 text-base sm:text-xs font-medium focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) cursor-pointer ${
                                                                 row.goalId
                                                                     ? "border-purple-300 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-200 font-bold"
                                                                     : "border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"
@@ -738,7 +738,7 @@ export function BulkAddExpenseModal({
                                                                 },
                                                             )
                                                         }
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1.5 text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                                                     />
                                                 </td>
 
@@ -800,7 +800,7 @@ export function BulkAddExpenseModal({
                                                                 },
                                                             )
                                                         }
-                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-xs font-mono text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                                                        className="w-full rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) px-2 py-1.5 text-base sm:text-xs font-mono text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                                                     />
                                                 </td>
 

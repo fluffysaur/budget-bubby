@@ -795,7 +795,7 @@ export function CreditCardTrackerSection({
                                 onChange={(e) =>
                                     setStmtDueDateInput(e.target.value)
                                 }
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
+                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
                                 required
                             />
                         </div>
@@ -815,7 +815,7 @@ export function CreditCardTrackerSection({
                                     setStmtNotesInput(e.target.value)
                                 }
                                 placeholder="e.g. Miles & dining, Shopee rebate"
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
+                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
                             />
                         </div>
                     </ModalBody>

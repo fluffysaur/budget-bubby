@@ -765,7 +765,7 @@ export function BaseProfileEditorModal({
                                                 setGrossSalary(e.target.value)
                                             }
                                             aria-label="Gross Salary"
-                                            className="w-full pl-8 pr-3 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                            className="w-full pl-8 pr-3 py-2 text-base sm:text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                         />
                                     </div>
                                 </div>
@@ -790,7 +790,7 @@ export function BaseProfileEditorModal({
                                                 setCpfRate(e.target.value)
                                             }
                                             aria-label="CPF Employee Rate"
-                                            className="w-full pl-3 pr-8 py-2 text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                            className="w-full pl-3 pr-8 py-2 text-base sm:text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                         />
                                         <span className="absolute right-3 top-2.5 text-xs font-bold text-(--text-muted)">
                                             %
@@ -943,7 +943,7 @@ export function BaseProfileEditorModal({
                                                     setCatName(e.target.value)
                                                 }
                                                 placeholder="e.g. Groceries, Pet, Gym"
-                                                className="w-full px-3 py-1.5 text-xs font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                                className="w-full px-3 py-1.5 text-base sm:text-xs font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                             />
                                         </div>
 
@@ -1276,7 +1276,7 @@ export function BaseProfileEditorModal({
                                                                 }
                                                                 aria-label="Monthly dollar amount"
                                                                 title={`Monthly dollar amount for ${cat.name}`}
-                                                                className="w-16 text-right text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
+                                                                className="w-16 text-right text-base sm:text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
                                                             />
                                                             <span className="text-[10px] font-bold text-(--text-muted)">
                                                                 /mo
@@ -1349,7 +1349,7 @@ export function BaseProfileEditorModal({
                                                                         );
                                                                     }
                                                                 }}
-                                                                className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                                                className="w-full pr-5 pl-2 py-1 text-right text-base sm:text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
                                                             />
                                                             <span className="absolute right-1.5 top-1 text-[11px] font-bold text-(--text-muted)">
                                                                 %
