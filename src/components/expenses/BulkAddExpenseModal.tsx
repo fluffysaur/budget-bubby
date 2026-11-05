@@ -348,7 +348,7 @@ export function BulkAddExpenseModal({
                         rateOverrides[r.currency],
                     ),
                     is_shared: r.isShared,
-                    split_ratio: r.isShared ? 0.5 : 0.5,
+                    split_ratio: r.isShared ? 0.5 : 0.0,
                     tags: r.tags || [],
                 };
             });
