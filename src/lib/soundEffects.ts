@@ -4,6 +4,8 @@
  * - Spend logging celebration ("cha-ching")
  * - Category budget nearing limit warning chime (80%)
  * - Category budget exceeded alert chime (100%+)
+ * - Soft pop for routine taps (edit saved, triage, equip)
+ * - Success chime for real milestones (stage up, inbox zero, couple day)
  *
  * Automatically unlocks AudioContext on first user interaction (touch, click, keydown)
  * to prevent autoplay restriction failures on iOS Safari & mobile browsers.
@@ -213,5 +215,62 @@ export function playBudgetExceededSound(): void {
     osc2.stop(now + 0.45);
   } catch (err) {
     console.debug('Audio exceeded alert skipped:', err);
+  }
+}
+
+/**
+ * Play a tiny soft "pop" for routine feedback (~70ms sine blip, 880 to 660 Hz).
+ */
+export function playSoftPop(): void {
+  if (!isSoundEffectsEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(660, now + 0.07);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch (err) {
+    console.debug('Soft pop skipped:', err);
+  }
+}
+
+/**
+ * Play the milestone success chime: a bright C6-E6-G6 arpeggio (~420ms).
+ */
+export function playSuccessSound(): void {
+  if (!isSoundEffectsEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  try {
+    const now = ctx.currentTime;
+    const notes = [1046.5, 1318.51, 1567.98];
+    notes.forEach((freq, i) => {
+      const start = now + i * 0.09;
+      const end = start + (i === notes.length - 1 ? 0.24 : 0.16);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = i === notes.length - 1 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.setValueAtTime(0.16, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, end);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(end);
+    });
+  } catch (err) {
+    console.debug('Success chime skipped:', err);
   }
 }
