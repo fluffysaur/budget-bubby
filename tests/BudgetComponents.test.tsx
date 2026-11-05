@@ -237,6 +237,41 @@ describe('BudgetWaterfall', () => {
 
     expect(onEdit).toHaveBeenCalled();
   });
+
+  it('renders rows in order: Gross, CPF, Deductions, Take-home, Allocations', () => {
+    render(<BudgetWaterfall budget={sampleBudget} categories={sampleCategories} />);
+
+    const labels = ['Gross', 'CPF', 'Deductions', 'Take-home', 'Allocations'].map((l) =>
+      screen.getByText(new RegExp(`^${l}$`)),
+    );
+    for (let i = 0; i < labels.length - 1; i++) {
+      expect(
+        labels[i].compareDocumentPosition(labels[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it('has no outer card wrapper', () => {
+    const { container } = render(
+      <BudgetWaterfall budget={sampleBudget} categories={sampleCategories} />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).not.toContain('border-2');
+    expect(root.className).not.toContain('shadow-cute');
+  });
+
+  it('shows an empty state with a CTA that opens the editor', () => {
+    const onEdit = vi.fn();
+    render(<BudgetWaterfall budget={null} onEditProfile={onEdit} />);
+    expect(screen.getByText('No Budget')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /set up budget/i }));
+    expect(onEdit).toHaveBeenCalled();
+  });
+
+  it('omits the empty-state CTA without a handler', () => {
+    render(<BudgetWaterfall budget={null} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });
 
 describe('CategoryProgressList', () => {
@@ -580,7 +615,7 @@ describe('BudgetPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Budget Waterfall Breakdown/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
     });
     // Perspective is shown only in the header, not as a badge on the page
     expect(screen.queryByText(/^Yi Jia$/)).not.toBeInTheDocument();
@@ -592,7 +627,7 @@ describe('BudgetPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Budget Waterfall Breakdown/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
     });
     expect(screen.queryByText(/^Combined Household$/)).not.toBeInTheDocument();
   });
