@@ -5,23 +5,18 @@
  */
 import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
 import { Input } from "../src/components/ui/Input";
 import { Select } from "../src/components/ui/Select";
 import { Textarea } from "../src/components/ui/Textarea";
 
-const SRC = path.resolve(__dirname, "../src");
 const NON_TEXT_TYPES = ["checkbox", "radio", "range", "file", "hidden"];
 const BIG_TEXT = /(?<![:\w-])text-(base|lg|xl|2xl|3xl|4xl|5xl|6xl)\b/;
 
-function walk(dir: string): string[] {
-    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-        const p = path.join(dir, e.name);
-        if (e.isDirectory()) return walk(p);
-        return p.endsWith(".tsx") ? [p] : [];
-    });
-}
+const SOURCES = import.meta.glob("../src/**/*.tsx", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+}) as Record<string, string>;
 
 function extractTags(src: string): string[] {
     const tags: string[] = [];
@@ -51,15 +46,14 @@ function extractTags(src: string): string[] {
 describe("iOS input zoom guard", () => {
     it("raw text controls use 16px text on mobile", () => {
         const offenders: string[] = [];
-        for (const file of walk(SRC)) {
-            if (file.includes(`${path.sep}components${path.sep}ui${path.sep}`))
-                continue;
-            for (const tag of extractTags(fs.readFileSync(file, "utf8"))) {
+        for (const [file, source] of Object.entries(SOURCES)) {
+            if (file.includes("/components/ui/")) continue;
+            for (const tag of extractTags(source)) {
                 const type = tag.match(/type=["'{]+\s*["']?(\w+)/)?.[1];
                 if (type && NON_TEXT_TYPES.includes(type)) continue;
                 if (!BIG_TEXT.test(tag)) {
                     offenders.push(
-                        `${path.relative(SRC, file)}: ${tag.slice(0, 60).replace(/\s+/g, " ")}`,
+                        `${file}:${tag.slice(0, 60).replace(/\s+/g, " ")}`,
                     );
                 }
             }
