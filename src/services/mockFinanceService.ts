@@ -435,7 +435,7 @@ class MockFinanceServiceImpl implements FinanceService {
       color: input.color || '#64748B',
       icon: input.icon || 'tag',
       is_system: input.is_system || false,
-      group: input.group || 'spendable',
+      group: input.group ?? (isSpendableCategory(input.name) ? "spendable" : "allocation"),
     };
     this.state.categories.push(newCategory);
     this.persist();

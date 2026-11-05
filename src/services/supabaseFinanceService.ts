@@ -99,6 +99,23 @@ function normalizeNotificationPreferences(
   return prefs;
 }
 
+/**
+ * Compat for the optional categories."group" column. `undefined` = unknown,
+ * `false` = known missing (skip it in writes), `true` = known present.
+ */
+let categoryGroupColumnSupported: boolean | undefined;
+
+/** Test hook: forget what we learned about the categories."group" column. */
+export function resetCategoryGroupColumnSupport(): void {
+  categoryGroupColumnSupported = undefined;
+}
+
+/** Postgres 42703 (undefined column) or PostgREST PGRST204 (column not in schema cache). */
+function isMissingColumnError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === '42703' || error.code === 'PGRST204';
+}
+
 export class SupabaseFinanceServiceImpl implements FinanceService {
   private readonly clientOverride?: SupabaseClient;
   private readonly localFallback: boolean;
@@ -461,7 +478,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (cats.length > 0) {
       return cats.map((row) => ({
         ...row,
-        group: row.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+        group: row.group ?? (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
       }));
     }
 
@@ -495,7 +512,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (error) throw error;
     return ((data || []) as Category[]).map((row) => ({
       ...row,
-      group: row.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+      group: row.group ?? (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
     }));
   }
 
@@ -513,17 +530,33 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       is_system: input.is_system || false,
     };
 
-    const { data, error } = await client
+    const wantsGroup = input.group !== undefined && categoryGroupColumnSupported !== false;
+    if (wantsGroup) insertPayload.group = input.group;
+
+    let { data, error } = await client
       .from('categories')
       .insert(insertPayload)
       .select()
       .single();
 
+    if (error && wantsGroup && isMissingColumnError(error)) {
+      // categories.group migration not applied yet: retry once without it.
+      categoryGroupColumnSupported = false;
+      delete insertPayload.group;
+      ({ data, error } = await client
+        .from('categories')
+        .insert(insertPayload)
+        .select()
+        .single());
+    } else if (!error && wantsGroup) {
+      categoryGroupColumnSupported = true;
+    }
+
     if (error) throw error;
     const row = data as Category;
     return {
       ...row,
-      group: input.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+      group: input.group ?? row.group ?? (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
     };
   }
 
@@ -534,18 +567,30 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (updates.color !== undefined) payload.color = updates.color;
     if (updates.icon !== undefined) payload.icon = updates.icon;
 
-    const { data, error } = await client
-      .from('categories')
-      .update(payload)
-      .eq('id', id)
-      .select()
-      .single();
+    const wantsGroup = updates.group !== undefined && categoryGroupColumnSupported !== false;
+    if (wantsGroup) payload.group = updates.group;
+
+    const run = (body: Record<string, unknown>) =>
+      Object.keys(body).length > 0
+        ? client.from('categories').update(body).eq('id', id).select().single()
+        : client.from('categories').select('*').eq('id', id).single();
+
+    let { data, error } = await run(payload);
+
+    if (error && wantsGroup && isMissingColumnError(error)) {
+      // categories.group migration not applied yet: retry once without it.
+      categoryGroupColumnSupported = false;
+      delete payload.group;
+      ({ data, error } = await run(payload));
+    } else if (!error && wantsGroup) {
+      categoryGroupColumnSupported = true;
+    }
 
     if (error) throw error;
     const row = data as Category;
     return {
       ...row,
-      group: updates.group || (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
+      group: updates.group ?? row.group ?? (isSpendableCategory(row.name) ? 'spendable' : 'allocation'),
     };
   }
 

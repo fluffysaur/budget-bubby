@@ -37,6 +37,7 @@ import {
 import { Button } from "../ui/Button";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Alert } from "../ui/Alert";
+import { CategoryModeToggle } from "../categories/CategoryModeToggle";
 import { mockCategories } from "../../data/mockSeedData";
 import {
     calculateCPFAndNetPay,
@@ -162,6 +163,8 @@ export function BaseProfileEditorModal({
     const [editingCat, setEditingCat] = useState<Category | null>(null);
     const [catName, setCatName] = useState<string>("");
     const [catGroup, setCatGroup] = useState<CategoryGroup>("spendable");
+    // Until the user picks a mode, a new category follows its name (e.g. Allowance -> Set aside).
+    const [catGroupTouched, setCatGroupTouched] = useState(false);
     const [catColor, setCatColor] = useState<string>(PRESET_COLORS[0]);
     const [catIcon, setCatIcon] = useState<string>("tag");
     const [isCatSaving, setIsCatSaving] = useState<boolean>(false);
@@ -467,6 +470,7 @@ export function BaseProfileEditorModal({
         setEditingCat(null);
         setCatName("");
         setCatGroup("spendable");
+        setCatGroupTouched(false);
         setCatColor(PRESET_COLORS[0]);
         setCatIcon("tag");
         setErrorMessage(null);
@@ -476,6 +480,7 @@ export function BaseProfileEditorModal({
     const handleOpenEditCategory = (cat: Category) => {
         setEditingCat(cat);
         setCatName(cat.name);
+        setCatGroupTouched(true);
         setCatGroup(
             cat.group ||
                 (isSpendableCategory(cat) ? "spendable" : "allocation"),
@@ -485,6 +490,12 @@ export function BaseProfileEditorModal({
         setErrorMessage(null);
         setCatFormMode("edit");
     };
+
+    const effectiveCatGroup: CategoryGroup = catGroupTouched
+        ? catGroup
+        : isSpendableCategory(catName)
+          ? "spendable"
+          : "allocation";
 
     const handleSaveCategoryInline = async () => {
         if (!catName.trim()) {
@@ -499,7 +510,7 @@ export function BaseProfileEditorModal({
                     name: catName.trim(),
                     color: catColor,
                     icon: catIcon,
-                    group: catGroup,
+                    group: effectiveCatGroup,
                 });
                 setLocalCategories((prev) => [...prev, created]);
                 setCategoryPercentages((prev) => ({
@@ -511,7 +522,7 @@ export function BaseProfileEditorModal({
                     name: catName.trim(),
                     color: catColor,
                     icon: catIcon,
-                    group: catGroup,
+                    group: effectiveCatGroup,
                 });
             }
             setCatFormMode(null);
@@ -947,42 +958,13 @@ export function BaseProfileEditorModal({
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-(--text-muted) mb-1">
-                                                Group
-                                            </label>
-                                            <div className="grid grid-cols-2 gap-1.5">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setCatGroup("spendable")
-                                                    }
-                                                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
-                                                        catGroup === "spendable"
-                                                            ? "bg-(--pastel-mint) text-(--text-ink) shadow-(--shadow-cute-sm)"
-                                                            : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
-                                                    }`}
-                                                >
-                                                    Spendable
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setCatGroup(
-                                                            "allocation",
-                                                        )
-                                                    }
-                                                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border-2 border-(--border-ink) transition-all cursor-pointer ${
-                                                        catGroup ===
-                                                        "allocation"
-                                                            ? "bg-(--pastel-lilac) text-(--text-ink) shadow-(--shadow-cute-sm)"
-                                                            : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
-                                                    }`}
-                                                >
-                                                    Wealth / Fixed
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <CategoryModeToggle
+                                            value={effectiveCatGroup}
+                                            onChange={(g) => {
+                                                setCatGroup(g);
+                                                setCatGroupTouched(true);
+                                            }}
+                                        />
                                     </div>
 
                                     {/* Color & Icon Compact Row */}
