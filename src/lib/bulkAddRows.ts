@@ -104,6 +104,17 @@ export function sanitizeAmount(raw: string, currency = "SGD"): string {
     return `${intPart}.${decimals}`;
 }
 
+/** Short label for a row date, e.g. "Wed, 5 Nov". */
+export function formatRowDate(date: string): string {
+    const d = new Date(`${date}T00:00:00`);
+    if (isNaN(d.getTime())) return date;
+    return d.toLocaleDateString("en-SG", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+    });
+}
+
 export function isRowBlank(row: BulkRow): boolean {
     return row.amount.trim() === "" && row.item.trim() === "";
 }

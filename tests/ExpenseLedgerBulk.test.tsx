@@ -3,14 +3,16 @@
  * Edit/Delete Modals, Sort, Pagination, Fast Log and Bulk Add
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DeleteExpenseModal } from '../src/components/expenses/DeleteExpenseModal';
 import { ExpenseFormModal } from '../src/components/expenses/ExpenseFormModal';
+import { BulkAddExpenseModal } from '../src/components/expenses/BulkAddExpenseModal';
 import {
-  BulkAddExpenseModal,
-  parseBulkExpenseText,
-} from '../src/components/expenses/BulkAddExpenseModal';
+  formatISODate,
+  getSingaporeDate,
+  getTodayDateString,
+} from '../src/lib/dateUtils';
 import { ExpenseListTable } from '../src/components/expenses/ExpenseListTable';
 import { CentsFirstAmountInput } from '../src/components/expenses/CentsFirstAmountInput';
 import { financeService } from '../src/services/financeService';
@@ -265,262 +267,288 @@ describe('Ledger Power Tools, Fast Log & Bulk Add', () => {
   });
 
   /* ------------------------------------------------------------------ */
-  /* 4. BulkAddExpenseModal & parseBulkExpenseText                      */
+  /* 4. BulkAddExpenseModal                                             */
   /* ------------------------------------------------------------------ */
-  describe('BulkAddExpenseModal & Text Parser', () => {
-    it('parses multi-line text into structured expense rows', () => {
-      const sampleText = `12.50 Lunch at Maxwell
-4.20 Iced Coffee #Coffee
-35.00 Grab to Orchard #VietnamTrip
-2026-10-28 65.80 NTUC FairPrice #Groceries`;
+  describe('BulkAddExpenseModal', () => {
+    const rowOf = (n: number) =>
+      within(screen.getByRole('group', { name: `Row ${n}` }));
 
-      const parsed = parseBulkExpenseText(sampleText, '2026-10-27', mockCategories);
-
-      expect(parsed).toHaveLength(4);
-
-      // Line 1
-      expect(parsed[0].amount).toBe(12.5);
-      expect(parsed[0].item).toContain('Lunch at Maxwell');
-
-      // Line 2
-      expect(parsed[1].amount).toBe(4.2);
-      expect(parsed[1].item).toContain('Iced Coffee');
-      expect(parsed[1].tags).toContain('Coffee');
-
-      // Line 3
-      expect(parsed[2].amount).toBe(35.0);
-      expect(parsed[2].item).toContain('Grab to Orchard');
-      expect(parsed[2].tags).toContain('VietnamTrip');
-
-      // Line 4 (with date)
-      expect(parsed[3].date).toBe('2026-10-28');
-      expect(parsed[3].amount).toBe(65.8);
-      expect(parsed[3].item).toContain('NTUC FairPrice');
-    });
-
-    it('renders table grid, adds new rows, and submits batch expenses', async () => {
-      const bulkAddSpy = vi
-        .spyOn(financeService, 'bulkAddExpenses')
-        .mockResolvedValue([testExpense]);
-      const onAddedMock = vi.fn();
-      const onCloseMock = vi.fn();
-
-      render(
-        <BulkAddExpenseModal
-          isOpen={true}
-          onClose={onCloseMock}
-          onExpensesAdded={onAddedMock}
-          categories={mockCategories}
-          members={mockMembers}
-        />
-      );
-
-      expect(screen.getByText('Bulk Add Expenses')).toBeInTheDocument();
-
-      // Add a row
-      const addRowBtn = screen.getByRole('button', { name: /\+ Add Row/i });
-      fireEvent.click(addRowBtn);
-
-      // Fill in first row
-      const amountInputs = screen.getAllByPlaceholderText('0.00');
-      fireEvent.change(amountInputs[0], { target: { value: '25.50' } });
-
-      const descInputs = screen.getAllByPlaceholderText('e.g. Lunch');
-      fireEvent.change(descInputs[0], { target: { value: 'Supermarket Run' } });
-
-      // Update time for row 1
-      const timeInputRow1 = screen.getByLabelText('Time for row 1');
-      fireEvent.change(timeInputRow1, { target: { value: '16:45' } });
-
-      // Click submit
-      const submitBtn = screen.getByRole('button', { name: /Log All/i });
-      fireEvent.click(submitBtn);
-
-      await waitFor(() => {
-        expect(bulkAddSpy).toHaveBeenCalledWith(
-          expect.arrayContaining([
-            expect.objectContaining({
-              amount: 25.5,
-              item: 'Supermarket Run',
-              time: '16:45',
-            }),
-          ])
-        );
-        expect(onAddedMock).toHaveBeenCalled();
-        expect(onCloseMock).toHaveBeenCalled();
+    const fillRow = (n: number, amount: string, item: string) => {
+      fireEvent.change(screen.getByLabelText(`Amount for row ${n}`), {
+        target: { value: amount },
       });
-    });
+      fireEvent.change(screen.getByLabelText(`Description for row ${n}`), {
+        target: { value: item },
+      });
+    };
 
-    it('parses text with 24h and 12h times into structured rows with time', () => {
-      const sampleText = `14:30 12.50 Lunch at Maxwell
-2:15pm 4.20 Iced Coffee #Coffee
-2026-10-28 09:00 35.00 Grab to Airport`;
-
-      const parsed = parseBulkExpenseText(sampleText, '2026-10-27', mockCategories);
-
-      expect(parsed).toHaveLength(3);
-      expect(parsed[0].time).toBe('14:30');
-      expect(parsed[0].amount).toBe(12.5);
-      expect(parsed[0].item).toBe('Lunch at Maxwell');
-
-      expect(parsed[1].time).toBe('14:15');
-      expect(parsed[1].amount).toBe(4.2);
-      expect(parsed[1].item).toBe('Iced Coffee');
-
-      expect(parsed[2].date).toBe('2026-10-28');
-      expect(parsed[2].time).toBe('09:00');
-      expect(parsed[2].amount).toBe(35.0);
-      expect(parsed[2].item).toBe('Grab to Airport');
-    });
-
-    it('parses text matching savings goal hashtags and titles', () => {
-      const sampleText = `800.00 Wedding Banquet deposit #WeddingBanquet
-120.00 Universal Studios Japan #JapanTrip
-15.00 Casual Lunch #Food`;
-
-      const parsed = parseBulkExpenseText(
-        sampleText,
-        '2026-10-27',
-        mockCategories,
-        mockGoals
-      );
-
-      expect(parsed).toHaveLength(3);
-      // Row 1: Linked to Wedding Banquet goal
-      expect(parsed[0].amount).toBe(800.0);
-      expect(parsed[0].goalId).toBe('goal-wedding-1');
-      expect(parsed[0].categoryId).toBe('');
-
-      // Row 2: Linked to Japan Trip goal
-      expect(parsed[1].amount).toBe(120.0);
-      expect(parsed[1].goalId).toBe('goal-japan-2');
-      expect(parsed[1].categoryId).toBe('');
-
-      // Row 3: Standard category
-      expect(parsed[2].amount).toBe(15.0);
-      expect(parsed[2].goalId).toBeNull();
-      expect(parsed[2].categoryId).toBeDefined();
-    });
-
-    it('allows linking a row to a savings goal via unified dropdown and displays goal-funded summary badge', async () => {
-      const bulkAddSpy = vi
-        .spyOn(financeService, 'bulkAddExpenses')
-        .mockResolvedValue([testExpense]);
-      const onAddedMock = vi.fn();
-      const onCloseMock = vi.fn();
-
-      render(
+    const renderModal = (
+      props: Partial<React.ComponentProps<typeof BulkAddExpenseModal>> = {},
+    ) => {
+      const onClose = vi.fn();
+      const onExpensesAdded = vi.fn();
+      const utils = render(
         <BulkAddExpenseModal
           isOpen={true}
-          onClose={onCloseMock}
-          onExpensesAdded={onAddedMock}
+          onClose={onClose}
+          onExpensesAdded={onExpensesAdded}
           categories={mockCategories}
           members={mockMembers}
           goals={mockGoals}
-        />
+          {...props}
+        />,
       );
+      return { onClose, onExpensesAdded, ...utils };
+    };
 
-      // Verify "Set Goal for All" dropdown is NOT present (removed to save space)
-      expect(screen.queryByLabelText(/Set savings goal for all expenses/i)).toBeNull();
+    it('renders title Bulk Add with one row and no Smart Paste', () => {
+      renderModal();
+      expect(screen.getByText('Bulk Add')).toBeInTheDocument();
+      expect(screen.queryByText(/Paste Text/i)).toBeNull();
+      expect(screen.getAllByRole('group', { name: /^Row \d+$/ })).toHaveLength(1);
+      expect(screen.getByRole('radio', { name: 'Today' })).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
+    });
 
-      // Enter amount & description for first row
-      const amountInputs = screen.getAllByPlaceholderText('0.00');
-      fireEvent.change(amountInputs[0], { target: { value: '450.00' } });
+    it('focuses the first amount on open', () => {
+      renderModal();
+      expect(screen.getByLabelText('Amount for row 1')).toHaveFocus();
+    });
 
-      const descInputs = screen.getAllByPlaceholderText('e.g. Lunch');
-      fireEvent.change(descInputs[0], { target: { value: 'Bridal Gown Rental' } });
+    it('applies the active day only to new rows', async () => {
+      const bulkAddSpy = vi
+        .spyOn(financeService, 'bulkAddExpenses')
+        .mockResolvedValue([testExpense]);
+      renderModal();
+      const yesterday = new Date(getSingaporeDate());
+      yesterday.setDate(yesterday.getDate() - 1);
 
-      // Change row 1 Category / Goal dropdown to goal-wedding-1
-      const catOrGoalSelects = screen.getAllByLabelText(/Category or Goal for row 1/i);
-      fireEvent.change(catOrGoalSelects[0], { target: { value: 'goal:goal-wedding-1' } });
+      fillRow(1, '10', 'Lunch');
+      fireEvent.click(screen.getByRole('radio', { name: 'Yesterday' }));
+      fireEvent.click(screen.getByRole('button', { name: '+ Row' }));
+      fillRow(2, '5', 'Grab');
 
-      // Check footer summary updates with goal-funded count
-      expect(screen.getByText(/1 goal-funded/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /^Save 2/ }));
 
-      // Submit
-      const submitBtn = screen.getByRole('button', { name: /Log All/i });
-      fireEvent.click(submitBtn);
+      await waitFor(() => expect(bulkAddSpy).toHaveBeenCalled());
+      const inputs = bulkAddSpy.mock.calls[0][0];
+      expect(inputs[0].date).toBe(getTodayDateString());
+      expect(inputs[1].date).toBe(formatISODate(yesterday));
+    });
+
+    it('auto-guesses the category and stops once the user picks one', () => {
+      renderModal();
+      fillRow(1, '10', 'Lunch');
+      expect(
+        rowOf(1).getByRole('button', { name: /Category for row 1/ }),
+      ).toHaveTextContent('Food');
+
+      fireEvent.click(rowOf(1).getByRole('button', { name: /Category for row 1/ }));
+      fireEvent.click(rowOf(1).getByRole('option', { name: 'Transport' }));
+      expect(
+        rowOf(1).getByRole('button', { name: /Category for row 1/ }),
+      ).toHaveTextContent('Transport');
+
+      fireEvent.change(screen.getByLabelText('Description for row 1'), {
+        target: { value: 'Lunch again' },
+      });
+      expect(
+        rowOf(1).getByRole('button', { name: /Category for row 1/ }),
+      ).toHaveTextContent('Transport');
+    });
+
+    it('moves focus with Enter and adds a row after a valid last row', () => {
+      renderModal();
+      const amount = screen.getByLabelText('Amount for row 1');
+      fireEvent.change(amount, { target: { value: '12.5' } });
+      fireEvent.keyDown(amount, { key: 'Enter' });
+      const desc = screen.getByLabelText('Description for row 1');
+      expect(desc).toHaveFocus();
+
+      fireEvent.change(desc, { target: { value: 'Lunch' } });
+      fireEvent.keyDown(desc, { key: 'Enter' });
+
+      expect(screen.getAllByRole('group', { name: /^Row \d+$/ })).toHaveLength(2);
+      expect(screen.getByLabelText('Amount for row 2')).toHaveFocus();
+    });
+
+    it('does not add a row on Enter when the last row is invalid', () => {
+      renderModal();
+      const desc = screen.getByLabelText('Description for row 1');
+      fireEvent.change(desc, { target: { value: 'Lunch' } });
+      fireEvent.keyDown(desc, { key: 'Enter' });
+      expect(screen.getAllByRole('group', { name: /^Row \d+$/ })).toHaveLength(1);
+      expect(screen.getByText('Enter amount')).toBeInTheDocument();
+    });
+
+    it('shows inline errors only after Save, and keeps Save enabled to give feedback', async () => {
+      const bulkAddSpy = vi.spyOn(financeService, 'bulkAddExpenses');
+      renderModal();
+      fireEvent.change(screen.getByLabelText('Amount for row 1'), {
+        target: { value: '8' },
+      });
+      expect(screen.queryByText('Add description')).toBeNull();
+
+      fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+      expect(await screen.findByText('Add description')).toBeInTheDocument();
+      expect(bulkAddSpy).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Description for row 1')).toHaveFocus();
+    });
+
+    it('ignores blank rows and labels Save with count and total', async () => {
+      const bulkAddSpy = vi
+        .spyOn(financeService, 'bulkAddExpenses')
+        .mockResolvedValue([testExpense]);
+      const { onClose, onExpensesAdded } = renderModal();
+
+      fillRow(1, '12.50', 'Lunch');
+      fireEvent.click(screen.getByRole('button', { name: '+ Row' }));
+      fillRow(2, '25', 'Grab to Orchard');
+      fireEvent.click(screen.getByRole('button', { name: '+ Row' })); // blank row 3
+
+      const save = screen.getByRole('button', { name: 'Save 2 · S$37.50' });
+      fireEvent.click(save);
 
       await waitFor(() => {
+        expect(bulkAddSpy).toHaveBeenCalledTimes(1);
+        expect(bulkAddSpy.mock.calls[0][0]).toHaveLength(2);
         expect(bulkAddSpy).toHaveBeenCalledWith(
           expect.arrayContaining([
-            expect.objectContaining({
-              amount: 450,
-              item: 'Bridal Gown Rental',
-              goal_id: 'goal-wedding-1',
-              category_id: null,
-            }),
-          ])
+            expect.objectContaining({ amount: 12.5, item: 'Lunch' }),
+            expect.objectContaining({ amount: 25, item: 'Grab to Orchard' }),
+          ]),
         );
-        expect(onAddedMock).toHaveBeenCalled();
+        expect(onExpensesAdded).toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalled();
       });
     });
 
-    it('defaults rows to 50/50 in combined view, Solo in member view, and sets payer appropriately', () => {
-      // 1. Render in Combined view (defaultShared = true)
-      const { unmount } = render(
-        <BulkAddExpenseModal
-          isOpen={true}
-          onClose={vi.fn()}
-          categories={mockCategories}
-          members={mockMembers}
-          defaultPayerId={mockMembers[0].id}
-          defaultShared={true}
-        />
+    it('keeps all rows and shows an alert when saving fails', async () => {
+      vi.spyOn(financeService, 'bulkAddExpenses').mockRejectedValue(
+        new Error('Network down'),
       );
+      const { onClose } = renderModal();
+      fillRow(1, '12.50', 'Lunch');
 
-      // Verify payer dropdown is selected to member 0
-      const payerSelect = screen.getByLabelText(/Payer for all expenses/i);
-      expect(payerSelect).toHaveValue(mockMembers[0].id);
+      fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
 
-      // In Combined view, rows should default to "50/50"
-      const sharedButtons = screen.getAllByRole('button', { name: /50\/50/i });
-      expect(sharedButtons.length).toBeGreaterThanOrEqual(3);
-
-      // Add a new row and verify it also defaults to 50/50
-      const addRowBtn = screen.getByRole('button', { name: /\+ Add Row/i });
-      fireEvent.click(addRowBtn);
-      const updatedSharedButtons = screen.getAllByRole('button', { name: /50\/50/i });
-      expect(updatedSharedButtons.length).toBe(sharedButtons.length + 1);
-
-      unmount();
-
-      // 2. Render in Member view (defaultShared = false)
-      render(
-        <BulkAddExpenseModal
-          isOpen={true}
-          onClose={vi.fn()}
-          categories={mockCategories}
-          members={mockMembers}
-          defaultPayerId={mockMembers[1].id}
-          defaultShared={false}
-        />
-      );
-
-      // Payer dropdown should reflect Rachel
-      expect(screen.getByLabelText(/Payer for all expenses/i)).toHaveValue(mockMembers[1].id);
-
-      // Rows should display "Solo"
-      const soloButtons = screen.getAllByRole('button', { name: /Solo/i });
-      expect(soloButtons.length).toBeGreaterThanOrEqual(3);
+      expect(await screen.findByText('Network down')).toBeInTheDocument();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByLabelText('Amount for row 1')).toHaveValue('12.50');
+      expect(screen.getByRole('button', { name: /^Save/ })).toBeEnabled();
     });
 
-    it('parseBulkExpenseText respects defaultShared and tags (#solo / #shared)', () => {
-      const text = `12.50 Default item
-15.00 Personal treat #solo
-25.00 Shared dinner #shared`;
+    it('saves solo rows with split_ratio 0 and shared rows with 0.5', async () => {
+      const bulkAddSpy = vi
+        .spyOn(financeService, 'bulkAddExpenses')
+        .mockResolvedValue([testExpense]);
+      renderModal({ defaultShared: true });
+      fillRow(1, '10', 'Lunch');
+      fireEvent.click(screen.getByRole('button', { name: '+ Row' }));
+      fillRow(2, '20', 'Grab');
+      fireEvent.click(rowOf(2).getByRole('button', { name: /More options/ }));
+      fireEvent.click(rowOf(2).getByRole('button', { name: /Split for row 2/ }));
 
-      // When defaultShared = true
-      const parsedSharedDefault = parseBulkExpenseText(text, '2026-10-27', mockCategories, mockGoals, true);
-      expect(parsedSharedDefault[0].isShared).toBe(true);
-      expect(parsedSharedDefault[1].isShared).toBe(false);
-      expect(parsedSharedDefault[2].isShared).toBe(true);
+      fireEvent.click(screen.getByRole('button', { name: /^Save 2/ }));
 
-      // When defaultShared = false
-      const parsedSoloDefault = parseBulkExpenseText(text, '2026-10-27', mockCategories, mockGoals, false);
-      expect(parsedSoloDefault[0].isShared).toBe(false);
-      expect(parsedSoloDefault[1].isShared).toBe(false);
-      expect(parsedSoloDefault[2].isShared).toBe(true);
+      await waitFor(() => expect(bulkAddSpy).toHaveBeenCalled());
+      const [shared, solo] = bulkAddSpy.mock.calls[0][0];
+      expect(shared).toMatchObject({ is_shared: true, split_ratio: 0.5 });
+      expect(solo).toMatchObject({ is_shared: false, split_ratio: 0 });
+    });
+
+    it('defaults to 50/50 in combined view and Solo in member view; keeps the payer select', () => {
+      const { unmount } = renderModal({
+        defaultShared: true,
+        defaultPayerId: mockMembers[0].id,
+      });
+      expect(screen.getByLabelText(/Payer for all expenses/i)).toHaveValue(
+        mockMembers[0].id,
+      );
+      fireEvent.click(rowOf(1).getByRole('button', { name: /More options/ }));
+      expect(rowOf(1).getByRole('button', { name: /Split for row 1/ })).toHaveTextContent(
+        '50/50',
+      );
+      unmount();
+
+      renderModal({ defaultShared: false, defaultPayerId: mockMembers[1].id });
+      expect(screen.getByLabelText(/Payer for all expenses/i)).toHaveValue(
+        mockMembers[1].id,
+      );
+      fireEvent.click(rowOf(1).getByRole('button', { name: /More options/ }));
+      expect(rowOf(1).getByRole('button', { name: /Split for row 1/ })).toHaveTextContent(
+        'Solo',
+      );
+    });
+
+    it('funds a row from a savings goal', async () => {
+      const bulkAddSpy = vi
+        .spyOn(financeService, 'bulkAddExpenses')
+        .mockResolvedValue([testExpense]);
+      renderModal();
+      fillRow(1, '450', 'Bridal Gown Rental');
+
+      fireEvent.click(rowOf(1).getByRole('button', { name: /Category for row 1/ }));
+      fireEvent.click(rowOf(1).getByRole('option', { name: /Wedding Banquet/ }));
+
+      fireEvent.click(screen.getByRole('button', { name: /^Save 1/ }));
+
+      await waitFor(() =>
+        expect(bulkAddSpy).toHaveBeenCalledWith([
+          expect.objectContaining({
+            amount: 450,
+            goal_id: 'goal-wedding-1',
+            category_id: null,
+          }),
+        ]),
+      );
+    });
+
+    it('removing the last row clears it; removing another row offers undo', () => {
+      renderModal();
+      fillRow(1, '10', 'Lunch');
+      fireEvent.click(screen.getByRole('button', { name: 'Remove row 1' }));
+      expect(screen.getAllByRole('group', { name: /^Row \d+$/ })).toHaveLength(1);
+      expect(screen.getByLabelText('Amount for row 1')).toHaveValue('');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(screen.getByLabelText('Amount for row 1')).toHaveValue('10');
+
+      fireEvent.click(screen.getByRole('button', { name: '+ Row' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Remove row 1' }));
+      expect(screen.getAllByRole('group', { name: /^Row \d+$/ })).toHaveLength(1);
+      expect(screen.getByText('Row removed')).toBeInTheDocument();
+    });
+
+    it('converts foreign currency rows using the per-currency rate', async () => {
+      const bulkAddSpy = vi
+        .spyOn(financeService, 'bulkAddExpenses')
+        .mockResolvedValue([testExpense]);
+      renderModal();
+      fillRow(1, '1000', 'Ramen lunch');
+      fireEvent.click(rowOf(1).getByRole('button', { name: /More options/ }));
+      fireEvent.change(rowOf(1).getByLabelText('Currency for row 1'), {
+        target: { value: 'JPY' },
+      });
+      fireEvent.change(rowOf(1).getByLabelText('Exchange rate JPY'), {
+        target: { value: '100' },
+      });
+
+      expect(screen.getByRole('button', { name: 'Save 1 · S$10.00' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /^Save 1/ }));
+
+      await waitFor(() =>
+        expect(bulkAddSpy).toHaveBeenCalledWith([
+          expect.objectContaining({
+            amount: 10,
+            original_amount: 1000,
+            original_currency: 'JPY',
+            exchange_rate: 100,
+          }),
+        ]),
+      );
     });
   });
 
