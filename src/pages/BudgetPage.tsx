@@ -41,6 +41,7 @@ import { isSpendableCategory } from '../lib/financialFormulas';
 import { mockBaseProfiles, mockBaseAllocations, mockCategories } from '../data/mockSeedData';
 import { MonthPicker } from '../components/budget/MonthPicker';
 import { BudgetWaterfall } from '../components/budget/BudgetWaterfall';
+import { CategoriesHeader } from '../components/budget/CategoriesHeader';
 import { CategoryProgressList } from '../components/budget/CategoryProgressList';
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
 import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
@@ -302,14 +303,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
         <>
           {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                Categories
-              </h2>
-              <span className="text-xs font-semibold text-slate-500 dark:text-(--text-faint)">
-                <CurrencyText amount={spendableRemaining} /> left of <CurrencyText amount={spendableAllocated} /> cap
-              </span>
-            </div>
+            <CategoriesHeader
+              remaining={spendableRemaining}
+              allocated={spendableAllocated}
+              spent={spendableSpent}
+            />
 
             {categories.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center">
