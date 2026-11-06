@@ -21,6 +21,7 @@ import { isSupabaseConfigured } from "./supabaseClient";
 import { mockFinanceService } from "./mockFinanceService";
 import { supabaseFinanceService } from "./supabaseFinanceService";
 import type { FinanceService } from "./financeService";
+import { PartialBulkAddError } from "./bulkAddError";
 
 export type MutationType =
     | "addExpense"
@@ -301,6 +302,9 @@ export async function deleteExpense(id: string): Promise<void> {
 export async function bulkAddExpenses(
     expenses: CreateExpenseInput[],
 ): Promise<Expense[]> {
+    // Rows the backend already saved before a mid-batch failure
+    let alreadySaved: Expense[] = [];
+
     if (isOnline()) {
         try {
             const backend = getBackendService();
@@ -310,15 +314,20 @@ export async function bulkAddExpenses(
                 "Network error on bulkAddExpenses, queueing offline:",
                 err,
             );
+            if (err instanceof PartialBulkAddError) {
+                alreadySaved = err.created;
+            }
         }
     }
 
-    const optimistics = await mockFinanceService.bulkAddExpenses(expenses);
+    // Queue only the rows that were not saved, so replay cannot duplicate them
+    const remaining = expenses.slice(alreadySaved.length);
+    const optimistics = await mockFinanceService.bulkAddExpenses(remaining);
     enqueueMutation("bulkAddExpenses", {
-        expenses,
+        expenses: remaining,
         optimisticIds: optimistics.map((o) => o.id),
     });
-    return optimistics;
+    return [...alreadySaved, ...optimistics];
 }
 
 export async function recordDailyCheckin(
@@ -432,6 +441,20 @@ export async function flushOutbox(
         } catch (err) {
             console.error(`Failed to replay mutation ${mutation.id}:`, err);
             errors++;
+            if (
+                err instanceof PartialBulkAddError &&
+                mutation.type === "bulkAddExpenses"
+            ) {
+                // Keep only the rows that were not saved, so the retry cannot duplicate them
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const payload = mutation.payload as any;
+                const items: CreateExpenseInput[] =
+                    payload?.expenses || payload;
+                mutation.payload = {
+                    ...(Array.isArray(payload) ? {} : payload),
+                    expenses: items.slice(err.created.length),
+                };
+            }
             mutation.retryCount = (mutation.retryCount || 0) + 1;
             mutation.lastError =
                 err instanceof Error ? err.message : String(err);
