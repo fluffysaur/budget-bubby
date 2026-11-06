@@ -22,6 +22,7 @@ import { isSpendableCategory } from "../lib/financialFormulas";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { CurrencyText } from "../components/ui/CurrencyText";
+import { BubbyGreeting } from "../components/bubby/BubbyGreeting";
 
 export interface DashboardPageProps {
     className?: string;
@@ -108,7 +109,7 @@ export function DashboardPage({
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
-            <PageHeader title="Home" />
+            <PageHeader title="Home" badge={<BubbyGreeting onOpenInbox={() => onNavigateTab?.("inbox")} />} />
 
             {isLoading ? (
                 <DashboardSkeleton />

@@ -13,6 +13,7 @@ import { useBubby } from "../../hooks/useBubby";
 import { useActivityCheckins } from "../../hooks/useActivityCheckins";
 import { emitAppEvent, onAppEvent, type MilestoneDetail } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
+import { setInboxPending } from "../../lib/delight/inboxState";
 import { readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
 import { STAGES, HATCHLING_STAGE } from "../../lib/bubby/growth";
 import { getAccessory } from "../../lib/bubby/accessories";
@@ -93,8 +94,15 @@ export function DelightHost() {
     // Inbox triage: a soft pop and a nod per item, never a toast
     useEffect(() => {
         const offs = [
-            onAppEvent("inbox:item-confirmed", () => feedback.routine("triage")),
-            onAppEvent("inbox:item-discarded", () => feedback.routine("triage")),
+            onAppEvent("inbox:items-arrived", (d) => setInboxPending(d.pendingCount)),
+            onAppEvent("inbox:item-confirmed", (d) => {
+                setInboxPending(d.remaining);
+                feedback.routine("triage");
+            }),
+            onAppEvent("inbox:item-discarded", (d) => {
+                setInboxPending(d.remaining);
+                feedback.routine("triage");
+            }),
         ];
         return () => offs.forEach((off) => off());
     }, []);

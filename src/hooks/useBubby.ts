@@ -133,6 +133,10 @@ export interface UseBubbyResult {
     members: HouseholdMember[];
     checkins: DailyCheckin[];
     today: string;
+    /** SGT minutes since midnight (refreshed every minute). */
+    minutes: number;
+    /** The logged-in member's check-in reminder time, in minutes. */
+    checkinMinutes: number;
     equip: (slot: AccessorySlot, id: AccessoryId | null) => void;
 }
 
@@ -221,6 +225,8 @@ export function useBubby(): UseBubbyResult {
         members,
         checkins,
         today,
+        minutes,
+        checkinMinutes,
         equip,
     };
 }
