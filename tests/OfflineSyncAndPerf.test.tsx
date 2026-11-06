@@ -351,13 +351,14 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
       const confirmed = new Map<string, string>();
       const created: string[] = [];
       const target = {
-        confirmInboxItem: vi.fn(async (itemId: string) => {
+        confirmInboxItem: vi.fn(async (itemId: string, _expense: CreateExpenseInput) => {
+          void _expense;
           if (!confirmed.has(itemId)) {
             const id = `exp-${created.length + 1}`;
             created.push(id);
             confirmed.set(itemId, id);
           }
-          return confirmed.get(itemId);
+          return confirmed.get(itemId) as string;
         }),
         resolveInboxItem: vi.fn().mockResolvedValue(undefined),
       };
@@ -369,7 +370,7 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
 
       // Replaying again does nothing, and a forced double replay makes no second expense
       expect((await flushOutbox(target)).processed).toBe(0);
-      await target.confirmInboxItem('inbox-1');
+      await target.confirmInboxItem('inbox-1', input);
       expect(created).toEqual(['exp-1']);
     });
 
