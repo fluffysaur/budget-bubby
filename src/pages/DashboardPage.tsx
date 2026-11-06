@@ -9,7 +9,7 @@
  * and the check-in streak in the header.
  */
 
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useHousehold } from "../context/HouseholdContext";
 import { Card, PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
 import {
@@ -23,6 +23,12 @@ import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { CurrencyText } from "../components/ui/CurrencyText";
 import { BubbyGreeting } from "../components/bubby/BubbyGreeting";
+import { recapWeekFor } from "../lib/bubby/recap";
+import { readBubbyStore } from "../lib/bubby/storage";
+import { daysInMonthOf, toSgtDateString } from "../lib/bubby/dates";
+
+// Only loaded Monday to Wednesday, when a recap is due
+const WeeklyRecapCard = lazy(() => import("../components/dashboard/WeeklyRecapCard"));
 
 export interface DashboardPageProps {
     className?: string;
@@ -106,6 +112,15 @@ export function DashboardPage({
     }, [monthlyBudget]);
 
     const isOverspent = spendableSummary.totalRemaining < 0;
+
+    // Weekly recap: decided once per visit (Mon-Wed, until acknowledged)
+    const [recapWeek] = useState(() =>
+        recapWeekFor(toSgtDateString(), readBubbyStore().recapSeenWeek),
+    );
+    const weeklyBudget =
+        perspective === "household" && spendableSummary.totalAllocated > 0
+            ? (spendableSummary.totalAllocated * 7) / daysInMonthOf(toSgtDateString())
+            : null;
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
@@ -218,6 +233,17 @@ export function DashboardPage({
                             </div>
                         )}
                     </Card>
+
+                    {/* Last week's recap (temporary, Mon-Wed) */}
+                    {recapWeek && (
+                        <Suspense fallback={null}>
+                            <WeeklyRecapCard
+                                week={recapWeek}
+                                weeklyBudget={weeklyBudget}
+                                onSeeSpend={() => onNavigateTab?.("expenses")}
+                            />
+                        </Suspense>
+                    )}
 
                     {/* Upcoming bills */}
                     <UpcomingBillsWidget
