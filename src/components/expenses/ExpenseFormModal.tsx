@@ -14,7 +14,7 @@
  * "More" opens automatically when any of its non-default fields is set.
  */
 
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react";
 import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
@@ -31,6 +31,7 @@ import {
     SUPPORTED_CURRENCIES,
     buildExpenseFxFields,
     convertToSGD,
+    formatForeignAmount,
 } from "../../lib/currencyConverter";
 import { FxRateField } from "./FxRateField";
 import type {
@@ -54,6 +55,15 @@ import { TooltipPopover } from "../ui/TooltipPopover";
 import { CurrencyText } from "../ui/CurrencyText";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { guessCategoryId } from "../../lib/categoryGuess";
+import { getStoredLastSplit, storeLastSplit } from "../../lib/lastSplit";
+import { useInboxQuery } from "../../hooks/useInboxQueries";
+import { afterInboxConfirmed } from "../../lib/inbox/inboxConfirm";
+import {
+    inboxExpenseEventDetail,
+    inboxItemFormValues,
+} from "../../lib/capture/inboxExpense";
+import { normalizeMerchant } from "../../lib/capture/merchant";
+import { TruncatedText } from "../ui/TruncatedText";
 
 export interface ExpenseFormModalProps {
     isOpen: boolean;
@@ -64,6 +74,8 @@ export interface ExpenseFormModalProps {
     initialGoalId?: string;
     /** Add mode: prefill fields (deep link, inbox item). */
     initialValues?: ExpenseFormInitialValues;
+    /** Add mode: saving confirms this inbox item instead of adding. */
+    inboxItemId?: string;
     onExpenseAdded?: (expense: Expense) => void;
     onExpenseUpdated?: (expense: Expense) => void;
     defaultPayerId?: string;
@@ -95,27 +107,6 @@ type FundingSource = "budget" | "goal";
 const GOAL_CHIP_LIMIT = 4;
 
 const GLOBAL_RECENT_TAGS_STORAGE_KEY = "budget_bubby_recent_tags_global_v2";
-const LAST_SPLIT_STORAGE_KEY = "budget_bubby_last_split_v1";
-
-function getStoredLastSplit(): boolean | undefined {
-    try {
-        const raw = window.localStorage.getItem(LAST_SPLIT_STORAGE_KEY);
-        if (raw === "shared") return true;
-        if (raw === "personal") return false;
-    } catch {
-        // Ignore localStorage errors
-    }
-    return undefined;
-}
-
-function storeLastSplit(isShared: boolean) {
-    try {
-        window.localStorage.setItem(LAST_SPLIT_STORAGE_KEY, isShared ? "shared" : "personal");
-    } catch {
-        // Ignore localStorage errors
-    }
-}
-
 function getStoredRecentTags(): string[] {
     if (typeof window === "undefined" || !window.localStorage) return [];
     try {
@@ -164,6 +155,7 @@ export function ExpenseFormModal({
     expense,
     initialGoalId,
     initialValues,
+    inboxItemId,
     onExpenseAdded,
     onExpenseUpdated,
     defaultPayerId,
@@ -258,6 +250,17 @@ export function ExpenseFormModal({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    // Inbox: the item this save confirms, and newest items offered as chips
+    const [linkedInboxId, setLinkedInboxId] = useState<string | null>(null);
+    const { data: inboxData } = useInboxQuery({
+        enabled: isOpen && !isEditMode && !inboxItemId,
+    });
+    const inboxItems = inboxData?.items;
+    const inboxChips = useMemo(
+        () => (inboxData?.available ? (inboxItems ?? []).slice(0, 3) : []),
+        [inboxData?.available, inboxItems],
+    );
+
     // Fetch goals if not supplied in props
     useEffect(() => {
         if (propGoals) {
@@ -277,6 +280,36 @@ export function ExpenseFormModal({
             isMounted = false;
         };
     }, [propGoals, isOpen]);
+
+    // Applies prefill values on top of the add-mode defaults
+    const applyPrefill = useCallback(
+        (values: ExpenseFormInitialValues) => {
+            const foreign =
+                values.original_currency && values.original_currency !== "SGD";
+            if (foreign) {
+                setCurrencyCode(values.original_currency as string);
+                setAmount(values.original_amount ?? values.amount ?? 0);
+            } else if (values.amount) {
+                setCurrencyCode("SGD");
+                setAmount(values.amount);
+            }
+            if (values.item) {
+                setItem(values.item);
+                const guessed = guessCategoryId(values.item, categories);
+                if (guessed) setCategoryId(guessed);
+            }
+            if (values.category_id) {
+                setCategoryId(values.category_id);
+                setCategoryManuallySelected(true);
+            }
+            if (values.payer_id) setPayerId(values.payer_id);
+            if (values.is_shared !== undefined) setIsShared(values.is_shared);
+            if (values.date) setDate(values.date);
+            if (values.time) setTime(values.time);
+            if (values.remarks) setRemarks(values.remarks);
+        },
+        [categories],
+    );
 
     // Reset form and sync recent tags on open
     useEffect(() => {
@@ -354,46 +387,16 @@ export function ExpenseFormModal({
             setErrorMessage(null);
             setIsSubmitting(false);
 
-            if (initialValues) {
-                const foreign =
-                    initialValues.original_currency &&
-                    initialValues.original_currency !== "SGD";
-                if (foreign) {
-                    setCurrencyCode(initialValues.original_currency as string);
-                    setAmount(
-                        initialValues.original_amount ??
-                            initialValues.amount ??
-                            0,
-                    );
-                } else if (initialValues.amount) {
-                    setAmount(initialValues.amount);
-                }
-                if (initialValues.item) {
-                    setItem(initialValues.item);
-                    const guessed = guessCategoryId(
-                        initialValues.item,
-                        categories,
-                    );
-                    if (guessed) setCategoryId(guessed);
-                }
-                if (initialValues.category_id) {
-                    setCategoryId(initialValues.category_id);
-                    setCategoryManuallySelected(true);
-                }
-                if (initialValues.payer_id) setPayerId(initialValues.payer_id);
-                if (initialValues.is_shared !== undefined) {
-                    setIsShared(initialValues.is_shared);
-                }
-                if (initialValues.date) setDate(initialValues.date);
-                if (initialValues.time) setTime(initialValues.time);
-                if (initialValues.remarks) setRemarks(initialValues.remarks);
-            }
+            setLinkedInboxId(inboxItemId ?? null);
+            if (initialValues) applyPrefill(initialValues);
         }
     }, [
         isOpen,
         expense,
         initialGoalId,
         initialValues,
+        inboxItemId,
+        applyPrefill,
         defaultPayerId,
         defaultShared,
         activeMember,
@@ -615,6 +618,29 @@ export function ExpenseFormModal({
                 tags: tags.length > 0 ? tags : undefined,
             };
 
+            if (linkedInboxId) {
+                const linked = inboxItems?.find((i) => i.id === linkedInboxId);
+                const expenseId = await financeService.confirmInboxItem(
+                    linkedInboxId,
+                    input,
+                );
+                if (tags.length > 0) storeRecentTags(tags);
+                await afterInboxConfirmed({
+                    item: {
+                        id: linkedInboxId,
+                        merchant_key: linked?.merchant_key ?? normalizeMerchant(input.item),
+                        suggested_category_id: linked?.suggested_category_id ?? null,
+                    },
+                    expenseId,
+                    input,
+                    via: "edit",
+                    guessedCategoryId: linked?.suggested_category_id ?? null,
+                });
+                onExpenseAdded?.(inboxExpenseEventDetail(expenseId, input));
+                onClose();
+                return;
+            }
+
             const created = await financeService.addExpense(input);
 
             storeLastSplit(isShared);
@@ -669,6 +695,50 @@ export function ExpenseFormModal({
                     {/* Error Alert */}
                     {errorMessage && (
                         <Alert variant="danger">{errorMessage}</Alert>
+                    )}
+
+                    {/* From Inbox: confirm a captured purchase instead of adding a duplicate */}
+                    {!isEditMode && !inboxItemId && inboxChips.length > 0 && (
+                        <div>
+                            <span className="block mb-1.5 text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                                From Inbox
+                            </span>
+                            <div className="flex flex-wrap gap-1.5" aria-label="From Inbox">
+                                {inboxChips.map((chip) => {
+                                    const isLinked = chip.id === linkedInboxId;
+                                    return (
+                                        <button
+                                            key={chip.id}
+                                            type="button"
+                                            aria-pressed={isLinked}
+                                            onClick={() => {
+                                                if (isLinked) {
+                                                    setLinkedInboxId(null);
+                                                    return;
+                                                }
+                                                setLinkedInboxId(chip.id);
+                                                applyPrefill(
+                                                    inboxItemFormValues(chip, {
+                                                        categoryId: chip.suggested_category_id ?? null,
+                                                        isShared: null,
+                                                    }),
+                                                );
+                                            }}
+                                            className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+                                                isLinked
+                                                    ? "bg-(--pastel-mint-light) shadow-(--shadow-cute-sm)"
+                                                    : "bg-(--bg-card) hover:bg-(--bg-cream)"
+                                            }`}
+                                        >
+                                            <TruncatedText text={chip.merchant} className="min-w-0 max-w-32" />
+                                            <span className="shrink-0 font-mono-num text-(--text-muted)">
+                                                {formatForeignAmount(chip.amount, chip.currency)}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     )}
 
                     {/* Amount Input Header with Inline Currency Selector */}
@@ -1282,7 +1352,13 @@ export function ExpenseFormModal({
                             )
                         }
                     >
-                        {isSubmitting ? "Saving..." : isEditMode ? "Save" : "Add"}
+                        {isSubmitting
+                            ? "Saving..."
+                            : isEditMode
+                              ? "Save"
+                              : linkedInboxId
+                                ? "Confirm"
+                                : "Add"}
                     </Button>
                 </ModalFooter>
             </form>

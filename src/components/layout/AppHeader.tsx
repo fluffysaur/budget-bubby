@@ -100,6 +100,13 @@ export function AppHeader({
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Other screens (e.g. the Inbox empty state) can open Settings
+    useEffect(() => {
+        const open = () => setIsSettingsOpen(true);
+        window.addEventListener("openSettings", open);
+        return () => window.removeEventListener("openSettings", open);
+    }, []);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 

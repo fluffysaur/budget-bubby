@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
+import { INBOX_ITEMS_QUERY_KEY } from "../lib/inbox/inboxConfirm";
 import type {
     CaptureTokensResult,
     InboxItemsResult,
@@ -15,7 +16,7 @@ import type {
 
 export const inboxQueryKeys = {
     all: ["finance", "inbox"] as const,
-    items: ["finance", "inbox", "items", "pending"] as const,
+    items: INBOX_ITEMS_QUERY_KEY,
     summary: (memberId?: string) => ["finance", "inbox", "summary", memberId ?? "household"] as const,
     rules: ["finance", "inbox", "rules"] as const,
     tokens: (memberId?: string) => ["finance", "inbox", "tokens", memberId ?? "me"] as const,
@@ -39,11 +40,12 @@ function useRefetchInboxOnVisible() {
 }
 
 /** Household-wide pending items (both partners). */
-export function useInboxQuery() {
+export function useInboxQuery(options: { enabled?: boolean } = {}) {
     useRefetchInboxOnVisible();
     return useQuery<InboxItemsResult>({
         queryKey: inboxQueryKeys.items,
         queryFn: () => financeService.getInboxItems("pending"),
+        enabled: options.enabled ?? true,
         staleTime: INBOX_STALE_MS,
         refetchOnWindowFocus: true,
         refetchOnMount: true,

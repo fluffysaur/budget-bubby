@@ -49,6 +49,7 @@ const SpendPage = lazy(() => import('./pages/SpendPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 const PlanPage = lazy(() => import('./pages/PlanPage'));
 const FastLogPage = lazy(() => import('./pages/FastLogPage'));
+const InboxPage = lazy(() => import('./pages/InboxPage'));
 
 /**
  * Branded Skeleton Loader displayed during route transition / lazy bundle resolution
@@ -105,7 +106,7 @@ function AppLayoutInner() {
     const segment = location.pathname.replace(/^\//, '').split('/')[0];
     if (!segment || segment === 'dashboard') return 'dashboard';
     if (['goals', 'loans', 'recurring'].includes(segment)) return 'plan';
-    if (['spend', 'expenses', 'budget'].includes(segment)) return 'spend';
+    if (['spend', 'expenses', 'budget', 'inbox'].includes(segment)) return 'spend';
     return segment;
   }, [location.pathname]);
 
@@ -220,6 +221,7 @@ function AppLayoutInner() {
                 <Route path="/budget" element={<SpendPage initialTab="budget" onNavigateTab={handleSelectTab} />} />
                 <Route path="/expenses" element={<SpendPage initialTab="expenses" onNavigateTab={handleSelectTab} />} />
                 <Route path="/fast-log" element={<FastLogPage onOpenQuickAdd={handleOpenQuickAdd} />} />
+                <Route path="/inbox" element={<InboxPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
                 <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
