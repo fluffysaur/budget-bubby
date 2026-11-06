@@ -8,7 +8,7 @@
  * - Spendable Category spending meters (Food, Lifestyle, Transport, Buffer) with recurring item tooltips
  * - Collapsible Wealth & Fixed Allocations (Investments, Savings, Tithing)
  * - Visual Budget Waterfall breakdown
- * - Notion-style Bonus Allocation helper (AWS/Performance bonus calculator)
+ * - Bonus income shown outside category caps (logged in Plan › Bonus)
  * - Base profile editor modal
  */
 
@@ -44,7 +44,6 @@ import { BudgetWaterfall } from '../components/budget/BudgetWaterfall';
 import { CategoriesHeader } from '../components/budget/CategoriesHeader';
 import { CategoryProgressList } from '../components/budget/CategoryProgressList';
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
-import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
 import { CategoryLimitWarningBanner } from '../components/budget/CategoryLimitWarningBanner';
 import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCard';
 import { UncategorizedRecurringRow } from '../components/budget/UncategorizedRecurringRow';
@@ -399,13 +398,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
               onViewBonus={handleViewBonus}
             />
           </CollapsibleSection>
-
-          {/* Collapsible: Bonus Allocation Helper */}
-          <BonusAllocationCollapsible
-            initialGrossBonus={2000}
-            cpfRate={0.2}
-            defaultOpen={false}
-          />
         </>
       )}
 
