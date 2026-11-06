@@ -4,7 +4,7 @@ Card purchases go to the Budget Bubby **Inbox**, where you sort them. Nothing co
 
 ## 1. One-time server setup
 
-1. Apply `supabase/migrations/20261107090000_capture_inbox.sql`. Until it is applied, the Inbox stays hidden and Settings › Auto Capture shows "Needs database update".
+1. Apply `supabase/migrations/20261107110000_capture_inbox.sql`. Until it is applied, the Inbox stays hidden and Settings › Auto Capture shows "Needs database update".
 2. Deploy the functions with `npm run deploy:functions`. This deploys `send-reminders` and `capture-expense`, both with `--no-verify-jwt`. No new secrets are needed.
 3. Smoke test with a token from step 2.1 below:
 
