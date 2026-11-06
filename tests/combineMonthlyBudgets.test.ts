@@ -39,6 +39,21 @@ function memberBudget(owner: string, food: { allocated: number; spent: number })
 }
 
 describe("combineMonthlyBudgets", () => {
+    it("sums bonus summaries and keeps the bonus out of take-home", () => {
+        const a = memberBudget("m1", { allocated: 600, spent: 0 });
+        a.budget.bonus = 10000;
+        a.bonusSummary = { gross: 10000, cpf: 2000, net: 8000, count: 1, source: "events" };
+        const b = memberBudget("m2", { allocated: 400, spent: 0 });
+        b.budget.bonus = 1500;
+        b.bonusSummary = { gross: 1500, cpf: 0, net: 1500, count: 0, source: "legacy" };
+
+        const combined = combineMonthlyBudgets([a, b], "2026-11")!;
+        expect(combined.budget.bonus).toBe(11500);
+        expect(combined.bonusSummary).toEqual({ gross: 11500, cpf: 2000, net: 9500, count: 1, source: "events" });
+        expect(combined.budget.after_deductions).toBe(7600);
+        expect(combined.disposablePool).toBe(7600);
+    });
+
     it("returns null with no member budgets", () => {
         expect(combineMonthlyBudgets([], "2026-11")).toBeNull();
     });

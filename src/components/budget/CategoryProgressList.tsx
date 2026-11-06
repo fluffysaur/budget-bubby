@@ -8,7 +8,9 @@
  *   - Green: <= 80% (On Track)
  *   - Amber: 81-100% (Near Limit)
  *   - Red: > 100% (Over Budget)
- * - Over-budget alert banners and badges
+ * - Over-budget alert banners and badges (spendable categories only)
+ * - "Set aside" (allocation) categories never warn: neutral lilac pill, a
+ *   Set aside / Funded readout, and a neutral bar.
  */
 
 import {
@@ -26,7 +28,7 @@ import {
   Layers,
   Repeat,
 } from 'lucide-react';
-import { formatAllocationPercent } from '../../lib/financialFormulas';
+import { formatAllocationPercent, isSpendableCategory } from '../../lib/financialFormulas';
 import { getRecurringMonthlyAmount } from '../../lib/recurringItems';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { TruncatedText } from '../ui/TruncatedText';
@@ -72,6 +74,7 @@ export function CategoryProgressList({
 
   // Identify over-budget categories
   const overBudgetCategories = categories.filter((c) => {
+    if (!isSpendableCategory(c.category ?? c.category_id)) return false;
     const actual = c.actualSpent || 0;
     return actual > c.allocated_amount;
   });
@@ -80,8 +83,8 @@ export function CategoryProgressList({
     <div className={`space-y-4 ${className}`}>
       {/* Over Budget Alert Banner */}
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-[#fff1ee] dark:bg-[#3b1c19] text-[#9a1b1b] dark:text-[#fca5a5] shadow-(--shadow-cute-sm)">
-          <div className="p-1.5 rounded-xl bg-[#f76b57] text-white border-2 border-(--border-ink) shrink-0 shadow-(--shadow-cute-sm)">
+        <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-(--shadow-cute-sm)">
+          <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border-2 border-(--border-ink) shrink-0 shadow-(--shadow-cute-sm)">
             <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
           </div>
           <div className="text-xs sm:text-sm min-w-0 flex-1">
@@ -112,8 +115,10 @@ export function CategoryProgressList({
           const spentPercentage =
             allocated > 0 ? (actual / allocated) * 100 : actual > 0 ? 100 : 0;
           const roundedPercentage = Math.round(spentPercentage);
-          const isOverBudget = spentPercentage >= 100 || actual > allocated;
-          const isNearLimit = !isOverBudget && spentPercentage >= 80;
+          // Set-aside categories are funded, not capped: never warn.
+          const tracksCap = isSpendableCategory(catDetail.category ?? catDetail.category_id);
+          const isOverBudget = tracksCap && (spentPercentage >= 100 || actual > allocated);
+          const isNearLimit = tracksCap && !isOverBudget && spentPercentage >= 80;
 
           // Status Badge details
           let statusLabel = 'On Track';
@@ -140,7 +145,7 @@ export function CategoryProgressList({
                 compact ? 'p-3.5 sm:p-4' : 'p-4 sm:p-5'
               } shadow-(--shadow-cute-sm) transition-all ${
                 isOverBudget
-                  ? 'bg-[#fff1ee]/50 dark:bg-[#3b1c19]/40'
+                  ? 'bg-(--pastel-coral-light)/50'
                   : 'hover:bg-(--pastel-butter-light)/20'
               } ${onCategoryClick ? 'cursor-pointer' : ''}`}
             >
@@ -194,6 +199,12 @@ export function CategoryProgressList({
                 </div>
 
                 {/* Status Indicator Badge */}
+                {!tracksCap ? (
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shrink-0 shadow-cute-sm bg-(--pastel-lilac-light) text-(--text-ink)">
+                    <PiggyBank className="h-3 w-3" />
+                    <span>Set aside</span>
+                  </div>
+                ) : (
                 <div
                   className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shrink-0 shadow-cute-sm ${
                     isOverBudget
@@ -206,9 +217,32 @@ export function CategoryProgressList({
                   <StatusIcon className="h-3 w-3" />
                   <span>{statusLabel} ({roundedPercentage}%)</span>
                 </div>
+                )}
               </div>
 
-              {/* Amounts Grid: Spent vs Budgeted vs Remaining */}
+              {/* Amounts: Set aside / Funded for allocations, else Spent vs Budgeted vs Remaining */}
+              {!tracksCap ? (
+                <div className="grid grid-cols-2 gap-2 my-2.5 text-left">
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
+                      Set aside
+                    </span>
+                    <span className="text-(--text-ink)">
+                      <CurrencyText amount={allocated} size="md" />
+                    </span>
+                  </div>
+                  {actual > 0 && (
+                    <div>
+                      <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
+                        Funded
+                      </span>
+                      <span className="text-(--text-ink)">
+                        <CurrencyText amount={actual} size="md" />
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
               <div className="grid grid-cols-3 gap-2 my-2.5 text-left">
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
@@ -242,11 +276,14 @@ export function CategoryProgressList({
                 </div>
               </div>
 
+              )}
+
               {/* Progress Bar Meter */}
+              {(tracksCap || allocated > 0) && (
               <div className="space-y-1.5 mt-2.5">
                 <div className="h-3 w-full rounded-full bg-(--bg-canvas) border border-(--border-ink) overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${progressBarColor}`}
+                    className={`h-full rounded-full transition-all duration-300 ${tracksCap ? progressBarColor : 'bg-(--pastel-lilac)'}`}
                     style={{ width: `${fillWidth}%` }}
                     role="progressbar"
                     aria-valuenow={roundedPercentage}
@@ -278,6 +315,7 @@ export function CategoryProgressList({
                   </div>
                 ) : null}
               </div>
+              )}
             </div>
           );
         })}

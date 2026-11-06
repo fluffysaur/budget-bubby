@@ -200,17 +200,42 @@ describe('BudgetWaterfall', () => {
     expect(screen.getByText('S$4,308.33')).toBeInTheDocument();
   });
 
-  it('renders bonus when present and updates total gross pay', () => {
+  it('renders bonus outside caps without changing take-home or allocations', () => {
     const budgetWithBonus: MonthlyBudget = {
       ...sampleBudget,
       bonus: 1500.0,
-      after_deductions: 5808.33,
     };
+    const onViewBonus = vi.fn();
 
-    render(<BudgetWaterfall budget={budgetWithBonus} categories={sampleCategories} />);
+    render(
+      <BudgetWaterfall
+        budget={budgetWithBonus}
+        categories={sampleCategories}
+        bonusSummary={{ gross: 1500, cpf: 300, net: 1200, count: 1, source: 'events' }}
+        onViewBonus={onViewBonus}
+      />
+    );
 
+    // Gross includes the bonus; take-home stays the salary pool
     expect(screen.getByText(/1,500\.00/)).toBeInTheDocument();
-    expect(screen.getByText('S$5,808.33')).toBeInTheDocument();
+    expect(screen.getByText('S$7,500.00')).toBeInTheDocument();
+    expect(screen.getByText('S$4,308.33')).toBeInTheDocument();
+    expect(screen.getByText('Bonus CPF')).toBeInTheDocument();
+
+    const strip = screen.getByTestId('waterfall-bonus-strip');
+    expect(strip).toHaveTextContent('Outside caps');
+    expect(strip).toHaveTextContent('S$1,200.00 net');
+
+    // Category caps are unchanged by the bonus
+    expect(screen.getAllByText(/S\$646\.25/).length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /view/i }));
+    expect(onViewBonus).toHaveBeenCalled();
+  });
+
+  it('hides the bonus strip when there is no bonus', () => {
+    render(<BudgetWaterfall budget={sampleBudget} categories={sampleCategories} />);
+    expect(screen.queryByTestId('waterfall-bonus-strip')).not.toBeInTheDocument();
   });
 
   it('renders category allocations breakdown matching the disposable pool', () => {
@@ -236,6 +261,41 @@ describe('BudgetWaterfall', () => {
     fireEvent.click(editBtn);
 
     expect(onEdit).toHaveBeenCalled();
+  });
+
+  it('renders rows in order: Gross, CPF, Deductions, Take-home, Allocations', () => {
+    render(<BudgetWaterfall budget={sampleBudget} categories={sampleCategories} />);
+
+    const labels = ['Gross', 'CPF', 'Deductions', 'Take-home', 'Allocations'].map((l) =>
+      screen.getByText(new RegExp(`^${l}$`)),
+    );
+    for (let i = 0; i < labels.length - 1; i++) {
+      expect(
+        labels[i].compareDocumentPosition(labels[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it('has no outer card wrapper', () => {
+    const { container } = render(
+      <BudgetWaterfall budget={sampleBudget} categories={sampleCategories} />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).not.toContain('border-2');
+    expect(root.className).not.toContain('shadow-cute');
+  });
+
+  it('shows an empty state with a CTA that opens the editor', () => {
+    const onEdit = vi.fn();
+    render(<BudgetWaterfall budget={null} onEditProfile={onEdit} />);
+    expect(screen.getByText('No Budget')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /set up budget/i }));
+    expect(onEdit).toHaveBeenCalled();
+  });
+
+  it('omits the empty-state CTA without a handler', () => {
+    render(<BudgetWaterfall budget={null} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });
 
@@ -567,8 +627,8 @@ describe('BudgetPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /^budget$/i })).toBeInTheDocument();
-      expect(screen.getAllByText(/gross pay|gross salary/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/disposable pool|after deductions/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/^gross$|gross salary/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/^take-home$|after deductions/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -580,7 +640,7 @@ describe('BudgetPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Budget Waterfall Breakdown/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
     });
     // Perspective is shown only in the header, not as a badge on the page
     expect(screen.queryByText(/^Yi Jia$/)).not.toBeInTheDocument();
@@ -592,7 +652,7 @@ describe('BudgetPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Budget Waterfall Breakdown/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
     });
     expect(screen.queryByText(/^Combined Household$/)).not.toBeInTheDocument();
   });

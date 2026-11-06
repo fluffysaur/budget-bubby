@@ -1,224 +1,272 @@
 /**
  * BudgetWaterfall Component
- * Visual financial waterfall breakdown for Singapore couple finances:
- * 1. Gross Salary (+ Bonus)
- * 2. Employee CPF Deduction (20%)
- * 3. Fixed Deductions (Taxes & Insurance)
- * 4. After Deductions Disposable Pool (Take-Home Pay)
- * 5. Category Allocations (Food, Lifestyle, Investments, Savings, Tithing, Transport, Buffer)
+ * Flat list of the income flow for Singapore couple finances. The parent
+ * CollapsibleSection is the only card:
+ * 1. Gross (Salary, Bonus)
+ * 2. Employee CPF
+ * 3. Deductions (Taxes, Insurance)
+ * 4. Take-home (highlighted, salary only)
+ * 5. Bonus strip: bonuses count as income but stay outside category caps
+ * 6. Allocations per category
  */
 
-import {
-    DollarSign,
-    Building2,
-    Receipt,
-    Wallet,
-    Settings,
-    Sparkles,
-} from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowRight, Settings, Sparkles } from "lucide-react";
 import { formatAllocationPercent } from "../../lib/financialFormulas";
+import { PRESET_COLORS } from "../../lib/categoryPresets";
 import { TruncatedText } from "../ui/TruncatedText";
-import type { MonthlyBudget, MonthlyBudgetCategoryDetail } from "../../types/finance";
+import { TooltipPopover } from "../ui/TooltipPopover";
+import { Button } from "../ui/Button";
+import { EmptyStateCard } from "../ui/EmptyStateCard";
+import { Badge } from "../ui/Badge";
+import type {
+    BonusMonthSummary,
+    MonthlyBudget,
+    MonthlyBudgetCategoryDetail,
+} from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BudgetWaterfallProps {
-  budget?: MonthlyBudget | null;
-  categories?: MonthlyBudgetCategoryDetail[];
-  onEditProfile?: () => void;
-  className?: string;
+    budget?: MonthlyBudget | null;
+    categories?: MonthlyBudgetCategoryDetail[];
+    /** Bonuses received this month; falls back to `budget.bonus` with net = gross. */
+    bonusSummary?: BonusMonthSummary;
+    onEditProfile?: () => void;
+    /** Opens Plan › Bonus. */
+    onViewBonus?: () => void;
+    className?: string;
+}
+
+type FlowTone = "default" | "negative" | "purple";
+
+interface FlowRowProps {
+    label: ReactNode;
+    amount: number;
+    sign?: "+" | "-" | "";
+    tone?: FlowTone;
+    bold?: boolean;
+    sub?: boolean;
+    icon?: ReactNode;
+}
+
+const TONE_CLASS: Record<FlowTone, string> = {
+    default: "text-(--text-ink)",
+    negative: "text-rose-600 dark:text-rose-400",
+    purple: "text-purple-700 dark:text-purple-300",
+};
+
+function FlowRow({
+    label,
+    amount,
+    sign = "",
+    tone = "default",
+    bold = false,
+    sub = false,
+    icon,
+}: FlowRowProps) {
+    return (
+        <div
+            className={`flex items-center justify-between gap-3 ${
+                sub
+                    ? "pl-6 text-xs text-(--text-muted)"
+                    : "text-sm font-bold text-(--text-ink)"
+            }`}
+        >
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+                {icon}
+                {typeof label === "string" ? (
+                    <TruncatedText text={label} />
+                ) : (
+                    label
+                )}
+            </div>
+            <span
+                className={`shrink-0 font-mono-num ${bold ? "font-black" : "font-bold"} ${TONE_CLASS[tone]}`}
+            >
+                {sign}
+                <CurrencyText amount={amount} />
+            </span>
+        </div>
+    );
 }
 
 export function BudgetWaterfall({
-  budget,
-  categories = [],
-  onEditProfile,
-  className = '',
+    budget,
+    categories = [],
+    bonusSummary,
+    onEditProfile,
+    onViewBonus,
+    className = "",
 }: BudgetWaterfallProps) {
-  if (!budget) {
+    if (!budget) {
+        return (
+            <EmptyStateCard
+                className={className}
+                title="No Budget"
+                description="Set up a budget to see your income flow."
+                action={
+                    onEditProfile ? (
+                        <Button variant="primary" size="sm" onClick={onEditProfile}>
+                            Set Up Budget
+                        </Button>
+                    ) : undefined
+                }
+            />
+        );
+    }
+
+    const grossSalary = budget.gross_salary || 0;
+    const bonus = bonusSummary?.gross ?? (budget.bonus || 0);
+    const bonusCpf = bonusSummary?.cpf ?? 0;
+    const bonusNet = bonusSummary?.net ?? bonus;
+    const totalGross = grossSalary + bonus;
+    const cpfDeduction = budget.cpf_deduction || 0;
+    const taxesDeduction = budget.taxes_deduction || 0;
+    const insuranceDeduction = budget.insurance_deduction || 0;
+    const fixedDeductions = taxesDeduction + insuranceDeduction;
+    // Take-home is salary only: the bonus never feeds category caps.
+    const afterDeductions =
+        budget.after_deductions || grossSalary - cpfDeduction - fixedDeductions;
+
     return (
-      <div className={`p-8 text-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 ${className}`}>
-        <p className="text-sm text-slate-500 dark:text-(--text-faint)">No budget data available for this period.</p>
-      </div>
-    );
-  }
-
-  const grossSalary = budget.gross_salary || 0;
-  const bonus = budget.bonus || 0;
-  const totalGross = grossSalary + bonus;
-  const cpfDeduction = budget.cpf_deduction || 0;
-  const taxesDeduction = budget.taxes_deduction || 0;
-  const insuranceDeduction = budget.insurance_deduction || 0;
-  const fixedDeductions = taxesDeduction + insuranceDeduction;
-  const afterDeductions = budget.after_deductions || (totalGross - cpfDeduction - fixedDeductions);
-
-    return (
-        <div
-            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-cute space-y-5 transition-colors ${className}`}
-        >
-            {/* Waterfall Header */}
-            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-(--border-subtle) pb-3.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-display font-black text-base sm:text-lg tracking-tight text-(--text-ink)">
-                        Budget Waterfall Breakdown
-                    </h2>
+        <div className={`space-y-4 ${className}`}>
+            <div className="divide-y divide-(--border-subtle) [&>*]:py-2.5 first:[&>*]:pt-0">
+                <div className="space-y-1.5">
+                    <FlowRow label="Gross" amount={totalGross} bold />
+                    <FlowRow label="Salary" amount={grossSalary} sub />
+                    {bonus > 0 && (
+                        <FlowRow
+                            label="Bonus"
+                            amount={bonus}
+                            sign="+"
+                            tone="purple"
+                            sub
+                            icon={<Sparkles className="h-3 w-3 shrink-0" />}
+                        />
+                    )}
                 </div>
 
-                {onEditProfile && (
-                    <button
-                        type="button"
-                        onClick={onEditProfile}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-                    >
-                        <Settings className="h-3.5 w-3.5" />
-                        <span>Edit Budget</span>
-                    </button>
-                )}
-            </div>
-
-            {/* Waterfall Steps */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
-                {/* Gross Pay */}
-                <div className="relative rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3.5 shadow-cute-sm transition-all">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                            Gross Pay
-                        </span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-(--border-ink) bg-(--pastel-mint) text-(--text-ink)">
-                            <DollarSign className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-1.5">
-                        <span className="text-(--text-ink)">
-                            <CurrencyText amount={totalGross} size="lg" />
-                        </span>
-                    </div>
-                    <div className="mt-1.5 text-[11px] font-mono-num text-(--text-muted) space-y-0.5">
-                        <div className="flex justify-between">
-                            <span>Salary:</span>
-                            <span className="text-(--text-ink)"><CurrencyText amount={grossSalary} /></span>
-                        </div>
-                        {bonus > 0 && (
-                            <div className="flex justify-between text-purple-700 dark:text-purple-300 font-bold">
-                                <span className="flex items-center gap-1">
-                                    <Sparkles className="h-3 w-3" />
-                                    Bonus:
-                                </span>
-                                <span>+<CurrencyText amount={bonus} /></span>
-                            </div>
-                        )}
-                    </div>
+                <div className="space-y-1.5">
+                    <FlowRow
+                        label={
+                            <span className="flex min-w-0 items-center gap-1.5">
+                                <span>CPF</span>
+                                <TooltipPopover title="CPF">
+                                    Employee CPF, 20% of gross.
+                                </TooltipPopover>
+                            </span>
+                        }
+                        amount={cpfDeduction}
+                        sign="-"
+                        tone="negative"
+                    />
+                    {bonusCpf > 0 && (
+                        <FlowRow label="Bonus CPF" amount={bonusCpf} sign="-" sub />
+                    )}
                 </div>
 
-                {/* CPF (20%) */}
-                <div className="relative rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3.5 shadow-cute-sm transition-all">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                            CPF (20%)
-                        </span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink)">
-                            <Building2 className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-1.5">
-                        <span className="font-mono-num text-lg sm:text-xl font-black tracking-tight text-rose-600 dark:text-rose-400">
-                            -<CurrencyText amount={cpfDeduction} />
-                        </span>
-                    </div>
-                    <p className="mt-1.5 text-[11px] font-medium text-(--text-muted)">
-                        Employee CPF
-                    </p>
-                </div>
-
-                {/* Deductions */}
-                <div className="relative rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3.5 shadow-cute-sm transition-all">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                            Deductions
-                        </span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-(--border-ink) bg-(--pastel-butter) text-(--text-ink)">
-                            <Receipt className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-1.5">
-                        <span className="font-mono-num text-lg sm:text-xl font-black tracking-tight text-rose-600 dark:text-rose-400">
-                            -<CurrencyText amount={fixedDeductions} />
-                        </span>
-                    </div>
-                    <div className="mt-1.5 text-[11px] font-mono-num text-(--text-muted) space-y-0.5">
-                        <div className="flex justify-between">
-                            <span>Taxes:</span>
-                            <span className="font-bold text-(--text-ink)">-<CurrencyText amount={taxesDeduction} /></span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Insurance:</span>
-                            <span className="font-bold text-(--text-ink)">-<CurrencyText amount={insuranceDeduction} /></span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Disposable Pool */}
-                <div className="relative rounded-2xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3.5 shadow-cute transition-all">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-(--text-ink)">
-                            Disposable Pool
-                        </span>
-                        <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-(--border-ink) bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm">
-                            <Wallet className="h-3.5 w-3.5" />
-                        </div>
-                    </div>
-                    <div className="mt-1.5">
-                        <span className="text-(--text-ink)">
-                            <CurrencyText amount={afterDeductions} size="lg" />
-                        </span>
-                    </div>
-                    <p className="mt-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
-                        Net Take-Home
-                    </p>
+                <div className="space-y-1.5">
+                    <FlowRow
+                        label="Deductions"
+                        amount={fixedDeductions}
+                        sign="-"
+                        tone="negative"
+                    />
+                    <FlowRow label="Taxes" amount={taxesDeduction} sub />
+                    <FlowRow label="Insurance" amount={insuranceDeduction} sub />
                 </div>
             </div>
 
-            {/* Category Allocations Flow */}
+            <div className="rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-(--shadow-cute-sm)">
+                <FlowRow label="Take-home" amount={afterDeductions} bold />
+            </div>
+
+            {bonus > 0 && (
+                <div
+                    data-testid="waterfall-bonus-strip"
+                    className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) px-3 py-2 dark:bg-purple-950/40"
+                >
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-bold text-(--text-ink)">
+                        <Sparkles className="h-3.5 w-3.5 shrink-0 text-purple-700 dark:text-purple-300" />
+                        <span>Bonus</span>
+                        <TooltipPopover title="Bonus">
+                            Bonuses count as income but don't raise category limits. Split them in Plan › Bonus.
+                        </TooltipPopover>
+                    </div>
+                    <span className="shrink-0 font-mono-num text-sm font-black text-purple-700 dark:text-purple-300">
+                        <CurrencyText amount={bonusNet} /> net
+                    </span>
+                    <Badge variant="lilac" size="sm" className="shrink-0">
+                        Outside caps
+                    </Badge>
+                    {onViewBonus && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+                            onClick={onViewBonus}
+                            className="shrink-0"
+                        >
+                            View
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {categories.length > 0 && (
-                <div className="pt-2">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs font-black uppercase tracking-wider text-(--text-muted)">
-                            Category Allocations
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                            Allocations
                         </span>
-                        <div className="h-px flex-1 bg-(--border-subtle)" />
-                        <span className="text-xs font-bold text-(--text-ink)">
-                            100% of Disposable Pool
+                        <span className="shrink-0 text-xs font-bold text-(--text-muted)">
+                            100%
                         </span>
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div className="divide-y divide-(--border-subtle)">
                         {categories.map((catDetail) => {
                             const name = catDetail.category?.name || "Category";
-                            const color = catDetail.category?.color || "#dfc2ff";
+                            const color =
+                                catDetail.category?.color || PRESET_COLORS[0];
                             const percentDisplay = `${formatAllocationPercent(catDetail.percentage * 100)}%`;
 
                             return (
                                 <div
                                     key={catDetail.id || catDetail.category_id}
-                                    className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 flex flex-col justify-between shadow-cute-sm hover:bg-(--pastel-butter-light)/40 transition-colors"
+                                    className="flex items-center gap-2 py-2.5 text-sm font-bold text-(--text-ink)"
                                 >
-                                    <div className="flex items-center justify-between gap-1 mb-1">
-                                        <div className="min-w-0 flex-1 text-xs font-bold text-(--text-ink)">
-                                            <TruncatedText text={name} />
-                                        </div>
-                                        <span
-                                            className="px-1.5 py-0.5 rounded-md text-[10px] font-black text-white shrink-0 border border-black/20"
-                                            style={{ backgroundColor: color }}
-                                        >
-                                            {percentDisplay}
-                                        </span>
+                                    <span
+                                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                        style={{ backgroundColor: color }}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <TruncatedText text={name} />
                                     </div>
-                                    <div className="text-(--text-ink) mt-1 truncate">
-                                        <CurrencyText amount={catDetail.allocated_amount} size="md" />
-                                    </div>
+                                    <span className="shrink-0 text-xs font-bold text-(--text-muted)">
+                                        {percentDisplay}
+                                    </span>
+                                    <span className="shrink-0 font-mono-num">
+                                        <CurrencyText
+                                            amount={catDetail.allocated_amount}
+                                        />
+                                    </span>
                                 </div>
                             );
                         })}
                     </div>
+                </div>
+            )}
+
+            {onEditProfile && (
+                <div className="flex justify-end pt-1">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<Settings className="h-3.5 w-3.5" />}
+                        onClick={onEditProfile}
+                    >
+                        Edit Budget
+                    </Button>
                 </div>
             )}
         </div>

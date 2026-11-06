@@ -68,9 +68,9 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
         expect(screen.getByRole("tab", { name: /Expenses/i })).toHaveAttribute("aria-selected", "false");
 
         await waitFor(() => {
-            expect(screen.getByText(/Budget Waterfall/i)).toBeInTheDocument();
-            expect(screen.getAllByText(/Gross Pay/i)[0]).toBeInTheDocument();
-            expect(screen.getAllByText(/Disposable Pool/i)[0]).toBeInTheDocument();
+            expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
+            expect(screen.getAllByText(/^Gross$/i)[0]).toBeInTheDocument();
+            expect(screen.getAllByText(/^Take-home$/i)[0]).toBeInTheDocument();
         });
     });
 
@@ -81,7 +81,7 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
         expect(budgetTab).toHaveAttribute("aria-selected", "true");
 
         await waitFor(() => {
-            expect(screen.getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
         });
     });
 
@@ -92,7 +92,7 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
         expect(budgetTab).toHaveAttribute("aria-selected", "true");
 
         await waitFor(() => {
-            expect(screen.getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
         });
     });
 });

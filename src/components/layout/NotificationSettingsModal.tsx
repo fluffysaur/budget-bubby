@@ -530,7 +530,7 @@ export function NotificationSettingsModal({
                                                     const val = Math.max(50, Math.min(99, Number(e.target.value) || 80));
                                                     handleUpdate({ budget_warning_pct: val });
                                                 }}
-                                                className="w-16 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+                                                className="w-16 px-2.5 py-1 text-base sm:text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
                                             <span className="text-[11px] font-bold text-(--text-muted)">% of cap</span>
                                         </div>
@@ -557,7 +557,7 @@ export function NotificationSettingsModal({
                                                     const val = Math.max(10, Number(e.target.value) || 200);
                                                     handleUpdate({ settlement_threshold_sgd: val });
                                                 }}
-                                                className="w-20 px-2.5 py-1 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+                                                className="w-20 px-2.5 py-1 text-base sm:text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
                                         </div>
                                     </div>
@@ -657,7 +657,7 @@ function TimeField({ id, label, icon, value, testId, onChange }: TimeFieldProps)
                 value={value}
                 data-testid={testId}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full h-10 px-2.5 text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
+                className="w-full h-10 px-2.5 text-base sm:text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
             />
         </div>
     );

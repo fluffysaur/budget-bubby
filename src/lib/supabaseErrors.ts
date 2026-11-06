@@ -1,20 +1,32 @@
 /**
- * True when a Supabase/PostgREST error means a table or function doesn't
- * exist yet (a migration that hasn't been applied).
+ * Helpers for recognising Supabase / PostgREST errors that mean an optional
+ * migration has not been applied yet, so features can degrade gracefully.
  */
+
+const MISSING_RELATION_CODES = new Set([
+    "42P01", // undefined_table
+    "PGRST205", // table not in schema cache
+    "42883", // undefined_function
+    "PGRST202", // function not in schema cache
+]);
+
+/** True when the error says a table or RPC does not exist (migration not applied). */
 export function isMissingRelationError(err: unknown): boolean {
     if (!err || typeof err !== "object") return false;
     const { code, message } = err as { code?: unknown; message?: unknown };
-    if (
-        code === "PGRST205" || // table not in schema cache
-        code === "PGRST202" || // function not in schema cache
-        code === "42P01" || // undefined_table
-        code === "42883" // undefined_function
-    ) {
+    if (typeof code === "string" && MISSING_RELATION_CODES.has(code)) {
         return true;
     }
     return (
         typeof message === "string" &&
         /could not find the (table|function)|relation .* does not exist/i.test(message)
     );
+}
+
+/** Thrown by bonus log mutations when the bonus tables or RPCs are missing. */
+export class BonusLogUnavailableError extends Error {
+    constructor() {
+        super("Bonus log is not set up yet. Apply the bonus_events migration.");
+        this.name = "BonusLogUnavailableError";
+    }
 }

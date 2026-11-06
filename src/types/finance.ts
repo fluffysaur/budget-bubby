@@ -159,6 +159,8 @@ export interface MonthlyBudgetDetail {
   /** Recurring subscription/bill/other spend with no budget category (counted in totalSpent) */
   uncategorizedRecurringSpent?: number;
   uncategorizedRecurringItems?: RecurringItem[];
+  /** Bonuses received this month. Counted as income, kept outside category caps. */
+  bonusSummary?: BonusMonthSummary;
 }
 
 export interface Expense {
@@ -513,6 +515,67 @@ export interface BonusAllocationResult {
     amount: number;
     color: string;
   }>;
+}
+
+// ---------------------------------------------------------------------------
+// Bonus Log
+// ---------------------------------------------------------------------------
+
+export type BonusType = 'aws' | 'performance' | 'sign_on' | 'other';
+export type BonusSplitKey = 'tithing' | 'goals' | 'savings' | 'investments' | 'lifestyle';
+
+/** One bucket of a bonus split. `pct` is a 0-1 fraction. */
+export interface BonusSplitShare {
+  key: BonusSplitKey;
+  pct: number;
+  amount?: number;
+}
+
+export interface BonusGoalContribution {
+  goal_id: string;
+  amount: number;
+}
+
+export interface BonusEvent {
+  id: string;
+  household_id: string;
+  recipient_id: string;
+  type: BonusType;
+  received_on: string; // 'YYYY-MM-DD'
+  gross: number;
+  cpf: number;
+  net: number; // generated in DB; computed in mock
+  note?: string | null;
+  split: BonusSplitShare[];
+  goal_contributions: BonusGoalContribution[];
+  created_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SaveBonusEventInput {
+  id?: string;
+  recipient_id: string;
+  type: BonusType;
+  received_on: string;
+  gross: number;
+  cpf: number;
+  note?: string | null;
+  split: BonusSplitShare[];
+  goal_contributions: BonusGoalContribution[];
+}
+
+export interface BonusEventsResult {
+  available: boolean;
+  events: BonusEvent[];
+}
+
+export interface BonusMonthSummary {
+  gross: number;
+  cpf: number;
+  net: number;
+  count: number;
+  source: 'events' | 'legacy' | 'none';
 }
 
 export interface NotificationPreferences {

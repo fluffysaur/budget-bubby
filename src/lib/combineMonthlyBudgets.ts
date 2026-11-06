@@ -5,6 +5,7 @@
  */
 
 import type {
+    BonusMonthSummary,
     MonthlyBudget,
     MonthlyBudgetCategoryDetail,
     MonthlyBudgetDetail,
@@ -20,6 +21,26 @@ function sumOptional(
     const values = budgets.map(pick);
     if (values.some((v) => v === undefined)) return undefined;
     return round2(values.reduce<number>((s, v) => s + (v as number), 0));
+}
+
+/** Field-wise sum of member bonus summaries; undefined when no member has one. */
+function combineBonusSummaries(budgets: MonthlyBudgetDetail[]): BonusMonthSummary | undefined {
+    const summaries = budgets
+        .map((b) => b.bonusSummary)
+        .filter((s): s is BonusMonthSummary => Boolean(s));
+    if (summaries.length === 0) return undefined;
+    const source: BonusMonthSummary["source"] = summaries.some((s) => s.source === "events")
+        ? "events"
+        : summaries.some((s) => s.source === "legacy")
+          ? "legacy"
+          : "none";
+    return {
+        gross: round2(summaries.reduce((s, b) => s + b.gross, 0)),
+        cpf: round2(summaries.reduce((s, b) => s + b.cpf, 0)),
+        net: round2(summaries.reduce((s, b) => s + b.net, 0)),
+        count: summaries.reduce((s, b) => s + b.count, 0),
+        source,
+    };
 }
 
 export function combineMonthlyBudgets(
@@ -103,5 +124,6 @@ export function combineMonthlyBudgets(
         spendableRemaining: sumOptional(memberBudgets, (b) => b.spendableRemaining),
         uncategorizedRecurringSpent,
         uncategorizedRecurringItems,
+        bonusSummary: combineBonusSummaries(memberBudgets),
     };
 }

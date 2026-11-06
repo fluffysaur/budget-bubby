@@ -21,6 +21,8 @@ import type {
   CreditCardStatement,
   DailyCheckin,
   NotificationPreferences,
+  BonusEvent,
+  BonusSplitShare,
 } from '../types/finance';
 
 export const mockHousehold: Household = {
@@ -1174,6 +1176,10 @@ export interface MockSeedDataset {
   creditCardStatements: CreditCardStatement[];
   dailyCheckins: DailyCheckin[];
   notificationPreferences?: Record<string, NotificationPreferences>;
+  /** Bonus log entries; goal contributions are embedded per event. */
+  bonusEvents?: BonusEvent[];
+  /** Per-member default bonus split, keyed by member id. */
+  bonusSplitDefaults?: Record<string, BonusSplitShare[]>;
 }
 
 export function getDefaultNotificationPreferences(

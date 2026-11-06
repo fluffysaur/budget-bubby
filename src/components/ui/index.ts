@@ -3,6 +3,7 @@ export * from "./Badge";
 export * from "./Card";
 export * from "./Input";
 export * from "./Select";
+export * from "./Textarea";
 export * from "./SegmentedTabs";
 export * from "./CurrencyText";
 export * from "./PageHeader";

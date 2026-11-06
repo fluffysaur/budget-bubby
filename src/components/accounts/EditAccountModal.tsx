@@ -115,7 +115,7 @@ export function EditAccountModal({
                                 required
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-base sm:text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             />
                         </div>
 
@@ -132,7 +132,7 @@ export function EditAccountModal({
                                 value={institution}
                                 onChange={(e) => setInstitution(e.target.value)}
                                 placeholder="e.g. DBS, OCBC"
-                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-base sm:text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             />
                         </div>
                     </div>
@@ -211,7 +211,7 @@ export function EditAccountModal({
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="e.g. Salary credited here"
-                            className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
                 </ModalBody>
