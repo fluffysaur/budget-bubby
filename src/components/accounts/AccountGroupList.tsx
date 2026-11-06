@@ -344,7 +344,7 @@ export function AccountGroupList({
                                 if (e.key === 'Escape') setInlineEditingId(null);
                               }}
                               autoFocus
-                              className="w-28 rounded-lg border border-emerald-500 bg-white dark:bg-slate-800 px-2 py-1 text-right text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                              className="w-28 rounded-lg border border-emerald-500 bg-white dark:bg-slate-800 px-2 py-1 text-right text-base sm:text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
                             />
                             <button
                               type="button"

@@ -29,6 +29,8 @@ import { financeService } from "../../services/financeService";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
+import { Input } from "../ui/Input";
+import { CategoryModeToggle } from "./CategoryModeToggle";
 import { Alert } from "../ui/Alert";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import type {
@@ -82,6 +84,8 @@ export function ManageCategoriesModal({
     // Form fields
     const [name, setName] = useState<string>("");
     const [group, setGroup] = useState<CategoryGroup>("spendable");
+    // Until the user picks a mode, a new category follows its name (e.g. Allowance -> Set aside).
+    const [groupTouched, setGroupTouched] = useState(false);
     const [color, setColor] = useState<string>("#F59E0B");
     const [icon, setIcon] = useState<string>("tag");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -358,6 +362,7 @@ export function ManageCategoriesModal({
     const handleOpenCreate = () => {
         setName("");
         setGroup("spendable");
+        setGroupTouched(false);
         setColor(PRESET_COLORS[0]);
         setIcon("tag");
         setErrorMessage(null);
@@ -367,6 +372,7 @@ export function ManageCategoriesModal({
     const handleOpenEdit = (cat: Category) => {
         setEditingCategory(cat);
         setName(cat.name);
+        setGroupTouched(true);
         setGroup(
             cat.group ||
                 (isSpendableCategory(cat.name) ? "spendable" : "allocation"),
@@ -376,6 +382,12 @@ export function ManageCategoriesModal({
         setErrorMessage(null);
         setFormMode("edit");
     };
+
+    const effectiveGroup: CategoryGroup = groupTouched
+        ? group
+        : isSpendableCategory(name)
+          ? "spendable"
+          : "allocation";
 
     const handleSubmitForm = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -393,14 +405,14 @@ export function ManageCategoriesModal({
                     name: name.trim(),
                     color,
                     icon,
-                    group,
+                    group: effectiveGroup,
                 });
             } else if (formMode === "edit" && editingCategory) {
                 await financeService.updateCategory(editingCategory.id, {
                     name: name.trim(),
                     color,
                     icon,
-                    group,
+                    group: effectiveGroup,
                 });
             }
 
@@ -474,7 +486,7 @@ export function ManageCategoriesModal({
                 <ModalHeader
                     id={titleId}
                     title="Manage Categories"
-                    subtitle="Spendable caps & wealth allocations"
+                    subtitle="Caps & set-asides"
                     icon={<Tag className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
@@ -659,7 +671,7 @@ export function ManageCategoriesModal({
                                                                         .value,
                                                                 )
                                                             }
-                                                            className="w-full pl-7 pr-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden font-mono"
+                                                            className="w-full pl-7 pr-2 py-1 text-right text-base sm:text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden font-mono"
                                                             title="Set fixed monthly dollar amount (auto-converts to %)"
                                                         />
                                                     </div>
@@ -691,7 +703,7 @@ export function ManageCategoriesModal({
                                                                     cat.id,
                                                                 )
                                                             }
-                                                            className="w-full pr-5 pl-2 py-1 text-right text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
+                                                            className="w-full pr-5 pl-2 py-1 text-right text-base sm:text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
                                                         />
                                                         <span className="absolute right-1.5 top-1.5 text-[11px] text-(--text-faint)">
                                                             %
@@ -763,70 +775,23 @@ export function ManageCategoriesModal({
                                     </div>
 
                                     {/* Category Name */}
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                            Category Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={name}
-                                            onChange={(e) =>
-                                                setName(e.target.value)
-                                            }
-                                            placeholder="e.g. Groceries, Gym, Rent"
-                                            className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                                        />
-                                    </div>
+                                    <Input
+                                        label="Category Name"
+                                        type="text"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="e.g. Groceries, Gym, Rent"
+                                    />
 
-                                    {/* Category Group */}
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                                            Classification Type
-                                        </label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setGroup("spendable")
-                                                }
-                                                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
-                                                    group === "spendable"
-                                                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                                                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-(--text-faint)"
-                                                }`}
-                                            >
-                                                <span className="block font-semibold">
-                                                    Spendable Category
-                                                </span>
-                                                <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
-                                                    Tracked with daily spending
-                                                    meters (Food, Transport,
-                                                    Lifestyle, Buffer)
-                                                </span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setGroup("allocation")
-                                                }
-                                                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left ${
-                                                    group === "allocation"
-                                                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300"
-                                                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-(--text-faint)"
-                                                }`}
-                                            >
-                                                <span className="block font-semibold">
-                                                    Wealth & Fixed Allocation
-                                                </span>
-                                                <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
-                                                    Transferred or saved off the
-                                                    top (Investments, Savings,
-                                                    Tithing)
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    {/* Category Mode */}
+                                    <CategoryModeToggle
+                                        value={effectiveGroup}
+                                        onChange={(g) => {
+                                            setGroup(g);
+                                            setGroupTouched(true);
+                                        }}
+                                    />
 
                                     {/* Color Presets */}
                                     <div>

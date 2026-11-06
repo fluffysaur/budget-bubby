@@ -212,7 +212,7 @@ export function ExpenseFilterBar({
                             placeholder="Search merchant, item, note..."
                             value={filter.search || ""}
                             onChange={handleSearchChange}
-                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-8 py-2 text-xs font-medium text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-8 py-2 text-base sm:text-xs font-medium text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                         {filter.search && (
                             <button
@@ -416,7 +416,7 @@ export function ExpenseFilterBar({
                                 type="month"
                                 value={filter.month || ""}
                                 onChange={handleMonthChange}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 pr-3.5 py-1.5 text-xs font-mono-num font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 pr-3.5 py-1.5 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                             />
                         </div>
                     </div>

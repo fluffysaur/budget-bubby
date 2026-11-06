@@ -178,7 +178,7 @@ export function BulkBalanceUpdateModal({
                                 type="date"
                                 value={snapshotDate}
                                 onChange={(e) => setSnapshotDate(e.target.value)}
-                                className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-xs font-mono-num font-medium text-(--text-ink)"
+                                className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-base sm:text-xs font-mono-num font-medium text-(--text-ink)"
                             />
                         </div>
 
@@ -282,7 +282,7 @@ export function BulkBalanceUpdateModal({
                                             onChange={(e) =>
                                                 handleBalanceChange(account.id, e.target.value)
                                             }
-                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-1.5 pl-8 pr-2.5 text-right text-sm font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-1.5 pl-8 pr-2.5 text-right text-base sm:text-sm font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         />
                                     </div>
                                 </div>

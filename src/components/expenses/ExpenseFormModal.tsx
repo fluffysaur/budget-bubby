@@ -808,7 +808,7 @@ export function ExpenseFormModal({
                                 handleItemTextChange(e.target.value)
                             }
                             required
-                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
@@ -906,7 +906,7 @@ export function ExpenseFormModal({
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
                                             required
-                                            className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                            className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                         />
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -916,7 +916,7 @@ export function ExpenseFormModal({
                                             aria-label="Expense Time"
                                             value={time}
                                             onChange={(e) => setTime(e.target.value)}
-                                            className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                            className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                         />
                                         <button
                                             type="button"
@@ -1073,7 +1073,7 @@ export function ExpenseFormModal({
                                                 setCurrencyCode(e.target.value);
                                                 setCustomExchangeRate(undefined);
                                             }}
-                                            className="appearance-none rounded-full bg-(--bg-canvas) text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                            className="appearance-none rounded-full bg-(--bg-canvas) text-base sm:text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         >
                                             {SUPPORTED_CURRENCIES.map((c) => (
                                                 <option key={c.code} value={c.code}>
@@ -1111,7 +1111,7 @@ export function ExpenseFormModal({
                                     placeholder="Optional notes or context..."
                                     value={remarks}
                                     onChange={(e) => setRemarks(e.target.value)}
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
 
@@ -1164,7 +1164,7 @@ export function ExpenseFormModal({
                                                     handleAddTag(newTagInput);
                                                 }
                                             }}
-                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-8 pr-3 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-8 pr-3 py-1.5 text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         />
                                     </div>
                                     <button
