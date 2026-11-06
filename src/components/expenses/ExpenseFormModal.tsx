@@ -14,7 +14,7 @@
  * "More" opens automatically when any of its non-default fields is set.
  */
 
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react";
 import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
@@ -32,6 +32,7 @@ import {
     SUPPORTED_CURRENCIES,
     buildExpenseFxFields,
     convertToSGD,
+    formatForeignAmount,
 } from "../../lib/currencyConverter";
 import { FxRateField } from "./FxRateField";
 import type {
@@ -41,6 +42,7 @@ import type {
     CreateExpenseInput,
     UpdateExpenseInput,
     SavingsGoal,
+    InboxItem,
 } from "../../types/finance";
 import {
     AnimatedModal,
@@ -54,6 +56,15 @@ import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { CurrencyText } from "../ui/CurrencyText";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
+import { guessCategoryId } from "../../lib/categoryGuess";
+import { getStoredLastSplit, storeLastSplit } from "../../lib/lastSplit";
+import { afterInboxConfirmed } from "../../lib/inbox/inboxConfirm";
+import {
+    inboxExpenseEventDetail,
+    inboxItemFormValues,
+} from "../../lib/capture/inboxExpense";
+import { normalizeMerchant } from "../../lib/capture/merchant";
+import { TruncatedText } from "../ui/TruncatedText";
 
 export interface ExpenseFormModalProps {
     isOpen: boolean;
@@ -62,6 +73,10 @@ export interface ExpenseFormModalProps {
     expense?: Expense | null;
     /** Add mode: open with Goal funding on and this goal picked. */
     initialGoalId?: string;
+    /** Add mode: prefill fields (deep link, inbox item). */
+    initialValues?: ExpenseFormInitialValues;
+    /** Add mode: saving confirms this inbox item instead of adding. */
+    inboxItemId?: string;
     onExpenseAdded?: (expense: Expense) => void;
     onExpenseUpdated?: (expense: Expense) => void;
     defaultPayerId?: string;
@@ -71,124 +86,28 @@ export interface ExpenseFormModalProps {
     goals?: SavingsGoal[];
 }
 
+export type ExpenseFormInitialValues = Partial<
+    Pick<
+        CreateExpenseInput,
+        | "amount"
+        | "item"
+        | "date"
+        | "time"
+        | "original_currency"
+        | "original_amount"
+        | "remarks"
+        | "category_id"
+        | "payer_id"
+        | "is_shared"
+    >
+>;
+
 type FundingSource = "budget" | "goal";
 
 // Goal chips shown before "+ More"
 const GOAL_CHIP_LIMIT = 4;
 
 const GLOBAL_RECENT_TAGS_STORAGE_KEY = "budget_bubby_recent_tags_global_v2";
-const LAST_SPLIT_STORAGE_KEY = "budget_bubby_last_split_v1";
-
-function getStoredLastSplit(): boolean | undefined {
-    try {
-        const raw = window.localStorage.getItem(LAST_SPLIT_STORAGE_KEY);
-        if (raw === "shared") return true;
-        if (raw === "personal") return false;
-    } catch {
-        // Ignore localStorage errors
-    }
-    return undefined;
-}
-
-function storeLastSplit(isShared: boolean) {
-    try {
-        window.localStorage.setItem(LAST_SPLIT_STORAGE_KEY, isShared ? "shared" : "personal");
-    } catch {
-        // Ignore localStorage errors
-    }
-}
-
-// Category keyword matching rules for smart auto-detection
-const KEYWORD_CATEGORY_MAP: { keywords: string[]; categoryKey: string }[] = [
-    {
-        keywords: [
-            "grab",
-            "gojek",
-            "mrt",
-            "bus",
-            "taxi",
-            "comfortdelgro",
-            "parking",
-            "petrol",
-            "ez-link",
-            "ezlink",
-            "simplygo",
-            "transit",
-            "fuel",
-            "tada",
-        ],
-        categoryKey: "transport",
-    },
-    {
-        keywords: [
-            "lunch",
-            "dinner",
-            "breakfast",
-            "coffee",
-            "cafe",
-            "hawker",
-            "food",
-            "groceries",
-            "fairprice",
-            "cold storage",
-            "sheng siong",
-            "shengsiong",
-            "breadtalk",
-            "toast box",
-            "yakun",
-            "starbucks",
-            "kfc",
-            "mcdonalds",
-            "macdonalds",
-            "bubble tea",
-            "koi",
-            "liho",
-            "snack",
-            "restaurant",
-            "subway",
-        ],
-        categoryKey: "food",
-    },
-    {
-        keywords: [
-            "shopping",
-            "movie",
-            "cinema",
-            "gym",
-            "netflix",
-            "spotify",
-            "date night",
-            "personal care",
-            "gifts",
-            "uniqlo",
-            "zara",
-            "shopee",
-            "lazada",
-            "entertainment",
-            "games",
-            "haircut",
-        ],
-        categoryKey: "lifestyle",
-    },
-    {
-        keywords: [
-            "clinic",
-            "pharmacy",
-            "doctor",
-            "hospital",
-            "panadol",
-            "watsons",
-            "guardian",
-            "utilities",
-            "repair",
-            "sp services",
-            "maintenance",
-            "dentist",
-        ],
-        categoryKey: "buffer",
-    },
-];
-
 function getStoredRecentTags(): string[] {
     if (typeof window === "undefined" || !window.localStorage) return [];
     try {
@@ -236,6 +155,8 @@ export function ExpenseFormModal({
     onClose,
     expense,
     initialGoalId,
+    initialValues,
+    inboxItemId,
     onExpenseAdded,
     onExpenseUpdated,
     defaultPayerId,
@@ -330,6 +251,28 @@ export function ExpenseFormModal({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    // Inbox: the item this save confirms, and newest items offered as chips
+    const [linkedInboxId, setLinkedInboxId] = useState<string | null>(null);
+    const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+    const [showInboxChips, setShowInboxChips] = useState<boolean>(false);
+    const inboxChips = useMemo(() => inboxItems.slice(0, 3), [inboxItems]);
+    const wantsInboxChips = isOpen && !isEditMode && !inboxItemId;
+
+    // Newest inbox items, offered as "From Inbox" (household-wide)
+    useEffect(() => {
+        if (!wantsInboxChips) return;
+        let isMounted = true;
+        financeService
+            .getInboxItems("pending")
+            .then((res) => {
+                if (isMounted) setInboxItems(res.available ? res.items : []);
+            })
+            .catch(() => {});
+        return () => {
+            isMounted = false;
+        };
+    }, [wantsInboxChips]);
+
     // Fetch goals if not supplied in props
     useEffect(() => {
         if (propGoals) {
@@ -349,6 +292,36 @@ export function ExpenseFormModal({
             isMounted = false;
         };
     }, [propGoals, isOpen]);
+
+    // Applies prefill values on top of the add-mode defaults
+    const applyPrefill = useCallback(
+        (values: ExpenseFormInitialValues) => {
+            const foreign =
+                values.original_currency && values.original_currency !== "SGD";
+            if (foreign) {
+                setCurrencyCode(values.original_currency as string);
+                setAmount(values.original_amount ?? values.amount ?? 0);
+            } else if (values.amount) {
+                setCurrencyCode("SGD");
+                setAmount(values.amount);
+            }
+            if (values.item) {
+                setItem(values.item);
+                const guessed = guessCategoryId(values.item, categories);
+                if (guessed) setCategoryId(guessed);
+            }
+            if (values.category_id) {
+                setCategoryId(values.category_id);
+                setCategoryManuallySelected(true);
+            }
+            if (values.payer_id) setPayerId(values.payer_id);
+            if (values.is_shared !== undefined) setIsShared(values.is_shared);
+            if (values.date) setDate(values.date);
+            if (values.time) setTime(values.time);
+            if (values.remarks) setRemarks(values.remarks);
+        },
+        [categories],
+    );
 
     // Reset form and sync recent tags on open
     useEffect(() => {
@@ -425,11 +398,18 @@ export function ExpenseFormModal({
             setRecentTagsList(getStoredRecentTags());
             setErrorMessage(null);
             setIsSubmitting(false);
+
+            setLinkedInboxId(inboxItemId ?? null);
+            setShowInboxChips(false);
+            if (initialValues) applyPrefill(initialValues);
         }
     }, [
         isOpen,
         expense,
         initialGoalId,
+        initialValues,
+        inboxItemId,
+        applyPrefill,
         defaultPayerId,
         defaultShared,
         activeMember,
@@ -457,18 +437,8 @@ export function ExpenseFormModal({
     const handleItemTextChange = (text: string) => {
         setItem(text);
         if (!categoryManuallySelected) {
-            const lower = text.toLowerCase();
-            for (const map of KEYWORD_CATEGORY_MAP) {
-                if (map.keywords.some((kw) => lower.includes(kw))) {
-                    const match = categories.find((c) =>
-                        c.name.toLowerCase().includes(map.categoryKey),
-                    );
-                    if (match) {
-                        setCategoryId(match.id);
-                        break;
-                    }
-                }
-            }
+            const guessed = guessCategoryId(text, categories);
+            if (guessed) setCategoryId(guessed);
         }
     };
 
@@ -662,6 +632,29 @@ export function ExpenseFormModal({
                 tags: tags.length > 0 ? tags : undefined,
             };
 
+            if (linkedInboxId) {
+                const linked = inboxItems.find((i) => i.id === linkedInboxId);
+                const expenseId = await financeService.confirmInboxItem(
+                    linkedInboxId,
+                    input,
+                );
+                if (tags.length > 0) storeRecentTags(tags);
+                await afterInboxConfirmed({
+                    item: {
+                        id: linkedInboxId,
+                        merchant_key: linked?.merchant_key ?? normalizeMerchant(input.item),
+                        suggested_category_id: linked?.suggested_category_id ?? null,
+                    },
+                    expenseId,
+                    input,
+                    via: "edit",
+                    guessedCategoryId: linked?.suggested_category_id ?? null,
+                });
+                onExpenseAdded?.(inboxExpenseEventDetail(expenseId, input));
+                onClose();
+                return;
+            }
+
             const created = await financeService.addExpense(input);
 
             storeLastSplit(isShared);
@@ -718,6 +711,62 @@ export function ExpenseFormModal({
                     {/* Error Alert */}
                     {errorMessage && (
                         <Alert variant="danger">{errorMessage}</Alert>
+                    )}
+
+                    {/* From Inbox: confirm a captured purchase instead of adding a duplicate */}
+                    {!isEditMode && !inboxItemId && inboxChips.length > 0 && (
+                        <div>
+                            <button
+                                type="button"
+                                aria-expanded={showInboxChips || Boolean(linkedInboxId)}
+                                onClick={() => setShowInboxChips((prev) => !prev)}
+                                className="flex items-center gap-1 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                            >
+                                {`From Inbox (${inboxItems.length})`}
+                                {showInboxChips || linkedInboxId ? (
+                                    <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                ) : (
+                                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                )}
+                            </button>
+                            {(showInboxChips || linkedInboxId) && (
+                            <div className="flex flex-wrap gap-1.5" aria-label="From Inbox">
+                                {inboxChips.map((chip) => {
+                                    const isLinked = chip.id === linkedInboxId;
+                                    return (
+                                        <button
+                                            key={chip.id}
+                                            type="button"
+                                            aria-pressed={isLinked}
+                                            onClick={() => {
+                                                if (isLinked) {
+                                                    setLinkedInboxId(null);
+                                                    return;
+                                                }
+                                                setLinkedInboxId(chip.id);
+                                                applyPrefill(
+                                                    inboxItemFormValues(chip, {
+                                                        categoryId: chip.suggested_category_id ?? null,
+                                                        isShared: null,
+                                                    }),
+                                                );
+                                            }}
+                                            className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+                                                isLinked
+                                                    ? "bg-(--pastel-mint-light) shadow-(--shadow-cute-sm)"
+                                                    : "bg-(--bg-card) hover:bg-(--bg-cream)"
+                                            }`}
+                                        >
+                                            <TruncatedText text={chip.merchant} className="min-w-0 max-w-32" />
+                                            <span className="shrink-0 font-mono-num text-(--text-muted)">
+                                                {formatForeignAmount(chip.amount, chip.currency)}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            )}
+                        </div>
                     )}
 
                     {/* Amount Input Header with Inline Currency Selector */}
@@ -912,7 +961,7 @@ export function ExpenseFormModal({
                                 handleItemTextChange(e.target.value)
                             }
                             required
-                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
@@ -1010,7 +1059,7 @@ export function ExpenseFormModal({
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
                                             required
-                                            className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                            className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                         />
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -1020,7 +1069,7 @@ export function ExpenseFormModal({
                                             aria-label="Expense Time"
                                             value={time}
                                             onChange={(e) => setTime(e.target.value)}
-                                            className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
+                                            className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                         />
                                         <button
                                             type="button"
@@ -1177,7 +1226,7 @@ export function ExpenseFormModal({
                                                 setCurrencyCode(e.target.value);
                                                 setCustomExchangeRate(undefined);
                                             }}
-                                            className="appearance-none rounded-full bg-(--bg-canvas) text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                            className="appearance-none rounded-full bg-(--bg-canvas) text-base sm:text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         >
                                             {SUPPORTED_CURRENCIES.map((c) => (
                                                 <option key={c.code} value={c.code}>
@@ -1215,7 +1264,7 @@ export function ExpenseFormModal({
                                     placeholder="Optional notes or context..."
                                     value={remarks}
                                     onChange={(e) => setRemarks(e.target.value)}
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
 
@@ -1268,7 +1317,7 @@ export function ExpenseFormModal({
                                                     handleAddTag(newTagInput);
                                                 }
                                             }}
-                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-8 pr-3 py-1.5 text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-8 pr-3 py-1.5 text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         />
                                     </div>
                                     <button
@@ -1331,7 +1380,13 @@ export function ExpenseFormModal({
                             )
                         }
                     >
-                        {isSubmitting ? "Saving..." : isEditMode ? "Save" : "Add"}
+                        {isSubmitting
+                            ? "Saving..."
+                            : isEditMode
+                              ? "Save"
+                              : linkedInboxId
+                                ? "Confirm"
+                                : "Add"}
                     </Button>
                 </ModalFooter>
             </form>

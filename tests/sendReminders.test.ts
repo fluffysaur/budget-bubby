@@ -143,6 +143,8 @@ describe("push selection", () => {
 describe("runSendReminders", () => {
     beforeEach(() => {
         localStorage.clear();
+        // Empty demo inbox, so the daily check-in nudge is the one that fires
+        mockFinanceService.inbox.setItems([]);
     });
 
     it("converts instants to Singapore wall-clock time", () => {

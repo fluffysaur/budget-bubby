@@ -2,9 +2,9 @@ import { defineConfig } from 'vite';
 import path from 'path';
 
 /**
- * Bundles the server-side reminder sender for the send-reminders Edge
- * Function: `npm run build:functions` writes
- * supabase/functions/_shared/dist/send-reminders.js (gitignored).
+ * Bundles the server-side code for the Edge Functions:
+ * `npm run build:functions` writes supabase/functions/_shared/dist/
+ * send-reminders.js and capture-expense.js (gitignored).
  */
 export default defineConfig({
   // Expose no env vars: the app's browser config must not be baked into the
@@ -23,9 +23,12 @@ export default defineConfig({
     minify: false,
     sourcemap: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/server/sendReminders.ts'),
+      entry: {
+        'send-reminders': path.resolve(__dirname, 'src/server/sendReminders.ts'),
+        'capture-expense': path.resolve(__dirname, 'src/server/captureExpense.ts'),
+      },
       formats: ['es'],
-      fileName: () => 'send-reminders.js',
+      fileName: (_format, name) => `${name}.js`,
     },
     rollupOptions: {
       // Resolved by the function's deno.json import map

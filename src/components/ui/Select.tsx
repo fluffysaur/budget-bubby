@@ -39,8 +39,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
         const sizeClasses =
             sizeVariant === "sm"
-                ? "px-3 py-2 text-xs pr-9"
-                : "px-3.5 py-2.5 text-sm pr-10";
+                ? "px-3 py-2 text-base sm:text-xs pr-9"
+                : "px-3.5 py-2.5 text-base sm:text-sm pr-10";
 
         return (
             <div className={`w-full min-w-0 ${label ? "space-y-1.5" : ""} ${containerClassName}`}>

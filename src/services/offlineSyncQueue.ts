@@ -16,18 +16,22 @@ import type {
     UpdateExpenseInput,
     DailyCheckin,
     CheckinType,
+    InboxResolveStatus,
 } from "../types/finance";
 import { isSupabaseConfigured } from "./supabaseClient";
 import { mockFinanceService } from "./mockFinanceService";
 import { supabaseFinanceService } from "./supabaseFinanceService";
 import type { FinanceService } from "./financeService";
+import { PartialBulkAddError } from "./bulkAddError";
 
 export type MutationType =
     | "addExpense"
     | "updateExpense"
     | "deleteExpense"
     | "bulkAddExpenses"
-    | "recordDailyCheckin";
+    | "recordDailyCheckin"
+    | "confirmInboxItem"
+    | "resolveInboxItem";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface QueuedMutation<T = any> {
@@ -301,6 +305,9 @@ export async function deleteExpense(id: string): Promise<void> {
 export async function bulkAddExpenses(
     expenses: CreateExpenseInput[],
 ): Promise<Expense[]> {
+    // Rows the backend already saved before a mid-batch failure
+    let alreadySaved: Expense[] = [];
+
     if (isOnline()) {
         try {
             const backend = getBackendService();
@@ -310,15 +317,20 @@ export async function bulkAddExpenses(
                 "Network error on bulkAddExpenses, queueing offline:",
                 err,
             );
+            if (err instanceof PartialBulkAddError) {
+                alreadySaved = err.created;
+            }
         }
     }
 
-    const optimistics = await mockFinanceService.bulkAddExpenses(expenses);
+    // Queue only the rows that were not saved, so replay cannot duplicate them
+    const remaining = expenses.slice(alreadySaved.length);
+    const optimistics = await mockFinanceService.bulkAddExpenses(remaining);
     enqueueMutation("bulkAddExpenses", {
-        expenses,
+        expenses: remaining,
         optimisticIds: optimistics.map((o) => o.id),
     });
-    return optimistics;
+    return [...alreadySaved, ...optimistics];
 }
 
 export async function recordDailyCheckin(
@@ -345,6 +357,52 @@ export async function recordDailyCheckin(
     );
     enqueueMutation("recordDailyCheckin", { memberId, date, type });
     return optimistic;
+}
+
+/** Fetch failures, as opposed to the server rejecting the request. */
+function isNetworkError(err: unknown): boolean {
+    if (err instanceof TypeError) return true;
+    const message = err instanceof Error ? err.message : String(err);
+    return /failed to fetch|network|load failed|offline/i.test(message);
+}
+
+/** Expense id returned while an inbox confirm waits in the outbox. */
+export const QUEUED_INBOX_EXPENSE_PREFIX = "queued-inbox-";
+
+/**
+ * Inbox confirm. Queued only when offline or the request never reached the
+ * server; replay is safe because the RPC returns the existing expense id
+ * for an already-confirmed item.
+ */
+export async function confirmInboxItem(
+    itemId: string,
+    expense: CreateExpenseInput,
+): Promise<string> {
+    if (isOnline()) {
+        try {
+            return await getBackendService().confirmInboxItem(itemId, expense);
+        } catch (err) {
+            if (!isNetworkError(err)) throw err;
+            console.warn("Network error on confirmInboxItem, queueing offline:", err);
+        }
+    }
+    enqueueMutation("confirmInboxItem", { itemId, expense });
+    return `${QUEUED_INBOX_EXPENSE_PREFIX}${itemId}`;
+}
+
+export async function resolveInboxItem(
+    itemId: string,
+    status: InboxResolveStatus,
+): Promise<void> {
+    if (isOnline()) {
+        try {
+            return await getBackendService().resolveInboxItem(itemId, status);
+        } catch (err) {
+            if (!isNetworkError(err)) throw err;
+            console.warn("Network error on resolveInboxItem, queueing offline:", err);
+        }
+    }
+    enqueueMutation("resolveInboxItem", { itemId, status });
 }
 
 // ---------------------------------------------------------------------------
@@ -425,6 +483,17 @@ export async function flushOutbox(
                     }
                     break;
                 }
+                case "confirmInboxItem": {
+                    // Not applied optimistically, so replay on any backend
+                    const { itemId, expense } = payload;
+                    await target.confirmInboxItem(itemId, expense);
+                    break;
+                }
+                case "resolveInboxItem": {
+                    const { itemId, status } = payload;
+                    await target.resolveInboxItem(itemId, status);
+                    break;
+                }
             }
 
             syncedIds.add(mutation.id);
@@ -432,6 +501,20 @@ export async function flushOutbox(
         } catch (err) {
             console.error(`Failed to replay mutation ${mutation.id}:`, err);
             errors++;
+            if (
+                err instanceof PartialBulkAddError &&
+                mutation.type === "bulkAddExpenses"
+            ) {
+                // Keep only the rows that were not saved, so the retry cannot duplicate them
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const payload = mutation.payload as any;
+                const items: CreateExpenseInput[] =
+                    payload?.expenses || payload;
+                mutation.payload = {
+                    ...(Array.isArray(payload) ? {} : payload),
+                    expenses: items.slice(err.created.length),
+                };
+            }
             mutation.retryCount = (mutation.retryCount || 0) + 1;
             mutation.lastError =
                 err instanceof Error ? err.message : String(err);
@@ -473,6 +556,8 @@ export const offlineSyncQueue = {
     deleteExpense,
     bulkAddExpenses,
     recordDailyCheckin,
+    confirmInboxItem,
+    resolveInboxItem,
 };
 
 export default offlineSyncQueue;

@@ -23,6 +23,7 @@ import { mockMembers } from "../data/mockSeedData";
 import { isSpendableCategory } from "../lib/financialFormulas";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
+import { InboxHomeCard } from "../components/inbox/InboxHomeCard";
 import { CurrencyText } from "../components/ui/CurrencyText";
 import { BubbyGreeting } from "../components/bubby/BubbyGreeting";
 import { QuestCard } from "../components/dashboard/QuestCard";
@@ -139,6 +140,9 @@ export function DashboardPage({
                         categories={monthlyBudget?.categories || []}
                         onNavigateCategory={() => onNavigateTab?.("budget")}
                     />
+
+                    {/* Unsorted captures */}
+                    <InboxHomeCard />
 
                     {/* Left to Spend hero */}
                     <Card

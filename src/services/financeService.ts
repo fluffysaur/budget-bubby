@@ -37,14 +37,21 @@ import type {
   NotificationLogEntry,
   NotificationLogRef,
   PushSubscriptionInput,
+  BonusEvent,
+  BonusEventsResult,
+  BonusSplitShare,
+  SaveBonusEventInput,
 } from '../types/finance';
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
 import { supabaseFinanceService } from './supabaseFinanceService';
 import { offlineSyncQueue } from './offlineSyncQueue';
 import { queryClient } from '../lib/queryClient';
+import type { InboxService } from './inbox/inboxService';
+import { emitInboxEvent, type InboxEventMap } from '../lib/inbox/inboxEvents';
+import { isDayLogged } from '../lib/logging/dayLogged';
 
-export interface FinanceService {
+export interface FinanceService extends InboxService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
   getAccounts(perspective: Perspective): Promise<Account[]>;
   createAccount(input: CreateAccountInput): Promise<Account>;
@@ -113,6 +120,14 @@ export interface FinanceService {
   // Push Subscriptions (one per device)
   savePushSubscription(memberId: string, subscription: PushSubscriptionInput): Promise<void>;
   deletePushSubscription(endpoint: string): Promise<void>;
+  // Bonus Log
+  /** `available: false` when the bonus tables are missing (migration not applied). */
+  getBonusEvents(): Promise<BonusEventsResult>;
+  saveBonusEvent(input: SaveBonusEventInput): Promise<BonusEvent>;
+  deleteBonusEvent(id: string): Promise<void>;
+  /** The member's saved split, or the seeded default when none or unavailable. */
+  getBonusSplitDefault(memberId: string): Promise<BonusSplitShare[]>;
+  saveBonusSplitDefault(memberId: string, split: BonusSplitShare[]): Promise<void>;
 }
 
 export function isDemoModeActive(): boolean {
@@ -130,6 +145,46 @@ function getActiveService(): FinanceService {
     return mockFinanceService;
   }
   return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
+}
+
+/** True when the cached daily check-ins already have this member and date. */
+function isCheckinCached(memberId: string, date: string): boolean {
+  try {
+    return queryClient
+      .getQueriesData<DailyCheckin[]>({ queryKey: ['finance', 'daily-checkins'] })
+      .some(([, data]) => Array.isArray(data) && isDayLogged(data, memberId, date));
+  } catch {
+    return false;
+  }
+}
+
+/** Runs `save`, then emits day:logged for each (member, date) it logged. */
+async function withDayLogged<T>(
+  entries: { memberId: string; date: string }[],
+  source: InboxEventMap['day:logged']['source'],
+  save: () => Promise<T>
+): Promise<T> {
+  const seen = new Set<string>();
+  const unique = entries.filter((e) => {
+    const key = `${e.memberId}|${e.date}`;
+    if (!e.memberId || !e.date || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const first = unique.map((e) => !isCheckinCached(e.memberId, e.date));
+  const res = await save();
+  unique.forEach((e, i) =>
+    emitInboxEvent('day:logged', { ...e, source, firstForDate: first[i] })
+  );
+  return res;
+}
+
+function invalidateInboxCache() {
+  try {
+    queryClient.invalidateQueries({ queryKey: ['finance', 'inbox'] });
+  } catch {
+    // In restricted test environments without QueryClient mounted, fail silently
+  }
 }
 
 function invalidateFinanceCache() {
@@ -213,12 +268,14 @@ export const financeService: FinanceService = {
     }
   },
   addExpense: async (expense) => {
-    let res: Expense;
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().addExpense(expense);
-    } else {
-      res = await offlineSyncQueue.addExpense(expense);
-    }
+    const res = await withDayLogged(
+      [{ memberId: expense.payer_id, date: expense.date }],
+      'expense',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().addExpense(expense)
+          : offlineSyncQueue.addExpense(expense)
+    );
     invalidateFinanceCache();
     return res;
   },
@@ -233,12 +290,14 @@ export const financeService: FinanceService = {
     return res;
   },
   bulkAddExpenses: async (expenses) => {
-    let res: Expense[];
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().bulkAddExpenses(expenses);
-    } else {
-      res = await offlineSyncQueue.bulkAddExpenses(expenses);
-    }
+    const res = await withDayLogged(
+      expenses.map((e) => ({ memberId: e.payer_id, date: e.date })),
+      'expense',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().bulkAddExpenses(expenses)
+          : offlineSyncQueue.bulkAddExpenses(expenses)
+    );
     invalidateFinanceCache();
     return res;
   },
@@ -305,12 +364,14 @@ export const financeService: FinanceService = {
   // Daily Check-ins
   getDailyCheckins: (memberId) => getActiveService().getDailyCheckins(memberId),
   recordDailyCheckin: async (memberId, date, type) => {
-    let res: DailyCheckin;
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().recordDailyCheckin(memberId, date, type);
-    } else {
-      res = await offlineSyncQueue.recordDailyCheckin(memberId, date, type);
-    }
+    const res = await withDayLogged(
+      [{ memberId, date }],
+      type === 'no_spend' ? 'no_spend' : 'expense',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().recordDailyCheckin(memberId, date, type)
+          : offlineSyncQueue.recordDailyCheckin(memberId, date, type)
+    );
     invalidateFinanceCache();
     return res;
   },
@@ -333,6 +394,66 @@ export const financeService: FinanceService = {
   savePushSubscription: (memberId, subscription) =>
     getActiveService().savePushSubscription(memberId, subscription),
   deletePushSubscription: (endpoint) => getActiveService().deletePushSubscription(endpoint),
+  // Capture Inbox
+  getInboxItems: (status) => getActiveService().getInboxItems(status),
+  getInboxSummary: (memberId) => getActiveService().getInboxSummary(memberId),
+  confirmInboxItem: async (itemId, expense) => {
+    // The RPC checks in the payer on the purchase date
+    const res = await withDayLogged(
+      [{ memberId: expense.payer_id, date: expense.date }],
+      'inbox',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().confirmInboxItem(itemId, expense)
+          : offlineSyncQueue.confirmInboxItem(itemId, expense)
+    );
+    invalidateFinanceCache();
+    return res;
+  },
+  resolveInboxItem: async (itemId, status) => {
+    if (offlineSyncQueue.isReplaying()) {
+      await getActiveService().resolveInboxItem(itemId, status);
+    } else {
+      await offlineSyncQueue.resolveInboxItem(itemId, status);
+    }
+    invalidateInboxCache();
+  },
+  getMerchantRules: () => getActiveService().getMerchantRules(),
+  upsertMerchantRule: async (rule) => {
+    const res = await getActiveService().upsertMerchantRule(rule);
+    invalidateInboxCache();
+    return res;
+  },
+  deleteMerchantRule: async (id) => {
+    await getActiveService().deleteMerchantRule(id);
+    invalidateInboxCache();
+  },
+  listCaptureTokens: (memberId) => getActiveService().listCaptureTokens(memberId),
+  createCaptureToken: async (label, memberId) => {
+    const res = await getActiveService().createCaptureToken(label, memberId);
+    invalidateInboxCache();
+    return res;
+  },
+  revokeCaptureToken: async (id) => {
+    await getActiveService().revokeCaptureToken(id);
+    invalidateInboxCache();
+  },
+  // Bonus Log (online only: an atomic RPC plus goal changes is not safe to replay blind)
+  getBonusEvents: () => getActiveService().getBonusEvents(),
+  saveBonusEvent: async (input) => {
+    const res = await getActiveService().saveBonusEvent(input);
+    invalidateFinanceCache();
+    return res;
+  },
+  deleteBonusEvent: async (id) => {
+    await getActiveService().deleteBonusEvent(id);
+    invalidateFinanceCache();
+  },
+  getBonusSplitDefault: (memberId) => getActiveService().getBonusSplitDefault(memberId),
+  saveBonusSplitDefault: async (memberId, split) => {
+    await getActiveService().saveBonusSplitDefault(memberId, split);
+    invalidateFinanceCache();
+  },
 };
 
 export default financeService;

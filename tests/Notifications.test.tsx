@@ -37,6 +37,7 @@ import {
 import { getDefaultNotificationPreferences } from '../src/data/mockSeedData';
 import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
 import { getTodayDateString, getCurrentMonth } from '../src/lib/dateUtils';
+import { mockFinanceService } from '../src/services/mockFinanceService';
 import type {
   AccountSnapshot,
   CreditCardStatement,
@@ -67,6 +68,8 @@ describe('Notifications Engine', () => {
     localStorage.clear();
     sessionStorage.clear();
     vi.restoreAllMocks();
+    // Empty demo inbox: a pending inbox replaces the daily check-in nudge
+    mockFinanceService.inbox.setItems([]);
   });
 
   afterEach(() => {

@@ -322,6 +322,11 @@ export function NotificationCenterPopover({
                 if (onNavigateTab) {
                     onNavigateTab("expenses");
                 }
+            } else if (reminder.actionType === "view_inbox") {
+                setIsOpen(false);
+                if (onNavigateTab) {
+                    onNavigateTab("inbox");
+                }
             } else if (reminder.actionType === "view_settlement") {
                 setIsOpen(false);
                 if (onNavigateTab) {

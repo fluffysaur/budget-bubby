@@ -389,7 +389,7 @@ export function SurplusSweepModal({
                                                                 e.target.value
                                                             )
                                                         }
-                                                        className="w-24 sm:w-28 rounded-lg border-2 border-(--border-ink) py-1 pl-7 pr-2 text-right text-xs sm:text-sm font-bold text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--accent-lilac)"
+                                                        className="w-24 sm:w-28 rounded-lg border-2 border-(--border-ink) py-1 pl-7 pr-2 text-right text-base sm:text-xs sm:text-sm font-bold text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--accent-lilac)"
                                                     />
                                                 </div>
                                             </div>

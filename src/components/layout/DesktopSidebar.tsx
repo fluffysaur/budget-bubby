@@ -9,6 +9,8 @@ import type { ComponentType } from "react";
 import { LayoutDashboard, Receipt, Landmark, Compass, Heart } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { BubbyIcon } from "../ui/BubbyIcon";
+import { Badge } from "../ui/Badge";
+import { formatBadgeCount } from "../../hooks/useInboxBadge";
 
 export interface NavItem {
     id: string;
@@ -48,10 +50,17 @@ const NAV_ITEMS: NavItem[] = [
 export interface DesktopSidebarProps {
     activeTab?: string;
     onSelectTab?: (tab: string) => void;
+    /** Inbox items to sort, shown on the Spend item. */
+    spendBadgeCount?: number;
     className?: string;
 }
 
-export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className = "" }: DesktopSidebarProps) {
+export function DesktopSidebar({
+    activeTab = "dashboard",
+    onSelectTab,
+    spendBadgeCount = 0,
+    className = "",
+}: DesktopSidebarProps) {
     const household = useOptionalHousehold();
     const members = household?.members || [];
     const subtitleText = members.length > 0 ? members.map((m) => m.display_name).join(" & ") : "Household Finance";
@@ -86,9 +95,14 @@ export function DesktopSidebar({ activeTab = "dashboard", onSelectTab, className
                         isActive ? "text-(--text-ink)" : "text-(--text-muted)"
                     }`}
                 />
-                <div className="flex flex-col text-left truncate">
+                <div className="flex min-w-0 flex-1 flex-col text-left truncate">
                     <span className="truncate">{item.label}</span>
                 </div>
+                {item.id === "spend" && spendBadgeCount > 0 && (
+                    <Badge variant="coral" size="sm" className="shrink-0">
+                        <span aria-label={`${spendBadgeCount} to sort`}>{formatBadgeCount(spendBadgeCount)}</span>
+                    </Badge>
+                )}
             </button>
         );
     };

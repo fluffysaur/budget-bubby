@@ -22,6 +22,8 @@ import type {
     CreditCard,
     CreditCardStatement,
     DailyCheckin,
+    BonusEventsResult,
+    BonusSplitShare,
 } from "../types/finance";
 
 export const queryKeys = {
@@ -44,7 +46,27 @@ export const queryKeys = {
         ["finance", "credit-card-statements", month ?? "all"] as const,
     dailyCheckins: (memberId?: string) =>
         ["finance", "daily-checkins", memberId ?? "all"] as const,
+    bonusEvents: ["finance", "bonus-events"] as const,
+    bonusSplitDefault: (memberId?: string) =>
+        ["finance", "bonus-split-default", memberId ?? "none"] as const,
 };
+
+/** Bonus log entries plus whether the bonus tables exist yet. */
+export function useBonusEventsQuery() {
+    return useQuery<BonusEventsResult>({
+        queryKey: queryKeys.bonusEvents,
+        queryFn: () => financeService.getBonusEvents(),
+    });
+}
+
+/** A member's default bonus split (seeded default when none is saved). */
+export function useBonusSplitDefaultQuery(memberId?: string) {
+    return useQuery<BonusSplitShare[]>({
+        queryKey: queryKeys.bonusSplitDefault(memberId),
+        queryFn: () => financeService.getBonusSplitDefault(memberId as string),
+        enabled: Boolean(memberId),
+    });
+}
 
 export function useHouseholdOverviewQuery() {
     return useQuery<HouseholdOverview>({

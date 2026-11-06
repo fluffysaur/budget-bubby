@@ -327,7 +327,7 @@ export function UpdateBalanceModal({
                                     onChange={(e) =>
                                         setDate(e.target.value)
                                     }
-                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                             <div>
@@ -345,7 +345,7 @@ export function UpdateBalanceModal({
                                         setSingleNotes(e.target.value)
                                     }
                                     placeholder="e.g. Salary credited"
-                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
@@ -398,7 +398,7 @@ export function UpdateBalanceModal({
                             placeholder="Search accounts..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                            className="w-full pl-8 pr-3 py-1.5 text-base sm:text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
@@ -431,7 +431,7 @@ export function UpdateBalanceModal({
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="px-2 py-1 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                            className="px-2 py-1 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                         />
                     </div>
                 </div>
@@ -561,7 +561,7 @@ export function UpdateBalanceModal({
                                                     }))
                                                 }
                                                 placeholder="0.00"
-                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-right text-xs font-bold font-mono-num transition-all focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) ${
+                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-right text-base sm:text-xs font-bold font-mono-num transition-all focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) ${
                                                     isModified
                                                         ? "border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
                                                         : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"

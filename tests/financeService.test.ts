@@ -183,7 +183,7 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       expect(budgetDetail.totalSpent).toBeGreaterThanOrEqual(0);
     });
 
-    it('updates monthly budget and recalculates after_deductions', async () => {
+    it('updates monthly budget, ignores bonus and recalculates after_deductions', async () => {
       const yijiaMember = mockMembers.find((m) => m.display_name === 'Yi Jia')!;
       const budgetDetail = await mockFinanceService.getMonthlyBudget('2026-09', yijiaMember.id);
 
@@ -198,9 +198,10 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
 
       const updatedDetail = await mockFinanceService.getMonthlyBudget('2026-09', yijiaMember.id);
       expect(updatedDetail.budget.gross_salary).toBe(7000.0);
-      expect(updatedDetail.budget.bonus).toBe(1000.0);
-      // after_deductions = 7000 - 1400 + 1000 - 120 - 400 = 6080
-      expect(updatedDetail.budget.after_deductions).toBe(6080.0);
+      // bonus is derived from the bonus log, never written back, and stays outside caps
+      expect(updatedDetail.budget.bonus).toBe(0);
+      // after_deductions = 7000 - 1400 - 120 - 400 = 5080
+      expect(updatedDetail.budget.after_deductions).toBe(5080.0);
     });
 
     it('updates base profile and allocations', async () => {

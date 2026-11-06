@@ -4,6 +4,7 @@ import { supabaseFinanceService } from '../src/services/supabaseFinanceService';
 import { mockFinanceService } from '../src/services/mockFinanceService';
 import * as supabaseClientModule from '../src/services/supabaseClient';
 import { ManageCategoriesModal } from '../src/components/categories/ManageCategoriesModal';
+import { financeService } from '../src/services/financeService';
 
 describe('Category Management & Auto-Seeding', () => {
   const validHouseholdId = '00000000-0000-0000-0000-000000000001';
@@ -227,6 +228,39 @@ describe('Category Management & Auto-Seeding', () => {
       expect(screen.getByText('Add New Category')).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/e\.g\. Groceries/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /create category/i })).toBeInTheDocument();
+    });
+
+    it('offers Track cap / Set aside and saves the selected group', async () => {
+      const addSpy = vi.spyOn(financeService, 'addCategory');
+      await act(async () => {
+        render(<ManageCategoriesModal isOpen={true} onClose={vi.fn()} />);
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Manage Categories')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /add category/i }));
+
+      const trackCap = screen.getByRole('tab', { name: 'Track cap' });
+      const setAside = screen.getByRole('tab', { name: 'Set aside' });
+      expect(trackCap).toHaveAttribute('aria-selected', 'true');
+
+      // A new category follows its name until the toggle is used.
+      fireEvent.change(screen.getByPlaceholderText(/e\.g\. Groceries/i), {
+        target: { value: 'Allowance' },
+      });
+      expect(setAside).toHaveAttribute('aria-selected', 'true');
+
+      // Explicit choice wins over the name hint.
+      fireEvent.click(trackCap);
+      expect(trackCap).toHaveAttribute('aria-selected', 'true');
+
+      fireEvent.click(screen.getByRole('button', { name: /create category/i }));
+      await waitFor(() => expect(addSpy).toHaveBeenCalled());
+      expect(addSpy.mock.calls[0][0]).toMatchObject({
+        name: 'Allowance',
+        group: 'spendable',
+      });
     });
   });
 });

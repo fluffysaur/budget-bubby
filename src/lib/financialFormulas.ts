@@ -8,6 +8,7 @@
  * 5. Savings Goal Pacing Indicator
  */
 
+import { BONUS_SPLIT_BUCKETS, DEFAULT_BONUS_SPLIT } from "./bonusFormulas";
 import type {
     Account,
     AccountSnapshot,
@@ -44,6 +45,7 @@ import {
     toSingaporeMonth,
 } from "./dateUtils";
 import { formatSGD } from "./currency";
+import { isValidUuid } from "./uuid";
 import { calculateRecurringCategorySpend } from "./recurringItems";
 
 /**
@@ -232,6 +234,11 @@ export function calculateGoalPacing(
     };
 }
 
+const looksLikeUuid = (value: string): boolean => isValidUuid(value);
+
+/** Name fragments that mark a category as a set-aside allocation when no explicit group is stored. */
+const ALLOCATION_NAME_HINTS = ["invest", "saving", "tith", "allowance"];
+
 /**
  * 7. Determines whether a category belongs to day-to-day Spendable Budget
  * ('Food', 'Lifestyle', 'Transport', 'Buffer') vs. Wealth/Fixed Allocations
@@ -248,15 +255,11 @@ export function isSpendableCategory(
         return isSpendableCategory(categoryOrName.name);
     }
 
+    // A bare UUID carries no name information; treat it as spendable.
+    if (looksLikeUuid(categoryOrName)) return true;
+
     const clean = categoryOrName.toLowerCase().trim();
-    if (
-        clean.includes("invest") ||
-        clean.includes("saving") ||
-        clean.includes("tith")
-    ) {
-        return false;
-    }
-    return true;
+    return !ALLOCATION_NAME_HINTS.some((hint) => clean.includes(hint));
 }
 
 /**
@@ -616,13 +619,14 @@ export function calculateBonusAllocation(
     const cpfDeduction = Math.round(safeGross * cpfRate * 100) / 100;
     const afterCpf = Math.round((safeGross - cpfDeduction) * 100) / 100;
 
-    const splits = customSplits || [
-        { name: "Tithing", percentage: 0.1, color: "#8B5CF6" },
-        { name: "Goals", percentage: 0.4, color: "#3B82F6" },
-        { name: "Savings", percentage: 0.1, color: "#6366F1" },
-        { name: "Investments", percentage: 0.2, color: "#10B981" },
-        { name: "Lifestyle", percentage: 0.2, color: "#EC4899" },
-    ];
+    const splits =
+        customSplits ||
+        BONUS_SPLIT_BUCKETS.map((bucket) => ({
+            name: bucket.label,
+            percentage:
+                DEFAULT_BONUS_SPLIT.find((s) => s.key === bucket.key)?.pct ?? 0,
+            color: bucket.color,
+        }));
 
     return {
         grossBonus: safeGross,

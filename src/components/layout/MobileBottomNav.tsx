@@ -10,11 +10,14 @@
 
 import { LayoutDashboard, Plus, Receipt, Landmark, Compass } from "lucide-react";
 import { feedback } from "../../lib/delight/feedback";
+import { formatBadgeCount } from "../../hooks/useInboxBadge";
 
 export interface MobileBottomNavProps {
     activeTab?: string;
     onSelectTab?: (tab: string) => void;
     onQuickAdd?: () => void;
+    /** Inbox items to sort, shown on the Spend tab. */
+    spendBadgeCount?: number;
     className?: string;
 }
 
@@ -22,6 +25,7 @@ export function MobileBottomNav({
     activeTab = "dashboard",
     onSelectTab,
     onQuickAdd,
+    spendBadgeCount = 0,
     className = "",
 }: MobileBottomNavProps) {
     const isSpendActive = activeTab === "spend" || activeTab === "expenses" || activeTab === "budget";
@@ -60,8 +64,8 @@ export function MobileBottomNav({
                 <button
                     type="button"
                     onClick={() => onSelectTab?.("spend")}
-                    aria-label="Spend"
-                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
+                    aria-label={spendBadgeCount > 0 ? `Spend, ${spendBadgeCount} to sort` : "Spend"}
+                    className={`relative flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
                         isSpendActive
                             ? "text-(--text-ink) font-black"
                             : "text-(--text-muted) hover:text-(--text-ink)"
@@ -76,6 +80,15 @@ export function MobileBottomNav({
                     >
                         <Receipt className="h-5 w-5" strokeWidth={2.5} />
                     </div>
+                    {spendBadgeCount > 0 && (
+                        <span
+                            aria-hidden="true"
+                            data-testid="spend-inbox-badge"
+                            className="absolute top-1.5 right-[calc(50%-1.375rem)] min-w-5 rounded-full border-2 border-(--border-ink) bg-(--pastel-coral-light) px-1 text-center text-[10px] font-black leading-4 text-(--text-ink)"
+                        >
+                            {formatBadgeCount(spendBadgeCount)}
+                        </span>
+                    )}
                     <span className="text-[10px] font-bold leading-tight">Spend</span>
                 </button>
 

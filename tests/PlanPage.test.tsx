@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { PlanPage } from '../src/pages/PlanPage';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
+import { financeService } from '../src/services/financeService';
+import { mockFinanceService } from '../src/services/mockFinanceService';
 
 describe('PlanPage Component', () => {
   it('renders all plan sub-tabs with no-scrollbar styling', () => {
@@ -27,7 +29,12 @@ describe('PlanPage Component', () => {
     expect(within(tabNav).getByRole('tab', { name: /Bonus/i })).toBeInTheDocument();
   });
 
-  it('switches sub-tabs when tab buttons are clicked', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    mockFinanceService.resetData();
+  });
+
+  it('switches sub-tabs when tab buttons are clicked', async () => {
     render(
       <MemoryRouter>
         <HouseholdProvider>
@@ -40,7 +47,23 @@ describe('PlanPage Component', () => {
     fireEvent.click(bonusTab);
 
     expect(bonusTab).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('No Bonuses')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /log bonus/i }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows the setup alert and legacy calculator when the bonus log is unavailable', async () => {
+    vi.spyOn(financeService, 'getBonusEvents').mockResolvedValue({ available: false, events: [] });
+    render(
+      <MemoryRouter initialEntries={['/plan?tab=bonus']}>
+        <HouseholdProvider>
+          <PlanPage />
+        </HouseholdProvider>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Bonus log not set up')).toBeInTheDocument();
     expect(screen.getByText(/Bonus Splitter/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /log bonus/i })).not.toBeInTheDocument();
   });
 
   it('lists Loans last and shows the Under Construction placeholder', () => {

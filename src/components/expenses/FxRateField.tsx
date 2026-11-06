@@ -18,7 +18,7 @@ import {
 import { MONTH_NAMES_SHORT } from "../../lib/dateUtils";
 
 const INPUT_CLASS =
-    "rounded-lg border border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-xs font-semibold text-center text-(--text-ink)";
+    "rounded-lg border border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-base sm:text-xs font-semibold text-center text-(--text-ink)";
 
 interface FxRateInputProps {
     currencyCode: string;
@@ -51,7 +51,7 @@ export function FxRateInput({
                     if (val > 0) onCustomRateChange(roundRate(val));
                 }}
                 onBlur={() => setDraft(null)}
-                className={`w-20 ${INPUT_CLASS}`}
+                className={`text-base sm:text-sm w-20 ${INPUT_CLASS}`}
             />
             <span className="text-[10px] font-semibold">{currencyCode}</span>
         </label>
@@ -112,7 +112,7 @@ export function FxRateField({
                             if (rate) onCustomRateChange(rate);
                         }}
                         onBlur={() => setSgdDraft(null)}
-                        className={`w-24 ${INPUT_CLASS}`}
+                        className={`text-base sm:text-sm w-24 ${INPUT_CLASS}`}
                     />
                 </label>
                 <FxRateInput

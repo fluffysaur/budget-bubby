@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "deploy:functions": "npm run build:functions && npx supabase functions deploy send-reminders --no-verify-jwt"
+    "deploy:functions": "npm run build:functions && npx supabase functions deploy send-reminders --no-verify-jwt && npx supabase functions deploy capture-expense --no-verify-jwt"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.20",
