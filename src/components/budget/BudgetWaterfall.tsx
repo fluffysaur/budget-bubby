@@ -5,25 +5,35 @@
  * 1. Gross (Salary, Bonus)
  * 2. Employee CPF
  * 3. Deductions (Taxes, Insurance)
- * 4. Take-home (highlighted)
- * 5. Allocations per category
+ * 4. Take-home (highlighted, salary only)
+ * 5. Bonus strip: bonuses count as income but stay outside category caps
+ * 6. Allocations per category
  */
 
 import type { ReactNode } from "react";
-import { Settings, Sparkles } from "lucide-react";
+import { ArrowRight, Settings, Sparkles } from "lucide-react";
 import { formatAllocationPercent } from "../../lib/financialFormulas";
 import { PRESET_COLORS } from "../../lib/categoryPresets";
 import { TruncatedText } from "../ui/TruncatedText";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Button } from "../ui/Button";
 import { EmptyStateCard } from "../ui/EmptyStateCard";
-import type { MonthlyBudget, MonthlyBudgetCategoryDetail } from "../../types/finance";
+import { Badge } from "../ui/Badge";
+import type {
+    BonusMonthSummary,
+    MonthlyBudget,
+    MonthlyBudgetCategoryDetail,
+} from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BudgetWaterfallProps {
     budget?: MonthlyBudget | null;
     categories?: MonthlyBudgetCategoryDetail[];
+    /** Bonuses received this month; falls back to `budget.bonus` with net = gross. */
+    bonusSummary?: BonusMonthSummary;
     onEditProfile?: () => void;
+    /** Opens Plan › Bonus. */
+    onViewBonus?: () => void;
     className?: string;
 }
 
@@ -83,7 +93,9 @@ function FlowRow({
 export function BudgetWaterfall({
     budget,
     categories = [],
+    bonusSummary,
     onEditProfile,
+    onViewBonus,
     className = "",
 }: BudgetWaterfallProps) {
     if (!budget) {
@@ -104,14 +116,17 @@ export function BudgetWaterfall({
     }
 
     const grossSalary = budget.gross_salary || 0;
-    const bonus = budget.bonus || 0;
+    const bonus = bonusSummary?.gross ?? (budget.bonus || 0);
+    const bonusCpf = bonusSummary?.cpf ?? 0;
+    const bonusNet = bonusSummary?.net ?? bonus;
     const totalGross = grossSalary + bonus;
     const cpfDeduction = budget.cpf_deduction || 0;
     const taxesDeduction = budget.taxes_deduction || 0;
     const insuranceDeduction = budget.insurance_deduction || 0;
     const fixedDeductions = taxesDeduction + insuranceDeduction;
+    // Take-home is salary only: the bonus never feeds category caps.
     const afterDeductions =
-        budget.after_deductions || totalGross - cpfDeduction - fixedDeductions;
+        budget.after_deductions || grossSalary - cpfDeduction - fixedDeductions;
 
     return (
         <div className={`space-y-4 ${className}`}>
@@ -131,19 +146,24 @@ export function BudgetWaterfall({
                     )}
                 </div>
 
-                <FlowRow
-                    label={
-                        <span className="flex min-w-0 items-center gap-1.5">
-                            <span>CPF</span>
-                            <TooltipPopover title="CPF">
-                                Employee CPF, 20% of gross.
-                            </TooltipPopover>
-                        </span>
-                    }
-                    amount={cpfDeduction}
-                    sign="-"
-                    tone="negative"
-                />
+                <div className="space-y-1.5">
+                    <FlowRow
+                        label={
+                            <span className="flex min-w-0 items-center gap-1.5">
+                                <span>CPF</span>
+                                <TooltipPopover title="CPF">
+                                    Employee CPF, 20% of gross.
+                                </TooltipPopover>
+                            </span>
+                        }
+                        amount={cpfDeduction}
+                        sign="-"
+                        tone="negative"
+                    />
+                    {bonusCpf > 0 && (
+                        <FlowRow label="Bonus CPF" amount={bonusCpf} sign="-" sub />
+                    )}
+                </div>
 
                 <div className="space-y-1.5">
                     <FlowRow
@@ -160,6 +180,38 @@ export function BudgetWaterfall({
             <div className="rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-(--shadow-cute-sm)">
                 <FlowRow label="Take-home" amount={afterDeductions} bold />
             </div>
+
+            {bonus > 0 && (
+                <div
+                    data-testid="waterfall-bonus-strip"
+                    className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) px-3 py-2 dark:bg-purple-950/40"
+                >
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-bold text-(--text-ink)">
+                        <Sparkles className="h-3.5 w-3.5 shrink-0 text-purple-700 dark:text-purple-300" />
+                        <span>Bonus</span>
+                        <TooltipPopover title="Bonus">
+                            Bonuses count as income but don't raise category limits. Split them in Plan › Bonus.
+                        </TooltipPopover>
+                    </div>
+                    <span className="shrink-0 font-mono-num text-sm font-black text-purple-700 dark:text-purple-300">
+                        <CurrencyText amount={bonusNet} /> net
+                    </span>
+                    <Badge variant="lilac" size="sm" className="shrink-0">
+                        Outside caps
+                    </Badge>
+                    {onViewBonus && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+                            onClick={onViewBonus}
+                            className="shrink-0"
+                        >
+                            View
+                        </Button>
+                    )}
+                </div>
+            )}
 
             {categories.length > 0 && (
                 <div className="space-y-2">
