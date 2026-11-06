@@ -56,7 +56,7 @@
 - **Smart Category Auto-Matching**: Automatically detects category based on keyword descriptions (e.g. typing "Groceries", "FairPrice", or "Dinner").
 - **Quick Date Selector & Remarks**: 1-tap date chips (`Today`, `Yesterday`, `-2d`, Custom date picker) with inline notes for receipts or details.
 - **Fast Log Widget**: Inline compact Fast Log card on the Dashboard plus a standalone `/fast-log` PWA shortcut route featuring an integrated virtual keypad.
-- **Bulk Log Rapid Entry**: `BulkAddExpenseModal` with a spreadsheet-like multi-row grid and smart text-paste auto-parsing (e.g. paste `12.50 Lunch #trip` directly).
+- **Bulk Add**: `BulkAddExpenseModal` with simple rows (amount, description, auto-guessed category), day chips for catching up on missed days, and mobile cards with a sticky Save bar.
 - **Ledger Sorting & Pagination**: Sort expenses by Date (newest/oldest), Amount (high/low), Category, or Payer, with customizable page sizes (20 / 50 / 100 rows).
 - **Edit & Delete Modals**: Full modification support via `EditExpenseModal` and safe deletion with `DeleteExpenseModal` showing settlement impact before confirming.
 - **Audio & Particle Celebration**: Realistic Web Audio "cha-ching" chime with gesture auto-unlock and confetti animation on logging spend.
@@ -171,7 +171,7 @@ budget-bubby/
 │   │   ├── cards/          # Credit card statement tracker, card management modal
 │   │   ├── categories/     # ManageCategoriesModal with auto-balancing sliders
 │   │   ├── dashboard/      # Net worth hero, daily streak bar, warning banner, quick actions
-│   │   ├── expenses/       # Ledger table, CentsFirstAmountInput, fast log widget, bulk log modal, edit/delete modals
+│   │   ├── expenses/       # Ledger table, CentsFirstAmountInput, fast log widget, bulk add modal, edit/delete modals
 │   │   ├── goals/          # Milestone goal cards, spend-from-goal modal, deposit modal
 │   │   ├── layout/         # DesktopSidebar, MobileBottomNav, AppHeader, NotificationCenterPopover
 │   │   ├── loans/          # Amortization schedule, prepayment simulator
@@ -325,7 +325,7 @@ npm run test:e2e
 
 - **Feature & Integration Test Suites**:
     - `ExpenseEntryUX.test.tsx`: Cents-first input, segmented personal/shared pill, currency selector, and safe areas.
-    - `ExpenseLedgerBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget, and bulk paste parser.
+    - `ExpenseLedgerBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget,.
     - `BudgetSurplusAlerts.test.tsx`: Category % sliders, cumulative surplus card, and 80%/100% warning alerts.
     - `CreditCardTracker.test.tsx`: Credit card statements, due dates & bill management.
     - `SpendTagsAndGoals.test.tsx`: Spend tags overview, sinking fund goal drawdowns & budget isolation.

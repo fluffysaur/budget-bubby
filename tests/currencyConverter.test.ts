@@ -12,7 +12,6 @@ import {
   refreshExchangeRates,
   FX_RATES_UPDATED_EVENT,
 } from '../src/lib/currencyConverter';
-import { parseBulkExpenseText } from '../src/lib/expenseParser';
 
 describe('Currency Converter', () => {
   beforeEach(() => {
@@ -121,34 +120,5 @@ describe('Currency Converter: rates, saving and status', () => {
     const rates = await refreshExchangeRates();
     expect(rates.JPY).toBe(120);
     expect(getRateStatus().source).toBe('offline');
-  });
-});
-
-describe('Bulk parser currency detection', () => {
-  const parseOne = (line: string) => parseBulkExpenseText(line, '2026-11-04')[0];
-
-  it.each([
-    ['Nasi lemak RM12.50', 'MYR', 12.5],
-    ['Pho ₫250000', 'VND', 250000],
-    ['Ramen 980円', 'JPY', 980],
-    ['Ramen ¥980', 'JPY', 980],
-    ['Dumplings CNY ¥50', 'CNY', 50],
-    ['Bubble tea NT$75', 'TWD', 75],
-    ['Flat white A$5.50', 'AUD', 5.5],
-    ['Uber US$20', 'USD', 20],
-    ['Satay Rp50000', 'IDR', 50000],
-    ['Pad thai ฿120', 'THB', 120],
-    ['Kopi S$1.80', 'SGD', 1.8],
-    ['Kopi $1.80', 'SGD', 1.8],
-    ['Chicken rice 5', 'SGD', 5],
-  ])('%s -> %s %s', (line, currency, amount) => {
-    const row = parseOne(line);
-    expect(row.currency).toBe(currency);
-    expect(row.amount).toBe(amount);
-  });
-
-  it('does not treat letters inside words as a currency symbol', () => {
-    const row = parseOne('Farm12 fresh juice 4.50');
-    expect(row.currency).toBe('SGD');
   });
 });

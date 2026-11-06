@@ -53,6 +53,7 @@ import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { CurrencyText } from "../ui/CurrencyText";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
+import { guessCategoryId } from "../../lib/categoryGuess";
 
 export interface ExpenseFormModalProps {
     isOpen: boolean;
@@ -96,97 +97,6 @@ function storeLastSplit(isShared: boolean) {
         // Ignore localStorage errors
     }
 }
-
-// Category keyword matching rules for smart auto-detection
-const KEYWORD_CATEGORY_MAP: { keywords: string[]; categoryKey: string }[] = [
-    {
-        keywords: [
-            "grab",
-            "gojek",
-            "mrt",
-            "bus",
-            "taxi",
-            "comfortdelgro",
-            "parking",
-            "petrol",
-            "ez-link",
-            "ezlink",
-            "simplygo",
-            "transit",
-            "fuel",
-            "tada",
-        ],
-        categoryKey: "transport",
-    },
-    {
-        keywords: [
-            "lunch",
-            "dinner",
-            "breakfast",
-            "coffee",
-            "cafe",
-            "hawker",
-            "food",
-            "groceries",
-            "fairprice",
-            "cold storage",
-            "sheng siong",
-            "shengsiong",
-            "breadtalk",
-            "toast box",
-            "yakun",
-            "starbucks",
-            "kfc",
-            "mcdonalds",
-            "macdonalds",
-            "bubble tea",
-            "koi",
-            "liho",
-            "snack",
-            "restaurant",
-            "subway",
-        ],
-        categoryKey: "food",
-    },
-    {
-        keywords: [
-            "shopping",
-            "movie",
-            "cinema",
-            "gym",
-            "netflix",
-            "spotify",
-            "date night",
-            "personal care",
-            "gifts",
-            "uniqlo",
-            "zara",
-            "shopee",
-            "lazada",
-            "entertainment",
-            "games",
-            "haircut",
-        ],
-        categoryKey: "lifestyle",
-    },
-    {
-        keywords: [
-            "clinic",
-            "pharmacy",
-            "doctor",
-            "hospital",
-            "panadol",
-            "watsons",
-            "guardian",
-            "utilities",
-            "repair",
-            "sp services",
-            "maintenance",
-            "dentist",
-        ],
-        categoryKey: "buffer",
-    },
-];
 
 function getStoredRecentTags(): string[] {
     if (typeof window === "undefined" || !window.localStorage) return [];
@@ -456,18 +366,8 @@ export function ExpenseFormModal({
     const handleItemTextChange = (text: string) => {
         setItem(text);
         if (!categoryManuallySelected) {
-            const lower = text.toLowerCase();
-            for (const map of KEYWORD_CATEGORY_MAP) {
-                if (map.keywords.some((kw) => lower.includes(kw))) {
-                    const match = categories.find((c) =>
-                        c.name.toLowerCase().includes(map.categoryKey),
-                    );
-                    if (match) {
-                        setCategoryId(match.id);
-                        break;
-                    }
-                }
-            }
+            const guessed = guessCategoryId(text, categories);
+            if (guessed) setCategoryId(guessed);
         }
     };
 

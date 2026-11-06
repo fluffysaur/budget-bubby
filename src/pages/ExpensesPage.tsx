@@ -1,7 +1,7 @@
 /**
  * Expenses Page
  * Minimal, Ledger-First Spend Hub:
- * - PageHeader with '+ Bulk Log' and 'Add Expense'
+ * - PageHeader with '+ Bulk Add' and 'Add Expense'
  * - Compact summary strip: Spendable, Total Spent, Shared Spending, and Unsettled (with Settle Up)
  * - Mobile-friendly collapsible filter bar & responsive transaction ledger table right at the top
  * - Collapsible Spend Trends & Tags drawers below the ledger
@@ -15,7 +15,7 @@ import {
   Scale,
   CheckCircle2,
   Tag,
-  FileSpreadsheet,
+  ListPlus,
   BarChart3,
   PiggyBank,
 } from 'lucide-react';
@@ -320,12 +320,12 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="secondary"
-                aria-label="+ Bulk Log"
+                aria-label="+ Bulk Add"
                 className="w-full sm:w-auto"
-                leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" strokeWidth={2.5} />}
+                leftIcon={<ListPlus className="h-4 w-4 text-emerald-600" strokeWidth={2.5} />}
                 onClick={() => setIsBulkAddOpen(true)}
               >
-                Bulk Log
+                Bulk Add
               </Button>
               <Button
                 variant="primary"
@@ -344,12 +344,12 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
           <Button
             variant="secondary"
             size="sm"
-            aria-label="+ Bulk Log"
+            aria-label="+ Bulk Add"
             className="w-full sm:w-auto"
-            leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />}
+            leftIcon={<ListPlus className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />}
             onClick={() => setIsBulkAddOpen(true)}
           >
-            Bulk Log
+            Bulk Add
           </Button>
           <Button
             variant="primary"

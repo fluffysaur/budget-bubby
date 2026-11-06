@@ -94,7 +94,6 @@ Never re-declare shared constants or calculations locally across feature modules
 - **Month Names**: Always import `MONTH_NAMES_SHORT` or `MONTH_NAMES_FULL` (or the canonical `MONTH_NAMES` alias) from `src/lib/dateUtils`. Never re-declare `const MONTH_NAMES = ['Jan', 'Feb', ...]`.
 - **Category Presets & Icons**: Always import `PRESET_COLORS`, `PRESET_ICONS`, and `getCategoryIconComponent` from `src/lib/categoryPresets`. Never recreate color lists or icon mapping tables in modals.
 - **Allocation Auto-Balancing**: Always use `autoBalanceAllocations` from `src/lib/financialFormulas` to adjust unlocked category percentages proportionally to sum to 100%.
-- **Text & Receipt Parsing**: Always use `parseBulkExpenseText` from `src/lib/expenseParser`.
 - **DOM & Dirty Checking**: Always use `checkContainerDirty` and `findScrollableAncestor` from `src/lib/domUtils`.
 
 ### D. Usability & User Experience Defaults
