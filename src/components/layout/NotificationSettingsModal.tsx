@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { AutoCaptureSection } from "../settings/AutoCaptureSection";
 import {
     Bell,
     Volume2,
@@ -294,6 +295,9 @@ export function NotificationSettingsModal({
                             </div>
                         </div>
                     </div>
+
+                    {/* Auto Capture (phone purchase capture tokens) */}
+                    <AutoCaptureSection memberId={activeMemberId} />
 
                     {/* Push Notifications Section */}
                     <div>
