@@ -2,7 +2,7 @@
  * PlanPage Component
  * Consolidated 5th navigation hub for Long-Term Financial Planning:
  * - Segmented sub-tabs: Goals | Recurring | Bonus | Loans
- * - Embeds GoalsPage, RecurringPage, the Bonus calculator, and a Loans placeholder
+ * - Embeds GoalsPage, RecurringPage, the Bonus log, and a Loans placeholder
  * - Eliminates scattered sidebar links while preserving route compatibility
  */
 
@@ -17,7 +17,7 @@ import {
 import { PageHeader, SegmentedTabs } from "../components/ui";
 import { GoalsPage } from "./GoalsPage";
 import { RecurringPage } from "./RecurringPage";
-import { BonusAllocationCollapsible } from "../components/budget/BonusAllocationCollapsible";
+import { BonusLogPanel } from "../components/bonus/BonusLogPanel";
 import { LoansPlaceholder } from "../components/loans/LoansPlaceholder";
 
 export type PlanSubTab = "goals" | "loans" | "recurring" | "bonus";
@@ -78,11 +78,7 @@ export function PlanPage({ initialTab = "goals", className = "" }: PlanPageProps
       <div className="pt-1">
         {activeTab === 'goals' && <GoalsPage embedded={true} />}
         {activeTab === 'recurring' && <RecurringPage embedded={true} />}
-        {activeTab === 'bonus' && (
-          <div className="space-y-4">
-            <BonusAllocationCollapsible defaultOpen={true} />
-          </div>
-        )}
+        {activeTab === 'bonus' && <BonusLogPanel />}
         {activeTab === 'loans' && <LoansPlaceholder />}
       </div>
     </div>

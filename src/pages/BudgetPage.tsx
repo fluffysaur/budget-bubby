@@ -8,7 +8,7 @@
  * - Spendable Category spending meters (Food, Lifestyle, Transport, Buffer) with recurring item tooltips
  * - Collapsible Wealth & Fixed Allocations (Investments, Savings, Tithing)
  * - Visual Budget Waterfall breakdown
- * - Notion-style Bonus Allocation helper (AWS/Performance bonus calculator)
+ * - Bonus income shown outside category caps (logged in Plan › Bonus)
  * - Base profile editor modal
  */
 
@@ -44,7 +44,6 @@ import { BudgetWaterfall } from '../components/budget/BudgetWaterfall';
 import { CategoriesHeader } from '../components/budget/CategoriesHeader';
 import { CategoryProgressList } from '../components/budget/CategoryProgressList';
 import { BaseProfileEditorModal } from '../components/budget/BaseProfileEditorModal';
-import { BonusAllocationCollapsible } from '../components/budget/BonusAllocationCollapsible';
 import { CategoryLimitWarningBanner } from '../components/budget/CategoryLimitWarningBanner';
 import { CumulativeSurplusCard } from '../components/budget/CumulativeSurplusCard';
 import { UncategorizedRecurringRow } from '../components/budget/UncategorizedRecurringRow';
@@ -184,12 +183,23 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
     return { spendableCats: spendable, allocationCats: allocations };
   }, [budgetDetail]);
 
-  // Calculations for summary metrics
-  const totalGross = (budgetDetail?.budget.gross_salary || 0) + (budgetDetail?.budget.bonus || 0);
+  // Calculations for summary metrics. Bonuses count as income but stay outside
+  // the take-home pool that sets category caps.
+  const bonusGross = budgetDetail?.bonusSummary?.gross ?? (budgetDetail?.budget.bonus || 0);
+  const bonusCpf = budgetDetail?.bonusSummary?.cpf ?? 0;
+  const bonusNet = budgetDetail?.bonusSummary?.net ?? bonusGross;
+  const totalGross = (budgetDetail?.budget.gross_salary || 0) + bonusGross;
   const totalDeductions =
     (budgetDetail?.budget.cpf_deduction || 0) +
+    bonusCpf +
     (budgetDetail?.budget.taxes_deduction || 0) +
     (budgetDetail?.budget.insurance_deduction || 0);
+  const handleViewBonus = () =>
+    onNavigateTab
+      ? onNavigateTab('plan?tab=bonus')
+      : typeof window !== 'undefined'
+        ? window.location.assign('/plan?tab=bonus')
+        : undefined;
   const disposablePool = budgetDetail?.disposablePool || 0;
   const totalSpent = budgetDetail?.totalSpent || 0;
   const totalRemaining = budgetDetail?.totalRemaining || 0;
@@ -249,7 +259,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           title="Gross"
           loading={isLoading}
           value={formatSGD(totalGross, { showCents: false })}
-          tooltip="Base salary plus any monthly bonus before deductions."
+          subtitle={bonusGross > 0 ? `+${formatSGD(bonusGross, { showCents: false })} bonus` : undefined}
+          tooltip="Salary plus bonuses received this month."
           icon={<DollarSign className="h-4 w-4" />}
           iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
         />
@@ -259,7 +270,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           title="Deductions"
           loading={isLoading}
           value={<span className="text-rose-600 dark:text-rose-400">-<CurrencyText formatted={formatSGD(totalDeductions, { showCents: false })} /></span>}
-          tooltip="Employee CPF contribution (20%) + amortized monthly Taxes & Insurance."
+          tooltip="CPF, taxes and insurance, incl. bonus CPF."
           icon={<TrendingDown className="h-4 w-4" />}
           iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
         />
@@ -269,7 +280,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           title="Take-Home"
           loading={isLoading}
           value={formatSGD(disposablePool, { showCents: false })}
-          tooltip="Net take-home pay after CPF, taxes, and insurance available for category allocations."
+          subtitle={bonusNet > 0 ? `+${formatSGD(bonusNet, { showCents: false })} bonus` : undefined}
+          tooltip="Salary take-home for category caps. Bonuses are tracked separately."
           icon={<Wallet className="h-4 w-4" />}
           iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
         />
@@ -381,16 +393,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
             <BudgetWaterfall
               budget={budgetDetail?.budget}
               categories={budgetDetail?.categories}
+              bonusSummary={budgetDetail?.bonusSummary}
               onEditProfile={() => handleOpenEditor()}
+              onViewBonus={handleViewBonus}
             />
           </CollapsibleSection>
-
-          {/* Collapsible: Bonus Allocation Helper */}
-          <BonusAllocationCollapsible
-            initialGrossBonus={2000}
-            cpfRate={0.2}
-            defaultOpen={false}
-          />
         </>
       )}
 

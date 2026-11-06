@@ -200,17 +200,42 @@ describe('BudgetWaterfall', () => {
     expect(screen.getByText('S$4,308.33')).toBeInTheDocument();
   });
 
-  it('renders bonus when present and updates total gross pay', () => {
+  it('renders bonus outside caps without changing take-home or allocations', () => {
     const budgetWithBonus: MonthlyBudget = {
       ...sampleBudget,
       bonus: 1500.0,
-      after_deductions: 5808.33,
     };
+    const onViewBonus = vi.fn();
 
-    render(<BudgetWaterfall budget={budgetWithBonus} categories={sampleCategories} />);
+    render(
+      <BudgetWaterfall
+        budget={budgetWithBonus}
+        categories={sampleCategories}
+        bonusSummary={{ gross: 1500, cpf: 300, net: 1200, count: 1, source: 'events' }}
+        onViewBonus={onViewBonus}
+      />
+    );
 
+    // Gross includes the bonus; take-home stays the salary pool
     expect(screen.getByText(/1,500\.00/)).toBeInTheDocument();
-    expect(screen.getByText('S$5,808.33')).toBeInTheDocument();
+    expect(screen.getByText('S$7,500.00')).toBeInTheDocument();
+    expect(screen.getByText('S$4,308.33')).toBeInTheDocument();
+    expect(screen.getByText('Bonus CPF')).toBeInTheDocument();
+
+    const strip = screen.getByTestId('waterfall-bonus-strip');
+    expect(strip).toHaveTextContent('Outside caps');
+    expect(strip).toHaveTextContent('S$1,200.00 net');
+
+    // Category caps are unchanged by the bonus
+    expect(screen.getAllByText(/S\$646\.25/).length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /view/i }));
+    expect(onViewBonus).toHaveBeenCalled();
+  });
+
+  it('hides the bonus strip when there is no bonus', () => {
+    render(<BudgetWaterfall budget={sampleBudget} categories={sampleCategories} />);
+    expect(screen.queryByTestId('waterfall-bonus-strip')).not.toBeInTheDocument();
   });
 
   it('renders category allocations breakdown matching the disposable pool', () => {
