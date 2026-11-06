@@ -11,8 +11,7 @@ import {
 } from "../ui";
 import { formatSGD } from "../../lib/currency";
 import { formatDisplayMonth } from "../../lib/dateUtils";
-import { playChaChingSound } from "../../lib/soundEffects";
-import { haptics } from "../../lib/haptics";
+import { feedback } from "../../lib/delight/feedback";
 import type { SavingsGoal } from "../../types/finance";
 
 export interface SurplusSweepAllocation {
@@ -203,8 +202,8 @@ export function SurplusSweepModal({
             setIsSubmitting(true);
             setErrorMessage(null);
             await onSweepComplete(payload);
-            playChaChingSound();
-            haptics.sweep();
+            // Cha-ching, sweep haptic, confetti and a celebrating Bubby
+            feedback.milestone("sweep");
             onClose();
         } catch (err: unknown) {
             setErrorMessage(
