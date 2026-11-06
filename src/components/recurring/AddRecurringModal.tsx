@@ -30,6 +30,7 @@ import {
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
+import { Textarea } from "../ui/Textarea";
 import { MONTH_NAMES_FULL } from "../../lib/dateUtils";
 import {
     findDefaultRecurringCategoryId,
@@ -270,7 +271,7 @@ export function AddRecurringModal({
                             placeholder="e.g. Netflix, gym, phone plan, cloud storage"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-3.5 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            className="w-full px-3.5 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 
@@ -356,7 +357,7 @@ export function AddRecurringModal({
                                     placeholder="1200.00"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full pl-9 pr-3.5 py-2 text-sm font-mono-num font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    className="w-full pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
                         </div>
@@ -450,22 +451,14 @@ export function AddRecurringModal({
                     </div>
 
                     {/* Notes */}
-                    <div>
-                        <label
-                            htmlFor="recurring-notes"
-                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                        >
-                            Notes
-                        </label>
-                        <textarea
-                            id="recurring-notes"
-                            rows={2}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="e.g. GIRO deduction, hospital plan rider details..."
-                            className="w-full px-3.5 py-2 text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) resize-none"
-                        />
-                    </div>
+                    <Textarea
+                        label="Notes"
+                        id="recurring-notes"
+                        rows={2}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="e.g. GIRO deduction, hospital plan rider details..."
+                    />
                 </ModalBody>
 
                 <ModalFooter>

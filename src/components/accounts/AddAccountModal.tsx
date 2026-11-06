@@ -187,7 +187,7 @@ export function AddAccountModal({
                       if (found) handleSelectPreset(found);
                     }}
                     defaultValue=""
-                    className="appearance-none text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) pl-2 pr-6 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                    className="appearance-none text-base sm:text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) pl-2 pr-6 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                   >
                     <option value="" disabled>
                       More presets...
@@ -238,7 +238,7 @@ export function AddAccountModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. DBS Multiplier"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                  className="w-full px-3 py-2 text-base sm:text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                 />
               </div>
               <div>
@@ -251,7 +251,7 @@ export function AddAccountModal({
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
                   placeholder="e.g. DBS, OCBC, UOB"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                  className="w-full px-3 py-2 text-base sm:text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                 />
               </div>
             </div>
@@ -291,7 +291,7 @@ export function AddAccountModal({
                     value={balance}
                     onChange={(e) => setBalance(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-9 pr-3 py-2 text-xs font-bold font-mono-num rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                    className="w-full pl-9 pr-3 py-2 text-base sm:text-xs font-bold font-mono-num rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                   />
                 </div>
               </div>
@@ -360,7 +360,7 @@ export function AddAccountModal({
                       value={institution}
                       onChange={(e) => setInstitution(e.target.value)}
                       placeholder="e.g. DBS, OCBC"
-                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
+                      className="w-full px-2.5 py-1.5 text-base sm:text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
                     />
                   </div>
                   <div>
@@ -373,7 +373,7 @@ export function AddAccountModal({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="e.g. Salary account"
-                      className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
+                      className="w-full px-2.5 py-1.5 text-base sm:text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
                     />
                   </div>
                 </div>

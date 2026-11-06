@@ -62,7 +62,7 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(within(main).getByText(/^Income Flow$/i)).toBeInTheDocument();
             expect(within(main).getByRole("tab", { name: /Budget/i })).toHaveAttribute("aria-selected", "true");
         });
     });
@@ -71,7 +71,7 @@ describe("App Integration & Routing", () => {
         render(<App initialEntries={["/budget"]} />);
 
         await waitFor(() => {
-            expect(screen.getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
         });
     });
 
@@ -186,7 +186,7 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(within(main).getByText(/^Income Flow$/i)).toBeInTheDocument();
         });
     });
 
@@ -201,7 +201,7 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/Budget Waterfall/i)).toBeInTheDocument();
+            expect(within(main).getByText(/^Income Flow$/i)).toBeInTheDocument();
         });
     });
 });
