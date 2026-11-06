@@ -45,6 +45,8 @@ import { supabaseFinanceService } from './supabaseFinanceService';
 import { offlineSyncQueue } from './offlineSyncQueue';
 import { queryClient } from '../lib/queryClient';
 import type { InboxService } from './inbox/inboxService';
+import { emitInboxEvent, type InboxEventMap } from '../lib/inbox/inboxEvents';
+import { isDayLogged } from '../lib/logging/dayLogged';
 
 export interface FinanceService extends InboxService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
@@ -133,6 +135,38 @@ function getActiveService(): FinanceService {
     return mockFinanceService;
   }
   return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
+}
+
+/** True when the cached daily check-ins already have this member and date. */
+function isCheckinCached(memberId: string, date: string): boolean {
+  try {
+    return queryClient
+      .getQueriesData<DailyCheckin[]>({ queryKey: ['finance', 'daily-checkins'] })
+      .some(([, data]) => Array.isArray(data) && isDayLogged(data, memberId, date));
+  } catch {
+    return false;
+  }
+}
+
+/** Runs `save`, then emits day:logged for each (member, date) it logged. */
+async function withDayLogged<T>(
+  entries: { memberId: string; date: string }[],
+  source: InboxEventMap['day:logged']['source'],
+  save: () => Promise<T>
+): Promise<T> {
+  const seen = new Set<string>();
+  const unique = entries.filter((e) => {
+    const key = `${e.memberId}|${e.date}`;
+    if (!e.memberId || !e.date || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const first = unique.map((e) => !isCheckinCached(e.memberId, e.date));
+  const res = await save();
+  unique.forEach((e, i) =>
+    emitInboxEvent('day:logged', { ...e, source, firstForDate: first[i] })
+  );
+  return res;
 }
 
 function invalidateInboxCache() {
@@ -224,12 +258,14 @@ export const financeService: FinanceService = {
     }
   },
   addExpense: async (expense) => {
-    let res: Expense;
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().addExpense(expense);
-    } else {
-      res = await offlineSyncQueue.addExpense(expense);
-    }
+    const res = await withDayLogged(
+      [{ memberId: expense.payer_id, date: expense.date }],
+      'expense',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().addExpense(expense)
+          : offlineSyncQueue.addExpense(expense)
+    );
     invalidateFinanceCache();
     return res;
   },
@@ -244,12 +280,14 @@ export const financeService: FinanceService = {
     return res;
   },
   bulkAddExpenses: async (expenses) => {
-    let res: Expense[];
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().bulkAddExpenses(expenses);
-    } else {
-      res = await offlineSyncQueue.bulkAddExpenses(expenses);
-    }
+    const res = await withDayLogged(
+      expenses.map((e) => ({ memberId: e.payer_id, date: e.date })),
+      'expense',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().bulkAddExpenses(expenses)
+          : offlineSyncQueue.bulkAddExpenses(expenses)
+    );
     invalidateFinanceCache();
     return res;
   },
@@ -316,12 +354,14 @@ export const financeService: FinanceService = {
   // Streaks & Daily Check-ins
   getDailyCheckins: (memberId) => getActiveService().getDailyCheckins(memberId),
   recordDailyCheckin: async (memberId, date, type) => {
-    let res: DailyCheckin;
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().recordDailyCheckin(memberId, date, type);
-    } else {
-      res = await offlineSyncQueue.recordDailyCheckin(memberId, date, type);
-    }
+    const res = await withDayLogged(
+      [{ memberId, date }],
+      type === 'no_spend' ? 'no_spend' : 'expense',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().recordDailyCheckin(memberId, date, type)
+          : offlineSyncQueue.recordDailyCheckin(memberId, date, type)
+    );
     invalidateFinanceCache();
     return res;
   },
@@ -349,12 +389,15 @@ export const financeService: FinanceService = {
   getInboxItems: (status) => getActiveService().getInboxItems(status),
   getInboxSummary: (memberId) => getActiveService().getInboxSummary(memberId),
   confirmInboxItem: async (itemId, expense) => {
-    let res: string;
-    if (offlineSyncQueue.isReplaying()) {
-      res = await getActiveService().confirmInboxItem(itemId, expense);
-    } else {
-      res = await offlineSyncQueue.confirmInboxItem(itemId, expense);
-    }
+    // The RPC checks in the payer on the purchase date
+    const res = await withDayLogged(
+      [{ memberId: expense.payer_id, date: expense.date }],
+      'inbox',
+      () =>
+        offlineSyncQueue.isReplaying()
+          ? getActiveService().confirmInboxItem(itemId, expense)
+          : offlineSyncQueue.confirmInboxItem(itemId, expense)
+    );
     invalidateFinanceCache();
     return res;
   },
