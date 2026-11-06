@@ -7,6 +7,7 @@
 import { getCurrentMonth, formatISODate, formatMonth } from "../dateUtils";
 import {
     checkDailyCheckinReminder,
+    checkInboxReminder,
     checkBalanceUpdateReminder,
     checkCreditCardDueReminders,
     checkMissingCreditCardStatements,
@@ -20,7 +21,7 @@ import {
     DEFAULT_CC_DUE_REMINDER_DAYS,
     type AppReminder,
 } from "./rules";
-import type { NotificationPreferences } from "../../types/finance";
+import type { InboxSummary, NotificationPreferences } from "../../types/finance";
 import type { FinanceService } from "../../services/financeService";
 
 /** The finance service reads the reminder engine needs. */
@@ -38,7 +39,25 @@ export type ReminderDataSource = Pick<
     | "getGoals"
     | "getDailyCheckins"
     | "getMonthlyBudget"
->;
+> &
+    Partial<Pick<FinanceService, "getInboxSummary">>;
+
+const NO_INBOX: InboxSummary = {
+    available: false,
+    pendingCount: 0,
+    pendingTotalSgd: 0,
+    oldestCapturedAt: null,
+};
+
+/** The member's own pending captures. Never throws: before the migration (or on any error) there is no inbox. */
+async function safeInboxSummary(source: ReminderDataSource, memberId: string): Promise<InboxSummary> {
+    if (!source.getInboxSummary) return NO_INBOX;
+    try {
+        return await source.getInboxSummary(memberId);
+    } catch {
+        return NO_INBOX;
+    }
+}
 
 /**
  * App path a reminder opens, from the bell or a tapped push.
@@ -52,6 +71,8 @@ export function getReminderUrl(reminder: AppReminder): string {
             return "/expenses";
         case "view_budget":
             return "/budget";
+        case "view_inbox":
+            return "/inbox";
         case "view_recurring":
             return "/recurring";
         case "view_goals": {
@@ -113,6 +134,7 @@ export async function computeRemindersFrom(
         goals,
         allCheckins,
         monthlyBudget,
+        inboxSummary,
     ] = await Promise.all([
         source.getNotificationPreferences(memberId),
         source.getNotificationLog(memberId),
@@ -126,6 +148,7 @@ export async function computeRemindersFrom(
         source.getGoals(),
         source.getDailyCheckins(),
         source.getMonthlyBudget(currentMonth, memberId),
+        safeInboxSummary(source, memberId),
     ]);
 
     const members = overview.members || [];
@@ -134,12 +157,21 @@ export async function computeRemindersFrom(
 
     if (prefs.streak_and_logging) {
         candidates.push(
+            checkInboxReminder(
+                inboxSummary,
+                options?.currentHour,
+                memberId,
+                todayStr,
+                prefs.checkin_time,
+                referenceDate,
+            ),
             checkDailyCheckinReminder(
                 streak,
                 options?.currentHour,
                 memberId,
                 todayStr,
                 prefs.checkin_time,
+                inboxSummary.pendingCount,
             ),
         );
     }
