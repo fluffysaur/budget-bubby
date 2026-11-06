@@ -31,15 +31,9 @@ export function BonusRow({ event, recipientName, onEdit, onDelete }: BonusRowPro
     return (
         <div
             data-testid="bonus-row"
-            role="button"
-            tabIndex={0}
+            // Tapping the row opens Edit. It is not a role="button": it holds
+            // the Edit and Delete buttons, which serve keyboard and screen readers.
             onClick={() => onEdit(event)}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onEdit(event);
-                }
-            }}
             className="flex min-h-11 cursor-pointer items-center gap-3 py-2.5 transition-colors hover:bg-(--bg-cream) rounded-xl px-1"
         >
             <div className="min-w-0 flex-1 space-y-1">

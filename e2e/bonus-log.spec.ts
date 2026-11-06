@@ -6,6 +6,15 @@ import { test, expect, type Page } from '@playwright/test';
 // "By gap" gives Baby Fund the last share: S$457.16.
 const BABY_FUND = 'goal-00000000-0505';
 
+/** The "Total Saved" figure on a goal card (the card also shows a balance with the same title). */
+function totalSaved(page: Page, goalId: string) {
+  return page
+    .getByTestId(`goal-card-${goalId}`)
+    .locator('div', { hasText: 'Total Saved' })
+    .last()
+    .locator('span[title]');
+}
+
 async function logRachelBonus(page: Page) {
   await page.goto('/plan?tab=bonus');
   await expect(page.getByText('No Bonuses')).toBeVisible();
@@ -42,7 +51,7 @@ test.describe('Bonus Log', () => {
 
     // Goals tab: funded goal increased
     await page.getByRole('tab', { name: /Goals/i }).click();
-    await expect(page.getByTestId(`goal-card-${BABY_FUND}`).locator('[title="S$457.16"]')).toBeVisible();
+    await expect(totalSaved(page, BABY_FUND)).toHaveAttribute('title', 'S$457.16');
 
     // Budget: Income Flow shows the bonus outside caps
     await page.goto('/spend?tab=budget');
@@ -72,7 +81,7 @@ test.describe('Bonus Log', () => {
     await expect(page.getByText('No Bonuses')).toBeVisible();
 
     await page.getByRole('tab', { name: /Goals/i }).click();
-    await expect(page.getByTestId(`goal-card-${BABY_FUND}`).locator('[title="S$0.00"]')).toBeVisible();
+    await expect(totalSaved(page, BABY_FUND)).toHaveAttribute('title', 'S$0.00');
   });
 
   test('has no horizontal scroll on mobile and the modal footer is reachable', async ({ page, isMobile }) => {
