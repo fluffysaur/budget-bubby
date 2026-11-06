@@ -20,7 +20,8 @@ import {
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
-import { haptics } from "../../lib/haptics";
+import { feedback } from "../../lib/delight/feedback";
+import { recordExercise } from "../../lib/bubby/activity";
 import type { SavingsGoal } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 import { formatSGD } from "../../lib/currency";
@@ -88,7 +89,20 @@ export function QuickDepositModal({
             const updated = await financeService.updateGoal(goal.id, {
                 saved_so_far: Math.round(newSavedSoFar * 100) / 100,
             });
-            haptics.goalMilestone();
+            recordExercise("goal-add");
+            const reachedTarget =
+                goal.target_amount > 0 &&
+                goal.saved_so_far < goal.target_amount &&
+                updated.saved_so_far >= goal.target_amount;
+            if (reachedTarget) {
+                feedback.milestone("goal-complete", {
+                    dedupeKey: `goal-complete:${goal.id}`,
+                    title: "Goal reached! 🎉",
+                    subtitle: goal.title,
+                });
+            } else {
+                feedback.routine("goal-deposit");
+            }
             onDepositSaved?.(updated);
             onClose();
         } catch (err: unknown) {

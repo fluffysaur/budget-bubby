@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
     checkInboxReminder,
-    checkDailyCheckinReminder,
     type AppReminder,
 } from "../src/lib/reminders/rules";
 import { computeRemindersFrom, getReminderUrl, type ReminderDataSource } from "../src/lib/reminders/engine";
 import { classifyReminder } from "../src/lib/reminders/push";
 import { mockFinanceService } from "../src/services/mockFinanceService";
-import type { InboxSummary, StreakSummary } from "../src/types/finance";
+import type { InboxSummary } from "../src/types/finance";
 
 const REF = new Date(2026, 10, 5, 19, 0, 0); // SGT wall clock, 7 PM
 const summary = (over: Partial<InboxSummary> = {}): InboxSummary => ({
@@ -17,7 +16,6 @@ const summary = (over: Partial<InboxSummary> = {}): InboxSummary => ({
     oldestCapturedAt: new Date(REF.getTime() - 3600_000).toISOString(),
     ...over,
 });
-const streak = { currentStreak: 4, checkedInToday: false } as StreakSummary;
 
 describe("checkInboxReminder", () => {
     it("fires after check-in time with a stable daily key and totals only", () => {
@@ -53,12 +51,7 @@ describe("checkInboxReminder", () => {
     });
 });
 
-describe("daily check-in vs inbox", () => {
-    it("suppresses the daily check-in when the inbox has items", () => {
-        expect(checkDailyCheckinReminder(streak, 19, "m1", "2026-11-05", "18:00", 2)).toBeNull();
-        expect(checkDailyCheckinReminder(streak, 19, "m1", "2026-11-05", "18:00", 0)).not.toBeNull();
-    });
-
+describe("inbox reminder", () => {
     it("routes and classifies the inbox nudge", () => {
         const r = checkInboxReminder(summary(), 19, "m1", "2026-11-05", "18:00", REF) as AppReminder;
         expect(getReminderUrl(r)).toBe("/inbox");
@@ -85,7 +78,6 @@ describe("engine with the inbox", () => {
         const source: ReminderDataSource = {
             getNotificationPreferences: (id: string) => mockFinanceService.getNotificationPreferences(id),
             getNotificationLog: (id: string) => mockFinanceService.getNotificationLog(id),
-            getStreakSummary: (id?: string) => mockFinanceService.getStreakSummary(id),
             getAllAccountSnapshots: (p) => mockFinanceService.getAllAccountSnapshots(p),
             getCreditCardStatements: (m) => mockFinanceService.getCreditCardStatements(m),
             getCreditCards: () => mockFinanceService.getCreditCards(),

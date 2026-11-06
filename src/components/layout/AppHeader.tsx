@@ -28,10 +28,10 @@ import { mockMembers } from "../../data/mockSeedData";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
-import { StreakChip } from "./StreakChip";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
+import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { BubbyIcon } from "../ui/BubbyIcon";
 import { ConfirmModal } from "../ui/ConfirmModal";
 
@@ -432,8 +432,8 @@ export function AppHeader({
                         </div>
                     )}
 
-                    {/* Check-in streak */}
-                    <StreakChip />
+                    {/* Live household Bubby (tap to pet and open the sheet) */}
+                    <BubbyAvatarButton />
 
                     {/* Notification Center Popover */}
                     <NotificationCenterPopover onNavigateTab={onNavigateTab} />

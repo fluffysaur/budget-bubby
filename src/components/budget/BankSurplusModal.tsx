@@ -8,7 +8,8 @@ import {
 } from "../ui";
 import { formatSGD } from "../../lib/currency";
 import { formatDisplayMonth } from "../../lib/dateUtils";
-import { playChaChingSound } from "../../lib/soundEffects";
+import { feedback } from "../../lib/delight/feedback";
+import { recordExercise } from "../../lib/bubby/activity";
 import { CurrencyText } from "../ui/CurrencyText";
 
 export interface BankSurplusModalProps {
@@ -27,7 +28,9 @@ export function BankSurplusModal({
     onConfirm,
 }: BankSurplusModalProps) {
     const handleConfirm = () => {
-        playChaChingSound();
+        // Banking is a milestone too, but confetti is kept for sweeps
+        feedback.milestone("sweep", { big: false });
+        recordExercise("month-end");
         onConfirm();
         onClose();
     };

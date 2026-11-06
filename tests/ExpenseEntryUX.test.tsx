@@ -622,7 +622,7 @@ describe('ExpenseFormModal Currency Conversion & UX', () => {
     await waitFor(() => {
       expect(eventListener).toHaveBeenCalledTimes(1);
     });
-    expect((eventListener.mock.calls[0][0] as CustomEvent).detail).toEqual(mockExpense);
+    expect((eventListener.mock.calls[0][0] as CustomEvent).detail).toEqual({ ...mockExpense, source: "form" });
 
     window.removeEventListener('expenseAdded', eventListener);
   });

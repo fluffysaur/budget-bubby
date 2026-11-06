@@ -131,6 +131,26 @@ describe("Haptics Engine (src/lib/haptics.ts)", () => {
 
         haptics.destructive();
         expect(vibrateSpy).toHaveBeenLastCalledWith([50, 50]);
+
+        haptics.tick();
+        expect(vibrateSpy).toHaveBeenLastCalledWith(8);
+    });
+
+    it("gates the tick on the haptics preference", () => {
+        const vibrateSpy = vi.fn().mockReturnValue(true);
+        Object.defineProperty(window, "navigator", {
+            value: { vibrate: vibrateSpy },
+            writable: true,
+            configurable: true,
+        });
+        window.matchMedia = vi.fn().mockReturnValue({ matches: false });
+        localStorage.setItem(
+            "bb_notif_prefs_mem-1",
+            JSON.stringify({ haptics_enabled: false }),
+        );
+
+        expect(haptics.tick()).toBe(false);
+        expect(vibrateSpy).not.toHaveBeenCalled();
     });
 
     it("handles vibration exceptions without throwing", () => {

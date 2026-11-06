@@ -18,6 +18,7 @@ import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react
 import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { financeService } from "../../services/financeService";
+import { feedback } from "../../lib/delight/feedback";
 import {
     getTodayDateString,
     getSingaporeDate,
@@ -618,6 +619,7 @@ export function ExpenseFormModal({
                 if (tags.length > 0) {
                     storeRecentTags(tags);
                 }
+                feedback.routine("edit");
                 onExpenseUpdated?.(updated);
                 onClose();
                 return;
@@ -665,7 +667,9 @@ export function ExpenseFormModal({
             // Dispatch global event for celebration toast, sound & category alerts
             if (typeof window !== "undefined") {
                 window.dispatchEvent(
-                    new CustomEvent("expenseAdded", { detail: created }),
+                    new CustomEvent("expenseAdded", {
+                        detail: { ...created, source: "form" },
+                    }),
                 );
             }
 

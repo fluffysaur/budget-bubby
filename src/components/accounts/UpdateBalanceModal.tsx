@@ -25,6 +25,7 @@ import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/Animat
 import { TruncatedText } from "../ui/TruncatedText";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
+import { recordExercise } from "../../lib/bubby/activity";
 
 export interface UpdateBalanceModalProps {
     isOpen: boolean;
@@ -193,6 +194,7 @@ export function UpdateBalanceModal({
                     updates,
                     snapshotDate,
                 );
+                recordExercise("balances");
 
             onBalancesUpdated?.(updatedAccounts);
             if (updatedAccounts.length > 0) {

@@ -3,12 +3,16 @@
  * Provides tactile vibration patterns for:
  * - Pull-to-refresh trigger (lightTap: 12ms)
  * - Expense logged (success: 25ms)
- * - Daily streak check-in (celebrate: [30, 45, 50]ms)
+ * - No-spend check-in, full belly (celebrate: [30, 45, 50]ms)
  * - Surplus sweep to goals (sweep: [35, 50, 65]ms)
  * - Budget cap warning 80% (warning: [35, 45, 35]ms)
  * - Budget cap exceeded 100%+ (alert: [65, 45, 65]ms)
  * - Goal milestone or deposit (goalMilestone: [30, 40, 50]ms)
  * - Destructive action confirmation (destructive: [50, 50]ms)
+ * - Tiny press tick on the Quick Add FAB (tick: 8ms, Android only in practice)
+ *
+ * iOS Safari has no navigator.vibrate, so every call is a no-op on iPhones and
+ * the visual and audio cues carry the feedback there.
  *
  * Checks device capability, user settings (`bb_notif_prefs_`),
  * and respects system 'prefers-reduced-motion'.
@@ -17,6 +21,7 @@
 export type HapticPattern = number | number[] | readonly number[];
 
 export const HAPTIC_PATTERNS = {
+    tick: 8,
     lightTap: 12,
     success: 25,
     celebrate: [30, 45, 50],
@@ -97,6 +102,7 @@ export function triggerHaptic(pattern: HapticPattern): boolean {
  * High-level semantic haptic triggers for Budget Bubby.
  */
 export const haptics = {
+    tick: () => triggerHaptic(HAPTIC_PATTERNS.tick),
     lightTap: () => triggerHaptic(HAPTIC_PATTERNS.lightTap),
     success: () => triggerHaptic(HAPTIC_PATTERNS.success),
     celebrate: () => triggerHaptic(HAPTIC_PATTERNS.celebrate),

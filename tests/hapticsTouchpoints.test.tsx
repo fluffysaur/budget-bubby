@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { haptics } from "../src/lib/haptics";
 import { PullToRefresh } from "../src/components/ui/PullToRefresh";
-import { DailyCheckinStreakBar } from "../src/components/dashboard/DailyCheckinStreakBar";
+import { QuestCard } from "../src/components/dashboard/QuestCard";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
 import { SurplusSweepModal } from "../src/components/budget/SurplusSweepModal";
 import { QuickDepositModal } from "../src/components/goals/QuickDepositModal";
@@ -42,16 +42,11 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         expect(onRefresh).toHaveBeenCalledTimes(1);
     });
 
-    it("triggers haptics.celebrate when 1-tap Daily Streak check-in is submitted", async () => {
+    it("triggers haptics.celebrate when the 1-tap No Spend check-in is submitted", async () => {
         const celebrateSpy = vi.spyOn(haptics, "celebrate");
-        vi.spyOn(financeService, "getStreakSummary").mockResolvedValue({
-            currentStreak: 5,
-            longestStreak: 10,
-            checkedInToday: false,
-            coupleStreak: 3,
-            lastCheckinDate: "2026-10-28",
-        });
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
+        vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
+        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
         vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue({
             id: "chk-1",
             household_id: "hh-1",
@@ -63,13 +58,11 @@ describe("Haptic Feedback Touchpoints Integration", () => {
 
         render(
             <HouseholdProvider>
-                <DailyCheckinStreakBar memberId="mem-1" />
+                <QuestCard />
             </HouseholdProvider>,
         );
 
         const checkinBtn = await screen.findByTestId("no-spend-checkin-btn");
-        expect(checkinBtn).toBeInTheDocument();
-
         await act(async () => {
             fireEvent.click(checkinBtn);
         });

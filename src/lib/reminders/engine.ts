@@ -6,14 +6,13 @@
 
 import { getCurrentMonth, formatISODate, formatMonth } from "../dateUtils";
 import {
-    checkDailyCheckinReminder,
+    checkBubbyReminder,
     checkInboxReminder,
     checkBalanceUpdateReminder,
     checkCreditCardDueReminders,
     checkMissingCreditCardStatements,
     checkPartnerSharedSpendReminders,
     checkSettlementReminder,
-    checkCoupleStreakRiskReminder,
     checkBudgetLimitReminders,
     checkRecurringBillsReminders,
     checkGoalPacingReminders,
@@ -29,7 +28,6 @@ export type ReminderDataSource = Pick<
     FinanceService,
     | "getNotificationPreferences"
     | "getNotificationLog"
-    | "getStreakSummary"
     | "getAllAccountSnapshots"
     | "getCreditCardStatements"
     | "getCreditCards"
@@ -103,6 +101,8 @@ export interface ComputeRemindersOptions {
     memberId?: string;
     currentHour?: number;
     referenceDate?: Date;
+    /** Pending inbox items (wired by the inbox feature; 0 until then). */
+    inboxPending?: number;
 }
 
 /**
@@ -124,7 +124,6 @@ export async function computeRemindersFrom(
     const [
         prefs,
         log,
-        streak,
         snapshots,
         statements,
         cards,
@@ -138,7 +137,6 @@ export async function computeRemindersFrom(
     ] = await Promise.all([
         source.getNotificationPreferences(memberId),
         source.getNotificationLog(memberId),
-        source.getStreakSummary(memberId),
         source.getAllAccountSnapshots(memberId),
         source.getCreditCardStatements(),
         source.getCreditCards(),
@@ -156,24 +154,30 @@ export async function computeRemindersFrom(
     const ccDueDays = getCcDueReminderDays(prefs);
 
     if (prefs.streak_and_logging) {
-        candidates.push(
-            checkInboxReminder(
-                inboxSummary,
-                options?.currentHour,
-                memberId,
-                todayStr,
-                prefs.checkin_time,
-                referenceDate,
-            ),
-            checkDailyCheckinReminder(
-                streak,
-                options?.currentHour,
-                memberId,
-                todayStr,
-                prefs.checkin_time,
-                inboxSummary.pendingCount,
-            ),
-        );
+        if (inboxSummary.available && inboxSummary.pendingCount > 0) {
+            candidates.push(
+                checkInboxReminder(
+                    inboxSummary,
+                    options?.currentHour,
+                    memberId,
+                    todayStr,
+                    prefs.checkin_time,
+                    referenceDate,
+                ),
+            );
+        } else {
+            candidates.push(
+                checkBubbyReminder(
+                    allCheckins,
+                    expenses,
+                    options?.currentHour,
+                    memberId,
+                    todayStr,
+                    prefs.checkin_time,
+                    options?.inboxPending ?? inboxSummary.pendingCount,
+                ),
+            );
+        }
     }
 
     if (prefs.monthly_balance_updates) {
@@ -217,14 +221,6 @@ export async function computeRemindersFrom(
                 prefs.settlement_threshold_sgd || 200,
                 referenceDate,
                 memberId,
-            ),
-            checkCoupleStreakRiskReminder(
-                allCheckins,
-                members,
-                memberId,
-                options?.currentHour,
-                todayStr,
-                prefs.checkin_time,
             ),
         );
     }

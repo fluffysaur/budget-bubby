@@ -484,9 +484,244 @@ body {
     animation: bubbyHammerTap 1.4s ease-in-out infinite;
 }
 
+/* Living Bubby: reactions (≤400ms, transform/opacity only) and an idle blink */
+.bubby .bubby-body {
+    transform-box: view-box;
+    transform-origin: 256px 470px;
+}
+.bubby .bubby-flipper-l {
+    transform-box: fill-box;
+    transform-origin: 90% 40%;
+}
+.bubby .bubby-eyes,
+.bubby .bubby-beak {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+@keyframes bubbyHop {
+    0%,
+    100% {
+        transform: translateY(0) scale(1, 1);
+    }
+    35% {
+        transform: translateY(-26px) scale(0.96, 1.05);
+    }
+    70% {
+        transform: translateY(0) scale(1.05, 0.95);
+    }
+}
+
+@keyframes bubbyNod {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    40% {
+        transform: rotate(-6deg);
+    }
+    75% {
+        transform: rotate(4deg);
+    }
+}
+
+@keyframes bubbyWave {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    35% {
+        transform: rotate(-22deg);
+    }
+    70% {
+        transform: rotate(12deg);
+    }
+}
+
+@keyframes bubbySquash {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(0.93, 0.9);
+    }
+}
+
+@keyframes bubbyMunch {
+    0%,
+    100% {
+        transform: scaleY(1);
+    }
+    30% {
+        transform: scaleY(0.7);
+    }
+    60% {
+        transform: scaleY(1.05);
+    }
+}
+
+@keyframes bubbyPuff {
+    0% {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+@keyframes bubbyBlink {
+    0%,
+    96%,
+    100% {
+        transform: scaleY(1);
+    }
+    98% {
+        transform: scaleY(0.1);
+    }
+}
+
+@keyframes bubbyFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.bubby[data-reaction="cheer"] .bubby-body {
+    animation: bubbyHop 380ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.bubby[data-reaction="celebrate"] .bubby-body {
+    animation: bubbyHop 400ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.bubby[data-reaction="nod"] .bubby-body {
+    animation: bubbyNod 260ms ease-out;
+}
+.bubby[data-reaction="reunion"] .bubby-body {
+    animation: bubbyHop 400ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.bubby[data-reaction="poof"] .bubby-body,
+.bubby[data-reaction="pat"] .bubby-body {
+    animation: bubbySquash 360ms ease-out;
+}
+.bubby[data-reaction="wave"] .bubby-flipper-l,
+.bubby[data-reaction="cheer"] .bubby-flipper-l,
+.bubby[data-reaction="reunion"] .bubby-flipper-l {
+    animation: bubbyWave 350ms ease-in-out;
+}
+.bubby[data-reaction="munch"] .bubby-beak {
+    animation: bubbyMunch 360ms ease-in-out;
+}
+.bubby .bubby-dust {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: bubbyPuff 360ms ease-out forwards;
+}
+.bubby .bubby-glow,
+.bubby .bubby-sparkles {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: bubbyFadeIn 200ms ease-out;
+}
+.bubby[data-blink] .bubby-eyes {
+    animation: bubbyBlink 5s linear infinite;
+}
+
+/* "+1 🐾" pip that floats off the header Bubby on the first log of the day */
+.animate-pip-float {
+    animation: coinFloat 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Small pop for the active bottom-nav pill */
+@keyframes pillPop {
+    0% {
+        transform: scale(0.88);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+.animate-pill-pop {
+    animation: pillPop 160ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+/* Toast and banner entrance */
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+.animate-toast-in {
+    animation: toastIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Milestone confetti: ≤1.2s, transform/opacity only */
+@keyframes confettiFall {
+    0% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate3d(var(--confetti-x, 0), var(--confetti-y, 70vh), 0)
+            rotate(var(--confetti-r, 360deg));
+        opacity: 0;
+    }
+}
+.animate-confetti-fall {
+    animation: confettiFall var(--confetti-d, 1100ms) cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+    will-change: transform, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .animate-bubby-hammer {
         animation: none;
+    }
+
+    /* Bubby, pips, pills, toasts and confetti change state instantly */
+    .bubby .bubby-body,
+    .bubby .bubby-flipper-l,
+    .bubby .bubby-eyes,
+    .bubby .bubby-beak,
+    .bubby .bubby-dust,
+    .bubby .bubby-glow,
+    .bubby .bubby-sparkles,
+    .animate-pip-float,
+    .animate-pill-pop,
+    .animate-toast-in,
+    .animate-confetti-fall {
+        animation: none !important;
+    }
+    .animate-pip-float,
+    .animate-confetti-fall {
+        opacity: 0;
+    }
+
+    /* Celebration toasts and confetti show their end state without motion */
+    .animate-cha-ching,
+    .animate-coin-float,
+    .animate-confetti-left,
+    .animate-confetti-right,
+    .animate-sparkle-twinkle {
+        animation: none;
+    }
+    .animate-confetti-left,
+    .animate-confetti-right,
+    .animate-coin-float {
+        opacity: 0;
     }
 
     /* Modals and sheets appear and disappear without sliding or scaling */

@@ -20,3 +20,4 @@ export * from "./Alert";
 export * from "./ConfirmModal";
 export * from "./CategoryBadge";
 export * from "./BubbyConstruction";
+export * from "./ConfettiBurst";

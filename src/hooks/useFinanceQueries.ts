@@ -21,7 +21,6 @@ import type {
     BaseProfileAllocation,
     CreditCard,
     CreditCardStatement,
-    StreakSummary,
     DailyCheckin,
     BonusEventsResult,
     BonusSplitShare,
@@ -45,8 +44,6 @@ export const queryKeys = {
     creditCards: ["finance", "credit-cards"] as const,
     creditCardStatements: (month?: string) =>
         ["finance", "credit-card-statements", month ?? "all"] as const,
-    streakSummary: (memberId?: string) =>
-        ["finance", "streak-summary", memberId ?? "all"] as const,
     dailyCheckins: (memberId?: string) =>
         ["finance", "daily-checkins", memberId ?? "all"] as const,
     bonusEvents: ["finance", "bonus-events"] as const,
@@ -139,6 +136,7 @@ export function useBudgetDetailQuery(
     perspective: Perspective,
     activeMemberId: string | undefined,
     memberIds: string[],
+    options: { enabled?: boolean } = {},
 ) {
     const isCombined = perspective === "household" && memberIds.length > 0;
     return useQuery<MonthlyBudgetDetail | null>({
@@ -160,7 +158,7 @@ export function useBudgetDetailQuery(
             }
             return financeService.getMonthlyBudget(month, activeMemberId ?? memberIds[0]);
         },
-        enabled: Boolean(month),
+        enabled: Boolean(month) && options.enabled !== false,
     });
 }
 
@@ -196,13 +194,6 @@ export function useCreditCardStatementsQuery(month?: string) {
     return useQuery<CreditCardStatement[]>({
         queryKey: queryKeys.creditCardStatements(month),
         queryFn: () => financeService.getCreditCardStatements(month),
-    });
-}
-
-export function useStreakSummaryQuery(memberId?: string) {
-    return useQuery<StreakSummary>({
-        queryKey: queryKeys.streakSummary(memberId),
-        queryFn: () => financeService.getStreakSummary(memberId),
     });
 }
 

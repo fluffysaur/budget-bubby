@@ -35,7 +35,6 @@ import type {
   UpsertCreditCardStatementInput,
   DailyCheckin,
   CheckinType,
-  StreakSummary,
   NotificationPreferences,
   NotificationLogEntry,
   NotificationLogRef,
@@ -62,7 +61,7 @@ import {
   isSpendType,
   resolveDueDay,
 } from '../lib/recurringItems';
-import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
+import { getTodayDateString, addMonths, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import { BonusLogUnavailableError, isMissingRelationError } from '../lib/supabaseErrors';
 import {
@@ -1482,7 +1481,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     return data as CreditCardStatement;
   }
 
-  // Daily Check-ins & Streaks
+  // Daily Check-ins
   public async getDailyCheckins(memberId?: string): Promise<DailyCheckin[]> {
     const client = this.getClient();
     let query = client.from('daily_checkins').select('*').order('checkin_date', { ascending: false });
@@ -1516,108 +1515,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .single();
     if (error) throw error;
     return data as DailyCheckin;
-  }
-
-  public async getStreakSummary(memberId?: string): Promise<StreakSummary> {
-    const allCheckins = await this.getDailyCheckins();
-    const targetMemberCheckins = memberId
-      ? allCheckins.filter((c) => c.member_id === memberId)
-      : allCheckins;
-
-    const today = getTodayDateString();
-    const dateSet = new Set(targetMemberCheckins.map((c) => c.checkin_date));
-    const checkedInToday = dateSet.has(today);
-
-    let currentStreak = 0;
-    const cursor = new Date(today + 'T12:00:00');
-    if (!checkedInToday) {
-      cursor.setDate(cursor.getDate() - 1);
-    }
-
-    while (true) {
-      const iso = formatISODate(cursor);
-      if (dateSet.has(iso)) {
-        currentStreak++;
-        cursor.setDate(cursor.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-
-    const sortedDates = Array.from(dateSet).sort();
-    let longestStreak = 0;
-    let running = 0;
-    let prevDate: Date | null = null;
-
-    for (const dStr of sortedDates) {
-      const cur = new Date(dStr + 'T00:00:00');
-      if (prevDate) {
-        const diffDays = Math.round((cur.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          running++;
-        } else if (diffDays > 1) {
-          running = 1;
-        }
-      } else {
-        running = 1;
-      }
-      prevDate = cur;
-      if (running > longestStreak) longestStreak = running;
-    }
-
-    // Couple streak (days where BOTH partners checked in)
-    const client = this.getClient();
-    const { data: membersData } = await client.from('household_members').select('id').order('created_at', { ascending: true });
-    const members = (membersData || []) as { id: string }[];
-    const m1 = members[0]?.id;
-    const m2 = members[1]?.id;
-
-    let coupleStreak = 0;
-    if (m1 && m2) {
-      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
-      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
-      const cCursor = new Date(today + 'T12:00:00');
-      if (!m1Dates.has(today) || !m2Dates.has(today)) {
-        cCursor.setDate(cCursor.getDate() - 1);
-      }
-      while (true) {
-        const iso = formatISODate(cCursor);
-        if (m1Dates.has(iso) && m2Dates.has(iso)) {
-          coupleStreak++;
-          cCursor.setDate(cCursor.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-    }
-
-    let resolvedCurrentStreak = currentStreak;
-    if (!memberId && m1 && m2) {
-      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
-      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
-      const calcMemberStreak = (dates: Set<string>) => {
-        let s = 0;
-        const cur = new Date(today + 'T12:00:00');
-        if (!dates.has(today)) cur.setDate(cur.getDate() - 1);
-        while (true) {
-          const iso = formatISODate(cur);
-          if (dates.has(iso)) {
-            s++;
-            cur.setDate(cur.getDate() - 1);
-          } else break;
-        }
-        return s;
-      };
-      resolvedCurrentStreak = Math.max(calcMemberStreak(m1Dates), calcMemberStreak(m2Dates));
-    }
-
-    return {
-      currentStreak: resolvedCurrentStreak,
-      longestStreak: Math.max(longestStreak, resolvedCurrentStreak),
-      checkedInToday,
-      lastCheckinDate: targetMemberCheckins[0]?.checkin_date || null,
-      coupleStreak,
-    };
   }
 
   // Notification Preferences

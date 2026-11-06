@@ -32,7 +32,6 @@ import type {
   UpsertCreditCardStatementInput,
   DailyCheckin,
   CheckinType,
-  StreakSummary,
   NotificationPreferences,
   UpdateNotificationPreferencesInput,
   NotificationLogEntry,
@@ -103,10 +102,9 @@ export interface FinanceService extends InboxService {
   deleteCreditCard(id: string): Promise<void>;
   getCreditCardStatements(month?: string): Promise<CreditCardStatement[]>;
   upsertCreditCardStatement(input: UpsertCreditCardStatementInput): Promise<CreditCardStatement>;
-  // Streaks & Daily Check-ins
+  // Daily Check-ins
   getDailyCheckins(memberId?: string): Promise<DailyCheckin[]>;
   recordDailyCheckin(memberId: string, date: string, type: CheckinType): Promise<DailyCheckin>;
-  getStreakSummary(memberId?: string): Promise<StreakSummary>;
   // Notification Preferences
   getNotificationPreferences(memberId: string): Promise<NotificationPreferences>;
   updateNotificationPreferences(
@@ -363,7 +361,7 @@ export const financeService: FinanceService = {
     invalidateFinanceCache();
     return res;
   },
-  // Streaks & Daily Check-ins
+  // Daily Check-ins
   getDailyCheckins: (memberId) => getActiveService().getDailyCheckins(memberId),
   recordDailyCheckin: async (memberId, date, type) => {
     const res = await withDayLogged(
@@ -377,7 +375,6 @@ export const financeService: FinanceService = {
     invalidateFinanceCache();
     return res;
   },
-  getStreakSummary: (memberId) => getActiveService().getStreakSummary(memberId),
   // Notification Preferences
   getNotificationPreferences: (memberId) =>
     getActiveService().getNotificationPreferences(memberId),

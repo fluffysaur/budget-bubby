@@ -388,16 +388,12 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       expect(paidStmt.is_paid).toBe(true);
     });
 
-    it('records daily checkins and calculates streak summaries', async () => {
+    it('records daily checkins', async () => {
       const today = getTodayDateString();
       await financeService.recordDailyCheckin('mem-00000000-0011', today, 'no_spend');
 
       const checkins = await financeService.getDailyCheckins('mem-00000000-0011');
-      expect(checkins.some((c) => c.checkin_date === today)).toBe(true);
-
-      const streak = await financeService.getStreakSummary('mem-00000000-0011');
-      expect(streak.checkedInToday).toBe(true);
-      expect(streak.currentStreak).toBeGreaterThanOrEqual(1);
+      expect(checkins.some((c) => c.checkin_date === today && c.type === 'no_spend')).toBe(true);
     });
   });
 });
