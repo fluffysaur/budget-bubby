@@ -1,11 +1,11 @@
 /**
  * DelightHost: mounted once in the app shell.
  * - Checks in the logged-in member for today after every log
- * - Routes inbox triage to a soft routine cue (no per-item toast)
- * - Keeps the per-device high-water mark and snapshot in bb_bubby_v1
- * - Diffs stage and unlocks against what this device has seen and plays
- *   the "Bubby grew!" / "New: Kopi Cup" moments
- * - Hosts milestone confetti and toasts
+ * - Inbox: a soft cue per triage, an inbox-zero celebration once a day
+ * - Moments, once per device: body change, reunion after a feed, full belly
+ *   (all daily quests), the weekly snack treat, and a cheer when both
+ *   partners have fed Bubby today
+ * - Hosts milestone confetti, toasts and the lazy Bubby sheet
  */
 
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -14,10 +14,18 @@ import { useActivityCheckins } from "../../hooks/useActivityCheckins";
 import { emitAppEvent, onAppEvent, type MilestoneDetail } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
 import { setInboxPending } from "../../lib/delight/inboxState";
-import { addInboxZeroDay, readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
-import { toSgtDateString } from "../../lib/bubby/dates";
-import { STAGES, HATCHLING_STAGE } from "../../lib/bubby/growth";
-import { getAccessory } from "../../lib/bubby/accessories";
+import {
+    addLocalExercise,
+    addSnack,
+    hasCelebrated,
+    markCelebrated,
+    readBubbyStore,
+    updateBubbyStore,
+} from "../../lib/bubby/storage";
+import { allDone } from "../../lib/bubby/quests";
+import { snackForWeek, snackLabel } from "../../lib/bubby/snacks";
+import { mondayOf, toSgtDateString } from "../../lib/bubby/dates";
+import type { BubbyBody } from "../../lib/bubby/body";
 import { ConfettiBurst } from "../ui/ConfettiBurst";
 import { MilestoneToast } from "./MilestoneToast";
 
@@ -28,99 +36,104 @@ interface QueuedToast extends MilestoneDetail {
 }
 
 const MAX_QUEUED_TOASTS = 3;
-/** Couple streaks that get full confetti. */
-const COUPLE_STREAK_MILESTONES = [7, 14, 30, 50, 100];
+
+const BODY_TITLE: Record<Exclude<BubbyBody, "regular">, string> = {
+    buff: "Bubby got buff!",
+    lean: "Bubby's looking lean!",
+    chubby: "Bubby's well fed!",
+};
 
 export function DelightHost() {
     useActivityCheckins();
     const bubby = useBubby();
-    const { isReady, state, equipped, unlocked, today, members } = bubby;
+    const { isReady, body, mood, condition, dailyQuests, weeklyQuests, today, me, members } = bubby;
 
     const [toasts, setToasts] = useState<QueuedToast[]>([]);
     const [burstKey, setBurstKey] = useState(0);
     const toastSeq = useRef(0);
-    const [sheet, setSheet] = useState<{ open: boolean; accessoryId?: string } | null>(null);
+    const [sheetOpen, setSheetOpen] = useState<boolean | null>(null);
 
-    // High-water mark and a snapshot for components outside the providers
+    // Snapshot for components outside the providers (the save toast)
     useEffect(() => {
         if (!isReady) return;
         const store = readBubbyStore();
-        const snapshot = { stage: state.stage, equipped: equipped as Record<string, string> };
-        const hwmChanged = state.derivedPoints > (store.hwmPoints ?? 0);
-        const snapChanged = JSON.stringify(store.snapshot) !== JSON.stringify(snapshot);
-        if (hwmChanged || snapChanged) {
-            updateBubbyStore({
-                hwmPoints: Math.max(state.derivedPoints, store.hwmPoints ?? 0),
-                snapshot,
-            });
+        if (store.snapshot?.body !== body || store.snapshot?.mood !== mood) {
+            updateBubbyStore({ snapshot: { body, mood } });
         }
-    }, [isReady, state.derivedPoints, state.stage, equipped]);
+    }, [isReady, body, mood]);
 
-    // Stage-ups and unlocks, once per device
+    // Body changes (only towards a fuller shape are celebrated) and reunions
     useEffect(() => {
         if (!isReady) return;
         const store = readBubbyStore();
-        const seenStage = store.seenStage ?? 0;
-
-        if (state.stage > seenStage) {
-            const hatched = state.stage >= HATCHLING_STAGE && seenStage < HATCHLING_STAGE;
-            const stageName = STAGES[state.stage].name;
-            feedback.milestone("stage-up", {
-                dedupeKey: `stage:${state.stage}`,
-                title: hatched ? "Bubby hatched!" : "Bubby grew!",
-                subtitle: state.stage === STAGES.length - 1 ? "Fully grown" : `Now a ${stageName}`,
-                primary: { label: "Meet Bubby", event: "bubby:open-sheet" },
+        if (store.lastBody && store.lastBody !== body && body !== "regular") {
+            feedback.milestone("body-change", {
+                dedupeKey: `body:${body}:${today}`,
+                title: BODY_TITLE[body],
+                primary: { label: "See Bubby", event: "bubby:open-sheet" },
             });
         }
-        if (state.stage !== store.seenStage) {
-            updateBubbyStore({ seenStage: Math.max(state.stage, seenStage) });
+        if (store.lastMood && store.lastMood !== "normal" && mood === "normal") {
+            feedback.milestone("reunion", { dedupeKey: `reunion:${today}`, title: "Welcome back! 🐧" });
         }
+        if (store.lastBody !== body || store.lastMood !== mood) {
+            updateBubbyStore({ lastBody: body, lastMood: mood });
+        }
+    }, [isReady, body, mood, today]);
 
-        const seen = store.seenAccessories;
-        if (!seen) {
-            // First run on this device: learn what is already unlocked silently
-            updateBubbyStore({ seenAccessories: unlocked });
-            return;
-        }
-        const fresh = unlocked.filter((id) => !seen.includes(id));
-        if (fresh.length > 0) {
-            const first = getAccessory(fresh[0]);
-            if (first) {
-                feedback.milestone("unlock", {
-                    dedupeKey: `unlock:${first.id}`,
-                    title: `New: ${first.label}`,
-                    subtitle: fresh.length > 1 ? `+${fresh.length - 1} more to try` : "Ready to wear",
-                    primary: { label: "Try it on", event: "bubby:open-sheet", accessoryId: first.id },
-                });
-            }
-            updateBubbyStore({ seenAccessories: Array.from(new Set([...seen, ...fresh])) });
-        }
-    }, [isReady, state.stage, unlocked]);
-
-    // Couple day: when the second partner's check-in lands, once per device per day
-    const coupleToday = state.isCoupleDayToday;
-    const coupleStreak = state.coupleStreak;
+    // Daily quests (per member): full belly
+    const dailyDone = allDone(dailyQuests);
+    const meId = me?.id;
     useEffect(() => {
-        if (!isReady || !coupleToday || members.length < 2) return;
-        const isStreakMilestone = COUPLE_STREAK_MILESTONES.includes(coupleStreak);
-        feedback.milestone(isStreakMilestone ? "couple-streak" : "couple-day", {
-            dedupeKey: `couple-day:${today}`,
-            title: `Couple day! 🔥 ${coupleStreak}`,
-            subtitle: isStreakMilestone ? `${coupleStreak}-day couple streak` : "You both logged today",
+        if (!isReady || !dailyDone || !meId) return;
+        feedback.milestone("full-belly", {
+            dedupeKey: `full-belly:${today}:${meId}`,
+            title: "Full belly! 🍤",
+            subtitle: "All of today's quests",
         });
-    }, [isReady, coupleToday, coupleStreak, today, members.length]);
+    }, [isReady, dailyDone, meId, today]);
 
-    // Inbox triage: a soft pop and a nod per item, never a toast.
-    // Inbox zero: only when pending goes from >0 to 0 because of triage this
-    // session (never on load), once per member per day.
-    const meId = bubby.me?.id ?? "me";
-    const meIdRef = useRef(meId);
+    // Weekly quests (household): a snack treat for the collection
+    const weeklyDone = allDone(weeklyQuests);
     useEffect(() => {
-        meIdRef.current = meId;
+        if (!isReady || !weeklyDone) return;
+        const week = mondayOf(today);
+        const snack = snackForWeek(week);
+        const result = feedback.milestone("weekly-treat", {
+            dedupeKey: `treat:${week}`,
+            title: `Treat: ${snackLabel(snack)}!`,
+            subtitle: "Weekly quests done",
+            primary: { label: "See Bubby", event: "bubby:open-sheet" },
+        });
+        if (result !== "duplicate") {
+            addSnack({ id: snack, week });
+            emitAppEvent("bubby:store-changed", {});
+        }
+    }, [isReady, weeklyDone, today]);
+
+    // Both partners fed Bubby today: a small cheer, once a day
+    const bothFed = members.length >= 2 && members.every((m) => condition.fedToday.has(m.id));
+    useEffect(() => {
+        if (!isReady || !bothFed) return;
+        const key = `both-fed:${today}`;
+        if (hasCelebrated(key)) return;
+        markCelebrated(key);
+        feedback.routine("acknowledge");
+    }, [isReady, bothFed, today]);
+
+    // Inbox: a soft cue per triage; inbox zero once per member per day, only
+    // when triage this session takes pending from >0 to 0 (never on load)
+    const meIdRef = useRef(meId ?? "me");
+    useEffect(() => {
+        meIdRef.current = meId ?? "me";
     }, [meId]);
 
     useEffect(() => {
         let triaged = 0;
+        const syncPending = (count: number) => {
+            setInboxPending(count);
+            emitAppEvent("bubby:store-changed", {});
+        };
         const celebrateInboxZero = (clearedCount: number, date: string) => {
             if (clearedCount <= 0) return;
             const result = feedback.milestone("inbox-zero", {
@@ -129,23 +142,23 @@ export function DelightHost() {
                 subtitle: `${clearedCount} sorted`,
             });
             if (result !== "duplicate") {
-                addInboxZeroDay(date);
-                emitAppEvent("bubby:prefs-changed", {});
+                addLocalExercise("inbox-clear", date);
+                emitAppEvent("bubby:store-changed", {});
             }
             triaged = 0;
         };
         const onTriaged = (remaining: number) => {
             triaged += 1;
-            setInboxPending(remaining);
+            syncPending(remaining);
             feedback.routine("triage");
             if (remaining === 0) celebrateInboxZero(triaged, toSgtDateString());
         };
         const offs = [
-            onAppEvent("inbox:items-arrived", (d) => setInboxPending(d.pendingCount)),
+            onAppEvent("inbox:items-arrived", (d) => syncPending(d.pendingCount)),
             onAppEvent("inbox:item-confirmed", (d) => onTriaged(d.remaining)),
             onAppEvent("inbox:item-discarded", (d) => onTriaged(d.remaining)),
             onAppEvent("inbox:cleared", (d) => {
-                setInboxPending(0);
+                syncPending(0);
                 celebrateInboxZero(d.clearedCount, d.date || toSgtDateString());
             }),
         ];
@@ -167,17 +180,8 @@ export function DelightHost() {
     );
 
     // Bubby sheet: one lazy instance, kept mounted after first open for the exit animation
-    useEffect(
-        () =>
-            onAppEvent("bubby:open-sheet", (detail) =>
-                setSheet({ open: true, accessoryId: detail?.accessoryId }),
-            ),
-        [],
-    );
-    const closeSheet = useCallback(
-        () => setSheet((prev) => (prev ? { ...prev, open: false } : prev)),
-        [],
-    );
+    useEffect(() => onAppEvent("bubby:open-sheet", () => setSheetOpen(true)), []);
+    const closeSheet = useCallback(() => setSheetOpen(false), []);
 
     const clearBurst = useCallback(() => setBurstKey(0), []);
     const shiftToast = useCallback(() => setToasts((prev) => prev.slice(1)), []);
@@ -190,13 +194,9 @@ export function DelightHost() {
 
     return (
         <>
-            {sheet && (
+            {sheetOpen !== null && (
                 <Suspense fallback={null}>
-                    <BubbySheet
-                        isOpen={sheet.open}
-                        onClose={closeSheet}
-                        focusAccessoryId={sheet.accessoryId}
-                    />
+                    <BubbySheet isOpen={sheetOpen} onClose={closeSheet} />
                 </Suspense>
             )}
             {burstKey > 0 && <ConfettiBurst key={burstKey} onDone={clearBurst} />}
@@ -205,15 +205,12 @@ export function DelightHost() {
                     key={current.id}
                     title={current.title ?? ""}
                     subtitle={current.subtitle}
-                    stage={state.stage}
-                    equipped={equipped as Record<string, string>}
+                    body={body}
                     primaryLabel={current.primary?.label}
                     onPrimary={
                         current.primary?.event
                             ? () => {
-                                  emitAppEvent("bubby:open-sheet", {
-                                      accessoryId: current.primary?.accessoryId,
-                                  });
+                                  emitAppEvent("bubby:open-sheet", {});
                                   shiftToast();
                               }
                             : undefined

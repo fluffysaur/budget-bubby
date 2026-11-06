@@ -1,5 +1,6 @@
 /**
- * Shared milestone toast (stage up, unlock, couple day, inbox zero).
+ * Shared milestone toast (full belly, weekly treat, body change, reunion,
+ * inbox zero, goal reached).
  * Non-modal: only its own box takes taps. Dual explicit actions instead of
  * a passive X: an optional primary (e.g. "Meet Bubby") and "Nice!".
  */
@@ -8,12 +9,12 @@ import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Bubby } from "./Bubby";
+import type { BubbyBody } from "../../lib/bubby/body";
 
 export interface MilestoneToastProps {
     title: string;
     subtitle?: string;
-    stage: number;
-    equipped?: Record<string, string>;
+    body: BubbyBody;
     primaryLabel?: string;
     onPrimary?: () => void;
     /** "Nice!": acknowledge and close. */
@@ -26,8 +27,7 @@ export interface MilestoneToastProps {
 export function MilestoneToast({
     title,
     subtitle,
-    stage,
-    equipped,
+    body,
     primaryLabel,
     onPrimary,
     onAcknowledge,
@@ -49,10 +49,8 @@ export function MilestoneToast({
             >
                 <div className="relative flex h-12 w-12 shrink-0 items-end justify-center overflow-hidden rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter-light) pt-0.5">
                     <Bubby
-                        stage={stage}
-                        mood="proud"
+                        body={body}
                         reaction="celebrate"
-                        equipped={equipped}
                         size="sm"
                         className="h-11 w-11"
                         decorative

@@ -13,6 +13,7 @@ import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
+import { recordExercise } from "../../lib/bubby/activity";
 
 export interface BulkBalanceUpdateModalProps {
     isOpen: boolean;
@@ -136,6 +137,7 @@ export function BulkBalanceUpdateModal({
         try {
             setIsSubmitting(true);
             const updated = await financeService.bulkUpdateAccountBalances(updates, snapshotDate);
+            recordExercise("balances");
             onBalancesUpdated?.(updated);
             onClose();
         } catch (err: unknown) {

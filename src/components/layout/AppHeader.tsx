@@ -28,11 +28,11 @@ import { mockMembers } from "../../data/mockSeedData";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
-import { StreakChip } from "./StreakChip";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
+import { BubbyIcon } from "../ui/BubbyIcon";
 import { ConfirmModal } from "../ui/ConfirmModal";
 
 export interface AppHeaderProps {
@@ -197,10 +197,9 @@ export function AppHeader({
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
                 {/* Left: Brand Icon (Mobile) + Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
                 <div className="flex items-center">
-                    <BubbyAvatarButton
-                        variant="header"
-                        className="md:hidden -ml-1.5 mr-1"
-                    />
+                    <div className="flex md:hidden h-8 w-8 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0 mr-2.5 pt-0.5">
+                        <BubbyIcon className="h-7 w-7" />
+                    </div>
                     {/* Mobile Perspective Dropdown */}
                     <div className="relative sm:hidden" ref={dropdownRef}>
                         <button
@@ -426,8 +425,8 @@ export function AppHeader({
                         </div>
                     )}
 
-                    {/* Check-in streak */}
-                    <StreakChip />
+                    {/* Live household Bubby (tap to pet and open the sheet) */}
+                    <BubbyAvatarButton />
 
                     {/* Notification Center Popover */}
                     <NotificationCenterPopover onNavigateTab={onNavigateTab} />

@@ -31,7 +31,7 @@ export type PushClass = "urgent" | "routine" | "immediate";
  * - urgent: CC due in a day or less (or overdue), budget exceeded. Always
  *   pushed on their own, any hour outside quiet hours.
  * - routine: date-driven reminders. Bundled from DIGEST_HOUR.
- * - immediate: check-in, couple streak, budget nearing, settlement. Pushed
+ * - immediate: Bubby nudge, budget nearing, settlement. Pushed
  *   on the next run (check-in types are already gated by check-in time).
  */
 export function classifyReminder(reminder: AppReminder): PushClass {

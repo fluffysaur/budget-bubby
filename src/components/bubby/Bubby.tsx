@@ -1,19 +1,19 @@
 /**
- * Bubby, the household penguin: one layered inline SVG for every stage.
- * Motion is CSS only (keyframes on `.bubby-*` classes keyed off
- * `data-reaction`) and stops under prefers-reduced-motion.
+ * Bubby, the household penguin: one layered inline SVG. Four body shapes
+ * (regular, chubby, lean, buff) with visual mood overlays (rumbly tummy,
+ * tears, a little "miss you" sign). Moods are never named in the UI.
+ * Motion is CSS only (keyframes keyed off `data-reaction`) and stops under
+ * prefers-reduced-motion.
  */
 
 import { useId } from "react";
-import { STAGES, HATCHLING_STAGE } from "../../lib/bubby/growth";
-import { ANCHORS, INK } from "../../lib/bubby/anchors";
-import { MOOD_FACE, type BubbyMood, type EyeShape, type BeakShape } from "../../lib/bubby/moods";
-import type { AccessoryId, AccessorySlot } from "../../lib/bubby/accessories";
+import { FACE_ANCHOR, INK } from "../../lib/bubby/anchors";
+import { MOOD_FACE, type EyeShape, type BeakShape } from "../../lib/bubby/moods";
+import type { BubbyBody, BubbyMood } from "../../lib/bubby/body";
 import type { BubbyReaction } from "../../lib/appEvents";
-import { CoinNest, StageBody } from "./parts/StageBody";
-import { Beak, Brows, Cheeks, Eyes } from "./parts/Face";
-import { Dust, GlowRing, Hearts, HeldCoin, Sparkles, Zzz } from "./parts/Fx";
-import { AccessoryArt } from "./accessories/AccessoryArt";
+import { BodyShape } from "./parts/BodyShape";
+import { Beak, Cheeks, Eyes } from "./parts/Face";
+import { Dust, GlowRing, Hearts, MissYouSign, Rumble, Sparkles, Tears } from "./parts/Fx";
 
 export type BubbySize = "xs" | "sm" | "md" | "lg";
 
@@ -25,10 +25,9 @@ const SIZE_CLASS: Record<BubbySize, string> = {
 };
 
 export interface BubbyProps {
-    stage: number;
+    body?: BubbyBody;
     mood?: BubbyMood;
     reaction?: BubbyReaction | null;
-    equipped?: Partial<Record<AccessorySlot, AccessoryId>>;
     size?: BubbySize;
     className?: string;
     /** Hide from screen readers (e.g. inside a labelled button). */
@@ -43,98 +42,66 @@ function blinkDelayFor(id: string): string {
 }
 
 export function Bubby({
-    stage,
-    mood = "happy",
+    body = "regular",
+    mood = "normal",
     reaction = null,
-    equipped = {},
     size = "md",
     className = "",
     decorative = false,
 }: BubbyProps) {
     const instanceId = useId();
-    const safeStage = Math.min(Math.max(stage, 0), STAGES.length - 1);
-    const stageDef = STAGES[safeStage];
-    const anchors = ANCHORS[stageDef.id];
-    const hasFace = safeStage >= HATCHLING_STAGE && Boolean(anchors);
     const compact = size === "xs";
-    const face = MOOD_FACE[mood];
+    // A reaction (e.g. the reunion after a feed) shows the happy face
+    const face = MOOD_FACE[reaction ? "normal" : mood];
 
     let eyes: EyeShape = face.eyes;
     let beak: BeakShape = face.beak;
     if (reaction === "celebrate") {
         eyes = "sparkle";
         beak = "open";
-    } else if (reaction === "cheer" || reaction === "poof") {
-        eyes = "arc";
-        beak = "open";
     } else if (reaction === "munch") {
         beak = "munch";
     }
-
-    const neck = equipped.neck ?? (mood === "snug" ? "scarf" : undefined);
-    const hand = equipped.hand;
-    const label = `Bubby, ${stageDef.name.toLowerCase()}, ${mood}`;
 
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 512 512"
             className={`bubby ${SIZE_CLASS[size]} ${className}`}
-            data-stage={stageDef.id}
+            data-body={body}
             data-mood={mood}
             data-reaction={reaction ?? undefined}
             data-blink={eyes === "dot" ? "" : undefined}
-            {...(decorative
-                ? { "aria-hidden": true }
-                : { role: "img", "aria-label": label })}
+            {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": "Bubby" })}
         >
             <g data-layer="ground">
                 <ellipse cx="256" cy="476" rx="140" ry="14" fill={INK} opacity="0.12" />
-                {safeStage < HATCHLING_STAGE && <CoinNest />}
             </g>
 
-            {!compact && (
-                <g data-layer="fx-back">{reaction === "celebrate" && <GlowRing />}</g>
-            )}
+            {!compact && <g data-layer="fx-back">{reaction === "celebrate" && <GlowRing />}</g>}
 
             <g data-layer="body" className="bubby-body">
-                <StageBody stage={stageDef.id} part="body" showShell={!equipped.head} />
-
-                {hasFace && anchors && (
-                    <>
-                        <g data-layer="flipper-l" className="bubby-flipper-l">
-                            <StageBody stage={stageDef.id} part="flipperL" />
-                        </g>
-                        <g data-layer="flipper-r">
-                            <StageBody stage={stageDef.id} part="flipperR" />
-                        </g>
-                        <g data-layer="face" transform={anchors.face}>
-                            <Eyes shape={eyes} blinkDelay={blinkDelayFor(instanceId)} />
-                            {face.brows && <Brows />}
-                            {face.blush && <Cheeks lines={!compact} />}
-                            <Beak shape={beak} />
-                        </g>
-                        <g data-layer="acc-neck" transform={anchors.neck}>
-                            {neck && <AccessoryArt id={neck} />}
-                        </g>
-                        <g data-layer="acc-face" transform={anchors.face}>
-                            {equipped.face && <AccessoryArt id={equipped.face} />}
-                        </g>
-                        <g data-layer="acc-head" transform={anchors.head}>
-                            {equipped.head && <AccessoryArt id={equipped.head} />}
-                        </g>
-                        <g data-layer="acc-hand" transform={anchors.handR}>
-                            {hand ? <AccessoryArt id={hand} /> : face.fx === "coin" && <HeldCoin />}
-                        </g>
-                    </>
-                )}
+                <BodyShape body={body} part="body" />
+                {face.overlay === "rumble" && <Rumble />}
+                <g data-layer="flipper-l" className="bubby-flipper-l">
+                    <BodyShape body={body} part="flipperL" />
+                </g>
+                <g data-layer="flipper-r">
+                    <BodyShape body={body} part="flipperR" />
+                </g>
+                <g data-layer="face" transform={FACE_ANCHOR[body]}>
+                    <Eyes shape={eyes} blinkDelay={blinkDelayFor(instanceId)} />
+                    {face.blush && <Cheeks lines={!compact} />}
+                    <Beak shape={beak} />
+                    {face.overlay === "tears" && <Tears />}
+                </g>
+                {face.overlay === "sign" && <MissYouSign compact={compact} />}
             </g>
 
             {!compact && (
                 <g data-layer="fx-front">
-                    {face.fx === "zzz" && !reaction && <Zzz />}
-                    {(face.fx === "hearts" || (reaction === "celebrate" && mood === "proud")) && <Hearts />}
                     {reaction === "celebrate" && <Sparkles />}
+                    {reaction === "reunion" && <Hearts />}
                     {reaction === "poof" && <Dust />}
                 </g>
             )}

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { buildWeeklyRecap, recapMonths, recapWeekFor } from "../src/lib/bubby/recap";
+import { collectFeedEvents } from "../src/lib/bubby/sources";
 import { addDays } from "../src/lib/bubby/dates";
 import type { DailyCheckin, Expense } from "../src/types/finance";
+import type { BubbyStore } from "../src/lib/bubby/storage";
 
 const A = "mem-a";
 const B = "mem-b";
@@ -9,7 +11,7 @@ const WEEK = { start: "2026-10-26", end: "2026-11-01" }; // Mon-Sun across a mon
 
 function exp(date: string, amount: number, category_id = "cat-food", extra: Partial<Expense> = {}): Expense {
     return {
-        id: `${date}-${amount}-${category_id}`,
+        id: `${date}-${amount}-${category_id}-${extra.payer_id ?? A}`,
         household_id: "hh",
         payer_id: A,
         date,
@@ -19,12 +21,18 @@ function exp(date: string, amount: number, category_id = "cat-food", extra: Part
         is_shared: false,
         split_ratio: 0,
         settled: false,
+        created_at: `${date}T04:00:00.000Z`,
         ...extra,
     };
 }
 
 function chk(member_id: string, checkin_date: string, type: DailyCheckin["type"] = "expense"): DailyCheckin {
-    return { id: `${member_id}-${checkin_date}`, household_id: "hh", member_id, checkin_date, type };
+    return { id: `${member_id}-${checkin_date}-${type}`, household_id: "hh", member_id, checkin_date, type };
+}
+
+function recap(expenses: Expense[], checkins: DailyCheckin[] = [], store: BubbyStore = {}, weeklyBudget?: number) {
+    const events = collectFeedEvents({ checkins, expenses, snapshots: [], bonusEvents: [], store });
+    return buildWeeklyRecap({ week: WEEK, expenses, checkins, events, weeklyBudget });
 }
 
 describe("recap week bounds", () => {
@@ -45,60 +53,48 @@ describe("recap week bounds", () => {
 });
 
 describe("buildWeeklyRecap", () => {
-    const base = { week: WEEK, checkins: [] as DailyCheckin[], memberIds: [A, B] };
-
     it("sums the week across the month boundary, skips goal spend, finds the top category", () => {
-        const recap = buildWeeklyRecap({
-            ...base,
-            expenses: [
-                exp("2026-10-26", 20),
-                exp("2026-11-01", 30, "cat-fun"),
-                exp("2026-11-01", 15, "cat-fun"),
-                exp("2026-10-30", 500, "cat-fun", { goal_id: "goal-1" }),
-                exp("2026-11-02", 99), // next week
-                exp("2026-10-20", 130), // week before
-            ],
-        });
-        expect(recap.spent).toBe(65);
-        expect(recap.prevSpent).toBe(130);
-        expect(recap.changePct).toBe(-50);
-        expect(recap.topCategory).toEqual({ categoryId: "cat-fun", amount: 45 });
+        const r = recap([
+            exp("2026-10-26", 20),
+            exp("2026-11-01", 30, "cat-fun"),
+            exp("2026-11-01", 15, "cat-fun", { id: "dup" }),
+            exp("2026-10-30", 500, "cat-fun", { goal_id: "goal-1" }),
+            exp("2026-11-02", 99), // next week
+            exp("2026-10-20", 130), // week before
+        ]);
+        expect(r.spent).toBe(65);
+        expect(r.prevSpent).toBe(130);
+        expect(r.changePct).toBe(-50);
+        expect(r.topCategory).toEqual({ categoryId: "cat-fun", amount: 45 });
     });
 
-    it("prefers 5+ couple days over being under pace", () => {
-        const checkins = [0, 1, 2, 3, 4].flatMap((i) => [chk(A, addDays(WEEK.start, i)), chk(B, addDays(WEEK.start, i))]);
-        // Seed enough history that this week's paws don't cross a stage (no growth win)
-        const prior = Array.from({ length: 60 }, (_, i) => chk(A, addDays(WEEK.start, -40 - i)));
-        const recap = buildWeeklyRecap({ ...base, checkins: [...prior, ...checkins], expenses: [], weeklyBudget: 300 });
-        expect(recap.win).toEqual({ kind: "couple-days", text: "5 couple days" });
+    it("lists who fed Bubby each day, for the dots", () => {
+        const r = recap([], [chk(A, "2026-10-27"), chk(B, "2026-10-27"), chk(A, "2026-10-29")]);
+        expect(r.days).toHaveLength(7);
+        expect(r.days[1].fed.sort()).toEqual([A, B]);
+        expect(r.days[3].fed).toEqual([A]);
     });
 
-    it("reports a stage-up as the top win", () => {
-        const checkins = [0, 1, 2].flatMap((i) => [chk(A, addDays(WEEK.start, i)), chk(B, addDays(WEEK.start, i))]);
-        const recap = buildWeeklyRecap({ ...base, checkins, expenses: [] });
-        expect(recap.win).toEqual({ kind: "growth", text: "Bubby grew to Wobbly Egg" });
+    it("reports a body change as the top win", () => {
+        const fed = [0, 1, 2, 3, 4].flatMap((i) => [chk(A, addDays(WEEK.start, i)), chk(B, addDays(WEEK.start, i))]);
+        expect(recap([], fed).win).toEqual({ kind: "body", text: "Bubby ate well" });
     });
 
     it("falls through under pace, no-spend days and lowest week", () => {
-        const prior = Array.from({ length: 30 }, (_, i) => chk(A, addDays(WEEK.start, -40 - i)));
-        expect(
-            buildWeeklyRecap({ ...base, checkins: prior, expenses: [exp("2026-10-27", 40)], weeklyBudget: 124 }).win,
-        ).toEqual({ kind: "under-pace", text: "S$84 under pace" });
-
-        const noSpend = [chk(A, "2026-10-27", "no_spend"), chk(A, "2026-10-28", "no_spend")];
-        expect(buildWeeklyRecap({ ...base, checkins: [...prior, ...noSpend], expenses: [] }).win.kind).toBe("no-spend");
-
-        const lowest = buildWeeklyRecap({
-            ...base,
-            checkins: prior,
-            expenses: [exp("2026-10-27", 10), exp("2026-10-20", 50), exp("2026-10-13", 60), exp("2026-10-06", 70)],
+        expect(recap([exp("2026-10-27", 40)], [], {}, 124).win).toEqual({
+            kind: "under-pace",
+            text: "S$84 under pace",
         });
-        expect(lowest.win.kind).toBe("lowest-week");
+        expect(recap([], [chk(A, "2026-10-27", "no_spend"), chk(A, "2026-10-28", "no_spend")]).win.kind).toBe(
+            "no-spend",
+        );
+        expect(
+            recap([exp("2026-10-27", 10), exp("2026-10-20", 50), exp("2026-10-13", 60), exp("2026-10-06", 70)]).win
+                .kind,
+        ).toBe("lowest-week");
     });
 
     it("always has a win", () => {
-        const prior = Array.from({ length: 30 }, (_, i) => chk(A, addDays(WEEK.start, -40 - i)));
-        const recap = buildWeeklyRecap({ ...base, checkins: [...prior, chk(A, "2026-10-29")], expenses: [] });
-        expect(recap.win).toEqual({ kind: "logged", text: "Logged 1 of 7 days" });
+        expect(recap([], [chk(A, "2026-10-29")]).win).toEqual({ kind: "logged", text: "Logged 1 of 7 days" });
     });
 });

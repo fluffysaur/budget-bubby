@@ -258,7 +258,7 @@ export function NotificationSettingsModal({
                                         Haptic Feedback
                                     </span>
                                     <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        Tactile vibration for pulls, streaks, sweeps, logs & alerts
+                                        Tactile vibration for pulls, sweeps, logs & alerts
                                     </p>
                                 </div>
                             </div>
@@ -391,11 +391,11 @@ export function NotificationSettingsModal({
                                         onChange={(val) => handleUpdate({ cc_missing_statement: val })}
                                     />
 
-                                    {/* Streak & Spend Logging */}
+                                    {/* Bubby nudges (stored as streak_and_logging) */}
                                     <CategoryToggleRow
                                         icon={<Flame className="h-4 w-4 text-amber-500 shrink-0" />}
-                                        title="Daily Streak &amp; Spend Check-in"
-                                        description={`Daily ${formatTime12h(checkinTime)} reminder to log spend`}
+                                        title="Bubby Nudges"
+                                        description={`${formatTime12h(checkinTime)} nudge when Bubby needs a snack`}
                                         isChecked={prefs.streak_and_logging}
                                         testId="toggle-streak-logging"
                                         onChange={(val) => handleUpdate({ streak_and_logging: val })}

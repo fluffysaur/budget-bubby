@@ -299,14 +299,6 @@ export interface DailyCheckin {
   created_at?: string;
 }
 
-export interface StreakSummary {
-  currentStreak: number;
-  longestStreak: number;
-  checkedInToday: boolean;
-  lastCheckinDate?: string | null;
-  coupleStreak: number;
-}
-
 export interface MonthlySurplusPoint {
   month: string;
   cap: number;

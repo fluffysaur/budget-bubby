@@ -1,41 +1,48 @@
 /**
- * Per-device Bubby state in one localStorage key (`bb_bubby_v1`).
+ * Per-device Bubby state in one localStorage key (`bb_bubby_v2`).
  * Every access is wrapped in try/catch and the app works with an empty key.
- * "Seen" flags are per device on purpose: each partner gets their own
- * "Bubby grew!" moment.
+ *
+ * Only things with no table behind them live here: petting, local exercise
+ * records (goal adds, month-end actions, recap reads, inbox clears), the
+ * snack collection, and "already celebrated" flags. Food comes from data.
  */
 
-export const BUBBY_STORAGE_KEY = "bb_bubby_v1";
+export const BUBBY_STORAGE_KEY = "bb_bubby_v2";
 
-export type EquippedPrefs = Partial<Record<string, string | null>>;
+/** Local exercise records: SGT dates the action happened on this device. */
+export type LocalExerciseKind = "inbox-clear" | "balances" | "goal-add" | "month-end" | "recap-read";
+
+export interface SnackEntry {
+    id: string;
+    /** Monday (YYYY-MM-DD) of the week it was earned. */
+    week: string;
+}
 
 export interface BubbySnapshot {
-    stage: number;
-    equipped: Record<string, string>;
+    body: string;
+    mood: string;
 }
 
 export interface BubbyStore {
-    /** Highest points ever derived on this device, so growth never regresses. */
-    hwmPoints?: number;
-    /** Stage index last celebrated on this device. */
-    seenStage?: number;
-    seenAccessories?: string[];
-    /** Slot -> accessory id, or null when the user took the slot off. */
-    equipped?: EquippedPrefs;
+    /** memberId -> SGT dates this member petted Bubby (on this device). */
+    petDays?: Record<string, string[]>;
+    exercise?: Partial<Record<LocalExerciseKind, string[]>>;
+    snacks?: SnackEntry[];
+    /** Body and mood last shown on this device (for change and reunion moments). */
+    lastBody?: string;
+    lastMood?: string;
     /** Epoch ms of the last app-open greeting. */
     lastGreetingAt?: number;
     /** Monday (YYYY-MM-DD) of the last acknowledged weekly recap. */
     recapSeenWeek?: string;
-    /** SGT dates the inbox reached zero on this device. */
-    inboxZeroDays?: string[];
-    /** Dedupe keys of milestones already celebrated (most recent last). */
+    /** Dedupe keys of moments already celebrated (most recent last). */
     celebrated?: string[];
-    /** Last rendered stage and equipped items, for components outside providers. */
+    /** Last rendered look, for components outside the providers (save toast). */
     snapshot?: BubbySnapshot;
 }
 
-const MAX_CELEBRATED = 60;
-const MAX_INBOX_ZERO_DAYS = 120;
+const MAX_CELEBRATED = 80;
+const MAX_DAYS = 120;
 
 export function readBubbyStore(): BubbyStore {
     try {
@@ -68,6 +75,12 @@ export function updateBubbyStore(
     return next;
 }
 
+function addDay(list: string[] | undefined, date: string): string[] {
+    const days = new Set(list ?? []);
+    days.add(date);
+    return Array.from(days).sort().slice(-MAX_DAYS);
+}
+
 export function hasCelebrated(key: string): boolean {
     return (readBubbyStore().celebrated ?? []).includes(key);
 }
@@ -80,12 +93,22 @@ export function markCelebrated(key: string): void {
     });
 }
 
-export function addInboxZeroDay(date: string): void {
+export function addLocalExercise(kind: LocalExerciseKind, date: string): void {
+    updateBubbyStore((prev) => ({
+        exercise: { ...(prev.exercise ?? {}), [kind]: addDay(prev.exercise?.[kind], date) },
+    }));
+}
+
+export function addPetDay(memberId: string, date: string): void {
+    updateBubbyStore((prev) => ({
+        petDays: { ...(prev.petDays ?? {}), [memberId]: addDay(prev.petDays?.[memberId], date) },
+    }));
+}
+
+export function addSnack(entry: SnackEntry): void {
     updateBubbyStore((prev) => {
-        const days = new Set(prev.inboxZeroDays ?? []);
-        days.add(date);
-        return {
-            inboxZeroDays: Array.from(days).sort().slice(-MAX_INBOX_ZERO_DAYS),
-        };
+        const snacks = prev.snacks ?? [];
+        if (snacks.some((s) => s.week === entry.week)) return {};
+        return { snacks: [...snacks, entry] };
     });
 }

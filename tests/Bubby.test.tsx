@@ -3,61 +3,53 @@ import { render, screen } from "@testing-library/react";
 import { Bubby } from "../src/components/bubby/Bubby";
 
 function layers(container: HTMLElement): string[] {
-    return Array.from(container.querySelectorAll("[data-layer]")).map(
-        (el) => el.getAttribute("data-layer") ?? "",
-    );
+    return Array.from(container.querySelectorAll("[data-layer]")).map((el) => el.getAttribute("data-layer") ?? "");
 }
 
 describe("Bubby", () => {
-    it("shows just the egg and its nest at the egg stages", () => {
-        const { container } = render(<Bubby stage={0} />);
-        expect(layers(container)).toEqual(["ground", "fx-back", "body", "fx-front"]);
-        expect(container.querySelector("svg")?.getAttribute("data-stage")).toBe("egg");
+    it("is always a penguin: same layers for every body", () => {
+        for (const body of ["regular", "chubby", "lean", "buff"] as const) {
+            const { container, unmount } = render(<Bubby body={body} />);
+            expect(container.querySelector("svg")?.getAttribute("data-body")).toBe(body);
+            expect(layers(container)).toEqual([
+                "ground",
+                "fx-back",
+                "body",
+                "flipper-l",
+                "flipper-r",
+                "face",
+                "fx-front",
+            ]);
+            unmount();
+        }
     });
 
-    it("adds face, flippers and accessory slots from Hatchling up", () => {
-        const { container } = render(<Bubby stage={2} />);
-        expect(layers(container)).toEqual([
-            "ground",
-            "fx-back",
-            "body",
-            "flipper-l",
-            "flipper-r",
-            "face",
-            "acc-neck",
-            "acc-face",
-            "acc-head",
-            "acc-hand",
-            "fx-front",
-        ]);
+    it.each([
+        ["normal", null],
+        ["rumbly", "rumble"],
+        ["teary", "tears"],
+        ["missyou", "sign"],
+    ] as const)("draws the %s mood as an overlay only", (mood, overlay) => {
+        const { container } = render(<Bubby mood={mood} />);
+        const found = container.querySelector("[data-overlay]")?.getAttribute("data-overlay") ?? null;
+        expect(found).toBe(overlay);
     });
 
-    it("renders accessories only once Bubby can wear them", () => {
-        const { container: egg } = render(<Bubby stage={1} equipped={{ head: "crown" }} />);
-        expect(egg.querySelector('[data-layer="acc-head"]')).toBeNull();
-
-        const { container: adult } = render(<Bubby stage={5} equipped={{ head: "crown", neck: "scarf" }} />);
-        expect(adult.querySelector('[data-layer="acc-head"]')?.childElementCount).toBe(1);
-        expect(adult.querySelector('[data-layer="acc-neck"]')?.childElementCount).toBe(1);
-        expect(adult.querySelector('[data-layer="acc-hand"]')?.childElementCount).toBe(0);
+    it("never names the mood for screen readers", () => {
+        render(<Bubby mood="teary" />);
+        expect(screen.getByRole("img", { name: "Bubby" })).toBeInTheDocument();
     });
 
-    it("labels stage and mood for screen readers", () => {
-        render(<Bubby stage={3} mood="sleepy" />);
-        expect(screen.getByRole("img", { name: "Bubby, chick, sleepy" })).toBeInTheDocument();
-    });
-
-    it("is hidden from screen readers when decorative, and skips fx when tiny", () => {
-        const { container } = render(<Bubby stage={5} size="xs" decorative />);
-        const svg = container.querySelector("svg")!;
-        expect(svg.getAttribute("aria-hidden")).toBe("true");
+    it("drops the sign text and fx when tiny, and hides when decorative", () => {
+        const { container } = render(<Bubby mood="missyou" size="xs" decorative />);
+        expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+        expect(container.querySelector("text")).toBeNull();
         expect(layers(container)).not.toContain("fx-front");
-        expect(layers(container)).not.toContain("fx-back");
     });
 
-    it("exposes the reaction for CSS and swaps to sparkle eyes on celebrate", () => {
-        const { container } = render(<Bubby stage={5} reaction="celebrate" />);
-        expect(container.querySelector("svg")?.getAttribute("data-reaction")).toBe("celebrate");
-        expect(container.querySelector(".bubby-sparkles")).not.toBeNull();
+    it("a reaction shows the happy face (the reunion after a feed)", () => {
+        const { container } = render(<Bubby mood="teary" reaction="reunion" />);
+        expect(container.querySelector("svg")?.getAttribute("data-reaction")).toBe("reunion");
+        expect(container.querySelector('[data-overlay="tears"]')).toBeNull();
     });
 });

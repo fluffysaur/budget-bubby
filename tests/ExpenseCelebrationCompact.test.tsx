@@ -22,7 +22,7 @@ describe("compact expense toast", () => {
     });
 
     it("shows a cheering Bubby, no confetti, and leaves after 2s", () => {
-        writeBubbyStore({ snapshot: { stage: 3, equipped: {} } });
+        writeBubbyStore({ snapshot: { body: "buff", mood: "normal" } });
         const play = vi.spyOn(soundEffects, "playChaChingSound").mockImplementation(() => {});
         const { container } = render(<ExpenseSuccessCelebration />);
 
@@ -30,7 +30,7 @@ describe("compact expense toast", () => {
 
         expect(screen.getByRole("status")).toBeInTheDocument();
         const bubby = container.querySelector("svg.bubby");
-        expect(bubby?.getAttribute("data-stage")).toBe("chick");
+        expect(bubby?.getAttribute("data-body")).toBe("buff");
         expect(bubby?.getAttribute("data-reaction")).toBe("cheer");
         expect(container.querySelector(".animate-confetti-left, .animate-confetti-right")).toBeNull();
         expect(play).toHaveBeenCalledTimes(1);

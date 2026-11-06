@@ -41,7 +41,7 @@ export interface BubbyGreetingProps {
 }
 
 export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
-    const { isReady, mood, state, me, minutes, checkinMinutes } = useBubby();
+    const { isReady, mood, condition, me, members, minutes, checkinMinutes } = useBubby();
     const [line, setLine] = useState<GreetingLine | null>(null);
     const [leaving, setLeaving] = useState(false);
     const [wake, setWake] = useState(0);
@@ -51,8 +51,8 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
     useEffect(() => {
         inputsRef.current = {
             mood,
-            loggedToday: Boolean(me && state.todayLoggedBy.has(me.id)),
-            coupleDayToday: state.isCoupleDayToday,
+            loggedToday: Boolean(me && condition.fedToday.has(me.id)),
+            bothFedToday: members.length >= 2 && members.every((m) => condition.fedToday.has(m.id)),
             minutes,
             checkinMinutes,
         };

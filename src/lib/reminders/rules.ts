@@ -23,8 +23,9 @@ import {
 } from "../dateUtils";
 import { formatSGD } from "../currency";
 import { isSpendableCategory } from "../financialFormulas";
+import { collectFeedEvents } from "../bubby/sources";
+import { deriveCondition, type BubbyMood } from "../bubby/body";
 import type {
-    StreakSummary,
     AccountSnapshot,
     CreditCardStatement,
     CreditCard,
@@ -44,7 +45,6 @@ export type ReminderType =
     | "credit_card_missing_stmt"
     | "partner_shared_spend"
     | "settlement_due"
-    | "couple_streak_risk"
     | "budget_limit"
     | "recurring_bill_due"
     | "goal_pacing"
@@ -146,30 +146,51 @@ function daysBetween(fromDate: string, toDate: string): number {
     return Math.round((toMs - fromMs) / DAY_MS);
 }
 
+/** Bubby's gentle lines, by visual mood (never a mood word). */
+export const BUBBY_REMINDER_LINES: Record<Exclude<BubbyMood, "normal">, string> = {
+    rumbly: "Bubby's tummy is rumbling 🐧",
+    teary: "Bubby's eyes are a little watery 🐧",
+    missyou: "Bubby misses you 🐧",
+};
+
 /**
- * 1. Daily spend check-in, from the member's check-in time (default 18:00)
- * when not yet checked in today.
+ * 1. Bubby nudge: from the member's check-in time (default 18:00), once a
+ * day, only while Bubby looks hungry (3+ days since anyone in the household
+ * logged). Never sent while Bubby is normal. With items waiting in the
+ * inbox, the line points there instead.
  */
-export function checkDailyCheckinReminder(
-    streak: StreakSummary,
+export function checkBubbyReminder(
+    allCheckins: DailyCheckin[],
+    expenses: Expense[],
     currentHour?: number,
     memberId?: string,
     todayStr?: string,
     checkinTime: string = DEFAULT_CHECKIN_TIME,
+    inboxPending = 0,
 ): AppReminder | null {
-    if (streak.checkedInToday) return null;
     if (!isPastCheckinTime(currentHour, checkinTime)) return null;
 
     const today = todayStr || sgToday();
-    const days = streak.currentStreak || 0;
+    const events = collectFeedEvents({
+        checkins: allCheckins,
+        expenses,
+        snapshots: [],
+        bonusEvents: [],
+        store: {},
+    });
+    const { mood } = deriveCondition(events, today);
+    if (mood === "normal") return null;
 
     return {
         id: `reminder-daily-checkin-${memberPrefix(memberId)}${today}`,
         type: "daily_checkin",
-        title: "Log Today's Spend",
-        message: days > 0 ? `Keep your ${days}-day streak.` : "Check in to start a streak.",
-        severity: "warning",
-        actionLabel: "Add Expense",
+        title: "Bubby",
+        message:
+            inboxPending > 0
+                ? `${inboxPending} to sort — Bubby's waiting 🐧`
+                : BUBBY_REMINDER_LINES[mood],
+        severity: "info",
+        actionLabel: inboxPending > 0 ? "Sort Inbox" : "Add Expense",
         actionType: "check_in",
         createdAt: new Date().toISOString(),
     };
@@ -401,46 +422,6 @@ export function checkSettlementReminder(
         severity: exceeds ? "warning" : "info",
         actionLabel,
         actionType: "view_settlement",
-        createdAt: new Date().toISOString(),
-    };
-}
-
-/**
- * 7. Couple streak at risk: from the check-in time, active member checked
- * in, partner hasn't.
- */
-export function checkCoupleStreakRiskReminder(
-    allCheckins: DailyCheckin[],
-    members: HouseholdMember[],
-    activeMemberId: string,
-    currentHour?: number,
-    todayStr?: string,
-    checkinTime: string = DEFAULT_CHECKIN_TIME,
-): AppReminder | null {
-    if (members.length < 2) return null;
-
-    const partner = members.find((m) => m.id !== activeMemberId);
-    if (!partner) return null;
-
-    if (!isPastCheckinTime(currentHour, checkinTime)) return null;
-
-    const today = todayStr || sgToday();
-    const activeCheckedIn = allCheckins.some(
-        (c) => c.member_id === activeMemberId && c.checkin_date === today,
-    );
-    const partnerCheckedIn = allCheckins.some(
-        (c) => c.member_id === partner.id && c.checkin_date === today,
-    );
-    if (!activeCheckedIn || partnerCheckedIn) return null;
-
-    return {
-        id: `reminder-couple-streak-risk-${activeMemberId}-${today}`,
-        type: "couple_streak_risk",
-        title: "Couple Streak at Risk",
-        message: `${partner.display_name} hasn't checked in today.`,
-        severity: "warning",
-        actionLabel: "View Streak",
-        actionType: "check_in",
         createdAt: new Date().toISOString(),
     };
 }

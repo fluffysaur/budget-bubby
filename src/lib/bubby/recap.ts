@@ -1,14 +1,15 @@
 /**
  * Weekly recap ("Last Week"), shown on Home from Monday until it is
  * acknowledged or Thursday comes, about the previous Mon-Sun (SGT).
- * Household perspective, because Bubby is shared. There is always a win.
+ * Household perspective, because Bubby is shared. There is always a win,
+ * and the days both partners fed Bubby are shown as a row of dots.
  */
 
 import type { DailyCheckin, Expense } from "../../types/finance";
 import { formatSGD } from "../currency";
 import { addDays, daysBetween, mondayOf } from "./dates";
-import { deriveBubbyState, STAGES } from "./growth";
-import { ACCESSORIES, getUnlocked } from "./accessories";
+import { deriveCondition, foodByMemberDay, type BubbyBody } from "./body";
+import type { FeedEvent } from "./sources";
 
 export interface RecapWeek {
     start: string;
@@ -30,14 +31,13 @@ export function recapMonths(week: RecapWeek): [string, string] {
     return [addDays(week.start, -21).slice(0, 7), week.end.slice(0, 7)];
 }
 
-export type RecapWinKind =
-    | "growth"
-    | "couple-days"
-    | "under-pace"
-    | "inbox-zero"
-    | "no-spend"
-    | "lowest-week"
-    | "logged";
+export type RecapWinKind = "body" | "under-pace" | "inbox-zero" | "no-spend" | "lowest-week" | "logged";
+
+export interface RecapDay {
+    date: string;
+    /** Members who fed Bubby that day. */
+    fed: string[];
+}
 
 export interface WeeklyRecap {
     week: RecapWeek;
@@ -47,17 +47,25 @@ export interface WeeklyRecap {
     changePct: number | null;
     topCategory: { categoryId: string; amount: number } | null;
     win: { kind: RecapWinKind; text: string };
+    /** Mon-Sun, for the "fed together" dots. */
+    days: RecapDay[];
 }
 
 export interface RecapInputs {
     week: RecapWeek;
     expenses: Expense[];
     checkins: DailyCheckin[];
-    memberIds: readonly string[];
-    inboxZeroDays?: readonly string[];
+    /** Feed events (see sources.ts), for body changes and fed days. */
+    events: FeedEvent[];
     /** Pro-rata weekly spendable budget, if known. */
     weeklyBudget?: number | null;
 }
+
+const BODY_WIN: Record<Exclude<BubbyBody, "regular">, string> = {
+    buff: "Bubby got buff",
+    lean: "Bubby got lean",
+    chubby: "Bubby ate well",
+};
 
 function inRange(date: string, start: string, end: string): boolean {
     return date >= start && date <= end;
@@ -73,28 +81,8 @@ function spendBetween(expenses: Expense[], start: string, end: string): number {
     return Math.round(total * 100) / 100;
 }
 
-function growthWin(inputs: RecapInputs): string | null {
-    const { week, checkins, memberIds, inboxZeroDays = [] } = inputs;
-    const before = deriveBubbyState(checkins, memberIds, addDays(week.start, -1));
-    const after = deriveBubbyState(checkins, memberIds, week.end);
-    if (after.stage > before.stage) return `Bubby grew to ${STAGES[after.stage].name}`;
-
-    const unlockState = (s: typeof before, until: string) =>
-        getUnlocked({
-            stage: s.stage,
-            points: s.points,
-            longestCoupleStreak: s.longestCoupleStreak,
-            maxHouseholdDaysInMonth: s.maxHouseholdDaysInMonth,
-            inboxZeroDays: inboxZeroDays.filter((d) => d <= until).length,
-        });
-    const had = new Set(unlockState(before, addDays(week.start, -1)));
-    const fresh = unlockState(after, week.end).find((id) => !had.has(id));
-    if (fresh) return `Unlocked ${ACCESSORIES.find((a) => a.id === fresh)?.label ?? fresh}`;
-    return null;
-}
-
 export function buildWeeklyRecap(inputs: RecapInputs): WeeklyRecap {
-    const { week, expenses, checkins, memberIds, inboxZeroDays = [], weeklyBudget } = inputs;
+    const { week, expenses, checkins, events, weeklyBudget } = inputs;
 
     const spent = spendBetween(expenses, week.start, week.end);
     const prevSpent = spendBetween(expenses, addDays(week.start, -7), addDays(week.start, -1));
@@ -112,30 +100,31 @@ export function buildWeeklyRecap(inputs: RecapInputs): WeeklyRecap {
         }
     }
 
-    // Per-day check-in facts for the week
-    const pair = memberIds.slice(0, 2);
-    const weekRows = checkins.filter((c) => inRange(c.checkin_date, week.start, week.end));
-    const byDate = new Map<string, Set<string>>();
-    const noSpendDates = new Set<string>();
-    for (const c of weekRows) {
-        if (!byDate.has(c.checkin_date)) byDate.set(c.checkin_date, new Set());
-        byDate.get(c.checkin_date)!.add(c.member_id);
-        if (c.type === "no_spend") noSpendDates.add(c.checkin_date);
+    // Who fed Bubby each day of the week
+    const food = foodByMemberDay(events);
+    const days: RecapDay[] = Array.from({ length: 7 }, (_, i) => ({ date: addDays(week.start, i), fed: [] }));
+    for (const key of food.keys()) {
+        const [memberId, date] = key.split("|");
+        const day = days.find((d) => d.date === date);
+        if (day && memberId !== "household") day.fed.push(memberId);
     }
-    const coupleDays =
-        pair.length === 2
-            ? Array.from(byDate.values()).filter((s) => s.has(pair[0]) && s.has(pair[1])).length
-            : 0;
-    const inboxZeros = inboxZeroDays.filter((d) => inRange(d, week.start, week.end)).length;
 
+    const noSpendDates = new Set(
+        checkins.filter((c) => c.type === "no_spend" && inRange(c.checkin_date, week.start, week.end)).map((c) => c.checkin_date),
+    );
+    const inboxZeros = new Set(
+        events
+            .filter((e) => e.sourceId === "inbox-clear" && inRange(e.date, week.start, week.end))
+            .map((e) => e.date),
+    ).size;
     const priorWeeks = [1, 2, 3].map((n) =>
         spendBetween(expenses, addDays(week.start, -7 * n), addDays(week.start, -7 * n + 6)),
     );
 
     const win = ((): WeeklyRecap["win"] => {
-        const grew = growthWin(inputs);
-        if (grew) return { kind: "growth", text: grew };
-        if (coupleDays >= 5) return { kind: "couple-days", text: `${coupleDays} couple days` };
+        const before = deriveCondition(events, addDays(week.start, -1)).body;
+        const after = deriveCondition(events, week.end).body;
+        if (after !== "regular" && after !== before) return { kind: "body", text: BODY_WIN[after] };
         if (weeklyBudget && weeklyBudget > 0 && spent < weeklyBudget) {
             return {
                 kind: "under-pace",
@@ -147,8 +136,9 @@ export function buildWeeklyRecap(inputs: RecapInputs): WeeklyRecap {
         if (priorWeeks.some((w) => w > 0) && priorWeeks.every((w) => spent < w)) {
             return { kind: "lowest-week", text: "Lowest spend in 4 weeks" };
         }
-        return { kind: "logged", text: `Logged ${byDate.size} of 7 days` };
+        const logged = days.filter((d) => d.fed.length > 0).length;
+        return { kind: "logged", text: `Logged ${logged} of 7 days` };
     })();
 
-    return { week, spent, prevSpent, changePct, topCategory, win };
+    return { week, spent, prevSpent, changePct, topCategory, win, days };
 }

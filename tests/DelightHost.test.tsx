@@ -16,29 +16,40 @@ import { DelightHost } from "../src/components/bubby/DelightHost";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
 import { financeService } from "../src/services/financeService";
 import { mockMembers } from "../src/data/mockSeedData";
-import { addDays, toSgtDateString } from "../src/lib/bubby/dates";
+import { addDays, mondayOf, toSgtDateString } from "../src/lib/bubby/dates";
 import { readBubbyStore, writeBubbyStore } from "../src/lib/bubby/storage";
 import { resetFeedbackState } from "../src/lib/delight/feedback";
 import { resetActivityCheckinState } from "../src/lib/bubby/activity";
 import { emitAppEvent, onAppEvent } from "../src/lib/appEvents";
-import type { DailyCheckin } from "../src/types/finance";
+import type { DailyCheckin, Expense } from "../src/types/finance";
 
 const [YJ, RACHEL] = mockMembers;
+const TODAY = toSgtDateString();
 
-function coupleDays(days: number, end = toSgtDateString()): DailyCheckin[] {
-    const rows: DailyCheckin[] = [];
-    for (let i = 0; i < days; i++) {
-        for (const m of [YJ, RACHEL]) {
-            rows.push({
-                id: `${m.id}-${i}`,
-                household_id: "hh",
-                member_id: m.id,
-                checkin_date: addDays(end, -i),
-                type: "expense",
-            });
-        }
-    }
-    return rows;
+function chk(member_id: string, checkin_date: string): DailyCheckin {
+    return { id: `${member_id}-${checkin_date}`, household_id: "hh", member_id, checkin_date, type: "expense" };
+}
+
+function expense(payer_id: string, date: string, n: number): Expense {
+    return {
+        id: `${payer_id}-${date}-${n}`,
+        household_id: "hh",
+        payer_id,
+        date,
+        item: "x",
+        amount: 5,
+        is_shared: false,
+        split_ratio: 0,
+        settled: false,
+        created_at: `${date}T04:00:00.000Z`,
+    };
+}
+
+function mockData({ checkins = [] as DailyCheckin[], expenses = [] as Expense[] } = {}) {
+    vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(checkins);
+    vi.spyOn(financeService, "getExpenses").mockResolvedValue(expenses);
+    vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
+    vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue({} as DailyCheckin);
 }
 
 async function renderHost() {
@@ -61,139 +72,114 @@ describe("DelightHost", () => {
     });
 
     it("checks in the logger for today after an expense is added", async () => {
-        // Yesterday only, so today's log is the first
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(
-            coupleDays(1, addDays(toSgtDateString(), -1)),
-        );
-        const record = vi
-            .spyOn(financeService, "recordDailyCheckin")
-            .mockResolvedValue({} as DailyCheckin);
+        mockData({ checkins: [chk(YJ.id, addDays(TODAY, -1))] });
         await renderHost();
         await waitFor(() => expect(financeService.getDailyCheckins).toHaveBeenCalled());
 
         await act(async () => {
-            emitAppEvent("expenseAdded", {
-                id: "e1",
-                household_id: "hh",
-                payer_id: RACHEL.id,
-                date: "2026-10-01",
-                item: "Dinner",
-                amount: 30,
-                is_shared: true,
-                split_ratio: 0.5,
-                settled: false,
-                source: "form",
-            });
+            emitAppEvent("expenseAdded", { ...expense(RACHEL.id, "2026-10-01", 1), source: "form" });
         });
 
-        expect(record).toHaveBeenCalledWith(YJ.id, toSgtDateString(), "expense");
+        expect(financeService.recordDailyCheckin).toHaveBeenCalledWith(YJ.id, TODAY, "expense");
         expect(screen.getByText("Cha-ching!")).toBeInTheDocument();
     });
 
     it("skips the toast for inbox confirms but still checks in", async () => {
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
-        const record = vi
-            .spyOn(financeService, "recordDailyCheckin")
-            .mockResolvedValue({} as DailyCheckin);
+        mockData();
         await renderHost();
         await waitFor(() => expect(financeService.getDailyCheckins).toHaveBeenCalled());
 
         await act(async () => {
-            emitAppEvent("expenseAdded", {
-                id: "e2",
-                household_id: "hh",
-                payer_id: YJ.id,
-                date: toSgtDateString(),
-                item: "Grab",
-                amount: 12,
-                is_shared: false,
-                split_ratio: 0,
-                settled: false,
-                source: "inbox",
-            });
+            emitAppEvent("expenseAdded", { ...expense(YJ.id, TODAY, 2), source: "inbox" });
         });
 
         expect(screen.queryByText("Cha-ching!")).not.toBeInTheDocument();
-        await waitFor(() => expect(record).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(financeService.recordDailyCheckin).toHaveBeenCalledTimes(1));
     });
 
-    it("plays the hatch moment once per device, with confetti", async () => {
-        // 10 couple days: 6 x 2 + 4 x 3 = 24 paws -> Hatchling
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(coupleDays(10, addDays(toSgtDateString(), -1)));
+    it("plays a reunion when a feed brings Bubby back", async () => {
+        writeBubbyStore({ lastMood: "teary", lastBody: "regular" });
+        mockData({ checkins: [chk(YJ.id, TODAY)] });
         await renderHost();
 
-        expect(await screen.findByText("Bubby hatched!")).toBeInTheDocument();
+        expect(await screen.findByText("Welcome back! 🐧")).toBeInTheDocument();
+        expect(readBubbyStore().lastMood).toBe("normal");
+    });
+
+    it("celebrates a body change with confetti, once", async () => {
+        writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
+        const expenses = [0, 1, 2, 3].flatMap((d) =>
+            [YJ.id, RACHEL.id].map((m, i) => expense(m, addDays(TODAY, -d), d * 10 + i)),
+        );
+        mockData({ expenses });
+        await renderHost();
+
+        expect(await screen.findByText("Bubby's well fed!")).toBeInTheDocument();
         expect(screen.getByTestId("confetti-burst")).toBeInTheDocument();
-        expect(readBubbyStore().seenStage).toBe(2);
-
         fireEvent.click(screen.getByRole("button", { name: "Nice!" }));
-        expect(screen.queryByText("Bubby hatched!")).not.toBeInTheDocument();
+        expect(readBubbyStore().lastBody).toBe("chubby");
     });
 
-    it("stays quiet when this device has already seen the stage", async () => {
-        writeBubbyStore({ seenStage: 2, seenAccessories: [] });
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(coupleDays(10, addDays(toSgtDateString(), -1)));
+    it("stays quiet on first run and when nothing changed", async () => {
+        mockData({ checkins: [chk(YJ.id, TODAY)] });
         await renderHost();
-        await waitFor(() => expect(financeService.getDailyCheckins).toHaveBeenCalled());
+        await waitFor(() => expect(readBubbyStore().lastMood).toBe("normal"));
         expect(screen.queryByTestId("milestone-toast")).not.toBeInTheDocument();
     });
 
-    it("plays a couple-day moment once a day, without confetti", async () => {
-        writeBubbyStore({ seenStage: 5, seenAccessories: [] });
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(coupleDays(3));
+    it("gives a full belly when today's quests are done", async () => {
+        writeBubbyStore({ lastBody: "regular", lastMood: "normal", petDays: { [YJ.id]: [TODAY] } });
+        mockData({ checkins: [chk(YJ.id, TODAY)] });
         await renderHost();
-
-        expect(await screen.findByText("Couple day! 🔥 3")).toBeInTheDocument();
-        expect(screen.queryByTestId("confetti-burst")).not.toBeInTheDocument();
-        expect(readBubbyStore().celebrated).toContain(`couple-day:${toSgtDateString()}`);
+        expect(await screen.findByText("Full belly! 🍤")).toBeInTheDocument();
     });
 
-    it("gives a 7-day couple streak full confetti", async () => {
-        writeBubbyStore({ seenStage: 5, seenAccessories: [] });
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(coupleDays(7));
+    it("adds a weekly snack when both weekly quests are done", async () => {
+        writeBubbyStore({
+            lastBody: "regular",
+            lastMood: "normal",
+            exercise: { balances: [TODAY], "recap-read": [TODAY] },
+        });
+        mockData();
         await renderHost();
-
-        expect(await screen.findByText("7-day couple streak")).toBeInTheDocument();
-        expect(screen.getByTestId("confetti-burst")).toBeInTheDocument();
+        expect(await screen.findByText(/^Treat: /)).toBeInTheDocument();
+        expect(readBubbyStore().snacks).toEqual([expect.objectContaining({ week: mondayOf(TODAY) })]);
     });
 
-    it("soft-cues each inbox triage without a toast", async () => {
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
-        await renderHost();
+    it("cheers once when both partners have fed Bubby today", async () => {
+        writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
+        mockData({ checkins: [chk(YJ.id, TODAY), chk(RACHEL.id, TODAY)] });
         const reactions: string[] = [];
         const off = onAppEvent("bubby:react", (d) => reactions.push(d.kind));
-        act(() => {
-            emitAppEvent("inbox:item-discarded", { itemId: "i1", reason: "discarded", remaining: 2 });
-        });
+        await renderHost();
+        await waitFor(() => expect(readBubbyStore().celebrated).toContain(`both-fed:${TODAY}`));
         off();
-        expect(reactions).toEqual(["nod"]);
-        expect(screen.queryByTestId("milestone-toast")).not.toBeInTheDocument();
+        expect(reactions).toContain("cheer");
     });
 
-    it("celebrates inbox zero once when triage empties the inbox", async () => {
-        writeBubbyStore({ seenStage: 5, seenAccessories: [] });
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
-        vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue({} as DailyCheckin);
+    it("celebrates inbox zero once when triage empties the inbox, and logs exercise", async () => {
+        writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
+        mockData();
         await renderHost();
 
         act(() => {
             emitAppEvent("inbox:item-discarded", { itemId: "i1", reason: "duplicate", remaining: 1 });
             emitAppEvent("inbox:item-discarded", { itemId: "i2", reason: "discarded", remaining: 0 });
-            emitAppEvent("inbox:cleared", { clearedCount: 2, durationMs: 4000, date: toSgtDateString() });
+            emitAppEvent("inbox:cleared", { clearedCount: 2, durationMs: 4000, date: TODAY });
         });
 
         expect(screen.getByText("Inbox zero! 🎉")).toBeInTheDocument();
         expect(screen.getByText("2 sorted")).toBeInTheDocument();
         expect(screen.getAllByTestId("confetti-burst")).toHaveLength(1);
-        expect(readBubbyStore().inboxZeroDays).toEqual([toSgtDateString()]);
+        expect(readBubbyStore().exercise?.["inbox-clear"]).toEqual([TODAY]);
     });
 
     it("does nothing when the inbox is already empty on load", async () => {
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
+        mockData();
         await renderHost();
         act(() => {
             emitAppEvent("inbox:items-arrived", { newCount: 0, pendingCount: 0 });
-            emitAppEvent("inbox:cleared", { clearedCount: 0, durationMs: 0, date: toSgtDateString() });
+            emitAppEvent("inbox:cleared", { clearedCount: 0, durationMs: 0, date: TODAY });
         });
         expect(screen.queryByText("Inbox zero! 🎉")).not.toBeInTheDocument();
         expect(screen.queryByTestId("confetti-burst")).not.toBeInTheDocument();

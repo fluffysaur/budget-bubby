@@ -35,7 +35,6 @@ import type {
   UpsertCreditCardStatementInput,
   DailyCheckin,
   CheckinType,
-  StreakSummary,
   NotificationPreferences,
   UpdateNotificationPreferencesInput,
   NotificationLogEntry,
@@ -67,7 +66,7 @@ import {
   isSpendType,
   resolveDueDay,
 } from '../lib/recurringItems';
-import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
+import { getTodayDateString, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 import {
   getLocalNotificationLog,
@@ -1072,7 +1071,7 @@ class MockFinanceServiceImpl implements FinanceService {
     return cloneDeep(statement);
   }
 
-  // Daily Check-ins & Streak
+  // Daily Check-ins
   public async getDailyCheckins(memberId?: string): Promise<DailyCheckin[]> {
     let checkins = cloneDeep(this.state.dailyCheckins || []);
     if (memberId) {
@@ -1113,107 +1112,6 @@ class MockFinanceServiceImpl implements FinanceService {
     this.state.dailyCheckins.push(checkin);
     this.persist();
     return cloneDeep(checkin);
-  }
-
-  public async getStreakSummary(memberId?: string): Promise<StreakSummary> {
-    const today = getTodayDateString();
-    const allCheckins = await this.getDailyCheckins();
-    const targetMemberCheckins = memberId
-      ? allCheckins.filter((c) => c.member_id === memberId)
-      : allCheckins;
-
-    const dateSet = new Set(targetMemberCheckins.map((c) => c.checkin_date));
-    const checkedInToday = dateSet.has(today);
-
-    // Calculate current streak counting backward
-    let currentStreak = 0;
-    const cursor = new Date(today + 'T12:00:00');
-    if (!checkedInToday) {
-      cursor.setDate(cursor.getDate() - 1);
-    }
-
-    while (true) {
-      const iso = formatISODate(cursor);
-      if (dateSet.has(iso)) {
-        currentStreak++;
-        cursor.setDate(cursor.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-
-    // Longest streak
-    const sortedDates = Array.from(dateSet).sort();
-    let longestStreak = 0;
-    let running = 0;
-    let prevDate: Date | null = null;
-
-    for (const dStr of sortedDates) {
-      const cur = new Date(dStr + 'T00:00:00');
-      if (prevDate) {
-        const diffDays = Math.round((cur.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          running++;
-        } else if (diffDays > 1) {
-          running = 1;
-        }
-      } else {
-        running = 1;
-      }
-      prevDate = cur;
-      if (running > longestStreak) longestStreak = running;
-    }
-
-    // Couple streak (days where BOTH partners checked in)
-    const m1 = this.state.members[0]?.id;
-    const m2 = this.state.members[1]?.id;
-    let coupleStreak = 0;
-    if (m1 && m2) {
-      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
-      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
-      const cCursor = new Date(today + 'T12:00:00');
-      if (!m1Dates.has(today) || !m2Dates.has(today)) {
-        cCursor.setDate(cCursor.getDate() - 1);
-      }
-      while (true) {
-        const iso = formatISODate(cCursor);
-        if (m1Dates.has(iso) && m2Dates.has(iso)) {
-          coupleStreak++;
-          cCursor.setDate(cCursor.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-    }
-
-    // If viewing household (no memberId specified), set currentStreak to max of both partners' streaks
-    let resolvedCurrentStreak = currentStreak;
-    if (!memberId && m1 && m2) {
-      const m1Dates = new Set(allCheckins.filter((c) => c.member_id === m1).map((c) => c.checkin_date));
-      const m2Dates = new Set(allCheckins.filter((c) => c.member_id === m2).map((c) => c.checkin_date));
-      const calcMemberStreak = (dates: Set<string>) => {
-        let s = 0;
-        const cur = new Date(today + 'T12:00:00');
-        if (!dates.has(today)) cur.setDate(cur.getDate() - 1);
-        while (true) {
-          const iso = formatISODate(cur);
-          if (dates.has(iso)) {
-            s++;
-            cur.setDate(cur.getDate() - 1);
-          } else break;
-        }
-        return s;
-      };
-      resolvedCurrentStreak = Math.max(calcMemberStreak(m1Dates), calcMemberStreak(m2Dates));
-    }
-
-    return {
-      currentStreak: resolvedCurrentStreak,
-      longestStreak: Math.max(longestStreak, resolvedCurrentStreak),
-      checkedInToday,
-      lastCheckinDate: targetMemberCheckins[0]?.checkin_date || null,
-      coupleStreak,
-    };
   }
 
   // Notification Preferences

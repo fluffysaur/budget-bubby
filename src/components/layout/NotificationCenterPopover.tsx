@@ -17,7 +17,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     Bell,
-    Flame,
+    Fish,
     Landmark,
     CreditCard,
     CheckCircle2,
@@ -356,8 +356,7 @@ export function NotificationCenterPopover({
     const getReminderIcon = (type: AppReminder["type"]) => {
         switch (type) {
             case "daily_checkin":
-            case "couple_streak_risk":
-                return <Flame className="h-4 w-4 text-amber-500 shrink-0" />;
+                return <Fish className="h-4 w-4 text-sky-500 shrink-0" />;
             case "balance_update":
                 return <Landmark className="h-4 w-4 text-blue-500 shrink-0" />;
             case "credit_card_due":

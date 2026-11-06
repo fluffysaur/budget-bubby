@@ -16,6 +16,7 @@ import { feedback } from "../../lib/delight/feedback";
 import { readBubbyStore } from "../../lib/bubby/storage";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Bubby } from "../bubby/Bubby";
+import type { BubbyBody } from "../../lib/bubby/body";
 
 export interface ExpenseSuccessCelebrationProps {
     expense?: Expense | null;
@@ -27,8 +28,7 @@ const TOAST_MS = 2000;
 interface ActiveToast {
     id: number;
     expense: Expense;
-    stage: number;
-    equipped: Record<string, string>;
+    body: BubbyBody;
 }
 
 export function ExpenseSuccessCelebration({
@@ -55,14 +55,13 @@ export function ExpenseSuccessCelebration({
     const triggerCelebration = useCallback(
         (exp: Expense) => {
             clearDismissTimer();
-            // Stage and outfit from the last render of the live Bubby (works outside providers)
+            // Body from the last render of the live Bubby (works outside providers)
             const snapshot = readBubbyStore().snapshot;
             seqRef.current += 1;
             setActive({
                 id: seqRef.current,
                 expense: exp,
-                stage: snapshot?.stage ?? 5,
-                equipped: snapshot?.equipped ?? {},
+                body: (snapshot?.body as BubbyBody | undefined) ?? "regular",
             });
             feedback.routine("add");
 
@@ -115,10 +114,8 @@ export function ExpenseSuccessCelebration({
                 <div className="flex h-9 w-9 shrink-0 items-end justify-center overflow-hidden rounded-xl bg-(--pastel-mint) border-2 border-(--border-ink) pt-0.5">
                     <Bubby
                         key={active.id}
-                        stage={active.stage}
-                        mood="happy"
+                        body={active.body}
                         reaction="cheer"
-                        equipped={active.equipped}
                         size="xs"
                         className="h-8 w-8"
                         decorative

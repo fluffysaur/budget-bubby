@@ -2,20 +2,22 @@
  * Home declutter:
  * - CategoryLimitWarningBanner `single` mode shows only the most urgent alert
  * - Expenses "Unsettled" card offers Settle Up with a confirmation
- * - Header StreakChip shows the streak and opens the check-in bar
+ * - Header Bubby (where the streak chip was) shows who fed it today, no counts
  */
 
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
-import { StreakChip } from "../src/components/layout/StreakChip";
+import { BubbyAvatarButton } from "../src/components/bubby/BubbyAvatarButton";
+import { onAppEvent } from "../src/lib/appEvents";
+import { readBubbyStore } from "../src/lib/bubby/storage";
 import { ExpensesPage } from "../src/pages/ExpensesPage";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { AuthProvider } from "../src/context/AuthContext";
 import { financeService } from "../src/services/financeService";
 import { mockMembers } from "../src/data/mockSeedData";
-import { addDays, toSgtDateString } from "../src/lib/bubby/dates";
+import { toSgtDateString } from "../src/lib/bubby/dates";
 import type { HouseholdOverview, MonthlyBudgetCategoryDetail } from "../src/types/finance";
 
 vi.mock("../src/lib/soundEffects", () => ({
@@ -137,71 +139,42 @@ describe("Expenses Settle Up", () => {
     });
 });
 
-describe("StreakChip", () => {
+describe("Header Bubby", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
+        localStorage.clear();
+        vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
+        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
     });
 
-    it("shows the streak count and opens the check-in bar on tap", async () => {
-        // StreakChip reads the shared household check-ins query
-        const memberId = mockMembers[0].id;
-        const today = toSgtDateString();
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(
-            [0, 1, 2, 3, 4].map((i) => ({
-                id: `chk-${i}`,
-                household_id: "hh-01",
-                member_id: memberId,
-                checkin_date: addDays(today, -i),
-                type: "expense" as const,
-            })),
-        );
-
-        await act(async () => {
-            render(
-                <HouseholdProvider>
-                    <StreakChip />
-                </HouseholdProvider>,
-            );
-        });
-
-        const chip = await screen.findByRole("button", { name: /5-day streak, checked in today/i });
-        expect(screen.queryByTestId("daily-checkin-streak-bar")).not.toBeInTheDocument();
-
-        await act(async () => {
-            fireEvent.click(chip);
-        });
-
-        expect(screen.getByRole("dialog", { name: "Check-in Streak" })).toBeInTheDocument();
-        expect(screen.getByTestId("daily-checkin-streak-bar")).toBeInTheDocument();
-
-        fireEvent.keyDown(document, { key: "Escape" });
-        expect(screen.queryByRole("dialog", { name: "Check-in Streak" })).not.toBeInTheDocument();
-    });
-
-    it("counts the logged-in partner's streak in Combined view, not the first member's", async () => {
+    it("lights the logged-in partner's dot, shows no counts, and pets + opens the sheet on tap", async () => {
         const rachel = mockMembers.find((m) => m.display_name === "Rachel")!;
         const today = toSgtDateString();
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([
-            ...[0, 1, 2].map((i) => ({
-                id: `r-${i}`,
-                household_id: "hh-01",
-                member_id: rachel.id,
-                checkin_date: addDays(today, -i),
-                type: "expense" as const,
-            })),
-            { id: "y-0", household_id: "hh-01", member_id: mockMembers[0].id, checkin_date: today, type: "expense" as const },
+            { id: "r-0", household_id: "hh-01", member_id: rachel.id, checkin_date: today, type: "expense" as const },
         ]);
 
         await act(async () => {
             render(
                 <AuthProvider initialAuthenticated initialPartner="rachel">
                     <HouseholdProvider defaultPerspective="household">
-                        <StreakChip />
+                        <BubbyAvatarButton />
                     </HouseholdProvider>
                 </AuthProvider>,
             );
         });
 
-        expect(await screen.findByRole("button", { name: /3-day streak, checked in today/i })).toBeInTheDocument();
+        const button = screen.getByRole("button", { name: "Bubby" });
+        await waitFor(() =>
+            expect(screen.getByRole("img", { name: "Rachel, fed Bubby today" })).toHaveAttribute("data-fed", "true"),
+        );
+        expect(button.textContent ?? "").not.toMatch(/\d/);
+
+        const opened = vi.fn();
+        const off = onAppEvent("bubby:open-sheet", opened);
+        fireEvent.click(button);
+        off();
+        expect(opened).toHaveBeenCalledTimes(1);
+        expect(readBubbyStore().petDays?.[rachel.id]).toEqual([today]);
     });
 });

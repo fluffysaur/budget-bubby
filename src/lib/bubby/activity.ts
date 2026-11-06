@@ -16,6 +16,7 @@ import { queryKeys } from "../../hooks/useFinanceQueries";
 import { financeService } from "../../services/financeService";
 import { emitAppEvent } from "../appEvents";
 import { toSgtDateString } from "./dates";
+import { addLocalExercise, type LocalExerciseKind } from "./storage";
 import type { DailyCheckin } from "../../types/finance";
 
 let lastRecordedKey: string | null = null;
@@ -70,6 +71,15 @@ export function recordActivityCheckin(
 
     emitAppEvent("day:logged", { memberId, date: today, source, firstForDate });
     return { firstForDate };
+}
+
+/**
+ * Exercise 💪 with no table behind it (goal adds, month-end actions, balance
+ * updates): recorded on this device for today. Counts once per period.
+ */
+export function recordExercise(kind: LocalExerciseKind, today: string = toSgtDateString()): void {
+    addLocalExercise(kind, today);
+    emitAppEvent("bubby:store-changed", {});
 }
 
 /** Test helper. */

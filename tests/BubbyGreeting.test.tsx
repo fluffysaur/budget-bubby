@@ -61,20 +61,21 @@ describe("BubbyGreeting", () => {
 describe("pickGreeting", () => {
     const base = {
         inboxPending: 0,
-        mood: "happy" as const,
+        mood: "normal" as const,
         loggedToday: true,
-        coupleDayToday: false,
+        bothFedToday: false,
         minutes: 16 * 60,
         checkinMinutes: 18 * 60,
     };
 
     it("picks lines in priority order", () => {
         expect(pickGreeting({ ...base, inboxPending: 3 }).text).toBe("3 to sort");
-        expect(pickGreeting({ ...base, mood: "sleepy" }).text).toBe("Missed you!");
+        expect(pickGreeting({ ...base, mood: "rumbly" }).text).toBe("Snack time? 🍤");
+        expect(pickGreeting({ ...base, mood: "missyou" }).text).toBe("Over here! 🐧");
         expect(pickGreeting({ ...base, loggedToday: false, minutes: 19 * 60 }).text).toBe("Log today?");
         expect(pickGreeting({ ...base, minutes: 8 * 60 }).text).toBe("Morning! ☕");
         expect(pickGreeting({ ...base, minutes: 12 * 60 }).text).toBe("Makan time?");
-        expect(pickGreeting({ ...base, coupleDayToday: true }).text).toBe("Couple day ✓");
+        expect(pickGreeting({ ...base, bothFedToday: true }).text).toBe("Both fed ✓");
         expect(pickGreeting(base).text).toBe("Hi again!");
     });
 });

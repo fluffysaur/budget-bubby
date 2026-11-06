@@ -18,7 +18,8 @@ export type BubbyReaction =
     | "poof"
     | "wave"
     | "munch"
-    | "wiggle"
+    | "pat"
+    | "reunion"
     | "celebrate";
 
 export type ExpenseAddedSource = "form" | "bulk" | "inbox" | "fast-log";
@@ -28,10 +29,10 @@ export type ExpenseAddedDetail = Expense & { source?: ExpenseAddedSource };
 
 export type MilestoneKind =
     | "inbox-zero"
-    | "couple-day"
-    | "couple-streak"
-    | "stage-up"
-    | "unlock"
+    | "full-belly"
+    | "weekly-treat"
+    | "body-change"
+    | "reunion"
     | "goal-complete"
     | "sweep";
 
@@ -39,7 +40,6 @@ export interface MilestoneToastAction {
     label: string;
     /** App event to dispatch when tapped (keeps toasts serialisable). */
     event?: "bubby:open-sheet";
-    accessoryId?: string;
 }
 
 export interface MilestoneDetail {
@@ -54,9 +54,9 @@ export interface MilestoneDetail {
 export interface AppEventMap {
     expenseAdded: ExpenseAddedDetail;
     "bubby:react": { kind: BubbyReaction };
-    "bubby:open-sheet": { accessoryId?: string };
-    /** Equipped accessories changed on this device. */
-    "bubby:prefs-changed": Record<string, never>;
+    "bubby:open-sheet": Record<string, never>;
+    /** Local Bubby state (petting, exercise, snacks) changed on this device. */
+    "bubby:store-changed": Record<string, never>;
     "delight:milestone": MilestoneDetail;
     "inbox:items-arrived": { newCount: number; pendingCount: number };
     "inbox:item-confirmed": {

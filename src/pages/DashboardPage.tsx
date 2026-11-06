@@ -5,8 +5,10 @@
  * - Left to Spend hero with per-category meters
  * - Upcoming bills
  *
+ * - Bubby's daily quests
+ *
  * Net worth lives on Accounts, goals on Plan, settlement on Spend > Expenses,
- * and the check-in streak in the header.
+ * and the live Bubby in the header.
  */
 
 import { lazy, Suspense, useMemo, useState } from "react";
@@ -23,6 +25,7 @@ import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { CurrencyText } from "../components/ui/CurrencyText";
 import { BubbyGreeting } from "../components/bubby/BubbyGreeting";
+import { QuestCard } from "../components/dashboard/QuestCard";
 import { recapWeekFor } from "../lib/bubby/recap";
 import { readBubbyStore } from "../lib/bubby/storage";
 import { daysInMonthOf, toSgtDateString } from "../lib/bubby/dates";
@@ -233,6 +236,9 @@ export function DashboardPage({
                             </div>
                         )}
                     </Card>
+
+                    {/* Bubby's quests for today */}
+                    <QuestCard />
 
                     {/* Last week's recap (temporary, Mon-Wed) */}
                     {recapWeek && (

@@ -12,14 +12,25 @@ import { Button } from "../ui/Button";
 import { CategoryBadge } from "../ui/CategoryBadge";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Bubby } from "../bubby/Bubby";
-import { useBubby } from "../../hooks/useBubby";
-import { useCategoriesQuery, useExpensesQuery } from "../../hooks/useFinanceQueries";
+import { FedTodayDots } from "../bubby/FedTodayDots";
+import { useBubby, useHouseholdCheckinsQuery } from "../../hooks/useBubby";
+import {
+    useAccountSnapshotsQuery,
+    useCategoriesQuery,
+    useExpensesQuery,
+} from "../../hooks/useFinanceQueries";
 import { buildWeeklyRecap, recapMonths, type RecapWeek } from "../../lib/bubby/recap";
-import { readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
+import { collectFeedEvents } from "../../lib/bubby/sources";
+import { addLocalExercise, readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
+import { toSgtDateString } from "../../lib/bubby/dates";
+import { emitAppEvent } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
-import type { Expense } from "../../types/finance";
+import type { AccountSnapshot, DailyCheckin, Expense } from "../../types/finance";
 
 const NO_EXPENSES: Expense[] = [];
+const NO_CHECKINS: DailyCheckin[] = [];
+const NO_SNAPSHOTS: AccountSnapshot[] = [];
+const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export interface WeeklyRecapCardProps {
     week: RecapWeek;
@@ -30,7 +41,9 @@ export interface WeeklyRecapCardProps {
 
 export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapCardProps) {
     const [dismissed, setDismissed] = useState(false);
-    const { stage, equipped, checkins, members } = useBubby();
+    const { body, members } = useBubby();
+    const { data: checkinsData } = useHouseholdCheckinsQuery();
+    const { data: snapshotsData } = useAccountSnapshotsQuery("household");
     const [monthA, monthB] = recapMonths(week);
     const { data: expensesA } = useExpensesQuery({ month: monthA });
     const { data: expensesB } = useExpensesQuery({ month: monthB });
@@ -39,22 +52,27 @@ export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapC
     const recap = useMemo(() => {
         const a = expensesA ?? NO_EXPENSES;
         const b = monthA === monthB ? NO_EXPENSES : (expensesB ?? NO_EXPENSES);
-        return buildWeeklyRecap({
-            week,
-            expenses: [...a, ...b],
+        const expenses = [...a, ...b];
+        const checkins = checkinsData ?? NO_CHECKINS;
+        const events = collectFeedEvents({
             checkins,
-            memberIds: members.map((m) => m.id),
-            inboxZeroDays: readBubbyStore().inboxZeroDays,
-            weeklyBudget,
+            expenses,
+            snapshots: snapshotsData ?? NO_SNAPSHOTS,
+            bonusEvents: [],
+            store: readBubbyStore(),
         });
-    }, [expensesA, expensesB, monthA, monthB, week, checkins, members, weeklyBudget]);
+        return buildWeeklyRecap({ week, expenses, checkins, events, weeklyBudget });
+    }, [expensesA, expensesB, monthA, monthB, week, checkinsData, snapshotsData, weeklyBudget]);
 
     const topCategory = recap.topCategory
         ? categories?.find((c) => c.id === recap.topCategory?.categoryId)
         : undefined;
 
+    // Reading the recap is exercise 💪 (once a week)
     const acknowledge = () => {
         updateBubbyStore({ recapSeenWeek: week.start });
+        addLocalExercise("recap-read", toSgtDateString());
+        emitAppEvent("bubby:store-changed", {});
         setDismissed(true);
     };
 
@@ -94,8 +112,20 @@ export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapC
                         <Sparkles className="h-4 w-4 shrink-0 text-amber-500" strokeWidth={2.5} />
                         <span className="min-w-0 truncate">{recap.win.text}</span>
                     </p>
+                    {members.length > 0 && (
+                        <ol aria-label="Days Bubby was fed" className="mt-2 flex items-center gap-1.5">
+                            {recap.days.map((d) => (
+                                <li key={d.date} className="flex flex-col items-center gap-0.5">
+                                    <FedTodayDots members={members} fedToday={new Set(d.fed)} size="xs" />
+                                    <span className="text-[9px] font-bold text-(--text-faint)">
+                                        {DAY_LETTERS[new Date(`${d.date}T00:00:00Z`).getUTCDay()]}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
                 </div>
-                <Bubby stage={stage} mood="proud" equipped={equipped} size="md" className="h-20 w-20 shrink-0" decorative />
+                <Bubby body={body} size="md" className="h-20 w-20 shrink-0" decorative />
             </div>
             <div className="mt-3 flex items-center gap-2">
                 <Button

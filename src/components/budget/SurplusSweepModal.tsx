@@ -12,6 +12,7 @@ import {
 import { formatSGD } from "../../lib/currency";
 import { formatDisplayMonth } from "../../lib/dateUtils";
 import { feedback } from "../../lib/delight/feedback";
+import { recordExercise } from "../../lib/bubby/activity";
 import type { SavingsGoal } from "../../types/finance";
 
 export interface SurplusSweepAllocation {
@@ -204,6 +205,7 @@ export function SurplusSweepModal({
             await onSweepComplete(payload);
             // Cha-ching, sweep haptic, confetti and a celebrating Bubby
             feedback.milestone("sweep");
+            recordExercise("month-end");
             onClose();
         } catch (err: unknown) {
             setErrorMessage(

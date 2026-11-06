@@ -32,7 +32,7 @@ export type RoutineKind =
     | "delete"
     | "no-spend"
     | "triage"
-    | "equip"
+    | "pet"
     | "goal-deposit"
     | "acknowledge"
     | "fab";
@@ -52,7 +52,7 @@ const ROUTINE_CUES: Record<RoutineKind, Cue> = {
     delete: { haptic: "destructive", react: "poof" },
     "no-spend": { haptic: "celebrate", sound: "chaChing", react: "munch" },
     triage: { haptic: "lightTap", sound: "softPop", react: "nod" },
-    equip: { haptic: "lightTap", sound: "softPop", react: "cheer" },
+    pet: { haptic: "lightTap", sound: "softPop", react: "pat" },
     "goal-deposit": { haptic: "goalMilestone", sound: "softPop", react: "cheer" },
     acknowledge: { sound: "softPop", react: "cheer" },
     fab: { haptic: "tick" },
@@ -65,10 +65,10 @@ interface MilestoneCue extends Cue {
 
 const MILESTONE_CUES: Record<MilestoneKind, MilestoneCue> = {
     "inbox-zero": { haptic: "celebrate", sound: "success", react: "celebrate", big: true },
-    "couple-day": { haptic: "celebrate", sound: "success", react: "celebrate", big: false },
-    "couple-streak": { haptic: "celebrate", sound: "success", react: "celebrate", big: true },
-    "stage-up": { haptic: "celebrate", sound: "success", react: "celebrate", big: true },
-    unlock: { haptic: "goalMilestone", sound: "success", react: "cheer", big: false },
+    "full-belly": { haptic: "celebrate", sound: "success", react: "pat", big: false },
+    "weekly-treat": { haptic: "goalMilestone", sound: "success", react: "munch", big: false },
+    "body-change": { haptic: "celebrate", sound: "success", react: "celebrate", big: true },
+    reunion: { haptic: "celebrate", sound: "success", react: "reunion", big: false },
     "goal-complete": { haptic: "goalMilestone", sound: "success", react: "celebrate", big: true },
     sweep: { haptic: "sweep", sound: "chaChing", react: "celebrate", big: true },
 };
@@ -134,7 +134,7 @@ export interface MilestoneOptions {
     title?: string;
     subtitle?: string;
     primary?: MilestoneToastAction;
-    /** Override the big/lite tier (e.g. a couple day that is also a streak milestone). */
+    /** Override the big/lite tier (e.g. banking surplus without confetti). */
     big?: boolean;
 }
 

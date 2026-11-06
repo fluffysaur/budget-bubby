@@ -1,25 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, act, fireEvent } from "@testing-library/react";
+import { render, screen, act, fireEvent, within } from "@testing-library/react";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { BubbySheet } from "../src/components/bubby/BubbySheet";
 import { financeService } from "../src/services/financeService";
 import { mockMembers } from "../src/data/mockSeedData";
-import { addDays, toSgtDateString } from "../src/lib/bubby/dates";
-import { readBubbyStore } from "../src/lib/bubby/storage";
-import type { DailyCheckin } from "../src/types/finance";
+import { toSgtDateString } from "../src/lib/bubby/dates";
+import { readBubbyStore, writeBubbyStore } from "../src/lib/bubby/storage";
 
-const [YJ, RACHEL] = mockMembers;
-
-function rows(days: number, members = [YJ, RACHEL]): DailyCheckin[] {
-    const today = toSgtDateString();
-    const out: DailyCheckin[] = [];
-    for (let i = 0; i < days; i++) {
-        for (const m of members) {
-            out.push({ id: `${m.id}-${i}`, household_id: "hh", member_id: m.id, checkin_date: addDays(today, -i), type: "expense" });
-        }
-    }
-    return out;
-}
+const [YJ] = mockMembers;
 
 async function renderSheet() {
     await act(async () => {
@@ -35,34 +23,37 @@ describe("BubbySheet", () => {
     beforeEach(() => {
         localStorage.clear();
         vi.restoreAllMocks();
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
+        vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
+        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
     });
 
-    it("shows stage progress and the couple day", async () => {
-        // 16 couple days: 6 x 2 + 10 x 3 = 42 paws -> Hatchling, scarf unlocked
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(rows(16));
+    it("shows meters without numbers, quests and an empty snack shelf", async () => {
         await renderSheet();
 
-        expect(await screen.findByText("Hatchling")).toBeInTheDocument();
-        expect(screen.getByText("18 🐾 to Chick")).toBeInTheDocument();
-        expect(screen.getByText(/Couple day ✓ · 16/)).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: "Nourishment" })).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: "Fitness" })).toBeInTheDocument();
+        expect(screen.getByRole("list", { name: "Today's quests" })).toBeInTheDocument();
+        expect(screen.getByRole("list", { name: "This week's quests" })).toBeInTheDocument();
+        expect(screen.getByText("Finish a week's quests to earn a treat.")).toBeInTheDocument();
+        // No counters anywhere in the sheet body
+        const dialogText = screen.getByRole("list", { name: "Today's quests" }).closest("div")?.textContent ?? "";
+        expect(dialogText).not.toMatch(/\d/);
     });
 
-    it("equips and unequips with aria-pressed, and labels locked items", async () => {
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(rows(16));
+    it("petting ticks the daily quest", async () => {
         await renderSheet();
+        fireEvent.click(screen.getByRole("button", { name: "Pet Bubby" }));
 
-        const scarf = await screen.findByRole("button", { name: "Butter Scarf" });
-        expect(scarf).toHaveAttribute("aria-pressed", "true");
-        fireEvent.click(scarf);
-        expect(scarf).toHaveAttribute("aria-pressed", "false");
-        expect(readBubbyStore().equipped?.neck).toBeNull();
-
-        expect(screen.getByRole("button", { name: "Locked, 58 🐾" })).toBeDisabled();
+        expect(readBubbyStore().petDays?.[YJ.id]).toEqual([toSgtDateString()]);
+        const today = screen.getByRole("list", { name: "Today's quests" });
+        const pet = within(today).getByText("Pet Bubby").closest("li");
+        expect(pet).toHaveAttribute("data-done", "true");
     });
 
-    it("waits on the partner without nagging", async () => {
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(rows(1, [YJ]));
+    it("shows earned snacks", async () => {
+        writeBubbyStore({ snacks: [{ id: "fish", week: "2026-11-02" }] });
         await renderSheet();
-        expect(await screen.findByText(`Waiting on ${RACHEL.display_name}`)).toBeInTheDocument();
+        expect(screen.getByLabelText("Fish")).toBeInTheDocument();
     });
 });

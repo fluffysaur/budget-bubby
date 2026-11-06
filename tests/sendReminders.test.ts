@@ -164,7 +164,8 @@ describe("runSendReminders", () => {
         const deps = makeDeps();
         const first = await runSendReminders(deps);
         expect(first.members[0].keys.length).toBeGreaterThan(0);
-        expect(first.members[0].keys.some((k) => k.startsWith("reminder-daily-checkin-"))).toBe(true);
+        // The seed household logged two days ago, so Bubby is fine: no nudge
+        expect(first.members[0].keys.some((k) => k.startsWith("reminder-daily-checkin-"))).toBe(false);
         const pushesAfterFirst = deps.sendPush.mock.calls.length;
         expect(pushesAfterFirst).toBe(first.members[0].pushes);
 

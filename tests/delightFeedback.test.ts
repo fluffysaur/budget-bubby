@@ -69,7 +69,7 @@ describe("delight feedback", () => {
         setReducedMotion(true);
         const milestones: MilestoneDetail[] = [];
         const off = onAppEvent("delight:milestone", (d) => milestones.push(d));
-        const result = feedback.milestone("stage-up", { title: "Bubby grew!" });
+        const result = feedback.milestone("body-change", { title: "Bubby got buff!" });
         off();
         expect(result).toBe("milestone");
         expect(milestones[0].confetti).toBe(false);
@@ -80,7 +80,7 @@ describe("delight feedback", () => {
     it("rate limit degrades a second big milestone within 8s", () => {
         const milestones: MilestoneDetail[] = [];
         const off = onAppEvent("delight:milestone", (d) => milestones.push(d));
-        expect(feedback.milestone("stage-up")).toBe("milestone");
+        expect(feedback.milestone("body-change")).toBe("milestone");
         expect(feedback.milestone("inbox-zero")).toBe("degraded");
         off();
         expect(milestones.map((m) => m.confetti)).toEqual([true, false]);
@@ -91,8 +91,8 @@ describe("delight feedback", () => {
     it("lite milestones are not rate limited and never get confetti", () => {
         const milestones: MilestoneDetail[] = [];
         const off = onAppEvent("delight:milestone", (d) => milestones.push(d));
-        feedback.milestone("stage-up");
-        expect(feedback.milestone("couple-day")).toBe("milestone");
+        feedback.milestone("body-change");
+        expect(feedback.milestone("full-belly")).toBe("milestone");
         off();
         expect(milestones[1].confetti).toBe(false);
     });

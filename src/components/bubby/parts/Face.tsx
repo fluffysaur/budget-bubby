@@ -16,13 +16,6 @@ export function Eyes({ shape, blinkDelay }: { shape: EyeShape; blinkDelay?: stri
                 switch (shape) {
                     case "arc":
                         return <path key={cx} d={`M ${cx - 21} -6 Q ${cx} -34 ${cx + 21} -6`} {...line} />;
-                    case "half":
-                        return (
-                            <g key={cx}>
-                                <path d={`M ${cx - 18} -12 L ${cx + 18} -12`} {...line} strokeWidth={9} />
-                                <path d={`M ${cx - 14} -12 A 14 11 0 0 0 ${cx + 14} -12 Z`} fill={INK} />
-                            </g>
-                        );
                     case "droop": {
                         const outer = cx < 0 ? cx - 22 : cx + 22;
                         const inner = cx < 0 ? cx + 18 : cx - 18;
@@ -51,16 +44,6 @@ export function Eyes({ shape, blinkDelay }: { shape: EyeShape; blinkDelay?: stri
                         );
                 }
             })}
-        </g>
-    );
-}
-
-export function Brows() {
-    const line = { fill: "none", stroke: INK, strokeWidth: 9, strokeLinecap: "round" as const };
-    return (
-        <g>
-            <path d="M -86 -48 L -44 -38" {...line} />
-            <path d="M 44 -38 L 86 -48" {...line} />
         </g>
     );
 }

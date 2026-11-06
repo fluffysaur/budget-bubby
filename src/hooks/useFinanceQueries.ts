@@ -21,7 +21,6 @@ import type {
     BaseProfileAllocation,
     CreditCard,
     CreditCardStatement,
-    StreakSummary,
     DailyCheckin,
 } from "../types/finance";
 
@@ -43,8 +42,6 @@ export const queryKeys = {
     creditCards: ["finance", "credit-cards"] as const,
     creditCardStatements: (month?: string) =>
         ["finance", "credit-card-statements", month ?? "all"] as const,
-    streakSummary: (memberId?: string) =>
-        ["finance", "streak-summary", memberId ?? "all"] as const,
     dailyCheckins: (memberId?: string) =>
         ["finance", "daily-checkins", memberId ?? "all"] as const,
 };
@@ -175,13 +172,6 @@ export function useCreditCardStatementsQuery(month?: string) {
     return useQuery<CreditCardStatement[]>({
         queryKey: queryKeys.creditCardStatements(month),
         queryFn: () => financeService.getCreditCardStatements(month),
-    });
-}
-
-export function useStreakSummaryQuery(memberId?: string) {
-    return useQuery<StreakSummary>({
-        queryKey: queryKeys.streakSummary(memberId),
-        queryFn: () => financeService.getStreakSummary(memberId),
     });
 }
 

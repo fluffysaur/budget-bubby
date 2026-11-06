@@ -1,25 +1,23 @@
 /**
- * Daily Check-in Streak & Notifications Engine
+ * Notifications engine, reminder rules and the Bubby nudge
  */
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { DailyCheckinStreakBar } from '../src/components/dashboard/DailyCheckinStreakBar';
 import { NotificationCenterPopover } from '../src/components/layout/NotificationCenterPopover';
 import { NotificationSettingsModal } from '../src/components/layout/NotificationSettingsModal';
 import { HouseholdProvider } from '../src/context/HouseholdContext';
 import { AuthProvider } from '../src/context/AuthContext';
 import { financeService } from '../src/services/financeService';
 import {
-  checkDailyCheckinReminder,
+  checkBubbyReminder,
   checkBalanceUpdateReminder,
   checkCreditCardDueReminders,
   checkMissingCreditCardStatements,
   checkPartnerSharedSpendReminders,
   checkSettlementReminder,
-  checkCoupleStreakRiskReminder,
   checkBudgetLimitReminders,
   checkRecurringBillsReminders,
   checkGoalPacingReminders,
@@ -40,7 +38,6 @@ import { getDefaultNotificationPreferences } from '../src/data/mockSeedData';
 import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
 import { getTodayDateString, getCurrentMonth } from '../src/lib/dateUtils';
 import type {
-  StreakSummary,
   AccountSnapshot,
   CreditCardStatement,
   CreditCard,
@@ -65,7 +62,7 @@ function renderWithProviders(ui: React.ReactElement) {
   );
 }
 
-describe('Daily Check-in Streak & Notifications Engine', () => {
+describe('Notifications Engine', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -78,142 +75,43 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
   });
 
   // =========================================================================
-  // 1. DailyCheckinStreakBar
-  // =========================================================================
-  describe('DailyCheckinStreakBar Component', () => {
-    it('renders personal streak, couple streak, and 7-day mini calendar dots', async () => {
-      renderWithProviders(
-        <DailyCheckinStreakBar memberId="mem-00000000-0011" />
-      );
-
-      // Verify streak badge is displayed
-      const personalBadge = await screen.findByTestId('personal-streak-badge');
-      expect(personalBadge).toBeInTheDocument();
-      expect(personalBadge.getAttribute('title')).toContain('streak');
-
-      // Verify couple streak badge
-      const coupleBadge = screen.getByTestId('couple-streak-badge');
-      expect(coupleBadge).toBeInTheDocument();
-      expect(coupleBadge.getAttribute('title')).toContain('streak');
-
-      // Verify 7-day mini calendar dots
-      const calendarDots = screen.getByTestId('streak-calendar-dots');
-      expect(calendarDots).toBeInTheDocument();
-      for (let i = 0; i < 7; i++) {
-        expect(screen.getByTestId(`checkin-dot-${i}`)).toBeInTheDocument();
-      }
-    });
-
-    it('shows "Checked in today!" if user has already checked in', async () => {
-      // Mock streakSummary with checkedInToday = true
-      vi.spyOn(financeService, 'getStreakSummary').mockResolvedValueOnce({
-        currentStreak: 5,
-        longestStreak: 12,
-        checkedInToday: true,
-        coupleStreak: 4,
-        lastCheckinDate: getTodayDateString(),
-      });
-
-      renderWithProviders(
-        <DailyCheckinStreakBar memberId="mem-00000000-0011" />
-      );
-
-      const status = await screen.findByTestId('checked-in-today-status');
-      expect(status).toBeInTheDocument();
-      expect(status.textContent).toContain('Checked in today!');
-      expect(screen.queryByTestId('no-spend-checkin-btn')).not.toBeInTheDocument();
-    });
-
-    it('shows 1-tap "No Spend Today — Check In" button when not checked in and increments streak on click', async () => {
-      const today = getTodayDateString();
-      vi.spyOn(financeService, 'getStreakSummary').mockResolvedValueOnce({
-        currentStreak: 3,
-        longestStreak: 7,
-        checkedInToday: false,
-        coupleStreak: 2,
-        lastCheckinDate: null,
-      });
-
-      const recordSpy = vi.spyOn(financeService, 'recordDailyCheckin').mockResolvedValueOnce({
-        id: 'chk-new-test',
-        household_id: 'hh-00000000-0001',
-        member_id: 'mem-00000000-0011',
-        checkin_date: today,
-        type: 'no_spend',
-      });
-
-      const onCheckinSuccess = vi.fn();
-
-      renderWithProviders(
-        <DailyCheckinStreakBar
-          memberId="mem-00000000-0011"
-          onCheckinSuccess={onCheckinSuccess}
-        />
-      );
-
-      const noSpendBtn = await screen.findByTestId('no-spend-checkin-btn');
-      expect(noSpendBtn).toBeInTheDocument();
-      expect(noSpendBtn.textContent).toContain('No Spend — Check In');
-
-      // Click 1-tap button
-      await act(async () => {
-        fireEvent.click(noSpendBtn);
-      });
-
-      expect(recordSpy).toHaveBeenCalledWith('mem-00000000-0011', today, 'no_spend');
-      expect(onCheckinSuccess).toHaveBeenCalled();
-
-      // Should now display checked in today status
-      await waitFor(() => {
-        expect(screen.getByTestId('checked-in-today-status')).toBeInTheDocument();
-      });
-    });
-  });
-
-  // =========================================================================
   // 2. Notification Scheduler & NotificationCenterPopover
   // =========================================================================
   describe('Notification Engine & NotificationCenterPopover', () => {
-    it('creates daily spend checkin reminder only nearing end of day (>= 18:00) when user has not checked in', () => {
-      // Daytime (hour < 18) -> no reminder yet
-      const reminderDay = checkDailyCheckinReminder(
-        {
-          currentStreak: 2,
-          longestStreak: 5,
-          checkedInToday: false,
-          coupleStreak: 1,
-        },
-        14 // afternoon
-      );
-      expect(reminderDay).toBeNull();
+    it('Bubby nudges only while Bubby looks hungry, from the check-in time, once a day', () => {
+      const chk = (date: string): DailyCheckin => ({
+        id: `c-${date}`,
+        household_id: 'hh-1',
+        member_id: 'mem-2',
+        checkin_date: date,
+        type: 'expense',
+      });
 
-      // Evening (hour >= 18) -> reminder generated
-      const reminderEvening = checkDailyCheckinReminder(
-        {
-          currentStreak: 2,
-          longestStreak: 5,
-          checkedInToday: false,
-          coupleStreak: 1,
-        },
-        19 // evening
-      );
-      expect(reminderEvening).not.toBeNull();
-      expect(reminderEvening?.type).toBe('daily_checkin');
-      expect(reminderEvening?.title).toBe("Log Today's Spend");
-      expect(reminderEvening?.message).toBe('Keep your 2-day streak.');
-      expect(reminderEvening?.actionLabel).toBe('Add Expense');
+      // Normal Bubby (fed 2 days ago): never a nudge
+      expect(checkBubbyReminder([chk('2026-10-26')], [], 19, 'mem-1', '2026-10-28')).toBeNull();
 
-      // Checked in today -> no reminder even in evening
-      const reminderNone = checkDailyCheckinReminder(
-        {
-          currentStreak: 3,
-          longestStreak: 5,
-          checkedInToday: true,
-          coupleStreak: 2,
-        },
-        20
+      // 3+ days: rumbling tummy, but only from the check-in time
+      expect(checkBubbyReminder([chk('2026-10-25')], [], 14, 'mem-1', '2026-10-28')).toBeNull();
+      const rumbly = checkBubbyReminder([chk('2026-10-25')], [], 19, 'mem-1', '2026-10-28');
+      expect(rumbly?.type).toBe('daily_checkin');
+      expect(rumbly?.title).toBe('Bubby');
+      expect(rumbly?.message).toBe("Bubby's tummy is rumbling 🐧");
+      expect(rumbly?.id).toBe('reminder-daily-checkin-mem-1-2026-10-28');
+
+      expect(checkBubbyReminder([chk('2026-10-21')], [], 19, 'mem-1', '2026-10-28')?.message).toBe(
+        'Bubby misses you 🐧',
       );
-      expect(reminderNone).toBeNull();
+
+      // Inbox items waiting: the line points there
+      expect(checkBubbyReminder([chk('2026-10-25')], [], 19, 'mem-1', '2026-10-28', '18:00', 3)?.message).toBe(
+        "3 to sort — Bubby's waiting 🐧",
+      );
+
+      // Mood words never appear
+      for (const date of ['2026-10-25', '2026-10-23', '2026-10-20']) {
+        const r = checkBubbyReminder([chk(date)], [], 19, 'mem-1', '2026-10-28');
+        expect(r?.message).not.toMatch(/hungry|sad|lonely|teary|rumbly/i);
+      }
     });
 
     it('creates monthly balance update reminder on 1st and last days of month when snapshots are missing', () => {
@@ -397,13 +295,11 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       vi.setSystemTime(new Date('2026-10-29T19:00:00+08:00'));
 
       // Mock active reminders via computeActiveReminders
-      const mockStreak: StreakSummary = {
-        currentStreak: 2,
-        longestStreak: 5,
-        checkedInToday: false,
-        coupleStreak: 1,
-      };
-      vi.spyOn(financeService, 'getStreakSummary').mockResolvedValue(mockStreak);
+      // Nobody has logged for 4 days, so Bubby nudges
+      vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([
+        { id: 'old', household_id: 'hh-00000000-0001', member_id: 'mem-00000000-0012', checkin_date: '2026-10-25', type: 'expense' },
+      ]);
+      vi.spyOn(financeService, 'getExpenses').mockResolvedValue([]);
       vi.spyOn(financeService, 'getAllAccountSnapshots').mockResolvedValue([]);
       vi.spyOn(financeService, 'getCreditCardStatements').mockResolvedValue([
         {
@@ -551,6 +447,11 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
     it('hides dismissed reminders from computeActiveReminders', async () => {
       const memberId = 'mem-00000000-0011';
       const referenceDate = new Date('2026-10-29T19:00:00');
+      // Bubby has gone 4 days without food, so the nudge is active
+      vi.spyOn(financeService, 'getExpenses').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([
+        { id: 'old', household_id: 'hh-1', member_id: 'mem-00000000-0012', checkin_date: '2026-10-25', type: 'expense' },
+      ]);
       const before = await computeActiveReminders({ memberId, currentHour: 19, referenceDate });
       const checkin = before.find((r) => r.type === 'daily_checkin');
       expect(checkin).toBeDefined();
@@ -745,34 +646,6 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
       expect(rSmallEnd?.type).toBe('settlement_due');
       // Month-end reminder has its own key
       expect(rSmallEnd?.id).toBe('reminder-settlement-monthend-2026-10');
-    });
-
-    it('checkCoupleStreakRiskReminder alerts in evening when active member checked in but partner has not', () => {
-      const members: HouseholdMember[] = [
-        { id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' },
-        { id: 'mem-2', household_id: 'hh-1', display_name: 'Rachel', role: 'member' },
-      ];
-
-      const checkins: DailyCheckin[] = [
-        {
-          id: 'chk-1',
-          household_id: 'hh-1',
-          member_id: 'mem-1',
-          checkin_date: '2026-10-28',
-          type: 'no_spend',
-        },
-      ];
-
-      // Afternoon (14:00) -> no reminder yet
-      const rAfternoon = checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 14, '2026-10-28');
-      expect(rAfternoon).toBeNull();
-
-      // Evening (19:00) -> triggers couple streak risk
-      const rEvening = checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 19, '2026-10-28');
-      expect(rEvening).not.toBeNull();
-      expect(rEvening?.type).toBe('couple_streak_risk');
-      expect(rEvening?.title).toBe('Couple Streak at Risk');
-      expect(rEvening?.message).toBe("Rachel hasn't checked in today.");
     });
 
     it('checkBudgetLimitReminders alerts for spendable categories nearing or exceeding cap', () => {
@@ -1014,29 +887,14 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
   // 3b. Timing: check-in time and quiet hours
   // =========================================================================
   describe('Notification Timing', () => {
-    const streak: StreakSummary = {
-      currentStreak: 1,
-      longestStreak: 1,
-      checkedInToday: false,
-      coupleStreak: 0,
-    };
+    const hungry: DailyCheckin[] = [
+      { id: 'c', household_id: 'hh-1', member_id: 'mem-1', checkin_date: '2026-10-24', type: 'expense' },
+    ];
 
-    it('starts the check-in reminder at the member check-in time', () => {
-      expect(checkDailyCheckinReminder(streak, 19, 'mem-1', '2026-10-28', '20:00')).toBeNull();
-      expect(checkDailyCheckinReminder(streak, 20, 'mem-1', '2026-10-28', '20:00')).not.toBeNull();
-      expect(checkDailyCheckinReminder(streak, 7, 'mem-1', '2026-10-28', '07:00')).not.toBeNull();
-    });
-
-    it('starts the couple streak reminder at the check-in time', () => {
-      const members: HouseholdMember[] = [
-        { id: 'mem-1', household_id: 'hh-1', display_name: 'Yi Jia', role: 'owner' },
-        { id: 'mem-2', household_id: 'hh-1', display_name: 'Rachel', role: 'member' },
-      ];
-      const checkins: DailyCheckin[] = [
-        { id: 'c', household_id: 'hh-1', member_id: 'mem-1', checkin_date: '2026-10-28', type: 'no_spend' },
-      ];
-      expect(checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 20, '2026-10-28', '21:00')).toBeNull();
-      expect(checkCoupleStreakRiskReminder(checkins, members, 'mem-1', 21, '2026-10-28', '21:00')).not.toBeNull();
+    it('starts the Bubby nudge at the member check-in time', () => {
+      expect(checkBubbyReminder(hungry, [], 19, 'mem-1', '2026-10-28', '20:00')).toBeNull();
+      expect(checkBubbyReminder(hungry, [], 20, 'mem-1', '2026-10-28', '20:00')).not.toBeNull();
+      expect(checkBubbyReminder(hungry, [], 7, 'mem-1', '2026-10-28', '07:00')).not.toBeNull();
     });
 
     it('detects quiet hours, including windows past midnight', () => {
@@ -1135,7 +993,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       // Timing fields
       expect(screen.getByTestId('input-checkin-time')).toHaveValue('18:00');
-      expect(screen.getByText('Daily 6:00 PM reminder to log spend')).toBeInTheDocument();
+      expect(screen.getByText('6:00 PM nudge when Bubby needs a snack')).toBeInTheDocument();
       await act(async () => {
         fireEvent.change(screen.getByTestId('input-checkin-time'), { target: { value: '20:30' } });
       });
@@ -1143,7 +1001,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         'mem-00000000-0011',
         expect.objectContaining({ checkin_time: '20:30' })
       );
-      expect(screen.getByText('Daily 8:30 PM reminder to log spend')).toBeInTheDocument();
+      expect(screen.getByText('8:30 PM nudge when Bubby needs a snack')).toBeInTheDocument();
 
       await act(async () => {
         fireEvent.change(screen.getByTestId('input-quiet-start'), { target: { value: '23:00' } });
@@ -1242,19 +1100,16 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         configurable: true,
       });
 
-      vi.spyOn(financeService, 'getStreakSummary').mockResolvedValue({
-        currentStreak: 2,
-        longestStreak: 5,
-        checkedInToday: false,
-        coupleStreak: 1,
-      });
       vi.spyOn(financeService, 'getAllAccountSnapshots').mockResolvedValue([]);
       vi.spyOn(financeService, 'getCreditCardStatements').mockResolvedValue([]);
       vi.spyOn(financeService, 'getCreditCards').mockResolvedValue([]);
       vi.spyOn(financeService, 'getExpenses').mockResolvedValue([]);
       vi.spyOn(financeService, 'getRecurringItems').mockResolvedValue([]);
       vi.spyOn(financeService, 'getGoals').mockResolvedValue([]);
-      vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([]);
+      // Nobody has logged for 5 days, so Bubby nudges
+      vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([
+        { id: 'old', household_id: 'hh-1', member_id: 'mem-2', checkin_date: '2020-01-01', type: 'expense' },
+      ]);
       vi.spyOn(financeService, 'getMonthlyBudget').mockResolvedValue({
         budget: {
           id: 'b-1',
@@ -1533,15 +1388,12 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
     });
 
     it('scopes reminder IDs with memberId to prevent cross-member collisions', () => {
-      const streak: StreakSummary = {
-        currentStreak: 3,
-        longestStreak: 5,
-        checkedInToday: false,
-        coupleStreak: 2,
-      };
+      const hungry: DailyCheckin[] = [
+        { id: 'c', household_id: 'hh-1', member_id: 'mem-1', checkin_date: '2026-10-20', type: 'expense' },
+      ];
 
-      const r1 = checkDailyCheckinReminder(streak, 19, 'mem-1');
-      const r2 = checkDailyCheckinReminder(streak, 19, 'mem-2');
+      const r1 = checkBubbyReminder(hungry, [], 19, 'mem-1', '2026-10-28');
+      const r2 = checkBubbyReminder(hungry, [], 19, 'mem-2', '2026-10-28');
 
       expect(r1?.id).toContain('mem-1');
       expect(r2?.id).toContain('mem-2');

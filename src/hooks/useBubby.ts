@@ -1,50 +1,34 @@
 /**
- * The shared household Bubby: check-ins -> growth, mood, accessories, and
- * the latest transient reaction.
+ * The shared household Bubby: feed events -> body, mood, quests, snacks,
+ * and the latest transient reaction.
  *
- * One `daily_checkins` query for all members (shared with StreakChip). It
- * refetches on focus at most once a minute so the partner's logs show up
- * when the app resumes. Pacing reads the cached household budget only, so
- * Bubby adds no requests on open.
+ * Reads the shared check-ins query (refetched on focus at most once a
+ * minute, so the partner's logs show up on resume), this and last month's
+ * expenses, and account snapshots. Petting, local exercise records and
+ * snacks come from bb_bubby_v2.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
-import { queryKeys, useBudgetDetailQuery } from "./useFinanceQueries";
+import { queryKeys, useAccountSnapshotsQuery, useExpensesQuery } from "./useFinanceQueries";
 import { useLoggedInMember } from "./useLoggedInMember";
 import { onAppEvent, emitAppEvent, type BubbyReaction } from "../lib/appEvents";
-import {
-    deriveBubbyState,
-    HATCHLING_STAGE,
-    STAGES,
-    type BubbyState,
-    type StageDef,
-} from "../lib/bubby/growth";
-import {
-    computePace,
-    deriveBaseMood,
-    REACTION_MS,
-    type BubbyMood,
-} from "../lib/bubby/moods";
-import {
-    getUnlocked,
-    resolveEquipped,
-    type AccessoryId,
-    type AccessorySlot,
-    type UnlockInputs,
-} from "../lib/bubby/accessories";
-import { readBubbyStore, updateBubbyStore } from "../lib/bubby/storage";
-import {
-    daysInMonthOf,
-    sgtMinutesOfDay,
-    timeToMinutes,
-    toSgtDateString,
-} from "../lib/bubby/dates";
+import { collectFeedEvents, type BonusEventLike } from "../lib/bubby/sources";
+import { deriveCondition, type BubbyBody, type BubbyCondition, type BubbyMood } from "../lib/bubby/body";
+import { dailyQuests, weeklyQuests, type Quest } from "../lib/bubby/quests";
+import { REACTION_MS } from "../lib/bubby/moods";
+import { addPetDay, readBubbyStore, type SnackEntry } from "../lib/bubby/storage";
+import { addDays, sgtMinutesOfDay, timeToMinutes, toSgtDateString } from "../lib/bubby/dates";
+import { getInboxPending } from "../lib/delight/inboxState";
+import { feedback } from "../lib/delight/feedback";
 import { DEFAULT_CHECKIN_TIME } from "../lib/reminders/rules";
-import type { DailyCheckin, HouseholdMember } from "../types/finance";
+import type { AccountSnapshot, DailyCheckin, Expense, HouseholdMember } from "../types/finance";
 
 const EMPTY_CHECKINS: DailyCheckin[] = [];
+const EMPTY_EXPENSES: Expense[] = [];
+const EMPTY_SNAPSHOTS: AccountSnapshot[] = [];
+const NO_BONUS_EVENTS: BonusEventLike[] = [];
 const DEFAULT_CHECKIN_MINUTES = timeToMinutes(DEFAULT_CHECKIN_TIME) ?? 18 * 60;
 
 /** The member's check-in reminder time, from the cached notification prefs. */
@@ -57,6 +41,14 @@ function readCheckinMinutes(memberId: string | undefined): number {
     } catch {
         return DEFAULT_CHECKIN_MINUTES;
     }
+}
+
+/**
+ * Bonus entries feed Bubby once feat/bonus-log lands: swap this stub for a
+ * `bonus_events` query. On this branch there is no table, so it is empty.
+ */
+function useBonusEventsForBubby(): BonusEventLike[] {
+    return NO_BONUS_EVENTS;
 }
 
 /** SGT date and minute-of-day, refreshed every minute and on resume. */
@@ -85,30 +77,26 @@ export function useSgtClock(): { today: string; minutes: number } {
 }
 
 /** Latest Bubby reaction, cleared after its (≤400ms) animation. */
-export function useBubbyReaction(stage: number): BubbyReaction | null {
-    const [reaction, setReaction] = useState<{ kind: BubbyReaction; id: number } | null>(null);
+export function useBubbyReaction(): BubbyReaction | null {
+    const [reaction, setReaction] = useState<BubbyReaction | null>(null);
 
     useEffect(() => {
         let timer: number | undefined;
-        let seq = 0;
         const off = onAppEvent("bubby:react", ({ kind }) => {
-            // Eggs respond to everything with a wiggle
-            const shown: BubbyReaction = stage < HATCHLING_STAGE ? "wiggle" : kind;
-            seq += 1;
-            setReaction({ kind: shown, id: seq });
+            setReaction(kind);
             window.clearTimeout(timer);
-            timer = window.setTimeout(() => setReaction(null), REACTION_MS[shown]);
+            timer = window.setTimeout(() => setReaction(null), REACTION_MS[kind]);
         });
         return () => {
             off();
             window.clearTimeout(timer);
         };
-    }, [stage]);
+    }, []);
 
-    return reaction?.kind ?? null;
+    return reaction;
 }
 
-/** All members' check-ins, shared by Bubby and the streak chip. */
+/** All members' check-ins, shared app-wide. */
 export function useHouseholdCheckinsQuery() {
     return useQuery<DailyCheckin[]>({
         queryKey: queryKeys.dailyCheckins(),
@@ -120,113 +108,94 @@ export function useHouseholdCheckinsQuery() {
 
 export interface UseBubbyResult {
     isReady: boolean;
-    state: BubbyState;
-    stage: number;
-    stageDef: StageDef;
+    body: BubbyBody;
     mood: BubbyMood;
+    condition: BubbyCondition;
     reaction: BubbyReaction | null;
-    equipped: Partial<Record<AccessorySlot, AccessoryId>>;
-    unlocked: AccessoryId[];
-    unlockInputs: UnlockInputs;
+    dailyQuests: Quest[];
+    weeklyQuests: Quest[];
+    snacks: SnackEntry[];
     me: HouseholdMember | null;
     partner: HouseholdMember | null;
     members: HouseholdMember[];
-    checkins: DailyCheckin[];
     today: string;
     /** SGT minutes since midnight (refreshed every minute). */
     minutes: number;
     /** The logged-in member's check-in reminder time, in minutes. */
     checkinMinutes: number;
-    equip: (slot: AccessorySlot, id: AccessoryId | null) => void;
+    /** Pet Bubby: a soft cue every time, food once a day. */
+    pet: () => void;
 }
 
 export function useBubby(): UseBubbyResult {
     const { me, members } = useLoggedInMember();
     const { today, minutes } = useSgtClock();
-    // Per-device store; refreshed whenever this device changes it
     const [store, setStore] = useState(readBubbyStore);
 
-    const { data, isSuccess } = useHouseholdCheckinsQuery();
-    const checkins = data ?? EMPTY_CHECKINS;
-
-    const memberIds = useMemo(() => members.map((m) => m.id), [members]);
-    const month = today.slice(0, 7);
-    // Cache-only read of the household budget (Home fills it)
-    const { data: budget } = useBudgetDetailQuery(month, "household", undefined, memberIds, {
-        enabled: false,
+    const { data: checkinsData, isSuccess } = useHouseholdCheckinsQuery();
+    const { data: thisMonth, isSuccess: thisMonthReady } = useExpensesQuery({ month: today.slice(0, 7) });
+    const { data: lastMonth, isSuccess: lastMonthReady } = useExpensesQuery({
+        month: addDays(today.slice(0, 7) + "-01", -1).slice(0, 7),
     });
+    const { data: snapshotsData, isSuccess: snapshotsReady } = useAccountSnapshotsQuery("household");
+    const bonusEvents = useBonusEventsForBubby();
 
-    useEffect(
-        () => onAppEvent("bubby:prefs-changed", () => setStore(readBubbyStore())),
-        [],
+    useEffect(() => onAppEvent("bubby:store-changed", () => setStore(readBubbyStore())), []);
+
+    const checkins = checkinsData ?? EMPTY_CHECKINS;
+    const snapshots = snapshotsData ?? EMPTY_SNAPSHOTS;
+    const expenses = useMemo(
+        () => [...(thisMonth ?? EMPTY_EXPENSES), ...(lastMonth ?? EMPTY_EXPENSES)],
+        [thisMonth, lastMonth],
     );
 
-    const state = useMemo(
-        () => deriveBubbyState(checkins, memberIds, today, store.hwmPoints ?? 0),
-        [checkins, memberIds, today, store.hwmPoints],
+    const condition = useMemo(
+        () => deriveCondition(collectFeedEvents({ checkins, expenses, snapshots, bonusEvents, store }), today),
+        [checkins, expenses, snapshots, bonusEvents, store, today],
     );
 
-    const unlockInputs = useMemo<UnlockInputs>(
-        () => ({
-            stage: state.stage,
-            points: state.points,
-            longestCoupleStreak: state.longestCoupleStreak,
-            maxHouseholdDaysInMonth: state.maxHouseholdDaysInMonth,
-            inboxZeroDays: store.inboxZeroDays?.length ?? 0,
-        }),
-        [state, store.inboxZeroDays],
+    const daily = useMemo(
+        () =>
+            dailyQuests({
+                memberId: me?.id,
+                today,
+                checkins,
+                expenses,
+                store,
+                inboxPending: getInboxPending(),
+            }),
+        [me?.id, today, checkins, expenses, store],
     );
-    const unlocked = useMemo(() => getUnlocked(unlockInputs), [unlockInputs]);
-    const equipped = useMemo(
-        () => resolveEquipped(unlocked, store.equipped),
-        [unlocked, store.equipped],
-    );
-
-    const pace = useMemo(() => {
-        if (!budget) return null;
-        const day = Number(today.slice(8, 10));
-        return computePace(
-            budget.spendableSpent ?? 0,
-            budget.spendableAllocated ?? 0,
-            day,
-            daysInMonthOf(today),
-        );
-    }, [budget, today]);
+    const weekly = useMemo(() => weeklyQuests({ today, snapshots, store }), [today, snapshots, store]);
 
     const checkinMinutes = useMemo(() => readCheckinMinutes(me?.id), [me?.id]);
-    const mood = useMemo(
-        () => deriveBaseMood(state, pace, minutes, checkinMinutes),
-        [state, pace, minutes, checkinMinutes],
-    );
-    const reaction = useBubbyReaction(state.stage);
+    const reaction = useBubbyReaction();
+    const partner = useMemo(() => members.find((m) => m.id !== me?.id) ?? null, [members, me]);
 
-    const partner = useMemo(
-        () => members.find((m) => m.id !== me?.id) ?? null,
-        [members, me],
-    );
-
-    const equip = useCallback((slot: AccessorySlot, id: AccessoryId | null) => {
-        updateBubbyStore((prev) => ({ equipped: { ...(prev.equipped ?? {}), [slot]: id } }));
-        emitAppEvent("bubby:prefs-changed", {});
-    }, []);
+    const meId = me?.id;
+    const pet = useCallback(() => {
+        feedback.routine("pet");
+        if (!meId) return;
+        addPetDay(meId, toSgtDateString());
+        emitAppEvent("bubby:store-changed", {});
+    }, [meId]);
 
     return {
-        isReady: isSuccess,
-        state,
-        stage: state.stage,
-        stageDef: STAGES[state.stage],
-        mood,
+        // Every input loaded, so body and mood changes are real
+        isReady: isSuccess && thisMonthReady && lastMonthReady && snapshotsReady,
+        body: condition.body,
+        mood: condition.mood,
+        condition,
         reaction,
-        equipped,
-        unlocked,
-        unlockInputs,
+        dailyQuests: daily,
+        weeklyQuests: weekly,
+        snacks: store.snacks ?? [],
         me,
         partner,
         members,
-        checkins,
         today,
         minutes,
         checkinMinutes,
-        equip,
+        pet,
     };
 }

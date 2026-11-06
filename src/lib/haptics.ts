@@ -3,7 +3,7 @@
  * Provides tactile vibration patterns for:
  * - Pull-to-refresh trigger (lightTap: 12ms)
  * - Expense logged (success: 25ms)
- * - Daily streak check-in (celebrate: [30, 45, 50]ms)
+ * - No-spend check-in, full belly (celebrate: [30, 45, 50]ms)
  * - Surplus sweep to goals (sweep: [35, 50, 65]ms)
  * - Budget cap warning 80% (warning: [35, 45, 35]ms)
  * - Budget cap exceeded 100%+ (alert: [65, 45, 65]ms)
