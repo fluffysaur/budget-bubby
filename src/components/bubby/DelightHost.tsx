@@ -8,7 +8,7 @@
  * - Hosts milestone confetti and toasts
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useBubby } from "../../hooks/useBubby";
 import { useActivityCheckins } from "../../hooks/useActivityCheckins";
 import { emitAppEvent, onAppEvent, type MilestoneDetail } from "../../lib/appEvents";
@@ -19,6 +19,8 @@ import { STAGES, HATCHLING_STAGE } from "../../lib/bubby/growth";
 import { getAccessory } from "../../lib/bubby/accessories";
 import { ConfettiBurst } from "../ui/ConfettiBurst";
 import { MilestoneToast } from "./MilestoneToast";
+
+const BubbySheet = lazy(() => import("./BubbySheet"));
 
 interface QueuedToast extends MilestoneDetail {
     id: number;
@@ -34,6 +36,7 @@ export function DelightHost() {
     const [toasts, setToasts] = useState<QueuedToast[]>([]);
     const [burstKey, setBurstKey] = useState(0);
     const toastSeq = useRef(0);
+    const [sheet, setSheet] = useState<{ open: boolean; accessoryId?: string } | null>(null);
 
     // High-water mark and a snapshot for components outside the providers
     useEffect(() => {
@@ -121,6 +124,19 @@ export function DelightHost() {
         [],
     );
 
+    // Bubby sheet: one lazy instance, kept mounted after first open for the exit animation
+    useEffect(
+        () =>
+            onAppEvent("bubby:open-sheet", (detail) =>
+                setSheet({ open: true, accessoryId: detail?.accessoryId }),
+            ),
+        [],
+    );
+    const closeSheet = useCallback(
+        () => setSheet((prev) => (prev ? { ...prev, open: false } : prev)),
+        [],
+    );
+
     const clearBurst = useCallback(() => setBurstKey(0), []);
     const shiftToast = useCallback(() => setToasts((prev) => prev.slice(1)), []);
     const acknowledge = useCallback(() => {
@@ -132,6 +148,15 @@ export function DelightHost() {
 
     return (
         <>
+            {sheet && (
+                <Suspense fallback={null}>
+                    <BubbySheet
+                        isOpen={sheet.open}
+                        onClose={closeSheet}
+                        focusAccessoryId={sheet.accessoryId}
+                    />
+                </Suspense>
+            )}
             {burstKey > 0 && <ConfettiBurst key={burstKey} onDone={clearBurst} />}
             {current && (
                 <MilestoneToast
