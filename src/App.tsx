@@ -37,6 +37,7 @@ import {
   type ExpenseFormInitialValues,
 } from './components/expenses/ExpenseFormModal';
 import { useQuickAddDeepLink } from './hooks/useQuickAddDeepLink';
+import { useInboxBadge } from './hooks/useInboxBadge';
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
@@ -146,6 +147,9 @@ function AppLayoutInner() {
   // /expenses?action=new&amount=…&merchant=… (PWA shortcut, capture fallback)
   useQuickAddDeepLink(openQuickAddWithValues);
 
+  // Inbox count for the Spend badges and the app icon badge
+  const inboxCount = useInboxBadge();
+
   const handleExpenseAdded = useCallback(
     async (_newExpense: Expense) => {
       await refreshData();
@@ -193,7 +197,11 @@ function AppLayoutInner() {
   return (
     <div className="flex h-screen bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
       {/* Desktop Navigation Sidebar */}
-      <DesktopSidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
+      <DesktopSidebar
+        activeTab={activeTab}
+        onSelectTab={handleSelectTab}
+        spendBadgeCount={inboxCount}
+      />
 
       {/* Main Application Column */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
@@ -239,6 +247,7 @@ function AppLayoutInner() {
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         onQuickAdd={handleOpenQuickAdd}
+        spendBadgeCount={inboxCount}
       />
 
       {/* Global Quick Add Expense Modal */}

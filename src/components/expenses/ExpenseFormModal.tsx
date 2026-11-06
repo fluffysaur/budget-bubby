@@ -41,6 +41,7 @@ import type {
     CreateExpenseInput,
     UpdateExpenseInput,
     SavingsGoal,
+    InboxItem,
 } from "../../types/finance";
 import {
     AnimatedModal,
@@ -56,7 +57,6 @@ import { CurrencyText } from "../ui/CurrencyText";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { guessCategoryId } from "../../lib/categoryGuess";
 import { getStoredLastSplit, storeLastSplit } from "../../lib/lastSplit";
-import { useInboxQuery } from "../../hooks/useInboxQueries";
 import { afterInboxConfirmed } from "../../lib/inbox/inboxConfirm";
 import {
     inboxExpenseEventDetail,
@@ -252,14 +252,25 @@ export function ExpenseFormModal({
 
     // Inbox: the item this save confirms, and newest items offered as chips
     const [linkedInboxId, setLinkedInboxId] = useState<string | null>(null);
-    const { data: inboxData } = useInboxQuery({
-        enabled: isOpen && !isEditMode && !inboxItemId,
-    });
-    const inboxItems = inboxData?.items;
-    const inboxChips = useMemo(
-        () => (inboxData?.available ? (inboxItems ?? []).slice(0, 3) : []),
-        [inboxData?.available, inboxItems],
-    );
+    const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+    const [showInboxChips, setShowInboxChips] = useState<boolean>(false);
+    const inboxChips = useMemo(() => inboxItems.slice(0, 3), [inboxItems]);
+    const wantsInboxChips = isOpen && !isEditMode && !inboxItemId;
+
+    // Newest inbox items, offered as "From Inbox" (household-wide)
+    useEffect(() => {
+        if (!wantsInboxChips) return;
+        let isMounted = true;
+        financeService
+            .getInboxItems("pending")
+            .then((res) => {
+                if (isMounted) setInboxItems(res.available ? res.items : []);
+            })
+            .catch(() => {});
+        return () => {
+            isMounted = false;
+        };
+    }, [wantsInboxChips]);
 
     // Fetch goals if not supplied in props
     useEffect(() => {
@@ -388,6 +399,7 @@ export function ExpenseFormModal({
             setIsSubmitting(false);
 
             setLinkedInboxId(inboxItemId ?? null);
+            setShowInboxChips(false);
             if (initialValues) applyPrefill(initialValues);
         }
     }, [
@@ -619,7 +631,7 @@ export function ExpenseFormModal({
             };
 
             if (linkedInboxId) {
-                const linked = inboxItems?.find((i) => i.id === linkedInboxId);
+                const linked = inboxItems.find((i) => i.id === linkedInboxId);
                 const expenseId = await financeService.confirmInboxItem(
                     linkedInboxId,
                     input,
@@ -700,9 +712,20 @@ export function ExpenseFormModal({
                     {/* From Inbox: confirm a captured purchase instead of adding a duplicate */}
                     {!isEditMode && !inboxItemId && inboxChips.length > 0 && (
                         <div>
-                            <span className="block mb-1.5 text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                                From Inbox
-                            </span>
+                            <button
+                                type="button"
+                                aria-expanded={showInboxChips || Boolean(linkedInboxId)}
+                                onClick={() => setShowInboxChips((prev) => !prev)}
+                                className="flex items-center gap-1 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                            >
+                                {`From Inbox (${inboxItems.length})`}
+                                {showInboxChips || linkedInboxId ? (
+                                    <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                ) : (
+                                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                )}
+                            </button>
+                            {(showInboxChips || linkedInboxId) && (
                             <div className="flex flex-wrap gap-1.5" aria-label="From Inbox">
                                 {inboxChips.map((chip) => {
                                     const isLinked = chip.id === linkedInboxId;
@@ -738,6 +761,7 @@ export function ExpenseFormModal({
                                     );
                                 })}
                             </div>
+                            )}
                         </div>
                     )}
 
