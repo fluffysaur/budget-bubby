@@ -333,6 +333,64 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
       expect(mockTarget.addExpense).toHaveBeenCalledTimes(2);
     });
 
+    it('queues an offline inbox confirm and replays it once, idempotently', async () => {
+      setNetworkOverride(false);
+      const input: CreateExpenseInput = {
+        payer_id: 'mem-1',
+        date: '2026-11-05',
+        item: 'Grab Food',
+        amount: 12.5,
+        is_shared: false,
+      };
+      const queuedId = await offlineSyncQueue.confirmInboxItem('inbox-1', input);
+      await offlineSyncQueue.resolveInboxItem('inbox-2', 'discarded');
+      expect(queuedId).toBe('queued-inbox-inbox-1');
+      expect(getPendingMutations().map((m) => m.type)).toEqual(['confirmInboxItem', 'resolveInboxItem']);
+
+      // The RPC returns the same expense id when the item is already confirmed
+      const confirmed = new Map<string, string>();
+      const created: string[] = [];
+      const target = {
+        confirmInboxItem: vi.fn(async (itemId: string) => {
+          if (!confirmed.has(itemId)) {
+            const id = `exp-${created.length + 1}`;
+            created.push(id);
+            confirmed.set(itemId, id);
+          }
+          return confirmed.get(itemId);
+        }),
+        resolveInboxItem: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const first = await flushOutbox(target);
+      expect(first).toEqual({ processed: 2, errors: 0 });
+      expect(target.confirmInboxItem).toHaveBeenCalledWith('inbox-1', input);
+      expect(target.resolveInboxItem).toHaveBeenCalledWith('inbox-2', 'discarded');
+
+      // Replaying again does nothing, and a forced double replay makes no second expense
+      expect((await flushOutbox(target)).processed).toBe(0);
+      await target.confirmInboxItem('inbox-1');
+      expect(created).toEqual(['exp-1']);
+    });
+
+    it('does not queue an inbox confirm the server rejected', async () => {
+      setNetworkOverride(true);
+      vi.spyOn(
+        (await import('../src/services/mockFinanceService')).mockFinanceService,
+        'confirmInboxItem'
+      ).mockRejectedValue(new Error('inbox_item_resolved'));
+      await expect(
+        offlineSyncQueue.confirmInboxItem('inbox-9', {
+          payer_id: 'mem-1',
+          date: '2026-11-05',
+          item: 'x',
+          amount: 1,
+          is_shared: false,
+        })
+      ).rejects.toThrow('inbox_item_resolved');
+      expect(getPendingSyncCount()).toBe(0);
+    });
+
     it('automatically replays on window "online" event', async () => {
       setNetworkOverride(false);
 
