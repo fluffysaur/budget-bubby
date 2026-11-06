@@ -41,6 +41,10 @@ import type {
   NotificationLogRef,
   PushSubscriptionInput,
   UpdateNotificationPreferencesInput,
+  BonusEvent,
+  BonusEventsResult,
+  BonusSplitShare,
+  SaveBonusEventInput,
 } from '../types/finance';
 import { getDefaultNotificationPreferences } from '../data/mockSeedData';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -60,6 +64,12 @@ import {
 } from '../lib/recurringItems';
 import { getTodayDateString, addMonths, formatISODate, getCurrentSingaporeTime } from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
+import { BonusLogUnavailableError, isMissingRelationError } from '../lib/supabaseErrors';
+import {
+  cloneDefaultSplit,
+  normalizeBonusSplit,
+  summarizeBonusesForMonth,
+} from '../lib/bonusFormulas';
 import {
   getLocalNotificationLog,
   claimLocalNotificationSend,
@@ -111,6 +121,43 @@ export function resetCategoryGroupColumnSupport(): void {
 }
 
 /** Postgres 42703 (undefined column) or PostgREST PGRST204 (column not in schema cache). */
+/** Maps a bonus_events row (with optional nested contributions) to a BonusEvent. */
+function mapBonusEventRow(row: Record<string, unknown>): BonusEvent {
+  const contributions = Array.isArray(row.bonus_goal_contributions)
+    ? (row.bonus_goal_contributions as Array<{ goal_id: string; amount: unknown }>)
+    : [];
+  const gross = Number(row.gross) || 0;
+  const cpf = Number(row.cpf) || 0;
+  const split = Array.isArray(row.split)
+    ? (row.split as BonusSplitShare[]).map((s) => ({
+        key: s.key,
+        pct: Number(s.pct) || 0,
+        ...(s.amount !== undefined ? { amount: Number(s.amount) || 0 } : {}),
+      }))
+    : [];
+  return {
+    id: String(row.id),
+    household_id: String(row.household_id ?? ''),
+    recipient_id: String(row.recipient_id ?? ''),
+    type: (row.type as BonusEvent['type']) ?? 'other',
+    received_on: String(row.received_on ?? '').slice(0, 10),
+    gross,
+    cpf,
+    net: row.net !== undefined && row.net !== null
+      ? Number(row.net)
+      : Math.round((gross - cpf) * 100) / 100,
+    note: (row.note as string | null | undefined) ?? null,
+    split,
+    goal_contributions: contributions.map((c) => ({
+      goal_id: c.goal_id,
+      amount: Number(c.amount) || 0,
+    })),
+    created_by: (row.created_by as string | null | undefined) ?? null,
+    created_at: row.created_at as string | undefined,
+    updated_at: row.updated_at as string | undefined,
+  };
+}
+
 function isMissingColumnError(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
   return error.code === '42703' || error.code === 'PGRST204';
@@ -128,6 +175,18 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
    *   fall back to the device-local log on errors. The server sets it false
    *   so errors surface instead of being recorded in memory.
    */
+  /**
+   * Whether the bonus log tables exist. `null` = not checked yet. Cached for
+   * the session so budgets don't fire a failing request on every read; the
+   * cache resets on reload, so the log appears once the migration is applied.
+   */
+  private bonusTableAvailable: boolean | null = null;
+
+  /** Test hook: forget what we learned about the bonus log tables. */
+  public resetBonusLogAvailability(): void {
+    this.bonusTableAvailable = null;
+  }
+
   constructor(client?: SupabaseClient, options: { localFallback?: boolean } = {}) {
     this.clientOverride = client;
     this.localFallback = options.localFallback ?? true;
@@ -802,15 +861,26 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
 
     const nextMonth = addMonths(month, 1);
-    const [{ data: expensesData, error: expError }, recurringItems] = await Promise.all([
-      client
-        .from('expenses')
-        .select('*')
-        .gte('date', `${month}-01`)
-        .lt('date', `${nextMonth}-01`),
-      this.getRecurringItems(),
-    ]);
+    const [{ data: expensesData, error: expError }, recurringItems, monthBonusEvents] =
+      await Promise.all([
+        client
+          .from('expenses')
+          .select('*')
+          .gte('date', `${month}-01`)
+          .lt('date', `${nextMonth}-01`),
+        this.getRecurringItems(),
+        this.getMonthBonusEvents(month, budget.owner_id),
+      ]);
     if (expError) throw expError;
+
+    // Bonus is income, not budget: it never feeds after_deductions or category caps.
+    const legacyBonus = Number(budgetData?.bonus || 0);
+    const bonusSummary = summarizeBonusesForMonth(
+      monthBonusEvents ?? [],
+      month,
+      budget.owner_id,
+      legacyBonus
+    );
 
     const expenses = (expensesData || []) as Expense[];
     if (budgetData && !budget.is_locked && recurringItems && recurringItems.length > 0) {
@@ -830,8 +900,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
           insurance_deduction: insuranceMonthly,
           after_deductions: Math.round(
             (Number(budget.gross_salary) -
-              Number(budget.cpf_deduction) +
-              Number(budget.bonus || 0) -
+              Number(budget.cpf_deduction) -
               taxesMonthly -
               insuranceMonthly) *
               100
@@ -844,6 +913,27 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         }));
       }
     }
+    // Legacy rows stored after_deductions with the hand-entered bonus added.
+    // Unlocked months are normalized to salary take-home; locked months stay frozen.
+    if (budgetData && !budget.is_locked && legacyBonus > 0) {
+      budget = {
+        ...budget,
+        after_deductions: Math.round(
+          (Number(budget.gross_salary) -
+            Number(budget.cpf_deduction) -
+            Number(budget.taxes_deduction || 0) -
+            Number(budget.insurance_deduction || 0)) *
+            100
+        ) / 100,
+      };
+      catAllocData = catAllocData.map((row) => ({
+        ...row,
+        allocated_amount:
+          Math.round(budget.after_deductions * Number(row.percentage) * 100) / 100,
+      }));
+    }
+    budget = { ...budget, bonus: bonusSummary.gross };
+
     // Recurring subscription/bill/other spend for this member and month, by category
     const recurringSpend = calculateRecurringCategorySpend(recurringItems || [], month, {
       ownerId: budget.owner_id,
@@ -916,6 +1006,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       allocationTotal,
       uncategorizedRecurringSpent,
       uncategorizedRecurringItems: recurringSpend.uncategorized.items,
+      bonusSummary,
     };
   }
 
@@ -931,9 +1022,12 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       return;
     }
 
+    // bonus is derived from bonus_events at read time; never write it back.
+    const { bonus: _derivedBonus, ...writable } = budgetUpdates;
+    void _derivedBonus;
     const { error } = await client
       .from('monthly_budgets')
-      .update(budgetUpdates)
+      .update(writable)
       .eq('id', budgetUpdates.id);
     if (error) throw error;
   }
@@ -1700,6 +1794,188 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .delete()
       .eq('endpoint', endpoint);
     if (error) throw error;
+  }
+
+  // Bonus Log
+  public async getBonusEvents(): Promise<BonusEventsResult> {
+    if (this.bonusTableAvailable === false) return { available: false, events: [] };
+    const { data, error } = await this.getClient()
+      .from('bonus_events')
+      .select('*, bonus_goal_contributions(goal_id, amount)')
+      .order('received_on', { ascending: false });
+    if (error) {
+      if (isMissingRelationError(error)) {
+        this.bonusTableAvailable = false;
+        return { available: false, events: [] };
+      }
+      throw error;
+    }
+    this.bonusTableAvailable = true;
+    return {
+      available: true,
+      events: ((data || []) as Record<string, unknown>[]).map(mapBonusEventRow),
+    };
+  }
+
+  /**
+   * One member's bonuses received in a month, or null when the bonus log is
+   * unavailable. Never throws: the monthly budget must load without it.
+   */
+  private async getMonthBonusEvents(month: string, ownerId: string): Promise<BonusEvent[] | null> {
+    if (this.bonusTableAvailable === false || !ownerId) return null;
+    try {
+      const nextMonth = addMonths(month, 1);
+      const { data, error } = await this.getClient()
+        .from('bonus_events')
+        .select('*')
+        .eq('recipient_id', ownerId)
+        .gte('received_on', `${month}-01`)
+        .lt('received_on', `${nextMonth}-01`);
+      if (error) {
+        if (isMissingRelationError(error)) {
+          this.bonusTableAvailable = false;
+        } else {
+          console.warn('Failed to load bonus events for budget:', error);
+        }
+        return null;
+      }
+      this.bonusTableAvailable = true;
+      return ((data || []) as Record<string, unknown>[]).map(mapBonusEventRow);
+    } catch (err) {
+      console.warn('Failed to load bonus events for budget:', err);
+      return null;
+    }
+  }
+
+  private async getCurrentMemberId(): Promise<string | null> {
+    try {
+      const client = this.getClient();
+      const { data: authData } = await client.auth.getUser();
+      const userId = authData?.user?.id;
+      if (!userId) return null;
+      const { data } = await client
+        .from('household_members')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return (data?.id as string | undefined) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getBonusContributionGoalIds(eventId: string): Promise<string[]> {
+    try {
+      const { data } = await this.getClient()
+        .from('bonus_goal_contributions')
+        .select('goal_id')
+        .eq('bonus_event_id', eventId);
+      return ((data || []) as { goal_id: string }[]).map((r) => r.goal_id);
+    } catch {
+      return [];
+    }
+  }
+
+  /** Re-derives pacing status for goals whose saved amount an RPC changed. */
+  private async refreshGoalStatuses(goalIds: string[]): Promise<void> {
+    for (const id of new Set(goalIds)) {
+      try {
+        await this.updateGoal(id, {});
+      } catch (err) {
+        console.warn('Failed to refresh goal status after bonus change:', err);
+      }
+    }
+  }
+
+  private throwBonusError(error: unknown): never {
+    if (isMissingRelationError(error)) {
+      this.bonusTableAvailable = false;
+      throw new BonusLogUnavailableError();
+    }
+    throw error;
+  }
+
+  public async saveBonusEvent(input: SaveBonusEventInput): Promise<BonusEvent> {
+    const client = this.getClient();
+    const householdId = await this.getHouseholdId();
+    const previousGoalIds = input.id ? await this.getBonusContributionGoalIds(input.id) : [];
+    const createdBy = input.id ? null : await this.getCurrentMemberId();
+    const contributions = input.goal_contributions
+      .filter((c) => c.amount > 0)
+      .map((c) => ({ goal_id: c.goal_id, amount: Math.round(c.amount * 100) / 100 }));
+
+    const pEvent: Record<string, unknown> = {
+      household_id: householdId,
+      recipient_id: input.recipient_id,
+      type: input.type,
+      received_on: input.received_on,
+      gross: Math.round(input.gross * 100) / 100,
+      cpf: Math.round(input.cpf * 100) / 100,
+      note: input.note ?? '',
+      split: input.split,
+    };
+    if (input.id) pEvent.id = input.id;
+    if (createdBy) pEvent.created_by = createdBy;
+
+    const { data, error } = await client.rpc('save_bonus_event', {
+      p_event: pEvent,
+      p_contributions: contributions,
+    });
+    if (error) this.throwBonusError(error);
+    this.bonusTableAvailable = true;
+
+    await this.refreshGoalStatuses([...previousGoalIds, ...contributions.map((c) => c.goal_id)]);
+
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+    return mapBonusEventRow({
+      ...(row ?? { id: input.id ?? '', ...pEvent }),
+      bonus_goal_contributions: contributions,
+    });
+  }
+
+  public async deleteBonusEvent(id: string): Promise<void> {
+    const goalIds = await this.getBonusContributionGoalIds(id);
+    const { error } = await this.getClient().rpc('delete_bonus_event', { p_event_id: id });
+    if (error) this.throwBonusError(error);
+    await this.refreshGoalStatuses(goalIds);
+  }
+
+  public async getBonusSplitDefault(memberId: string): Promise<BonusSplitShare[]> {
+    if (this.bonusTableAvailable === false) return cloneDefaultSplit();
+    try {
+      const { data, error } = await this.getClient()
+        .from('bonus_split_defaults')
+        .select('split')
+        .eq('member_id', memberId)
+        .maybeSingle();
+      if (error) {
+        if (!isMissingRelationError(error)) {
+          console.warn('Failed to load bonus split default:', error);
+        }
+        return cloneDefaultSplit();
+      }
+      return data?.split ? normalizeBonusSplit(data.split) : cloneDefaultSplit();
+    } catch (err) {
+      console.warn('Failed to load bonus split default:', err);
+      return cloneDefaultSplit();
+    }
+  }
+
+  public async saveBonusSplitDefault(memberId: string, split: BonusSplitShare[]): Promise<void> {
+    const householdId = await this.getHouseholdId();
+    const clean = normalizeBonusSplit(split).map(({ key, pct }) => ({ key, pct }));
+    const { error } = await this.getClient()
+      .from('bonus_split_defaults')
+      .upsert(
+        {
+          household_id: householdId,
+          member_id: memberId,
+          split: clean,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'member_id' }
+      );
+    if (error) this.throwBonusError(error);
   }
 
   private async upsertNotificationLog(

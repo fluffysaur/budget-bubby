@@ -38,6 +38,10 @@ import type {
   NotificationLogEntry,
   NotificationLogRef,
   PushSubscriptionInput,
+  BonusEvent,
+  BonusEventsResult,
+  BonusSplitShare,
+  SaveBonusEventInput,
 } from '../types/finance';
 import { isSupabaseConfigured } from './supabaseClient';
 import { mockFinanceService } from './mockFinanceService';
@@ -115,6 +119,14 @@ export interface FinanceService {
   // Push Subscriptions (one per device)
   savePushSubscription(memberId: string, subscription: PushSubscriptionInput): Promise<void>;
   deletePushSubscription(endpoint: string): Promise<void>;
+  // Bonus Log
+  /** `available: false` when the bonus tables are missing (migration not applied). */
+  getBonusEvents(): Promise<BonusEventsResult>;
+  saveBonusEvent(input: SaveBonusEventInput): Promise<BonusEvent>;
+  deleteBonusEvent(id: string): Promise<void>;
+  /** The member's saved split, or the seeded default when none or unavailable. */
+  getBonusSplitDefault(memberId: string): Promise<BonusSplitShare[]>;
+  saveBonusSplitDefault(memberId: string, split: BonusSplitShare[]): Promise<void>;
 }
 
 export function isDemoModeActive(): boolean {
@@ -336,6 +348,22 @@ export const financeService: FinanceService = {
   savePushSubscription: (memberId, subscription) =>
     getActiveService().savePushSubscription(memberId, subscription),
   deletePushSubscription: (endpoint) => getActiveService().deletePushSubscription(endpoint),
+  // Bonus Log (online only: an atomic RPC plus goal changes is not safe to replay blind)
+  getBonusEvents: () => getActiveService().getBonusEvents(),
+  saveBonusEvent: async (input) => {
+    const res = await getActiveService().saveBonusEvent(input);
+    invalidateFinanceCache();
+    return res;
+  },
+  deleteBonusEvent: async (id) => {
+    await getActiveService().deleteBonusEvent(id);
+    invalidateFinanceCache();
+  },
+  getBonusSplitDefault: (memberId) => getActiveService().getBonusSplitDefault(memberId),
+  saveBonusSplitDefault: async (memberId, split) => {
+    await getActiveService().saveBonusSplitDefault(memberId, split);
+    invalidateFinanceCache();
+  },
 };
 
 export default financeService;

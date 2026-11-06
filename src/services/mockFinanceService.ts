@@ -41,6 +41,10 @@ import type {
   NotificationLogEntry,
   NotificationLogRef,
   PushSubscriptionInput,
+  BonusEvent,
+  BonusEventsResult,
+  BonusSplitShare,
+  SaveBonusEventInput,
 } from '../types/finance';
 import {
   mockSeedData,
@@ -69,6 +73,11 @@ import {
 } from '../lib/recurringItems';
 import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
+import {
+  cloneDefaultSplit,
+  normalizeBonusSplit,
+  summarizeBonusesForMonth,
+} from '../lib/bonusFormulas';
 import {
   getLocalNotificationLog,
   claimLocalNotificationSend,
@@ -134,6 +143,12 @@ function loadInitialData(): MockSeedDataset {
   }
   if (!dataset.notificationPreferences) {
     dataset.notificationPreferences = {};
+  }
+  if (!dataset.bonusEvents) {
+    dataset.bonusEvents = [];
+  }
+  if (!dataset.bonusSplitDefaults) {
+    dataset.bonusSplitDefaults = {};
   }
 
   return dataset;
@@ -495,8 +510,7 @@ class MockFinanceServiceImpl implements FinanceService {
       budget.insurance_deduction = insuranceMonthly;
       budget.after_deductions = Math.round(
         (budget.gross_salary -
-          budget.cpf_deduction +
-          (budget.bonus || 0) -
+          budget.cpf_deduction -
           budget.taxes_deduction -
           budget.insurance_deduction) *
           100
@@ -613,6 +627,30 @@ class MockFinanceServiceImpl implements FinanceService {
       budgetCategories = generated;
     }
 
+    // Bonus is income, not budget: it never feeds after_deductions or category caps.
+    const legacyBonus = Number(budget.bonus || 0);
+    const bonusSummary = summarizeBonusesForMonth(
+      this.state.bonusEvents ?? [],
+      month,
+      budget.owner_id,
+      legacyBonus
+    );
+    // Legacy rows that stored the bonus inside after_deductions: normalize unlocked months.
+    let effectiveAfter = budget.after_deductions;
+    if (!budget.is_locked && legacyBonus > 0) {
+      effectiveAfter = Math.round(
+        (budget.gross_salary -
+          budget.cpf_deduction -
+          (budget.taxes_deduction || 0) -
+          (budget.insurance_deduction || 0)) *
+          100
+      ) / 100;
+      budgetCategories = budgetCategories.map((bc) => ({
+        ...bc,
+        allocated_amount: Math.round(effectiveAfter * bc.percentage * 100) / 100,
+      }));
+    }
+
     // Recurring subscription/bill/other spend for this member and month, by category
     const recurringSpend = calculateRecurringCategorySpend(
       this.state.recurringItems,
@@ -658,7 +696,7 @@ class MockFinanceServiceImpl implements FinanceService {
         100
     ) / 100;
 
-    const disposablePool = budget.after_deductions;
+    const disposablePool = effectiveAfter;
     const totalRemaining = Math.round((disposablePool - totalSpent) * 100) / 100;
 
     // Spendable vs Allocation breakdown
@@ -677,7 +715,7 @@ class MockFinanceServiceImpl implements FinanceService {
     ) / 100;
 
     return {
-      budget: cloneDeep(budget),
+      budget: { ...cloneDeep(budget), after_deductions: effectiveAfter, bonus: bonusSummary.gross },
       categories: categoryDetails,
       disposablePool,
       totalSpent,
@@ -688,6 +726,7 @@ class MockFinanceServiceImpl implements FinanceService {
       allocationTotal,
       uncategorizedRecurringSpent,
       uncategorizedRecurringItems: cloneDeep(recurringSpend.uncategorized.items),
+      bonusSummary,
     };
   }
 
@@ -699,14 +738,16 @@ class MockFinanceServiceImpl implements FinanceService {
       throw new Error(`Monthly budget with id "${budgetUpdates.id}" not found`);
     }
 
-    Object.assign(budget, budgetUpdates);
+    // bonus is derived from bonus events at read time; never write it back.
+    const { bonus: _derivedBonus, ...writable } = budgetUpdates;
+    void _derivedBonus;
+    Object.assign(budget, writable);
 
-    // Recalculate after_deductions if not explicitly provided
+    // Recalculate after_deductions (salary take-home only) if not explicitly provided
     if (budgetUpdates.after_deductions === undefined) {
       budget.after_deductions = Math.round(
         (budget.gross_salary -
-          budget.cpf_deduction +
-          budget.bonus -
+          budget.cpf_deduction -
           budget.taxes_deduction -
           budget.insurance_deduction) * 100
       ) / 100;
@@ -1292,6 +1333,100 @@ class MockFinanceServiceImpl implements FinanceService {
   }
 
   // Push Subscriptions: no server in mock mode, so nothing to store
+  // Bonus Log
+  public async getBonusEvents(): Promise<BonusEventsResult> {
+    const events = [...(this.state.bonusEvents ?? [])].sort((a, b) =>
+      b.received_on.localeCompare(a.received_on)
+    );
+    return { available: true, events: cloneDeep(events) };
+  }
+
+  /** Moves goal saved amounts by `sign` × each contribution, clamped at 0, and re-derives status. */
+  private applyGoalContributions(
+    contributions: { goal_id: string; amount: number }[],
+    sign: 1 | -1
+  ): void {
+    for (const c of contributions) {
+      const goal = this.state.savingsGoals.find((g) => g.id === c.goal_id);
+      if (!goal) continue;
+      goal.saved_so_far = Math.max(
+        0,
+        Math.round((goal.saved_so_far + sign * c.amount) * 100) / 100
+      );
+      goal.status = calculateGoalPacing(
+        goal.target_amount,
+        goal.saved_so_far,
+        goal.target_date,
+        goal.monthly_contribution
+      ).status;
+    }
+  }
+
+  public async saveBonusEvent(input: SaveBonusEventInput): Promise<BonusEvent> {
+    const events = (this.state.bonusEvents ??= []);
+    const existingIdx = input.id ? events.findIndex((e) => e.id === input.id) : -1;
+    if (input.id && existingIdx < 0) {
+      throw new Error('Bonus not found');
+    }
+    const existing = existingIdx >= 0 ? events[existingIdx] : undefined;
+
+    // Reverse the old funding, then apply the new one
+    if (existing) this.applyGoalContributions(existing.goal_contributions, -1);
+    const contributions = input.goal_contributions
+      .filter((c) => c.amount > 0 && this.state.savingsGoals.some((g) => g.id === c.goal_id))
+      .map((c) => ({ goal_id: c.goal_id, amount: Math.round(c.amount * 100) / 100 }));
+    this.applyGoalContributions(contributions, 1);
+
+    const gross = Math.round(input.gross * 100) / 100;
+    const cpf = Math.round(input.cpf * 100) / 100;
+    const now = new Date().toISOString();
+    const event: BonusEvent = {
+      id: existing?.id ?? `bonus-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      household_id: this.state.household.id,
+      recipient_id: input.recipient_id,
+      type: input.type,
+      received_on: input.received_on,
+      gross,
+      cpf,
+      net: Math.round((gross - cpf) * 100) / 100,
+      note: input.note || null,
+      split: cloneDeep(input.split),
+      goal_contributions: contributions,
+      created_by: existing?.created_by ?? null,
+      created_at: existing?.created_at ?? now,
+      updated_at: now,
+    };
+    if (existing) {
+      events[existingIdx] = event;
+    } else {
+      events.push(event);
+    }
+    this.persist();
+    return cloneDeep(event);
+  }
+
+  public async deleteBonusEvent(id: string): Promise<void> {
+    const events = this.state.bonusEvents ?? [];
+    const existing = events.find((e) => e.id === id);
+    if (!existing) return;
+    this.applyGoalContributions(existing.goal_contributions, -1);
+    this.state.bonusEvents = events.filter((e) => e.id !== id);
+    this.persist();
+  }
+
+  public async getBonusSplitDefault(memberId: string): Promise<BonusSplitShare[]> {
+    const stored = this.state.bonusSplitDefaults?.[memberId];
+    return stored ? normalizeBonusSplit(stored) : cloneDefaultSplit();
+  }
+
+  public async saveBonusSplitDefault(memberId: string, split: BonusSplitShare[]): Promise<void> {
+    this.state.bonusSplitDefaults = {
+      ...(this.state.bonusSplitDefaults ?? {}),
+      [memberId]: normalizeBonusSplit(split).map(({ key, pct }) => ({ key, pct })),
+    };
+    this.persist();
+  }
+
   public async savePushSubscription(
     _memberId: string,
     _subscription: PushSubscriptionInput
