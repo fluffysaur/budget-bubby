@@ -138,6 +138,25 @@ describe("DelightHost", () => {
         expect(screen.queryByTestId("milestone-toast")).not.toBeInTheDocument();
     });
 
+    it("plays a couple-day moment once a day, without confetti", async () => {
+        writeBubbyStore({ seenStage: 5, seenAccessories: [] });
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(coupleDays(3));
+        await renderHost();
+
+        expect(await screen.findByText("Couple day! 🔥 3")).toBeInTheDocument();
+        expect(screen.queryByTestId("confetti-burst")).not.toBeInTheDocument();
+        expect(readBubbyStore().celebrated).toContain(`couple-day:${toSgtDateString()}`);
+    });
+
+    it("gives a 7-day couple streak full confetti", async () => {
+        writeBubbyStore({ seenStage: 5, seenAccessories: [] });
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(coupleDays(7));
+        await renderHost();
+
+        expect(await screen.findByText("7-day couple streak")).toBeInTheDocument();
+        expect(screen.getByTestId("confetti-burst")).toBeInTheDocument();
+    });
+
     it("soft-cues each inbox triage without a toast", async () => {
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
         await renderHost();

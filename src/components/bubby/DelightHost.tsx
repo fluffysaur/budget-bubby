@@ -27,11 +27,13 @@ interface QueuedToast extends MilestoneDetail {
 }
 
 const MAX_QUEUED_TOASTS = 3;
+/** Couple streaks that get full confetti. */
+const COUPLE_STREAK_MILESTONES = [7, 14, 30, 50, 100];
 
 export function DelightHost() {
     useActivityCheckins();
     const bubby = useBubby();
-    const { isReady, state, equipped, unlocked } = bubby;
+    const { isReady, state, equipped, unlocked, today, members } = bubby;
 
     const [toasts, setToasts] = useState<QueuedToast[]>([]);
     const [burstKey, setBurstKey] = useState(0);
@@ -93,6 +95,19 @@ export function DelightHost() {
             updateBubbyStore({ seenAccessories: Array.from(new Set([...seen, ...fresh])) });
         }
     }, [isReady, state.stage, unlocked]);
+
+    // Couple day: when the second partner's check-in lands, once per device per day
+    const coupleToday = state.isCoupleDayToday;
+    const coupleStreak = state.coupleStreak;
+    useEffect(() => {
+        if (!isReady || !coupleToday || members.length < 2) return;
+        const isStreakMilestone = COUPLE_STREAK_MILESTONES.includes(coupleStreak);
+        feedback.milestone(isStreakMilestone ? "couple-streak" : "couple-day", {
+            dedupeKey: `couple-day:${today}`,
+            title: `Couple day! 🔥 ${coupleStreak}`,
+            subtitle: isStreakMilestone ? `${coupleStreak}-day couple streak` : "You both logged today",
+        });
+    }, [isReady, coupleToday, coupleStreak, today, members.length]);
 
     // Inbox triage: a soft pop and a nod per item, never a toast
     useEffect(() => {
