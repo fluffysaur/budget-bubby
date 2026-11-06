@@ -14,7 +14,8 @@ async function freshInbox(page: Page) {
 async function drag(page: Page, dx: number) {
   const box = await page.getByTestId('inbox-card').boundingBox();
   if (!box) throw new Error('No inbox card');
-  const y = box.y + box.height / 2;
+  // Start near the top, over the merchant name: the card ignores drags that start on its buttons
+  const y = box.y + 28;
   const x = box.x + box.width / 2;
   await page.mouse.move(x, y);
   await page.mouse.down();
