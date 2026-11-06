@@ -73,8 +73,9 @@ export function ExpenseSuccessCelebration({
     // Global window event listener to catch 'expenseAdded'
     useEffect(() => {
         const handleGlobalExpenseAdded = (e: Event) => {
-            const customEvent = e as CustomEvent<Expense>;
-            if (customEvent.detail) {
+            const customEvent = e as CustomEvent<Expense & { source?: string }>;
+            // Inbox confirms skip the per-save toast so triage stays fast
+            if (customEvent.detail && customEvent.detail.source !== "inbox") {
                 triggerCelebration(customEvent.detail);
             }
         };

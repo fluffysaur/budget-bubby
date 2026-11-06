@@ -32,7 +32,12 @@ import { useCategoriesQuery } from './hooks/useFinanceQueries';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
-import { ExpenseFormModal } from './components/expenses/ExpenseFormModal';
+import {
+  ExpenseFormModal,
+  type ExpenseFormInitialValues,
+} from './components/expenses/ExpenseFormModal';
+import { useQuickAddDeepLink } from './hooks/useQuickAddDeepLink';
+import { useInboxBadge } from './hooks/useInboxBadge';
 import { ExpenseSuccessCelebration } from './components/expenses/ExpenseSuccessCelebration';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
 import { PWAUpdateToast } from './components/pwa/PWAUpdateToast';
@@ -45,6 +50,7 @@ const SpendPage = lazy(() => import('./pages/SpendPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 const PlanPage = lazy(() => import('./pages/PlanPage'));
 const FastLogPage = lazy(() => import('./pages/FastLogPage'));
+const InboxPage = lazy(() => import('./pages/InboxPage'));
 
 /**
  * Branded Skeleton Loader displayed during route transition / lazy bundle resolution
@@ -90,6 +96,9 @@ function AppLayoutInner() {
   const { refreshData, members } = useHousehold();
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
+  const [quickAddValues, setQuickAddValues] = useState<
+    ExpenseFormInitialValues | undefined
+  >(undefined);
   const { data: categoriesData } = useCategoriesQuery();
   const categories = categoriesData || [];
 
@@ -98,7 +107,7 @@ function AppLayoutInner() {
     const segment = location.pathname.replace(/^\//, '').split('/')[0];
     if (!segment || segment === 'dashboard') return 'dashboard';
     if (['goals', 'loans', 'recurring'].includes(segment)) return 'plan';
-    if (['spend', 'expenses', 'budget'].includes(segment)) return 'spend';
+    if (['spend', 'expenses', 'budget', 'inbox'].includes(segment)) return 'spend';
     return segment;
   }, [location.pathname]);
 
@@ -118,12 +127,28 @@ function AppLayoutInner() {
   );
 
   const handleOpenQuickAdd = useCallback(() => {
+    setQuickAddValues(undefined);
     setIsQuickAddOpen(true);
   }, []);
 
+  const openQuickAddWithValues = useCallback(
+    (initialValues?: ExpenseFormInitialValues) => {
+      setQuickAddValues(initialValues);
+      setIsQuickAddOpen(true);
+    },
+    []
+  );
+
   const handleCloseQuickAdd = useCallback(() => {
     setIsQuickAddOpen(false);
+    setQuickAddValues(undefined);
   }, []);
+
+  // /expenses?action=new&amount=…&merchant=… (PWA shortcut, capture fallback)
+  useQuickAddDeepLink(openQuickAddWithValues);
+
+  // Inbox count for the Spend badges and the app icon badge
+  const inboxCount = useInboxBadge();
 
   const handleExpenseAdded = useCallback(
     async (_newExpense: Expense) => {
@@ -148,6 +173,7 @@ function AppLayoutInner() {
       if (e.key === 'c' || e.key === 'C') {
         if (!e.metaKey && !e.ctrlKey && !e.altKey) {
           e.preventDefault();
+          setQuickAddValues(undefined);
           setIsQuickAddOpen((prev) => !prev);
         }
       }
@@ -159,7 +185,11 @@ function AppLayoutInner() {
 
   // Allow other pages to open Quick Add via custom event
   useEffect(() => {
-    const handleGlobalOpen = () => setIsQuickAddOpen(true);
+    const handleGlobalOpen = (e: Event) => {
+      const detail = (e as CustomEvent<ExpenseFormInitialValues | undefined>).detail;
+      setQuickAddValues(detail && typeof detail === 'object' ? detail : undefined);
+      setIsQuickAddOpen(true);
+    };
     window.addEventListener('openQuickAdd', handleGlobalOpen);
     return () => window.removeEventListener('openQuickAdd', handleGlobalOpen);
   }, []);
@@ -167,7 +197,11 @@ function AppLayoutInner() {
   return (
     <div className="flex h-screen bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
       {/* Desktop Navigation Sidebar */}
-      <DesktopSidebar activeTab={activeTab} onSelectTab={handleSelectTab} />
+      <DesktopSidebar
+        activeTab={activeTab}
+        onSelectTab={handleSelectTab}
+        spendBadgeCount={inboxCount}
+      />
 
       {/* Main Application Column */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
@@ -195,6 +229,7 @@ function AppLayoutInner() {
                 <Route path="/budget" element={<SpendPage initialTab="budget" onNavigateTab={handleSelectTab} />} />
                 <Route path="/expenses" element={<SpendPage initialTab="expenses" onNavigateTab={handleSelectTab} />} />
                 <Route path="/fast-log" element={<FastLogPage onOpenQuickAdd={handleOpenQuickAdd} />} />
+                <Route path="/inbox" element={<InboxPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
                 <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
@@ -212,12 +247,14 @@ function AppLayoutInner() {
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         onQuickAdd={handleOpenQuickAdd}
+        spendBadgeCount={inboxCount}
       />
 
       {/* Global Quick Add Expense Modal */}
       <ExpenseFormModal
         isOpen={isQuickAddOpen}
         onClose={handleCloseQuickAdd}
+        initialValues={quickAddValues}
         onExpenseAdded={handleExpenseAdded}
         categories={categories}
         members={members}

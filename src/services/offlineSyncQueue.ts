@@ -16,6 +16,7 @@ import type {
     UpdateExpenseInput,
     DailyCheckin,
     CheckinType,
+    InboxResolveStatus,
 } from "../types/finance";
 import { isSupabaseConfigured } from "./supabaseClient";
 import { mockFinanceService } from "./mockFinanceService";
@@ -28,7 +29,9 @@ export type MutationType =
     | "updateExpense"
     | "deleteExpense"
     | "bulkAddExpenses"
-    | "recordDailyCheckin";
+    | "recordDailyCheckin"
+    | "confirmInboxItem"
+    | "resolveInboxItem";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface QueuedMutation<T = any> {
@@ -356,6 +359,52 @@ export async function recordDailyCheckin(
     return optimistic;
 }
 
+/** Fetch failures, as opposed to the server rejecting the request. */
+function isNetworkError(err: unknown): boolean {
+    if (err instanceof TypeError) return true;
+    const message = err instanceof Error ? err.message : String(err);
+    return /failed to fetch|network|load failed|offline/i.test(message);
+}
+
+/** Expense id returned while an inbox confirm waits in the outbox. */
+export const QUEUED_INBOX_EXPENSE_PREFIX = "queued-inbox-";
+
+/**
+ * Inbox confirm. Queued only when offline or the request never reached the
+ * server; replay is safe because the RPC returns the existing expense id
+ * for an already-confirmed item.
+ */
+export async function confirmInboxItem(
+    itemId: string,
+    expense: CreateExpenseInput,
+): Promise<string> {
+    if (isOnline()) {
+        try {
+            return await getBackendService().confirmInboxItem(itemId, expense);
+        } catch (err) {
+            if (!isNetworkError(err)) throw err;
+            console.warn("Network error on confirmInboxItem, queueing offline:", err);
+        }
+    }
+    enqueueMutation("confirmInboxItem", { itemId, expense });
+    return `${QUEUED_INBOX_EXPENSE_PREFIX}${itemId}`;
+}
+
+export async function resolveInboxItem(
+    itemId: string,
+    status: InboxResolveStatus,
+): Promise<void> {
+    if (isOnline()) {
+        try {
+            return await getBackendService().resolveInboxItem(itemId, status);
+        } catch (err) {
+            if (!isNetworkError(err)) throw err;
+            console.warn("Network error on resolveInboxItem, queueing offline:", err);
+        }
+    }
+    enqueueMutation("resolveInboxItem", { itemId, status });
+}
+
 // ---------------------------------------------------------------------------
 // Replay & Flush Engine
 // ---------------------------------------------------------------------------
@@ -434,6 +483,17 @@ export async function flushOutbox(
                     }
                     break;
                 }
+                case "confirmInboxItem": {
+                    // Not applied optimistically, so replay on any backend
+                    const { itemId, expense } = payload;
+                    await target.confirmInboxItem(itemId, expense);
+                    break;
+                }
+                case "resolveInboxItem": {
+                    const { itemId, status } = payload;
+                    await target.resolveInboxItem(itemId, status);
+                    break;
+                }
             }
 
             syncedIds.add(mutation.id);
@@ -496,6 +556,8 @@ export const offlineSyncQueue = {
     deleteExpense,
     bulkAddExpenses,
     recordDailyCheckin,
+    confirmInboxItem,
+    resolveInboxItem,
 };
 
 export default offlineSyncQueue;

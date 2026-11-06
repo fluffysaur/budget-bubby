@@ -39,6 +39,7 @@ import {
 import { getDefaultNotificationPreferences } from '../src/data/mockSeedData';
 import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
 import { getTodayDateString, getCurrentMonth } from '../src/lib/dateUtils';
+import { mockFinanceService } from '../src/services/mockFinanceService';
 import type {
   StreakSummary,
   AccountSnapshot,
@@ -70,6 +71,8 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
     localStorage.clear();
     sessionStorage.clear();
     vi.restoreAllMocks();
+    // Empty demo inbox: a pending inbox replaces the daily check-in nudge
+    mockFinanceService.inbox.setItems([]);
   });
 
   afterEach(() => {
@@ -1135,7 +1138,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
 
       // Timing fields
       expect(screen.getByTestId('input-checkin-time')).toHaveValue('18:00');
-      expect(screen.getByText('Daily 6:00 PM reminder to log spend')).toBeInTheDocument();
+      expect(screen.getByText('Sort Inbox or log by 6:00 PM')).toBeInTheDocument();
       await act(async () => {
         fireEvent.change(screen.getByTestId('input-checkin-time'), { target: { value: '20:30' } });
       });
@@ -1143,7 +1146,7 @@ describe('Daily Check-in Streak & Notifications Engine', () => {
         'mem-00000000-0011',
         expect.objectContaining({ checkin_time: '20:30' })
       );
-      expect(screen.getByText('Daily 8:30 PM reminder to log spend')).toBeInTheDocument();
+      expect(screen.getByText('Sort Inbox or log by 8:30 PM')).toBeInTheDocument();
 
       await act(async () => {
         fireEvent.change(screen.getByTestId('input-quiet-start'), { target: { value: '23:00' } });

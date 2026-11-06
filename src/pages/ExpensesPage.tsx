@@ -19,6 +19,7 @@ import {
   BarChart3,
   PiggyBank,
 } from 'lucide-react';
+import { InboxShortcutButton } from '../components/inbox/InboxShortcutButton';
 import { useHousehold } from '../context/HouseholdContext';
 import { PageHeader, Button, StatCard, CollapsibleSection, ConfirmModal } from '../components/ui';
 import {
@@ -318,6 +319,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
           title="Expenses"
           actions={
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <InboxShortcutButton />
               <Button
                 variant="secondary"
                 aria-label="+ Bulk Add"
@@ -341,6 +343,7 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
         />
       ) : (
         <div className="flex items-center justify-end gap-2">
+          <InboxShortcutButton />
           <Button
             variant="secondary"
             size="sm"

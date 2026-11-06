@@ -13,8 +13,14 @@ const MISSING_RELATION_CODES = new Set([
 /** True when the error says a table or RPC does not exist (migration not applied). */
 export function isMissingRelationError(err: unknown): boolean {
     if (!err || typeof err !== "object") return false;
-    const code = (err as { code?: unknown }).code;
-    return typeof code === "string" && MISSING_RELATION_CODES.has(code);
+    const { code, message } = err as { code?: unknown; message?: unknown };
+    if (typeof code === "string" && MISSING_RELATION_CODES.has(code)) {
+        return true;
+    }
+    return (
+        typeof message === "string" &&
+        /could not find the (table|function)|relation .* does not exist/i.test(message)
+    );
 }
 
 /** Thrown by bonus log mutations when the bonus tables or RPCs are missing. */

@@ -35,6 +35,7 @@ import type {
     MonthlyBudgetDetail,
     RecurringItem,
     SavingsGoal,
+    InboxSummary,
 } from "../../types/finance";
 
 export type ReminderType =
@@ -48,7 +49,8 @@ export type ReminderType =
     | "budget_limit"
     | "recurring_bill_due"
     | "goal_pacing"
-    | "monthly_budget_review";
+    | "monthly_budget_review"
+    | "inbox_pending";
 
 export type ReminderActionType =
     | "check_in"
@@ -58,7 +60,8 @@ export type ReminderActionType =
     | "view_settlement"
     | "view_budget"
     | "view_recurring"
-    | "view_goals";
+    | "view_goals"
+    | "view_inbox";
 
 export interface AppReminder {
     id: string;
@@ -156,8 +159,11 @@ export function checkDailyCheckinReminder(
     memberId?: string,
     todayStr?: string,
     checkinTime: string = DEFAULT_CHECKIN_TIME,
+    inboxPendingCount = 0,
 ): AppReminder | null {
     if (streak.checkedInToday) return null;
+    // The inbox nudge replaces it: at most one logging nudge a day
+    if (inboxPendingCount > 0) return null;
     if (!isPastCheckinTime(currentHour, checkinTime)) return null;
 
     const today = todayStr || sgToday();
@@ -171,6 +177,43 @@ export function checkDailyCheckinReminder(
         severity: "warning",
         actionLabel: "Add Expense",
         actionType: "check_in",
+        createdAt: new Date().toISOString(),
+    };
+}
+
+/** Oldest pending item older than this makes the inbox nudge a warning. */
+export const INBOX_STALE_DAYS = 3;
+
+/**
+ * 1b. Inbox has captured purchases to sort, from the check-in time. Shows
+ * totals only (no merchant names) for lock-screen privacy.
+ */
+export function checkInboxReminder(
+    summary: InboxSummary | null | undefined,
+    currentHour?: number,
+    memberId?: string,
+    todayStr?: string,
+    checkinTime: string = DEFAULT_CHECKIN_TIME,
+    referenceDate?: Date,
+): AppReminder | null {
+    if (!summary?.available || summary.pendingCount <= 0) return null;
+    if (!isPastCheckinTime(currentHour, checkinTime)) return null;
+
+    const today = todayStr || sgToday();
+    const count = summary.pendingCount;
+    const oldestMs = summary.oldestCapturedAt ? new Date(summary.oldestCapturedAt).getTime() : NaN;
+    const nowMs = (referenceDate ?? new Date()).getTime();
+    const isStale = !Number.isNaN(oldestMs) && nowMs - oldestMs > INBOX_STALE_DAYS * DAY_MS;
+
+    return {
+        id: `reminder-inbox-${memberPrefix(memberId)}${today}`,
+        type: "inbox_pending",
+        title: count === 1 ? "1 Purchase to Sort" : `${count} Purchases to Sort`,
+        message: `${formatSGD(summary.pendingTotalSgd)} waiting.`,
+        severity: isStale ? "warning" : "info",
+        actionLabel: "Sort Now",
+        actionType: "view_inbox",
+        data: { pendingCount: count },
         createdAt: new Date().toISOString(),
     };
 }
