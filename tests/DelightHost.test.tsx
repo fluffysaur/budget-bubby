@@ -169,4 +169,33 @@ describe("DelightHost", () => {
         expect(reactions).toEqual(["nod"]);
         expect(screen.queryByTestId("milestone-toast")).not.toBeInTheDocument();
     });
+
+    it("celebrates inbox zero once when triage empties the inbox", async () => {
+        writeBubbyStore({ seenStage: 5, seenAccessories: [] });
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
+        vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue({} as DailyCheckin);
+        await renderHost();
+
+        act(() => {
+            emitAppEvent("inbox:item-discarded", { itemId: "i1", reason: "duplicate", remaining: 1 });
+            emitAppEvent("inbox:item-discarded", { itemId: "i2", reason: "discarded", remaining: 0 });
+            emitAppEvent("inbox:cleared", { clearedCount: 2, durationMs: 4000, date: toSgtDateString() });
+        });
+
+        expect(screen.getByText("Inbox zero! 🎉")).toBeInTheDocument();
+        expect(screen.getByText("2 sorted")).toBeInTheDocument();
+        expect(screen.getAllByTestId("confetti-burst")).toHaveLength(1);
+        expect(readBubbyStore().inboxZeroDays).toEqual([toSgtDateString()]);
+    });
+
+    it("does nothing when the inbox is already empty on load", async () => {
+        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
+        await renderHost();
+        act(() => {
+            emitAppEvent("inbox:items-arrived", { newCount: 0, pendingCount: 0 });
+            emitAppEvent("inbox:cleared", { clearedCount: 0, durationMs: 0, date: toSgtDateString() });
+        });
+        expect(screen.queryByText("Inbox zero! 🎉")).not.toBeInTheDocument();
+        expect(screen.queryByTestId("confetti-burst")).not.toBeInTheDocument();
+    });
 });

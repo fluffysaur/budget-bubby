@@ -14,7 +14,8 @@ import { useActivityCheckins } from "../../hooks/useActivityCheckins";
 import { emitAppEvent, onAppEvent, type MilestoneDetail } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
 import { setInboxPending } from "../../lib/delight/inboxState";
-import { readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
+import { addInboxZeroDay, readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
+import { toSgtDateString } from "../../lib/bubby/dates";
 import { STAGES, HATCHLING_STAGE } from "../../lib/bubby/growth";
 import { getAccessory } from "../../lib/bubby/accessories";
 import { ConfettiBurst } from "../ui/ConfettiBurst";
@@ -109,17 +110,43 @@ export function DelightHost() {
         });
     }, [isReady, coupleToday, coupleStreak, today, members.length]);
 
-    // Inbox triage: a soft pop and a nod per item, never a toast
+    // Inbox triage: a soft pop and a nod per item, never a toast.
+    // Inbox zero: only when pending goes from >0 to 0 because of triage this
+    // session (never on load), once per member per day.
+    const meId = bubby.me?.id ?? "me";
+    const meIdRef = useRef(meId);
     useEffect(() => {
+        meIdRef.current = meId;
+    }, [meId]);
+
+    useEffect(() => {
+        let triaged = 0;
+        const celebrateInboxZero = (clearedCount: number, date: string) => {
+            if (clearedCount <= 0) return;
+            const result = feedback.milestone("inbox-zero", {
+                dedupeKey: `inbox-zero:${date}:${meIdRef.current}`,
+                title: "Inbox zero! 🎉",
+                subtitle: `${clearedCount} sorted`,
+            });
+            if (result !== "duplicate") {
+                addInboxZeroDay(date);
+                emitAppEvent("bubby:prefs-changed", {});
+            }
+            triaged = 0;
+        };
+        const onTriaged = (remaining: number) => {
+            triaged += 1;
+            setInboxPending(remaining);
+            feedback.routine("triage");
+            if (remaining === 0) celebrateInboxZero(triaged, toSgtDateString());
+        };
         const offs = [
             onAppEvent("inbox:items-arrived", (d) => setInboxPending(d.pendingCount)),
-            onAppEvent("inbox:item-confirmed", (d) => {
-                setInboxPending(d.remaining);
-                feedback.routine("triage");
-            }),
-            onAppEvent("inbox:item-discarded", (d) => {
-                setInboxPending(d.remaining);
-                feedback.routine("triage");
+            onAppEvent("inbox:item-confirmed", (d) => onTriaged(d.remaining)),
+            onAppEvent("inbox:item-discarded", (d) => onTriaged(d.remaining)),
+            onAppEvent("inbox:cleared", (d) => {
+                setInboxPending(0);
+                celebrateInboxZero(d.clearedCount, d.date || toSgtDateString());
             }),
         ];
         return () => offs.forEach((off) => off());
