@@ -44,8 +44,9 @@ import { mockFinanceService } from './mockFinanceService';
 import { supabaseFinanceService } from './supabaseFinanceService';
 import { offlineSyncQueue } from './offlineSyncQueue';
 import { queryClient } from '../lib/queryClient';
+import type { InboxService } from './inbox/inboxService';
 
-export interface FinanceService {
+export interface FinanceService extends InboxService {
   getHouseholdOverview(): Promise<HouseholdOverview>;
   getAccounts(perspective: Perspective): Promise<Account[]>;
   createAccount(input: CreateAccountInput): Promise<Account>;
@@ -132,6 +133,14 @@ function getActiveService(): FinanceService {
     return mockFinanceService;
   }
   return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
+}
+
+function invalidateInboxCache() {
+  try {
+    queryClient.invalidateQueries({ queryKey: ['finance', 'inbox'] });
+  } catch {
+    // In restricted test environments without QueryClient mounted, fail silently
+  }
 }
 
 function invalidateFinanceCache() {
@@ -336,6 +345,47 @@ export const financeService: FinanceService = {
   savePushSubscription: (memberId, subscription) =>
     getActiveService().savePushSubscription(memberId, subscription),
   deletePushSubscription: (endpoint) => getActiveService().deletePushSubscription(endpoint),
+  // Capture Inbox
+  getInboxItems: (status) => getActiveService().getInboxItems(status),
+  getInboxSummary: (memberId) => getActiveService().getInboxSummary(memberId),
+  confirmInboxItem: async (itemId, expense) => {
+    let res: string;
+    if (offlineSyncQueue.isReplaying()) {
+      res = await getActiveService().confirmInboxItem(itemId, expense);
+    } else {
+      res = await offlineSyncQueue.confirmInboxItem(itemId, expense);
+    }
+    invalidateFinanceCache();
+    return res;
+  },
+  resolveInboxItem: async (itemId, status) => {
+    if (offlineSyncQueue.isReplaying()) {
+      await getActiveService().resolveInboxItem(itemId, status);
+    } else {
+      await offlineSyncQueue.resolveInboxItem(itemId, status);
+    }
+    invalidateInboxCache();
+  },
+  getMerchantRules: () => getActiveService().getMerchantRules(),
+  upsertMerchantRule: async (rule) => {
+    const res = await getActiveService().upsertMerchantRule(rule);
+    invalidateInboxCache();
+    return res;
+  },
+  deleteMerchantRule: async (id) => {
+    await getActiveService().deleteMerchantRule(id);
+    invalidateInboxCache();
+  },
+  listCaptureTokens: (memberId) => getActiveService().listCaptureTokens(memberId),
+  createCaptureToken: async (label, memberId) => {
+    const res = await getActiveService().createCaptureToken(label, memberId);
+    invalidateInboxCache();
+    return res;
+  },
+  revokeCaptureToken: async (id) => {
+    await getActiveService().revokeCaptureToken(id);
+    invalidateInboxCache();
+  },
 };
 
 export default financeService;

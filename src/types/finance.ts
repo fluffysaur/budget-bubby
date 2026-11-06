@@ -575,3 +575,85 @@ export interface NotificationLogRef {
     key: string;
     type: string;
 }
+
+// ==========================================
+// Capture Inbox
+// ==========================================
+
+export type InboxItemStatus = 'pending' | 'confirmed' | 'discarded' | 'duplicate';
+
+/** A captured purchase waiting to be sorted. Never counted as spend. */
+export interface InboxItem {
+  id: string;
+  household_id: string;
+  /** Payer: the member whose token captured it. */
+  member_id: string;
+  source?: string;
+  merchant: string;
+  merchant_key: string;
+  /** In `currency` (the original currency). */
+  amount: number;
+  currency: string;
+  raw_amount?: string | null;
+  card_name?: string | null;
+  captured_at: string;
+  status: InboxItemStatus;
+  suggested_category_id?: string | null;
+  likely_duplicate_of?: string | null;
+  expense_id?: string | null;
+  resolved_at?: string | null;
+  created_at?: string;
+}
+
+export interface InboxItemsResult {
+  /** False before the capture inbox migration is applied. */
+  available: boolean;
+  items: InboxItem[];
+}
+
+export interface InboxSummary {
+  /** False before the capture inbox migration is applied. */
+  available: boolean;
+  pendingCount: number;
+  /** Approximate, from cached FX rates. */
+  pendingTotalSgd: number;
+  oldestCapturedAt: string | null;
+}
+
+export interface CaptureToken {
+  id: string;
+  member_id: string;
+  label: string;
+  token_hint: string;
+  created_at: string;
+  last_used_at?: string | null;
+  revoked_at?: string | null;
+}
+
+export interface CaptureTokensResult {
+  available: boolean;
+  tokens: CaptureToken[];
+}
+
+export type MerchantRuleAction = 'categorise' | 'ignore';
+
+export interface MerchantRule {
+  id: string;
+  merchant_key: string;
+  action: MerchantRuleAction;
+  category_id?: string | null;
+  is_shared?: boolean | null;
+  hit_count: number;
+  updated_at?: string;
+}
+
+export interface UpsertMerchantRuleInput {
+  merchant_key: string;
+  action?: MerchantRuleAction;
+  category_id?: string | null;
+  is_shared?: boolean | null;
+  /** Adds to the stored count. */
+  hit_increment?: number;
+}
+
+export type InboxResolveStatus = 'discarded' | 'duplicate' | 'pending';

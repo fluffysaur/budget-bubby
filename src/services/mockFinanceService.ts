@@ -69,6 +69,7 @@ import {
 } from '../lib/recurringItems';
 import { getTodayDateString, formatISODate, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
+import { MockInboxStore } from './inbox/mockInboxStore';
 import {
   getLocalNotificationLog,
   claimLocalNotificationSend,
@@ -142,6 +143,27 @@ function loadInitialData(): MockSeedDataset {
 class MockFinanceServiceImpl implements FinanceService {
   private state: MockSeedDataset = loadInitialData();
 
+  // Capture Inbox (demo data in ./inbox/mockInboxStore)
+  public readonly inbox = new MockInboxStore((input) => this.addExpense(input));
+  getInboxItems: FinanceService['getInboxItems'] = (status) => this.inbox.getInboxItems(status);
+  getInboxSummary: FinanceService['getInboxSummary'] = (memberId) =>
+    this.inbox.getInboxSummary(memberId);
+  confirmInboxItem: FinanceService['confirmInboxItem'] = (itemId, expense) =>
+    this.inbox.confirmInboxItem(itemId, expense);
+  resolveInboxItem: FinanceService['resolveInboxItem'] = (itemId, status) =>
+    this.inbox.resolveInboxItem(itemId, status);
+  getMerchantRules: FinanceService['getMerchantRules'] = () => this.inbox.getMerchantRules();
+  upsertMerchantRule: FinanceService['upsertMerchantRule'] = (rule) =>
+    this.inbox.upsertMerchantRule(rule);
+  deleteMerchantRule: FinanceService['deleteMerchantRule'] = (id) =>
+    this.inbox.deleteMerchantRule(id);
+  listCaptureTokens: FinanceService['listCaptureTokens'] = (memberId) =>
+    this.inbox.listCaptureTokens(memberId);
+  createCaptureToken: FinanceService['createCaptureToken'] = (label, memberId) =>
+    this.inbox.createCaptureToken(label, memberId);
+  revokeCaptureToken: FinanceService['revokeCaptureToken'] = (id) =>
+    this.inbox.revokeCaptureToken(id);
+
   private persist() {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -161,6 +183,7 @@ class MockFinanceServiceImpl implements FinanceService {
     }
     this.state = loadInitialData();
     this.persist();
+    this.inbox.reset();
   }
 
   public resetState(): void {

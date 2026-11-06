@@ -68,6 +68,7 @@ import {
   dismissLocalNotification,
 } from './localNotificationLog';
 import type { FinanceService } from './financeService';
+import { SupabaseInboxStore } from './inbox/supabaseInboxStore';
 
 export const PRESET_DEFAULT_CATEGORIES = [
   { name: 'Food', color: '#F59E0B', icon: 'utensils', group: 'spendable' as const },
@@ -115,7 +116,31 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   constructor(client?: SupabaseClient, options: { localFallback?: boolean } = {}) {
     this.clientOverride = client;
     this.localFallback = options.localFallback ?? true;
+    this.inbox = new SupabaseInboxStore(
+      () => this.getClient(),
+      () => this.getHouseholdId()
+    );
   }
+
+  // Capture Inbox (implemented in ./inbox/supabaseInboxStore)
+  private readonly inbox: SupabaseInboxStore;
+  getInboxItems: FinanceService['getInboxItems'] = (status) => this.inbox.getInboxItems(status);
+  getInboxSummary: FinanceService['getInboxSummary'] = (memberId) =>
+    this.inbox.getInboxSummary(memberId);
+  confirmInboxItem: FinanceService['confirmInboxItem'] = (itemId, expense) =>
+    this.inbox.confirmInboxItem(itemId, expense);
+  resolveInboxItem: FinanceService['resolveInboxItem'] = (itemId, status) =>
+    this.inbox.resolveInboxItem(itemId, status);
+  getMerchantRules: FinanceService['getMerchantRules'] = () => this.inbox.getMerchantRules();
+  upsertMerchantRule: FinanceService['upsertMerchantRule'] = (rule) =>
+    this.inbox.upsertMerchantRule(rule);
+  deleteMerchantRule: FinanceService['deleteMerchantRule'] = (id) =>
+    this.inbox.deleteMerchantRule(id);
+  listCaptureTokens: FinanceService['listCaptureTokens'] = () => this.inbox.listCaptureTokens();
+  createCaptureToken: FinanceService['createCaptureToken'] = (label, memberId) =>
+    this.inbox.createCaptureToken(label, memberId);
+  revokeCaptureToken: FinanceService['revokeCaptureToken'] = (id) =>
+    this.inbox.revokeCaptureToken(id);
 
   private getClient(): SupabaseClient {
     const client = this.clientOverride ?? supabase;
