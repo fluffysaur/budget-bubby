@@ -151,7 +151,7 @@ export function TruncatedText({
                         role="tooltip"
                         onClick={(e) => e.stopPropagation()}
                         {...getFloatingProps()}
-                        className={`z-9999 w-max max-w-65 sm:max-w-xs px-2.5 py-1.5 text-xs font-bold leading-snug rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) wrap-break-word whitespace-normal pointer-events-auto select-text font-display transition-opacity duration-150 ${tooltipClassName}`}
+                        className={`z-9999 w-max max-w-65 sm:max-w-xs px-2.5 py-1.5 text-xs font-bold leading-snug rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm wrap-break-word whitespace-normal pointer-events-auto select-text font-display transition-opacity duration-150 ${tooltipClassName}`}
                     >
                         {text}
                     </div>

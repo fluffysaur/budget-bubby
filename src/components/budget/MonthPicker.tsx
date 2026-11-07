@@ -1,7 +1,7 @@
 /**
  * MonthPicker Component
  * Monthly navigation component ('YYYY-MM') with:
- * - Tactile Warm Oat aesthetic with shadow-(--shadow-cute-sm) and border-2
+ * - Tactile Warm Oat aesthetic with shadow-cute-sm and border-2
  * - Previous / Next month step controls
  * - Interactive month display trigger opening a custom month-selection popover
  * - Year steppers and 12-month quick select grid
@@ -120,7 +120,7 @@ export function MonthPicker({
 
     return (
         <div
-            className={`inline-flex items-center justify-between gap-1.5 sm:gap-2 p-1.5 bg-(--bg-card) border-2 border-(--border-ink) rounded-2xl shadow-(--shadow-cute-sm) transition-colors w-full sm:w-auto ${className}`}
+            className={`inline-flex items-center justify-between gap-1.5 sm:gap-2 p-1.5 bg-(--bg-card) border-2 border-(--border-ink) rounded-2xl shadow-cute-sm transition-colors w-full sm:w-auto ${className}`}
         >
             {/* Previous Month Button */}
             <button
@@ -174,7 +174,7 @@ export function MonthPicker({
                             opacity: isPositioned ? 1 : 0,
                         }}
                         {...getFloatingProps()}
-                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-(--shadow-cute) select-none transition-opacity duration-150 animate-in fade-in"
+                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute select-none transition-opacity duration-150 animate-in fade-in"
                     >
                         {/* Popover Header: Year Stepper & Close Button */}
                         <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-(--border-subtle)">
@@ -229,7 +229,7 @@ export function MonthPicker({
                                         aria-label={`Select ${monthName} ${navYear}`}
                                         className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                             isSelected
-                                                ? "bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                 : isTodayMonth
                                                   ? "bg-(--pastel-mint) text-(--text-ink) border border-(--border-ink) hover:bg-(--pastel-mint-dark)"
                                                   : "bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"

@@ -16,14 +16,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
     primary:
-        "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--text-ink) hover:text-(--bg-cream) dark:hover:bg-(--bg-cream) dark:hover:text-(--text-ink)",
+        "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) dark:hover:bg-(--bg-cream) dark:hover:text-(--text-ink)",
     secondary:
-        "bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-cream) dark:hover:bg-(--bg-cream)",
-    butter: "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--accent-butter)",
+        "bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--bg-cream) dark:hover:bg-(--bg-cream)",
+    butter: "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--accent-butter)",
     outline:
         "bg-transparent border-2 border-(--border-subtle) text-(--text-ink) hover:bg-(--bg-cream)",
     ghost: "bg-transparent text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) border-transparent",
-    danger: "bg-(--accent-coral) text-white border-2 border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--pastel-coral)",
+    danger: "bg-(--accent-coral) text-white border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--pastel-coral)",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

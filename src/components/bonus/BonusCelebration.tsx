@@ -64,14 +64,14 @@ export function BonusCelebration({ celebration, onDone }: BonusCelebrationProps)
             onClick={onDone}
             className="fixed top-16 sm:top-20 left-1/2 z-9999 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] px-2 animate-cha-ching select-none cursor-pointer"
         >
-            <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-2.5 sm:px-4.5 sm:py-3 text-(--text-ink) shadow-(--shadow-cute)">
+            <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-2.5 sm:px-4.5 sm:py-3 text-(--text-ink) shadow-cute">
                 <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-visible">
                     {CONFETTI.map((cls) => (
                         <span key={cls} className={`${cls} border border-(--border-ink)`} />
                     ))}
                 </div>
 
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) shadow-(--shadow-cute-sm)">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) shadow-cute-sm">
                     <Sparkles className="h-4.5 w-4.5" />
                 </div>
 

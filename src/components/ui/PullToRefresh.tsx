@@ -218,15 +218,15 @@ export function PullToRefresh({
                         opacity: isRefreshing ? 1 : Math.max(0.2, progress),
                     }}
                 >
-                    <div className="flex items-center gap-2 rounded-full border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-1.5 shadow-(--shadow-cute-sm)">
+                    <div className="flex items-center gap-2 rounded-full border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-1.5 shadow-cute-sm">
                         {isRefreshing ? (
                             <RotateCw
-                                className="h-4 w-4 animate-spin text-[#7e22ce] dark:text-[#dfc2ff]"
+                                className="h-4 w-4 animate-spin text-purple-700 dark:text-(--pastel-lilac)"
                                 strokeWidth={2.5}
                             />
                         ) : isPastThreshold ? (
                             <RotateCw
-                                className="h-4 w-4 text-[#14532d] dark:text-[#86efac] transition-transform duration-150 rotate-180"
+                                className="h-4 w-4 text-(--accent-mint-ink) dark:text-(--pastel-mint-dark) transition-transform duration-150 rotate-180"
                                 strokeWidth={2.5}
                             />
                         ) : (

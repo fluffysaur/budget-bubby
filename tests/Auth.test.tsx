@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { PinLoginScreen } from "../src/components/auth/PinLoginScreen";
 import { HouseholdProvider, useHousehold } from "../src/context/HouseholdContext";
-import { AppHeader } from "../src/components/layout/AppHeader";
+import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
 import {
     isBiometricsAvailable,
     isBiometricsEnrolled,
@@ -131,12 +131,12 @@ describe("PIN Authentication & Access Control", () => {
         expect(screen.getByTestId("partner")).toHaveTextContent("rachel");
     });
 
-    it("Lock/Sign Out button renders in AppHeader and triggers signOut via modal portal", async () => {
+    it("Lock/Sign Out button renders in DesktopSidebar and triggers signOut via modal portal", async () => {
         render(
             <MemoryRouter>
                 <AuthProvider initialAuthenticated={true}>
                     <HouseholdProvider>
-                        <AppHeader />
+                        <DesktopSidebar />
                     </HouseholdProvider>
                 </AuthProvider>
             </MemoryRouter>,

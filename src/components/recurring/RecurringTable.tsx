@@ -157,7 +157,7 @@ export function RecurringTable({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search name or notes..."
-                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-(--shadow-cute-sm) focus:outline-none focus:shadow-(--shadow-cute) transition-all"
+                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-all"
                     />
                     {searchTerm && (
                         <button
@@ -207,7 +207,7 @@ export function RecurringTable({
             </div>
 
             {/* Table Container */}
-            <div className="overflow-x-auto rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute)">
+            <div className="overflow-x-auto rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute">
                 <table className="w-full text-left border-collapse block sm:table">
                     <thead className="hidden sm:table-header-group">
                         <tr className="border-b-2 border-(--border-ink) bg-(--bg-cream) text-xs font-bold text-(--text-ink) uppercase tracking-wider font-display">

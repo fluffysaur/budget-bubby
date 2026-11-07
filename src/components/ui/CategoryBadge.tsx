@@ -43,7 +43,7 @@ export function CategoryBadge({
 
     return (
         <span
-            className={`inline-flex items-center font-bold rounded-lg bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) max-w-full ${sizeStyles} ${className}`}
+            className={`inline-flex items-center font-bold rounded-lg bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm max-w-full ${sizeStyles} ${className}`}
         >
             {renderIcon()}
             <span className="min-w-0 truncate">

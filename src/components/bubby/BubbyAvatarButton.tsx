@@ -49,7 +49,7 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
             }}
             className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-transform ${className}`}
         >
-            <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden pt-0.5">
+            <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm overflow-hidden pt-0.5">
                 <Bubby body={body} mood={mood} reaction={reaction} size="xs" className="h-8 w-8 sm:h-9 sm:w-9" decorative />
             </span>
             <FedTodayDots

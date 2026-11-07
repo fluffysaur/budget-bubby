@@ -181,7 +181,7 @@ export function AccountGroupList({
             onClick={() => setScopeFilter('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               scopeFilter === 'all'
-                ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
+                ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
             }`}
           >
@@ -192,7 +192,7 @@ export function AccountGroupList({
             onClick={() => setScopeFilter('non-cpf')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               scopeFilter === 'non-cpf'
-                ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
+                ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
             }`}
           >
@@ -200,14 +200,14 @@ export function AccountGroupList({
           </button>
         </div>
 
-        <div className="flex items-center gap-1 bg-(--bg-cream) border-2 border-(--border-ink) p-1 rounded-xl shadow-(--shadow-cute-sm)">
+        <div className="flex items-center gap-1 bg-(--bg-cream) border-2 border-(--border-ink) p-1 rounded-xl shadow-cute-sm">
           <button
             type="button"
             onClick={() => setViewMode('table')}
             aria-label="Compact Table View"
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               viewMode === 'table'
-                ? 'bg-white dark:bg-[#342445] text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
+                ? 'bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink)'
             }`}
           >
@@ -220,7 +220,7 @@ export function AccountGroupList({
             aria-label="Cards View"
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               viewMode === 'cards'
-                ? 'bg-white dark:bg-[#342445] text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)'
+                ? 'bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink)'
             }`}
           >
@@ -256,7 +256,7 @@ export function AccountGroupList({
             {/* Group Header & Subtotals */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-2 border-b-2 border-(--border-ink) gap-2">
               <div className="flex items-center gap-2.5">
-                <div className={`p-2 rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) ${group.headerColor}`}>
+                <div className={`p-2 rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute-sm ${group.headerColor}`}>
                   <Icon className="h-4 w-4" />
                 </div>
                 <div>
@@ -264,7 +264,7 @@ export function AccountGroupList({
                     <h2 className="text-base sm:text-lg font-bold text-(--text-ink) font-display tracking-tight">
                       {group.title}
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-(--bg-cream) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-(--bg-cream) text-(--text-ink) border border-(--border-ink) shadow-cute-sm">
                       {group.accounts.length} account{group.accounts.length === 1 ? '' : 's'}
                     </span>
                   </div>
@@ -299,7 +299,7 @@ export function AccountGroupList({
               </div>
             ) : (
               /* Notion-Style Compact Table List */
-              <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) divide-y-2 divide-(--border-ink) overflow-hidden shadow-(--shadow-cute)">
+              <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) divide-y-2 divide-(--border-ink) overflow-hidden shadow-cute">
                 {group.accounts.map((account) => {
                   const isEditing = inlineEditingId === account.id;
                   return (
@@ -382,7 +382,7 @@ export function AccountGroupList({
                               type="button"
                               onClick={() => onUpdateBalance?.(account)}
                               aria-label="Update Balance"
-                              className="inline-flex items-center gap-1 rounded-lg border border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-[11px] font-bold text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 rounded-lg border border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-[11px] font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
                             >
                               <Pencil className="h-3 w-3" />
                               <span className="hidden sm:inline">Update Balance</span>
@@ -393,7 +393,7 @@ export function AccountGroupList({
                                 onClick={() => onEditAccount(account)}
                                 aria-label={`Edit ${account.name}`}
                                 title="Edit account details"
-                                className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
+                                className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
                               >
                                 <Settings className="h-3 w-3" />
                               </button>
@@ -404,7 +404,7 @@ export function AccountGroupList({
                                 onClick={() => onDeleteAccount(account)}
                                 aria-label={`Delete ${account.name}`}
                                 title="Delete account"
-                                className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--pastel-coral-light) hover:text-rose-600 cursor-pointer transition-colors"
+                                className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-coral-light) hover:text-rose-600 cursor-pointer transition-colors"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>

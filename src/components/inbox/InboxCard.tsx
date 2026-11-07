@@ -171,7 +171,7 @@ export function InboxCard({
                                     onClick={() => onSelectCategory(c.id)}
                                     className={`flex min-h-10 items-center rounded-xl border-2 px-1.5 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                                         selected
-                                            ? "border-(--border-ink) bg-(--pastel-lilac-light) shadow-(--shadow-cute-sm)"
+                                            ? "border-(--border-ink) bg-(--pastel-lilac-light) shadow-cute-sm"
                                             : "border-transparent hover:bg-(--bg-cream)"
                                     }`}
                                 >

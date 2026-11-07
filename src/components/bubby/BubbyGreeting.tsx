@@ -119,7 +119,7 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
                 if (line.action === "inbox" && onOpenInbox) onOpenInbox();
                 else emitAppEvent("bubby:open-sheet", {});
             }}
-            className={`relative ml-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-2.5 py-1 text-xs font-black text-(--text-ink) shadow-(--shadow-cute-sm) animate-toast-in transition-opacity duration-150 motion-reduce:transition-none cursor-pointer ${
+            className={`relative ml-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-2.5 py-1 text-xs font-black text-(--text-ink) shadow-cute-sm animate-toast-in transition-opacity duration-150 motion-reduce:transition-none cursor-pointer ${
                 leaving ? "opacity-0" : "opacity-100"
             }`}
         >

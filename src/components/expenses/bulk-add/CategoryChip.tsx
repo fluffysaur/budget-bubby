@@ -130,7 +130,7 @@ export const CategoryChip = memo(function CategoryChip({
                 <div
                     role="listbox"
                     aria-label={`Category options for row ${index + 1}`}
-                    className="z-50 mt-2 max-h-64 w-full min-w-48 overflow-y-auto rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-sm) sm:absolute sm:left-0 sm:top-full"
+                    className="z-50 mt-2 max-h-64 w-full min-w-48 overflow-y-auto rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-sm sm:absolute sm:left-0 sm:top-full"
                 >
                     {visibleCategories.map((c) => (
                         <button

@@ -196,7 +196,7 @@ export function ExpenseFilterBar({
 
     const containerStyle = embeddedInCard
         ? `w-full min-w-0 transition-colors ${className}`
-        : `w-full min-w-0 overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-(--shadow-cute-sm) transition-colors ${className}`;
+        : `w-full min-w-0 overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-sm transition-colors ${className}`;
 
     return (
         <div className={containerStyle}>
@@ -265,7 +265,7 @@ export function ExpenseFilterBar({
                         aria-label="Reset filters"
                         className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border-2 px-3 sm:px-3.5 text-xs font-bold transition-all shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                             hasActiveFilters
-                                ? "border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-(--shadow-cute-sm)"
+                                ? "border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-cute-sm"
                                 : "border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
                         }`}
                     >
@@ -283,7 +283,7 @@ export function ExpenseFilterBar({
                         onClick={() => setIsMobileFilterOpen((prev) => !prev)}
                         className={`flex-1 inline-flex items-center justify-between gap-1.5 rounded-xl border-2 border-(--border-ink) px-3 py-2 text-xs font-bold transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                             activeFilterCount > 0
-                                ? "bg-(--pastel-lilac-light) text-(--text-ink) shadow-(--shadow-cute-sm)"
+                                ? "bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm"
                                 : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light)"
                         }`}
                     >
@@ -431,7 +431,7 @@ export function ExpenseFilterBar({
                         {activeChips.map((chip) => (
                             <span
                                 key={chip.id}
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
                             >
                                 <span>{chip.label}</span>
                                 <button

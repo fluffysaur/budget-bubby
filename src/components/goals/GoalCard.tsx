@@ -113,7 +113,7 @@ export function GoalCard({
         <div
             id={`goal-card-${goal.id}`}
             data-testid={`goal-card-${goal.id}`}
-            className={`relative flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-(--shadow-cute) transition-all ${className}`}
+            className={`relative flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute transition-all ${className}`}
         >
             {isHighlighted && (
                 <div
@@ -126,7 +126,7 @@ export function GoalCard({
                 {/* Header: Emoji, Title, Status Badge */}
                 <div className="flex items-start justify-between gap-2.5">
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--pastel-butter-light) text-2xl shadow-(--shadow-cute-sm)">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--pastel-butter-light) text-2xl shadow-cute-sm">
                             <span role="img" aria-label={goal.title}>
                                 {goal.emoji || "🎯"}
                             </span>
@@ -168,7 +168,7 @@ export function GoalCard({
                     </div>
 
                     <div
-                        className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${statusConfig.badgeClass}`}
+                        className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border-2 border-(--border-ink) shadow-cute-sm shrink-0 ${statusConfig.badgeClass}`}
                     >
                         <StatusIcon
                             className="h-3.5 w-3.5 shrink-0"
@@ -179,7 +179,7 @@ export function GoalCard({
                 </div>
 
                 {/* Big-Ticket Financial Highlights (2x2 Grid) */}
-                <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 shadow-(--shadow-cute-sm)">
+                <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 shadow-cute-sm">
                     <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
                         <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
                             Target Amount
@@ -351,7 +351,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onSpendFromGoal?.(goal)}
                     aria-label={`+ Spend from ${goal.title}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-(--shadow-cute-sm) hover:bg-[#1a1a1a] hover:text-[#fbf7f1] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
                 >
                     <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
                     <span>Spend</span>
@@ -362,7 +362,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onQuickDeposit?.(goal)}
                     aria-label={`Deposit to ${goal.title}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-(--shadow-cute-sm) hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
                 >
                     <Coins
                         className="h-3.5 w-3.5 text-emerald-800 shrink-0"
@@ -377,7 +377,7 @@ export function GoalCard({
                     onClick={() => onEdit?.(goal)}
                     aria-label={`Edit ${goal.title}`}
                     title={`Edit ${goal.title}`}
-                    className="inline-flex items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) p-2 text-xs font-bold shadow-(--shadow-cute-sm) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                    className="inline-flex items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) p-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
                 >
                     <Pencil className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                 </button>

@@ -753,7 +753,7 @@ export function ExpenseFormModal({
                                             }}
                                             className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                                                 isLinked
-                                                    ? "bg-(--pastel-mint-light) shadow-(--shadow-cute-sm)"
+                                                    ? "bg-(--pastel-mint-light) shadow-cute-sm"
                                                     : "bg-(--bg-card) hover:bg-(--bg-cream)"
                                             }`}
                                         >
@@ -888,7 +888,7 @@ export function ExpenseFormModal({
                                                 }
                                                 className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                                                     isSelected
-                                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold"
+                                                        ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
                                                         : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
                                                 }`}
                                             >
@@ -925,7 +925,7 @@ export function ExpenseFormModal({
                                             }}
                                             className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
                                                 isSelected
-                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold"
+                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold"
                                                     : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle) font-medium"
                                             }`}
                                         >
@@ -1019,7 +1019,7 @@ export function ExpenseFormModal({
                                         }}
                                         className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                             date === todayStr
-                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                 : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
                                         }`}
                                     >
@@ -1031,7 +1031,7 @@ export function ExpenseFormModal({
                                         onClick={() => setDate(yesterdayStr)}
                                         className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                             date === yesterdayStr
-                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                 : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
                                         }`}
                                     >
@@ -1043,7 +1043,7 @@ export function ExpenseFormModal({
                                         onClick={() => setDate(twoDaysAgoStr)}
                                         className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                             date === twoDaysAgoStr
-                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                 : "bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) border border-(--border-subtle)"
                                         }`}
                                     >
@@ -1086,7 +1086,7 @@ export function ExpenseFormModal({
                             </div>
 
                             {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
-                            <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-(--shadow-cute-sm)">
+                            <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-cute-sm">
                                 {/* Payer Toggle */}
                                 <div className="flex items-center justify-between gap-1.5 flex-wrap">
                                     <span className="text-[11px] font-bold text-(--text-muted)">
@@ -1108,7 +1108,7 @@ export function ExpenseFormModal({
                                                     }
                                                     className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                                         isSelected
-                                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                             : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                                     }`}
                                                 >
@@ -1145,7 +1145,7 @@ export function ExpenseFormModal({
                                             onClick={() => setIsShared(false)}
                                             className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
                                                 !isShared
-                                                    ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                    ? "bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
                                                     : "text-(--text-muted) hover:text-(--text-ink)"
                                             }`}
                                         >
@@ -1158,7 +1158,7 @@ export function ExpenseFormModal({
                                             onClick={() => setIsShared(true)}
                                             className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer ${
                                                 isShared
-                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)"
+                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border border-(--border-ink) shadow-cute-sm"
                                                     : "text-(--text-muted) hover:text-(--text-ink)"
                                             }`}
                                         >
@@ -1325,7 +1325,7 @@ export function ExpenseFormModal({
                                         onClick={() =>
                                             handleAddTag(newTagInput)
                                         }
-                                        className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) px-3 py-1.5 text-xs font-bold cursor-pointer transition-all"
+                                        className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) px-3 py-1.5 text-xs font-bold cursor-pointer transition-all"
                                     >
                                         + Tag
                                     </button>
@@ -1345,7 +1345,7 @@ export function ExpenseFormModal({
                                                 onClick={() =>
                                                     handleAddTag(rTag)
                                                 }
-                                                className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) px-2 py-0.5 text-[11px] font-bold transition-all cursor-pointer shadow-(--shadow-cute-sm)"
+                                                className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) px-2 py-0.5 text-[11px] font-bold transition-all cursor-pointer shadow-cute-sm"
                                             >
                                                 <span>
                                                     + #{rTag.replace(/^#/, "")}

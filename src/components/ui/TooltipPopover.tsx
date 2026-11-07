@@ -137,7 +137,7 @@ export function TooltipPopover({
                             opacity: isPositioned ? 1 : 0,
                         }}
                         {...getFloatingProps()}
-                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-(--shadow-cute) select-text transition-opacity duration-150"
+                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute select-text transition-opacity duration-150"
                     >
                         <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-(--border-subtle)">
                             {title && (

@@ -109,7 +109,7 @@ export function ExpenseSuccessCelebration({
             onClick={handleDismiss}
             className="fixed top-16 sm:top-20 left-1/2 z-9999 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] px-2 animate-toast-in select-none cursor-pointer"
         >
-            <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl bg-(--bg-card) text-(--text-ink) pl-2 pr-3 sm:pr-4 py-1.5 sm:py-2 shadow-(--shadow-cute) border-2 border-(--border-ink) max-w-full active:scale-95 transition-transform">
+            <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl bg-(--bg-card) text-(--text-ink) pl-2 pr-3 sm:pr-4 py-1.5 sm:py-2 shadow-cute border-2 border-(--border-ink) max-w-full active:scale-95 transition-transform">
                 {/* Cheering Bubby badge */}
                 <div className="flex h-9 w-9 shrink-0 items-end justify-center overflow-hidden rounded-xl bg-(--pastel-mint) border-2 border-(--border-ink) pt-0.5">
                     <Bubby

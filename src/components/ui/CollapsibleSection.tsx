@@ -41,7 +41,7 @@ export function CollapsibleSection({
 
     return (
         <div
-            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute) overflow-hidden transition-all ${className}`}
+            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute overflow-hidden transition-all ${className}`}
         >
             <button
                 type="button"
@@ -76,7 +76,7 @@ export function CollapsibleSection({
                     )}
                     <div
                         className={`flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) transition-all duration-200 group-hover:text-(--text-ink) ${
-                            isOpen ? "bg-[#dfc2ff] rotate-90 text-[#1a1a1a]" : ""
+                            isOpen ? "bg-(--pastel-lilac) rotate-90 text-(--text-ink)" : ""
                         }`}
                     >
                         <ChevronRight className="h-4 w-4" strokeWidth={2.5} />

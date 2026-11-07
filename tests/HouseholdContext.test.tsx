@@ -149,7 +149,7 @@ describe("Layout Components", () => {
     });
 
     describe("AppHeader", () => {
-        it("renders unified perspective dropdown, currency badge, mock status, and theme toggle", async () => {
+        it("renders unified perspective dropdown, mock status, and handles perspective selection", async () => {
             await act(async () => {
                 render(
                     <MemoryRouter>
@@ -169,6 +169,17 @@ describe("Layout Components", () => {
 
             // Demo status badge exists
             expect(screen.getByText("Demo Mode")).toBeInTheDocument();
+
+            // Header is decluttered: desktop utilities are no longer in the header
+            expect(
+                screen.queryByRole("button", { name: /^refresh$/i }),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", { name: /^settings$/i }),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", { name: /toggle theme/i }),
+            ).not.toBeInTheDocument();
 
             // Open perspective dropdown and select Rachel
             await act(async () => {
@@ -191,17 +202,6 @@ describe("Layout Components", () => {
             });
 
             expect(dropdownTrigger).toHaveTextContent(/rachel/i);
-
-            // Theme toggle button
-            const themeBtn = screen.getByRole("button", {
-                name: /toggle theme/i,
-            });
-            await act(async () => {
-                fireEvent.click(themeBtn);
-            });
-            expect(document.documentElement.classList.contains("dark")).toBe(
-                true,
-            );
         });
 
         it("hides Add Expense button on mobile viewports via responsive desktop-only classes", async () => {
@@ -233,7 +233,7 @@ describe("Layout Components", () => {
             expect(parent).toHaveClass("md:block");
         });
 
-        it("renders Settings and Refresh in mobile perspective dropdown and hides manual refresh icon on mobile", async () => {
+        it("renders Settings and Refresh in mobile perspective dropdown", async () => {
             await act(async () => {
                 render(
                     <MemoryRouter>
@@ -243,13 +243,6 @@ describe("Layout Components", () => {
                     </MemoryRouter>,
                 );
             });
-
-            // The header refresh button is hidden on mobile screens
-            const refreshBtn = screen.getByRole("button", {
-                name: /^refresh$/i,
-            });
-            expect(refreshBtn).toHaveClass("hidden");
-            expect(refreshBtn).toHaveClass("sm:flex");
 
             // Open mobile dropdown
             const dropdownTrigger = screen.getByRole("button", {
@@ -278,11 +271,13 @@ describe("Layout Components", () => {
     });
 
     describe("DesktopSidebar", () => {
-        it("renders all main navigation tabs and handles tab selection", async () => {
+        it("renders all main navigation tabs, utility footer, and handles interactions", async () => {
             let selectedTab = "dashboard";
             const onSelectTab = vi.fn((tab: string) => {
                 selectedTab = tab;
             });
+            const openSettingsSpy = vi.fn();
+            window.addEventListener("openSettings", openSettingsSpy);
 
             await act(async () => {
                 render(
@@ -301,10 +296,28 @@ describe("Layout Components", () => {
             expect(screen.getByText("Accounts")).toBeInTheDocument();
             expect(screen.getByText("Plan")).toBeInTheDocument();
 
+            // Tab navigation
             await act(async () => {
                 fireEvent.click(screen.getByText("Spend"));
             });
             expect(onSelectTab).toHaveBeenCalledWith("spend");
+
+            // Desktop utility footer buttons
+            const settingsBtn = screen.getByRole("button", { name: /^settings$/i });
+            expect(settingsBtn).toBeInTheDocument();
+            fireEvent.click(settingsBtn);
+            expect(openSettingsSpy).toHaveBeenCalled();
+            window.removeEventListener("openSettings", openSettingsSpy);
+
+            const refreshBtn = screen.getByRole("button", { name: /^refresh$/i });
+            expect(refreshBtn).toBeInTheDocument();
+
+            const themeBtn = screen.getByRole("button", { name: /toggle theme/i });
+            expect(themeBtn).toBeInTheDocument();
+            await act(async () => {
+                fireEvent.click(themeBtn);
+            });
+            expect(document.documentElement.classList.contains("dark")).toBe(true);
         });
     });
 

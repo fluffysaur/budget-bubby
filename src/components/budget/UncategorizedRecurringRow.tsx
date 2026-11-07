@@ -27,7 +27,7 @@ export function UncategorizedRecurringRow({
     return (
         <div
             data-testid="uncategorized-recurring"
-            className={`flex items-center justify-between gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-(--shadow-cute-sm) ${className}`}
+            className={`flex items-center justify-between gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute-sm ${className}`}
         >
             <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) text-(--text-ink)">

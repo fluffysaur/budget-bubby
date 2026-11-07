@@ -196,9 +196,9 @@ export function NotificationSettingsModal({
                             Sound Effects
                         </h4>
 
-                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-butter) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
                                     <Volume2 className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div>
@@ -216,7 +216,7 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestSound}
                                     title="Play test audio chime"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
                                     <Volume2 className="h-3 w-3" strokeWidth={2.5} />
                                     <span>Play</span>
@@ -249,9 +249,9 @@ export function NotificationSettingsModal({
                             Haptic Feedback
                         </h4>
 
-                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
                                     <Vibrate className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div>
@@ -269,7 +269,7 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestHaptic}
                                     title="Test haptic vibration"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
                                     <Vibrate className="h-3 w-3" strokeWidth={2.5} />
                                     <span>Vibrate</span>
@@ -305,9 +305,9 @@ export function NotificationSettingsModal({
                             Notifications
                         </h4>
 
-                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-(--shadow-cute-sm)">
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-mint) text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-mint) text-(--accent-mint-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
                                     <Bell className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
                                 <div>
@@ -318,10 +318,10 @@ export function NotificationSettingsModal({
                                         <span
                                             className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
                                                 permission === "granted"
-                                                    ? "bg-(--pastel-mint) text-[#14532d] border-[#14532d]/40"
+                                                    ? "bg-(--pastel-mint) text-(--accent-mint-ink) border-(--accent-mint-ink)/40"
                                                     : permission === "denied"
-                                                    ? "bg-(--pastel-coral-light) text-[#9a1b1b] border-[#9a1b1b]/40"
-                                                    : "bg-(--pastel-butter) text-[#78350f] border-[#78350f]/40"
+                                                    ? "bg-(--pastel-coral-light) text-(--accent-coral-ink) border-(--accent-coral-ink)/40"
+                                                    : "bg-(--pastel-butter) text-amber-900 border-amber-900/40"
                                             }`}
                                         >
                                             {permission}
@@ -338,7 +338,7 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestPush}
                                     title="Send test push notification"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
                                     <Send className="h-3 w-3" strokeWidth={2.5} />
                                     <span>{testPushSent ? "Sent!" : "Test"}</span>
@@ -474,7 +474,7 @@ export function NotificationSettingsModal({
                                 </h4>
 
                                 {/* CC Due Reminder Days */}
-                                <div className="mb-3 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                <div className="mb-3 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
                                     <div
                                         id="cc-due-days-label"
                                         className="text-[11px] font-black text-(--text-ink) mb-2"
@@ -495,7 +495,7 @@ export function NotificationSettingsModal({
                                                     aria-pressed={isOn}
                                                     data-testid={`chip-cc-due-${day}`}
                                                     onClick={() => handleToggleCcDueDay(day)}
-                                                    className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-(--shadow-cute-sm) transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
+                                                    className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
                                                         isOn
                                                             ? "bg-(--pastel-lilac) text-(--text-ink)"
                                                             : "bg-(--bg-cream) text-(--text-muted)"
@@ -511,7 +511,7 @@ export function NotificationSettingsModal({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                                     {/* Budget Warning % */}
-                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
                                         <label
                                             htmlFor="budget-warning-pct-input"
                                             className="block text-[11px] font-black text-(--text-ink) mb-1"
@@ -537,7 +537,7 @@ export function NotificationSettingsModal({
                                     </div>
 
                                     {/* Shared Settlement Cap */}
-                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                                    <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
                                         <label
                                             htmlFor="settlement-threshold-input"
                                             className="block text-[11px] font-black text-(--text-ink) mb-1"
@@ -643,7 +643,7 @@ interface TimeFieldProps {
 
 function TimeField({ id, label, icon, value, testId, onChange }: TimeFieldProps) {
     return (
-        <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+        <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
             <label
                 htmlFor={id}
                 className="flex items-center gap-1 text-[11px] font-black text-(--text-ink) mb-1"
@@ -681,9 +681,9 @@ function CategoryToggleRow({
     onChange,
 }: CategoryToggleRowProps) {
     return (
-        <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm) transition-colors hover:bg-(--bg-cream)">
+        <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm transition-colors hover:bg-(--bg-cream)">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--bg-cream) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
                     {icon}
                 </div>
                 <div className="min-w-0 flex-1">

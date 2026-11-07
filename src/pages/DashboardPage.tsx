@@ -159,7 +159,7 @@ export function DashboardPage({
                                     data-testid="left-to-spend-amount"
                                     className={`mt-1 ${
                                         isOverspent
-                                            ? "text-[#9a1b1b] dark:text-rose-400"
+                                            ? "text-(--accent-coral-ink) dark:text-rose-400"
                                             : "text-(--text-ink)"
                                     }`}
                                 >
@@ -174,7 +174,7 @@ export function DashboardPage({
                                 <button
                                     type="button"
                                     onClick={() => onNavigateTab("budget")}
-                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
                                 >
                                     Budget
                                 </button>
@@ -185,7 +185,7 @@ export function DashboardPage({
                         <div className="mt-3 h-2.5 w-full rounded-full bg-(--bg-cream) border border-(--border-ink)/30 overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all ${
-                                    isOverspent ? "bg-[#f76b57]" : "bg-emerald-500"
+                                    isOverspent ? "bg-(--accent-coral)" : "bg-emerald-500"
                                 }`}
                                 style={{ width: `${spendableSummary.totalPct}%` }}
                             />
@@ -197,12 +197,12 @@ export function DashboardPage({
                                 {spendableSummary.categories.map((cat) => (
                                     <div
                                         key={cat.id}
-                                        className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 shadow-(--shadow-cute-sm)"
+                                        className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 shadow-cute-sm"
                                     >
                                         <div className="flex items-center justify-between gap-1 text-xs">
                                             <span className="font-bold text-(--text-ink) flex items-center gap-1.5 font-display min-w-0 flex-1">
                                                 <span
-                                                    className="h-2.5 w-2.5 rounded-full shrink-0 border border-[#1a1a1a]"
+                                                    className="h-2.5 w-2.5 rounded-full shrink-0 border border-(--border-ink)"
                                                     style={{
                                                         backgroundColor: cat.color,
                                                     }}
