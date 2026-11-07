@@ -1,6 +1,6 @@
 /**
  * NotificationCenterPopover Component
- * 
+ *
  * Features:
  * - Bell icon with dynamic badge count of active reminders
  * - Responsive presentation:
@@ -84,13 +84,15 @@ export function NotificationCenterPopover({
     const [reminders, setReminders] = useState<AppReminder[]>([]);
     const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
     const [readIds, setReadIds] = useState<Set<string>>(new Set());
-    const [permission, setPermission] = useState<NotificationPermission>("default");
+    const [permission, setPermission] =
+        useState<NotificationPermission>("default");
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const popoverRef = useRef<HTMLDivElement>(null);
     const desktopPopoverRef = useRef<HTMLDivElement>(null);
     const mobileOverlayRef = useRef<HTMLDivElement>(null);
 
-    const activeMemberId = activeMember?.id || members?.[0]?.id || "mem-00000000-0011";
+    const activeMemberId =
+        activeMember?.id || members?.[0]?.id || "mem-00000000-0011";
     const readParam = searchParams.get("read");
 
     // Sync browser notification permission state
@@ -102,7 +104,11 @@ export function NotificationCenterPopover({
 
     const loadReadIds = useCallback(async () => {
         const log = await financeService.getNotificationLog(activeMemberId);
-        return new Set(log.filter((entry) => entry.read_at).map((entry) => entry.reminder_key));
+        return new Set(
+            log
+                .filter((entry) => entry.read_at)
+                .map((entry) => entry.reminder_key),
+        );
     }, [activeMemberId]);
 
     // Load active reminders for current member
@@ -157,7 +163,8 @@ export function NotificationCenterPopover({
     // Keep this device's push subscription in line with permission and preferences
     const syncSubscription = useCallback(async () => {
         try {
-            const prefs = await financeService.getNotificationPreferences(activeMemberId);
+            const prefs =
+                await financeService.getNotificationPreferences(activeMemberId);
             await syncPushSubscription(activeMemberId, prefs.push_enabled);
         } catch (err) {
             console.debug("Failed to sync push subscription:", err);
@@ -173,11 +180,16 @@ export function NotificationCenterPopover({
         if (!readParam) return;
         const keys = readParam.split(",").filter(Boolean);
         const known = new Map(reminders.map((r) => [r.id, r.type]));
-        const refs = keys.map((key) => ({ key, type: known.get(key) ?? "push" }));
+        const refs = keys.map((key) => ({
+            key,
+            type: known.get(key) ?? "push",
+        }));
         setReadIds((prev) => new Set([...prev, ...keys]));
         financeService
             .markNotificationsRead(activeMemberId, refs)
-            .catch((err) => console.debug("Failed to mark pushed reminders read:", err));
+            .catch((err) =>
+                console.debug("Failed to mark pushed reminders read:", err),
+            );
         setSearchParams(
             (prev) => {
                 const next = new URLSearchParams(prev);
@@ -194,8 +206,15 @@ export function NotificationCenterPopover({
             loadReminders();
             syncSubscription();
         };
-        window.addEventListener("notificationPreferencesUpdated", handlePreferencesUpdated);
-        return () => window.removeEventListener("notificationPreferencesUpdated", handlePreferencesUpdated);
+        window.addEventListener(
+            "notificationPreferencesUpdated",
+            handlePreferencesUpdated,
+        );
+        return () =>
+            window.removeEventListener(
+                "notificationPreferencesUpdated",
+                handlePreferencesUpdated,
+            );
     }, [loadReminders, syncSubscription]);
 
     // Click outside listener for desktop popover
@@ -215,12 +234,18 @@ export function NotificationCenterPopover({
             }
 
             // Check if click was inside desktop popover
-            if (desktopPopoverRef.current && desktopPopoverRef.current.contains(target)) {
+            if (
+                desktopPopoverRef.current &&
+                desktopPopoverRef.current.contains(target)
+            ) {
                 return;
             }
 
             // Check if click was inside mobile overlay
-            if (mobileOverlayRef.current && mobileOverlayRef.current.contains(target)) {
+            if (
+                mobileOverlayRef.current &&
+                mobileOverlayRef.current.contains(target)
+            ) {
                 return;
             }
 
@@ -247,7 +272,9 @@ export function NotificationCenterPopover({
     // Filter out dismissed reminders
     const visibleReminders = reminders.filter((r) => !dismissedIds.has(r.id));
     const count = visibleReminders.length;
-    const unreadCount = visibleReminders.filter((r) => !readIds.has(r.id)).length;
+    const unreadCount = visibleReminders.filter(
+        (r) => !readIds.has(r.id),
+    ).length;
 
     // Opening the bell marks every visible reminder as read
     const handleToggleOpen = () => {
@@ -262,13 +289,18 @@ export function NotificationCenterPopover({
                 activeMemberId,
                 unread.map((r) => ({ key: r.id, type: r.type })),
             )
-            .catch((err) => console.debug("Failed to mark reminders read:", err));
+            .catch((err) =>
+                console.debug("Failed to mark reminders read:", err),
+            );
     };
 
     const handleDismiss = (reminder: AppReminder) => {
         setDismissedIds((prev) => new Set([...prev, reminder.id]));
         financeService
-            .dismissNotification(activeMemberId, { key: reminder.id, type: reminder.type })
+            .dismissNotification(activeMemberId, {
+                key: reminder.id,
+                type: reminder.type,
+            })
             .catch((err) => console.debug("Failed to dismiss reminder:", err));
     };
 
@@ -276,7 +308,11 @@ export function NotificationCenterPopover({
     const handleNoSpend = async (reminder: AppReminder) => {
         setIsProcessing(true);
         try {
-            await financeService.recordDailyCheckin(activeMemberId, getTodayDateString(), "no_spend");
+            await financeService.recordDailyCheckin(
+                activeMemberId,
+                getTodayDateString(),
+                "no_spend",
+            );
             playChaChingSound();
             handleDismiss(reminder);
             await refreshData();
@@ -344,8 +380,13 @@ export function NotificationCenterPopover({
                 }
             } else if (reminder.actionType === "view_goals") {
                 setIsOpen(false);
-                const goalId = typeof reminder.data?.goalId === "string" ? reminder.data.goalId : undefined;
-                const query = goalId ? `?goalId=${encodeURIComponent(goalId)}` : "";
+                const goalId =
+                    typeof reminder.data?.goalId === "string"
+                        ? reminder.data.goalId
+                        : undefined;
+                const query = goalId
+                    ? `?goalId=${encodeURIComponent(goalId)}`
+                    : "";
                 navigate(`/goals${query}`);
                 if (onNavigateTab) {
                     onNavigateTab(`goals${query}`);
@@ -365,20 +406,30 @@ export function NotificationCenterPopover({
             case "balance_update":
                 return <Landmark className="h-4 w-4 text-blue-500 shrink-0" />;
             case "credit_card_due":
-                return <CreditCard className="h-4 w-4 text-rose-500 shrink-0" />;
+                return (
+                    <CreditCard className="h-4 w-4 text-rose-500 shrink-0" />
+                );
             case "credit_card_missing_stmt":
-                return <CreditCard className="h-4 w-4 text-amber-500 shrink-0" />;
+                return (
+                    <CreditCard className="h-4 w-4 text-amber-500 shrink-0" />
+                );
             case "partner_shared_spend":
             case "settlement_due":
                 return <Users className="h-4 w-4 text-purple-500 shrink-0" />;
             case "budget_limit":
-                return <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />;
+                return (
+                    <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+                );
             case "recurring_bill_due":
-                return <CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />;
+                return (
+                    <CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />
+                );
             case "goal_pacing":
                 return <Target className="h-4 w-4 text-emerald-500 shrink-0" />;
             case "monthly_budget_review":
-                return <BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />;
+                return (
+                    <BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />
+                );
             default:
                 return <Bell className="h-4 w-4 text-emerald-500 shrink-0" />;
         }
@@ -389,15 +440,15 @@ export function NotificationCenterPopover({
         <>
             {/* Browser Permission Prompt Banner */}
             {permission === "default" && (
-                <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-(--pastel-mint)/40 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                    <div className="text-[11px] text-[#14532d] dark:text-[#86efac] font-bold">
+                <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-(--pastel-mint)/40 border-2 border-(--border-ink) shadow-cute-sm">
+                    <div className="text-[11px] text-(--accent-mint-ink) dark:text-(--pastel-mint-dark) font-bold">
                         Get alerts on this device?
                     </div>
                     <button
                         type="button"
                         data-testid="enable-push-notifications-btn"
                         onClick={handleRequestPermission}
-                        className="px-2.5 py-1 rounded-lg bg-[#bbf7d0] text-[#14532d] border border-(--border-ink) text-[10px] font-black hover:bg-[#86efac] transition-colors cursor-pointer"
+                        className="px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-(--accent-mint-ink) border border-(--border-ink) text-[10px] font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer"
                     >
                         Enable
                     </button>
@@ -407,7 +458,7 @@ export function NotificationCenterPopover({
             {/* Empty State */}
             {visibleReminders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--pastel-mint) text-[#14532d] border-2 border-(--border-ink) shadow-(--shadow-cute-sm) mb-2.5">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--pastel-mint) text-(--accent-mint-ink) border-2 border-(--border-ink) shadow-cute-sm mb-2.5">
                         <CheckCircle2 className="h-6 w-6" strokeWidth={2.5} />
                     </div>
                     <p className="text-sm font-black text-(--text-ink)">
@@ -423,7 +474,7 @@ export function NotificationCenterPopover({
                         <div
                             key={reminder.id}
                             data-testid={`reminder-card-${reminder.id}`}
-                            className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm) transition-all"
+                            className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-cute-sm transition-all"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -474,7 +525,12 @@ export function NotificationCenterPopover({
                                     data-testid={`reminder-action-${reminder.actionType}`}
                                     disabled={isProcessing}
                                     onClick={() => handleAction(reminder)}
-                                    rightIcon={<ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                                    rightIcon={
+                                        <ChevronRight
+                                            className="h-3.5 w-3.5"
+                                            strokeWidth={2.5}
+                                        />
+                                    }
                                 >
                                     {reminder.actionLabel}
                                 </Button>
@@ -495,14 +551,14 @@ export function NotificationCenterPopover({
                 aria-label={`Notifications (${unreadCount} unread)`}
                 aria-expanded={isOpen}
                 onClick={handleToggleOpen}
-                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
             >
                 <Bell className="h-4 w-4" strokeWidth={2.5} />
 
                 {unreadCount > 0 && (
                     <span
                         data-testid="notification-badge-count"
-                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#f76b57] border border-(--border-ink) px-1 text-[10px] font-black text-white shadow-(--shadow-cute-sm) animate-in zoom-in-75 font-mono-num"
+                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-[10px] font-black text-white shadow-cute-sm animate-in zoom-in-75 font-mono-num"
                     >
                         {unreadCount}
                     </span>
@@ -516,12 +572,12 @@ export function NotificationCenterPopover({
                     data-testid="notification-center-popover"
                     role="region"
                     aria-label="Notification center"
-                    className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-(--shadow-cute-lg) z-50 animate-in fade-in-50 zoom-in-95 duration-150"
+                    className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-lg z-50 animate-in fade-in-50 zoom-in-95 duration-150"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
                         <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
                                 <Bell className="h-4 w-4" strokeWidth={2.5} />
                             </div>
 
@@ -567,10 +623,13 @@ export function NotificationCenterPopover({
                         className="fixed inset-0 z-50 flex flex-col bg-(--bg-canvas) animate-in fade-in slide-in-from-bottom-2 duration-150"
                     >
                         {/* Mobile Sticky Header */}
-                        <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-(--shadow-cute-sm)">
+                        <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
                             <div className="flex items-center gap-2.5">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
-                                    <Bell className="h-4 w-4" strokeWidth={2.5} />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                    <Bell
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-sm font-black text-(--text-ink) font-display">
@@ -589,7 +648,7 @@ export function NotificationCenterPopover({
                                 aria-label="Close notification center"
                                 data-testid="close-notification-overlay-btn"
                                 onClick={() => setIsOpen(false)}
-                                className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                             >
                                 <X className="h-4 w-4" strokeWidth={2.5} />
                             </button>

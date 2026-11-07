@@ -46,7 +46,7 @@ export function BankSurplusModal({
 
             <ModalBody className="space-y-4">
                 {/* Visual callout card */}
-                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-4 shadow-(--shadow-cute-sm) space-y-2">
+                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-4 shadow-cute-sm space-y-2">
                     <div className="flex items-center gap-2 font-bold text-sm text-(--text-ink)">
                         <Sparkles className="h-4 w-4 text-amber-500 fill-amber-400" />
                         <span>Reserve Cushion</span>

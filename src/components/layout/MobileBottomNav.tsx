@@ -51,7 +51,7 @@ export function MobileBottomNav({
                     <div
                         className={`p-1 mb-1 rounded-xl transition-all ${
                             activeTab === "dashboard"
-                                ? "bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) animate-pill-pop"
+                                ? "bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
                         }`}
                     >
@@ -74,7 +74,7 @@ export function MobileBottomNav({
                     <div
                         className={`p-1 mb-1 rounded-xl transition-all ${
                             isSpendActive
-                                ? "bg-(--pastel-butter) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) animate-pill-pop"
+                                ? "bg-(--pastel-butter) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
                         }`}
                     >
@@ -105,7 +105,7 @@ export function MobileBottomNav({
                             onQuickAdd?.();
                         }}
                         aria-label="Quick Add"
-                        className="absolute bottom-5.5 flex items-center justify-center w-12 h-12 rounded-2xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute) group-hover:scale-105 active:scale-96 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all duration-120 cursor-pointer focus:outline-none"
+                        className="absolute bottom-5.5 flex items-center justify-center w-12 h-12 rounded-2xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute group-hover:scale-105 active:scale-96 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all duration-120 cursor-pointer focus:outline-none"
                     >
                         <Plus className="h-6 w-6 stroke-3" />
                     </button>
@@ -128,7 +128,7 @@ export function MobileBottomNav({
                     <div
                         className={`p-1 mb-1 rounded-xl transition-all ${
                             activeTab === "accounts"
-                                ? "bg-(--pastel-pink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) animate-pill-pop"
+                                ? "bg-(--pastel-pink) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
                         }`}
                     >
@@ -151,7 +151,7 @@ export function MobileBottomNav({
                     <div
                         className={`p-1 mb-1 rounded-xl transition-all ${
                             isPlanActive
-                                ? "bg-(--pastel-mint) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) animate-pill-pop"
+                                ? "bg-(--pastel-mint) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
                         }`}
                     >

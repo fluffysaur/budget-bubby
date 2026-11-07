@@ -495,7 +495,7 @@ export function AnimatedModal({
                                   : "modal-sheet-enter"
                           }`
                         : `max-h-[90dvh] rounded-2xl ${isClosing ? "animate-modal-out" : "animate-modal-in"}`
-                } bg-(--bg-card) border-t-2 sm:border-2 border-(--border-ink) shadow-(--shadow-cute-lg) flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom,0px)] ${className}`}
+                } bg-(--bg-card) border-t-2 sm:border-2 border-(--border-ink) shadow-cute-lg flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom,0px)] ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {isDrawerOnMobile && (
@@ -524,9 +524,9 @@ export function AnimatedModal({
                     className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-modal-in"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="w-full max-w-sm rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute-lg) p-5 flex flex-col gap-4 text-(--text-ink)">
+                    <div className="w-full max-w-sm rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute-lg p-5 flex flex-col gap-4 text-(--text-ink)">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-(--border-ink) bg-[#fef2f2] text-[#f76b57]">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-(--border-ink) bg-(--pastel-coral-subtle) text-(--accent-coral)">
                                 <AlertCircle className="h-5 w-5" />
                             </div>
                             <div className="min-w-0 flex-1">

@@ -61,7 +61,7 @@ export function ExpenseTrendsCard({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-(--border-ink)">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
             <BarChart3 className="h-4 w-4" />
           </div>
           <div>
@@ -215,7 +215,7 @@ export function ExpenseTrendsCard({
               return (
                 <div
                   key={cat.categoryId}
-                  className="rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-(--shadow-cute-sm)"
+                  className="rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-cute-sm"
                 >
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-(--text-ink) flex items-center gap-1.5">

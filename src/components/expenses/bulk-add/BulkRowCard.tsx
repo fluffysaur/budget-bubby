@@ -58,7 +58,7 @@ export const BulkRowCard = memo(function BulkRowCard({
         <li
             role="group"
             aria-label={`Row ${index + 1}`}
-            className="space-y-2 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-(--shadow-cute-sm)"
+            className="space-y-2 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-cute-sm"
         >
             <div className="flex items-start gap-2">
                 <div className="w-28 shrink-0">

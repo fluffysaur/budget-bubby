@@ -72,13 +72,13 @@ export function AccountCard({
 
   return (
     <div
-      className={`flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 sm:p-4 shadow-(--shadow-cute-sm) hover:shadow-(--shadow-cute) transition-all ${className}`}
+      className={`flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 sm:p-4 shadow-cute-sm hover:shadow-cute transition-all ${className}`}
     >
       <div>
         {/* Header: Institution & Type Badges */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-(--shadow-cute-sm) ${typeStyle.iconBg}`}>
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl shadow-cute-sm ${typeStyle.iconBg}`}>
               <TypeIcon className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -114,7 +114,7 @@ export function AccountCard({
                 onClick={() => onEditAccount(account)}
                 aria-label={`Edit ${account.name}`}
                 title="Edit account details"
-                className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
               >
                 <Settings className="h-3.5 w-3.5" />
               </button>
@@ -125,7 +125,7 @@ export function AccountCard({
                 onClick={() => onDeleteAccount(account)}
                 aria-label={`Delete ${account.name}`}
                 title="Delete account"
-                className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -168,7 +168,7 @@ export function AccountCard({
           type="button"
           aria-label="Update Balance"
           onClick={() => onUpdateBalance?.(account)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-(--text-ink) bg-(--pastel-lilac-light) border border-(--border-ink) shadow-(--shadow-cute-sm) hover:bg-(--pastel-lilac) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-(--text-ink) bg-(--pastel-lilac-light) border border-(--border-ink) shadow-cute-sm hover:bg-(--pastel-lilac) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
         >
           <Pencil className="h-3 w-3" strokeWidth={2.5} />
           <span>Update Balance</span>

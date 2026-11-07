@@ -334,7 +334,7 @@ export function CreditCardTrackerSection({
             data-testid="credit-card-tracker-section"
         >
             {/* Month Navigation & Add Card Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute)">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink)">
                         <ReceiptText className="h-5 w-5" />
@@ -355,7 +355,7 @@ export function CreditCardTrackerSection({
                     data-testid="credit-card-header-actions"
                 >
                     {/* Month Stepper */}
-                    <div className="flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-(--shadow-cute-sm)">
+                    <div className="flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-cute-sm">
                         <button
                             type="button"
                             aria-label="Previous Month"
@@ -483,7 +483,7 @@ export function CreditCardTrackerSection({
                             <div
                                 key={card.id}
                                 data-testid={`credit-card-card-${card.id}`}
-                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-(--shadow-(--shadow-cute)-sm) hover:shadow-(--shadow-cute) transition-all relative overflow-hidden"
+                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-all relative overflow-hidden"
                             >
                                 {/* Color Top Stripe */}
                                 <div
@@ -499,7 +499,7 @@ export function CreditCardTrackerSection({
                                     <div className="flex items-start justify-between gap-2 mt-1">
                                         <div className="flex items-center gap-2.5">
                                             <div
-                                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-(--shadow-(--shadow-cute)-sm) shrink-0 border border-(--border-ink)"
+                                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
                                                 style={{
                                                     backgroundColor:
                                                         card.color || "#dfc2ff",
@@ -542,7 +542,7 @@ export function CreditCardTrackerSection({
                                                     setCardToEdit(card);
                                                     setIsAddEditCardOpen(true);
                                                 }}
-                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-(--shadow-(--shadow-cute)-sm) active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
                                             </button>
@@ -552,7 +552,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     setCardToDelete(card)
                                                 }
-                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-(--shadow-(--shadow-cute)-sm) active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
@@ -560,7 +560,7 @@ export function CreditCardTrackerSection({
                                     </div>
 
                                     {/* Card Configuration Specs */}
-                                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 text-center text-xs shadow-(--shadow-(--shadow-cute)-sm)">
+                                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 text-center text-xs shadow-cute-sm">
                                         <div>
                                             <span className="text-xs uppercase font-bold text-(--text-muted) block">
                                                 Statement Day
@@ -618,7 +618,7 @@ export function CreditCardTrackerSection({
 
                                                     {dueStatus && (
                                                         <span
-                                                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) ${
+                                                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shadow-cute-sm ${
                                                                 stmt.is_paid
                                                                     ? "bg-(--pastel-mint) text-(--text-ink)"
                                                                     : dueStatus.isOverdue
@@ -676,7 +676,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     handleTogglePaid(stmt)
                                                 }
-                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) transition-all cursor-pointer ${
+                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-all cursor-pointer ${
                                                     stmt.is_paid
                                                         ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
                                                         : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
@@ -696,7 +696,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     handleOpenLogStatement(card)
                                                 }
-                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) transition-colors cursor-pointer shrink-0"
+                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
                                             >
                                                 Edit
                                             </button>
@@ -708,7 +708,7 @@ export function CreditCardTrackerSection({
                                             onClick={() =>
                                                 handleOpenLogStatement(card)
                                             }
-                                            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-(--shadow-(--shadow-cute)-sm) transition-colors cursor-pointer"
+                                            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer"
                                         >
                                             <Plus className="h-3.5 w-3.5 stroke-3" />
                                             <span>Log Statement</span>
@@ -774,7 +774,7 @@ export function CreditCardTrackerSection({
                                     setStmtAmountInput(e.target.value)
                                 }
                                 placeholder="e.g. 842.50"
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2.5 text-base font-bold text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
+                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2.5 text-base font-bold text-(--text-ink) focus:border-purple-700 focus:outline-hidden"
                                 required
                                 autoFocus
                             />
@@ -795,7 +795,7 @@ export function CreditCardTrackerSection({
                                 onChange={(e) =>
                                     setStmtDueDateInput(e.target.value)
                                 }
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
+                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-purple-700 focus:outline-hidden"
                                 required
                             />
                         </div>
@@ -815,7 +815,7 @@ export function CreditCardTrackerSection({
                                     setStmtNotesInput(e.target.value)
                                 }
                                 placeholder="e.g. Miles & dining, Shopee rebate"
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-[#7e22ce] focus:outline-hidden"
+                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-purple-700 focus:outline-hidden"
                             />
                         </div>
                     </ModalBody>

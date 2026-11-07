@@ -18,7 +18,7 @@ function InboxHomeCardInner() {
     return (
         <Card role="region" aria-label="Inbox" variant="butter" elevation="sm" padding="md">
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
                     <Inbox className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />
                 </div>
                 <div className="min-w-0 flex-1">

@@ -146,9 +146,9 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
                 Auto Capture
             </h4>
 
-            <div className="space-y-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-(--shadow-cute-sm)">
+            <div className="space-y-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-cute-sm">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) shadow-(--shadow-cute-sm)">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) shadow-cute-sm">
                         <Smartphone className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0 flex-1">

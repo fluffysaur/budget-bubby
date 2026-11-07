@@ -229,7 +229,7 @@ export function SurplusSweepModal({
 
             <ModalBody className="space-y-4">
                 {/* Celebration callout banner */}
-                <div className="flex items-start gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-3.5 shadow-(--shadow-cute-sm)">
+                <div className="flex items-start gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-3.5 shadow-cute-sm">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-ink)">
                         <Sparkles className="h-5 w-5" strokeWidth={2.5} />
                     </div>
@@ -329,7 +329,7 @@ export function SurplusSweepModal({
                                     key={goal.id}
                                     className={`rounded-xl border-2 transition-all p-3 ${
                                         isSelected
-                                            ? "border-(--border-ink) bg-(--bg-card) shadow-(--shadow-cute-sm)"
+                                            ? "border-(--border-ink) bg-(--bg-card) shadow-cute-sm"
                                             : "border-(--border-subtle) bg-(--bg-cream) opacity-60"
                                     }`}
                                 >

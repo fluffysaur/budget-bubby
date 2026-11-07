@@ -49,7 +49,7 @@ function CustomTooltip({ active, payload, label }: NetWorthCustomTooltipProps) {
     if (!active || !payload || !payload.length) return null;
 
     return (
-        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-(--shadow-cute) text-xs space-y-2 min-w-42.5">
+        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-cute text-xs space-y-2 min-w-42.5">
             <div className="font-bold text-(--text-ink) font-display pb-1 border-b-2 border-(--border-ink)">
                 {label}
             </div>
@@ -106,7 +106,7 @@ export function NetWorthChart({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b-2 border-(--border-ink) gap-3">
                 <div className="shrink-0">
                     <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
                             <TrendingUp className="h-4 w-4" />
                         </div>
                         <h2 className="text-base sm:text-lg font-bold text-(--text-ink) font-display tracking-tight whitespace-nowrap">

@@ -118,14 +118,14 @@ export function SpendTagsOverviewCard({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b-2 border-(--border-ink)">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
             <Tag className="h-4.5 w-4.5" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-(--text-ink) font-display flex items-center gap-2">
               <span>Spend Tags Overview</span>
               {tagAggregates.length > 0 && (
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-(--bg-cream) text-(--text-ink) border border-(--border-ink) shadow-(--shadow-cute-sm)">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-(--bg-cream) text-(--text-ink) border border-(--border-ink) shadow-cute-sm">
                   {tagAggregates.length} {tagAggregates.length === 1 ? 'tag' : 'tags'}
                 </span>
               )}
@@ -138,7 +138,7 @@ export function SpendTagsOverviewCard({
 
         {activeTag && (
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-xs font-bold text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-(--shadow-cute-sm)">
+            <span className="text-xs font-bold text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-cute-sm">
               <Filter className="h-3 w-3" />
               <span>Filtering by #{activeTag}</span>
             </span>
@@ -155,7 +155,7 @@ export function SpendTagsOverviewCard({
       </div>
 
       {tagAggregates.length === 0 ? (
-        <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-6 text-center shadow-(--shadow-cute-sm)">
+        <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-6 text-center shadow-cute-sm">
           <Tag className="h-8 w-8 text-(--text-muted) mx-auto mb-2 opacity-60" />
           <p className="text-xs font-bold text-(--text-ink) font-display">No Spend Tags Recorded</p>
           <p className="text-[11px] text-(--text-muted) max-w-sm mx-auto mt-0.5">
@@ -176,8 +176,8 @@ export function SpendTagsOverviewCard({
                   onClick={() => onSelectTag?.(item.tag)}
                   className={`group relative flex flex-col justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-(--border-ink) bg-(--pastel-lilac) shadow-(--shadow-cute)'
-                      : 'border-(--border-ink) bg-(--bg-cream) hover:bg-(--pastel-butter-light) shadow-(--shadow-cute-sm)'
+                      ? 'border-(--border-ink) bg-(--pastel-lilac) shadow-cute'
+                      : 'border-(--border-ink) bg-(--bg-cream) hover:bg-(--pastel-butter-light) shadow-cute-sm'
                   }`}
                 >
                   <div>

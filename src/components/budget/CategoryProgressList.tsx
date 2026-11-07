@@ -83,8 +83,8 @@ export function CategoryProgressList({
     <div className={`space-y-4 ${className}`}>
       {/* Over Budget Alert Banner */}
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-(--shadow-cute-sm)">
-          <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border-2 border-(--border-ink) shrink-0 shadow-(--shadow-cute-sm)">
+        <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-cute-sm">
+          <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border-2 border-(--border-ink) shrink-0 shadow-cute-sm">
             <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
           </div>
           <div className="text-xs sm:text-sm min-w-0 flex-1">
@@ -143,7 +143,7 @@ export function CategoryProgressList({
               onClick={() => onCategoryClick?.(catDetail.category_id)}
               className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) ${
                 compact ? 'p-3.5 sm:p-4' : 'p-4 sm:p-5'
-              } shadow-(--shadow-cute-sm) transition-all ${
+              } shadow-cute-sm transition-all ${
                 isOverBudget
                   ? 'bg-(--pastel-coral-light)/50'
                   : 'hover:bg-(--pastel-butter-light)/20'

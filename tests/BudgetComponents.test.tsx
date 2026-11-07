@@ -106,14 +106,14 @@ describe('MonthPicker', () => {
     expect(screen.queryByText(/current month/i)).not.toBeInTheDocument();
   });
 
-  it('renders with border-2 and shadow-(--shadow-cute-sm) tokens', () => {
+  it('renders with border-2 and shadow-cute-sm tokens', () => {
     const onChange = vi.fn();
     const { container } = render(<MonthPicker selectedMonth="2026-09" onChangeMonth={onChange} />);
 
     const rootDiv = container.firstChild as HTMLElement;
     expect(rootDiv).toHaveClass('border-2');
     expect(rootDiv).toHaveClass('border-(--border-ink)');
-    expect(rootDiv).toHaveClass('shadow-(--shadow-cute-sm)');
+    expect(rootDiv).toHaveClass('shadow-cute-sm');
   });
 
   it('opens month selector popover when tapping the month display pill', () => {

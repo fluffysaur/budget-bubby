@@ -18,10 +18,10 @@ export interface SegmentedTabsProps<T extends string = string> {
 }
 
 const accentMap = {
-    lilac: "bg-(--pastel-lilac) text-(--text-ink) shadow-(--shadow-cute-sm) border-2 border-(--border-ink)",
-    butter: "bg-(--pastel-butter) text-(--text-ink) shadow-(--shadow-cute-sm) border-2 border-(--border-ink)",
-    mint: "bg-(--pastel-mint) text-(--text-ink) shadow-(--shadow-cute-sm) border-2 border-(--border-ink)",
-    white: "bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) border-2 border-(--border-ink)",
+    lilac: "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm border-2 border-(--border-ink)",
+    butter: "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm border-2 border-(--border-ink)",
+    mint: "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm border-2 border-(--border-ink)",
+    white: "bg-(--bg-card) text-(--text-ink) shadow-cute-sm border-2 border-(--border-ink)",
 };
 
 export function SegmentedTabs<T extends string = string>({

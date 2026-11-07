@@ -8,9 +8,12 @@ Always use canonical Tailwind v4 utilities rather than arbitrary values where st
     - `hover:text-(--text-ink)` (NOT `hover:text-[var(--text-ink)]`)
     - `bg-(--bg-card)` (NOT `bg-[var(--bg-card)]`)
     - `border-(--border-ink)` (NOT `border-[var(--border-ink)]`)
-    - `shadow-(--shadow-cute-sm)` (NOT `shadow-[var(--shadow-cute-sm)]`)
     - Use theme pastel tokens: `bg-(--pastel-lilac-light)`, `bg-(--pastel-butter-light)`, `bg-(--pastel-mint-light)`, `bg-(--pastel-coral-light)`, `bg-(--pastel-pink-light)`.
     - Never use hardcoded arbitrary hex color values (e.g. `bg-[#dfc2ff]` or `bg-[#ffe999]`) when theme CSS variables exist.
+- **Theme Shadow Utilities**: Theme shadows defined in `@theme` must be written directly as utility classes rather than wrapped in variable parens:
+    - `shadow-cute` (NOT `shadow-(--shadow-cute)` or `shadow-[var(--shadow-cute)]`)
+    - `shadow-cute-sm` (NOT `shadow-(--shadow-cute-sm)`)
+    - `shadow-cute-lg` (NOT `shadow-(--shadow-cute-lg)`)
 - **Borders**: Use standard border width tokens:
     - `border-2` (NOT `border-[2px]` or `border-[1.5px]`)
     - `border-t-2` (NOT `border-t-[2px]`)
@@ -65,7 +68,7 @@ Always use canonical Tailwind v4 utilities rather than arbitrary values where st
 
 Budget Bubby uses a tactile, friendly "Warm Oat" aesthetic with neo-brutalist / cute design touches:
 
-- **Borders & Shadows**: Standard `border-2 border-(--border-ink)` and `shadow-(--shadow-cute)` or `shadow-(--shadow-cute-sm)`.
+- **Borders & Shadows**: Standard `border-2 border-(--border-ink)` and `shadow-cute` or `shadow-cute-sm`.
 - **Theme Tokens**: Always prefer project tokens:
     - Backgrounds: `bg-(--bg-canvas)`, `bg-(--bg-cream)`, `bg-(--bg-card)`.
     - Text: `text-(--text-ink)`, `text-(--text-muted)`, `text-(--text-faint)`.
@@ -78,7 +81,7 @@ Never roll custom raw containers, ad-hoc dialogs, or handwritten alert boxes whe
 - **Alert Banners**: Always use `<Alert variant="danger" | "warning" | "info" | "success" title={...}>{children}</Alert>` for form error messages, validation warnings, and feedback banners. Never write inline ad-hoc alert containers (e.g. `p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700`).
 - **Confirmation Dialogs**: Always use `<ConfirmModal isOpen={...} onClose={...} onConfirm={...} title="..." variant="danger" | "warning" | "primary" />` for deletion confirmations and destructive state transitions.
 - **Category Badges**: Always use `<CategoryBadge name={...} color={...} icon={...} size="sm" | "md" />` for displaying category dots, icons, and labels.
-- **Cards & Stats**: Use `<Card variant="..." elevation="tactile" | "sm" | "flat" | "subtle" />` and `<StatCard />`. Use `elevation="sm"` for clean bordered cards with `shadow-(--shadow-cute-sm)`. Use the `footer`, `subtitle`, and `badge` props of `StatCard` for pacing/limits rather than building custom cards from scratch.
+- **Cards & Stats**: Use `<Card variant="..." elevation="tactile" | "sm" | "flat" | "subtle" />` and `<StatCard />`. Use `elevation="sm"` for clean bordered cards with `shadow-cute-sm`. Use the `footer`, `subtitle`, and `badge` props of `StatCard` for pacing/limits rather than building custom cards from scratch.
 - **Buttons**: Always `<Button variant="primary" | "secondary" | "danger" | "butter" | "ghost" | "outline" size="sm" | "md" | "lg" | "icon-sm" | "icon-md" />` with `leftIcon` or `rightIcon`.
 - **Dialogs & Modals**: Always `<AnimatedModal />` with `<ModalHeader />`, `<ModalBody />`, and `<ModalFooter />`.
 - **Badges & Indicators**: Always `<Badge variant="..." />`.

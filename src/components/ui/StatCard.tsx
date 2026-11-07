@@ -28,7 +28,7 @@ export function StatCard({
     tooltip,
     tooltipTitle,
     icon,
-    iconBg = "bg-[#f3e8ff] text-[#6b21a8] dark:bg-[#3b1f54] dark:text-[#dfc2ff]",
+    iconBg = "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
     badge,
     footer,
     variant = "white",
@@ -74,7 +74,7 @@ export function StatCard({
                     </div>
                     {icon && (
                         <div
-                            className={`p-1.5 sm:p-2 rounded-xl border-2 border-(--border-ink) shadow-(--shadow-cute-sm) shrink-0 ${iconBg}`}
+                            className={`p-1.5 sm:p-2 rounded-xl border-2 border-(--border-ink) shadow-cute-sm shrink-0 ${iconBg}`}
                         >
                             {icon}
                         </div>

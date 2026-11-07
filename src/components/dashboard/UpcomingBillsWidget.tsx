@@ -62,12 +62,12 @@ export function UpcomingBillsWidget({
         <div
             role="region"
             aria-label="Upcoming Bills"
-            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-(--shadow-cute) transition-colors ${className}`}
+            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-cute transition-colors ${className}`}
         >
             {/* Header */}
             <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-butter) text-[#1a1a1a] border-2 border-(--border-ink) shadow-(--shadow-cute-sm)">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
                         <CalendarClock className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0">
@@ -84,7 +84,7 @@ export function UpcomingBillsWidget({
                     <button
                         type="button"
                         onClick={onViewAll}
-                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                     >
                         <span>View All</span>
                         <ChevronRight
@@ -99,7 +99,7 @@ export function UpcomingBillsWidget({
             <div className="mt-4">
                 {displayItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-(--border-ink) py-8 text-center bg-(--bg-cream)">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) text-lg mb-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute-sm text-lg mb-2">
                             📋
                         </div>
                         <p className="text-sm font-bold text-(--text-ink) font-display">
@@ -117,10 +117,10 @@ export function UpcomingBillsWidget({
                             return (
                                 <div
                                     key={recurringItem.id}
-                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-card)"
+                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-all hover:bg-(--bg-card)"
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-[#342445] border-2 border-(--border-ink) text-(--text-ink) shadow-(--shadow-cute-sm) shrink-0">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
                                             <Bell className="h-4 w-4" strokeWidth={2.5} />
                                         </div>
                                         <div className="min-w-0 flex-1">

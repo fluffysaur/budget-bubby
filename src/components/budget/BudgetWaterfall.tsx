@@ -177,7 +177,7 @@ export function BudgetWaterfall({
                 </div>
             </div>
 
-            <div className="rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-(--shadow-cute-sm)">
+            <div className="rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-cute-sm">
                 <FlowRow label="Take-home" amount={afterDeductions} bold />
             </div>
 

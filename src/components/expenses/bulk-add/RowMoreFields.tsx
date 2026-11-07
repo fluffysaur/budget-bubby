@@ -71,7 +71,7 @@ export function RowMoreFields({
                     }
                     className={`min-h-11 shrink-0 rounded-xl border-2 px-3 text-sm font-bold text-(--text-ink) active:translate-x-0.5 active:translate-y-0.5 ${
                         row.isShared
-                            ? "border-(--border-ink) bg-(--pastel-mint-light) shadow-(--shadow-cute-sm)"
+                            ? "border-(--border-ink) bg-(--pastel-mint-light) shadow-cute-sm"
                             : "border-(--border-subtle) bg-(--bg-card)"
                     }`}
                 >

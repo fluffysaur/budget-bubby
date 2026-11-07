@@ -20,7 +20,7 @@
 
 ## Global Constraints
 
-- Use canonical Tailwind v4 utilities (`bg-(--bg-card)`, `border-(--border-ink)`, `shadow-(--shadow-cute)`, `stroke-3` or `strokeWidth={2.5}`).
+- Use canonical Tailwind v4 utilities (`bg-(--bg-card)`, `border-(--border-ink)`, `shadow-cute`, `stroke-3` or `strokeWidth={2.5}`).
 - 4 spaces indentation (`tabWidth: 4`), double quotes (`" "`), semicolons (`semi: true`), multi-line trailing commas.
 - Reuse existing primitives in `src/components/ui/` (`Card`, `StatCard`, `Button`, `AnimatedModal`, `Badge`, `CurrencyText`, `TooltipPopover`, `TruncatedText`).
 - Fast refresh hygiene: no non-component exports in `.tsx` files without `react-refresh/only-export-components` annotation.

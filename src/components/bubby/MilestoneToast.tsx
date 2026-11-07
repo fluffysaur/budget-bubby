@@ -45,7 +45,7 @@ export function MilestoneToast({
                 role="status"
                 aria-live="polite"
                 data-testid="milestone-toast"
-                className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-(--shadow-cute) animate-toast-in"
+                className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-cute animate-toast-in"
             >
                 <div className="relative flex h-12 w-12 shrink-0 items-end justify-center overflow-hidden rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter-light) pt-0.5">
                     <Bubby

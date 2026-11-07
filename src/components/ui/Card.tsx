@@ -44,11 +44,11 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         ref,
     ) => {
         let borderAndShadow =
-            "border-2 border-(--border-ink) shadow-(--shadow-cute)";
+            "border-2 border-(--border-ink) shadow-cute";
 
         if (elevation === "sm") {
             borderAndShadow =
-                "border-2 border-(--border-ink) shadow-(--shadow-cute-sm)";
+                "border-2 border-(--border-ink) shadow-cute-sm";
         } else if (elevation === "flat") {
             borderAndShadow = "border-2 border-(--border-ink)";
         } else if (elevation === "subtle") {
@@ -56,7 +56,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         }
 
         const interactiveStyles = interactive
-            ? "cursor-pointer transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-(--shadow-cute-lg) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            ? "cursor-pointer transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-cute-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
             : "";
 
         return (

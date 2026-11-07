@@ -224,7 +224,7 @@ export function CentsFirstAmountInput({
       {/* Display & Numeric Input Field */}
       <div
         onClick={() => internalInputRef.current?.focus()}
-        className="relative flex items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-4 shadow-(--shadow-cute-sm) transition-all focus-within:ring-2 focus-within:ring-(--pastel-lilac) focus-within:bg-(--bg-card) cursor-text"
+        className="relative flex items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-4 shadow-cute-sm transition-all focus-within:ring-2 focus-within:ring-(--pastel-lilac) focus-within:bg-(--bg-card) cursor-text"
       >
         <span className="mr-2 text-2xl font-bold font-mono-num text-(--text-muted) select-none">
           {currencySymbol}
@@ -267,7 +267,7 @@ export function CentsFirstAmountInput({
               key={digit}
               type="button"
               onClick={() => pushDigit(digit)}
-              className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-xl font-bold font-mono-num text-(--text-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
+              className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-xl font-bold font-mono-num text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
             >
               {digit}
             </button>
@@ -275,14 +275,14 @@ export function CentsFirstAmountInput({
           <button
             type="button"
             onClick={pushDoubleZero}
-            className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-lg font-bold font-mono-num text-(--text-muted) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
+            className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-lg font-bold font-mono-num text-(--text-muted) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
           >
             00
           </button>
           <button
             type="button"
             onClick={() => pushDigit(0)}
-            className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-xl font-bold font-mono-num text-(--text-ink) shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
+            className="flex h-12 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-xl font-bold font-mono-num text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-butter-light) cursor-pointer transition-transform"
           >
             0
           </button>
@@ -290,7 +290,7 @@ export function CentsFirstAmountInput({
             type="button"
             onClick={popDigit}
             aria-label="Backspace"
-            className="flex h-12 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-rose-700 shadow-(--shadow-cute-sm) active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-coral) cursor-pointer transition-transform"
+            className="flex h-12 items-center justify-center rounded-xl bg-(--pastel-coral-light) border-2 border-(--border-ink) text-rose-700 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 hover:bg-(--pastel-coral) cursor-pointer transition-transform"
           >
             <Delete className="h-5 w-5" />
           </button>

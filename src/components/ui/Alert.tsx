@@ -30,28 +30,28 @@ const variantStyles: Record<
 > = {
     danger: {
         container:
-            "border-2 border-(--border-ink) bg-(--pastel-coral-light) text-rose-900 dark:bg-rose-950/40 dark:text-rose-200 shadow-(--shadow-cute-sm)",
+            "border-2 border-(--border-ink) bg-(--pastel-coral-light) text-rose-900 dark:bg-rose-950/40 dark:text-rose-200 shadow-cute-sm",
         title: "text-rose-950 dark:text-rose-100",
         icon: "text-rose-600 dark:text-rose-400",
         defaultIcon: AlertTriangle,
     },
     warning: {
         container:
-            "border-2 border-(--border-ink) bg-(--pastel-butter-light) text-amber-950 dark:bg-amber-950/40 dark:text-amber-200 shadow-(--shadow-cute-sm)",
+            "border-2 border-(--border-ink) bg-(--pastel-butter-light) text-amber-950 dark:bg-amber-950/40 dark:text-amber-200 shadow-cute-sm",
         title: "text-amber-950 dark:text-amber-100",
         icon: "text-amber-700 dark:text-amber-400",
         defaultIcon: AlertCircle,
     },
     info: {
         container:
-            "border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-purple-950 dark:bg-purple-950/40 dark:text-purple-200 shadow-(--shadow-cute-sm)",
+            "border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-purple-950 dark:bg-purple-950/40 dark:text-purple-200 shadow-cute-sm",
         title: "text-purple-950 dark:text-purple-100",
         icon: "text-purple-700 dark:text-purple-400",
         defaultIcon: Info,
     },
     success: {
         container:
-            "border-2 border-(--border-ink) bg-(--pastel-mint-light) text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-(--shadow-cute-sm)",
+            "border-2 border-(--border-ink) bg-(--pastel-mint-light) text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-cute-sm",
         title: "text-emerald-950 dark:text-emerald-100",
         icon: "text-emerald-700 dark:text-emerald-400",
         defaultIcon: CheckCircle2,

@@ -29,7 +29,7 @@ export function DayChips({ value, onChange, disabled }: DayChipsProps) {
     const chipClass = (selected: boolean) =>
         `${CHIP} ${
             selected
-                ? "bg-(--pastel-lilac-light) shadow-(--shadow-cute-sm)"
+                ? "bg-(--pastel-lilac-light) shadow-cute-sm"
                 : "bg-(--bg-card)"
         }`;
 

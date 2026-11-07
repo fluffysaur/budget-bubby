@@ -71,7 +71,7 @@ export function ConfettiBurst({ onDone, pieces = MAX_PIECES }: ConfettiBurstProp
             <div
                 aria-hidden="true"
                 data-testid="confetti-static"
-                className="pointer-events-none fixed left-1/2 top-28 z-9998 -translate-x-1/2 rounded-full border-2 border-(--border-ink) bg-(--pastel-butter) p-2 shadow-(--shadow-cute-sm)"
+                className="pointer-events-none fixed left-1/2 top-28 z-9998 -translate-x-1/2 rounded-full border-2 border-(--border-ink) bg-(--pastel-butter) p-2 shadow-cute-sm"
             >
                 <Sparkles className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />
             </div>

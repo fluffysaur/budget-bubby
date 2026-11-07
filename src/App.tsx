@@ -66,26 +66,26 @@ export function RouteSkeletonLoader() {
     >
       {/* Header bar placeholder */}
       <div className="flex items-center justify-between">
-        <div className="h-8 bg-[#d8d0c7]/60 dark:bg-slate-800 rounded-xl w-48" />
-        <div className="h-8 bg-[#d8d0c7]/60 dark:bg-slate-800 rounded-xl w-28" />
+        <div className="h-8 bg-(--border-subtle)/60 dark:bg-slate-800 rounded-xl w-48" />
+        <div className="h-8 bg-(--border-subtle)/60 dark:bg-slate-800 rounded-xl w-28" />
       </div>
 
       {/* Hero card / 3-column stats skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)" />
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm)" />
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-(--shadow-cute-sm) sm:col-span-2 lg:col-span-1" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-cute-sm" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-cute-sm" />
+        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-cute-sm sm:col-span-2 lg:col-span-1" />
       </div>
 
       {/* Main card placeholder */}
-      <div className="h-72 bg-(--bg-card) rounded-2xl p-6 border-2 border-(--border-ink) shadow-(--shadow-cute) flex flex-col justify-between">
-        <div className="h-6 bg-[#d8d0c7]/70 dark:bg-slate-700 rounded-lg w-1/4" />
+      <div className="h-72 bg-(--bg-card) rounded-2xl p-6 border-2 border-(--border-ink) shadow-cute flex flex-col justify-between">
+        <div className="h-6 bg-(--border-subtle)/70 dark:bg-slate-700 rounded-lg w-1/4" />
         <div className="space-y-3">
-          <div className="h-4 bg-[#d8d0c7]/50 dark:bg-slate-700/60 rounded-md w-full" />
-          <div className="h-4 bg-[#d8d0c7]/50 dark:bg-slate-700/60 rounded-md w-5/6" />
-          <div className="h-4 bg-[#d8d0c7]/40 dark:bg-slate-700/40 rounded-md w-4/6" />
+          <div className="h-4 bg-(--border-subtle)/50 dark:bg-slate-700/60 rounded-md w-full" />
+          <div className="h-4 bg-(--border-subtle)/50 dark:bg-slate-700/60 rounded-md w-5/6" />
+          <div className="h-4 bg-(--border-subtle)/40 dark:bg-slate-700/40 rounded-md w-4/6" />
         </div>
-        <div className="h-4 bg-[#d8d0c7]/40 dark:bg-slate-700/40 rounded-md w-1/3" />
+        <div className="h-4 bg-(--border-subtle)/40 dark:bg-slate-700/40 rounded-md w-1/3" />
       </div>
     </div>
   );
@@ -286,7 +286,7 @@ export function AppShell() {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#dfc2ff] border-t-transparent" />
+          <div className="h-9 w-9 animate-spin rounded-full border-3 border-(--pastel-lilac) border-t-transparent" />
           <span className="text-xs font-bold text-(--text-muted) tracking-wider uppercase font-mono-num">Loading Budget Bubby...</span>
         </div>
       </div>
