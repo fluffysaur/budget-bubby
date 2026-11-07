@@ -17,6 +17,8 @@ import { readBubbyStore } from "../../lib/bubby/storage";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Bubby } from "../bubby/Bubby";
 import type { BubbyBody } from "../../lib/bubby/body";
+import { m, AnimatePresence } from "motion/react";
+import { pop } from "../../lib/motion";
 
 export interface ExpenseSuccessCelebrationProps {
     expense?: Expense | null;
@@ -99,57 +101,62 @@ export function ExpenseSuccessCelebration({
         return () => window.removeEventListener("expenseAdded", handleGlobalExpenseAdded);
     }, [triggerCelebration]);
 
-    if (!active) return null;
-    const activeExpense = active.expense;
+    const activeExpense = active?.expense;
 
     return (
-        <div
-            role="status"
-            aria-live="polite"
-            onClick={handleDismiss}
-            className="fixed top-16 sm:top-20 left-1/2 z-9999 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] px-2 animate-toast-in select-none cursor-pointer"
-        >
-            <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl bg-(--bg-card) text-(--text-ink) pl-2 pr-3 sm:pr-4 py-1.5 sm:py-2 shadow-cute border-2 border-(--border-ink) max-w-full active:scale-95 transition-transform">
-                {/* Cheering Bubby badge */}
-                <div className="flex h-9 w-9 shrink-0 items-end justify-center overflow-hidden rounded-xl bg-(--pastel-mint) border-2 border-(--border-ink) pt-0.5">
-                    <Bubby
-                        key={active.id}
-                        body={active.body}
-                        reaction="cheer"
-                        size="xs"
-                        className="h-8 w-8"
-                        decorative
-                    />
-                </div>
-
-                {/* Details Container */}
-                <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold min-w-0 flex-1">
-                    <span className="text-emerald-700 dark:text-emerald-300 font-extrabold shrink-0">
-                        Cha-ching!
-                    </span>
-                    <span className="shrink-0">
-                        <CurrencyText amount={activeExpense.amount} />
-                    </span>
-                    <span className="text-(--text-muted) shrink-0">•</span>
-                    <span className="truncate max-w-28 sm:max-w-48 text-(--text-ink) font-medium">
-                        {activeExpense.item}
-                    </span>
-                </div>
-
-                {/* Dismiss Action Hint */}
-                <button
-                    type="button"
-                    aria-label="Dismiss notification"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleDismiss();
-                    }}
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors"
+        <AnimatePresence>
+            {active && activeExpense && (
+                <m.div
+                    key={active.id}
+                    role="status"
+                    aria-live="polite"
+                    onClick={handleDismiss}
+                    {...pop}
+                    className="fixed top-16 sm:top-20 left-1/2 z-9999 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] px-2 select-none cursor-pointer"
                 >
-                    <X className="h-3.5 w-3.5" />
-                </button>
-            </div>
-        </div>
+                    <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl bg-(--bg-card) text-(--text-ink) pl-2 pr-3 sm:pr-4 py-1.5 sm:py-2 shadow-cute border-2 border-(--border-ink) max-w-full active:scale-95 transition-transform">
+                        {/* Cheering Bubby badge */}
+                        <div className="flex h-9 w-9 shrink-0 items-end justify-center overflow-hidden rounded-xl bg-(--pastel-mint) border-2 border-(--border-ink) pt-0.5">
+                            <Bubby
+                                key={active.id}
+                                body={active.body}
+                                reaction="cheer"
+                                size="xs"
+                                className="h-8 w-8"
+                                decorative
+                            />
+                        </div>
+
+                        {/* Details Container */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold min-w-0 flex-1">
+                            <span className="text-emerald-700 dark:text-emerald-300 font-extrabold shrink-0">
+                                Cha-ching!
+                            </span>
+                            <span className="shrink-0">
+                                <CurrencyText amount={activeExpense.amount} />
+                            </span>
+                            <span className="text-(--text-muted) shrink-0">•</span>
+                            <span className="truncate max-w-28 sm:max-w-48 text-(--text-ink) font-medium">
+                                {activeExpense.item}
+                            </span>
+                        </div>
+
+                        {/* Dismiss Action Hint */}
+                        <button
+                            type="button"
+                            aria-label="Dismiss notification"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDismiss();
+                            }}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </m.div>
+            )}
+        </AnimatePresence>
     );
 }
 

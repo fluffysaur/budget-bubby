@@ -32,6 +32,7 @@ import {
     useGoalsQuery,
     useExpensesQuery,
     useCategoriesQuery,
+    useInvalidateFinance,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
 import { GoalCard } from "../components/goals/GoalCard";
@@ -39,6 +40,8 @@ import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
 import { QuickDepositModal } from "../components/goals/QuickDepositModal";
 import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import type { SavingsGoal, Expense } from "../types/finance";
+import { m, AnimatePresence } from "motion/react";
+import { listItem } from "../lib/motion";
 
 export interface GoalsPageProps {
     className?: string;
@@ -57,8 +60,8 @@ export function GoalsPage({
         activeMember,
         overview,
         members: ctxMembers,
-        refreshData: refreshHousehold,
     } = useHousehold();
+    const { invalidateGoals, invalidateExpenses } = useInvalidateFinance();
 
     // Cached TanStack Queries
     const {
@@ -288,15 +291,16 @@ export function GoalsPage({
     };
 
     const handleGoalSaved = async () => {
-        await refreshHousehold();
+        invalidateGoals();
     };
 
     const handleDepositSaved = async () => {
-        await refreshHousehold();
+        invalidateGoals();
     };
 
     const handleSpendSaved = async () => {
-        await refreshHousehold();
+        invalidateGoals();
+        invalidateExpenses();
     };
 
     return (
@@ -451,17 +455,20 @@ export function GoalsPage({
                     role="tabpanel"
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
-                    {displayedGoals.map((goal) => (
-                        <GoalCard
-                            key={goal.id}
-                            goal={goal}
-                            linkedExpenses={goalExpensesMap.get(goal.id) || []}
-                            onEdit={handleOpenEditModal}
-                            onQuickDeposit={handleOpenDepositModal}
-                            onSpendFromGoal={handleOpenSpendModal}
-                            isHighlighted={highlightedGoalId === goal.id}
-                        />
-                    ))}
+                    <AnimatePresence initial={false}>
+                        {displayedGoals.map((goal) => (
+                            <m.div key={goal.id} {...listItem}>
+                                <GoalCard
+                                    goal={goal}
+                                    linkedExpenses={goalExpensesMap.get(goal.id) || []}
+                                    onEdit={handleOpenEditModal}
+                                    onQuickDeposit={handleOpenDepositModal}
+                                    onSpendFromGoal={handleOpenSpendModal}
+                                    isHighlighted={highlightedGoalId === goal.id}
+                                />
+                            </m.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
             )}
 

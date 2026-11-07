@@ -113,3 +113,5 @@ export function prefersReducedMotion(): boolean {
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
     );
 }
+
+export { m, AnimatePresence } from "motion/react";

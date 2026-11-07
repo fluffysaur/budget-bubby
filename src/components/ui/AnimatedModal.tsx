@@ -198,6 +198,47 @@ export function AnimatedModal({
         return checkContainerDirty(drawerRef.current);
     }, [isDirtyProp]);
 
+    // Touch device keyboard handling: scroll focused input into view on visualViewport resize
+    useEffect(() => {
+        if (!shouldRender || !isDrawerOnMobile) return;
+        const drawerEl = drawerRef.current;
+        if (!drawerEl || typeof window === "undefined" || !window.visualViewport) return;
+
+        let focusedInput: HTMLElement | null = null;
+
+        const handleFocusIn = (e: FocusEvent) => {
+            const target = e.target as HTMLElement | null;
+            if (
+                target &&
+                (target instanceof HTMLInputElement ||
+                    target instanceof HTMLTextAreaElement ||
+                    target instanceof HTMLSelectElement)
+            ) {
+                focusedInput = target;
+            }
+        };
+
+        const handleFocusOut = () => {
+            focusedInput = null;
+        };
+
+        const handleViewportResize = () => {
+            if (focusedInput && document.activeElement === focusedInput) {
+                focusedInput.scrollIntoView({ block: "center", behavior: "smooth" });
+            }
+        };
+
+        drawerEl.addEventListener("focusin", handleFocusIn);
+        drawerEl.addEventListener("focusout", handleFocusOut);
+        window.visualViewport.addEventListener("resize", handleViewportResize);
+
+        return () => {
+            drawerEl.removeEventListener("focusin", handleFocusIn);
+            drawerEl.removeEventListener("focusout", handleFocusOut);
+            window.visualViewport?.removeEventListener("resize", handleViewportResize);
+        };
+    }, [shouldRender, isDrawerOnMobile]);
+
     const handleRequestClose = useCallback(
         (options?: { force?: boolean } | boolean) => {
             const force =

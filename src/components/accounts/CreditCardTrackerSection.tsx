@@ -10,15 +10,9 @@
 
 import {
     useState,
-    useEffect,
-    useCallback,
-    useRef,
     useMemo,
-    useContext,
     type FormEvent,
 } from "react";
-import { QueryClientContext, useQueryClient } from "@tanstack/react-query";
-import { queryClient as defaultQueryClient } from "../../lib/queryClient";
 import {
     CreditCard as CreditCardIcon,
     Plus,
@@ -39,6 +33,8 @@ import { StatCard } from "../ui/StatCard";
 import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { m, AnimatePresence } from "motion/react";
+import { listItem } from "../../lib/motion";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import {
@@ -49,6 +45,11 @@ import {
     addMonths,
 } from "../../lib/dateUtils";
 import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
+import {
+    useCreditCardsQuery,
+    useCreditCardStatementsQuery,
+    useInvalidateFinance,
+} from "../../hooks/useFinanceQueries";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
 import type {
     CreditCard,
@@ -126,19 +127,24 @@ export function CreditCardTrackerSection({
     activeMemberId,
     className = "",
 }: CreditCardTrackerSectionProps) {
-    const contextQueryClient = useContext(QueryClientContext);
-    const queryClient = useQueryClient(contextQueryClient ?? defaultQueryClient);
+    const { invalidateCreditCards } = useInvalidateFinance();
 
     const [selectedMonth, setSelectedMonth] =
         useState<string>(getCurrentMonth);
     useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
-    const [cards, setCards] = useState<CreditCard[]>([]);
-    const [statements, setStatements] = useState<CreditCardStatement[]>([]);
-    // Month whose data is currently loaded; skeletons show until it matches selectedMonth
-    const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
-    const isLoading = loadedMonth !== selectedMonth;
-    const latestMonthRef = useRef<string>(selectedMonth);
+    const { data: cardsData, isLoading: cardsLoading } = useCreditCardsQuery();
+    const {
+        data: statementsData,
+        isLoading: statementsLoading,
+        isPlaceholderData: statementsPlaceholder,
+    } = useCreditCardStatementsQuery(selectedMonth);
+
+    const cards = useMemo(() => cardsData || [], [cardsData]);
+    const statements = useMemo(() => statementsData || [], [statementsData]);
+    const isLoading =
+        (cardsLoading && !cardsData) ||
+        (statementsLoading && !statementsData);
 
     // Card modal states
     const [isAddEditCardOpen, setIsAddEditCardOpen] = useState<boolean>(false);
@@ -158,30 +164,6 @@ export function CreditCardTrackerSection({
 
     // Delete card confirmation
     const [cardToDelete, setCardToDelete] = useState<CreditCard | null>(null);
-
-    const loadData = useCallback(async () => {
-        latestMonthRef.current = selectedMonth;
-        try {
-            const [allCards, monthStatements] = await Promise.all([
-                financeService.getCreditCards(),
-                financeService.getCreditCardStatements(selectedMonth),
-            ]);
-            // Ignore responses for a month the user has already switched away from
-            if (latestMonthRef.current !== selectedMonth) return;
-            setCards(allCards || []);
-            setStatements(monthStatements || []);
-        } catch (err) {
-            console.error("Failed to load credit cards or statements:", err);
-        } finally {
-            if (latestMonthRef.current === selectedMonth) {
-                setLoadedMonth(selectedMonth);
-            }
-        }
-    }, [selectedMonth]);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
 
     // Filter cards by perspective
     const filteredCards = useMemo(() => {
@@ -239,10 +221,7 @@ export function CreditCardTrackerSection({
                 notes: stmt.notes,
             };
             await financeService.upsertCreditCardStatement(input);
-            queryClient.invalidateQueries({
-                queryKey: ["finance", "credit-card-statements"],
-            });
-            await loadData();
+            invalidateCreditCards();
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
         }
@@ -301,10 +280,7 @@ export function CreditCardTrackerSection({
                 is_paid: existingStatement ? existingStatement.is_paid : false,
                 paid_at: existingStatement ? existingStatement.paid_at : null,
             });
-            queryClient.invalidateQueries({
-                queryKey: ["finance", "credit-card-statements"],
-            });
-            await loadData();
+            invalidateCreditCards();
             setIsLogStatementOpen(false);
         } catch (err: unknown) {
             setStmtError(
@@ -319,10 +295,7 @@ export function CreditCardTrackerSection({
         try {
             await financeService.deleteCreditCard(cardId);
             setCardToDelete(null);
-            queryClient.invalidateQueries({
-                queryKey: ["finance", "credit-card-statements"],
-            });
-            await loadData();
+            invalidateCreditCards();
         } catch (err) {
             console.error("Failed to delete credit card:", err);
         }
@@ -397,8 +370,9 @@ export function CreditCardTrackerSection({
                 </div>
             </div>
 
-            {/* 3 Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* 3 Summary Cards & Card Listing (dimmed during month switch) */}
+            <div className={statementsPlaceholder ? "space-y-4 opacity-60 transition-opacity" : "space-y-4 transition-opacity"}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     title="Total CC Bill Due this Month"
                     loading={isLoading}
@@ -466,25 +440,27 @@ export function CreditCardTrackerSection({
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                     data-testid="credit-card-list"
                 >
-                    {filteredCards.map((card) => {
-                        const stmt = statementMap.get(card.id);
-                        const owner = members.find(
-                            (m) => m.id === card.owner_id,
-                        );
-                        const dueStatus = stmt
-                            ? getRelativeDueLabel(
-                                  stmt.due_date,
-                                  stmt.is_paid,
-                                  stmt.paid_at,
-                              )
-                            : null;
+                    <AnimatePresence initial={false}>
+                        {filteredCards.map((card) => {
+                            const stmt = statementMap.get(card.id);
+                            const owner = members.find(
+                                (m) => m.id === card.owner_id,
+                            );
+                            const dueStatus = stmt
+                                ? getRelativeDueLabel(
+                                      stmt.due_date,
+                                      stmt.is_paid,
+                                      stmt.paid_at,
+                                  )
+                                : null;
 
-                        return (
-                            <div
-                                key={card.id}
-                                data-testid={`credit-card-card-${card.id}`}
-                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
-                            >
+                            return (
+                                <m.div
+                                    key={card.id}
+                                    data-testid={`credit-card-card-${card.id}`}
+                                    {...listItem}
+                                    className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
+                                >
                                 {/* Color Top Stripe */}
                                 <div
                                     className="absolute top-0 left-0 right-0 h-1.5"
@@ -715,11 +691,13 @@ export function CreditCardTrackerSection({
                                         </button>
                                     )}
                                 </div>
-                            </div>
+                            </m.div>
                         );
                     })}
-                </div>
+                </AnimatePresence>
+            </div>
             )}
+            </div>
 
             {/* Add / Edit Card Modal */}
             <AddEditCreditCardModal
@@ -728,7 +706,7 @@ export function CreditCardTrackerSection({
                 card={cardToEdit}
                 members={members}
                 defaultOwnerId={activeMemberId}
-                onCardSaved={loadData}
+                onCardSaved={invalidateCreditCards}
             />
 
             {/* Log / Edit Statement Modal */}

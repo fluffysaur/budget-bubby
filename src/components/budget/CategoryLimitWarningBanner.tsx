@@ -22,6 +22,8 @@ import { financeService } from '../../services/financeService';
 import { getDefaultNotificationPreferences } from '../../data/mockSeedData';
 import type { Expense, MonthlyBudgetCategoryDetail, NotificationPreferences } from '../../types/finance';
 import { CurrencyText } from '../ui/CurrencyText';
+import { m, AnimatePresence } from 'motion/react';
+import { collapse, pop } from '../../lib/motion';
 
 export interface CategoryLimitWarningBannerProps {
   categories?: MonthlyBudgetCategoryDetail[];
@@ -236,152 +238,164 @@ export function CategoryLimitWarningBanner({
   return (
     <>
       {/* Immediate Toast Notification (Floating) */}
-      {toast && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="fixed top-[calc(1.25rem+env(safe-area-inset-top))] left-4 right-4 sm:left-auto sm:right-5 z-50 max-w-sm sm:max-w-md sm:w-full animate-enter pointer-events-auto"
-        >
-          <div
-            className={`p-4 rounded-2xl border-2 border-(--border-ink) shadow-cute-lg flex items-start gap-3 backdrop-blur-md ${
-              toast.type === 'exceeded'
-                ? 'bg-(--accent-coral-subtle) text-(--accent-coral-ink) dark:bg-rose-950/40 dark:text-rose-300'
-                : 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
-            }`}
+      <AnimatePresence>
+        {toast && (
+          <m.div
+            key="limit-toast"
+            role="alert"
+            aria-live="assertive"
+            {...pop}
+            className="fixed top-[calc(1.25rem+env(safe-area-inset-top))] left-4 right-4 sm:left-auto sm:right-5 z-50 max-w-sm sm:max-w-md sm:w-full pointer-events-auto"
           >
             <div
-              className={`p-2 rounded-xl border border-(--border-ink) shadow-cute-sm shrink-0 ${
+              className={`p-4 rounded-2xl border-2 border-(--border-ink) shadow-cute-lg flex items-start gap-3 backdrop-blur-md ${
                 toast.type === 'exceeded'
-                  ? 'bg-(--accent-coral) text-white'
-                  : 'bg-(--pastel-butter) text-(--text-ink)'
+                  ? 'bg-(--accent-coral-subtle) text-(--accent-coral-ink) dark:bg-rose-950/40 dark:text-rose-300'
+                  : 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
               }`}
             >
-              {toast.type === 'exceeded' ? (
-                <ShieldAlert className="h-5 w-5" strokeWidth={2.5} />
-              ) : (
-                <AlertTriangle className="h-5 w-5" strokeWidth={2.5} />
-              )}
+              <div
+                className={`p-2 rounded-xl border border-(--border-ink) shadow-cute-sm shrink-0 ${
+                  toast.type === 'exceeded'
+                    ? 'bg-(--accent-coral) text-white'
+                    : 'bg-(--pastel-butter) text-(--text-ink)'
+                }`}
+              >
+                {toast.type === 'exceeded' ? (
+                  <ShieldAlert className="h-5 w-5" strokeWidth={2.5} />
+                ) : (
+                  <AlertTriangle className="h-5 w-5" strokeWidth={2.5} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 pr-1">
+                <h4 className="text-xs font-black uppercase tracking-wider mb-0.5 font-display">
+                  {toast.title}
+                </h4>
+                <p className="text-xs font-bold leading-relaxed">
+                  {toast.message}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                aria-label="Dismiss notification"
+                className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="flex-1 min-w-0 pr-1">
-              <h4 className="text-xs font-black uppercase tracking-wider mb-0.5 font-display">
-                {toast.title}
-              </h4>
-              <p className="text-xs font-bold leading-relaxed">
-                {toast.message}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              aria-label="Dismiss notification"
-              className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
+          </m.div>
+        )}
+      </AnimatePresence>
 
       {/* Persistent Warning Banner (In-Flow) */}
-      {hasAnyAlerts && (
-        <div
-          data-testid="category-limit-warning-banner"
-          role="region"
-          aria-label="Category Budget Guardrails"
-          className={`space-y-2.5 ${className}`}
-        >
-          {/* Exceeded Cap Alert (Rose) */}
-          {shownExceeded.length > 0 && (
+      <AnimatePresence>
+        {hasAnyAlerts && (
+          <m.div
+            key="category-limit-banner"
+            {...collapse}
+            className={`space-y-2.5 ${className}`}
+          >
             <div
-              data-testid="category-limit-exceeded-banner"
-              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-colors"
+              data-testid="category-limit-warning-banner"
+              role="region"
+              aria-label="Category Budget Guardrails"
+              className="space-y-2.5"
             >
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border border-(--border-ink) shrink-0 mt-0.5">
-                  <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs font-black uppercase tracking-wider text-(--accent-coral-ink) dark:text-rose-300 font-display">
-                      Budget Cap Exceeded ({exceededAlerts.length})
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {shownExceeded.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between gap-2 text-xs font-bold text-(--accent-coral-ink) dark:text-rose-300 flex-wrap"
-                      >
-                        <span>
-                          {item.name} has exceeded cap by <CurrencyText amount={item.over} />!
-                        </span>
-                        <span className="text-[11px] font-mono-num opacity-90">
-                          <CurrencyText amount={item.spent} /> of <CurrencyText amount={item.allocated} /> ({item.percentage}%)
+              {/* Exceeded Cap Alert (Rose) */}
+              {shownExceeded.length > 0 && (
+                <div
+                  data-testid="category-limit-exceeded-banner"
+                  className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border border-(--border-ink) shrink-0 mt-0.5">
+                      <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-xs font-black uppercase tracking-wider text-(--accent-coral-ink) dark:text-rose-300 font-display">
+                          Budget Cap Exceeded ({exceededAlerts.length})
                         </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Nearing Cap Warning (Amber) */}
-          {shownWarning.length > 0 && (
-            <div
-              data-testid="category-limit-nearing-banner"
-              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-cute-sm transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shrink-0 mt-0.5">
-                  <AlertTriangle className="h-4 w-4" strokeWidth={2.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 font-display">
-                      Nearing Limit Warning ({warningAlerts.length})
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {shownWarning.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between gap-2 text-xs font-bold text-amber-800 dark:text-amber-200 flex-wrap"
-                      >
-                        <span>
-                          {item.name} is at {item.percentage}% (<CurrencyText amount={item.spent} /> of <CurrencyText amount={item.allocated} />) — <CurrencyText amount={item.left} /> left
-                        </span>
-                        {onNavigateCategory && (
-                          <button
-                            type="button"
-                            onClick={() => onNavigateCategory(item.id)}
-                            className="inline-flex items-center gap-1 text-[11px] font-black text-amber-800 dark:text-amber-200 hover:underline cursor-pointer"
+                      <div className="space-y-1">
+                        {shownExceeded.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between gap-2 text-xs font-bold text-(--accent-coral-ink) dark:text-rose-300 flex-wrap"
                           >
-                            <span>View</span>
-                            <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
-                          </button>
-                        )}
+                            <span>
+                              {item.name} has exceeded cap by <CurrencyText amount={item.over} />!
+                            </span>
+                            <span className="text-[11px] font-mono-num opacity-90">
+                              <CurrencyText amount={item.spent} /> of <CurrencyText amount={item.allocated} /> ({item.percentage}%)
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {hiddenCount > 0 && (
-            <button
-              type="button"
-              data-testid="category-limit-more"
-              onClick={() => onNavigateCategory?.('')}
-              className="inline-flex items-center gap-1 px-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
-            >
-              <span>+{hiddenCount} more</span>
-              <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
-            </button>
-          )}
-        </div>
-      )}
+              {/* Nearing Cap Warning (Amber) */}
+              {shownWarning.length > 0 && (
+                <div
+                  data-testid="category-limit-nearing-banner"
+                  className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-cute-sm transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shrink-0 mt-0.5">
+                      <AlertTriangle className="h-4 w-4" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 font-display">
+                          Nearing Limit Warning ({warningAlerts.length})
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {shownWarning.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between gap-2 text-xs font-bold text-amber-800 dark:text-amber-200 flex-wrap"
+                          >
+                            <span>
+                              {item.name} is at {item.percentage}% (<CurrencyText amount={item.spent} /> of <CurrencyText amount={item.allocated} />) — <CurrencyText amount={item.left} /> left
+                            </span>
+                            {onNavigateCategory && (
+                              <button
+                                type="button"
+                                onClick={() => onNavigateCategory(item.id)}
+                                className="inline-flex items-center gap-1 text-[11px] font-black text-amber-800 dark:text-amber-200 hover:underline cursor-pointer"
+                              >
+                                <span>View</span>
+                                <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {hiddenCount > 0 && (
+                <button
+                  type="button"
+                  data-testid="category-limit-more"
+                  onClick={() => onNavigateCategory?.('')}
+                  className="inline-flex items-center gap-1 px-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                >
+                  <span>+{hiddenCount} more</span>
+                  <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
+                </button>
+              )}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

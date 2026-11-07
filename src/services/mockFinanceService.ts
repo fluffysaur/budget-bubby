@@ -853,7 +853,7 @@ class MockFinanceServiceImpl implements FinanceService {
 
   public async addExpense(input: CreateExpenseInput): Promise<Expense> {
     const newExpense: Expense = {
-      id: `exp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: input.id || `exp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       household_id: input.household_id || this.state.household.id,
       payer_id: input.payer_id,
       category_id: input.category_id || null,
