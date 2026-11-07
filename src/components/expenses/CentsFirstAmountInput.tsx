@@ -224,7 +224,7 @@ export function CentsFirstAmountInput({
       {/* Display & Numeric Input Field */}
       <div
         onClick={() => internalInputRef.current?.focus()}
-        className="relative flex items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-4 shadow-cute-sm transition-all focus-within:ring-2 focus-within:ring-(--pastel-lilac) focus-within:bg-(--bg-card) cursor-text"
+        className="relative flex items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-4 shadow-cute-sm transition-colors focus-within:ring-2 focus-within:ring-(--pastel-lilac) focus-within:bg-(--bg-card) cursor-text"
       >
         <span className="mr-2 text-2xl font-bold font-mono-num text-(--text-muted) select-none">
           {currencySymbol}

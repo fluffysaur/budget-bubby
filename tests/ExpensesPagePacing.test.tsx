@@ -36,12 +36,12 @@ describe('ExpensesPage Pacing & 4-Card Summary Strip', () => {
         });
     });
 
-    it('displays dynamic daily pace and spending limit in the Spendable Remaining card', async () => {
+    it('displays dynamic daily pace and meter progress in the Spendable Remaining card', async () => {
         renderWithProviders(<ExpensesPage />);
 
         await waitFor(() => {
             expect(screen.getByText(/\d+d left/i)).toBeInTheDocument();
-            expect(screen.getByText(/Limit/i)).toBeInTheDocument();
+            expect(screen.getByRole('progressbar', { name: /spendable/i })).toBeInTheDocument();
         });
     });
 });

@@ -210,7 +210,7 @@ export function AppHeader({
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm transition-all cursor-pointer"
+                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm transition-press cursor-pointer"
                         >
                             <span>{currentOption.label}</span>
                             <ChevronDown
@@ -225,7 +225,7 @@ export function AppHeader({
                             <div
                                 role="listbox"
                                 aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
+                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg z-50 animate-pop"
                             >
                                 <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                     Perspectives
@@ -377,7 +377,7 @@ export function AppHeader({
                                             ? "Combined Household"
                                             : opt.label
                                     }
-                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all sm:text-xs cursor-pointer ${
+                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-press sm:text-xs cursor-pointer ${
                                         isSelected
                                             ? opt.activeBg
                                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"

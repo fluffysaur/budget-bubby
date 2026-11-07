@@ -18,6 +18,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
+import { LazyMotion, domAnimation, MotionConfig } from 'motion/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import {
@@ -62,7 +63,7 @@ export function RouteSkeletonLoader() {
       role="status"
       aria-label="Loading page content"
       data-testid="route-skeleton-loader"
-      className="w-full space-y-6 animate-pulse py-2"
+      className="w-full space-y-6 motion-safe:animate-pulse py-2"
     >
       {/* Header bar placeholder */}
       <div className="flex items-center justify-between">
@@ -196,7 +197,7 @@ function AppLayoutInner() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
+    <div className="flex h-dvh bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
       {/* Desktop Navigation Sidebar */}
       <DesktopSidebar
         activeTab={activeTab}
@@ -219,7 +220,7 @@ function AppLayoutInner() {
         <PullToRefresh
           as="main"
           onRefresh={refreshData}
-          className="px-4 sm:px-6 py-6 pb-24 md:pb-10"
+          className="px-4 sm:px-6 py-6 pb-24 md:pb-10 [scrollbar-gutter:stable]"
         >
           <div className="mx-auto w-full max-w-5xl">
             <Suspense fallback={<RouteSkeletonLoader />}>
@@ -284,7 +285,7 @@ export function AppShell() {
   // If live Supabase is configured and we are still verifying the session
   if (isSupabaseConfigured() && authLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
+      <div className="flex h-dvh w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
         <div className="flex flex-col items-center gap-3">
           <div className="h-9 w-9 animate-spin rounded-full border-3 border-(--pastel-lilac) border-t-transparent" />
           <span className="text-xs font-bold text-(--text-muted) tracking-wider uppercase font-mono-num">Loading Budget Bubby...</span>
@@ -325,13 +326,17 @@ export function App({ initialEntries, initialAuthenticated }: AppProps = {}) {
   const routerProps = initialEntries ? { initialEntries } : {};
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider initialAuthenticated={initialAuthenticated}>
-        <RouterComponent {...routerProps}>
-          <AppShell />
-        </RouterComponent>
-      </AuthProvider>
-    </QueryClientProvider>
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider initialAuthenticated={initialAuthenticated}>
+            <RouterComponent {...routerProps}>
+              <AppShell />
+            </RouterComponent>
+          </AuthProvider>
+        </QueryClientProvider>
+      </MotionConfig>
+    </LazyMotion>
   );
 }
 

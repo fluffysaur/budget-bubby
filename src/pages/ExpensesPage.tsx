@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { InboxShortcutButton } from '../components/inbox/InboxShortcutButton';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, CollapsibleSection, ConfirmModal } from '../components/ui';
+import { PageHeader, Button, StatCard, CollapsibleSection, ConfirmModal, MeterBar } from '../components/ui';
 import {
   useExpensesQuery,
   useAllExpensesQuery,
@@ -404,6 +404,9 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
           tooltip={
             <div className="space-y-1.5 text-xs">
               <p>Day-to-day categories only. Goal-funded spends excluded.</p>
+              <p className="text-[11px] text-(--text-muted)">
+                Limit: <CurrencyText amount={spendablePacing.spendableAllocated} /> (Spent: <CurrencyText amount={spendablePacing.spendableSpent} />)
+              </p>
               {spendablePacing.isCurrentMonth && (
                 <p className="text-[11px] text-(--text-muted)">
                   Daily pace: <CurrencyText amount={spendablePacing.dynamicDailyPace} />/day
@@ -426,22 +429,12 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
           }
           footer={
             <div className="space-y-1.5 mt-1">
-              <div className="flex items-center justify-between text-[11px] text-(--text-muted) font-medium">
-                <span>Spent <CurrencyText amount={spendablePacing.spendableSpent} /></span>
-                <span>Limit <CurrencyText amount={spendablePacing.spendableAllocated} /></span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 border border-(--border-subtle)">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    spendablePacing.pacingStatus === 'exceeded'
-                      ? 'bg-rose-500'
-                      : spendablePacing.pacingStatus === 'warning'
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${Math.min(100, spendablePacing.progressPercent)}%` }}
-                />
-              </div>
+              <MeterBar
+                value={spendablePacing.spendableSpent}
+                max={spendablePacing.spendableAllocated}
+                size="sm"
+                aria-label="Spendable spending progress"
+              />
               {!spendablePacing.isCurrentMonth && spendablePacing.spendableRemaining > 0 && (
                 <button
                   type="button"

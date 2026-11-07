@@ -428,7 +428,7 @@ describe("Cumulative Surplus & Deficit Calculations", () => {
         // Badges
         const currentBadge = screen.getByTestId("current-month-surplus-badge");
         expect(currentBadge).toBeInTheDocument();
-        expect(screen.getByText(/Surplus this month/i)).toBeInTheDocument();
+        expect(screen.getByText(/Result/i)).toBeInTheDocument();
         expect(
             screen.getAllByText(withText(/\+S\$180\.20/i)).length,
         ).toBeGreaterThanOrEqual(1);
@@ -619,8 +619,8 @@ describe("CategoryProgressList Warning Badges", () => {
 
         render(<CategoryProgressList categories={categories} />);
 
-        // Amber warning text on progress bar (amber chip removed)
-        expect(screen.getByText(withText(/S\$80\.00 remaining/i))).toBeInTheDocument();
+        // Streamlined remaining text on category meter
+        expect(screen.getByText(withText(/S\$80\.00 left/i))).toBeInTheDocument();
         expect(screen.queryByText("Amber Guardrail")).not.toBeInTheDocument();
 
         // Rose cap exceeded badge on progress bar

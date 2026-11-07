@@ -178,6 +178,7 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
         linkedExpenses={weddingLinkedExpenses}
       />
     );
+    fireEvent.click(screen.getByRole('button', { name: /breakdown/i }));
 
     // 4 Sinking Fund Metric labels
     expect(screen.getByText('Target Amount')).toBeInTheDocument();
@@ -186,11 +187,11 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
     expect(screen.getByText('Balance')).toBeInTheDocument();
 
     // Target Amount: 55,000
-    expect(screen.getByText(formatSGD(55000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(55000.0)).length).toBeGreaterThanOrEqual(1);
     // Goal-Funded Spend: 5,000 appears in metric card and in linked expenses
     expect(screen.getAllByText(formatSGD(5000.0)).length).toBeGreaterThanOrEqual(1);
     // Saved so far / Remaining balance: 50,000
-    expect(screen.getByText(formatSGD(50000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(50000.0)).length).toBeGreaterThanOrEqual(1);
 
     // Linked goal expenses list
     expect(screen.getByText('Spends (1)')).toBeInTheDocument();

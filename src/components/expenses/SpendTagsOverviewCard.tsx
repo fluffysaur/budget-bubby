@@ -171,7 +171,7 @@ export function SpendTagsOverviewCard({
                   key={item.tag}
                   data-testid={`tag-card-${item.tag}`}
                   onClick={() => onSelectTag?.(item.tag)}
-                  className={`group relative flex flex-col justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
+                  className={`group relative flex flex-col justify-between p-3.5 rounded-xl border-2 transition-press cursor-pointer ${
                     isSelected
                       ? 'border-(--border-ink) bg-(--pastel-lilac) shadow-cute'
                       : 'border-(--border-ink) bg-(--bg-cream) hover:bg-(--pastel-butter-light) shadow-cute-sm'
@@ -196,7 +196,7 @@ export function SpendTagsOverviewCard({
                             onSelectTag?.(item.tag);
                           }
                         }}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-press cursor-pointer ${
                           isSelected
                             ? 'bg-purple-600 text-white'
                             : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 group-hover:border-purple-300'

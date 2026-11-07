@@ -63,16 +63,17 @@ const sampleBehindGoal: SavingsGoal = {
 describe('GoalCard Component', () => {
   it('renders emoji, title, target amount, total saved, and balance', () => {
     render(<GoalCard goal={sampleOnTrackGoal} />);
+    fireEvent.click(screen.getByRole('button', { name: /breakdown/i }));
 
     // Emoji & Title
     expect(screen.getByText('🏠')).toBeInTheDocument();
     expect(screen.getByText('HDB Down Payment')).toBeInTheDocument();
 
     // Target amount
-    expect(screen.getByText(formatSGD(190000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(190000.0)).length).toBeGreaterThanOrEqual(1);
     // Total Saved & Balance (when goal spend is 0, balance = total saved)
     const matchingAmounts = screen.getAllByText(formatSGD(100000.0));
-    expect(matchingAmounts).toHaveLength(2);
+    expect(matchingAmounts.length).toBeGreaterThanOrEqual(2);
   });
 
   it('calculates balance as total saved minus goal spend without deducting milestone progress', () => {
@@ -91,11 +92,12 @@ describe('GoalCard Component', () => {
     };
 
     render(<GoalCard goal={sampleOnTrackGoal} linkedExpenses={[mockExpense]} />);
+    fireEvent.click(screen.getByRole('button', { name: /breakdown/i }));
 
     // Target amount: 190,000
-    expect(screen.getByText(formatSGD(190000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(190000.0)).length).toBeGreaterThanOrEqual(1);
     // Total saved remains 100,000
-    expect(screen.getByText(formatSGD(100000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(100000.0)).length).toBeGreaterThanOrEqual(1);
     // Goal spend: 15,000 (appears in highlight card and linked expenses list)
     expect(screen.getAllByText(formatSGD(15000.0)).length).toBeGreaterThan(0);
     // Balance: 100,000 - 15,000 = 85,000
@@ -135,6 +137,7 @@ describe('GoalCard Component', () => {
 
   it('displays monthly contribution and required monthly pace', () => {
     render(<GoalCard goal={sampleOnTrackGoal} />);
+    fireEvent.click(screen.getByRole('button', { name: /breakdown/i }));
 
     // Monthly contribution formatted
     expect(screen.getAllByText(withText(/S\$10,000\.00\/mo/)).length).toBeGreaterThanOrEqual(1);

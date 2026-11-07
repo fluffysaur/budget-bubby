@@ -13,7 +13,7 @@
 
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useHousehold } from "../context/HouseholdContext";
-import { Card, PageHeader, TruncatedText, DashboardSkeleton } from "../components/ui";
+import { Card, PageHeader, TruncatedText, DashboardSkeleton, MeterBar, ProgressRing } from "../components/ui";
 import {
     useRecurringItemsQuery,
     useBudgetDetailQuery,
@@ -121,10 +121,16 @@ export function DashboardPage({
     const [recapWeek] = useState(() =>
         recapWeekFor(toSgtDateString(), readBubbyStore().recapSeenWeek),
     );
+    const [showAllCategories, setShowAllCategories] = useState(false);
     const weeklyBudget =
         perspective === "household" && spendableSummary.totalAllocated > 0
             ? (spendableSummary.totalAllocated * 7) / daysInMonthOf(toSgtDateString())
             : null;
+
+    const displayedCategories = showAllCategories
+        ? spendableSummary.categories
+        : spendableSummary.categories.slice(0, 4);
+    const hasMore = spendableSummary.categories.length > 4;
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
@@ -174,69 +180,82 @@ export function DashboardPage({
                                 <button
                                     type="button"
                                     onClick={() => onNavigateTab("budget")}
-                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer"
                                 >
                                     Budget
                                 </button>
                             )}
                         </div>
 
-                        {/* Overall progress */}
-                        <div className="mt-3 h-2.5 w-full rounded-full bg-(--bg-cream) border border-(--border-ink)/30 overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all ${
-                                    isOverspent ? "bg-(--accent-coral)" : "bg-emerald-500"
-                                }`}
-                                style={{ width: `${spendableSummary.totalPct}%` }}
+                        {/* Overall progress meter */}
+                        <div className="mt-3">
+                            <MeterBar
+                                value={spendableSummary.totalSpent}
+                                max={spendableSummary.totalAllocated}
+                                size="md"
+                                aria-label="Spendable budget progress"
                             />
                         </div>
 
                         {/* Per-category meters */}
                         {spendableSummary.categories.length > 0 && (
-                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                {spendableSummary.categories.map((cat) => (
-                                    <div
-                                        key={cat.id}
-                                        className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 shadow-cute-sm"
-                                    >
-                                        <div className="flex items-center justify-between gap-1 text-xs">
-                                            <span className="font-bold text-(--text-ink) flex items-center gap-1.5 font-display min-w-0 flex-1">
-                                                <span
-                                                    className="h-2.5 w-2.5 rounded-full shrink-0 border border-(--border-ink)"
-                                                    style={{
-                                                        backgroundColor: cat.color,
-                                                    }}
-                                                />
-                                                <span className="min-w-0">
-                                                    <TruncatedText text={cat.name} />
-                                                </span>
-                                            </span>
-                                            <span className="shrink-0 text-[11px] font-black text-(--text-muted) font-mono-num">
-                                                {cat.pct}%
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-2 text-sm font-extrabold text-(--text-ink) font-mono-num">
-                                            <CurrencyText amount={cat.remaining} />
-                                            <span className="ml-1 text-[10px] font-bold text-(--text-muted)">
-                                                left
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-2 h-2 w-full rounded-full bg-(--bg-card) border border-(--border-ink)/30 overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full transition-all"
-                                                style={{
-                                                    width: `${cat.pct}%`,
-                                                    backgroundColor:
-                                                        cat.remaining < 0
-                                                            ? "#f76b57"
-                                                            : cat.color,
-                                                }}
+                            <div className="mt-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    {displayedCategories.map((cat) => (
+                                        <div
+                                            key={cat.id}
+                                            className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-cute-sm flex items-center gap-2.5"
+                                        >
+                                            <ProgressRing
+                                                value={cat.pct}
+                                                size={36}
+                                                strokeWidth={3.5}
+                                                tone={
+                                                    cat.remaining < 0
+                                                        ? "over"
+                                                        : cat.pct >= 80
+                                                          ? "near"
+                                                          : "ok"
+                                                }
+                                                centerContent={
+                                                    <span
+                                                        className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"
+                                                        style={{
+                                                            backgroundColor: cat.color,
+                                                        }}
+                                                    />
+                                                }
                                             />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-xs font-bold text-(--text-ink) truncate font-display">
+                                                    <TruncatedText text={cat.name} />
+                                                </div>
+                                                <div
+                                                    className={`text-xs font-extrabold font-mono-num ${
+                                                        cat.remaining < 0
+                                                            ? "text-(--accent-coral-ink) dark:text-rose-400"
+                                                            : "text-(--text-ink)"
+                                                    }`}
+                                                >
+                                                    <CurrencyText amount={cat.remaining} />
+                                                </div>
+                                            </div>
                                         </div>
+                                    ))}
+                                </div>
+                                {hasMore && (
+                                    <div className="mt-2 text-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAllCategories((prev) => !prev)}
+                                            className="text-xs font-bold text-(--text-muted) hover:text-(--text-ink) py-1 px-3 rounded-lg hover:bg-(--bg-cream) cursor-pointer transition-colors"
+                                        >
+                                            {showAllCategories
+                                                ? "Show Less"
+                                                : `+${spendableSummary.categories.length - 4} More`}
+                                        </button>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         )}
                     </Card>
