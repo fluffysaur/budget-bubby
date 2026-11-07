@@ -43,6 +43,8 @@ import { TruncatedText } from "../ui/TruncatedText";
 import { financeService } from "../../services/financeService";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
+import { m, AnimatePresence } from "motion/react";
+import { pop, fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
 
 function useIsMobile(breakpoint = 640): boolean {
@@ -566,99 +568,107 @@ export function NotificationCenterPopover({
             </button>
 
             {/* Desktop Popover Container */}
-            {isOpen && !isMobile && (
-                <div
-                    ref={desktopPopoverRef}
-                    data-testid="notification-center-popover"
-                    role="region"
-                    aria-label="Notification center"
-                    className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-lg z-50 animate-pop"
-                >
-                    {/* Header */}
-                    <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
-                        <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
-                                <Bell className="h-4 w-4" strokeWidth={2.5} />
-                            </div>
-
-                            <h3 className="text-xs font-black text-(--text-ink) font-display">
-                                Notifications
-                            </h3>
-
-                            {count > 0 && (
-                                <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
-                                    {count}
-                                </span>
-                            )}
-                        </div>
-
-                        <button
-                            type="button"
-                            aria-label="Close notification center"
-                            onClick={() => setIsOpen(false)}
-                            className="rounded-lg p-1 text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    </div>
-
-                    {/* Reminders List */}
-                    <div className="mt-3 max-h-80 overflow-y-auto space-y-2.5 pr-0.5">
-                        {renderRemindersList()}
-                    </div>
-                </div>
-            )}
-
-            {/* Mobile Full-Screen Overlay Portal (rendered directly to body on mobile) */}
-            {isOpen &&
-                isMobile &&
-                typeof document !== "undefined" &&
-                createPortal(
-                    <div
-                        ref={mobileOverlayRef}
-                        data-testid="notification-center-mobile-overlay"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Notifications and reminders"
-                        className="fixed inset-0 z-50 flex flex-col bg-(--bg-canvas) animate-enter"
+            <AnimatePresence>
+                {isOpen && !isMobile && (
+                    <m.div
+                        key="notification-desktop-popover"
+                        ref={desktopPopoverRef}
+                        data-testid="notification-center-popover"
+                        role="region"
+                        aria-label="Notification center"
+                        {...pop}
+                        className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-lg z-50"
                     >
-                        {/* Mobile Sticky Header */}
-                        <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
-                            <div className="flex items-center gap-2.5">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
-                                    <Bell
-                                        className="h-4 w-4"
-                                        strokeWidth={2.5}
-                                    />
+                        {/* Header */}
+                        <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                    <Bell className="h-4 w-4" strokeWidth={2.5} />
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <h2 className="text-sm font-black text-(--text-ink) font-display">
-                                        Notifications
-                                    </h2>
-                                    {count > 0 && (
-                                        <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
-                                            {count}
-                                        </span>
-                                    )}
-                                </div>
+
+                                <h3 className="text-xs font-black text-(--text-ink) font-display">
+                                    Notifications
+                                </h3>
+
+                                {count > 0 && (
+                                    <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
+                                        {count}
+                                    </span>
+                                )}
                             </div>
 
                             <button
                                 type="button"
                                 aria-label="Close notification center"
-                                data-testid="close-notification-overlay-btn"
                                 onClick={() => setIsOpen(false)}
-                                className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                className="rounded-lg p-1 text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                             >
-                                <X className="h-4 w-4" strokeWidth={2.5} />
+                                <X className="h-4 w-4" />
                             </button>
                         </div>
 
-                        {/* Mobile Body Content */}
-                        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-12">
+                        {/* Reminders List */}
+                        <div className="mt-3 max-h-80 overflow-y-auto space-y-2.5 pr-0.5">
                             {renderRemindersList()}
                         </div>
-                    </div>,
+                    </m.div>
+                )}
+            </AnimatePresence>
+
+            {/* Mobile Full-Screen Overlay Portal (rendered directly to body on mobile) */}
+            {typeof document !== "undefined" &&
+                createPortal(
+                    <AnimatePresence>
+                        {isOpen && isMobile && (
+                            <m.div
+                                key="notification-mobile-overlay"
+                                ref={mobileOverlayRef}
+                                data-testid="notification-center-mobile-overlay"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-label="Notifications and reminders"
+                                {...fadeRise}
+                                className="fixed inset-0 z-50 flex flex-col bg-(--bg-canvas)"
+                            >
+                                {/* Mobile Sticky Header */}
+                                <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                            <Bell
+                                                className="h-4 w-4"
+                                                strokeWidth={2.5}
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-sm font-black text-(--text-ink) font-display">
+                                                Notifications
+                                            </h2>
+                                            {count > 0 && (
+                                                <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
+                                                    {count}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        aria-label="Close notification center"
+                                        data-testid="close-notification-overlay-btn"
+                                        onClick={() => setIsOpen(false)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    >
+                                        <X className="h-4 w-4" strokeWidth={2.5} />
+                                    </button>
+                                </div>
+
+                                {/* Mobile Body Content */}
+                                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-12">
+                                    {renderRemindersList()}
+                                </div>
+                            </m.div>
+                        )}
+                    </AnimatePresence>,
                     document.body,
                 )}
         </div>

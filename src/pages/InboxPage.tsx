@@ -31,10 +31,9 @@ import { haptics } from "../lib/haptics";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
 import { Alert } from "../components/ui/Alert";
 import { EmptyStateCard } from "../components/ui/EmptyStateCard";
-import { InboxCard } from "../components/inbox/InboxCard";
+import { InboxCard, InboxCardSkeleton } from "../components/inbox/InboxCard";
 import { useSwipeCard, type SwipeDirection } from "../components/inbox/useSwipeCard";
 import { ExpenseFormModal, type ExpenseFormInitialValues } from "../components/expenses/ExpenseFormModal";
 import type { Category, Expense, InboxItem, InboxItemsResult, MerchantRule } from "../types/finance";
@@ -365,7 +364,7 @@ export function InboxPage() {
                 )}
 
                 {isLoading ? (
-                    <Card elevation="tactile" padding="md" className="h-64 motion-safe:animate-pulse" aria-label="Loading inbox" />
+                    <InboxCardSkeleton />
                 ) : top ? (
                     <>
                         <div className="relative">

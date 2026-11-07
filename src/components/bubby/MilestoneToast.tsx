@@ -7,6 +7,8 @@
 
 import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
+import { m } from "motion/react";
+import { pop } from "../../lib/motion";
 import { Button } from "../ui/Button";
 import { Bubby } from "./Bubby";
 import type { BubbyBody } from "../../lib/bubby/body";
@@ -41,11 +43,12 @@ export function MilestoneToast({
 
     return (
         <div className="pointer-events-none fixed inset-x-0 top-16 sm:top-20 z-9999 flex justify-center px-4">
-            <div
+            <m.div
                 role="status"
                 aria-live="polite"
                 data-testid="milestone-toast"
-                className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-cute animate-toast-in"
+                {...pop}
+                className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3 shadow-cute"
             >
                 <div className="relative flex h-12 w-12 shrink-0 items-end justify-center overflow-hidden rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter-light) pt-0.5">
                     <Bubby
@@ -77,7 +80,7 @@ export function MilestoneToast({
                         </Button>
                     </div>
                 </div>
-            </div>
+            </m.div>
         </div>
     );
 }

@@ -28,6 +28,8 @@ import {
     TruncatedText,
 } from "../ui";
 import { formatSGD } from "../../lib/currency";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 function formatMutationLabel(mutation: QueuedMutation): string {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -202,79 +204,76 @@ export const OfflineBanner: React.FC = () => {
 
     const failedCount = failedMutations.length;
 
-    if (
-        isOnline &&
-        !isSyncing &&
-        !showSyncedConfirmation &&
-        failedCount === 0
-    ) {
-        return null;
-    }
-
     return (
         <>
-            {/* 1. Offline Mode alert bar */}
-            {!isOnline ? (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-amber-500 text-slate-950 dark:bg-amber-600 dark:text-white"
-                >
-                    <WifiOff className="w-3.5 h-3.5 shrink-0" />
-                    <span>
-                        {pendingCount > 0
-                            ? `Offline Mode — ${pendingCount} ${
-                                  pendingCount === 1 ? "expense" : "expenses"
-                              } queued locally. Will sync automatically when back online.`
-                            : "You are offline. Showing cached Budget Bubby view."}
-                    </span>
-                    {failedCount > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => setIsFailedModalOpen(true)}
-                            className="font-bold underline underline-offset-2 cursor-pointer shrink-0"
+            <AnimatePresence>
+                {!isOnline ? (
+                    <m.div key="offline" {...collapse}>
+                        <div
+                            role="status"
+                            aria-live="polite"
+                            className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-amber-500 text-slate-950 dark:bg-amber-600 dark:text-white"
                         >
-                            {failedCount} not synced
-                        </button>
-                    )}
-                </div>
-            ) : isSyncing ? (
-                /* 2. Syncing in progress spinner */
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-sky-600 text-white"
-                >
-                    <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-                    <span>Syncing offline changes to Supabase...</span>
-                </div>
-            ) : failedCount > 0 ? (
-                /* 3. Failed mutations bar */
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-coral-light) text-(--text-ink) border-b-2 border-(--border-ink)"
-                >
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-(--accent-coral)" />
-                    <button
-                        type="button"
-                        onClick={() => setIsFailedModalOpen(true)}
-                        className="font-bold underline underline-offset-2 cursor-pointer"
-                    >
-                        {failedCount} not synced
-                    </button>
-                </div>
-            ) : (
-                /* 4. Reconnected and synced confirmation pill (visible for 3.5s) */
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-mint) text-(--accent-mint-ink) border-b-2 border-(--border-ink)"
-                >
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-(--accent-mint-ink)" />
-                    <span>✓ All changes synced to Supabase</span>
-                </div>
-            )}
+                            <WifiOff className="w-3.5 h-3.5 shrink-0" />
+                            <span>
+                                {pendingCount > 0
+                                    ? `Offline Mode — ${pendingCount} ${
+                                          pendingCount === 1 ? "expense" : "expenses"
+                                      } queued locally. Will sync automatically when back online.`
+                                    : "You are offline. Showing cached Budget Bubby view."}
+                            </span>
+                            {failedCount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsFailedModalOpen(true)}
+                                    className="font-bold underline underline-offset-2 cursor-pointer shrink-0"
+                                >
+                                    {failedCount} not synced
+                                </button>
+                            )}
+                        </div>
+                    </m.div>
+                ) : isSyncing ? (
+                    <m.div key="syncing" {...collapse}>
+                        <div
+                            role="status"
+                            aria-live="polite"
+                            className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-sky-600 text-white"
+                        >
+                            <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                            <span>Syncing offline changes to Supabase...</span>
+                        </div>
+                    </m.div>
+                ) : failedCount > 0 ? (
+                    <m.div key="failed" {...collapse}>
+                        <div
+                            role="status"
+                            aria-live="polite"
+                            className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-coral-light) text-(--text-ink) border-b-2 border-(--border-ink)"
+                        >
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-(--accent-coral)" />
+                            <button
+                                type="button"
+                                onClick={() => setIsFailedModalOpen(true)}
+                                className="font-bold underline underline-offset-2 cursor-pointer"
+                            >
+                                {failedCount} not synced
+                            </button>
+                        </div>
+                    </m.div>
+                ) : showSyncedConfirmation ? (
+                    <m.div key="synced" {...collapse}>
+                        <div
+                            role="status"
+                            aria-live="polite"
+                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-mint) text-(--accent-mint-ink) border-b-2 border-(--border-ink)"
+                        >
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-(--accent-mint-ink)" />
+                            <span>✓ All changes synced to Supabase</span>
+                        </div>
+                    </m.div>
+                ) : null}
+            </AnimatePresence>
 
             <AnimatedModal
                 isOpen={isFailedModalOpen && failedCount > 0}

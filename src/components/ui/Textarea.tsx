@@ -1,4 +1,6 @@
 import React, { forwardRef } from "react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;
@@ -31,11 +33,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
                     } ${className}`}
                     {...props}
                 />
-                {error && (
-                    <p className="text-xs font-bold text-(--accent-coral) animate-enter">
-                        {error}
-                    </p>
-                )}
+                <AnimatePresence initial={false}>
+                    {error && (
+                        <m.div key="textarea-error" {...collapse}>
+                            <p className="text-xs font-bold text-(--accent-coral)">
+                                {error}
+                            </p>
+                        </m.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     },

@@ -150,16 +150,6 @@ export function DashboardPage({
                 <DashboardSkeleton />
             ) : (
                 <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
-                    {/* Most urgent category limit alert */}
-                    <CategoryLimitWarningBanner
-                        single
-                        categories={monthlyBudget?.categories || []}
-                        onNavigateCategory={() => onNavigateTab?.("budget")}
-                    />
-
-                    {/* Unsorted captures */}
-                    <InboxHomeCard />
-
                     {/* Left to Spend hero */}
                     <Card
                         role="region"
@@ -256,6 +246,16 @@ export function DashboardPage({
                             </div>
                         )}
                     </Card>
+
+                    {/* Most urgent category limit alert (rendered below hero) */}
+                    <CategoryLimitWarningBanner
+                        single
+                        categories={monthlyBudget?.categories || []}
+                        onNavigateCategory={() => onNavigateTab?.("budget")}
+                    />
+
+                    {/* Unsorted captures (rendered below hero) */}
+                    <InboxHomeCard />
 
                     {/* Bubby's quests for today */}
                     <QuestCard />

@@ -1,5 +1,7 @@
 import React, { forwardRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 export interface SelectOption {
     value: string;
@@ -81,7 +83,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         strokeWidth={2.5}
                     />
                 </div>
-                {error && <p className="text-xs font-bold text-(--accent-coral) animate-enter">{error}</p>}
+                <AnimatePresence initial={false}>
+                    {error && (
+                        <m.div key="select-error" {...collapse}>
+                            <p className="text-xs font-bold text-(--accent-coral)">
+                                {error}
+                            </p>
+                        </m.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     },

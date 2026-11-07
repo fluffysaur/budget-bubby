@@ -27,6 +27,7 @@ import { snackForWeek, snackLabel } from "../../lib/bubby/snacks";
 import { mondayOf, toSgtDateString } from "../../lib/bubby/dates";
 import type { BubbyBody } from "../../lib/bubby/body";
 import { ConfettiBurst } from "../ui/ConfettiBurst";
+import { AnimatePresence } from "motion/react";
 import { MilestoneToast } from "./MilestoneToast";
 
 const BubbySheet = lazy(() => import("./BubbySheet"));
@@ -200,25 +201,27 @@ export function DelightHost() {
                 </Suspense>
             )}
             {burstKey > 0 && <ConfettiBurst key={burstKey} onDone={clearBurst} />}
-            {current && (
-                <MilestoneToast
-                    key={current.id}
-                    title={current.title ?? ""}
-                    subtitle={current.subtitle}
-                    body={body}
-                    primaryLabel={current.primary?.label}
-                    onPrimary={
-                        current.primary?.event
-                            ? () => {
-                                  emitAppEvent("bubby:open-sheet", {});
-                                  shiftToast();
-                              }
-                            : undefined
-                    }
-                    onAcknowledge={acknowledge}
-                    onTimeout={shiftToast}
-                />
-            )}
+            <AnimatePresence>
+                {current && (
+                    <MilestoneToast
+                        key={current.id}
+                        title={current.title ?? ""}
+                        subtitle={current.subtitle}
+                        body={body}
+                        primaryLabel={current.primary?.label}
+                        onPrimary={
+                            current.primary?.event
+                                ? () => {
+                                      emitAppEvent("bubby:open-sheet", {});
+                                      shiftToast();
+                                  }
+                                : undefined
+                        }
+                        onAcknowledge={acknowledge}
+                        onTimeout={shiftToast}
+                    />
+                )}
+            </AnimatePresence>
         </>
     );
 }

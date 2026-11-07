@@ -6,6 +6,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { RotateCw, ArrowDown } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
 import { haptics } from "../../lib/haptics";
 import { prefersReducedMotion } from "../../lib/motion";
 
@@ -210,51 +211,59 @@ export function PullToRefresh({
             ref={containerRef as unknown as React.RefObject<HTMLDivElement>}
             className={`relative flex-1 overflow-y-auto overscroll-y-contain ${className}`}
         >
-            {/* Visual Pull Indicator Pill (Visible during pull or refresh) */}
-            {(isPulling || isRefreshing) && (
-                <div
-                    aria-live="polite"
-                    className="pointer-events-none absolute left-0 right-0 top-2 z-30 flex justify-center transition-transform duration-75"
-                    style={{
-                        transform: reducedMotion
-                            ? "none"
-                            : `translateY(${Math.max(0, pullDistance - 28)}px)`,
-                        opacity: isRefreshing ? 1 : Math.max(0.2, progress),
-                    }}
-                >
-                    <div className="flex items-center gap-2 rounded-full border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-1.5 shadow-cute-sm">
-                        {isRefreshing ? (
-                            <RotateCw
-                                className="h-4 w-4 animate-spin text-purple-700 dark:text-(--pastel-lilac)"
-                                strokeWidth={2.5}
-                            />
-                        ) : isPastThreshold ? (
-                            <RotateCw
-                                className="h-4 w-4 text-(--accent-mint-ink) dark:text-(--pastel-mint-dark) transition-transform duration-150 rotate-180"
-                                strokeWidth={2.5}
-                            />
-                        ) : (
-                            <ArrowDown
-                                className="h-4 w-4 text-(--text-muted) transition-transform duration-150"
-                                strokeWidth={2.5}
-                                style={{
-                                    transform: reducedMotion
-                                        ? "none"
-                                        : `rotate(${progress * 180}deg)`,
-                                }}
-                            />
-                        )}
+            {/* Visual Pull Indicator Pill with smooth exit fade */}
+            <AnimatePresence>
+                {(isPulling || isRefreshing) && (
+                    <m.div
+                        key="pull-indicator"
+                        initial={{ opacity: 0 }}
+                        animate={{
+                            opacity: isRefreshing ? 1 : Math.max(0.2, progress),
+                            y: reducedMotion ? 0 : Math.max(0, pullDistance - 28),
+                        }}
+                        exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                        transition={
+                            isPulling || reducedMotion
+                                ? { duration: 0 }
+                                : { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
+                        }
+                        aria-live="polite"
+                        className="pointer-events-none absolute left-0 right-0 top-2 z-30 flex justify-center"
+                    >
+                        <div className="flex items-center gap-2 rounded-full border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-1.5 shadow-cute-sm">
+                            {isRefreshing ? (
+                                <RotateCw
+                                    className="h-4 w-4 animate-spin text-purple-700 dark:text-(--pastel-lilac)"
+                                    strokeWidth={2.5}
+                                />
+                            ) : isPastThreshold ? (
+                                <RotateCw
+                                    className="h-4 w-4 text-(--accent-mint-ink) dark:text-(--pastel-mint-dark) rotate-180"
+                                    strokeWidth={2.5}
+                                />
+                            ) : (
+                                <ArrowDown
+                                    className="h-4 w-4 text-(--text-muted)"
+                                    strokeWidth={2.5}
+                                    style={{
+                                        transform: reducedMotion
+                                            ? "none"
+                                            : `rotate(${progress * 180}deg)`,
+                                    }}
+                                />
+                            )}
 
-                        <span className="text-xs font-bold text-(--text-ink)">
-                            {isRefreshing
-                                ? "Refreshing..."
-                                : isPastThreshold
-                                ? "Release to refresh"
-                                : "Pull down to refresh"}
-                        </span>
-                    </div>
-                </div>
-            )}
+                            <span className="text-xs font-bold text-(--text-ink)">
+                                {isRefreshing
+                                    ? "Refreshing..."
+                                    : isPastThreshold
+                                    ? "Release to refresh"
+                                    : "Pull down to refresh"}
+                            </span>
+                        </div>
+                    </m.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Content with smooth transform during active pull */}
             <div
