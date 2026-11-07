@@ -17,7 +17,7 @@
 import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react";
 import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
-import { financeService } from "../../services/financeService";
+import { financeService, isMockModeActive } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
 import {
     getTodayDateString,
@@ -170,19 +170,30 @@ export function ExpenseFormModal({
     const ctxMembers = household?.members;
     const activeMember = household?.activeMember ?? null;
     const perspective = household?.perspective ?? "household";
+    const isMockMode = household?.isMockMode ?? isMockModeActive();
     const isEditMode = Boolean(expense);
 
-    const members =
-        propMembers && propMembers.length > 0
-            ? propMembers
-            : ctxMembers && ctxMembers.length > 0
-              ? ctxMembers
-              : mockMembers;
+    const members = useMemo(
+        () =>
+            propMembers && propMembers.length > 0
+                ? propMembers
+                : ctxMembers && ctxMembers.length > 0
+                  ? ctxMembers
+                  : isMockMode
+                    ? mockMembers
+                    : [],
+        [propMembers, ctxMembers, isMockMode],
+    );
 
-    const categories =
-        propCategories && propCategories.length > 0
-            ? propCategories
-            : mockCategories;
+    const categories = useMemo(
+        () =>
+            propCategories && propCategories.length > 0
+                ? propCategories
+                : isMockMode
+                  ? mockCategories
+                  : [],
+        [propCategories, isMockMode],
+    );
 
     const spendableCategories = useMemo(
         () => categories.filter((c) => isSpendableCategory(c)),
@@ -1103,39 +1114,45 @@ export function ExpenseFormModal({
                             {/* Payer Selection & 2-Button Segmented Personal/Shared Toggle */}
                             <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-2.5 shadow-cute-sm">
                                 {/* Payer Toggle */}
-                                <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                                    <span className="text-[11px] font-bold text-(--text-muted)">
-                                        Payer:
-                                    </span>
-                                    <div
-                                        className="flex gap-1.5"
-                                        aria-label="Payer Selection"
-                                    >
-                                        {members.map((member) => {
-                                            const isSelected = payerId === member.id;
-                                            return (
-                                                <button
-                                                    key={member.id}
-                                                    type="button"
-                                                    aria-pressed={isSelected}
-                                                    onClick={() =>
-                                                        setPayerId(member.id)
-                                                    }
-                                                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                                                        isSelected
-                                                            ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
-                                                            : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
-                                                    }`}
-                                                >
-                                                    <span>
-                                                        {member.avatar_url || "👤"}
-                                                    </span>
-                                                    <span>{member.display_name}</span>
-                                                </button>
-                                            );
-                                        })}
+                                {members.length > 0 && (
+                                    <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                        <span className="text-[11px] font-bold text-(--text-muted)">
+                                            Payer:
+                                        </span>
+                                        <div
+                                            className="flex gap-1.5"
+                                            aria-label="Payer Selection"
+                                        >
+                                            {members.map((member) => {
+                                                const isSelected =
+                                                    payerId === member.id;
+                                                return (
+                                                    <button
+                                                        key={member.id}
+                                                        type="button"
+                                                        aria-pressed={isSelected}
+                                                        onClick={() =>
+                                                            setPayerId(member.id)
+                                                        }
+                                                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                                            isSelected
+                                                                ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                                                : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
+                                                        }`}
+                                                    >
+                                                        <span>
+                                                            {member.avatar_url ||
+                                                                "👤"}
+                                                        </span>
+                                                        <span>
+                                                            {member.display_name}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* 2-Button Segmented Personal / Shared Toggle */}
                                 <div>

@@ -17,7 +17,7 @@ import { formatSGD } from '../../lib/currency';
 import { isSpendableCategory } from '../../lib/financialFormulas';
 import { playBudgetWarningSound, playBudgetExceededSound } from '../../lib/soundEffects';
 import { haptics } from '../../lib/haptics';
-import { useOptionalHousehold } from '../../context/HouseholdContext';
+import { useLoggedInMember } from '../../hooks/useLoggedInMember';
 import { financeService } from '../../services/financeService';
 import { getDefaultNotificationPreferences } from '../../data/mockSeedData';
 import type { Expense, MonthlyBudgetCategoryDetail, NotificationPreferences } from '../../types/finance';
@@ -44,10 +44,8 @@ export function CategoryLimitWarningBanner({
   onNavigateCategory,
   single = false,
 }: CategoryLimitWarningBannerProps) {
-    const household = useOptionalHousehold();
-    const activeMember = household?.activeMember;
-    const members = household?.members;
-    const activeMemberId = activeMember?.id || members?.[0]?.id || 'mem-00000000-0011';
+    const { me, members } = useLoggedInMember();
+    const activeMemberId = me?.id || members?.[0]?.id || 'mem-00000000-0011';
 
     const [toast, setToast] = useState<ToastAlert | null>(null);
     const [prefs, setPrefs] = useState<NotificationPreferences>(() =>

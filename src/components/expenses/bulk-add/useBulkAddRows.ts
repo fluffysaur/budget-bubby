@@ -58,6 +58,11 @@ export function useBulkAddRows({
                 date: getTodayDateString(),
                 isShared: isSharedDefault,
             });
+        } else if (isOpen && !state.payerId && resolvedPayerId) {
+            dispatch({
+                type: "setPayer",
+                payerId: resolvedPayerId,
+            });
         }
         prevIsOpenRef.current = isOpen;
         prevPayerPropRef.current = defaultPayerId;
@@ -68,6 +73,7 @@ export function useBulkAddRows({
         defaultShared,
         resolvedPayerId,
         isSharedDefault,
+        state.payerId,
     ]);
 
     const summary = useMemo(

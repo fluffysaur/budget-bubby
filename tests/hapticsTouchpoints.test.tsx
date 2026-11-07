@@ -267,6 +267,11 @@ describe("Haptic Feedback Touchpoints Integration", () => {
     });
 
     it("allows toggling and testing haptics in NotificationSettingsModal", async () => {
+        Object.defineProperty(window.navigator, "vibrate", {
+            value: vi.fn().mockReturnValue(true),
+            configurable: true,
+            writable: true,
+        });
         const celebrateSpy = vi.spyOn(haptics, "celebrate");
         const updateSpy = vi.spyOn(financeService, "updateNotificationPreferences");
 

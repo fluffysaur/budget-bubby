@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { financeService, isDemoModeActive } from "../../services/financeService";
 import { isSupabaseConfigured } from "../../services/supabaseClient";
 import { useCaptureTokensQuery, inboxQueryKeys } from "../../hooks/useInboxQueries";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { getCaptureEndpointUrl, formatLastUsed } from "../../lib/capture/endpoint";
 import { MAX_ACTIVE_CAPTURE_TOKENS } from "../../services/inbox/inboxErrors";
 import type { CaptureToken } from "../../types/finance";
@@ -63,9 +64,14 @@ function CopyRow({ label, value, testId }: { label: string; value: string; testI
     );
 }
 
-function SetupSteps() {
+function detectCapturePlatform(): "android" | "ios" {
+    if (typeof navigator === "undefined") return "ios";
+    return /android/i.test(navigator.userAgent || "") ? "android" : "ios";
+}
+
+function IosSetupSteps({ defaultOpen }: { defaultOpen: boolean }) {
     return (
-        <CollapsibleSection title="Setup Steps">
+        <CollapsibleSection title="iPhone Setup" defaultOpen={defaultOpen}>
             <ol className="list-decimal space-y-1.5 pl-4 text-xs text-(--text-ink)">
                 <li>iPhone: Shortcuts › Automation › + › Transaction. Pick your cards, Run Immediately.</li>
                 <li>Add Get Contents of URL: the URL above, Method POST.</li>
@@ -73,17 +79,54 @@ function SetupSteps() {
                 <li>JSON body: amount, merchant, card from Shortcut Input; source = wallet.</li>
                 <li>Pay S$1 with Apple Pay to test. It lands in Inbox.</li>
             </ol>
-            <p className="mt-2 text-xs text-(--text-muted)">
-                Other phones: any app that can POST JSON (e.g. MacroDroid or Tasker on Android) can use
-                this token. Send amount, merchant, and optionally currency, card, occurred_at and source.
+        </CollapsibleSection>
+    );
+}
+
+function AndroidSetupSteps({ defaultOpen }: { defaultOpen: boolean }) {
+    return (
+        <CollapsibleSection title="Android Setup" defaultOpen={defaultOpen}>
+            <p className="text-xs text-(--text-ink)">
+                POST JSON (amount, merchant, and optional currency, card, occurred_at, source) from MacroDroid or Tasker to the capture endpoint with{" "}
+                <code className="font-mono">Authorization: Bearer &lt;token&gt;</code>. Full steps tracked in{" "}
+                <a
+                    href="https://github.com/fluffysaur/budget-bubby/issues/44"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold underline"
+                >
+                    issue #44
+                </a>
+                .
             </p>
         </CollapsibleSection>
     );
 }
 
+function SetupSteps() {
+    const platform = detectCapturePlatform();
+    return (
+        <div className="space-y-2" data-testid="auto-capture-setup-steps">
+            {platform === "android" ? (
+                <>
+                    <AndroidSetupSteps key="android-primary" defaultOpen={true} />
+                    <IosSetupSteps key="ios-secondary" defaultOpen={false} />
+                </>
+            ) : (
+                <>
+                    <IosSetupSteps key="ios-primary" defaultOpen={true} />
+                    <AndroidSetupSteps key="android-secondary" defaultOpen={false} />
+                </>
+            )}
+        </div>
+    );
+}
+
 export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
     const queryClient = useQueryClient();
-    const { data, isLoading } = useCaptureTokensQuery(memberId);
+    const { me } = useLoggedInMember();
+    const targetMemberId = memberId || me?.id;
+    const { data, isLoading } = useCaptureTokensQuery(targetMemberId);
     const available = data?.available ?? true;
     const tokens = data?.tokens ?? EMPTY_TOKENS;
 
@@ -118,7 +161,7 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
         setCreateError(null);
         setIsCreating(true);
         try {
-            const { token } = await financeService.createCaptureToken(label, memberId);
+            const { token } = await financeService.createCaptureToken(label, targetMemberId);
             setNewToken(token);
             await refresh();
         } catch (err) {
@@ -212,6 +255,8 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
                         ))}
                     </ul>
                 )}
+
+                {!newToken && <SetupSteps />}
             </div>
 
             <AnimatedModal isOpen={isCreateOpen} onClose={closeCreate} maxWidth="max-w-md">

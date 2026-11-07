@@ -416,5 +416,85 @@ describe('financialFormulas', () => {
       expect(result.hasUnspentSurplus).toBe(false);
       expect(result.surplusAmount).toBe(0);
     });
+
+    it('returns nothing while queries are loading or when there is no base profile', () => {
+      const whileLoading = detectUnspentMonthEndSurplus({
+        currentMonth: '2026-10',
+        lastMonth: '2026-09',
+        monthlyCap: 1200,
+        expenses: [],
+        categories: mockCategories,
+        queriesReady: false,
+      });
+      expect(whileLoading.hasUnspentSurplus).toBe(false);
+      expect(whileLoading.surplusAmount).toBe(0);
+
+      const noProfiles = detectUnspentMonthEndSurplus({
+        currentMonth: '2026-10',
+        lastMonth: '2026-09',
+        expenses: [],
+        categories: mockCategories,
+        baseProfiles: [],
+        baseAllocations: [],
+        queriesReady: true,
+      });
+      expect(noProfiles.hasUnspentSurplus).toBe(false);
+      expect(noProfiles.surplusAmount).toBe(0);
+
+      const noCapOrProfile = detectUnspentMonthEndSurplus({
+        currentMonth: '2026-10',
+        lastMonth: '2026-09',
+        expenses: [],
+        categories: mockCategories,
+      });
+      expect(noCapOrProfile.hasUnspentSurplus).toBe(false);
+      expect(noCapOrProfile.surplusAmount).toBe(0);
+    });
+
+    it('uses monthlyBudget.spendableRemaining when monthlyBudget is provided', () => {
+      const result = detectUnspentMonthEndSurplus({
+        currentMonth: '2026-10',
+        lastMonth: '2026-09',
+        expenses: [],
+        categories: mockCategories,
+        baseProfiles: [
+          {
+            id: 'prof-1',
+            household_id: 'hh-1',
+            owner_id: 'm1',
+            gross_salary: 6000,
+            cpf_employee_rate: 0.2,
+            tithing_enabled: false,
+          },
+        ],
+        monthlyBudget: {
+          budget: {
+            id: 'mb-1',
+            household_id: 'hh-1',
+            owner_id: 'm1',
+            month: '2026-09',
+            gross_salary: 6000,
+            bonus: 0,
+            cpf_deduction: 1200,
+            taxes_deduction: 0,
+            insurance_deduction: 0,
+            after_deductions: 4800,
+            is_locked: false,
+          },
+          categories: [],
+          disposablePool: 4800,
+          totalSpent: 4000,
+          totalRemaining: 800,
+          spendableAllocated: 1800,
+          spendableSpent: 1125,
+          spendableRemaining: 675,
+        },
+        queriesReady: true,
+      });
+
+      expect(result.hasUnspentSurplus).toBe(true);
+      expect(result.surplusAmount).toBe(675);
+      expect(result.lastMonth).toBe('2026-09');
+    });
   });
 });

@@ -113,25 +113,25 @@ Never re-declare shared constants or calculations locally across feature modules
 ### E. Motion & Animation
 
 - **Which tool:**
-  - Use `motion` (Framer Motion, imported from `motion/react`) for anything with an exit or layout animation: route and tab changes, toasts, popovers, sheets, list rows added or removed, and shared indicators.
-  - Use the CSS tokens and utilities for press, hover, progress fills and colour changes.
+    - Use `motion` (Framer Motion, imported from `motion/react`) for anything with an exit or layout animation: route and tab changes, toasts, popovers, sheets, list rows added or removed, and shared indicators.
+    - Use the CSS tokens and utilities for press, hover, progress fills and colour changes.
 - **Bundle:** Use `m.*` components inside the app-wide `<LazyMotion features={domAnimation} strict>`. Never import `motion.*` directly, since `strict` rejects it.
 - **Presets, never ad-hoc values:**
-  - Reuse the presets in `src/lib/motion.ts` (`fadeRise`, `pop`, `collapse`, `listItem`).
-  - Use the easing tokens (`--ease-out-soft`, `--ease-in-fast`, `--ease-spring`) and duration tokens (`--duration-instant/fast/base/slow`).
-  - Never add a new cubic-bezier or a one-off duration.
+    - Reuse the presets in `src/lib/motion.ts` (`fadeRise`, `pop`, `collapse`, `listItem`).
+    - Use the easing tokens (`--ease-out-soft`, `--ease-in-fast`, `--ease-spring`) and duration tokens (`--duration-instant/fast/base/slow`).
+    - Never add a new cubic-bezier or a one-off duration.
 - **CSS utilities:** `.animate-enter`, `.animate-pop`, `.transition-press` and `.progress-fill`. Never use `animate-in` / `fade-in` / `slide-in-from-*`: no plugin defines them, so they do nothing.
 - **Property choice:**
-  - Animate `transform` and `opacity` only. Height is the exception: animate it only through the `collapse` preset.
-  - Never use `transition-all`. List the properties instead (`transition-colors`, `.transition-press`).
+    - Animate `transform` and `opacity` only. Height is the exception: animate it only through the `collapse` preset.
+    - Never use `transition-all`. List the properties instead (`transition-colors`, `.transition-press`).
 - **Reduced motion:**
-  - Every animation must respect `prefers-reduced-motion`.
-  - `MotionConfig reducedMotion="user"` covers `motion`. The global CSS rule covers CSS.
-  - Any JS-driven motion (smooth scroll, drag, pull-to-refresh) must check `matchMedia("(prefers-reduced-motion: reduce)")`.
+    - Every animation must respect `prefers-reduced-motion`.
+    - `MotionConfig reducedMotion="user"` covers `motion`. The global CSS rule covers CSS.
+    - Any JS-driven motion (smooth scroll, drag, pull-to-refresh) must check `matchMedia("(prefers-reduced-motion: reduce)")`.
 - **No layout shift:**
-  - Conditional banners and cards animate their height in and out through `collapse`. They never pop into the page flow.
-  - Async content keeps its previous data visible (`placeholderData: keepPreviousData`) instead of falling back to a skeleton.
-  - Numbers use `tabular-nums`.
+    - Conditional banners and cards animate their height in and out through `collapse`. They never pop into the page flow.
+    - Async content keeps its previous data visible (`placeholderData: keepPreviousData`) instead of falling back to a skeleton.
+    - Numbers use `tabular-nums`.
 - **Viewport:** Use `dvh` (`h-dvh`, `min-h-dvh`), never `h-screen`. Fixed elements near the screen edges add `env(safe-area-inset-*)`.
 - **Never slower:** Navigation never waits for an exit animation to finish. Keep enter animations at 220ms or less.
 
@@ -209,17 +209,17 @@ This repo is **public**, so everything in a screenshot is public too.
 - **Demo data only.** Capture from the e2e dev server, which forces mock mode (`playwright.config.ts` sets empty Supabase env vars). Never capture from the live DB.
 - **Nothing personal in the PR.** No real names, balances, salaries or emails, in images or in the PR body.
 - **Sizes:**
-  - 360×800 (Android) and 390×844 (iPhone), in light and dark mode.
-  - Set the theme via the app's theme `localStorage` key in an init script; the app uses a `dark` class, not media queries.
-  - Add 1280×800 when desktop layout changed.
+    - 360×800 (Android) and 390×844 (iPhone), in light and dark mode.
+    - Set the theme via the app's theme `localStorage` key in an init script; the app uses a `dark` class, not media queries.
+    - Add 1280×800 when desktop layout changed.
 - **Before and after:**
-  - Capture "before" on the base branch and "after" on the PR branch.
-  - Text-only PRs may skip dark mode.
+    - Capture "before" on the base branch and "after" on the PR branch.
+    - Text-only PRs may skip dark mode.
 - **Hosting:**
-  - Screenshots live on the orphan branch `chore/pr-screenshots`. It is never merged and never deleted.
-  - Use a separate worktree: `git worktree add --orphan -b chore/pr-screenshots ../bb-shots` the first time, or `git worktree add ../bb-shots chore/pr-screenshots` after that.
-  - Put the images in a folder named after the PR branch, with `/` replaced by `-`, e.g. `fix-offline-queue/after-390-dark-home.png`. Commit, push, then remove the worktree.
-  - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
+    - Screenshots live on the orphan branch `chore/pr-screenshots`. It is never merged and never deleted.
+    - Use a separate worktree: `git worktree add --orphan -b chore/pr-screenshots ../bb-shots` the first time, or `git worktree add ../bb-shots chore/pr-screenshots` after that.
+    - Put the images in a folder named after the PR branch, with `/` replaced by `-`, e.g. `fix-offline-queue/after-390-dark-home.png`. Commit, push, then remove the worktree.
+    - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
 - **Not test baselines.** Screenshots are never committed to feature branches or used as visual-regression baselines.
 
 ### H. Backlog (GitHub Issues)
@@ -240,15 +240,17 @@ Add `bug` or `enhancement` to every backlog issue. Add `needs-db` when the fix n
     - **Refs:** plan, audit ID or PR
     - **DB change:** none, or the SQL the user must run
 
-  The repo is public, so never include personal names, real balances or other private data.
+    The repo is public, so never include personal names, real balances or other private data.
+
 - **Clearing:** The PR that fixes an issue says `Closes #<n>` in its body.
 - **Picking up:** Run `gh issue list --label backlog --label P0`, then P1 and so on, and take the highest unblocked issue. Issues labelled `needs-db` wait until the user confirms the SQL has run.
 
 ## 8. Subagent Delegation & Model Tiering
 
-When spawning subagents via `invoke_subagent` (built-in or custom via `define_subagent`), select the lightest model tier appropriate for the task rather than always defaulting to `inherit`:
+When spawning subagents via `invoke_subagent` (built-in or custom via `define_subagent`), strictly prioritize `flash` and below, selecting the cheapest appropriate model where possible. Avoid defaulting to `inherit` when the parent runs on a higher tier.
 
-- **`flash_lite`**: Use for trivial, repetitive, or high-volume lookups (e.g., grepping across files, inventorying imports, simple pattern checks).
-- **`flash`**: Use for straightforward tasks (e.g., targeted codebase research, routine unit test writing, mechanical refactors, or well-scoped UI edits).
-- **`inherit` / `pro`**: Reserve for complex multi-file architecture, subtle bug investigation, or tasks requiring deep domain reasoning.
+Due to small Gemini 4 Argon usage limits, Argon (`pro` / `inherit`) is reserved strictly for **planning only for now** or when deemed **absolutely necessary for heavily-complex tasks**.
 
+- **`flash_lite`**: Primary tier for trivial, repetitive, or high-volume lookups (e.g., grepping across files, inventorying imports, simple pattern checks).
+- **`flash`**: Default workhorse tier for the majority of subagent work (e.g., targeted codebase research, implementation, routine unit test writing, mechanical refactors, well-scoped UI edits).
+- **`pro` / `inherit` (Gemini 4 Argon)**: Restricted to planning only for now, or heavily-complex tasks where deemed absolutely necessary (e.g., intricate architectural design or elusive root-cause reasoning across complex interdependent systems). Never use for routine implementation, testing, or research.

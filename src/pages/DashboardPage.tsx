@@ -43,10 +43,22 @@ export function DashboardPage({
     className = "",
     onNavigateTab,
 }: DashboardPageProps) {
-    const { perspective, activeMember, members: ctxMembers } = useHousehold();
+    const {
+        perspective,
+        activeMember,
+        members: ctxMembers,
+        isMockMode,
+    } = useHousehold();
 
-    const members =
-        ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
+    const members = useMemo(
+        () =>
+            ctxMembers && ctxMembers.length > 0
+                ? ctxMembers
+                : isMockMode
+                  ? mockMembers
+                  : [],
+        [ctxMembers, isMockMode],
+    );
 
     const currentMonth = useCurrentMonth();
     const memberIds = useMemo(() => members.map((m) => m.id), [members]);

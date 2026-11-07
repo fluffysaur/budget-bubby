@@ -164,6 +164,20 @@ function isMissingColumnError(error: { code?: string; message?: string } | null)
   return error.code === '42703' || error.code === 'PGRST204';
 }
 
+/**
+ * Quotes a value for a PostgREST `or()` ilike filter by wrapping `%value%` in
+ * double quotes and escaping `\` and `"`.
+ */
+export function quotePostgrestIlikePattern(search: string): string {
+  const escaped = search.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return `"%${escaped}%"`;
+}
+
+export function buildExpenseSearchOrFilter(search: string): string {
+  const quoted = quotePostgrestIlikePattern(search);
+  return `item.ilike.${quoted},remarks.ilike.${quoted}`;
+}
+
 export class SupabaseFinanceServiceImpl implements FinanceService {
   private readonly clientOverride?: SupabaseClient;
   private readonly localFallback: boolean;
@@ -700,27 +714,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       householdId = await this.getHouseholdId();
     }
 
-    // 2. Resolve owner_id safely
-    let ownerId = profile.owner_id;
+    // 2. Reject non-UUID owner_id in Supabase mode
+    const ownerId = profile.owner_id;
     if (!isValidUuid(ownerId)) {
-      const { data: members } = await client
-        .from('household_members')
-        .select('id, display_name')
-        .eq('household_id', householdId);
-
-      const matched = (members || []).find(
-        (m) =>
-          m.id === ownerId ||
-          (ownerId.toLowerCase().includes('yijia') && m.display_name.toLowerCase().includes('yi jia')) ||
-          (ownerId.toLowerCase().includes('rachel') && m.display_name.toLowerCase().includes('rachel'))
-      );
-      if (matched) {
-        ownerId = matched.id;
-      } else if (members && members.length > 0) {
-        ownerId = members[0].id;
-      } else {
-        throw new Error('No valid household member found to associate with base profile');
-      }
+      throw new Error(`Invalid member ID for base profile: "${ownerId}"`);
     }
 
     // 3. Resolve profile.id: reuse existing row ID for (household_id, owner_id) if one exists
@@ -771,17 +768,12 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .eq('profile_id', finalProfileId);
     if (delError) throw delError;
 
-    // 5. Insert new allocations with sanitized UUIDs
+    // 5. Insert new allocations with validated category UUIDs
     if (allocations.length > 0) {
-      const categories = await this.getCategories();
-
       const sanitizedAllocations = allocations.map((alloc) => {
-        let catId = alloc.category_id;
+        const catId = alloc.category_id;
         if (!isValidUuid(catId)) {
-          const matched = categories.find(
-            (c) => c.id === catId || c.name.toLowerCase() === catId.toLowerCase()
-          );
-          catId = matched?.id || categories[0]?.id || catId;
+          throw new Error(`Invalid category ID in base profile allocation: "${catId}"`);
         }
 
         const allocRow: Record<string, unknown> = {
@@ -1095,7 +1087,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       query = query.contains('tags', [filter.tag]);
     }
     if (filter?.search) {
-      query = query.or(`item.ilike.%${filter.search}%,remarks.ilike.%${filter.search}%`);
+      query = query.or(buildExpenseSearchOrFilter(filter.search));
     }
 
     if (filter?.page && filter?.pageSize) {
@@ -1111,38 +1103,18 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async addExpense(input: CreateExpenseInput): Promise<Expense> {
     const client = this.getClient();
-    const householdId = input.household_id || (await this.getHouseholdId());
+    const householdId = isValidUuid(input.household_id)
+      ? input.household_id!
+      : await this.getHouseholdId();
 
-    // Safely resolve payer_id if a mock or non-UUID string was supplied
-    let resolvedPayerId = input.payer_id;
-    if (resolvedPayerId.startsWith('mem-') || resolvedPayerId.length < 32) {
-      const { data: members } = await client
-        .from('household_members')
-        .select('id, display_name');
-      const matched = (members || []).find((m) =>
-        m.id === resolvedPayerId ||
-        (resolvedPayerId.toLowerCase().includes('yijia') && m.display_name.toLowerCase().includes('yi jia')) ||
-        (resolvedPayerId.toLowerCase().includes('rachel') && m.display_name.toLowerCase().includes('rachel'))
-      );
-      if (matched) {
-        resolvedPayerId = matched.id;
-      } else if (members && members.length > 0) {
-        resolvedPayerId = members[0].id;
-      }
+    if (!isValidUuid(input.payer_id)) {
+      throw new Error(`Invalid payer member ID: "${input.payer_id}"`);
     }
+    const resolvedPayerId = input.payer_id;
 
-    // Safely resolve category_id if a mock or non-UUID string was supplied
-    let resolvedCategoryId: string | null = input.category_id || null;
-    if (resolvedCategoryId && (resolvedCategoryId.startsWith('cat-') || resolvedCategoryId.length < 32)) {
-      const { data: categories } = await client
-        .from('categories')
-        .select('id, name');
-      const matchedCat = (categories || []).find((c) => c.id === resolvedCategoryId);
-      if (matchedCat) {
-        resolvedCategoryId = matchedCat.id;
-      } else {
-        resolvedCategoryId = categories?.[0]?.id || null;
-      }
+    const resolvedCategoryId: string | null = input.category_id || null;
+    if (resolvedCategoryId && !isValidUuid(resolvedCategoryId)) {
+      throw new Error(`Invalid category ID: "${resolvedCategoryId}"`);
     }
 
     const insertPayload: Record<string, unknown> = {
@@ -1246,6 +1218,17 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const { data, error } = await client.from('savings_goals').select('*');
     if (error) throw error;
     return (data || []) as SavingsGoal[];
+  }
+
+  public async getGoal(id: string): Promise<SavingsGoal | null> {
+    const client = this.getClient();
+    const { data, error } = await client
+      .from('savings_goals')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as SavingsGoal | null) ?? null;
   }
 
   public async addGoal(input: CreateGoalInput): Promise<SavingsGoal> {

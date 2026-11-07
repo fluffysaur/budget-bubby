@@ -20,6 +20,7 @@ import type {
     CreateRecurringItemInput,
 } from "../../types/finance";
 import { useHousehold } from "../../context/HouseholdContext";
+import { isMockModeActive } from "../../services/financeService";
 import { mockMembers } from "../../data/mockSeedData";
 import {
     AnimatedModal,
@@ -42,14 +43,15 @@ function useSafeHousehold() {
     try {
         return useHousehold();
     } catch {
+        const isMock = isMockModeActive();
         return {
-            members: mockMembers,
-            activeMember: mockMembers[0],
+            members: isMock ? mockMembers : [],
+            activeMember: isMock ? mockMembers[0] : null,
             perspective: "household" as const,
             setPerspective: () => {},
             theme: "light" as const,
             toggleTheme: () => {},
-            isMockMode: true,
+            isMockMode: isMock,
             overview: null,
             loading: false,
             refreshData: async () => {},
@@ -82,7 +84,7 @@ export function AddRecurringModal({
     initialItem = null,
     categories = EMPTY_CATEGORIES,
 }: AddRecurringModalProps) {
-    const { members, activeMember } = useSafeHousehold();
+    const { members, activeMember, isMockMode } = useSafeHousehold();
 
     // Find member IDs
     const yiJiaMember = members.find((m) =>
@@ -90,7 +92,10 @@ export function AddRecurringModal({
     );
 
     const defaultOwnerId =
-        activeMember?.id || yiJiaMember?.id || "mem-00000000-0011";
+        activeMember?.id ||
+        yiJiaMember?.id ||
+        members[0]?.id ||
+        (isMockMode ? "mem-00000000-0011" : "joint");
 
     // Form states
     const [name, setName] = useState<string>("");
@@ -299,21 +304,23 @@ export function AddRecurringModal({
                             </Select>
                         </div>
 
-                        <div>
-                            <Select
-                                id="recurring-owner"
-                                label="Owner"
-                                value={ownerId}
-                                onChange={(e) => setOwnerId(e.target.value)}
-                                className="bg-(--bg-canvas)"
-                            >
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        👤 {m.display_name}
-                                    </option>
-                                ))}
-                            </Select>
-                        </div>
+                        {members.length > 0 && (
+                            <div>
+                                <Select
+                                    id="recurring-owner"
+                                    label="Owner"
+                                    value={ownerId}
+                                    onChange={(e) => setOwnerId(e.target.value)}
+                                    className="bg-(--bg-canvas)"
+                                >
+                                    {members.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            👤 {m.display_name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                        )}
                     </div>
 
                     {/* Spend category (subscription / bill / other only) */}
