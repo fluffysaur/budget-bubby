@@ -418,5 +418,62 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
         getExpensesSpy.mockRestore();
       }
     });
+
+    it('locks past months and keeps historical budgets intact when base profile changes in mock mode', async () => {
+      const pastMonth = '2025-01';
+      const yijiaMember = mockMembers.find((m) => m.display_name === 'Yi Jia')!;
+
+      // 1. Fetch past month budget
+      const pastBudgetBefore = await mockFinanceService.getMonthlyBudget(pastMonth, yijiaMember.id);
+      expect(pastBudgetBefore.budget.is_locked).toBe(true);
+      const originalGross = pastBudgetBefore.budget.gross_salary;
+
+      // 2. Update base profile with higher salary
+      const profiles = await mockFinanceService.getBaseProfiles();
+      const yijiaProfile = profiles.find((p) => p.owner_id === yijiaMember.id)!;
+      await mockFinanceService.updateBaseProfile(
+        {
+          ...yijiaProfile,
+          gross_salary: originalGross + 2500,
+        },
+        [],
+      );
+
+      // 3. Past month budget gross salary must remain unchanged
+      const pastBudgetAfter = await mockFinanceService.getMonthlyBudget(pastMonth, yijiaMember.id);
+      expect(pastBudgetAfter.budget.gross_salary).toBe(originalGross);
+      expect(pastBudgetAfter.budget.is_locked).toBe(true);
+    });
+
+    it('returns an empty budget for partner without base profile in mock mode', async () => {
+      // Create a third member without any base budget profile
+      const thirdMember = {
+        id: 'mem-00000000-0099',
+        household_id: 'hh-00000000-0001',
+        display_name: 'Third Member',
+        role: 'member' as const,
+        color: '#6366f1',
+        created_at: new Date().toISOString(),
+      };
+      (mockFinanceService as any).state.members.push(thirdMember);
+
+      const budgetDetail = await mockFinanceService.getMonthlyBudget('2026-11', thirdMember.id);
+      expect(budgetDetail.budget.owner_id).toBe(thirdMember.id);
+      expect(budgetDetail.budget.gross_salary).toBe(0);
+      expect(budgetDetail.budget.cpf_deduction).toBe(0);
+      expect(budgetDetail.budget.after_deductions).toBe(0);
+      expect(budgetDetail.budget.notes).toBe('No base budget profile configured');
+      expect(budgetDetail.categories).toHaveLength(0);
+    });
+
+    it('throws when updating monthly budget without ID or when ID is not found in mock mode', async () => {
+      await expect(
+        mockFinanceService.updateMonthlyBudget({} as any),
+      ).rejects.toThrow('Monthly budget ID is required for update');
+
+      await expect(
+        mockFinanceService.updateMonthlyBudget({ id: 'non-existent-budget-id' }),
+      ).rejects.toThrow(/not found/);
+    });
   });
 });

@@ -61,7 +61,12 @@ import {
   isSpendType,
   resolveDueDay,
 } from '../lib/recurringItems';
-import { getTodayDateString, addMonths, getCurrentSingaporeTime } from '../lib/dateUtils';
+import {
+  getTodayDateString,
+  addMonths,
+  getCurrentSingaporeTime,
+  getCurrentMonth,
+} from '../lib/dateUtils';
 import { isValidUuid } from '../lib/uuid';
 import { BonusLogUnavailableError, isMissingRelationError } from '../lib/supabaseErrors';
 import {
@@ -855,13 +860,94 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         .eq('profile_id', finalProfileId);
       if (delError) throw delError;
     }
+
+    // 5. Synchronize unlocked monthly budgets for current and future months for this member.
+    // Past months (month < currentMonth) and locked months are frozen and never modified.
+    const currentMonth = getCurrentMonth();
+    const { data: unlockedBudgets, error: fetchBudgetError } = await client
+      .from('monthly_budgets')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .gte('month', currentMonth)
+      .eq('is_locked', false);
+
+    if (!fetchBudgetError && unlockedBudgets && unlockedBudgets.length > 0) {
+      const recurringItems = await this.getRecurringItems();
+      const newGross = Number(profile.gross_salary) || 0;
+      const newCpf = calculateCPFAndNetPay(newGross, cpfEmployeeRate).cpfDeduction;
+
+      for (const mb of unlockedBudgets) {
+        const { taxesMonthly, insuranceMonthly } = calculateMemberRecurringDeductions(
+          recurringItems,
+          ownerId,
+          mb.month
+        );
+        const newAfterDeductions = Math.round(
+          (newGross - newCpf - taxesMonthly - insuranceMonthly) * 100
+        ) / 100;
+
+        const { error: updateBudgetError } = await client
+          .from('monthly_budgets')
+          .update({
+            gross_salary: newGross,
+            cpf_deduction: newCpf,
+            taxes_deduction: taxesMonthly,
+            insurance_deduction: insuranceMonthly,
+            after_deductions: newAfterDeductions,
+          })
+          .eq('id', mb.id);
+        if (updateBudgetError) throw updateBudgetError;
+
+        // Re-sync monthly_budget_categories for this unlocked budget
+        const { error: delCatError } = await client
+          .from('monthly_budget_categories')
+          .delete()
+          .eq('monthly_budget_id', mb.id);
+        if (delCatError) throw delCatError;
+
+        if (allocations.length > 0) {
+          const catAllocInserts = allocations.map((alloc) => {
+            const allocId =
+              typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : undefined;
+            const targetPct = Number(alloc.target_percentage) || 0;
+            return {
+              ...(allocId ? { id: allocId } : {}),
+              monthly_budget_id: mb.id,
+              category_id: alloc.category_id,
+              percentage: targetPct,
+              allocated_amount: Math.round(newAfterDeductions * targetPct * 100) / 100,
+            };
+          });
+          const { error: insertCatError } = await client
+            .from('monthly_budget_categories')
+            .insert(catAllocInserts);
+          if (insertCatError) throw insertCatError;
+        }
+      }
+    }
   }
 
   public async getMonthlyBudget(month: string, memberId?: string): Promise<MonthlyBudgetDetail> {
     const client = this.getClient();
+    const currentMonth = getCurrentMonth();
+    const isPastMonth = month < currentMonth;
+
+    let targetMemberId = memberId;
+    if (!targetMemberId) {
+      const { data: membersData } = await client
+        .from('household_members')
+        .select('id')
+        .limit(1);
+      if (membersData && membersData.length > 0) {
+        targetMemberId = membersData[0].id;
+      }
+    }
+
     let query = client.from('monthly_budgets').select('*').eq('month', month);
-    if (memberId) {
-      query = query.eq('owner_id', memberId);
+    if (targetMemberId) {
+      query = query.eq('owner_id', targetMemberId);
     }
 
     const { data: budgetData, error: budgetError } = await query.limit(1).maybeSingle();
@@ -881,6 +967,15 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
     if (budgetData) {
       budget = budgetData as MonthlyBudget;
+      if (isPastMonth && !budget.is_locked) {
+        const { error: lockError } = await client
+          .from('monthly_budgets')
+          .update({ is_locked: true })
+          .eq('id', budget.id);
+        if (!lockError) {
+          budget = { ...budget, is_locked: true };
+        }
+      }
       const { data: allocRows, error: catAllocError } = await client
         .from('monthly_budget_categories')
         .select('*, categories(*)')
@@ -888,52 +983,120 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       if (catAllocError) throw catAllocError;
       catAllocData = (allocRows as unknown as CategoryAllocRow[]) || [];
     } else {
-      // Synthesize budget from base_budget_profiles + base_profile_allocations for new months
-      const [profs, allCats, recurringItems] = await Promise.all([
+      const [profs, _allCats, recurringItems, householdId] = await Promise.all([
         this.getBaseProfiles(),
         this.getCategories(),
         this.getRecurringItems(),
+        this.getHouseholdId(),
       ]);
-      const baseProfile =
-        profs.find((p) => !memberId || p.owner_id === memberId) || profs[0];
-      const ownerId = memberId || baseProfile?.owner_id || '';
-      const gross = baseProfile ? Number(baseProfile.gross_salary) : 5000;
-      const rate = baseProfile ? Number(baseProfile.cpf_employee_rate) : 0.2;
-      const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
-      const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberRecurringDeductions(recurringItems, ownerId, month);
-      const afterDeductions = Math.round(
-        (gross - cpf - taxesDeduction - insuranceDeduction) * 100
-      ) / 100;
+      const baseProfile = profs.find((p) => p.owner_id === targetMemberId);
+      const ownerId = targetMemberId || '';
 
-      budget = {
-        id: `mb-dyn-${month}-${ownerId}`,
-        household_id: baseProfile?.household_id || '',
-        owner_id: ownerId,
-        month,
-        gross_salary: gross,
-        bonus: 0,
-        cpf_deduction: cpf,
-        taxes_deduction: taxesDeduction,
-        insurance_deduction: insuranceDeduction,
-        after_deductions: afterDeductions,
-        notes: 'Generated monthly budget',
-        is_locked: false,
-      };
+      if (!baseProfile) {
+        // Partner with no base profile gets an empty "no profile" budget, not the other partner's profile
+        budget = {
+          id: `mb-dyn-${month}-${ownerId || 'empty'}`,
+          household_id: householdId || '',
+          owner_id: ownerId,
+          month,
+          gross_salary: 0,
+          bonus: 0,
+          cpf_deduction: 0,
+          taxes_deduction: 0,
+          insurance_deduction: 0,
+          after_deductions: 0,
+          notes: 'No base budget profile configured',
+          is_locked: isPastMonth,
+        };
+        catAllocData = [];
+      } else {
+        const gross = Number(baseProfile.gross_salary) || 0;
+        const rate = Number(baseProfile.cpf_employee_rate) || 0.2;
+        const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
-      const baseAllocs = baseProfile
-        ? await this.getBaseAllocations(baseProfile.id)
-        : [];
-      catAllocData = baseAllocs.map((alloc, idx) => ({
-        id: `mbc-${budget.id}-${idx}`,
-        monthly_budget_id: budget.id,
-        category_id: alloc.category_id,
-        percentage: Number(alloc.target_percentage),
-        allocated_amount:
-          Math.round(afterDeductions * Number(alloc.target_percentage) * 100) / 100,
-        categories: allCats.find((c) => c.id === alloc.category_id),
-      }));
+        const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
+          calculateMemberRecurringDeductions(recurringItems, ownerId, month);
+        const afterDeductions =
+          Math.round((gross - cpf - taxesDeduction - insuranceDeduction) * 100) / 100;
+
+        const newBudgetId =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : undefined;
+
+        const budgetInsertPayload: Record<string, unknown> = {
+          household_id: baseProfile.household_id || householdId,
+          owner_id: ownerId,
+          month,
+          gross_salary: gross,
+          bonus: 0,
+          cpf_deduction: cpf,
+          taxes_deduction: taxesDeduction,
+          insurance_deduction: insuranceDeduction,
+          after_deductions: afterDeductions,
+          notes: 'Generated monthly budget',
+          is_locked: isPastMonth,
+        };
+        if (newBudgetId) {
+          budgetInsertPayload.id = newBudgetId;
+        }
+
+        const { data: insertedBudget, error: insertError } = await client
+          .from('monthly_budgets')
+          .insert(budgetInsertPayload)
+          .select('*')
+          .single();
+
+        if (insertError) {
+          // If conflict (e.g. concurrent creation), retry select
+          const { data: existingData, error: selectError } = await client
+            .from('monthly_budgets')
+            .select('*')
+            .eq('month', month)
+            .eq('owner_id', ownerId)
+            .maybeSingle();
+          if (selectError || !existingData) {
+            throw insertError;
+          }
+          budget = existingData as MonthlyBudget;
+        } else {
+          budget = insertedBudget as MonthlyBudget;
+        }
+
+        const baseAllocs = await this.getBaseAllocations(baseProfile.id);
+        if (baseAllocs.length > 0) {
+          const catAllocInserts = baseAllocs.map((alloc) => {
+            const allocId =
+              typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : undefined;
+            const targetPct = Number(alloc.target_percentage) || 0;
+            return {
+              ...(allocId ? { id: allocId } : {}),
+              monthly_budget_id: budget.id,
+              category_id: alloc.category_id,
+              percentage: targetPct,
+              allocated_amount:
+                Math.round(afterDeductions * targetPct * 100) / 100,
+            };
+          });
+
+          const { error: catInsertError } = await client
+            .from('monthly_budget_categories')
+            .insert(catAllocInserts);
+          if (catInsertError) {
+            console.warn('Failed to insert monthly_budget_categories:', catInsertError);
+          }
+        }
+
+        const { data: allocRows, error: catAllocError } = await client
+          .from('monthly_budget_categories')
+          .select('*, categories(*)')
+          .eq('monthly_budget_id', budget.id);
+        if (catAllocError) throw catAllocError;
+        catAllocData = (allocRows as unknown as CategoryAllocRow[]) || [];
+      }
     }
 
     const nextMonth = addMonths(month, 1);
@@ -1096,7 +1259,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
     // Dynamic synthetic budget IDs (e.g. mb-dyn-*) are not yet persisted in monthly_budgets
     if (!isValidUuid(budgetUpdates.id)) {
-      return;
+      throw new Error(
+        `Invalid monthly budget ID: "${budgetUpdates.id}". Budget must be persisted with a valid UUID before update.`
+      );
     }
 
     // bonus is derived from bonus_events at read time; never write it back.
