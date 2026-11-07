@@ -16,14 +16,12 @@ import { useState, useMemo } from 'react';
 import {
   Settings,
   DollarSign,
-  TrendingDown,
   Wallet,
-  Receipt,
   PiggyBank,
   Tag,
 } from 'lucide-react';
 import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, BudgetContentSkeleton } from '../components/ui';
+import { PageHeader, Button, StatCard, BudgetContentSkeleton, MeterBar, Badge } from '../components/ui';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import {
   useCategoriesQuery,
@@ -189,17 +187,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
     return { spendableCats: spendable, allocationCats: allocations };
   }, [budgetDetail]);
 
-  // Calculations for summary metrics. Bonuses count as income but stay outside
-  // the take-home pool that sets category caps.
-  const bonusGross = budgetDetail?.bonusSummary?.gross ?? (budgetDetail?.budget.bonus || 0);
-  const bonusCpf = budgetDetail?.bonusSummary?.cpf ?? 0;
-  const bonusNet = budgetDetail?.bonusSummary?.net ?? bonusGross;
-  const totalGross = (budgetDetail?.budget.gross_salary || 0) + bonusGross;
-  const totalDeductions =
-    (budgetDetail?.budget.cpf_deduction || 0) +
-    bonusCpf +
-    (budgetDetail?.budget.taxes_deduction || 0) +
-    (budgetDetail?.budget.insurance_deduction || 0);
   const handleViewBonus = () =>
     onNavigateTab
       ? onNavigateTab('plan?tab=bonus')
@@ -258,62 +245,33 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
       {/* Category Limit Warning Banner (Guardrails) */}
       <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />
 
-      {/* High-Level Financial Metric Cards (2x2 on mobile, 4-col on desktop) */}
+      {/* High-Level Budget Hero Card */}
       <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        {/* Card 1: Gross Salary */}
         <StatCard
-          title="Gross"
+          title={totalRemaining < 0 ? 'Over' : 'Left'}
           loading={isLoading}
-          value={formatSGD(totalGross, { showCents: false })}
-          subtitle={bonusGross > 0 ? `+${formatSGD(bonusGross, { showCents: false })} bonus` : undefined}
-          tooltip="Salary plus bonuses received this month."
-          icon={<DollarSign className="h-4 w-4" />}
-          iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-        />
-
-        {/* Card 2: Total Deductions */}
-        <StatCard
-          title="Deductions"
-          loading={isLoading}
-          value={<span className="text-rose-600 dark:text-rose-400">-<CurrencyText formatted={formatSGD(totalDeductions, { showCents: false })} /></span>}
-          tooltip="CPF, taxes and insurance, incl. bonus CPF."
-          icon={<TrendingDown className="h-4 w-4" />}
-          iconBg="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-        />
-
-        {/* Card 3: Disposable Pool */}
-        <StatCard
-          title="Take-Home"
-          loading={isLoading}
-          value={formatSGD(disposablePool, { showCents: false })}
-          subtitle={bonusNet > 0 ? `+${formatSGD(bonusNet, { showCents: false })} bonus` : undefined}
-          tooltip="Salary take-home for category caps. Bonuses are tracked separately."
-          icon={<Wallet className="h-4 w-4" />}
-          iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-        />
-
-        {/* Card 4: Actual Spent & Remaining */}
-        <StatCard
-          title="Spent"
-          loading={isLoading}
-          value={formatSGD(totalSpent, { showCents: false })}
-          subtitle={
-            <span
-              className={`font-bold ${
-                totalRemaining < 0
-                  ? 'text-rose-600 dark:text-rose-400'
-                  : 'text-emerald-600 dark:text-emerald-400'
-              }`}
-            >
-              {totalRemaining < 0 ? 'Over ' : 'Left '}
-              <CurrencyText formatted={formatSGD(Math.abs(totalRemaining), { showCents: false })} />
-            </span>
+          value={<CurrencyText formatted={formatSGD(Math.abs(totalRemaining), { showCents: false })} />}
+          badge={
+            totalRemaining < 0 ? (
+              <Badge variant="over">Over</Badge>
+            ) : (
+              <Badge variant="ok">On Track</Badge>
+            )
           }
-          icon={<Receipt className="h-4 w-4" />}
-          iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+          tooltip={`Take-home pool of ${formatSGD(disposablePool)} minus ${formatSGD(totalSpent)} spent.`}
+          icon={<Wallet className="h-4 w-4" />}
+          iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+          footer={
+            disposablePool > 0 ? (
+              <MeterBar
+                value={totalSpent}
+                max={disposablePool}
+                size="md"
+                aria-label="Monthly budget spent"
+              />
+            ) : undefined
+          }
         />
-      </div>
 
       {/* Loading Indicator */}
       {isLoading ? (
@@ -341,7 +299,14 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 </p>
                 <div className="mt-3 flex items-center justify-center gap-2.5">
                   <Button
-                    variant="secondary"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleOpenEditor()}
+                  >
+                    Add Category
+                  </Button>
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={async () => {
                       await financeService.seedDefaultCategories();
@@ -349,13 +314,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                     }}
                   >
                     Presets
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleOpenEditor()}
-                  >
-                    + Add Category
                   </Button>
                 </div>
               </div>
@@ -393,7 +351,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           {/* Collapsible: Budget Waterfall Breakdown */}
           <CollapsibleSection
             title="Income Flow"
-            subtitle="Take-home pay & CPF"
             icon={<DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />}
             defaultOpen={true}
           >

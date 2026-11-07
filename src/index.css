@@ -38,6 +38,15 @@
     --color-pink: var(--accent-pink);
     --color-mint: var(--accent-mint);
     --color-coral: var(--accent-coral);
+    --color-tone-ok: var(--tone-ok);
+    --color-tone-ok-bg: var(--tone-ok-bg);
+    --color-tone-ok-text: var(--tone-ok-text);
+    --color-tone-near: var(--tone-near);
+    --color-tone-near-bg: var(--tone-near-bg);
+    --color-tone-near-text: var(--tone-near-text);
+    --color-tone-over: var(--tone-over);
+    --color-tone-over-bg: var(--tone-over-bg);
+    --color-tone-over-text: var(--tone-over-text);
 
     --shadow-cute-sm: var(--shadow-cute-sm);
     --shadow-cute: var(--shadow-cute);
@@ -101,6 +110,17 @@
     --pastel-pink-light: #fcdef6;
     --pastel-cream: var(--bg-cream);
 
+    /* Tone tokens (PR #9 visual meters) */
+    --tone-ok: var(--pastel-mint);
+    --tone-ok-bg: var(--pastel-mint-light);
+    --tone-ok-text: var(--accent-mint-ink);
+    --tone-near: var(--pastel-butter);
+    --tone-near-bg: var(--pastel-butter-light);
+    --tone-near-text: #78350f;
+    --tone-over: var(--accent-coral);
+    --tone-over-bg: var(--pastel-coral-light);
+    --tone-over-text: var(--accent-coral-ink);
+
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -162,6 +182,17 @@
     --pastel-pink: #f59bf2;
     --pastel-pink-light: #451b43;
     --pastel-cream: var(--bg-cream);
+
+    /* Tone tokens (PR #9 visual meters) */
+    --tone-ok: var(--pastel-mint);
+    --tone-ok-bg: var(--pastel-mint-light);
+    --tone-ok-text: var(--accent-mint-ink);
+    --tone-near: var(--pastel-butter);
+    --tone-near-bg: var(--pastel-butter-light);
+    --tone-near-text: #fef3c7;
+    --tone-over: var(--accent-coral);
+    --tone-over-bg: var(--pastel-coral-light);
+    --tone-over-text: var(--accent-coral-ink);
 }
 
 /* Base Body Styles */

@@ -532,8 +532,7 @@ export function ManageCategoriesModal({
                                 <div>
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-faint) flex items-center gap-1.5">
                                         <Percent className="h-3.5 w-3.5" />
-                                        Percentage Allocations (Must Sum to
-                                        100%)
+                                        Allocations
                                     </h3>
                                     <p className="text-[11px] text-(--text-faint)">
                                         Calculated from estimated disposable
@@ -925,10 +924,7 @@ export function ManageCategoriesModal({
                                                 No Categories
                                             </h4>
                                             <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                                                You have no categories
-                                                configured yet. Add custom
-                                                categories or restore
-                                                recommended presets.
+                                                Add a category or restore presets.
                                             </p>
                                             <div className="mt-4 flex items-center justify-center gap-3">
                                                 <Button
@@ -958,7 +954,7 @@ export function ManageCategoriesModal({
                                             <div>
                                                 <h4 className="text-xs font-bold uppercase tracking-wider text-(--text-faint) mb-2 flex items-center justify-between">
                                                     <span>
-                                                        Spendable Categories (
+                                                        Spendable (
                                                         {
                                                             spendableCategories.length
                                                         }
@@ -1131,13 +1127,11 @@ export function ManageCategoriesModal({
                         onClose={() => setDeletingCategory(null)}
                         onConfirm={handleDeleteConfirm}
                         title={`Delete "${deletingCategory?.name}"?`}
-                        confirmLabel="Confirm Delete"
+                        confirmLabel="Delete"
                         isLoading={isSubmitting}
                     >
                         <p className="text-xs text-(--text-muted) leading-relaxed">
-                            Removing this category will delete associated budget
-                            allocations. Existing expense records will have
-                            their category cleared.
+                            Removes its budget share. Expenses become uncategorised.
                         </p>
                     </ConfirmModal>
                 </div>

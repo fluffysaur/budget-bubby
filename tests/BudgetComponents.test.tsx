@@ -300,39 +300,43 @@ describe('BudgetWaterfall', () => {
 });
 
 describe('CategoryProgressList', () => {
-  it('renders category meters with allocated, actual spent, and remaining amounts', () => {
+  it('renders category meters with amount left and meter progress', () => {
     render(<CategoryProgressList categories={sampleCategories} />);
 
     // Food category check
     expect(screen.getByText('Food')).toBeInTheDocument();
-    expect(screen.getByText('S$300.00')).toBeInTheDocument();
-    expect(screen.getAllByText('S$646.25').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('S$346.25')).toBeInTheDocument();
+    expect(screen.getAllByText(/left/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('applies green status for spend <= 80%', () => {
     render(<CategoryProgressList categories={[sampleCategories[0]]} />);
 
-    // Food is 46.4% spent (<=80%)
-    const badge = screen.getByText(/on track|good|46%/i);
-    expect(badge).toBeInTheDocument();
+    // Food is 46.4% spent (<=80%): shows amount left and no Over badge
+    expect(screen.getByText(/left/i)).toBeInTheDocument();
+    expect(screen.queryByText('Over')).not.toBeInTheDocument();
+    const meter = screen.getByRole('progressbar');
+    expect(meter.firstElementChild?.className).toContain('bg-(--tone-ok)');
   });
 
   it('applies amber status for spend between 81% and 100%', () => {
     render(<CategoryProgressList categories={[sampleCategories[1]]} />);
 
-    // Lifestyle is 89.7% spent (81-100%)
-    const badge = screen.getByText(/near limit|warning|90%/i);
-    expect(badge).toBeInTheDocument();
+    // Lifestyle is 89.7% spent (81-100%): shows amount left with near tone and no Over badge
+    expect(screen.getByText(/left/i)).toBeInTheDocument();
+    expect(screen.queryByText('Over')).not.toBeInTheDocument();
+    const meter = screen.getByRole('progressbar');
+    expect(meter.firstElementChild?.className).toContain('bg-(--tone-near)');
   });
 
   it('applies red status and shows over-budget warning when spend > 100%', () => {
     render(<CategoryProgressList categories={[sampleCategories[2]]} />);
 
-    // Transport is 120.7% spent (>100%)
-    expect(screen.getAllByText(/over budget/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/121%/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/over by/i)).toBeInTheDocument();
+    // Transport is 120.7% spent (>100%): shows over banner and Over badge
+    expect(screen.getByText('Over')).toBeInTheDocument();
+    expect(screen.getAllByText(/over/i).length).toBeGreaterThan(0);
+    const meter = screen.getByRole('progressbar');
+    expect(meter.firstElementChild?.className).toContain('bg-(--tone-over)');
   });
 
   it('renders empty state message when no categories are provided', () => {

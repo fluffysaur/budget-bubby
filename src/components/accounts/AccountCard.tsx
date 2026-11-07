@@ -113,7 +113,7 @@ export function AccountCard({
                 type="button"
                 onClick={() => onEditAccount(account)}
                 aria-label={`Edit ${account.name}`}
-                title="Edit account details"
+                title="Edit"
                 className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
               >
                 <Settings className="h-3.5 w-3.5" />
@@ -124,7 +124,7 @@ export function AccountCard({
                 type="button"
                 onClick={() => onDeleteAccount(account)}
                 aria-label={`Delete ${account.name}`}
-                title="Delete account"
+                title="Delete"
                 className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
               >
                 <Trash2 className="h-3.5 w-3.5" />

@@ -167,7 +167,18 @@ export function AccountGroupList({
       <EmptyStateCard
         icon={<PiggyBank className="h-6 w-6" />}
         title="No Accounts"
-        description="No accounts found for this perspective."
+        description="Add an account to start tracking balances."
+        action={
+          onAddAccount && (
+            <Button
+              variant="primary"
+              onClick={onAddAccount}
+              leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+            >
+              Add Account
+            </Button>
+          )
+        }
         className={className}
       />
     );
@@ -187,7 +198,7 @@ export function AccountGroupList({
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
             }`}
           >
-            All Accounts ({accounts.length})
+            All ({accounts.length})
           </button>
           <button
             type="button"
@@ -380,7 +391,7 @@ export function AccountGroupList({
                                   ? handleStartInlineEdit(account)
                                   : onUpdateBalance?.(account)
                               }
-                              title="Click to edit balance"
+                              title="Edit balance"
                               className="text-(--text-ink) font-display hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                             >
                               <CurrencyText amount={account.balance} size="md" />
@@ -399,7 +410,7 @@ export function AccountGroupList({
                                 type="button"
                                 onClick={() => onEditAccount(account)}
                                 aria-label={`Edit ${account.name}`}
-                                title="Edit account details"
+                                title="Edit"
                                 className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
                               >
                                 <Settings className="h-3 w-3" />

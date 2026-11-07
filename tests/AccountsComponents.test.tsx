@@ -166,7 +166,7 @@ describe('AccountGroupList', () => {
 
   it('renders friendly empty state when accounts array is empty', () => {
     render(<AccountGroupList accounts={[]} />);
-    expect(screen.getByText(/no accounts found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no accounts/i)).toBeInTheDocument();
   });
 });
 
@@ -195,7 +195,7 @@ describe('UpdateBalanceModal', () => {
     expect(screen.getByText(/UOB Lady's Savings/i)).toBeInTheDocument();
 
     // Input fields
-    const balanceInput = screen.getByLabelText(/new balance/i) as HTMLInputElement;
+    const balanceInput = screen.getByLabelText(/balance/i) as HTMLInputElement;
     expect(balanceInput).toBeInTheDocument();
     expect(Number(balanceInput.value)).toBe(10000);
 
@@ -226,7 +226,7 @@ describe('UpdateBalanceModal', () => {
       />
     );
 
-    const balanceInput = screen.getByLabelText(/new balance/i);
+    const balanceInput = screen.getByLabelText(/balance/i);
     fireEvent.change(balanceInput, { target: { value: '12500.50' } });
 
     const notesInput = screen.getByLabelText(/notes|remarks/i);
@@ -328,7 +328,7 @@ describe('AccountsPage', () => {
 
     // Modal dialog should appear
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/update account balance/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Update Balances/i).length).toBeGreaterThan(0);
   });
 
   it('updates accounts when switching perspective', async () => {
@@ -381,7 +381,7 @@ describe('AccountsPage', () => {
       // Click preset
       fireEvent.click(screen.getByText('DBS Multiplier'));
       expect((screen.getByLabelText(/account name/i) as HTMLInputElement).value).toBe('DBS Multiplier');
-      expect((screen.getByLabelText(/bank \/ institution/i) as HTMLInputElement).value).toBe('DBS');
+      expect((screen.getByLabelText(/bank/i) as HTMLInputElement).value).toBe('DBS');
     });
 
     it('displays the 0-accounts welcome banner when isInitialSetup is true', () => {
@@ -422,8 +422,8 @@ describe('AccountsPage', () => {
       );
 
       fireEvent.change(screen.getByLabelText(/account name/i), { target: { value: 'DBS Multiplier' } });
-      fireEvent.change(screen.getByLabelText(/bank \/ institution/i), { target: { value: 'DBS' } });
-      fireEvent.change(screen.getByLabelText(/starting balance/i), { target: { value: '5000' } });
+      fireEvent.change(screen.getByLabelText(/bank/i), { target: { value: 'DBS' } });
+      fireEvent.change(screen.getByLabelText(/balance/i), { target: { value: '5000' } });
 
       fireEvent.click(screen.getByRole('button', { name: /create account/i }));
 
@@ -499,9 +499,9 @@ describe('AccountsPage', () => {
       );
 
       expect(screen.getByText(/Delete Account\?/i)).toBeInTheDocument();
-      expect(screen.getByText(/permanently remove all historical balance snapshots/i)).toBeInTheDocument();
+      expect(screen.getByText(/Removes its balance history\./i)).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: /delete account/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
 
       await waitFor(() => {
         expect(deleteSpy).toHaveBeenCalledWith(sampleAccounts[0].id);
@@ -528,7 +528,7 @@ describe('AccountsPage', () => {
       );
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText(/Update Account Balances/i)).toBeInTheDocument();
+      expect(screen.getByText(/Update Balances/i)).toBeInTheDocument();
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText(/search accounts/i)).toBeInTheDocument();
@@ -543,7 +543,7 @@ describe('AccountsPage', () => {
       const balanceInputs = screen.getAllByPlaceholderText('0.00');
       fireEvent.change(balanceInputs[0], { target: { value: '15000' } });
 
-      expect(screen.getAllByText(/1 modified/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/1 changed/i).length).toBeGreaterThan(0);
 
       fireEvent.click(screen.getByRole('button', { name: /save 1 modified account/i }));
 

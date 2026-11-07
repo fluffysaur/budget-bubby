@@ -234,12 +234,8 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
 
         // Verify immediate toast alert is rendered
         expect(screen.getByRole("alert")).toBeInTheDocument();
-        expect(screen.getByText(/Budget Limit Warning/i)).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                /Food is at 81% \(S\$650\.00 of S\$800\.00\) — S\$150\.00 left/i,
-            ),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Food at 81%/i)).toBeInTheDocument();
+        expect(screen.getByText(/S\$150\.00 left/i)).toBeInTheDocument();
     });
 
     it("triggers playBudgetExceededSound and displays toast when expenseAdded crosses 100%", () => {
@@ -288,10 +284,8 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
 
         expect(soundEffects.playBudgetExceededSound).toHaveBeenCalledTimes(1);
         expect(screen.getByRole("alert")).toBeInTheDocument();
-        expect(screen.getByText(/Budget Cap Exceeded!/i)).toBeInTheDocument();
-        expect(
-            screen.getByText(/Food has exceeded cap by S\$20\.00!/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Food Over/i)).toBeInTheDocument();
+        expect(screen.getByText(/S\$20\.00 over cap/i)).toBeInTheDocument();
     });
 });
 
@@ -434,16 +428,17 @@ describe("Cumulative Surplus & Deficit Calculations", () => {
         // Badges
         const currentBadge = screen.getByTestId("current-month-surplus-badge");
         expect(currentBadge).toBeInTheDocument();
-        expect(screen.getByText(/Surplus this month/i)).toBeInTheDocument();
+        expect(screen.getByText(/Result/i)).toBeInTheDocument();
         expect(
             screen.getAllByText(withText(/\+S\$180\.20/i)).length,
         ).toBeGreaterThanOrEqual(1);
 
         const bankedBadge = screen.getByTestId("total-banked-surplus-badge");
         expect(bankedBadge).toBeInTheDocument();
+        expect(screen.getByText("Banked")).toBeInTheDocument();
         expect(
-            screen.getByText(withText(/Total Banked Surplus: \+S\$520\.40/i)),
-        ).toBeInTheDocument();
+            screen.getAllByText(withText(/\+S\$520\.40/i)).length,
+        ).toBeGreaterThanOrEqual(1);
 
         // Goal Protection tooltip callout
         const tooltipBtn = screen.getByRole("button", {
@@ -451,7 +446,7 @@ describe("Cumulative Surplus & Deficit Calculations", () => {
         });
         fireEvent.click(tooltipBtn);
         expect(
-            screen.getByText(/Goal-Funded Protection:/i),
+            screen.getByText(/Unspent cap carries over/i),
         ).toBeInTheDocument();
     });
 });
@@ -496,9 +491,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         expect(lockInfoBtn).toBeInTheDocument();
         fireEvent.click(lockInfoBtn);
         expect(
-            screen.getByText(
-                "Locked categories keep their exact amount when you click Auto-Balance.",
-            ),
+            screen.getByText("Locked rows stay put."),
         ).toBeInTheDocument();
         fireEvent.click(screen.getByRole("button", { name: "Close tooltip" }));
 
@@ -536,9 +529,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         fireEvent.click(lockedBadge);
         expect(screen.getByRole("tooltip")).toBeInTheDocument();
         expect(
-            screen.getAllByText(
-                "Locked categories keep their exact amount when you click Auto-Balance.",
-            ).length,
+            screen.getAllByText("Locked rows stay put.").length,
         ).toBeGreaterThan(0);
         fireEvent.click(screen.getByRole("button", { name: "Close tooltip" }));
 
@@ -628,14 +619,14 @@ describe("CategoryProgressList Warning Badges", () => {
 
         render(<CategoryProgressList categories={categories} />);
 
-        // Amber warning text on progress bar (amber chip removed)
-        expect(screen.getByText(withText(/S\$80\.00 remaining/i))).toBeInTheDocument();
+        // Streamlined remaining text on category meter
+        expect(screen.getByText(withText(/S\$80\.00 left/i))).toBeInTheDocument();
         expect(screen.queryByText("Amber Guardrail")).not.toBeInTheDocument();
 
         // Rose cap exceeded badge on progress bar
         expect(
             screen.getByTestId("badge-rose-cat-lifestyle"),
         ).toBeInTheDocument();
-        expect(screen.getByText("Rose Cap Exceeded")).toBeInTheDocument();
+        expect(screen.getByText("Over")).toBeInTheDocument();
     });
 });

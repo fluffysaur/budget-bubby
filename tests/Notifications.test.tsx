@@ -1124,7 +1124,7 @@ describe('Notifications Engine', () => {
 
       expect(screen.queryByText('Notification Types')).not.toBeInTheDocument();
       expect(screen.queryByText('Custom Thresholds')).not.toBeInTheDocument();
-      expect(screen.getByText(/Push notifications are turned off/i)).toBeInTheDocument();
+      expect(screen.getByText(/Push is off/i)).toBeInTheDocument();
 
       // Sound Effects section remains accessible in its own category
       expect(screen.getByRole('heading', { name: 'Sound Effects' })).toBeInTheDocument();

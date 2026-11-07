@@ -31,7 +31,6 @@ export interface NavItem {
     id: string;
     label: string;
     icon: ComponentType<{ className?: string; strokeWidth?: number | string }>;
-    description?: string;
     section?: "core" | "plan";
 }
 
@@ -40,25 +39,21 @@ const NAV_ITEMS: NavItem[] = [
         id: "dashboard",
         label: "Home",
         icon: LayoutDashboard,
-        description: "Daily spend check & quick actions",
     },
     {
         id: "spend",
         label: "Spend",
         icon: Receipt,
-        description: "Expenses ledger & monthly budget caps",
     },
     {
         id: "accounts",
         label: "Accounts",
         icon: Landmark,
-        description: "Month-end balances & asset trends",
     },
     {
         id: "plan",
         label: "Plan",
         icon: Compass,
-        description: "Goals & recurring commitments",
     },
 ];
 
@@ -272,10 +267,7 @@ export function DesktopSidebar({
                 confirmLabel="Sign Out"
                 variant="danger"
             >
-                <p>
-                    You will need your PIN to unlock the app and access your
-                    finances.
-                </p>
+                <p>Lock the app? You&apos;ll need your PIN.</p>
             </ConfirmModal>
         </aside>
     );

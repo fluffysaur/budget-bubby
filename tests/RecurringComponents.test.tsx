@@ -181,7 +181,7 @@ describe('RecurringTable Component', () => {
     expect(screen.getByRole('columnheader', { name: /Owner/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Frequency/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /^Amount$/i })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /Monthly Amortized/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /Per Month/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /Renewal/i })).toBeInTheDocument();
 
     // Item names

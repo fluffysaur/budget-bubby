@@ -86,9 +86,9 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       expect(screen.getByText(/8832/)).toBeInTheDocument();
 
       // Summary cards
-      expect(screen.getByText('Total CC Bill Due this Month')).toBeInTheDocument();
-      expect(screen.getByText('Total Paid')).toBeInTheDocument();
-      expect(screen.getByText('Total Unpaid')).toBeInTheDocument();
+      expect(screen.getByText('Due')).toBeInTheDocument();
+      expect(screen.getAllByText('Paid').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('Unpaid')).toBeInTheDocument();
 
       // In mock seed data for 2026-10:
       // DBS: 842.50 (unpaid)
@@ -163,7 +163,7 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       fireEvent.click(logStmtBtns[0]);
 
       // Fill in amount
-      const amountInput = screen.getByLabelText(/Statement Balance/i);
+      const amountInput = screen.getByLabelText(/Balance/i);
       fireEvent.change(amountInput, { target: { value: '450.75' } });
 
       // Save Statement
@@ -200,7 +200,7 @@ describe('Credit Card Statements & Due Date Tracker', () => {
         target: { value: '8000' },
       });
 
-      fireEvent.click(screen.getByRole('button', { name: 'Add Credit Card' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
       await waitFor(() => {
         expect(onCardSaved).toHaveBeenCalled();

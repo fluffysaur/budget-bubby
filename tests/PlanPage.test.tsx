@@ -61,7 +61,7 @@ describe('PlanPage Component', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Bonus log not set up')).toBeInTheDocument();
+    expect(await screen.findByText('Not available')).toBeInTheDocument();
     expect(screen.getByText(/Bonus Splitter/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /log bonus/i })).not.toBeInTheDocument();
   });

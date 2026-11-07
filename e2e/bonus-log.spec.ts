@@ -67,7 +67,7 @@ test.describe('Bonus Log', () => {
     await expect(modal.getByRole('heading', { level: 2, name: 'Edit Bonus' })).toBeVisible();
     await modal.getByLabel('Gross').fill('5000');
     await modal.getByRole('button', { name: 'Next' }).click();
-    await expect(modal.getByText('Goal amounts no longer match the Goals share.')).toBeVisible();
+    await expect(modal.getByText("Amounts don't match Goals share.")).toBeVisible();
     await modal.getByRole('button', { name: 'Rebalance' }).click();
     await modal.getByRole('button', { name: 'Save' }).click();
     await expect(modal).not.toBeVisible();

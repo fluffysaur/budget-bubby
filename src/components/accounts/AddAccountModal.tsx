@@ -190,7 +190,7 @@ export function AddAccountModal({
                     className="appearance-none text-base sm:text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) pl-2 pr-6 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
                   >
                     <option value="" disabled>
-                      More presets...
+                      More
                     </option>
                     {ALL_PRESETS.map((p) => (
                       <option key={p.name} value={p.name}>
@@ -243,7 +243,7 @@ export function AddAccountModal({
               </div>
               <div>
                 <label htmlFor="account-institution" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
-                  Bank / Institution
+                  Bank
                 </label>
                 <input
                   id="account-institution"
@@ -268,8 +268,8 @@ export function AddAccountModal({
                   sizeVariant="sm"
                   className="bg-(--bg-canvas)"
                 >
-                  <option value="Cash">Cash / Savings</option>
-                  <option value="Investment">Investment / Brokerage</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Investment">Investment</option>
                   <option value="CPF">CPF (OA/SA/MA)</option>
                   <option value="Other">Other Asset</option>
                 </Select>
@@ -277,7 +277,7 @@ export function AddAccountModal({
 
               <div>
                 <label htmlFor="initial-balance" className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
-                  Starting Balance (SGD) *
+                  Balance *
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-(--text-muted) select-none">

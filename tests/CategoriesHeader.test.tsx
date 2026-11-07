@@ -3,19 +3,19 @@ import { describe, it, expect } from "vitest";
 import { CategoriesHeader } from "../src/components/budget/CategoriesHeader";
 
 describe("CategoriesHeader", () => {
-    it("shows remaining under the cap with an emerald bar", () => {
+    it("shows remaining under the cap with an ok tone bar", () => {
         render(<CategoriesHeader remaining={500} allocated={1000} spent={500} />);
         expect(screen.getByText(/left/)).toHaveTextContent("S$500.00 left");
         const bar = screen.getByRole("progressbar");
         expect(bar).toHaveAttribute("aria-valuenow", "50");
-        expect(bar.firstElementChild?.className).toContain("bg-emerald-500");
+        expect(bar.firstElementChild?.className).toContain("bg-(--tone-ok)");
     });
 
-    it("uses amber at 85%", () => {
+    it("uses near tone at 85%", () => {
         render(<CategoriesHeader remaining={150} allocated={1000} spent={850} />);
         const bar = screen.getByRole("progressbar");
         expect(bar).toHaveAttribute("aria-valuenow", "85");
-        expect(bar.firstElementChild?.className).toContain("bg-amber-500");
+        expect(bar.firstElementChild?.className).toContain("bg-(--tone-near)");
     });
 
     it("shows over amount in rose and clamps the bar when over cap", () => {
@@ -23,8 +23,8 @@ describe("CategoriesHeader", () => {
         expect(screen.getByText(/over/)).toHaveTextContent("S$200.00 over");
         expect(screen.queryByText(/left/)).not.toBeInTheDocument();
         const bar = screen.getByRole("progressbar");
-        expect(bar).toHaveAttribute("aria-valuenow", "100");
-        expect(bar.firstElementChild?.className).toContain("bg-rose-500");
+        expect(bar).toHaveAttribute("aria-valuenow", "120");
+        expect(bar.firstElementChild?.className).toContain("bg-(--tone-over)");
     });
 
     it("hides the bar when nothing is allocated", () => {

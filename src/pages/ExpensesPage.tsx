@@ -28,6 +28,7 @@ import {
     CollapsibleSection,
     ConfirmModal,
     Alert,
+    MeterBar,
 } from "../components/ui";
 import {
     useExpensesQuery,
@@ -575,12 +576,29 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
           value={formatSGD(spendablePacing.spendableRemaining)}
           subtitle={
             spendablePacing.isCurrentMonth
-              ? `${formatSGD(spendablePacing.dynamicDailyPace)}/day · ${spendablePacing.daysRemaining}d left`
+              ? `${spendablePacing.daysRemaining}d left`
               : spendablePacing.spendableRemaining >= 0
-              ? `+${formatSGD(spendablePacing.spendableRemaining)} surplus`
-              : `-${formatSGD(Math.abs(spendablePacing.spendableRemaining))} deficit`
+              ? `+${formatSGD(spendablePacing.spendableRemaining)}`
+              : `-${formatSGD(Math.abs(spendablePacing.spendableRemaining))}`
           }
-          tooltip="Remaining allowance for day-to-day spendable categories (Food, Lifestyle, Transport, Buffer). Excludes goal-funded purchases. In personal view, shared expenses count at your 50% share."
+          tooltip={
+            <div className="space-y-1.5 text-xs">
+              <p>Day-to-day categories only. Goal-funded spends excluded.</p>
+              <p className="text-[11px] text-(--text-muted)">
+                Limit: <CurrencyText amount={spendablePacing.spendableAllocated} /> (Spent: <CurrencyText amount={spendablePacing.spendableSpent} />)
+              </p>
+              {spendablePacing.isCurrentMonth && (
+                <p className="text-[11px] text-(--text-muted)">
+                  Daily pace: <CurrencyText amount={spendablePacing.dynamicDailyPace} />/day
+                </p>
+              )}
+              <CollapsibleSection title="Learn more" defaultOpen={false} className="mt-1">
+                <p className="text-[11px] text-(--text-muted) pt-1">
+                  In personal view, shared expenses count at your 50% share.
+                </p>
+              </CollapsibleSection>
+            </div>
+          }
           icon={<PiggyBank className="h-4 w-4" />}
           iconBg={
             spendablePacing.pacingStatus === 'safe'
@@ -591,22 +609,12 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
           }
           footer={
             <div className="space-y-1.5 mt-1">
-              <div className="flex items-center justify-between text-[11px] text-(--text-muted) font-medium">
-                <span>Spent <CurrencyText amount={spendablePacing.spendableSpent} /></span>
-                <span>Limit <CurrencyText amount={spendablePacing.spendableAllocated} /></span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 border border-(--border-subtle)">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    spendablePacing.pacingStatus === 'exceeded'
-                      ? 'bg-rose-500'
-                      : spendablePacing.pacingStatus === 'warning'
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-500'
-                  }`}
-                  style={{ width: `${Math.min(100, spendablePacing.progressPercent)}%` }}
-                />
-              </div>
+              <MeterBar
+                value={spendablePacing.spendableSpent}
+                max={spendablePacing.spendableAllocated}
+                size="sm"
+                aria-label="Spendable spending progress"
+              />
               {!spendablePacing.isCurrentMonth && spendablePacing.spendableRemaining > 0 && (
                 <button
                   type="button"
@@ -650,7 +658,13 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
           title="Unsettled"
           loading={isLoading}
           value={formatSGD(settlement.netBalance)}
-          subtitle={settlement.settlementText}
+          subtitle={
+            settlement.netBalance === 0
+              ? "All settled"
+              : settlement.debtorName && settlement.creditorName
+              ? `${settlement.debtorName} → ${settlement.creditorName}`
+              : settlement.settlementText
+          }
           icon={settlement.netBalance === 0 ? <CheckCircle2 className="h-4 w-4" /> : <Scale className="h-4 w-4" />}
           iconBg={
             settlement.netBalance === 0
@@ -683,7 +697,7 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
           confirmLabel="Settle"
           icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />}
         >
-          Mark all shared expenses as settled? The <CurrencyText amount={settlement.netBalance} /> balance resets to S$0.00.
+          Mark shared expenses settled?
         </ConfirmModal>
 
         {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}

@@ -88,7 +88,7 @@ describe('Spend Tags Overview Card', () => {
     render(<SpendTagsOverviewCard expenses={sampleExpenses} />);
 
     // Header
-    expect(screen.getByText('Spend Tags Overview')).toBeInTheDocument();
+    expect(screen.getByText('Tags')).toBeInTheDocument();
     expect(screen.getByText('3 tags')).toBeInTheDocument();
 
     // Vietnam Trip: 45.0 + 25.0 = 70.0 (2 txs)
@@ -178,22 +178,23 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
         linkedExpenses={weddingLinkedExpenses}
       />
     );
+    fireEvent.click(screen.getByRole('button', { name: /breakdown/i }));
 
     // 4 Sinking Fund Metric labels
     expect(screen.getByText('Target Amount')).toBeInTheDocument();
-    expect(screen.getByText('Total Saved')).toBeInTheDocument();
+    expect(screen.getAllByText('Total Saved').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Goal Spend')).toBeInTheDocument();
     expect(screen.getByText('Balance')).toBeInTheDocument();
 
     // Target Amount: 55,000
-    expect(screen.getByText(formatSGD(55000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(55000.0)).length).toBeGreaterThanOrEqual(1);
     // Goal-Funded Spend: 5,000 appears in metric card and in linked expenses
     expect(screen.getAllByText(formatSGD(5000.0)).length).toBeGreaterThanOrEqual(1);
     // Saved so far / Remaining balance: 50,000
-    expect(screen.getByText(formatSGD(50000.0))).toBeInTheDocument();
+    expect(screen.getAllByText(formatSGD(50000.0)).length).toBeGreaterThanOrEqual(1);
 
     // Linked goal expenses list
-    expect(screen.getByText('Linked Goal Expenses (1)')).toBeInTheDocument();
+    expect(screen.getByText('Spends (1)')).toBeInTheDocument();
     expect(screen.getByText('Grand Ballroom Deposit')).toBeInTheDocument();
 
     // "+ Spend from Goal" button

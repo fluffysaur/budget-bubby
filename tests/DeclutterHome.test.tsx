@@ -120,7 +120,7 @@ describe("Expenses Settle Up", () => {
         const settleBtn = await screen.findByRole("button", { name: /settle up/i });
         fireEvent.click(settleBtn);
 
-        expect(await screen.findByText(/Mark all shared expenses as settled/)).toBeInTheDocument();
+        expect(await screen.findByText(/Mark shared expenses settled/)).toBeInTheDocument();
         expect(settleSpy).not.toHaveBeenCalled();
 
         await act(async () => {

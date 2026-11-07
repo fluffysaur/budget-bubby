@@ -138,9 +138,9 @@ describe("BonusLogPanel", () => {
         fireEvent.click(await screen.findByRole("button", { name: "Edit bonus" }));
         fireEvent.change(await screen.findByLabelText("Gross"), { target: { value: "5000" } });
         fireEvent.click(screen.getByRole("button", { name: "Next" }));
-        expect(screen.getByText("Goal amounts no longer match the Goals share.")).toBeInTheDocument();
+        expect(screen.getByText("Amounts don't match Goals share.")).toBeInTheDocument();
         fireEvent.click(screen.getByRole("button", { name: "Rebalance" }));
-        expect(screen.queryByText("Goal amounts no longer match the Goals share.")).not.toBeInTheDocument();
+        expect(screen.queryByText("Amounts don't match Goals share.")).not.toBeInTheDocument();
     });
 
     it("confirms delete with the goals copy", async () => {
