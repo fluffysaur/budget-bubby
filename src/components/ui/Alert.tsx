@@ -73,7 +73,7 @@ export function Alert({
     return (
         <div
             role="alert"
-            className={`flex items-start gap-3 rounded-xl p-3 text-xs sm:text-sm font-semibold transition-all ${config.container} ${className}`}
+            className={`flex items-start gap-3 rounded-xl p-3 text-xs sm:text-sm font-semibold transition-colors ${config.container} ${className}`}
         >
             <div className={`shrink-0 mt-0.5 ${config.icon}`}>
                 {icon !== undefined ? (

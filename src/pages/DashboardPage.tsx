@@ -174,7 +174,7 @@ export function DashboardPage({
                                 <button
                                     type="button"
                                     onClick={() => onNavigateTab("budget")}
-                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer"
                                 >
                                     Budget
                                 </button>

@@ -263,7 +263,7 @@ export function ExpenseFilterBar({
                         onClick={handleResetClick}
                         title="Reset Filters"
                         aria-label="Reset filters"
-                        className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border-2 px-3 sm:px-3.5 text-xs font-bold transition-all shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                        className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border-2 px-3 sm:px-3.5 text-xs font-bold transition-press shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                             hasActiveFilters
                                 ? "border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-cute-sm"
                                 : "border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
@@ -281,7 +281,7 @@ export function ExpenseFilterBar({
                         aria-expanded={isMobileFilterOpen}
                         aria-label="Toggle filters"
                         onClick={() => setIsMobileFilterOpen((prev) => !prev)}
-                        className={`flex-1 inline-flex items-center justify-between gap-1.5 rounded-xl border-2 border-(--border-ink) px-3 py-2 text-xs font-bold transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                        className={`flex-1 inline-flex items-center justify-between gap-1.5 rounded-xl border-2 border-(--border-ink) px-3 py-2 text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                             activeFilterCount > 0
                                 ? "bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm"
                                 : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light)"

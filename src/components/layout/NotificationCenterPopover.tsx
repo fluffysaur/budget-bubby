@@ -471,7 +471,7 @@ export function NotificationCenterPopover({
                         <div
                             key={reminder.id}
                             data-testid={`reminder-card-${reminder.id}`}
-                            className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-cute-sm transition-all"
+                            className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-cute-sm transition-colors"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -548,14 +548,14 @@ export function NotificationCenterPopover({
                 aria-label={`Notifications (${unreadCount} unread)`}
                 aria-expanded={isOpen}
                 onClick={handleToggleOpen}
-                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
             >
                 <Bell className="h-4 w-4" strokeWidth={2.5} />
 
                 {unreadCount > 0 && (
                     <span
                         data-testid="notification-badge-count"
-                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-[10px] font-black text-white shadow-cute-sm animate-in zoom-in-75 font-mono-num"
+                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-[10px] font-black text-white shadow-cute-sm animate-pop font-mono-num"
                     >
                         {unreadCount}
                     </span>
@@ -569,7 +569,7 @@ export function NotificationCenterPopover({
                     data-testid="notification-center-popover"
                     role="region"
                     aria-label="Notification center"
-                    className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-lg z-50 animate-in fade-in-50 zoom-in-95 duration-150"
+                    className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-lg z-50 animate-pop"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
@@ -617,7 +617,7 @@ export function NotificationCenterPopover({
                         role="dialog"
                         aria-modal="true"
                         aria-label="Notifications and reminders"
-                        className="fixed inset-0 z-50 flex flex-col bg-(--bg-canvas) animate-in fade-in slide-in-from-bottom-2 duration-150"
+                        className="fixed inset-0 z-50 flex flex-col bg-(--bg-canvas) animate-enter"
                     >
                         {/* Mobile Sticky Header */}
                         <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
