@@ -1289,7 +1289,10 @@ export function BaseProfileEditorModal({
                                                                         ? rawPercentText[
                                                                               cat
                                                                                   .id
-                                                                          ]
+                                                                          ].replace(
+                                                                              /%+$/,
+                                                                              "",
+                                                                          )
                                                                         : categoryPercentages[
                                                                                 cat
                                                                                     .id
