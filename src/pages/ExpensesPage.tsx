@@ -175,6 +175,9 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
     const [isSettleOpen, setIsSettleOpen] = useState<boolean>(false);
+    const [settleTargetIds, setSettleTargetIds] = useState<
+        string[] | undefined
+    >(undefined);
 
     // Month-end Sweep Modal State
     const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
@@ -240,15 +243,6 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
     await refreshHousehold();
   };
 
-  // Mark all shared expenses between the two partners as settled
-  const handleSettleUp = async () => {
-    const [m1, m2] = members;
-    if (!m1 || !m2) return;
-    await financeService.settleSharedExpenses(m1.id, m2.id);
-    await refreshHousehold();
-    setIsSettleOpen(false);
-  };
-
   // Handle deleting an expense
   const handleDeleteExpense = async (id: string) => {
     try {
@@ -311,6 +305,21 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
       m2.display_name
     );
   }, [overview, expenses, members]);
+
+  // Mark the unsettled shared expenses displayed in the settlement summary as settled
+  const handleSettleUp = async () => {
+    const [m1, m2] = members;
+    if (!m1 || !m2) return;
+    const idsToSettle = settleTargetIds ?? settlement.expenseIds;
+    if (idsToSettle && idsToSettle.length > 0) {
+      await financeService.settleSharedExpenses(m1.id, m2.id, idsToSettle);
+    } else {
+      await financeService.settleSharedExpenses(m1.id, m2.id);
+    }
+    await refreshHousehold();
+    setIsSettleOpen(false);
+    setSettleTargetIds(undefined);
+  };
 
   // Historical Expense Trends Calculation (6-month rolling averages & category benchmarks)
   const trendsSummary = useMemo(() => {
@@ -610,7 +619,10 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setIsSettleOpen(true)}
+                onClick={() => {
+                  setSettleTargetIds(settlement.expenseIds);
+                  setIsSettleOpen(true);
+                }}
                 leftIcon={<Scale className="h-3.5 w-3.5" strokeWidth={2.5} />}
                 className="mt-1"
               >

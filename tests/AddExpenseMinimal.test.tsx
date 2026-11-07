@@ -9,6 +9,8 @@ import { render, screen, fireEvent, waitFor, act, within } from "@testing-librar
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
+import * as AuthContextModule from "../src/context/AuthContext";
+import * as useBubbyModule from "../src/hooks/useBubby";
 import { financeService } from "../src/services/financeService";
 import { mockCategories, mockMembers } from "../src/data/mockSeedData";
 import type { Expense } from "../src/types/finance";
@@ -99,5 +101,92 @@ describe("Add Expense minimal layout", () => {
         localStorage.setItem("budget_bubby_last_split_v1", "shared");
         await renderModal();
         expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(/Shared$/);
+    });
+
+    it("defaults payer to useLoggedInMember().me in Combined (household) perspective (M3)", async () => {
+        vi.spyOn(AuthContextModule, "useAuth").mockReturnValue({
+            user: null,
+            session: null,
+            loggedInPartner: "rachel",
+            isAuthenticated: true,
+            isDemoMode: true,
+            authLoading: false,
+            authError: null,
+            signInWithPin: vi.fn(),
+            signOut: vi.fn(),
+            clearAuthError: vi.fn(),
+        });
+
+        await act(async () => {
+            render(
+                <HouseholdProvider initialPerspective="household">
+                    <ExpenseFormModal
+                        isOpen
+                        onClose={vi.fn()}
+                        categories={mockCategories}
+                        members={mockMembers}
+                        goals={[]}
+                    />
+                </HouseholdProvider>,
+            );
+        });
+
+        expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
+            /Rachel/,
+        );
+    });
+
+    it("derives Today and Yesterday date chips from useSgtClock().today so they update across midnight (M10)", async () => {
+        const sgtSpy = vi.spyOn(useBubbyModule, "useSgtClock").mockReturnValue({
+            today: "2026-11-07",
+            minutes: 23 * 60,
+        });
+
+        let rerenderUi!: (ui: React.ReactElement) => void;
+        await act(async () => {
+            const rendered = render(
+                <HouseholdProvider initialPerspective="yijia">
+                    <ExpenseFormModal
+                        isOpen
+                        onClose={vi.fn()}
+                        categories={mockCategories}
+                        members={mockMembers}
+                        goals={[]}
+                        initialValues={{ date: "2026-11-07" }}
+                    />
+                </HouseholdProvider>,
+            );
+            rerenderUi = rendered.rerender;
+        });
+
+        expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
+            /^Today ·/,
+        );
+
+        // Simulate clock advancing past midnight to 2026-11-08 while modal remains mounted
+        sgtSpy.mockReturnValue({
+            today: "2026-11-08",
+            minutes: 5,
+        });
+
+        await act(async () => {
+            rerenderUi(
+                <HouseholdProvider initialPerspective="yijia">
+                    <ExpenseFormModal
+                        isOpen
+                        onClose={vi.fn()}
+                        categories={mockCategories}
+                        members={mockMembers}
+                        goals={[]}
+                        initialValues={{ date: "2026-11-07" }}
+                    />
+                </HouseholdProvider>,
+            );
+        });
+
+        // 2026-11-07 is now Yesterday relative to 2026-11-08
+        expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
+            /^Yesterday ·/,
+        );
     });
 });

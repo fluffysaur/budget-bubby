@@ -87,7 +87,11 @@ export interface FinanceService extends InboxService {
   updateExpense(id: string, updates: UpdateExpenseInput): Promise<Expense>;
   bulkAddExpenses(expenses: CreateExpenseInput[]): Promise<Expense[]>;
   deleteExpense(id: string): Promise<void>;
-  settleSharedExpenses(member1Id: string, member2Id: string): Promise<void>;
+  settleSharedExpenses(
+    member1Id: string,
+    member2Id: string,
+    expenseIds?: string[]
+  ): Promise<void>;
   getGoals(): Promise<SavingsGoal[]>;
   getGoal(id: string): Promise<SavingsGoal | null>;
   addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
@@ -302,8 +306,8 @@ export const financeService: FinanceService = {
     }
     invalidateFinanceCache();
   },
-  settleSharedExpenses: async (m1, m2) => {
-    await getActiveService().settleSharedExpenses(m1, m2);
+  settleSharedExpenses: async (m1, m2, expenseIds) => {
+    await getActiveService().settleSharedExpenses(m1, m2, expenseIds);
     invalidateFinanceCache();
   },
   getGoals: () => getActiveService().getGoals(),

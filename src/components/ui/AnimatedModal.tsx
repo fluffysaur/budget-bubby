@@ -19,6 +19,12 @@ import {
 const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+// Module-level stack of open modal IDs so Escape only closes the top-most modal
+// and body/main overflow is saved once when the first modal opens and restored when the last closes.
+const openModalStack: symbol[] = [];
+let savedBodyOverflow: string | null = null;
+let savedMainOverflow: string | null = null;
+
 export interface AnimatedModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -100,6 +106,7 @@ export function AnimatedModal({
     const closingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const drawerRef = useRef<HTMLDivElement>(null);
+    const modalIdRef = useRef<symbol>(Symbol("AnimatedModal"));
 
     // Touch gesture state for mobile slide-down-to-close
     const [dragTranslateY, setDragTranslateY] = useState(0);
@@ -418,11 +425,62 @@ export function AnimatedModal({
         [handleTouchStart, handleTouchMove, handleTouchEnd, handleRequestClose],
     );
 
-    // Handle ESC key
+    const isActive = shouldRender && !isClosing;
+
+    // Register in open modal stack and prevent background scrolling across stacked modals
+    useIsomorphicLayoutEffect(() => {
+        if (!isActive) return;
+
+        const id = modalIdRef.current;
+        if (openModalStack.length === 0 && typeof document !== "undefined") {
+            savedBodyOverflow = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+            const mainEl = document.querySelector("main");
+            if (mainEl instanceof HTMLElement) {
+                savedMainOverflow = mainEl.style.overflow;
+                mainEl.style.overflow = "hidden";
+            }
+        }
+        if (!openModalStack.includes(id)) {
+            openModalStack.push(id);
+        }
+
+        return () => {
+            const idx = openModalStack.lastIndexOf(id);
+            if (idx !== -1) {
+                openModalStack.splice(idx, 1);
+            }
+            if (
+                openModalStack.length === 0 &&
+                typeof document !== "undefined"
+            ) {
+                if (savedBodyOverflow !== null) {
+                    document.body.style.overflow = savedBodyOverflow;
+                    savedBodyOverflow = null;
+                }
+                if (savedMainOverflow !== null) {
+                    const mainEl = document.querySelector("main");
+                    if (mainEl instanceof HTMLElement) {
+                        mainEl.style.overflow = savedMainOverflow;
+                    }
+                    savedMainOverflow = null;
+                }
+            }
+        };
+    }, [isActive]);
+
+    // Handle ESC key (only top-most open modal responds)
     useEffect(() => {
-        if (!shouldRender || isClosing) return;
+        if (!isActive) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
+                if (
+                    openModalStack.length > 0 &&
+                    openModalStack[openModalStack.length - 1] !==
+                        modalIdRef.current
+                ) {
+                    return;
+                }
                 if (showDiscardConfirm) {
                     setShowDiscardConfirm(false);
                     return;
@@ -432,18 +490,7 @@ export function AnimatedModal({
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [shouldRender, isClosing, showDiscardConfirm, handleRequestClose]);
-
-    // Prevent background scrolling
-    useIsomorphicLayoutEffect(() => {
-        if (shouldRender && !isClosing) {
-            const originalOverflow = document.body.style.overflow;
-            document.body.style.overflow = "hidden";
-            return () => {
-                document.body.style.overflow = originalOverflow;
-            };
-        }
-    }, [shouldRender, isClosing]);
+    }, [isActive, showDiscardConfirm, handleRequestClose]);
 
     if (!shouldRender) return null;
 

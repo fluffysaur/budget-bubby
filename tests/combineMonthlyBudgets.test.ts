@@ -83,6 +83,33 @@ describe("combineMonthlyBudgets", () => {
         expect(combined.spendableSpent).toBeUndefined();
         expect(combined.spendableAllocated).toBe(1000);
     });
+
+    it("counts joint recurring items once (100%) and deduplicates recurring item lists when combining members (M1)", () => {
+        const jointBill = {
+            id: "ri-joint-internet",
+            household_id: "hh-1",
+            owner_id: "joint",
+            type: "bill" as const,
+            name: "Home Fibre",
+            amount: 60,
+            frequency: "monthly" as const,
+            monthly_amortized_amount: 60,
+            category_id: "cat-food",
+        };
+        const m1 = memberBudget("m1", { allocated: 600, spent: 30 });
+        m1.categories[0].recurringSpent = 30;
+        m1.categories[0].recurringItems = [jointBill];
+
+        const m2 = memberBudget("m2", { allocated: 400, spent: 30 });
+        m2.categories[0].recurringSpent = 30;
+        m2.categories[0].recurringItems = [jointBill];
+
+        const combined = combineMonthlyBudgets([m1, m2], "2026-11")!;
+        expect(combined.categories[0].recurringSpent).toBe(60);
+        expect(combined.categories[0].actualSpent).toBe(60);
+        expect(combined.categories[0].recurringItems).toHaveLength(1);
+        expect(combined.categories[0].recurringItems?.[0].id).toBe("ri-joint-internet");
+    });
 });
 
 describe("calculateSpendablePacing with a monthly budget", () => {

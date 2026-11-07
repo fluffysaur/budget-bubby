@@ -49,6 +49,7 @@ import {
     autoBalanceAllocations,
 } from "../../lib/financialFormulas";
 import { isValidUuid } from "../../lib/uuid";
+import { getCurrentMonth } from "../../lib/dateUtils";
 import { PRESET_COLORS, PRESET_ICONS } from "../../lib/categoryPresets";
 import type {
     BaseBudgetProfile,
@@ -125,7 +126,11 @@ export function BaseProfileEditorModal({
     const { effectiveTaxes, effectiveInsurance } = useMemo(() => {
         if (recurringItems !== undefined && recurringItems.length > 0) {
             const { taxesMonthly, insuranceMonthly } =
-                calculateMemberRecurringDeductions(recurringItems, profile?.owner_id);
+                calculateMemberRecurringDeductions(
+                    recurringItems,
+                    profile?.owner_id,
+                    selectedMonth || getCurrentMonth(),
+                );
             return {
                 effectiveTaxes: taxesMonthly,
                 effectiveInsurance: insuranceMonthly,
@@ -135,7 +140,13 @@ export function BaseProfileEditorModal({
             effectiveTaxes: Number(initialTaxes) || 0,
             effectiveInsurance: Number(initialInsurance) || 0,
         };
-    }, [recurringItems, profile?.owner_id, initialTaxes, initialInsurance]);
+    }, [
+        recurringItems,
+        profile?.owner_id,
+        selectedMonth,
+        initialTaxes,
+        initialInsurance,
+    ]);
 
     // Category percentages mapped by categoryId: string (e.g. "15", "6.9633", "")
     const [categoryPercentages, setCategoryPercentages] = useState<

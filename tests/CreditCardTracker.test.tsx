@@ -171,6 +171,33 @@ describe('Credit Card Statements & Due Date Tracker', () => {
         expect(screen.getAllByText(formatSGD(450.75)).length).toBeGreaterThanOrEqual(1);
       });
     });
+
+    it('renders proper English ordinals (1st, 22nd) instead of 1th/22th for billing and due days', async () => {
+      await financeService.addCreditCard({
+        owner_id: testMembers[0].id,
+        name: 'Citibank Rewards',
+        bank: 'Citi',
+        last4: '1122',
+        billing_day: 1,
+        due_day: 22,
+      });
+
+      render(
+        <CreditCardTrackerSection
+          members={testMembers}
+          perspective="household"
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Citibank Rewards')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('1st')).toBeInTheDocument();
+      expect(screen.getByText('22nd')).toBeInTheDocument();
+      expect(screen.queryByText('1th')).not.toBeInTheDocument();
+      expect(screen.queryByText('22th')).not.toBeInTheDocument();
+    });
   });
 
   describe('AddEditCreditCardModal Component', () => {

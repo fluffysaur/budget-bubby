@@ -429,6 +429,7 @@ export interface SettlementSummary {
   settlementText: string;
   member1OwesMember2: number;
   member2OwesMember1: number;
+  expenseIds?: string[];
 }
 
 export interface GoalPacingResult {

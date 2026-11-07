@@ -17,12 +17,13 @@
 import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react";
 import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
+import { useSgtClock } from "../../hooks/useBubby";
+import { addDays } from "../../lib/bubby/dates";
 import { financeService, isMockModeActive } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
 import {
     getTodayDateString,
-    getSingaporeDate,
-    formatISODate,
     formatDisplayDate,
     getCurrentSingaporeTime,
 } from "../../lib/dateUtils";
@@ -184,6 +185,7 @@ export function ExpenseFormModal({
                     : [],
         [propMembers, ctxMembers, isMockMode],
     );
+    const { me } = useLoggedInMember(members);
 
     const categories = useMemo(
         () =>
@@ -230,6 +232,7 @@ export function ExpenseFormModal({
     const [payerId, setPayerId] = useState<string>(() => {
         if (defaultPayerId) return defaultPayerId;
         if (activeMember) return activeMember.id;
+        if (me) return me.id;
         return members[0]?.id || "";
     });
     const [isShared, setIsShared] = useState<boolean>(resolvedDefaultShared);
@@ -391,7 +394,10 @@ export function ExpenseFormModal({
             setShowMoreCategories(false);
             setPayerId(
                 defaultPayerId ||
-                    (activeMember ? activeMember.id : members[0]?.id || ""),
+                    activeMember?.id ||
+                    me?.id ||
+                    members[0]?.id ||
+                    "",
             );
             setIsShared(
                 defaultShared ?? getStoredLastSplit() ?? perspective === "household",
@@ -424,6 +430,7 @@ export function ExpenseFormModal({
         defaultPayerId,
         defaultShared,
         activeMember,
+        me,
         perspective,
         categories,
         spendableCategories,
@@ -528,18 +535,10 @@ export function ExpenseFormModal({
     // Auto-expand accordion if any nested fields have active values
     const isAccordionExpanded = showMoreOptions || moreOptionsActiveCount > 0;
 
-    // Date shortcut calculations
-    const todayStr = useMemo(() => getTodayDateString(), []);
-    const yesterdayStr = useMemo(() => {
-        const d = getSingaporeDate();
-        d.setDate(d.getDate() - 1);
-        return formatISODate(d);
-    }, []);
-    const twoDaysAgoStr = useMemo(() => {
-        const d = getSingaporeDate();
-        d.setDate(d.getDate() - 2);
-        return formatISODate(d);
-    }, []);
+    // Date shortcut calculations (derived from SGT clock so chips stay fresh across midnight)
+    const { today: todayStr } = useSgtClock();
+    const yesterdayStr = useMemo(() => addDays(todayStr, -1), [todayStr]);
+    const twoDaysAgoStr = useMemo(() => addDays(todayStr, -2), [todayStr]);
 
     // One-line summary of the defaults hidden in "More", e.g. "Today · Yi Jia · Shared"
     const moreSummary = useMemo(() => {

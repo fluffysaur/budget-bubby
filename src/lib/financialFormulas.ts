@@ -46,7 +46,12 @@ import {
 } from "./dateUtils";
 import { formatSGD } from "./currency";
 import { isValidUuid } from "./uuid";
-import { calculateRecurringCategorySpend } from "./recurringItems";
+import {
+    calculateRecurringCategorySpend,
+    getRecurringMonthlyShare,
+    isRecurringItemActiveInMonth,
+    isRecurringItemOwnedBy,
+} from "./recurringItems";
 
 /**
  * 1. Calculates Singapore CPF deduction (default 20% employee rate) and net take-home pay.
@@ -151,6 +156,7 @@ export function calculateSharedExpenseSettlement(
 
     const m1Display = member1Name || "Member 1";
     const m2Display = member2Name || "Member 2";
+    const expenseIds = relevantExpenses.map((e) => e.id);
 
     if (netDiff > 0) {
         // member2 owes member1
@@ -163,6 +169,7 @@ export function calculateSharedExpenseSettlement(
             settlementText: `${m2Display} owes ${m1Display} ${formatSGD(netDiff)}`,
             member1OwesMember2,
             member2OwesMember1,
+            expenseIds,
         };
     } else if (netDiff < 0) {
         // member1 owes member2
@@ -176,6 +183,7 @@ export function calculateSharedExpenseSettlement(
             settlementText: `${m1Display} owes ${m2Display} ${formatSGD(absNet)}`,
             member1OwesMember2,
             member2OwesMember1,
+            expenseIds,
         };
     } else {
         // Zero balance
@@ -188,6 +196,7 @@ export function calculateSharedExpenseSettlement(
             settlementText: "All settled up",
             member1OwesMember2,
             member2OwesMember1,
+            expenseIds,
         };
     }
 }
@@ -1087,39 +1096,38 @@ export function formatAllocationPercent(pct: number): string {
 
 /**
  * 19. Computes a member's monthly amortized Taxes and Insurance deductions from active recurring items.
+ * When `month` ('YYYY-MM') is provided, items outside their `[start_date, end_date]` window are excluded.
+ * Joint items (`owner_id === "joint"`) are split 50/50 for a single member and counted at 100% for the household.
  */
 export function calculateMemberRecurringDeductions(
     recurringItems: RecurringItem[] = [],
     memberId?: string,
+    month?: string,
 ): { taxesMonthly: number; insuranceMonthly: number } {
     const inScope = (recurringItems || []).filter((p) => {
-        if (!memberId || memberId === "household") return true;
-        return p.owner_id === memberId || p.owner_id === "joint";
+        if (!isRecurringItemOwnedBy(p, memberId)) return false;
+        if (month && !isRecurringItemActiveInMonth(p, month)) return false;
+        return true;
     });
-
-    const getMonthlyAmount = (p: RecurringItem): number => {
-        if (
-            p.monthly_amortized_amount !== undefined &&
-            p.monthly_amortized_amount !== null
-        ) {
-            return Number(p.monthly_amortized_amount) || 0;
-        }
-        const amt = Number(p.amount) || 0;
-        return p.frequency === "annually" ? amt / 12 : amt;
-    };
 
     const taxesMonthly =
         Math.round(
             inScope
                 .filter((p) => p.type === "tax")
-                .reduce((sum, p) => sum + getMonthlyAmount(p), 0) * 100,
+                .reduce(
+                    (sum, p) => sum + getRecurringMonthlyShare(p, memberId),
+                    0,
+                ) * 100,
         ) / 100;
 
     const insuranceMonthly =
         Math.round(
             inScope
                 .filter((p) => p.type === "insurance")
-                .reduce((sum, p) => sum + getMonthlyAmount(p), 0) * 100,
+                .reduce(
+                    (sum, p) => sum + getRecurringMonthlyShare(p, memberId),
+                    0,
+                ) * 100,
         ) / 100;
 
     return { taxesMonthly, insuranceMonthly };

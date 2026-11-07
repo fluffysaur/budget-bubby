@@ -54,6 +54,7 @@ import {
     PRESET_ICONS,
     getCategoryIconComponent as getIconComponent,
 } from "../../lib/categoryPresets";
+import { getCurrentMonth } from "../../lib/dateUtils";
 import { CurrencyText } from "../ui/CurrencyText";
 
 export interface ManageCategoriesModalProps {
@@ -135,12 +136,13 @@ export function ManageCategoriesModal({
                 const gross = activeProf.gross_salary || 5000;
                 const cpf = calculateCPFAndNetPay(
                     gross,
-                    activeProf.cpf_employee_rate || 0.2,
+                    activeProf.cpf_employee_rate ?? 0.2,
                 ).cpfDeduction;
                 const { taxesMonthly, insuranceMonthly } =
                     calculateMemberRecurringDeductions(
                         recurringItems || [],
                         activeProf.owner_id,
+                        getCurrentMonth(),
                     );
                 const disp = calculateDisposableBudget(
                     gross - cpf,

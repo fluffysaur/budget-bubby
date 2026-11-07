@@ -285,4 +285,79 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
         expect(handleClose).not.toHaveBeenCalled();
         expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     });
+
+    it("only closes the top-most stacked modal on Escape and keeps body overflow hidden until the last modal closes (L6)", () => {
+        document.body.style.overflow = "auto";
+        const closeBottom = vi.fn();
+        const closeTop = vi.fn();
+
+        const { rerender } = render(
+            <>
+                <AnimatedModal isOpen={true} onClose={closeBottom}>
+                    <ModalHeader title="Bottom Modal" onClose={closeBottom} />
+                    <ModalBody>
+                        <p>Bottom content</p>
+                    </ModalBody>
+                </AnimatedModal>
+                <AnimatedModal isOpen={true} onClose={closeTop}>
+                    <ModalHeader title="Top Modal" onClose={closeTop} />
+                    <ModalBody>
+                        <p>Top content</p>
+                    </ModalBody>
+                </AnimatedModal>
+            </>,
+        );
+
+        expect(document.body.style.overflow).toBe("hidden");
+
+        // Pressing Escape when both are open closes only the top modal
+        fireEvent.keyDown(window, { key: "Escape" });
+        expect(closeTop).toHaveBeenCalledTimes(1);
+        expect(closeBottom).not.toHaveBeenCalled();
+
+        // Simulate top modal closing while bottom modal remains open
+        rerender(
+            <>
+                <AnimatedModal isOpen={true} onClose={closeBottom}>
+                    <ModalHeader title="Bottom Modal" onClose={closeBottom} />
+                    <ModalBody>
+                        <p>Bottom content</p>
+                    </ModalBody>
+                </AnimatedModal>
+                <AnimatedModal isOpen={false} onClose={closeTop}>
+                    <ModalHeader title="Top Modal" onClose={closeTop} />
+                    <ModalBody>
+                        <p>Top content</p>
+                    </ModalBody>
+                </AnimatedModal>
+            </>,
+        );
+
+        // Body overflow stays hidden while bottom modal is still open
+        expect(document.body.style.overflow).toBe("hidden");
+
+        // Pressing Escape now closes the bottom modal
+        fireEvent.keyDown(window, { key: "Escape" });
+        expect(closeBottom).toHaveBeenCalledTimes(1);
+
+        // Close bottom modal and verify body overflow is restored
+        rerender(
+            <>
+                <AnimatedModal isOpen={false} onClose={closeBottom}>
+                    <ModalHeader title="Bottom Modal" onClose={closeBottom} />
+                    <ModalBody>
+                        <p>Bottom content</p>
+                    </ModalBody>
+                </AnimatedModal>
+                <AnimatedModal isOpen={false} onClose={closeTop}>
+                    <ModalHeader title="Top Modal" onClose={closeTop} />
+                    <ModalBody>
+                        <p>Top content</p>
+                    </ModalBody>
+                </AnimatedModal>
+            </>,
+        );
+
+        expect(document.body.style.overflow).toBe("auto");
+    });
 });

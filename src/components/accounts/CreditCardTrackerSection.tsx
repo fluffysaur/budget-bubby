@@ -47,6 +47,7 @@ import {
     formatDisplayMonth,
     formatDisplayDate,
     addMonths,
+    ordinal,
 } from "../../lib/dateUtils";
 import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
@@ -566,7 +567,7 @@ export function CreditCardTrackerSection({
                                                 Statement Day
                                             </span>
                                             <span className="font-mono-num font-bold text-(--text-ink)">
-                                                {card.billing_day}th
+                                                {ordinal(card.billing_day)}
                                             </span>
                                         </div>
                                         <div className="border-x border-(--border-subtle)">
@@ -574,7 +575,7 @@ export function CreditCardTrackerSection({
                                                 Due Day
                                             </span>
                                             <span className="font-mono-num font-bold text-(--text-ink)">
-                                                {card.due_day}th
+                                                {ordinal(card.due_day)}
                                             </span>
                                         </div>
                                         <div>

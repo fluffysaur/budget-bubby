@@ -114,13 +114,40 @@ export function isRecurringItemActiveInMonth(
     return true;
 }
 
+/** True if the item is shared jointly across the household rather than owned by a single member. */
+export function isJointRecurringItem(item: RecurringItem): boolean {
+    return !item.owner_id || item.owner_id === "joint";
+}
+
 /** True if the item belongs to the member (or is joint). No member = all items. */
 export function isRecurringItemOwnedBy(
     item: RecurringItem,
     ownerId?: string | null,
 ): boolean {
     if (!ownerId || ownerId === "household") return true;
-    return item.owner_id === ownerId || item.owner_id === "joint";
+    return item.owner_id === ownerId || isJointRecurringItem(item);
+}
+
+/**
+ * Returns the effective monthly share of an item for a given perspective/owner:
+ * - In household perspective (`!ownerId || ownerId === "household"`): 100% of the monthly amount.
+ * - In a single member's perspective (`ownerId` is a member ID):
+ *   - 100% if `item.owner_id === ownerId`
+ *   - 50% if `item.owner_id === "joint"` (or unset), so that each partner bears half
+ *     of joint recurring items and summing both members in `combineMonthlyBudgets`
+ *     counts joint items exactly once (100%) instead of twice (200%).
+ *   - 0 if owned by the other member.
+ */
+export function getRecurringMonthlyShare(
+    item: RecurringItem,
+    ownerId?: string | null,
+): number {
+    if (!isRecurringItemOwnedBy(item, ownerId)) return 0;
+    const fullAmount = getRecurringMonthlyAmount(item);
+    if (ownerId && ownerId !== "household" && isJointRecurringItem(item)) {
+        return Math.round(fullAmount * 0.5 * 100) / 100;
+    }
+    return fullAmount;
 }
 
 export interface RecurringSpendBucket {
@@ -140,8 +167,8 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Groups a member's active subscription/bill/other items by spend category
- * for one month. Monthly items count in full; annual items count their
- * amortized monthly amount.
+ * for one month. Monthly items count in full (or 50% for joint items in a
+ * single-member view); annual items count their amortized monthly share.
  */
 export function calculateRecurringCategorySpend(
     items: RecurringItem[] = [],
@@ -163,7 +190,7 @@ export function calculateRecurringCategorySpend(
         if (!isRecurringItemOwnedBy(item, options.ownerId)) continue;
         if (!isRecurringItemActiveInMonth(item, month)) continue;
 
-        const amount = getRecurringMonthlyAmount(item);
+        const amount = getRecurringMonthlyShare(item, options.ownerId);
         total += amount;
 
         const categoryId = item.category_id;
