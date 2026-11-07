@@ -10,6 +10,7 @@ import {
   monthsBetween,
   formatTime12h,
   extractTimeFromISO,
+  getDefaultStatementDueDate,
 } from '../src/lib/dateUtils';
 
 describe('dateUtils', () => {
@@ -64,5 +65,49 @@ describe('dateUtils', () => {
     expect(extractTimeFromISO(isoUtc)).toBe('14:30');
     expect(extractTimeFromISO('')).toBe('');
     expect(extractTimeFromISO(null)).toBe('');
+  });
+
+  describe('getDefaultStatementDueDate (Issue #34)', () => {
+    it('preserves due day 31 when the target month has 31 days', () => {
+      // Sep statement -> Oct due (31 days)
+      expect(getDefaultStatementDueDate('2026-09', 31)).toBe('2026-10-31');
+      // Nov statement -> Dec due (31 days)
+      expect(getDefaultStatementDueDate('2026-11', 31)).toBe('2026-12-31');
+      // Jun statement -> Jul due (31 days)
+      expect(getDefaultStatementDueDate('2026-06', 31)).toBe('2026-07-31');
+    });
+
+    it('clamps due day 31 to 30 when the target month has 30 days', () => {
+      // Oct statement -> Nov due (30 days)
+      expect(getDefaultStatementDueDate('2026-10', 31)).toBe('2026-11-30');
+      // Mar statement -> Apr due (30 days)
+      expect(getDefaultStatementDueDate('2026-03', 31)).toBe('2026-04-30');
+      // Aug statement -> Sep due (30 days)
+      expect(getDefaultStatementDueDate('2026-08', 31)).toBe('2026-09-30');
+      // Day 30 in a 30-day month remains 30
+      expect(getDefaultStatementDueDate('2026-10', 30)).toBe('2026-11-30');
+    });
+
+    it('clamps due day 29-31 to 28 in non-leap year February', () => {
+      // Jan 2026 statement -> Feb 2026 due (28 days)
+      expect(getDefaultStatementDueDate('2026-01', 31)).toBe('2026-02-28');
+      expect(getDefaultStatementDueDate('2026-01', 30)).toBe('2026-02-28');
+      expect(getDefaultStatementDueDate('2026-01', 29)).toBe('2026-02-28');
+      expect(getDefaultStatementDueDate('2026-01', 28)).toBe('2026-02-28');
+    });
+
+    it('clamps due day 30-31 to 29 in leap year February', () => {
+      // Jan 2028 statement -> Feb 2028 due (leap year, 29 days)
+      expect(getDefaultStatementDueDate('2028-01', 31)).toBe('2028-02-29');
+      expect(getDefaultStatementDueDate('2028-01', 30)).toBe('2028-02-29');
+      expect(getDefaultStatementDueDate('2028-01', 29)).toBe('2028-02-29');
+    });
+
+    it('preserves mid-month due days without clamping across all months', () => {
+      expect(getDefaultStatementDueDate('2026-09', 15)).toBe('2026-10-15');
+      expect(getDefaultStatementDueDate('2026-10', 15)).toBe('2026-11-15');
+      expect(getDefaultStatementDueDate('2026-01', 15)).toBe('2026-02-15');
+      expect(getDefaultStatementDueDate('2028-01', 15)).toBe('2028-02-15');
+    });
   });
 });

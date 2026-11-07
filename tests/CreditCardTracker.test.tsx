@@ -201,6 +201,37 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       expect(screen.queryByText('1th')).not.toBeInTheDocument();
       expect(screen.queryByText('22th')).not.toBeInTheDocument();
     });
+
+    it('sets default due date input using the real due day clamped to month length (not clamped to 28)', async () => {
+      await financeService.addCreditCard({
+        owner_id: testMembers[0].id,
+        name: 'End-of-Month Card',
+        bank: 'Standard Chartered',
+        last4: '9900',
+        billing_day: 1,
+        due_day: 31,
+      });
+
+      render(
+        <CreditCardTrackerSection
+          members={testMembers}
+          perspective="household"
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('End-of-Month Card')).toBeInTheDocument();
+      });
+
+      const logStmtBtn = screen.getByRole('button', {
+        name: /Log statement for End-of-Month Card/i,
+      });
+      fireEvent.click(logStmtBtn);
+
+      const dueDateInput = screen.getByLabelText(/Due Date/i) as HTMLInputElement;
+      // October statement -> November due date (30 days in Nov): 2026-11-30, NOT 2026-11-28
+      expect(dueDateInput.value).toBe('2026-11-30');
+    });
   });
 
   describe('AddEditCreditCardModal Component', () => {
