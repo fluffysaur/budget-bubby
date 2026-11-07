@@ -15,7 +15,7 @@ Read this whole section before starting any PR.
 
   Every PR gets a final review on **strong** before it is raised.
 - **Source findings.** These live in [app-polish/audits/](./app-polish/audits/): `bugs.md`, `motion.md` and `copy.md`. IDs like `H1`, `M5`, `1.6` and `2.4` refer to them. Line numbers come from a snapshot taken before `feat/delight-bubby` merged. If a line does not match, search for the quoted code.
-- **Backlog.** Anything you find but don't fix goes into [docs/backlog.md](../backlog.md) (AGENTS.md section 7H). Do not widen a PR.
+- **Backlog.** Anything you find but don't fix becomes a GitHub issue labelled `backlog` (AGENTS.md section 7H). Do not widen a PR. Run `gh issue list --label backlog` to see what is already known.
 
 ## Rules for this plan (one-off exception)
 
@@ -26,7 +26,7 @@ The user has approved these for the PRs in this plan only. AGENTS.md section 7A 
 - **Stacked PRs.** If a PR depends on one that is not merged yet, branch from the parent branch and open the PR with `--base <parent-branch>`. GitHub retargets it to `main` when the parent merges. If the parent is already merged, branch from an up-to-date `main`.
 - **Quality gate before raising each PR.** `npm run lint` must show 0 errors and 0 warnings. `npm run build` and `npm test` must pass. Run `npm run test:e2e` for every PR that changes UI. Report failures as they are.
 - **Screenshots.** Every PR that changes UI attaches before/after screenshots, following AGENTS.md section 7G. They come from demo data only, and the PR body must not include names or real figures.
-- **Live DB.** No migrations and no SQL against the live DB. Fixes that need a DB change go to the backlog.
+- **Live DB.** No migrations and no SQL against the live DB. Fixes that need a DB change become `backlog` + `needs-db` issues.
 - **Dependencies.** The only dependency allowed is `motion`, in PR #6 (the user approved it).
 - **Worktrees.** Remove any git worktree you create once its PR is raised.
 
@@ -72,7 +72,7 @@ Expect merge conflicts between lanes in `ExpensesPage.tsx`, `supabaseFinanceServ
    - Compute the amount from `useBudgetDetailQuery(lastMonth)` `spendableRemaining`, the same figure the Budget page shows.
    - Remove the hard-coded `1500` cap.
    - With no base profile, show no banner.
-4. **Fresh goal balance before sweep writes (M6).** Before adding to `saved_so_far`, fetch that goal's current row (a new `getGoal(id)` read is fine). Then write `fresh + amount`. Add a backlog note for a server-side increment RPC.
+4. **Fresh goal balance before sweep writes (M6).** Before adding to `saved_so_far`, fetch that goal's current row (a new `getGoal(id)` read is fine). Then write `fresh + amount`. The server-side increment RPC is already issue #37.
 5. **Reject mock IDs in Supabase mode (M4).**
    - `addExpense` / `updateBaseProfile` must throw on a non-UUID member or category id, instead of mapping it to `members[0]` / `categories[0]`.
    - Member pickers render only once real members have loaded.
@@ -137,7 +137,7 @@ Expect merge conflicts between lanes in `ExpensesPage.tsx`, `supabaseFinanceServ
    - Don't set `bb_notif_initial_prompted` unless the user actually saw the prompt.
 3. **Number fields (M9).** In `NotificationSettingsModal.tsx` (budget warning %, settlement threshold), keep a local draft string. Clamp and save on blur or Enter, not on every keystroke.
 4. **Haptics toggle.** Hide it when `!("vibrate" in navigator)`, which is the case on iOS Safari.
-5. **Auto Capture setup order.** In the Auto Capture settings section, detect the platform from `navigator.userAgent` (Android or iOS) and show the matching steps first, with the other platform's steps collapsed. Android gets the automation-app steps (MacroDroid/Tasker posting to the capture endpoint). If those steps don't exist yet, add a backlog item rather than inventing them. iOS gets the Apple Pay Shortcut steps.
+5. **Auto Capture setup order.** In the Auto Capture settings section, detect the platform from `navigator.userAgent` (Android or iOS) and show the matching steps first, with the other platform's steps collapsed. Android gets the automation-app steps (MacroDroid/Tasker posting to the capture endpoint). If those steps don't exist yet, leave a placeholder and link issue #44 rather than inventing them. iOS gets the Apple Pay Shortcut steps.
 
 **Tests**
 - Unit test: in Combined view, push sync and check-in use `me.id`.
@@ -191,7 +191,7 @@ Expect merge conflicts between lanes in `ExpensesPage.tsx`, `supabaseFinanceServ
    - Move add and delete to `useMutation`, with `onMutate` patching the cache, `onError` rolling back with an `<Alert>` or toast, and `onSettled` running a targeted invalidate.
    - Add sheets close immediately on Save.
    - This must work with the offline queue from #2: when offline, the queued item stays in the cache.
-   - All other writes keep their current flow. Moving every write is a backlog item.
+   - All other writes keep their current flow. Moving every write is issue #38.
 5. **Double-submit guards** (motion audit 4.2) on `handleDeleteExpense`, `handleDeleteItem` (Recurring), goal quick-deposit and settle-up. Use `isPending` from the mutation, or a small `useSubmitLock()` in `src/hooks/`.
 
 **Tests**
@@ -350,6 +350,6 @@ Text only, using existing components. Number density and new visuals are #9.
 ## Done when
 
 - All 9 PRs are raised, their gates are green, and their screenshots are attached.
-- `docs/backlog.md` holds everything found but not fixed.
+- Everything found but not fixed is a `backlog` issue.
 - The worktrees are removed.
 - The agent posts a final summary listing every PR link, its base branch, merge order and any gate failures.
