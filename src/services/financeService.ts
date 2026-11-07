@@ -190,6 +190,9 @@ function invalidateInboxCache() {
 }
 
 function invalidateFinanceCache() {
+  if (!offlineSyncQueue.isOnline() && !isMockModeActive()) {
+    return;
+  }
   try {
     queryClient.invalidateQueries({ queryKey: ['finance'] });
   } catch {
@@ -261,6 +264,7 @@ export const financeService: FinanceService = {
   },
   getExpenses: (filter) => getActiveService().getExpenses(filter),
   addExpense: async (expense) => {
+    const beforePending = offlineSyncQueue.getPendingSyncCount();
     const res = await withDayLogged(
       [{ memberId: expense.payer_id, date: expense.date }],
       'expense',
@@ -269,20 +273,28 @@ export const financeService: FinanceService = {
           ? getActiveService().addExpense(expense)
           : offlineSyncQueue.addExpense(expense)
     );
-    invalidateFinanceCache();
+    const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
+    if (!queuedOffline || isMockModeActive()) {
+      invalidateFinanceCache();
+    }
     return res;
   },
   updateExpense: async (id, updates) => {
+    const beforePending = offlineSyncQueue.getPendingSyncCount();
     let res: Expense;
     if (offlineSyncQueue.isReplaying()) {
       res = await getActiveService().updateExpense(id, updates);
     } else {
       res = await offlineSyncQueue.updateExpense(id, updates);
     }
-    invalidateFinanceCache();
+    const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
+    if (!queuedOffline || isMockModeActive()) {
+      invalidateFinanceCache();
+    }
     return res;
   },
   bulkAddExpenses: async (expenses) => {
+    const beforePending = offlineSyncQueue.getPendingSyncCount();
     const res = await withDayLogged(
       expenses.map((e) => ({ memberId: e.payer_id, date: e.date })),
       'expense',
@@ -291,16 +303,23 @@ export const financeService: FinanceService = {
           ? getActiveService().bulkAddExpenses(expenses)
           : offlineSyncQueue.bulkAddExpenses(expenses)
     );
-    invalidateFinanceCache();
+    const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
+    if (!queuedOffline || isMockModeActive()) {
+      invalidateFinanceCache();
+    }
     return res;
   },
   deleteExpense: async (id) => {
+    const beforePending = offlineSyncQueue.getPendingSyncCount();
     if (offlineSyncQueue.isReplaying()) {
       await getActiveService().deleteExpense(id);
     } else {
       await offlineSyncQueue.deleteExpense(id);
     }
-    invalidateFinanceCache();
+    const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
+    if (!queuedOffline || isMockModeActive()) {
+      invalidateFinanceCache();
+    }
   },
   settleSharedExpenses: async (m1, m2) => {
     await getActiveService().settleSharedExpenses(m1, m2);

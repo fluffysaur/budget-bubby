@@ -185,6 +185,7 @@ export interface Expense {
 }
 
 export interface CreateExpenseInput {
+  id?: string;
   household_id?: string;
   payer_id: string;
   category_id?: string | null;
