@@ -492,7 +492,7 @@ export function ExpenseListTable({
                             setEditingExpense(expense);
                           }}
                           aria-label={`Edit ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                           title="Edit expense"
                         >
                           <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -501,7 +501,7 @@ export function ExpenseListTable({
                           type="button"
                           onClick={() => setDeletingExpense(expense)}
                           aria-label={`Delete ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                           title="Delete expense"
                         >
                           <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -571,7 +571,7 @@ export function ExpenseListTable({
                       <button
                         type="button"
                         onClick={() => handlePageChange(p)}
-                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-all cursor-pointer ${
+                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-press cursor-pointer ${
                           p === validCurrentPage
                             ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-black'
                             : 'border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5'

@@ -24,7 +24,7 @@ export function MonthEndSweepBanner({
         <div
             role="region"
             aria-label="Month-End Surplus Notification"
-            className={`relative flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-lilac-subtle) p-3.5 sm:p-4 shadow-cute transition-all ${className}`}
+            className={`relative flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-lilac-subtle) p-3.5 sm:p-4 shadow-cute transition-colors ${className}`}
         >
             <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-lilac) text-(--text-ink) shadow-cute-sm">

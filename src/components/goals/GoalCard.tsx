@@ -113,7 +113,7 @@ export function GoalCard({
         <div
             id={`goal-card-${goal.id}`}
             data-testid={`goal-card-${goal.id}`}
-            className={`relative flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute transition-all ${className}`}
+            className={`relative flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute transition-colors ${className}`}
         >
             {isHighlighted && (
                 <div
@@ -350,7 +350,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onSpendFromGoal?.(goal)}
                     aria-label={`+ Spend from ${goal.title}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
                 >
                     <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
                     <span>Spend</span>
@@ -361,7 +361,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onQuickDeposit?.(goal)}
                     aria-label={`Deposit to ${goal.title}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer whitespace-nowrap"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
                 >
                     <Coins
                         className="h-3.5 w-3.5 text-emerald-800 shrink-0"
@@ -376,7 +376,7 @@ export function GoalCard({
                     onClick={() => onEdit?.(goal)}
                     aria-label={`Edit ${goal.title}`}
                     title={`Edit ${goal.title}`}
-                    className="inline-flex items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) p-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                    className="inline-flex items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) p-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
                 >
                     <Pencil className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                 </button>

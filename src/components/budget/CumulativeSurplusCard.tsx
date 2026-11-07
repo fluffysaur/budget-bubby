@@ -377,7 +377,7 @@ export function CumulativeSurplusCard({
                         return (
                             <div
                                 key={point.month}
-                                className={`p-3 rounded-xl border-2 flex flex-col justify-between transition-all ${
+                                className={`p-3 rounded-xl border-2 flex flex-col justify-between transition-colors ${
                                     isSelected
                                         ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
                                         : "border-(--border-subtle) bg-(--bg-canvas)"

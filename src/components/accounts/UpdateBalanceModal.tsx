@@ -239,7 +239,7 @@ export function UpdateBalanceModal({
                             onClose();
                             onOpenAddAccount();
                         }}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                     >
                         <Plus className="h-4 w-4" strokeWidth={2.5} />
                         <span>Add Account</span>
@@ -408,7 +408,7 @@ export function UpdateBalanceModal({
                                     key={cat}
                                     type="button"
                                     onClick={() => setTypeFilter(cat)}
-                                    className={`px-2.5 py-1 rounded-xl text-[11px] border transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                                    className={`px-2.5 py-1 rounded-xl text-[11px] border transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                         typeFilter === cat
                                             ? "bg-(--pastel-lilac) text-(--text-ink) border-(--border-ink) shadow-cute-sm font-bold"
                                             : "bg-(--bg-canvas) text-(--text-muted) border-(--border-subtle) hover:border-(--border-ink) hover:text-(--text-ink) font-semibold"
@@ -470,7 +470,7 @@ export function UpdateBalanceModal({
                             return (
                                 <div
                                     key={acc.id}
-                                    className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
+                                    className={`p-2.5 sm:p-3 rounded-2xl border transition-colors flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
                                         isModified
                                             ? "border-2 border-(--border-ink) bg-(--pastel-butter-light)/40 shadow-cute-sm"
                                             : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-card)"
@@ -555,7 +555,7 @@ export function UpdateBalanceModal({
                                                     }))
                                                 }
                                                 placeholder="0.00"
-                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-right text-base sm:text-xs font-bold font-mono-num transition-all focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) ${
+                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-right text-base sm:text-xs font-bold font-mono-num transition-colors focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) ${
                                                     isModified
                                                         ? "border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
                                                         : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"

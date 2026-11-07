@@ -721,7 +721,7 @@ export function BaseProfileEditorModal({
                                     key={m.id}
                                     type="button"
                                     onClick={() => onSelectMember?.(m.id)}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-press cursor-pointer ${
                                         isSelected
                                             ? "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
@@ -881,7 +881,7 @@ export function BaseProfileEditorModal({
                                     <button
                                         type="button"
                                         onClick={handleOpenCreateCategory}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm transition-all cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer"
                                     >
                                         <Plus className="h-3 w-3" />
                                         <span>Add Category</span>
@@ -903,7 +903,7 @@ export function BaseProfileEditorModal({
                                     <button
                                         type="button"
                                         onClick={handleAutoBalance}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) border-2 border-(--border-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                         title="Auto-adjust unlocked categories to 100%"
                                     >
                                         <Scale className="h-3.5 w-3.5" />
@@ -920,7 +920,7 @@ export function BaseProfileEditorModal({
 
                             {/* Inline Add / Edit Category Drawer */}
                             {catFormMode && (
-                                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 space-y-3 shadow-cute-sm animate-in fade-in duration-150">
+                                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 space-y-3 shadow-cute-sm animate-enter">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-(--text-ink)">
                                             {catFormMode === "create"
@@ -1003,7 +1003,7 @@ export function BaseProfileEditorModal({
                                                                 )
                                                             }
                                                             title={item.label}
-                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer ${
+                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-press cursor-pointer ${
                                                                 isSelected
                                                                     ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
                                                                     : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
@@ -1100,7 +1100,7 @@ export function BaseProfileEditorModal({
                                                                     : "Lock category"
                                                             }
                                                             data-testid={`lock-${cat.id}`}
-                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-all cursor-pointer shrink-0 ${
+                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-press cursor-pointer shrink-0 ${
                                                                 isLocked
                                                                     ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
                                                                     : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"

@@ -463,7 +463,7 @@ export function CreditCardTrackerSection({
                             <div
                                 key={card.id}
                                 data-testid={`credit-card-card-${card.id}`}
-                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-all relative overflow-hidden"
+                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
                             >
                                 {/* Color Top Stripe */}
                                 <div
@@ -653,7 +653,7 @@ export function CreditCardTrackerSection({
                                                 onClick={() =>
                                                     handleTogglePaid(stmt)
                                                 }
-                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-all cursor-pointer ${
+                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer ${
                                                     stmt.is_paid
                                                         ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
                                                         : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"

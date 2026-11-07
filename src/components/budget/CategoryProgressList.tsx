@@ -143,7 +143,7 @@ export function CategoryProgressList({
               onClick={() => onCategoryClick?.(catDetail.category_id)}
               className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) ${
                 compact ? 'p-3.5 sm:p-4' : 'p-4 sm:p-5'
-              } shadow-cute-sm transition-all ${
+              } shadow-cute-sm transition-colors ${
                 isOverBudget
                   ? 'bg-(--pastel-coral-light)/50'
                   : 'hover:bg-(--pastel-butter-light)/20'

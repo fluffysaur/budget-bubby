@@ -365,7 +365,7 @@ export function InboxPage() {
                 )}
 
                 {isLoading ? (
-                    <Card elevation="tactile" padding="md" className="h-64 animate-pulse" aria-label="Loading inbox" />
+                    <Card elevation="tactile" padding="md" className="h-64 motion-safe:animate-pulse" aria-label="Loading inbox" />
                 ) : top ? (
                     <>
                         <div className="relative">
