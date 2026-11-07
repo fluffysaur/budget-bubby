@@ -229,22 +229,13 @@ export function SurplusSweepModal({
 
             <ModalBody className="space-y-4">
                 {/* Celebration callout banner */}
-                <div className="flex items-start gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-3.5 shadow-cute-sm">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-ink)">
-                        <Sparkles className="h-5 w-5" strokeWidth={2.5} />
+                <div className="flex items-center gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-3 shadow-cute-sm">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-ink)">
+                        <Sparkles className="h-4 w-4" strokeWidth={2.5} />
                     </div>
-                    <div className="text-xs sm:text-sm text-(--text-ink)">
-                        <p className="font-bold">
-                            🎉 Great job in {formatDisplayMonth(month)}!
-                        </p>
-                        <p className="text-(--text-muted) mt-0.5">
-                            You have{" "}
-                            <span className="text-(--text-ink)">
-                                <CurrencyText amount={surplusAmount} />
-                            </span>{" "}
-                            unspent. Deposit into goals to boost milestone progress.
-                        </p>
-                    </div>
+                    <p className="font-bold text-xs sm:text-sm text-(--text-ink)">
+                        Great job in {formatDisplayMonth(month)} 🎉
+                    </p>
                 </div>
 
                 {/* Preset Chips & Mode Selector */}
@@ -266,7 +257,7 @@ export function SurplusSweepModal({
                             onClick={handleAllToTopGoal}
                             aria-label="100% to first goal"
                         >
-                            All to Top Goal
+                            Top Goal
                         </Button>
                     </div>
 
@@ -300,8 +291,21 @@ export function SurplusSweepModal({
                 {/* Goals List */}
                 <div className="space-y-2.5 max-h-75 overflow-y-auto pr-1">
                     {activeGoals.length === 0 ? (
-                        <div className="text-center py-6 text-xs text-(--text-muted)">
-                            No active savings goals found. Create a goal in the Goals tab first!
+                        <div className="text-center py-6 text-xs text-(--text-muted) space-y-2">
+                            <h4 className="font-bold text-sm text-(--text-ink)">No Goals</h4>
+                            <p className="text-xs text-(--text-muted)">Add a goal to sweep surplus.</p>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    onClose();
+                                    if (typeof window !== "undefined") {
+                                        window.location.href = "/goals";
+                                    }
+                                }}
+                            >
+                                Add Goal
+                            </Button>
                         </div>
                     ) : (
                         activeGoals.map((goal) => {

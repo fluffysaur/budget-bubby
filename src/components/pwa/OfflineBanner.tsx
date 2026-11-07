@@ -212,15 +212,13 @@ export const OfflineBanner: React.FC = () => {
                         <div
                             role="status"
                             aria-live="polite"
-                            className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-amber-500 text-slate-950 dark:bg-amber-600 dark:text-white"
+                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-butter) text-(--text-ink) border-b-2 border-(--border-ink)"
                         >
                             <WifiOff className="w-3.5 h-3.5 shrink-0" />
                             <span>
                                 {pendingCount > 0
-                                    ? `Offline Mode — ${pendingCount} ${
-                                          pendingCount === 1 ? "expense" : "expenses"
-                                      } queued locally. Will sync automatically when back online.`
-                                    : "You are offline. Showing cached Budget Bubby view."}
+                                    ? `Offline · ${pendingCount} queued`
+                                    : "Offline"}
                             </span>
                             {failedCount > 0 && (
                                 <button
@@ -238,10 +236,10 @@ export const OfflineBanner: React.FC = () => {
                         <div
                             role="status"
                             aria-live="polite"
-                            className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-sky-600 text-white"
+                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-lilac) text-(--text-ink) border-b-2 border-(--border-ink)"
                         >
                             <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-                            <span>Syncing offline changes to Supabase...</span>
+                            <span>Syncing...</span>
                         </div>
                     </m.div>
                 ) : failedCount > 0 ? (
@@ -249,7 +247,7 @@ export const OfflineBanner: React.FC = () => {
                         <div
                             role="status"
                             aria-live="polite"
-                            className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-coral-light) text-(--text-ink) border-b-2 border-(--border-ink)"
+                            className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-coral-light) text-(--text-ink) border-b-2 border-(--border-ink)"
                         >
                             <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-(--accent-coral)" />
                             <button

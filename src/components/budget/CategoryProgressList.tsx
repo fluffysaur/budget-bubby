@@ -1,21 +1,14 @@
 /**
  * CategoryProgressList Component
  * Visual category meters with:
- * - Progress bar indicator
- * - Budgeted vs actual spent vs remaining
- * - Recurring subscription/bill/other breakdown tooltip per category
- * - Color-coded status:
- *   - Green: <= 80% (On Track)
- *   - Amber: 81-100% (Near Limit)
- *   - Red: > 100% (Over Budget)
- * - Over-budget alert banners and badges (spendable categories only)
- * - "Set aside" (allocation) categories never warn: neutral lilac pill, a
- *   Set aside / Funded readout, and a neutral bar.
+ * - MeterBar indicator
+ * - Bold remaining amount as primary figure
+ * - Secondary figures (spent, budgeted, %) in a tap TooltipPopover
+ * - Status Badge only when category exceeds budget
+ * - "Set aside" (allocation) categories: lilac pill, Set aside / Funded readout
  */
 
 import {
-  AlertTriangle,
-  CheckCircle2,
   AlertCircle,
   TrendingUp,
   HelpCircle,
@@ -28,11 +21,13 @@ import {
   Layers,
   Repeat,
 } from 'lucide-react';
-import { formatAllocationPercent, isSpendableCategory } from '../../lib/financialFormulas';
+import { isSpendableCategory } from '../../lib/financialFormulas';
 import { getRecurringMonthlyAmount } from '../../lib/recurringItems';
 import { TooltipPopover } from '../ui/TooltipPopover';
 import { TruncatedText } from '../ui/TruncatedText';
 import { EmptyStateCard } from '../ui/EmptyStateCard';
+import { MeterBar } from '../ui/MeterBar';
+import { Badge } from '../ui/Badge';
 import type { MonthlyBudgetCategoryDetail } from '../../types/finance';
 import { CurrencyText } from '../ui/CurrencyText';
 
@@ -118,24 +113,6 @@ export function CategoryProgressList({
           // Set-aside categories are funded, not capped: never warn.
           const tracksCap = isSpendableCategory(catDetail.category ?? catDetail.category_id);
           const isOverBudget = tracksCap && (spentPercentage >= 100 || actual > allocated);
-          const isNearLimit = tracksCap && !isOverBudget && spentPercentage >= 80;
-
-          // Status Badge details
-          let statusLabel = 'On Track';
-          let progressBarColor = 'bg-emerald-500';
-          let StatusIcon = CheckCircle2;
-
-          if (isOverBudget) {
-            statusLabel = 'Over Budget';
-            progressBarColor = 'bg-rose-500';
-            StatusIcon = AlertCircle;
-          } else if (isNearLimit) {
-            statusLabel = 'Near Limit';
-            progressBarColor = 'bg-amber-500';
-            StatusIcon = AlertTriangle;
-          }
-
-          const fillWidth = Math.max(0, Math.min(spentPercentage, 100));
 
           return (
             <div
@@ -149,7 +126,7 @@ export function CategoryProgressList({
                   : 'hover:bg-(--pastel-butter-light)/20'
               } ${onCategoryClick ? 'cursor-pointer' : ''}`}
             >
-              {/* Card Header: Icon, Name, Target % & Status Badge */}
+              {/* Card Header: Icon, Name & Status Badge (Over or Set aside only) */}
               <div className="flex items-center justify-between gap-2 mb-2.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
@@ -164,9 +141,6 @@ export function CategoryProgressList({
                         text={categoryName}
                         className="font-display font-black text-sm text-(--text-ink)"
                       />
-                      <span className="text-[10px] font-mono-num font-bold text-(--text-muted) shrink-0">
-                        ({formatAllocationPercent(catDetail.percentage * 100)}%)
-                      </span>
                       {subSpent > 0 && (
                         <TooltipPopover
                           label={`${categoryName} Recurring Breakdown`}
@@ -198,31 +172,25 @@ export function CategoryProgressList({
                   </div>
                 </div>
 
-                {/* Status Indicator Badge */}
+                {/* Status Indicator Badge: Only "Over" or "Set aside" */}
                 {!tracksCap ? (
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shrink-0 shadow-cute-sm bg-(--pastel-lilac-light) text-(--text-ink)">
-                    <PiggyBank className="h-3 w-3" />
-                    <span>Set aside</span>
-                  </div>
-                ) : (
-                <div
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shrink-0 shadow-cute-sm ${
-                    isOverBudget
-                      ? 'bg-(--pastel-coral-light) text-(--text-ink)'
-                      : isNearLimit
-                      ? 'bg-(--pastel-butter) text-(--text-ink)'
-                      : 'bg-(--pastel-mint) text-(--text-ink)'
-                  }`}
-                >
-                  <StatusIcon className="h-3 w-3" />
-                  <span>{statusLabel} ({roundedPercentage}%)</span>
-                </div>
-                )}
+                  <Badge variant="lilac" size="sm" icon={<PiggyBank className="h-3 w-3" />}>
+                    Set aside
+                  </Badge>
+                ) : isOverBudget ? (
+                  <Badge
+                    variant="over"
+                    size="sm"
+                    data-testid={`badge-rose-${catDetail.category_id}`}
+                  >
+                    Over
+                  </Badge>
+                ) : null}
               </div>
 
-              {/* Amounts: Set aside / Funded for allocations, else Spent vs Budgeted vs Remaining */}
+              {/* Primary Amount: Left / Over for spendable, Set aside / Funded for allocations */}
               {!tracksCap ? (
-                <div className="grid grid-cols-2 gap-2 my-2.5 text-left">
+                <div className="flex items-center justify-between text-left my-2">
                   <div>
                     <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                       Set aside
@@ -232,7 +200,7 @@ export function CategoryProgressList({
                     </span>
                   </div>
                   {actual > 0 && (
-                    <div>
+                    <div className="text-right">
                       <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
                         Funded
                       </span>
@@ -243,78 +211,50 @@ export function CategoryProgressList({
                   )}
                 </div>
               ) : (
-              <div className="grid grid-cols-3 gap-2 my-2.5 text-left">
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
-                    Spent
-                  </span>
-                  <span className="text-(--text-ink)">
-                    <CurrencyText amount={actual} size="md" />
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
-                    Budgeted
-                  </span>
-                  <span className="text-(--text-ink)">
-                    <CurrencyText amount={allocated} size="md" />
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
-                    Remaining
-                  </span>
-                  <span
-                    className={`${
-                      remaining < 0
-                        ? 'text-rose-600 dark:text-rose-400'
-                        : 'text-emerald-700 dark:text-emerald-400'
-                    }`}
-                  >
-                    <CurrencyText amount={remaining} size="md" />
-                  </span>
-                </div>
-              </div>
+                <div className="flex items-center justify-between my-2">
+                  <div className="flex items-center gap-1.5">
+                    {remaining < 0 ? (
+                      <span className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono-num">
+                        <CurrencyText amount={Math.abs(remaining)} /> over
+                      </span>
+                    ) : (
+                      <span className="text-sm font-bold text-(--text-ink) font-mono-num">
+                        <CurrencyText amount={remaining} /> left
+                      </span>
+                    )}
+                  </div>
 
+                  {/* Secondary Figures in TooltipPopover */}
+                  <TooltipPopover
+                    title={`${categoryName} Details`}
+                    ariaLabel={`${categoryName} budget breakdown`}
+                  >
+                    <div className="space-y-1 text-xs">
+                      <div>
+                        Spent: <strong><CurrencyText amount={actual} /></strong>
+                      </div>
+                      <div>
+                        Budget: <strong><CurrencyText amount={allocated} /></strong>
+                      </div>
+                      <div className="text-(--text-muted)">
+                        {roundedPercentage}% of cap
+                      </div>
+                    </div>
+                  </TooltipPopover>
+                </div>
               )}
 
               {/* Progress Bar Meter */}
               {(tracksCap || allocated > 0) && (
-              <div className="space-y-1.5 mt-2.5">
-                <div className="h-3 w-full rounded-full bg-(--bg-canvas) border border-(--border-ink) overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${tracksCap ? progressBarColor : 'bg-(--pastel-lilac)'}`}
-                    style={{ width: `${fillWidth}%` }}
-                    role="progressbar"
-                    aria-valuenow={roundedPercentage}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
+                <div className="mt-2.5">
+                  <MeterBar
+                    value={actual}
+                    max={allocated}
+                    tone={!tracksCap ? 'ok' : undefined}
+                    size="md"
+                    aria-label={`${categoryName} spending progress`}
                   />
                 </div>
-
-                {/* Warning Badges (Amber for >= 80%, Rose for >= 100%) */}
-                {isOverBudget ? (
-                  <div className="flex items-center justify-between text-[11px] text-rose-600 dark:text-rose-400 font-bold pt-0.5">
-                    <span className="flex items-center gap-1 font-mono-num">
-                      <AlertCircle className="h-3 w-3" />
-                      Over by <CurrencyText amount={Math.abs(remaining)} />
-                    </span>
-                    <span
-                      data-testid={`badge-rose-${catDetail.category_id}`}
-                      className="px-2 py-0.5 rounded-full bg-(--pastel-coral-light) text-rose-800 font-bold text-[10px] border border-(--border-ink) shadow-cute-sm"
-                    >
-                      Rose Cap Exceeded
-                    </span>
-                  </div>
-                ) : isNearLimit ? (
-                  <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold pt-0.5">
-                    <span className="flex items-center gap-1 font-mono-num">
-                      <AlertTriangle className="h-3 w-3" />
-                      <CurrencyText amount={remaining} /> remaining
-                    </span>
-                  </div>
-                ) : null}
-              </div>
               )}
             </div>
           );

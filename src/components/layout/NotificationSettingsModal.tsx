@@ -216,7 +216,6 @@ export function NotificationSettingsModal({
             <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 <ModalHeader
                     title="Settings"
-                    subtitle="Customize sound effects, push notifications & alert thresholds"
                     icon={<Settings className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-lilac)"
                     onClose={onClose}
@@ -239,7 +238,7 @@ export function NotificationSettingsModal({
                                         Sound Effects
                                     </span>
                                     <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        Cha-ching spend logging chime & alert sounds
+                                        Chime on log, alert sounds
                                     </p>
                                 </div>
                             </div>
@@ -293,7 +292,7 @@ export function NotificationSettingsModal({
                                             Haptic Feedback
                                         </span>
                                         <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                            Tactile vibration for pulls, sweeps, logs & alerts
+                                            Vibrate on actions
                                         </p>
                                     </div>
                                 </div>
@@ -413,7 +412,7 @@ export function NotificationSettingsModal({
                                     {/* CC Payment Due */}
                                     <CategoryToggleRow
                                         icon={<CreditCard className="h-4 w-4 text-rose-500 shrink-0" />}
-                                        title="Credit Card Payment Due"
+                                        title="Card Due"
                                         description="Alert before statement due date"
                                         isChecked={prefs.cc_payment_due}
                                         testId="toggle-cc-payment-due"
@@ -423,7 +422,7 @@ export function NotificationSettingsModal({
                                     {/* CC Missing Statement */}
                                     <CategoryToggleRow
                                         icon={<CreditCard className="h-4 w-4 text-amber-500 shrink-0" />}
-                                        title="Missing Credit Card Statement"
+                                        title="Card Statement"
                                         description="Alert when statement is not yet logged"
                                         isChecked={prefs.cc_missing_statement}
                                         testId="toggle-cc-missing-statement"
@@ -443,7 +442,7 @@ export function NotificationSettingsModal({
                                     {/* Monthly Balance Updates */}
                                     <CategoryToggleRow
                                         icon={<Landmark className="h-4 w-4 text-blue-500 shrink-0" />}
-                                        title="Monthly Balance Updates"
+                                        title="Balances"
                                         description="Month-end balance refresh prompt"
                                         isChecked={prefs.monthly_balance_updates}
                                         testId="toggle-monthly-balances"
@@ -453,7 +452,7 @@ export function NotificationSettingsModal({
                                     {/* Partner & Shared Spend */}
                                     <CategoryToggleRow
                                         icon={<Users className="h-4 w-4 text-purple-500 shrink-0" />}
-                                        title="Partner &amp; Shared Spend Alerts"
+                                        title="Partner Spend"
                                         description="Partner spend and split updates"
                                         isChecked={prefs.partner_shared_spend}
                                         testId="toggle-partner-shared-spend"
@@ -463,7 +462,7 @@ export function NotificationSettingsModal({
                                     {/* Budget Limit Warnings */}
                                     <CategoryToggleRow
                                         icon={<AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />}
-                                        title="Category Budget Limits"
+                                        title="Budget Limits"
                                         description="Warn when categories near budget limit"
                                         isChecked={prefs.budget_limit_alerts}
                                         testId="toggle-budget-limit-alerts"
@@ -473,7 +472,7 @@ export function NotificationSettingsModal({
                                     {/* Recurring Bills Due */}
                                     <CategoryToggleRow
                                         icon={<CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />}
-                                        title="Recurring Bills"
+                                        title="Recurring"
                                         description="Remind before recurring items are due"
                                         isChecked={prefs.recurring_bills_due}
                                         testId="toggle-recurring-bills"
@@ -483,7 +482,7 @@ export function NotificationSettingsModal({
                                     {/* Savings Goals Pacing */}
                                     <CategoryToggleRow
                                         icon={<Target className="h-4 w-4 text-emerald-500 shrink-0" />}
-                                        title="Savings Goal Pacing"
+                                        title="Goals"
                                         description="Goal pacing and achievement alerts"
                                         isChecked={prefs.goal_pacing_alerts}
                                         testId="toggle-goal-pacing"
@@ -493,7 +492,7 @@ export function NotificationSettingsModal({
                                     {/* Monthly Budget Review */}
                                     <CategoryToggleRow
                                         icon={<BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />}
-                                        title="Monthly Budget Review"
+                                        title="Budget Review"
                                         description="Early month budget review prompt"
                                         isChecked={prefs.monthly_budget_review}
                                         testId="toggle-monthly-budget-review"
@@ -644,7 +643,7 @@ export function NotificationSettingsModal({
                     ) : (
                         <div className="rounded-2xl border-2 border-dashed border-(--border-subtle) bg-(--bg-card)/50 p-4 text-center">
                             <p className="text-xs font-bold text-(--text-muted)">
-                                Push notifications are turned off. Turn on Push Notifications above to customize alert types and thresholds.
+                                Push is off.
                             </p>
                         </div>
                     )}

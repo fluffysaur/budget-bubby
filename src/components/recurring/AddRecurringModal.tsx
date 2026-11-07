@@ -382,10 +382,10 @@ export function AddRecurringModal({
                                 className="bg-(--bg-canvas)"
                             >
                                 <option value="annually">
-                                    Once a year (Annual)
+                                    Yearly
                                 </option>
                                 <option value="monthly">
-                                    Every month (Monthly)
+                                    Monthly
                                 </option>
                             </Select>
                         </div>
@@ -438,7 +438,7 @@ export function AddRecurringModal({
                     <div className="grid grid-cols-2 gap-3">
                         <Input
                             id="recurring-start-date"
-                            label="Start (Optional)"
+                            label="Start"
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}

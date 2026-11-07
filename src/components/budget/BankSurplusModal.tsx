@@ -1,4 +1,4 @@
-import { Shield, Sparkles, CheckCircle2 } from "lucide-react";
+import { Shield, CheckCircle2 } from "lucide-react";
 import {
     AnimatedModal,
     ModalHeader,
@@ -46,37 +46,26 @@ export function BankSurplusModal({
 
             <ModalBody className="space-y-4">
                 {/* Visual callout card */}
-                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-4 shadow-cute-sm space-y-2">
-                    <div className="flex items-center gap-2 font-bold text-sm text-(--text-ink)">
-                        <Sparkles className="h-4 w-4 text-amber-500 fill-amber-400" />
-                        <span>Reserve Cushion</span>
+                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--accent-butter-subtle) p-4 shadow-cute-sm flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-butter) text-(--text-ink)">
+                        <Shield className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                    <p className="text-xs text-(--text-muted) leading-relaxed">
-                        Bank <strong className="text-(--text-ink)"><CurrencyText amount={surplusAmount} /></strong> to cushion
-                        future months against unexpected overages.
-                    </p>
-                </div>
-
-                {/* Details Breakdown */}
-                <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                        <span className="text-(--text-muted)">Unspent Amount:</span>
-                        <strong className="text-emerald-700 font-extrabold text-sm">
-                            +<CurrencyText amount={surplusAmount} />
-                        </strong>
-                    </div>
-                    <div className="flex items-center justify-between text-xs border-t border-(--border-subtle) pt-2">
-                        <span className="text-(--text-muted)">Destination:</span>
-                        <span className="font-bold text-(--text-ink) flex items-center gap-1">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                            Banked Surplus
-                        </span>
+                    <div>
+                        <div className="font-bold text-sm text-(--text-ink)">Reserve Cushion</div>
+                        <p className="text-xs text-(--text-muted) leading-relaxed mt-0.5">
+                            Bank <CurrencyText amount={surplusAmount} /> to cushion future overages.
+                        </p>
                     </div>
                 </div>
 
-                <p className="text-[11px] text-(--text-muted) text-center">
-                    Deploy banked surplus to savings goals anytime from Budget.
-                </p>
+                {/* Destination */}
+                <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 flex items-center justify-between text-xs">
+                    <span className="text-(--text-muted)">Destination:</span>
+                    <span className="font-bold text-(--text-ink) flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        Banked Surplus
+                    </span>
+                </div>
             </ModalBody>
 
             <ModalFooter>

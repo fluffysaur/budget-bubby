@@ -301,10 +301,10 @@ export function ExpenseListTable({
               className="bg-(--bg-canvas) font-bold text-xs py-1"
             >
               <option value="">Default order</option>
-              <option value="date-desc">Date (Newest first)</option>
-              <option value="date-asc">Date (Oldest first)</option>
-              <option value="amount-desc">Amount (Highest first)</option>
-              <option value="amount-asc">Amount (Lowest first)</option>
+              <option value="date-desc">Newest</option>
+              <option value="date-asc">Oldest</option>
+              <option value="amount-desc">Highest</option>
+              <option value="amount-asc">Lowest</option>
               <option value="category-asc">Category (A-Z)</option>
               <option value="payer-asc">Payer (A-Z)</option>
             </Select>
@@ -319,9 +319,9 @@ export function ExpenseListTable({
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-cute-sm mb-3">
               <Receipt className="h-6 w-6" />
             </div>
-            <h3 className="text-base font-extrabold text-(--text-ink) mb-1">No expenses found</h3>
+            <h3 className="text-base font-extrabold text-(--text-ink) mb-1">No Expenses</h3>
             <p className="text-xs text-(--text-muted) max-w-sm mb-4">
-              There are no expenses matching your filter criteria. Try changing your filters or add a new expense.
+              Clear filters or add an expense.
             </p>
             {onResetFilters && (
               <Button
@@ -330,7 +330,7 @@ export function ExpenseListTable({
                 onClick={onResetFilters}
                 leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
               >
-                Clear filters
+                Reset Filters
               </Button>
             )}
           </div>

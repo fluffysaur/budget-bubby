@@ -28,6 +28,7 @@ import {
 import { calculateCumulativeSurplus } from "../../lib/financialFormulas";
 import { financeService } from "../../services/financeService";
 import { TooltipPopover } from "../ui/TooltipPopover";
+import { Sparkline } from "../ui/Sparkline";
 import { Button } from "../ui/Button";
 import { Skeleton, SkeletonGroup } from "../ui/Skeleton";
 import {
@@ -241,12 +242,6 @@ export function CumulativeSurplusCard({
         }
     };
 
-    // Find max absolute delta for visual relative bar scaling
-    const maxAbsDelta = Math.max(
-        ...summary.monthlyHistory.map((h) => Math.abs(h.delta)),
-        500,
-    );
-
     return (
         <div
             data-testid="cumulative-surplus-card"
@@ -260,18 +255,14 @@ export function CumulativeSurplusCard({
                     </div>
                     <div className="flex items-center gap-1.5">
                         <h3 className="font-display font-black text-sm sm:text-base text-(--text-ink)">
-                            Cumulative Spending Surplus
+                            Surplus
                         </h3>
                         <TooltipPopover
-                            title="Goal-Funded Protection & Rollover"
+                            title="Rollover"
                             ariaLabel="Goal-Funded Protection info"
                             align="left"
                         >
-                            Unspent spendable cap rolls over month-to-month.{" "}
-                            <strong>Goal-Funded Protection:</strong> Expenses
-                            paid out of pre-saved savings goals are excluded
-                            from spendable expenses to prevent artificial budget
-                            deficits.
+                            Unspent cap carries over. Goal-funded spends are excluded.
                         </TooltipPopover>
                     </div>
                 </div>
@@ -316,11 +307,6 @@ export function CumulativeSurplusCard({
                             {isCurrentSurplusPositive ? "+" : "-"}
                             <CurrencyText amount={Math.abs(currentSurplus)} />
                         </div>
-                        <span className="block text-xs font-bold mt-0.5 opacity-90">
-                            {isCurrentSurplusPositive
-                                ? "Surplus this month"
-                                : "Deficit this month"}
-                        </span>
                     </div>
 
                     <div
@@ -345,16 +331,12 @@ export function CumulativeSurplusCard({
                 >
                     <div>
                         <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                            Historical Rollover
+                            Banked
                         </span>
                         <div className="font-mono-num text-xl font-black tracking-tight mt-0.5">
                             {isBankedPositive ? "+" : "-"}
                             <CurrencyText amount={Math.abs(totalBanked)} />
                         </div>
-                        <span className="block text-xs font-bold mt-0.5 opacity-90">
-                            Total Banked Surplus: {isBankedPositive ? "+" : "-"}
-                            <CurrencyText amount={Math.abs(totalBanked)} />
-                        </span>
                     </div>
 
                     <div className="p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm bg-(--pastel-butter) text-(--text-ink)">
@@ -363,94 +345,68 @@ export function CumulativeSurplusCard({
                 </div>
             </div>
 
-            {/* Visual Breakdown / Mini Rollover Bar for Recent 3-6 Months */}
-            <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                        Recent {summary.monthlyHistory.length}-Month Rollover
-                        Breakdown
-                    </span>
-                    <span className="text-[11px] font-medium text-(--text-muted)">
-                        Spendable Cap vs Non-Goal Spend
-                    </span>
-                </div>
+            {/* Visual Rollover History */}
+            {summary.monthlyHistory.length > 0 && (
+                <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                            Last 6 Months
+                        </span>
+                        <Sparkline
+                            data={summary.monthlyHistory.map((p) => p.cumulative)}
+                            tone={isBankedPositive ? "ok" : "over"}
+                            width={96}
+                            height={24}
+                            aria-label="Surplus trend"
+                        />
+                    </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
-                    {summary.monthlyHistory.map((point) => {
-                        const isPos = point.delta >= 0;
-                        const isSelected = point.month === selectedMonth;
-                        const barFill = Math.min(
-                            100,
-                            Math.round(
-                                (Math.abs(point.delta) / maxAbsDelta) * 100,
-                            ),
-                        );
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                        {summary.monthlyHistory.map((point) => {
+                            const isPos = point.delta >= 0;
+                            const isSelected = point.month === selectedMonth;
 
-                        return (
-                            <div
-                                key={point.month}
-                                className={`p-3 rounded-xl border-2 flex flex-col justify-between transition-colors ${
-                                    isSelected
-                                        ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
-                                        : "border-(--border-subtle) bg-(--bg-canvas)"
-                                }`}
-                            >
-                                <div>
-                                    <div className="flex items-center justify-between text-xs font-bold text-(--text-ink)">
-                                        <span>
-                                            {formatShortMonth(point.month)}
-                                        </span>
-                                        {point.goalSpent > 0 && (
-                                            <span
-                                                title={`Goal-funded spending of ${formatSGD(point.goalSpent)} safely excluded`}
-                                                className="text-[9px] px-1 py-0.2 rounded bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) font-bold"
-                                            >
-                                                Goal
+                            return (
+                                <div
+                                    key={point.month}
+                                    className={`p-3 rounded-xl border-2 flex flex-col justify-between transition-colors ${
+                                        isSelected
+                                            ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
+                                            : "border-(--border-subtle) bg-(--bg-canvas)"
+                                    }`}
+                                >
+                                    <div>
+                                        <div className="flex items-center justify-between text-xs font-bold text-(--text-ink)">
+                                            <span>
+                                                {formatShortMonth(point.month)}
                                             </span>
-                                        )}
-                                    </div>
+                                            {point.goalSpent > 0 && (
+                                                <span
+                                                    title={`Goal-funded spending of ${formatSGD(point.goalSpent)} safely excluded`}
+                                                    className="text-[9px] px-1 py-0.2 rounded bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) font-bold"
+                                                >
+                                                    Goal
+                                                </span>
+                                            )}
+                                        </div>
 
-                                    <div
-                                        className={`font-mono-num text-sm font-black tracking-tight mt-1 ${
-                                            isPos
-                                                ? "text-emerald-700 dark:text-emerald-400"
-                                                : "text-rose-600 dark:text-rose-400"
-                                        }`}
-                                    >
-                                        {isPos ? "+" : "-"}
-                                        <CurrencyText amount={Math.abs(point.delta)} />
-                                    </div>
-
-                                    <div className="font-mono-num text-[10px] text-(--text-muted) mt-0.5">
-                                        <CurrencyText amount={point.spent} /> /{" "}
-                                        <CurrencyText amount={point.cap} />
-                                    </div>
-                                </div>
-
-                                {/* Mini Visual Rollover Bar */}
-                                <div className="mt-3">
-                                    <div className="h-2 w-full bg-(--bg-card) border border-(--border-ink) rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full rounded-full transition-all duration-300 ${
+                                            className={`font-mono-num text-sm font-black tracking-tight mt-1.5 ${
                                                 isPos
-                                                    ? "bg-emerald-500"
-                                                    : "bg-rose-500"
+                                                    ? "text-emerald-700 dark:text-emerald-400"
+                                                    : "text-rose-600 dark:text-rose-400"
                                             }`}
-                                            style={{
-                                                width: `${Math.max(12, barFill)}%`,
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="font-mono-num text-[9px] text-(--text-muted) text-right mt-1 font-semibold">
-                                        Cum: {point.cumulative >= 0 ? "+" : ""}
-                                        <CurrencyText amount={point.cumulative} />
+                                        >
+                                            {isPos ? "+" : "-"}
+                                            <CurrencyText amount={Math.abs(point.delta)} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Surplus Sweep Modal */}
             <SurplusSweepModal

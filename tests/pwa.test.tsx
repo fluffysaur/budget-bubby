@@ -76,9 +76,9 @@ describe('PWA Features & Installation', () => {
       render(<IOSInstallModal isOpen={true} onClose={onClose} />);
 
       expect(screen.getByText('Install Budget Bubby')).toBeInTheDocument();
-      expect(screen.getByText(/Tap the Share button/i)).toBeInTheDocument();
-      expect(screen.getByText(/Select 'Add to Home Screen'/i)).toBeInTheDocument();
-      expect(screen.getByText(/Tap 'Add'/i)).toBeInTheDocument();
+      expect(screen.getByText(/Tap Share/i)).toBeInTheDocument();
+      expect(screen.getByText(/Add to Home Screen/i)).toBeInTheDocument();
+      expect(screen.getByText(/Tap Add/i)).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: /Got it/i }));
       expect(onClose).toHaveBeenCalled();
@@ -90,7 +90,7 @@ describe('PWA Features & Installation', () => {
       render(<PWAInstallButton />);
 
       // Initially null because not installable yet
-      expect(screen.queryByLabelText(/Install Budget Bubby App/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Install$/i)).not.toBeInTheDocument();
 
       // Trigger beforeinstallprompt
       const promptEvent = new Event('beforeinstallprompt') as any;
@@ -100,7 +100,7 @@ describe('PWA Features & Installation', () => {
         window.dispatchEvent(promptEvent);
       });
 
-      expect(screen.getByLabelText(/Install Budget Bubby App/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Install$/i)).toBeInTheDocument();
     });
   });
 
@@ -115,7 +115,7 @@ describe('PWA Features & Installation', () => {
       render(<OfflineBanner />);
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText(/You are offline\. Showing cached Budget Bubby view\./i)).toBeInTheDocument();
+      expect(screen.getByText(/^Offline$/i)).toBeInTheDocument();
     });
 
     it('is hidden when online', () => {

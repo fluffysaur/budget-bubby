@@ -10,12 +10,13 @@ import {
     AlertCircle,
     Loader2,
     Fingerprint,
-    ScanFace,
     CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { BubbyIcon } from "../ui/BubbyIcon";
 import { AnimatedModal } from "../ui/AnimatedModal";
+import { isSupabaseConfigured } from "../../services/supabaseClient";
+import { isDemoModeActive } from "../../services/financeService";
 import {
     isBiometricsAvailable,
     isBiometricsEnrolled,
@@ -30,6 +31,7 @@ export interface PinLoginScreenProps {
 
 export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
     const { signInWithPin, authLoading, authError, clearAuthError } = useAuth();
+    const isMockMode = !isSupabaseConfigured() || isDemoModeActive();
     const [pin, setPin] = useState<string>("");
     const [isShaking, setIsShaking] = useState<boolean>(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -81,14 +83,10 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     return;
                 }
             }
-            setBiometricError(
-                "Biometric verification failed. Please enter your PIN.",
-            );
+            setBiometricError("Biometrics failed. Use PIN.");
         } catch (err: unknown) {
             const message =
-                err instanceof Error
-                    ? err.message
-                    : "Biometric authentication was cancelled or unavailable.";
+                err instanceof Error ? err.message : "Biometrics cancelled.";
             setBiometricError(message);
         } finally {
             setIsBiometricAuthenticating(false);
@@ -235,17 +233,19 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 <h1 className="text-2xl font-black tracking-tight text-(--text-ink) mb-1 font-display">
                     Budget Bubby
                 </h1>
-                <p className="text-xs font-semibold text-(--text-muted) mb-6 text-center">
-                    Enter your 6-digit PIN to unlock{" "}
-                    <span className="opacity-40">•</span>{" "}
-                    <button
-                        type="button"
-                        onClick={() => processPinSubmission("000000")}
-                        className="font-bold underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink) cursor-pointer"
-                    >
-                        Demo PIN: 000000
-                    </button>
-                </p>
+                {isMockMode ? (
+                    <p className="text-xs font-semibold text-(--text-muted) mb-6 text-center">
+                        <button
+                            type="button"
+                            onClick={() => processPinSubmission("000000")}
+                            className="font-bold underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink) cursor-pointer"
+                        >
+                            Demo PIN: 000000
+                        </button>
+                    </p>
+                ) : (
+                    <div className="mb-6" />
+                )}
 
                 {/* Biometrics Quick Unlock Banner (When Enrolled) */}
                 {biometricsEnrolled && (
@@ -264,7 +264,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         ) : (
                             <>
                                 <Fingerprint className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />
-                                <span>Unlock with Fingerprint / Face ID</span>
+                                <span>Biometric Unlock</span>
                             </>
                         )}
                     </button>
@@ -320,7 +320,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 {authLoading && (
                     <div className="flex items-center gap-2 mb-6 text-purple-700 dark:text-(--pastel-lilac) text-xs font-bold animate-enter">
                         <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
-                        <span>Unlocking household...</span>
+                        <span>Unlocking...</span>
                     </div>
                 )}
 
@@ -383,11 +383,6 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     >
                         Disable biometric unlock
                     </button>
-                ) : biometricsAvailable ? (
-                    <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-(--text-muted)">
-                        <ScanFace className="h-4 w-4 text-purple-700 dark:text-(--pastel-lilac)" strokeWidth={2.5} />
-                        <span>Biometric unlock supported on this device</span>
-                    </div>
                 ) : null}
             </div>
 
@@ -410,9 +405,7 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                     </h2>
 
                     <p className="text-xs font-medium text-(--text-muted) mb-6 leading-relaxed">
-                        Unlock Budget Bubby faster next time using Touch ID,
-                        Face ID, or your device fingerprint without entering
-                        your 6-digit PIN.
+                        Unlock faster with biometrics.
                     </p>
 
                     <div className="w-full flex flex-col gap-2.5">

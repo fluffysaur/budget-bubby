@@ -52,7 +52,7 @@ describe("PIN Authentication & Access Control", () => {
         );
 
         expect(screen.getByText("Budget Bubby")).toBeInTheDocument();
-        expect(screen.getByText("Enter your 6-digit PIN to unlock")).toBeInTheDocument();
+        expect(screen.getByText("Demo PIN: 000000")).toBeInTheDocument();
 
         for (let i = 0; i < 6; i++) {
             expect(screen.getByTestId(`pin-dot-${i}`)).toBeInTheDocument();
@@ -259,7 +259,7 @@ describe("PIN Authentication & Access Control", () => {
 
             const bioBtn = await screen.findByTestId("biometric-unlock-btn");
             expect(bioBtn).toBeInTheDocument();
-            expect(bioBtn.textContent).toContain("Unlock with Fingerprint / Face ID");
+            expect(bioBtn.textContent).toContain("Biometric Unlock");
 
             // Also renders disable option
             const disableBtn = screen.getByTestId("disable-biometrics-btn");

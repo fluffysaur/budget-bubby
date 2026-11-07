@@ -153,10 +153,10 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         expect(screen.getByPlaceholderText(/search merchant/i)).toBeInTheDocument();
 
         // Empty state is rendered inside the card body
-        expect(screen.getByText(/no expenses found/i)).toBeInTheDocument();
+        expect(screen.getByText(/no expenses/i)).toBeInTheDocument();
 
-        // Clear filters button triggers onResetFilters
-        const clearBtn = screen.getByRole("button", { name: /clear filters/i });
+        // Reset filters button triggers onResetFilters
+        const clearBtn = screen.getAllByRole("button", { name: /reset filters/i })[1];
         fireEvent.click(clearBtn);
 
         expect(onResetFilters).toHaveBeenCalledTimes(1);

@@ -19,7 +19,6 @@ import {
     Calendar,
     CheckCircle2,
     AlertTriangle,
-    Clock,
     Pencil,
     Trash2,
     ChevronLeft,
@@ -32,7 +31,10 @@ import { Button } from "../ui/Button";
 import { StatCard } from "../ui/StatCard";
 import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
+import { Badge } from "../ui/Badge";
+import { MeterBar } from "../ui/MeterBar";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import { ConfirmModal } from "../ui/ConfirmModal";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
 import { financeService } from "../../services/financeService";
@@ -260,7 +262,7 @@ export function CreditCardTrackerSection({
         const amount = parseFloat(stmtAmountInput);
         if (isNaN(amount) || amount < 0) {
             setStmtError(
-                "Please enter a valid statement balance amount (e.g. 842.50)",
+                "Enter an amount",
             );
             return;
         }
@@ -308,24 +310,9 @@ export function CreditCardTrackerSection({
             data-testid="credit-card-tracker-section"
         >
             {/* Month Navigation & Add Card Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink)">
-                        <ReceiptText className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h2 className="text-sm font-bold text-(--text-ink)">
-                            Credit Card Statements &amp; Due Dates
-                        </h2>
-                        <p className="text-xs text-(--text-muted)">
-                            Track monthly billing statements, 1-tap paid status,
-                            and payment due days
-                        </p>
-                    </div>
-                </div>
-
+            <div className="p-4 rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute">
                 <div
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto sm:shrink-0"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     data-testid="credit-card-header-actions"
                 >
                     {/* Month Stepper */}
@@ -375,32 +362,27 @@ export function CreditCardTrackerSection({
             <div className={statementsPlaceholder ? "space-y-4 opacity-60 transition-opacity" : "space-y-4 transition-opacity"}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
-                    title="Total CC Bill Due this Month"
+                    title="Due"
                     loading={isLoading}
                     value={formatSGD(totalBillDue)}
-                    subtitle={`Across ${filteredCards.length} configured card${filteredCards.length === 1 ? "" : "s"}`}
+                    subtitle={`${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
                     icon={<ReceiptText className="h-4 w-4" />}
                     iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                 />
 
                 <StatCard
-                    title="Total Paid"
+                    title="Paid"
                     loading={isLoading}
                     value={formatSGD(totalPaid)}
-                    subtitle="Cleared statements"
                     icon={<FileCheck2 className="h-4 w-4" />}
                     iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
                 />
 
                 <StatCard
-                    title="Total Unpaid"
+                    title="Unpaid"
                     loading={isLoading}
                     value={formatSGD(totalUnpaid)}
-                    subtitle={
-                        totalUnpaid > 0
-                            ? "Pending payment"
-                            : "All clear for this month!"
-                    }
+                    subtitle={totalUnpaid > 0 ? "Pending" : "All paid"}
                     icon={<AlertTriangle className="h-4 w-4" />}
                     iconBg={
                         totalUnpaid > 0
@@ -417,11 +399,10 @@ export function CreditCardTrackerSection({
                 <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
                     <CreditCardIcon className="h-10 w-10 text-(--text-faint) mb-3" />
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-                        No Credit Cards Configured
+                        No Cards
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-(--text-faint) max-w-sm mt-1">
-                        Add your DBS, OCBC, UOB, or Citi credit cards to track
-                        statement billing cycles and payment due dates.
+                        Add a card to track statements.
                     </p>
                     <Button
                         variant="primary"
@@ -433,7 +414,7 @@ export function CreditCardTrackerSection({
                             setIsAddEditCardOpen(true);
                         }}
                     >
-                        Add Your First Card
+                        Add Card
                     </Button>
                 </div>
             ) : (
@@ -536,104 +517,89 @@ export function CreditCardTrackerSection({
                                         </div>
                                     </div>
 
-                                    {/* Card Configuration Specs */}
-                                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 text-center text-xs shadow-cute-sm">
-                                        <div>
-                                            <span className="text-xs uppercase font-bold text-(--text-muted) block">
-                                                Statement Day
-                                            </span>
-                                            <span className="font-mono-num font-bold text-(--text-ink)">
+                                    {/* Card Configuration Specs as Icon Rows */}
+                                    <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
+                                        <div className="flex items-center gap-1.5 font-mono-num font-medium">
+                                            <ReceiptText className="h-3.5 w-3.5 text-(--text-muted)" />
+                                            <span>Statement Day</span>
+                                            <span className="font-bold text-(--text-ink)">
                                                 {ordinal(card.billing_day)}
                                             </span>
                                         </div>
-                                        <div className="border-x border-(--border-subtle)">
-                                            <span className="text-xs uppercase font-bold text-(--text-muted) block">
-                                                Due Day
-                                            </span>
-                                            <span className="font-mono-num font-bold text-(--text-ink)">
+                                        <div className="flex items-center gap-1.5 font-mono-num font-medium">
+                                            <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
+                                            <span>Due Day</span>
+                                            <span className="font-bold text-(--text-ink)">
                                                 {ordinal(card.due_day)}
                                             </span>
                                         </div>
-                                        <div>
-                                            <span className="text-xs uppercase font-bold text-(--text-muted) block">
-                                                Limit
-                                            </span>
-                                            <span className="font-mono-num font-bold text-(--text-ink)">
-                                                {card.credit_limit
-                                                    ? formatSGD(
-                                                          card.credit_limit,
-                                                      )
-                                                    : "No limit"}
-                                            </span>
-                                        </div>
+                                        <span className="font-mono-num font-medium text-[11px]">
+                                            {card.credit_limit
+                                                ? `Limit ${formatSGD(card.credit_limit, { showCents: false })}`
+                                                : "No limit"}
+                                        </span>
                                     </div>
 
                                     {/* Statement Information for Selected Month */}
-                                    <div className="mt-4 border-t border-(--border-subtle) pt-3">
+                                    <div className="mt-3 border-t border-(--border-subtle) pt-3">
                                         {stmt ? (
                                             <div className="space-y-2.5">
                                                 <div className="flex items-baseline justify-between">
                                                     <span className="text-xs font-bold text-(--text-muted)">
-                                                        Statement Amount
+                                                        Statement
                                                     </span>
-                                                    <span className="text-(--text-ink)">
+                                                    <span className="text-(--text-ink) font-display font-black text-lg">
                                                         <CurrencyText amount={stmt.statement_amount} size="md" />
                                                     </span>
                                                 </div>
 
-                                                {/* Due Date & Relative Status */}
+                                                {/* Due Date & Status Badge Countdown */}
                                                 <div className="flex items-center justify-between text-xs">
-                                                    <div className="flex items-center gap-1.5 font-mono-num font-medium text-(--text-muted)">
-                                                        <Calendar className="h-3.5 w-3.5" />
-                                                        <span>
-                                                            Due{" "}
-                                                            {formatDisplayDate(
-                                                                stmt.due_date,
-                                                            )}
-                                                        </span>
-                                                    </div>
+                                                    <span
+                                                        className="text-[11px] font-mono-num text-(--text-muted)"
+                                                        title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                                    >
+                                                        {formatDisplayDate(stmt.due_date)}
+                                                    </span>
 
                                                     {dueStatus && (
-                                                        <span
-                                                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border border-(--border-ink) shadow-cute-sm ${
+                                                        <Badge
+                                                            variant={
                                                                 stmt.is_paid
-                                                                    ? "bg-(--pastel-mint) text-(--text-ink)"
+                                                                    ? "paid"
                                                                     : dueStatus.isOverdue
-                                                                      ? "bg-(--pastel-coral-light) text-rose-800"
-                                                                      : dueStatus.isDueToday
-                                                                        ? "bg-(--pastel-butter) text-(--text-ink)"
-                                                                        : "bg-(--pastel-lilac-light) text-(--text-ink)"
-                                                            }`}
+                                                                      ? "over"
+                                                                      : "due"
+                                                            }
+                                                            size="sm"
+                                                            title={`Due ${formatDisplayDate(stmt.due_date)}`}
                                                         >
-                                                            {stmt.is_paid ? (
-                                                                <CheckCircle2 className="h-3 w-3" />
-                                                            ) : dueStatus.isOverdue ? (
-                                                                <AlertTriangle className="h-3 w-3" />
-                                                            ) : (
-                                                                <Clock className="h-3 w-3" />
-                                                            )}
-                                                            <span>
-                                                                {
-                                                                    dueStatus.label
-                                                                }
-                                                            </span>
-                                                        </span>
+                                                            {dueStatus.label}
+                                                        </Badge>
                                                     )}
                                                 </div>
 
+                                                {/* Utilisation meter if limit configured */}
+                                                {card.credit_limit && card.credit_limit > 0 && (
+                                                    <div className="pt-1">
+                                                        <MeterBar
+                                                            value={stmt.statement_amount}
+                                                            max={card.credit_limit}
+                                                            size="sm"
+                                                            aria-label={`${card.name} limit utilisation`}
+                                                        />
+                                                    </div>
+                                                )}
+
                                                 {stmt.notes && (
                                                     <p className="text-xs text-(--text-muted) italic line-clamp-1">
-                                                        &ldquo;{stmt.notes}
-                                                        &rdquo;
+                                                        &ldquo;{stmt.notes}&rdquo;
                                                     </p>
                                                 )}
                                             </div>
                                         ) : (
                                             <div className="py-2 text-center text-xs text-(--text-muted)">
-                                                No statement logged for{" "}
-                                                {formatDisplayMonth(
-                                                    selectedMonth,
-                                                )}
+                                                No statement
                                             </div>
                                         )}
                                     </div>
@@ -688,7 +654,7 @@ export function CreditCardTrackerSection({
                                             className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer"
                                         >
                                             <Plus className="h-3.5 w-3.5 stroke-3" />
-                                            <span>Log Statement</span>
+                                            <span>Log</span>
                                         </button>
                                     )}
                                 </div>
@@ -741,7 +707,7 @@ export function CreditCardTrackerSection({
                                 className="flex items-center gap-1 text-xs font-bold text-(--text-ink) mb-1"
                             >
                                 <DollarSign className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Statement Balance (SGD) *</span>
+                                <span>Balance *</span>
                             </label>
                             <input
                                 id="stmt-amount"
@@ -784,7 +750,7 @@ export function CreditCardTrackerSection({
                                 htmlFor="stmt-notes"
                                 className="block text-xs font-bold text-(--text-ink) mb-1"
                             >
-                                Notes (Optional)
+                                Notes
                             </label>
                             <input
                                 id="stmt-notes"
@@ -820,49 +786,19 @@ export function CreditCardTrackerSection({
 
             {/* Delete Card Confirmation Modal */}
             {cardToDelete && (
-                <AnimatedModal
+                <ConfirmModal
                     isOpen={true}
                     onClose={() => setCardToDelete(null)}
+                    onConfirm={() => handleDeleteCard(cardToDelete.id)}
+                    title={`Delete ${cardToDelete.name}?`}
+                    confirmLabel="Delete"
+                    variant="danger"
                     maxWidth="max-w-sm"
                 >
-                    <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-                        <ModalHeader
-                            title="Delete Credit Card"
-                            subtitle="This action cannot be undone."
-                            icon={<Trash2 className="h-5 w-5 text-rose-700" strokeWidth={2.5} />}
-                            iconBgColor="bg-rose-100"
-                            onClose={() => setCardToDelete(null)}
-                        />
-
-                        <ModalBody className="p-5">
-                            <p className="text-xs text-(--text-muted) leading-relaxed">
-                                Are you sure you want to delete{" "}
-                                <span className="font-bold text-(--text-ink)">
-                                    {cardToDelete.name}
-                                </span>
-                                ? All logged monthly statements for this card will
-                                also be removed.
-                            </p>
-                        </ModalBody>
-
-                        <ModalFooter className="justify-end gap-2">
-                            <Button
-                                variant="secondary"
-                                onClick={() => setCardToDelete(null)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="danger"
-                                onClick={() =>
-                                    handleDeleteCard(cardToDelete.id)
-                                }
-                            >
-                                Delete Card
-                            </Button>
-                        </ModalFooter>
-                    </div>
-                </AnimatedModal>
+                    <p className="text-xs text-(--text-muted) leading-relaxed">
+                        Removes its statement history.
+                    </p>
+                </ConfirmModal>
             )}
         </div>
     );

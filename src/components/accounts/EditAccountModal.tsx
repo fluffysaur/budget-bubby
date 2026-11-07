@@ -85,8 +85,7 @@ export function EditAccountModal({
             <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 <ModalHeader
                     id="edit-account-title"
-                    title="Edit Account Details"
-                    subtitle="Update account name, category, or owner"
+                    title="Edit Account"
                     icon={<Pencil className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
@@ -124,7 +123,7 @@ export function EditAccountModal({
                                 htmlFor="edit-account-institution"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Bank / Institution
+                                Bank
                             </label>
                             <input
                                 id="edit-account-institution"
@@ -142,13 +141,13 @@ export function EditAccountModal({
                         <div>
                             <Select
                                 id="edit-account-type"
-                                label="Account Category *"
+                                label="Type"
                                 value={type}
                                 onChange={(e) => setType(e.target.value as AccountType)}
                                 className="bg-(--bg-canvas)"
                             >
-                                <option value="Cash">Cash / Savings / Current</option>
-                                <option value="Investment">Investment / Brokerage / SRS</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Investment">Investment</option>
                                 <option value="CPF">CPF (OA / SA / MA)</option>
                                 <option value="Other">Other Asset</option>
                             </Select>
@@ -187,7 +186,7 @@ export function EditAccountModal({
                             <span
                                 className={`text-xs font-bold ${type === "CPF" ? "text-(--text-muted)" : "text-(--text-ink)"}`}
                             >
-                                Joint Household Account
+                                Joint
                             </span>
                         </label>
                         {type === "CPF" && (
@@ -203,7 +202,7 @@ export function EditAccountModal({
                             htmlFor="edit-account-notes"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Notes / Remarks
+                            Notes
                         </label>
                         <input
                             id="edit-account-notes"

@@ -594,15 +594,13 @@ export function BaseProfileEditorModal({
         e.preventDefault();
 
         if (!isValidTotal) {
-            setErrorMessage(
-                `Category allocations must sum to exactly 100% (currently ${totalPercentage}%).`,
-            );
+            setErrorMessage("Must total 100%");
             return;
         }
 
         const parsedGross = parseFloat(grossSalary);
         if (isNaN(parsedGross) || parsedGross <= 0) {
-            setErrorMessage("Please enter a valid positive gross salary.");
+            setErrorMessage("Enter a salary");
             return;
         }
 
@@ -774,7 +772,7 @@ export function BaseProfileEditorModal({
                                         htmlFor="gross-salary-input"
                                         className="block text-xs font-bold text-(--text-ink) mb-1"
                                     >
-                                        Gross Salary (SGD)
+                                        Gross
                                     </label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-2.5 text-xs font-bold text-(--text-muted)">
@@ -801,7 +799,7 @@ export function BaseProfileEditorModal({
                                         htmlFor="cpf-rate-input"
                                         className="block text-xs font-bold text-(--text-ink) mb-1"
                                     >
-                                        CPF Employee Rate (%)
+                                        CPF Rate
                                     </label>
                                     <div className="relative">
                                         <input
@@ -831,7 +829,7 @@ export function BaseProfileEditorModal({
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted) flex items-center gap-1.5">
                                     <ShieldCheck className="h-3.5 w-3.5" />
-                                    Fixed Monthly Deductions
+                                    Fixed Deductions
                                 </h3>
                                 <button
                                     type="button"
@@ -873,7 +871,7 @@ export function BaseProfileEditorModal({
                                     className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm"
                                 >
                                     <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
-                                        Monthly Insurance
+                                        Insurance
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-(--text-ink)">
@@ -883,9 +881,6 @@ export function BaseProfileEditorModal({
                                             /mo
                                         </span>
                                     </div>
-                                    <span className="block text-[10px] text-(--text-muted) mt-1">
-                                        From insurance items
-                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -933,8 +928,7 @@ export function BaseProfileEditorModal({
                                         title="Category Lock"
                                         ariaLabel="Category lock explanation"
                                     >
-                                        Locked categories keep their exact
-                                        amount when you click Auto-Balance.
+                                        Locked rows stay put.
                                     </TooltipPopover>
                                 </div>
                             </div>
@@ -1059,8 +1053,11 @@ export function BaseProfileEditorModal({
                             <div className="space-y-2.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 sm:p-4 shadow-cute-sm">
                                 {localCategories.length === 0 ? (
                                     <div className="text-center py-6">
-                                        <p className="text-xs text-(--text-muted) mb-2">
-                                            No categories configured yet.
+                                        <h4 className="text-sm font-bold text-(--text-ink) mb-1">
+                                            No Categories
+                                        </h4>
+                                        <p className="text-xs text-(--text-muted) mb-3">
+                                            Add a category to allocate your budget.
                                         </p>
                                         <button
                                             type="button"
@@ -1068,7 +1065,7 @@ export function BaseProfileEditorModal({
                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-(--text-ink) bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer"
                                         >
                                             <Plus className="h-3 w-3" />
-                                            <span>Add Categories</span>
+                                            <span>Add Category</span>
                                         </button>
                                     </div>
                                 ) : (
@@ -1161,12 +1158,7 @@ export function BaseProfileEditorModal({
                                                                     </button>
                                                                 )}
                                                             >
-                                                                Locked
-                                                                categories keep
-                                                                their exact
-                                                                amount when you
-                                                                click
-                                                                Auto-Balance.
+                                                                Locked rows stay put.
                                                             </TooltipPopover>
                                                         )}
 

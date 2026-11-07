@@ -131,7 +131,7 @@ export function RecurringPage({
         }, [inScopeItems, ownerScopeId]);
 
     const nextRenewalSub = (() => {
-        if (!nextRenewal) return "No annual items";
+        if (!nextRenewal) return "None";
         const { date, item } = nextRenewal;
         const yearSuffix =
             date.getFullYear() !== getSingaporeDate().getFullYear()

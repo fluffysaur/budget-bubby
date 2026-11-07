@@ -36,7 +36,7 @@ describe("delight micro-interactions", () => {
         render(<QuickDepositModal isOpen onClose={vi.fn()} goal={goal} onDepositSaved={vi.fn()} />);
         fireEvent.click(screen.getByRole("button", { name: /\+S\$100/i }));
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: /confirm deposit/i }));
+            fireEvent.click(screen.getByRole("button", { name: /^deposit$/i }));
         });
         off();
 

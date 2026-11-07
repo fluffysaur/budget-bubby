@@ -123,16 +123,13 @@ export function SpendTagsOverviewCard({
           </div>
           <div>
             <h3 className="text-sm font-bold text-(--text-ink) font-display flex items-center gap-2">
-              <span>Spend Tags Overview</span>
+              <span>Tags</span>
               {tagAggregates.length > 0 && (
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-(--bg-cream) text-(--text-ink) border border-(--border-ink) shadow-cute-sm">
                   {tagAggregates.length} {tagAggregates.length === 1 ? 'tag' : 'tags'}
                 </span>
               )}
             </h3>
-            <p className="text-xs text-(--text-muted)">
-              Cross-category tracking for big trips, renovations, and milestone events
-            </p>
           </div>
         </div>
 
@@ -262,8 +259,7 @@ export function SpendTagsOverviewCard({
           </div>
 
           {/* Footer note */}
-          <div className="flex items-center justify-between text-[11px] text-(--text-muted) pt-1">
-            <span>Click any tag to filter the transaction ledger</span>
+          <div className="flex items-center justify-end text-[11px] text-(--text-muted) pt-1">
             <span>Total Tagged Spend: <span className="text-(--text-ink)"><CurrencyText amount={totalTaggedSpend} /></span></span>
           </div>
         </div>

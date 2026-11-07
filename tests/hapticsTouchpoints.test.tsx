@@ -165,7 +165,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         const presetBtn = screen.getByRole("button", { name: /\+S\$100/i });
         fireEvent.click(presetBtn);
 
-        const submitBtn = screen.getByRole("button", { name: /confirm deposit/i });
+        const submitBtn = screen.getByRole("button", { name: /^deposit$/i });
         await act(async () => {
             fireEvent.click(submitBtn);
         });

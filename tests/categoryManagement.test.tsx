@@ -216,7 +216,7 @@ describe('Category Management & Auto-Seeding', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Manage Categories')).toBeInTheDocument();
-        expect(screen.getByText(/spendable categories/i)).toBeInTheDocument();
+        expect(screen.getByText(/spendable/i)).toBeInTheDocument();
         expect(screen.getByText(/wealth & fixed allocations/i)).toBeInTheDocument();
       });
 

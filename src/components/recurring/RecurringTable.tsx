@@ -231,7 +231,7 @@ export function RecurringTable({
                                 Amount
                             </th>
                             <th scope="col" className="py-3.5 px-4 text-right">
-                                Monthly Amortized
+                                Per Month
                             </th>
                             <th scope="col" className="py-3.5 px-4">
                                 Renewal

@@ -123,17 +123,13 @@ export function AddEditGoalModal({
         setErrorMessage(null);
 
         if (!title.trim()) {
-            setErrorMessage(
-                "Please enter a goal title (e.g. Wedding Banquet, HDB Reno)",
-            );
+            setErrorMessage("Add a title");
             titleInputRef.current?.focus();
             return;
         }
 
         if (isNaN(numericTarget) || numericTarget <= 0) {
-            setErrorMessage(
-                "Please enter a valid target amount greater than S$0.00",
-            );
+            setErrorMessage("Target must exceed 0");
             return;
         }
 
@@ -206,7 +202,6 @@ export function AddEditGoalModal({
                 <ModalHeader
                     id="goal-modal-title"
                     title={goal ? "Edit Savings Goal" : "New Savings Goal"}
-                    subtitle="Track couple milestones, target dates, and monthly savings pace"
                     icon={<Target className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
@@ -221,7 +216,7 @@ export function AddEditGoalModal({
                     {/* Emoji Presets & Custom Selector */}
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
-                            Goal Icon / Emoji
+                            Icon
                         </label>
                         <div className="flex flex-wrap gap-1.5 mb-2">
                             {EMOJI_PRESETS.map((p) => (
@@ -285,7 +280,7 @@ export function AddEditGoalModal({
                                 htmlFor="goal-target"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Target Amount (S$) *
+                                Target *
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
@@ -311,7 +306,7 @@ export function AddEditGoalModal({
                                 htmlFor="goal-saved"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Saved So Far (S$)
+                                Saved
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
@@ -340,7 +335,7 @@ export function AddEditGoalModal({
                                 htmlFor="goal-date"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Target Date (Optional)
+                                Target Date
                             </label>
                             <input
                                 id="goal-date"
@@ -356,7 +351,7 @@ export function AddEditGoalModal({
                                 htmlFor="goal-monthly"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
-                                Monthly Contribution (S$)
+                                Monthly
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
@@ -440,7 +435,7 @@ export function AddEditGoalModal({
                         isLoading={isSubmitting}
                         disabled={isSubmitting}
                     >
-                        {goal ? "Save Changes" : "Create Goal"}
+                        {goal ? "Save" : "Create"}
                     </Button>
                 </ModalFooter>
             </form>
