@@ -927,6 +927,11 @@ class MockFinanceServiceImpl implements FinanceService {
     return cloneDeep(this.state.savingsGoals);
   }
 
+  public async getGoal(id: string): Promise<SavingsGoal | null> {
+    const goal = this.state.savingsGoals.find((g) => g.id === id);
+    return goal ? cloneDeep(goal) : null;
+  }
+
   public async addGoal(input: CreateGoalInput): Promise<SavingsGoal> {
     const savedSoFar = input.saved_so_far ?? 0;
     const monthlyContribution = input.monthly_contribution ?? 0;

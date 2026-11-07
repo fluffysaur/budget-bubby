@@ -8,7 +8,14 @@
  * - Responsive desktop layout with inline Search, Sort, Reset, and filter grid
  */
 
-import { useState, useMemo, type ChangeEvent } from "react";
+import {
+    useState,
+    useMemo,
+    useRef,
+    useEffect,
+    useCallback,
+    type ChangeEvent,
+} from "react";
 import {
     Search,
     RotateCcw,
@@ -26,9 +33,12 @@ import type {
     SortDirection,
 } from "../../types/finance";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { isMockModeActive } from "../../services/financeService";
 import { Select } from "../ui/Select";
 import { formatShortMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
+
+export const EXPENSE_SEARCH_DEBOUNCE_MS = 250;
 
 export interface ExpenseFilterBarProps {
     filter: ExpenseFilter;
@@ -46,8 +56,8 @@ export interface ExpenseFilterBarProps {
 export function ExpenseFilterBar({
     filter,
     onFilterChange,
-    categories = mockCategories,
-    members = mockMembers,
+    categories: propCategories,
+    members: propMembers,
     onReset,
     className = "",
     sortBy,
@@ -55,15 +65,51 @@ export function ExpenseFilterBar({
     onSortChange,
     embeddedInCard = false,
 }: ExpenseFilterBarProps) {
+    const isMock = isMockModeActive();
+    const categories = useMemo(
+        () => propCategories ?? (isMock ? mockCategories : []),
+        [propCategories, isMock],
+    );
+    const members = useMemo(
+        () => propMembers ?? (isMock ? mockMembers : []),
+        [propMembers, isMock],
+    );
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const currentMonth = useCurrentMonth();
 
+    const [searchText, setSearchText] = useState<string>(filter.search || "");
+    const [prevPropSearch, setPrevPropSearch] = useState<string>(filter.search || "");
+    if ((filter.search || "") !== prevPropSearch) {
+        setPrevPropSearch(filter.search || "");
+        setSearchText(filter.search || "");
+    }
+
+    const latestRef = useRef({ filter, onFilterChange });
+
+    useEffect(() => {
+        latestRef.current = { filter, onFilterChange };
+    });
+
+    useEffect(() => {
+        const currentSearch = latestRef.current.filter.search || "";
+        if (searchText === currentSearch) return;
+        const timer = setTimeout(() => {
+            latestRef.current.onFilterChange({
+                ...latestRef.current.filter,
+                search: searchText,
+            });
+        }, EXPENSE_SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    }, [searchText]);
+
     const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-        onFilterChange({
-            ...filter,
-            search: e.target.value,
-        });
+        setSearchText(e.target.value);
     };
+
+    const handleClearSearch = useCallback(() => {
+        setSearchText("");
+        onFilterChange({ ...filter, search: "" });
+    }, [filter, onFilterChange]);
 
     const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value;
@@ -102,6 +148,7 @@ export function ExpenseFilterBar({
     };
 
     const handleResetClick = () => {
+        setSearchText("");
         if (onReset) {
             onReset();
         } else {
@@ -145,7 +192,7 @@ export function ExpenseFilterBar({
             chips.push({
                 id: "search",
                 label: `"${filter.search.trim()}"`,
-                onRemove: () => onFilterChange({ ...filter, search: "" }),
+                onRemove: handleClearSearch,
             });
         }
 
@@ -192,7 +239,7 @@ export function ExpenseFilterBar({
         }
 
         return chips;
-    }, [filter, categories, members, onFilterChange, currentMonth]);
+    }, [filter, categories, members, onFilterChange, currentMonth, handleClearSearch]);
 
     const containerStyle = embeddedInCard
         ? `w-full min-w-0 transition-colors ${className}`
@@ -210,15 +257,15 @@ export function ExpenseFilterBar({
                             id="filter-search"
                             type="text"
                             placeholder="Search merchant, item, note..."
-                            value={filter.search || ""}
+                            value={searchText}
                             onChange={handleSearchChange}
                             className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-8 py-2 text-base sm:text-xs font-medium text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
-                        {filter.search && (
+                        {(searchText || filter.search) && (
                             <button
                                 type="button"
                                 aria-label="Dismiss search"
-                                onClick={() => onFilterChange({ ...filter, search: "" })}
+                                onClick={handleClearSearch}
                                 className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-(--text-muted) hover:text-(--text-ink) text-xs font-bold cursor-pointer transition-colors"
                             >
                                 <X className="h-3 w-3 stroke-3" />
@@ -361,24 +408,26 @@ export function ExpenseFilterBar({
                         </div>
 
                         {/* Payer Select */}
-                        <div className="min-w-0">
-                            <Select
-                                id="filter-payer"
-                                label="Payer"
-                                labelClassName="text-[11px] mb-1 tracking-wider"
-                                value={filter.payerId || ""}
-                                onChange={handlePayerChange}
-                                sizeVariant="sm"
-                                className="bg-(--bg-canvas)"
-                            >
-                                <option value="">All Payers</option>
-                                {members.map((member) => (
-                                    <option key={member.id} value={member.id}>
-                                        {member.display_name}
-                                    </option>
-                                ))}
-                            </Select>
-                        </div>
+                        {members.length > 0 && (
+                            <div className="min-w-0">
+                                <Select
+                                    id="filter-payer"
+                                    label="Payer"
+                                    labelClassName="text-[11px] mb-1 tracking-wider"
+                                    value={filter.payerId || ""}
+                                    onChange={handlePayerChange}
+                                    sizeVariant="sm"
+                                    className="bg-(--bg-canvas)"
+                                >
+                                    <option value="">All Payers</option>
+                                    {members.map((member) => (
+                                        <option key={member.id} value={member.id}>
+                                            {member.display_name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                        )}
 
                         {/* Shared Split Select */}
                         <div className="min-w-0">

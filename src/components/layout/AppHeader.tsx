@@ -92,8 +92,15 @@ export function AppHeader({
         promptInstall,
     } = usePWAInstall();
 
-    const members =
-        ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
+    const members = useMemo(
+        () =>
+            ctxMembers && ctxMembers.length > 0
+                ? ctxMembers
+                : isMockMode
+                  ? mockMembers
+                  : [],
+        [ctxMembers, isMockMode],
+    );
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);

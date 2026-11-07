@@ -89,6 +89,7 @@ export interface FinanceService extends InboxService {
   deleteExpense(id: string): Promise<void>;
   settleSharedExpenses(member1Id: string, member2Id: string): Promise<void>;
   getGoals(): Promise<SavingsGoal[]>;
+  getGoal(id: string): Promise<SavingsGoal | null>;
   addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
   updateGoal(id: string, updates: Partial<SavingsGoal>): Promise<SavingsGoal>;
   getRecurringItems(): Promise<RecurringItem[]>;
@@ -140,11 +141,12 @@ export function isDemoModeActive(): boolean {
   return false;
 }
 
+export function isMockModeActive(): boolean {
+  return !isSupabaseConfigured() || isDemoModeActive();
+}
+
 function getActiveService(): FinanceService {
-  if (isDemoModeActive()) {
-    return mockFinanceService;
-  }
-  return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
+  return isMockModeActive() ? mockFinanceService : supabaseFinanceService;
 }
 
 /** True when the cached daily check-ins already have this member and date. */
@@ -257,16 +259,7 @@ export const financeService: FinanceService = {
     await getActiveService().updateMonthlyBudget(budget);
     invalidateFinanceCache();
   },
-  getExpenses: async (filter) => {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return mockFinanceService.getExpenses(filter);
-    }
-    try {
-      return await getActiveService().getExpenses(filter);
-    } catch {
-      return mockFinanceService.getExpenses(filter);
-    }
-  },
+  getExpenses: (filter) => getActiveService().getExpenses(filter),
   addExpense: async (expense) => {
     const res = await withDayLogged(
       [{ memberId: expense.payer_id, date: expense.date }],
@@ -314,6 +307,7 @@ export const financeService: FinanceService = {
     invalidateFinanceCache();
   },
   getGoals: () => getActiveService().getGoals(),
+  getGoal: (id) => getActiveService().getGoal(id),
   addGoal: async (goal) => {
     const res = await getActiveService().addGoal(goal);
     invalidateFinanceCache();

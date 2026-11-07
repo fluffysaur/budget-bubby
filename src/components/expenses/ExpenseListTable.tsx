@@ -35,7 +35,7 @@ import { ExpenseRowsSkeleton } from '../ui/PageSkeletons';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { ExpenseFilterBar } from './ExpenseFilterBar';
-import { financeService } from '../../services/financeService';
+import { financeService, isMockModeActive } from '../../services/financeService';
 import type {
   Expense,
   Category,
@@ -70,8 +70,8 @@ export interface ExpenseListTableProps {
 
 export function ExpenseListTable({
   expenses,
-  categories = mockCategories,
-  members = mockMembers,
+  categories: propCategories,
+  members: propMembers,
   goals: propGoals,
   onDeleteExpense,
   onEditExpense,
@@ -88,6 +88,15 @@ export function ExpenseListTable({
   onFilterChange,
   onResetFilters,
 }: ExpenseListTableProps) {
+  const isMock = isMockModeActive();
+  const categories = useMemo(
+    () => propCategories ?? (isMock ? mockCategories : []),
+    [propCategories, isMock],
+  );
+  const members = useMemo(
+    () => propMembers ?? (isMock ? mockMembers : []),
+    [propMembers, isMock],
+  );
   // Goals for Goal Spend badges
   const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(propGoals || []);
 
