@@ -128,8 +128,8 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     if (!available) {
         return (
             <div className={`space-y-4 ${className}`}>
-                <Alert variant="info" title="Bonus log not set up">
-                    Apply the bonus_events migration to log bonuses.
+                <Alert variant="info" title="Not available">
+                    Bonus log unavailable.
                 </Alert>
                 <BonusAllocationCollapsible defaultOpen={true} />
             </div>

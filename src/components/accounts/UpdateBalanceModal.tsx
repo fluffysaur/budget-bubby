@@ -227,11 +227,10 @@ export function UpdateBalanceModal({
                     </div>
                     <div>
                         <h3 className="text-base font-bold text-(--text-ink) font-display">
-                            No Accounts Found
+                            No Accounts
                         </h3>
                         <p className="text-xs text-(--text-muted) mt-1">
-                            Add your first bank account or CPF to start tracking
-                            balances.
+                            Add an account to start tracking balances.
                         </p>
                     </div>
                     <button
@@ -243,7 +242,7 @@ export function UpdateBalanceModal({
                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                     >
                         <Plus className="h-4 w-4" strokeWidth={2.5} />
-                        <span>Add First Account</span>
+                        <span>Add Account</span>
                     </button>
                 </div>
             </AnimatedModal>
@@ -284,7 +283,7 @@ export function UpdateBalanceModal({
                                 htmlFor="single-balance-input"
                                 className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                             >
-                                New Balance (S$)
+                                Balance
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-muted) select-none">
@@ -335,7 +334,7 @@ export function UpdateBalanceModal({
                                     htmlFor="single-notes-input"
                                     className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                                 >
-                                    Notes (Optional)
+                                    Notes
                                 </label>
                                 <input
                                     id="single-notes-input"
@@ -381,8 +380,7 @@ export function UpdateBalanceModal({
                 {/* Header */}
                 <ModalHeader
                     id="multi-modal-title"
-                    title="Update Account Balances"
-                    subtitle="Type directly into any balance. Only modified accounts will be saved."
+                    title="Update Balances"
                     icon={<Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
@@ -437,13 +435,9 @@ export function UpdateBalanceModal({
                 </div>
 
                 {/* Change Counter Banner */}
-                <div className="px-4 sm:px-5 py-1.5 bg-(--bg-canvas) border-b border-(--border-subtle) flex items-center justify-between text-xs shrink-0">
-                    <span className="text-[11px] font-bold text-(--text-muted)">
-                        Showing {filteredAccounts.length} of{" "}
-                        {accountsList.length} accounts
-                    </span>
+                <div className="px-4 sm:px-5 py-1.5 bg-(--bg-canvas) border-b border-(--border-subtle) flex items-center justify-end text-xs shrink-0">
                     <span className="text-[11px] font-black text-(--text-ink) bg-(--pastel-butter-light) px-2 py-0.5 rounded-full border border-(--border-ink)">
-                        {modifiedAccounts.length} modified
+                        {modifiedAccounts.length} changed
                     </span>
                 </div>
 
@@ -458,7 +452,7 @@ export function UpdateBalanceModal({
 
                     {filteredAccounts.length === 0 ? (
                         <div className="text-center py-8 text-xs text-(--text-muted)">
-                            No accounts match "{searchQuery}"
+                            No Matches
                         </div>
                     ) : (
                         filteredAccounts.map((acc) => {

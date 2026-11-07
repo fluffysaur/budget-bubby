@@ -5,7 +5,7 @@
  */
 
 import { useMemo } from "react";
-import { CalendarClock, ChevronRight, Bell } from "lucide-react";
+import { CalendarClock, ChevronRight, Bell, Plus } from "lucide-react";
 import {
     formatDueInDays,
     formatISODate,
@@ -17,10 +17,12 @@ import { TruncatedText } from "../ui/TruncatedText";
 import { RecurringTypeBadge } from "../recurring/RecurringTypeBadge";
 import type { RecurringItem } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { Button } from "../ui/Button";
 
 export interface UpcomingBillsWidgetProps {
     recurringItems?: RecurringItem[];
     onViewAll?: () => void;
+    onAdd?: () => void;
     className?: string;
     /** Overrides "today" (Singapore time) for due-date calculations. */
     referenceDate?: Date;
@@ -29,6 +31,7 @@ export interface UpcomingBillsWidgetProps {
 export function UpcomingBillsWidget({
     recurringItems = [],
     onViewAll,
+    onAdd,
     className = "",
     referenceDate,
 }: UpcomingBillsWidgetProps) {
@@ -74,9 +77,6 @@ export function UpcomingBillsWidget({
                         <h3 className="text-sm sm:text-base font-black text-(--text-ink) font-display">
                             Upcoming Bills
                         </h3>
-                        <p className="text-xs font-semibold text-(--text-muted)">
-                            Next due from Recurring
-                        </p>
                     </div>
                 </div>
 
@@ -105,9 +105,26 @@ export function UpcomingBillsWidget({
                         <p className="text-sm font-bold text-(--text-ink) font-display">
                             Nothing Due
                         </p>
-                        <p className="mt-1 text-xs text-(--text-muted) max-w-xs font-medium">
+                        <p className="mt-1 text-xs text-(--text-muted) max-w-xs font-medium mb-3">
                             Add a recurring item to track due dates.
                         </p>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                                if (onAdd) {
+                                    onAdd();
+                                } else if (onViewAll) {
+                                    onViewAll();
+                                } else if (typeof window !== "undefined") {
+                                    window.location.hash = "#/recurring";
+                                }
+                            }}
+                            leftIcon={<Plus className="h-3.5 w-3.5 stroke-3" />}
+                        >
+                            Add Recurring
+                        </Button>
                     </div>
                 ) : (
                     <div className="space-y-2.5">

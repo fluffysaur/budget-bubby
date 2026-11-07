@@ -99,11 +99,7 @@ export const OfflineBanner: React.FC = () => {
       >
         <WifiOff className="w-3.5 h-3.5 shrink-0" />
         <span>
-          {pendingCount > 0
-            ? `Offline Mode — ${pendingCount} ${
-                pendingCount === 1 ? 'expense' : 'expenses'
-              } queued locally. Will sync automatically when back online.`
-            : 'You are offline. Showing cached Budget Bubby view.'}
+          {pendingCount > 0 ? `Offline · ${pendingCount} queued` : 'Offline'}
         </span>
       </div>
     );
@@ -118,7 +114,7 @@ export const OfflineBanner: React.FC = () => {
         className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-sky-600 text-white"
       >
         <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-        <span>Syncing offline changes to Supabase...</span>
+        <span>Syncing...</span>
       </div>
     );
   }

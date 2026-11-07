@@ -152,8 +152,8 @@ export function BulkBalanceUpdateModal({
             <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 <ModalHeader
                     id="bulk-balance-modal-title"
-                    title="Month-End Check-In"
-                    subtitle="Pre-filled with last balances — edit only what changed & save all"
+                    title="Check-In"
+                    subtitle="Edit what changed."
                     icon={<CalendarCheck2 className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
@@ -332,7 +332,7 @@ export function BulkBalanceUpdateModal({
                             disabled={isSubmitting}
                             leftIcon={<Check className="h-4 w-4" strokeWidth={2.5} />}
                         >
-                            Save Month-End Snapshot
+                            Save Snapshot
                         </Button>
                     </div>
                 </ModalFooter>

@@ -83,7 +83,6 @@ export function DeleteExpenseModal({
             <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 <ModalHeader
                     title="Delete Expense?"
-                    subtitle="This transaction will be permanently removed."
                     icon={
                         <Trash2 className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />
                     }
@@ -155,28 +154,24 @@ export function DeleteExpenseModal({
                         {expense.goal_id && (
                             <Alert
                                 variant="warning"
-                                title="Savings Goal Balance Restored:"
+                                title="Goal refunded"
                                 icon={
                                     <Target className="h-4 w-4 text-amber-700" strokeWidth={2.5} />
                                 }
                             >
-                                Deleting this expense will return{" "}
-                                <CurrencyText amount={expense.amount} />{" "}
-                                back to the linked savings goal balance.
+                                <CurrencyText amount={expense.amount} /> returns to the goal.
                             </Alert>
                         )}
 
                         {expense.is_shared && (
                             <Alert
                                 variant="info"
-                                title="Couple Settlement Adjusted:"
+                                title="Settlement updates"
                                 icon={
                                     <ArrowRightLeft className="h-4 w-4 text-purple-700" strokeWidth={2.5} />
                                 }
                             >
-                                This was logged as a shared expense. Deleting it
-                                will recalculate who owes whom in the monthly
-                                summary.
+                                Shared total recalculates.
                             </Alert>
                         )}
                     </div>

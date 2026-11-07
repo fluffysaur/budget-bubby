@@ -211,12 +211,12 @@ describe('AddEditGoalModal Component', () => {
       />
     );
 
-    const submitBtn = screen.getByRole('button', { name: /Create Goal/i });
+    const submitBtn = screen.getByRole('button', { name: /Create/i });
     fireEvent.click(submitBtn);
 
     // Shows validation error
     await waitFor(() => {
-      expect(screen.getByText(/Please enter a goal title/i)).toBeInTheDocument();
+      expect(screen.getByText(/Add a title/i)).toBeInTheDocument();
     });
   });
 
@@ -241,13 +241,13 @@ describe('AddEditGoalModal Component', () => {
 
     // Fill form
     fireEvent.change(screen.getByLabelText(/Goal Title/i), { target: { value: 'Baby Fund' } });
-    fireEvent.change(screen.getByLabelText(/Target Amount/i), { target: { value: '30000' } });
-    fireEvent.change(screen.getByLabelText(/Saved So Far/i), { target: { value: '5000' } });
+    fireEvent.change(screen.getByLabelText(/^Target \*/i), { target: { value: '30000' } });
+    fireEvent.change(screen.getByLabelText(/Saved/i), { target: { value: '5000' } });
     fireEvent.change(screen.getByLabelText(/Target Date/i), { target: { value: '2028-12-31' } });
-    fireEvent.change(screen.getByLabelText(/Monthly Contribution/i), { target: { value: '1000' } });
+    fireEvent.change(screen.getByLabelText(/Monthly/i), { target: { value: '1000' } });
 
     // Submit
-    fireEvent.click(screen.getByRole('button', { name: /Create Goal/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     await waitFor(() => {
       expect(addGoalSpy).toHaveBeenCalledTimes(1);
@@ -290,10 +290,10 @@ describe('AddEditGoalModal Component', () => {
     expect(titleInput.value).toBe('HDB Down Payment');
 
     // Update target amount
-    fireEvent.change(screen.getByLabelText(/Target Amount/i), { target: { value: '200000' } });
+    fireEvent.change(screen.getByLabelText(/^Target \*/i), { target: { value: '200000' } });
 
     // Submit update
-    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
       expect(updateGoalSpy).toHaveBeenCalledWith(
@@ -382,8 +382,8 @@ describe('GoalsPage Integration', () => {
     expect(screen.getByText('HDB Down Payment')).toBeInTheDocument();
     expect(screen.getByText('Renovation Fund')).toBeInTheDocument();
 
-    // Click "In Progress" tab
-    const inProgressTab = screen.getByRole('tab', { name: /In Progress/i });
+    // Click "Active" tab
+    const inProgressTab = screen.getByRole('tab', { name: /Active/i });
     fireEvent.click(inProgressTab);
 
     // Wedding (achieved) should be hidden; HDB and Reno visible
@@ -391,8 +391,8 @@ describe('GoalsPage Integration', () => {
     expect(screen.getByText('HDB Down Payment')).toBeInTheDocument();
     expect(screen.getByText('Renovation Fund')).toBeInTheDocument();
 
-    // Click "Achieved" tab
-    const achievedTab = screen.getByRole('tab', { name: /Achieved/i });
+    // Click "Done" tab
+    const achievedTab = screen.getByRole('tab', { name: /Done/i });
     fireEvent.click(achievedTab);
 
     // Wedding visible; HDB and Reno hidden
@@ -437,9 +437,9 @@ describe('GoalsPage Integration', () => {
 
     // Fill and submit
     fireEvent.change(screen.getByLabelText(/Goal Title/i), { target: { value: 'Japan Trip' } });
-    fireEvent.change(screen.getByLabelText(/Target Amount/i), { target: { value: '8000' } });
+    fireEvent.change(screen.getByLabelText(/^Target \*/i), { target: { value: '8000' } });
     fireEvent.change(screen.getByLabelText(/Target Date/i), { target: { value: '2027-11-01' } });
-    fireEvent.click(screen.getByRole('button', { name: /Create Goal/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Create/i }));
 
     await waitFor(() => {
       expect(addSpy).toHaveBeenCalled();
@@ -477,11 +477,11 @@ describe('GoalsPage Integration', () => {
     expect(screen.getByRole('heading', { name: /Quick Deposit/i })).toBeInTheDocument();
 
     // Enter deposit amount
-    const amountInput = screen.getByLabelText(/Deposit Amount/i);
+    const amountInput = screen.getByLabelText(/Amount/i);
     fireEvent.change(amountInput, { target: { value: '5000' } });
 
     // Confirm deposit
-    fireEvent.click(screen.getByRole('button', { name: /Confirm Deposit/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Deposit$/i }));
 
     await waitFor(() => {
       expect(updateSpy).toHaveBeenCalledWith(

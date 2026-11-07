@@ -67,17 +67,17 @@ export function ExpenseTrendsCard({
           <div>
             <div className="flex items-center gap-1.5">
               <h3 className="text-sm font-bold text-(--text-ink) font-display">
-                Monthly Expense Trends &amp; Averages
+                Spend Trends
               </h3>
               <TooltipPopover
                 ariaLabel="Expense Trends Methodology"
                 title="How Averages Are Calculated"
               >
-                Tracks monthly spendable expenses (Food, Lifestyle, Transport, Buffer) including active monthly subscriptions in Lifestyle. In Personal view, shared 50/50 expenses count at your 50% share.
+                Spendable categories plus subscriptions. Personal view uses your share.
               </TooltipPopover>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-(--text-faint)">
-              {perspectiveLabel} • 6-month history &amp; category benchmarks
+              {perspectiveLabel} • 6 months
             </p>
           </div>
         </div>
@@ -111,9 +111,6 @@ export function ExpenseTrendsCard({
           <span className="mt-1 block text-slate-900 dark:text-white">
             <CurrencyText amount={currentMonthTotal} size="md" />
           </span>
-          <span className="text-[10px] text-(--text-faint)">
-            Spendable + subs
-          </span>
         </div>
 
         <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 p-3 border border-emerald-100/80 dark:border-emerald-900/40">
@@ -123,9 +120,6 @@ export function ExpenseTrendsCard({
           <span className="mt-1 block text-emerald-800 dark:text-emerald-200">
             <CurrencyText amount={rolling3MonthAvg} size="md" />
           </span>
-          <span className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80">
-            Rolling benchmark
-          </span>
         </div>
 
         <div className="rounded-xl bg-slate-50/80 dark:bg-slate-800/50 p-3 border border-slate-100 dark:border-slate-800">
@@ -134,9 +128,6 @@ export function ExpenseTrendsCard({
           </span>
           <span className="mt-1 block text-slate-900 dark:text-white">
             <CurrencyText amount={rolling6MonthAvg} size="md" />
-          </span>
-          <span className="text-[10px] text-(--text-faint)">
-            Longer baseline
           </span>
         </div>
       </div>
@@ -201,7 +192,7 @@ export function ExpenseTrendsCard({
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-              Category Monthly Averages vs This Month
+              Vs Average
             </span>
             <span className="text-[11px] text-(--text-faint)">Current / Avg</span>
           </div>

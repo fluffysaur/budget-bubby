@@ -339,7 +339,7 @@ export function GoalsPage({
                     title="Target"
                     loading={isLoading}
                     value={formatSGD(totalTarget)}
-                    subtitle={`Across ${perspectiveGoals.length} ${perspectiveGoals.length === 1 ? "goal" : "goals"}`}
+                    subtitle={`${perspectiveGoals.length} ${perspectiveGoals.length === 1 ? "goal" : "goals"}`}
                     icon={<Target className="h-4 w-4" />}
                     iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
                 />
@@ -369,7 +369,6 @@ export function GoalsPage({
                     title="Monthly Pace"
                     loading={isLoading}
                     value={`${formatSGD(totalMonthlyContributions)}/mo`}
-                    subtitle="Target monthly pace"
                     icon={<Calendar className="h-4 w-4" />}
                     iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
                 />
@@ -381,7 +380,7 @@ export function GoalsPage({
                     tabs={[
                         {
                             id: "all",
-                            label: "All Goals",
+                            label: "All",
                             badge: (
                                 <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
                                     {perspectiveGoals.length}
@@ -390,7 +389,7 @@ export function GoalsPage({
                         },
                         {
                             id: "in_progress",
-                            label: "In Progress",
+                            label: "Active",
                             badge: (
                                 <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
                                     {inProgressGoals.length}
@@ -399,7 +398,7 @@ export function GoalsPage({
                         },
                         {
                             id: "achieved",
-                            label: "Achieved",
+                            label: "Done",
                             badge: (
                                 <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
                                     {achievedGoals.length}

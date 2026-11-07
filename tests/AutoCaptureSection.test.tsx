@@ -74,7 +74,7 @@ describe("AutoCaptureSection", () => {
     it("shows the database alert before the migration", async () => {
         vi.spyOn(financeService, "listCaptureTokens").mockResolvedValue({ available: false, tokens: [] });
         renderSection();
-        expect(await screen.findByText("Needs database update")).toBeInTheDocument();
+        expect(await screen.findByText("Not available")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /New Token/i })).toBeDisabled();
     });
 });

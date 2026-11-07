@@ -36,7 +36,7 @@ export function BonusAllocationCollapsible({
   return (
     <CollapsibleSection
       title="Bonus Splitter"
-      subtitle={`Net ${formatSGD(result.afterCpf, { showCents: false })} · Split bonus`}
+      subtitle={`Net ${formatSGD(result.afterCpf, { showCents: false })}`}
       icon={<Sparkles className="h-5 w-5 text-amber-500" />}
       defaultOpen={defaultOpen}
       className={className}
@@ -49,7 +49,7 @@ export function BonusAllocationCollapsible({
               htmlFor="bonus-gross-input"
               className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
             >
-              Gross Bonus (S$)
+              Gross
             </label>
             <input
               id="bonus-gross-input"
@@ -64,7 +64,7 @@ export function BonusAllocationCollapsible({
 
           <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm flex flex-col justify-center">
             <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-              Employee CPF ({Math.round(cpfRate * 100)}%)
+              CPF {Math.round(cpfRate * 100)}%
             </span>
             <span className="mt-1 font-mono-num text-lg font-black text-rose-600 dark:text-rose-400">
               -<CurrencyText amount={result.cpfDeduction} />
@@ -73,7 +73,7 @@ export function BonusAllocationCollapsible({
 
           <div className="rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) p-3 shadow-cute-sm flex flex-col justify-center">
             <span className="text-[11px] font-black uppercase tracking-wider text-(--text-ink)">
-              After CPF Take-Home Bonus
+              Take-Home
             </span>
             <span className="mt-1 text-emerald-950 dark:text-emerald-100">
               <CurrencyText amount={result.afterCpf} size="md" />

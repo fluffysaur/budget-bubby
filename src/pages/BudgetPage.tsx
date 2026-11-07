@@ -334,7 +334,14 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                 </p>
                 <div className="mt-3 flex items-center justify-center gap-2.5">
                   <Button
-                    variant="secondary"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleOpenEditor()}
+                  >
+                    Add Category
+                  </Button>
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={async () => {
                       await financeService.seedDefaultCategories();
@@ -342,13 +349,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
                     }}
                   >
                     Presets
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleOpenEditor()}
-                  >
-                    + Add Category
                   </Button>
                 </div>
               </div>
@@ -386,7 +386,6 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           {/* Collapsible: Budget Waterfall Breakdown */}
           <CollapsibleSection
             title="Income Flow"
-            subtitle="Take-home pay & CPF"
             icon={<DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />}
             defaultOpen={true}
           >

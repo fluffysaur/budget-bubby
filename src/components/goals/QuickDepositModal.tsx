@@ -140,7 +140,7 @@ export function QuickDepositModal({
                     {/* Quick Deposit Chips */}
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
-                            Quick Deposit Presets
+                            Presets
                         </label>
                         <div className="flex flex-wrap gap-1.5">
                             {DEPOSIT_PRESETS.map((amt) => (
@@ -168,7 +168,7 @@ export function QuickDepositModal({
                             htmlFor="deposit-amount"
                             className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                         >
-                            Deposit Amount (S$) *
+                            Amount *
                         </label>
                         <div className="relative">
                             <span className="absolute left-3 top-2.5 text-base font-bold text-(--text-muted)">
@@ -229,7 +229,7 @@ export function QuickDepositModal({
                         disabled={isSubmitting || numericDeposit <= 0}
                         leftIcon={<Coins className="h-4 w-4" strokeWidth={2.5} />}
                     >
-                        Confirm Deposit
+                        Deposit
                     </Button>
                 </ModalFooter>
             </form>

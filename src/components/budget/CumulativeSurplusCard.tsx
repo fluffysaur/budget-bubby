@@ -260,18 +260,14 @@ export function CumulativeSurplusCard({
                     </div>
                     <div className="flex items-center gap-1.5">
                         <h3 className="font-display font-black text-sm sm:text-base text-(--text-ink)">
-                            Cumulative Spending Surplus
+                            Surplus
                         </h3>
                         <TooltipPopover
-                            title="Goal-Funded Protection & Rollover"
+                            title="Rollover"
                             ariaLabel="Goal-Funded Protection info"
                             align="left"
                         >
-                            Unspent spendable cap rolls over month-to-month.{" "}
-                            <strong>Goal-Funded Protection:</strong> Expenses
-                            paid out of pre-saved savings goals are excluded
-                            from spendable expenses to prevent artificial budget
-                            deficits.
+                            Unspent cap carries over. Goal-funded spends are excluded.
                         </TooltipPopover>
                     </div>
                 </div>
@@ -345,16 +341,12 @@ export function CumulativeSurplusCard({
                 >
                     <div>
                         <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                            Historical Rollover
+                            Banked
                         </span>
                         <div className="font-mono-num text-xl font-black tracking-tight mt-0.5">
                             {isBankedPositive ? "+" : "-"}
                             <CurrencyText amount={Math.abs(totalBanked)} />
                         </div>
-                        <span className="block text-xs font-bold mt-0.5 opacity-90">
-                            Total Banked Surplus: {isBankedPositive ? "+" : "-"}
-                            <CurrencyText amount={Math.abs(totalBanked)} />
-                        </span>
                     </div>
 
                     <div className="p-2.5 rounded-xl border border-(--border-ink) shadow-cute-sm bg-(--pastel-butter) text-(--text-ink)">
@@ -367,11 +359,7 @@ export function CumulativeSurplusCard({
             <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                        Recent {summary.monthlyHistory.length}-Month Rollover
-                        Breakdown
-                    </span>
-                    <span className="text-[11px] font-medium text-(--text-muted)">
-                        Spendable Cap vs Non-Goal Spend
+                        Last 6 Months
                     </span>
                 </div>
 

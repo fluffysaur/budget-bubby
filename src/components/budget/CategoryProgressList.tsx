@@ -303,7 +303,7 @@ export function CategoryProgressList({
                       data-testid={`badge-rose-${catDetail.category_id}`}
                       className="px-2 py-0.5 rounded-full bg-(--pastel-coral-light) text-rose-800 font-bold text-[10px] border border-(--border-ink) shadow-cute-sm"
                     >
-                      Rose Cap Exceeded
+                      Over
                     </span>
                   </div>
                 ) : isNearLimit ? (

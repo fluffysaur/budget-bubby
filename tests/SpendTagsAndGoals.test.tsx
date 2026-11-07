@@ -88,7 +88,7 @@ describe('Spend Tags Overview Card', () => {
     render(<SpendTagsOverviewCard expenses={sampleExpenses} />);
 
     // Header
-    expect(screen.getByText('Spend Tags Overview')).toBeInTheDocument();
+    expect(screen.getByText('Tags')).toBeInTheDocument();
     expect(screen.getByText('3 tags')).toBeInTheDocument();
 
     // Vietnam Trip: 45.0 + 25.0 = 70.0 (2 txs)
@@ -193,7 +193,7 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
     expect(screen.getByText(formatSGD(50000.0))).toBeInTheDocument();
 
     // Linked goal expenses list
-    expect(screen.getByText('Linked Goal Expenses (1)')).toBeInTheDocument();
+    expect(screen.getByText('Spends (1)')).toBeInTheDocument();
     expect(screen.getByText('Grand Ballroom Deposit')).toBeInTheDocument();
 
     // "+ Spend from Goal" button

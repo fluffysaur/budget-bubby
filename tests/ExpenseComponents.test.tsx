@@ -481,7 +481,7 @@ describe('ExpenseListTable', () => {
       />
     );
 
-    expect(screen.getByText(/no expenses found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no expenses/i)).toBeInTheDocument();
   });
 });
 
@@ -578,7 +578,7 @@ describe('ExpensesPage Integration', () => {
     // The settlement card displays the global balance even though the ledger is filtered
     await waitFor(() => {
       expect(screen.getByText('S$52.40')).toBeInTheDocument();
-      expect(screen.getByText('Yi Jia owes Rachel S$52.40')).toBeInTheDocument();
+      expect(screen.getByText('Yi Jia → Rachel')).toBeInTheDocument();
     });
   });
 });

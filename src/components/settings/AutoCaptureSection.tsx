@@ -171,13 +171,13 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
                 </div>
 
                 {!available && (
-                    <Alert variant="info" title="Needs database update">
-                        Apply the capture inbox migration to turn this on.
+                    <Alert variant="info" title="Not available">
+                        Needs backend update.
                     </Alert>
                 )}
                 {available && isDemo && (
-                    <Alert variant="info" title="Demo mode">
-                        Capture only works with Supabase.
+                    <Alert variant="info" title="Not available">
+                        Needs backend update.
                     </Alert>
                 )}
 
@@ -230,7 +230,7 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
                     {newToken ? (
                         <>
                             <Alert variant="warning" title="Shown once">
-                                Paste it into your Shortcut now.
+                                Copy it now.
                             </Alert>
                             <CopyRow label="Token" value={newToken} testId="new-capture-token" />
                             {endpoint && <CopyRow label="Endpoint" value={endpoint} testId="capture-endpoint" />}

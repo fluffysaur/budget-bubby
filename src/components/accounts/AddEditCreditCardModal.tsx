@@ -137,25 +137,23 @@ export function AddEditCreditCardModal({
 
         const effectiveBank = bank === "Other" ? customBank.trim() : bank;
         if (!effectiveBank) {
-            setErrorMessage("Please select or enter an issuing bank");
+            setErrorMessage("Pick a bank");
             return;
         }
 
         if (last4 && (last4.length !== 4 || isNaN(Number(last4)))) {
-            setErrorMessage(
-                "Last 4 digits must be exactly 4 digits, or left blank",
-            );
+            setErrorMessage("Last 4 digits only");
             return;
         }
 
         const bDay = Number(billingDay);
         const dDay = Number(dueDay);
         if (isNaN(bDay) || bDay < 1 || bDay > 31) {
-            setErrorMessage("Statement day must be between 1 and 31");
+            setErrorMessage("Day must be 1-31");
             return;
         }
         if (isNaN(dDay) || dDay < 1 || dDay > 31) {
-            setErrorMessage("Payment due day must be between 1 and 31");
+            setErrorMessage("Day must be 1-31");
             return;
         }
 
@@ -217,7 +215,6 @@ export function AddEditCreditCardModal({
             >
                 <ModalHeader
                     title={isEditing ? "Edit Credit Card" : "Add Credit Card"}
-                    subtitle="Track statements, billing cycles, and due dates"
                     icon={<CreditCard className="h-4.5 w-4.5" strokeWidth={2.5} />}
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
@@ -457,7 +454,7 @@ export function AddEditCreditCardModal({
                         isLoading={isSubmitting}
                         disabled={isSubmitting}
                     >
-                        {isEditing ? "Save Changes" : "Add Credit Card"}
+                        {isEditing ? "Save" : "Add Card"}
                     </Button>
                 </ModalFooter>
             </form>

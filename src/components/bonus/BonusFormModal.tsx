@@ -710,7 +710,7 @@ export function BonusFormModal({
                                                     </Button>
                                                 }
                                             >
-                                                Goal amounts no longer match the Goals share.
+                                                Amounts don't match Goals share.
                                             </Alert>
                                         )}
                                         <BonusGoalPicker

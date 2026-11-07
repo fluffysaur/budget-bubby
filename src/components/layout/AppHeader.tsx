@@ -418,7 +418,7 @@ export function AppHeader({
                     {/* Connection Status Badge (Only shown in Demo Mode) */}
                     {isMockMode && (
                         <div
-                            title="Running in local Demo Mode with sample seed data"
+                            title="Demo Mode"
                             className="flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter) px-2.5 py-1 text-xs font-bold text-(--text-ink) shadow-cute-sm"
                         >
                             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse border border-(--border-ink)" />
@@ -450,7 +450,7 @@ export function AppHeader({
                 maxWidth="max-w-sm"
             >
                 <p className="text-sm text-(--text-muted)">
-                    You&apos;ll need your 6-digit PIN to unlock again.
+                    You&apos;ll need your PIN to unlock.
                 </p>
             </ConfirmModal>
 

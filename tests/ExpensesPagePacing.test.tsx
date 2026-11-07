@@ -40,7 +40,7 @@ describe('ExpensesPage Pacing & 4-Card Summary Strip', () => {
         renderWithProviders(<ExpensesPage />);
 
         await waitFor(() => {
-            expect(screen.getByText(/\/day/i)).toBeInTheDocument();
+            expect(screen.getByText(/\d+d left/i)).toBeInTheDocument();
             expect(screen.getByText(/Limit/i)).toBeInTheDocument();
         });
     });

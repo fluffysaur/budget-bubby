@@ -198,9 +198,7 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
       render(<OfflineBanner />);
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(
-        screen.getByText(/You are offline\. Showing cached Budget Bubby view\./i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/^Offline$/i)).toBeInTheDocument();
     });
 
     it('displays pending count message when mutations are queued offline', async () => {
@@ -238,9 +236,7 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
       });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(
-        screen.getByText('Offline Mode — 3 expenses queued locally. Will sync automatically when back online.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Offline · 3 queued')).toBeInTheDocument();
     });
 
     it('formats singular expense when pendingCount is 1', async () => {
@@ -260,9 +256,7 @@ describe('Offline-First Sync Queue & Fast Lazy Loading', () => {
         render(<OfflineBanner />);
       });
 
-      expect(
-        screen.getByText('Offline Mode — 1 expense queued locally. Will sync automatically when back online.')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Offline · 1 queued')).toBeInTheDocument();
     });
 
     it('shows confirmation pill "✓ All changes synced to Supabase" when reconnecting', async () => {

@@ -7,8 +7,6 @@ import { useState } from "react";
 import type { Account } from "../../types/finance";
 import { financeService } from "../../services/financeService";
 import { ConfirmModal } from "../ui/ConfirmModal";
-import { Alert } from "../ui/Alert";
-import { CurrencyText } from "../ui/CurrencyText";
 
 export interface DeleteAccountModalProps {
     isOpen: boolean;
@@ -49,33 +47,15 @@ export function DeleteAccountModal({
             onClose={onClose}
             onConfirm={handleDelete}
             title="Delete Account?"
-            subtitle="This action cannot be undone"
-            confirmLabel="Delete Account"
+            confirmLabel="Delete"
             cancelLabel="Keep Account"
             variant="danger"
             isLoading={isDeleting}
             errorMessage={error}
         >
-            <div className="space-y-3">
-                <p className="text-xs sm:text-sm text-(--text-ink) leading-relaxed">
-                    Are you sure you want to delete{" "}
-                    <span className="font-bold">{account.name}</span>
-                    {account.institution
-                        ? ` (${account.institution})`
-                        : ""}{" "}
-                    with current balance of{" "}
-                    <span className="text-(--text-ink)">
-                        <CurrencyText amount={account.balance} />
-                    </span>
-                    ?
-                </p>
-
-                <Alert variant="danger" title="Warning:">
-                    Deleting this account will permanently remove all historical
-                    balance snapshots, net worth timeline entries, and monthly
-                    records associated with it.
-                </Alert>
-            </div>
+            <p className="text-xs sm:text-sm text-(--text-muted) leading-relaxed">
+                Removes its balance history.
+            </p>
         </ConfirmModal>
     );
 }

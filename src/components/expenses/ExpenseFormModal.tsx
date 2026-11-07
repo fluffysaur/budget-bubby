@@ -822,7 +822,7 @@ export function ExpenseFormModal({
                                         align="left"
                                         className="shrink-0"
                                     >
-                                        Goal spends draw from the goal's savings and are excluded from monthly budget caps.
+                                        Paid from goal savings. Excluded from caps.
                                     </TooltipPopover>
                                 </div>
                             ) : (
@@ -871,9 +871,24 @@ export function ExpenseFormModal({
                                 aria-label="Goal Selection"
                             >
                                 {goals.length === 0 ? (
-                                    <p className="text-xs text-(--text-muted) py-1">
-                                        No savings goals found.
-                                    </p>
+                                    <div className="py-2 text-center w-full">
+                                        <p className="text-xs font-bold text-(--text-ink)">No Goals</p>
+                                        <p className="text-xs text-(--text-muted) mt-0.5">Create a goal to link this expense.</p>
+                                        <a
+                                            href="/goals"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                onClose();
+                                                if (typeof window !== "undefined") {
+                                                    window.location.href = "/goals";
+                                                }
+                                            }}
+                                            className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-purple-700 dark:text-purple-400 hover:underline cursor-pointer"
+                                        >
+                                            <Plus className="h-3 w-3 stroke-3" />
+                                            <span>Add Goal</span>
+                                        </a>
+                                    </div>
                                 ) : (
                                     visibleGoals.map((g) => {
                                         const isSelected =
@@ -1256,7 +1271,7 @@ export function ExpenseFormModal({
                                     htmlFor="expense-remarks"
                                     className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                                 >
-                                    Remarks / Notes
+                                    Notes
                                 </label>
                                 <input
                                     id="expense-remarks"

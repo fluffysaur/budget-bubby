@@ -124,8 +124,8 @@ export function CategoryLimitWarningBanner({
           setToast({
             id: String(Date.now()),
             type: 'exceeded',
-            title: 'Budget Cap Exceeded!',
-            message: `${catName} has exceeded cap by ${formatSGD(overAmount)}!`,
+            title: `${catName} Over`,
+            message: `${formatSGD(overAmount)} over cap`,
           });
         }
       } else if (newPct >= warningThreshold && prevPct < warningThreshold) {
@@ -140,8 +140,8 @@ export function CategoryLimitWarningBanner({
           setToast({
             id: String(Date.now()),
             type: 'warning',
-            title: 'Budget Limit Warning',
-            message: `${catName} is at ${Math.round(newPct)}% (${formatSGD(newSpent)} of ${formatSGD(allocated)}) — ${formatSGD(leftAmount)} left`,
+            title: `${catName} at ${Math.round(newPct)}%`,
+            message: `${formatSGD(leftAmount)} left`,
           });
         }
       }
@@ -305,7 +305,7 @@ export function CategoryLimitWarningBanner({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-xs font-black uppercase tracking-wider text-(--accent-coral-ink) dark:text-rose-300 font-display">
-                      Budget Cap Exceeded ({exceededAlerts.length})
+                      Over Cap ({exceededAlerts.length})
                     </span>
                   </div>
                   <div className="space-y-1">
@@ -341,7 +341,7 @@ export function CategoryLimitWarningBanner({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 font-display">
-                      Nearing Limit Warning ({warningAlerts.length})
+                      Near Limit ({warningAlerts.length})
                     </span>
                   </div>
                   <div className="space-y-1">

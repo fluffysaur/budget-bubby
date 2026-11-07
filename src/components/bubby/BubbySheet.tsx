@@ -56,10 +56,10 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                             <Meter value={condition.fitness} icon="💪" label="Fitness" />
                         </div>
                         <TooltipPopover title="How Bubby grows" ariaLabel="How Bubby grows" align="right">
-                            Logging spend and petting Bubby are food 🍤. Clearing the inbox, updating
-                            balances, adding to goals, month-end sweeps and reading the recap are
-                            exercise 💪. Lots of food makes Bubby chubby, lots of exercise makes it lean,
-                            and both make it buff.
+                            <div className="space-y-1 text-left">
+                                <div>🍤 Log spend, pet Bubby</div>
+                                <div>💪 Sort inbox, update balances, add to goals, sweep, read recap</div>
+                            </div>
                         </TooltipPopover>
                     </div>
                     <FedTodayDots members={members} fedToday={condition.fedToday} />
@@ -79,9 +79,12 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                 <section aria-label="Snacks">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">Snacks</h3>
                     {snacks.length === 0 ? (
-                        <p className="mt-1.5 text-xs font-medium text-(--text-muted)">
-                            Finish a week's quests to earn a treat.
-                        </p>
+                        <div className="mt-1.5 space-y-0.5">
+                            <p className="text-xs font-bold text-(--text-ink)">No Snacks</p>
+                            <p className="text-xs font-medium text-(--text-muted)">
+                                Finish a week's quests to earn a treat.
+                            </p>
+                        </div>
                     ) : (
                         <ul className="mt-1.5 flex flex-wrap gap-1.5">
                             {snacks.map((s) => (

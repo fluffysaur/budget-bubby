@@ -222,7 +222,7 @@ describe('Ledger Power Tools, Fast Log & Bulk Add', () => {
 
       expect(screen.getByText('Delete Expense?')).toBeInTheDocument();
       expect(screen.getByText('Maxwell Chicken Rice')).toBeInTheDocument();
-      expect(screen.getByText(/Couple Settlement Adjusted/i)).toBeInTheDocument();
+      expect(screen.getByText(/Settlement updates/i)).toBeInTheDocument();
     });
 
     it('warns about savings goal balance restoration when expense is linked to a goal', () => {
@@ -236,7 +236,7 @@ describe('Ledger Power Tools, Fast Log & Bulk Add', () => {
         />
       );
 
-      expect(screen.getByText(/Savings Goal Balance Restored/i)).toBeInTheDocument();
+      expect(screen.getByText(/Goal refunded/i)).toBeInTheDocument();
     });
 
     it('calls financeService.deleteExpense and notifies onDeleted on confirmation', async () => {

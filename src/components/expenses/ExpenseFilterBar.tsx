@@ -248,10 +248,10 @@ export function ExpenseFilterBar({
                             className="bg-(--bg-canvas) font-bold text-xs py-1.5"
                         >
                             <option value="">Default order</option>
-                            <option value="date-desc">Date (Newest first)</option>
-                            <option value="date-asc">Date (Oldest first)</option>
-                            <option value="amount-desc">Amount (Highest first)</option>
-                            <option value="amount-asc">Amount (Lowest first)</option>
+                            <option value="date-desc">Newest</option>
+                            <option value="date-asc">Oldest</option>
+                            <option value="amount-desc">Highest</option>
+                            <option value="amount-asc">Lowest</option>
                             <option value="category-asc">Category (A-Z)</option>
                             <option value="payer-asc">Payer (A-Z)</option>
                         </Select>

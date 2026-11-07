@@ -50,12 +50,7 @@ export const PWAUpdateToast: React.FC = () => {
 
         <div className="flex-1 pr-2">
           <p className="text-sm font-semibold text-slate-900 dark:text-white">
-            {needRefresh ? 'New version available' : 'Ready for offline use'}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-(--text-faint) mt-0.5">
-            {needRefresh
-              ? 'An updated version of Budget Bubby is ready to reload.'
-              : 'App assets are cached. You can open Budget Bubby without network.'}
+            {needRefresh ? 'Update ready' : 'Offline ready'}
           </p>
 
           {needRefresh && (
@@ -64,7 +59,7 @@ export const PWAUpdateToast: React.FC = () => {
                 onClick={() => updateServiceWorker(true)}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors"
               >
-                Update now
+                Update
               </button>
               <button
                 onClick={close}
