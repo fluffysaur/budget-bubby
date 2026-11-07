@@ -216,7 +216,7 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestSound}
                                     title="Play test audio chime"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
                                     <Volume2 className="h-3 w-3" strokeWidth={2.5} />
                                     <span>Play</span>
@@ -269,7 +269,7 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestHaptic}
                                     title="Test haptic vibration"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
                                     <Vibrate className="h-3 w-3" strokeWidth={2.5} />
                                     <span>Vibrate</span>
@@ -338,7 +338,7 @@ export function NotificationSettingsModal({
                                     type="button"
                                     onClick={handleTestPush}
                                     title="Send test push notification"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
                                     <Send className="h-3 w-3" strokeWidth={2.5} />
                                     <span>{testPushSent ? "Sent!" : "Test"}</span>
@@ -495,7 +495,7 @@ export function NotificationSettingsModal({
                                                     aria-pressed={isOn}
                                                     data-testid={`chip-cc-due-${day}`}
                                                     onClick={() => handleToggleCcDueDay(day)}
-                                                    className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
+                                                    className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
                                                         isOn
                                                             ? "bg-(--pastel-lilac) text-(--text-ink)"
                                                             : "bg-(--bg-cream) text-(--text-muted)"

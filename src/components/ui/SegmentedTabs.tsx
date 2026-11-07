@@ -52,7 +52,7 @@ export function SegmentedTabs<T extends string = string>({
                         role="tab"
                         aria-selected={isActive}
                         onClick={() => onChange(tab.id)}
-                        className={`flex flex-1 sm:flex-initial justify-center items-center gap-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${sizeStyles} ${
+                        className={`relative after:absolute after:-inset-2 after:content-[''] flex flex-1 sm:flex-initial justify-center items-center gap-1.5 rounded-xl font-bold whitespace-nowrap transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${sizeStyles} ${
                             isActive
                                 ? accentMap[accent]
                                 : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"

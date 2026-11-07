@@ -150,7 +150,7 @@ export function QuickDepositModal({
                                     onClick={() =>
                                         setDepositAmount(amt.toString())
                                     }
-                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-press cursor-pointer ${
                                         numericDeposit === amt
                                             ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                             : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"

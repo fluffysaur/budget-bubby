@@ -7,6 +7,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { RotateCw, ArrowDown } from "lucide-react";
 import { haptics } from "../../lib/haptics";
+import { prefersReducedMotion } from "../../lib/motion";
 
 export interface PullToRefreshProps {
     onRefresh: () => Promise<void>;
@@ -202,6 +203,7 @@ export function PullToRefresh({
 
     const isPastThreshold = pullDistance >= threshold;
     const progress = Math.min(pullDistance / threshold, 1);
+    const reducedMotion = prefersReducedMotion();
 
     return (
         <Component
@@ -214,7 +216,9 @@ export function PullToRefresh({
                     aria-live="polite"
                     className="pointer-events-none absolute left-0 right-0 top-2 z-30 flex justify-center transition-transform duration-75"
                     style={{
-                        transform: `translateY(${Math.max(0, pullDistance - 28)}px)`,
+                        transform: reducedMotion
+                            ? "none"
+                            : `translateY(${Math.max(0, pullDistance - 28)}px)`,
                         opacity: isRefreshing ? 1 : Math.max(0.2, progress),
                     }}
                 >
@@ -233,7 +237,11 @@ export function PullToRefresh({
                             <ArrowDown
                                 className="h-4 w-4 text-(--text-muted) transition-transform duration-150"
                                 strokeWidth={2.5}
-                                style={{ transform: `rotate(${progress * 180}deg)` }}
+                                style={{
+                                    transform: reducedMotion
+                                        ? "none"
+                                        : `rotate(${progress * 180}deg)`,
+                                }}
                             />
                         )}
 
@@ -251,8 +259,14 @@ export function PullToRefresh({
             {/* Main Content with smooth transform during active pull */}
             <div
                 style={{
-                    transform: isPulling || isRefreshing ? `translateY(${pullDistance * 0.4}px)` : "none",
-                    transition: isPulling ? "none" : "transform 200ms ease-out",
+                    transform:
+                        !reducedMotion && (isPulling || isRefreshing)
+                            ? `translateY(${pullDistance * 0.4}px)`
+                            : "none",
+                    transition:
+                        isPulling || reducedMotion
+                            ? "none"
+                            : "transform var(--duration-base) var(--ease-out-soft)",
                 }}
             >
                 {children}

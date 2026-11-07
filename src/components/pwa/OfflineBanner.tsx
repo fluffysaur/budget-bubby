@@ -95,7 +95,7 @@ export const OfflineBanner: React.FC = () => {
       <div
         role="status"
         aria-live="polite"
-        className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-amber-500 text-slate-950 dark:bg-amber-600 dark:text-white"
+        className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-butter) text-(--text-ink) border-b-2 border-(--border-ink)"
       >
         <WifiOff className="w-3.5 h-3.5 shrink-0" />
         <span>
@@ -115,7 +115,7 @@ export const OfflineBanner: React.FC = () => {
       <div
         role="status"
         aria-live="polite"
-        className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-sky-600 text-white"
+        className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-lilac) text-(--text-ink) border-b-2 border-(--border-ink)"
       >
         <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
         <span>Syncing offline changes to Supabase...</span>
@@ -128,9 +128,9 @@ export const OfflineBanner: React.FC = () => {
     <div
       role="status"
       aria-live="polite"
-      className="w-full py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2 transition-colors z-40 bg-emerald-600 text-white"
+      className="w-full py-1.5 px-4 text-xs font-bold flex items-center justify-center gap-2 transition-colors z-40 bg-(--pastel-mint) text-(--accent-mint-ink) border-b-2 border-(--border-ink)"
     >
-      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-200" />
+      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-(--accent-mint-ink)" />
       <span>✓ All changes synced to Supabase</span>
     </div>
   );

@@ -213,7 +213,15 @@ export function GoalsPage({
         scrollTimerRef.current = setTimeout(() => {
             const el = document.getElementById(`goal-card-${targetGoalId}`);
             if (el) {
-                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                const reduced =
+                    typeof window !== "undefined" &&
+                    typeof window.matchMedia === "function" &&
+                    window.matchMedia("(prefers-reduced-motion: reduce)")
+                        .matches;
+                el.scrollIntoView({
+                    behavior: reduced ? "auto" : "smooth",
+                    block: "center",
+                });
             }
             scrollTimerRef.current = null;
         }, 100);

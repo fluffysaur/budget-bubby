@@ -212,7 +212,7 @@ export function AddAccountModal({
                       key={preset.name}
                       type="button"
                       onClick={() => handleSelectPreset(preset)}
-                      className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                         isSelected
                           ? 'bg-(--pastel-butter) text-(--text-ink) border-(--border-ink) shadow-cute-sm'
                           : 'bg-(--bg-canvas) text-(--text-ink) border-(--border-subtle) hover:border-(--border-ink)'
