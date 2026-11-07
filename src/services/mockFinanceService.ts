@@ -70,7 +70,12 @@ import {
   isSpendType,
   resolveDueDay,
 } from '../lib/recurringItems';
-import { getTodayDateString, getCurrentSingaporeTime, extractTimeFromISO } from '../lib/dateUtils';
+import {
+  getTodayDateString,
+  getCurrentSingaporeTime,
+  extractTimeFromISO,
+  getCurrentMonth,
+} from '../lib/dateUtils';
 import type { FinanceService } from './financeService';
 import { MockInboxStore } from './inbox/mockInboxStore';
 import {
@@ -511,8 +516,9 @@ class MockFinanceServiceImpl implements FinanceService {
   }
 
   private syncUnlockedBudgetsForOwner(ownerId?: string): void {
+    const currentMonth = getCurrentMonth();
     for (const budget of this.state.monthlyBudgets) {
-      if (budget.is_locked) continue;
+      if (budget.is_locked || budget.month < currentMonth) continue;
       if (ownerId && ownerId !== 'joint' && budget.owner_id !== ownerId) continue;
 
       const baseProfile = this.state.baseProfiles.find((p) => p.owner_id === budget.owner_id);
@@ -585,6 +591,9 @@ class MockFinanceServiceImpl implements FinanceService {
   }
 
   public async getMonthlyBudget(month: string, memberId?: string): Promise<MonthlyBudgetDetail> {
+    const currentMonth = getCurrentMonth();
+    const isPast = month < currentMonth;
+
     let targetOwnerId = memberId;
     if (!targetOwnerId && this.state.members.length > 0) {
       targetOwnerId = this.state.members[0].id;
@@ -594,40 +603,66 @@ class MockFinanceServiceImpl implements FinanceService {
       (b) => b.month === month && (!targetOwnerId || b.owner_id === targetOwnerId)
     );
 
-    const baseProfile =
-      this.state.baseProfiles.find((p) => !targetOwnerId || p.owner_id === targetOwnerId) ||
-      this.state.baseProfiles[0];
+    if (budget && isPast && !budget.is_locked) {
+      budget.is_locked = true;
+      this.persist();
+    }
+
+    const baseProfile = this.state.baseProfiles.find(
+      (p) => p.owner_id === targetOwnerId
+    );
 
     // If budget does not exist for this month, dynamically generate from base profile & recurring items
     if (!budget) {
       const ownerId = targetOwnerId || this.state.members[0].id;
-      const gross = baseProfile ? baseProfile.gross_salary : 5000;
-      const rate = baseProfile?.cpf_employee_rate ?? 0.20;
-      const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
-      const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberRecurringDeductions(this.state.recurringItems, ownerId, month);
+      if (!baseProfile) {
+        // Partner with no base profile gets an empty "no profile" budget, not the other partner's profile
+        budget = {
+          id: `mb-dyn-${month}-${ownerId || 'empty'}`,
+          household_id: this.state.household.id,
+          owner_id: ownerId,
+          month,
+          gross_salary: 0,
+          bonus: 0,
+          cpf_deduction: 0,
+          taxes_deduction: 0,
+          insurance_deduction: 0,
+          after_deductions: 0,
+          notes: 'No base budget profile configured',
+          is_locked: isPast,
+          created_at: new Date().toISOString(),
+        };
+      } else {
+        const gross = baseProfile.gross_salary;
+        const rate = baseProfile.cpf_employee_rate ?? 0.20;
+        const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
-      const afterDeductions = Math.round(
-        (gross - cpf - taxesDeduction - insuranceDeduction) * 100
-      ) / 100;
+        const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
+          calculateMemberRecurringDeductions(this.state.recurringItems, ownerId, month);
 
-      budget = {
-        id: `mb-dyn-${month}-${ownerId}`,
-        household_id: this.state.household.id,
-        owner_id: ownerId,
-        month,
-        gross_salary: gross,
-        bonus: 0,
-        cpf_deduction: cpf,
-        taxes_deduction: taxesDeduction,
-        insurance_deduction: insuranceDeduction,
-        after_deductions: afterDeductions,
-        notes: 'Generated monthly budget',
-        is_locked: false,
-        created_at: new Date().toISOString(),
-      };
-      this.state.monthlyBudgets.push(budget);
+        const afterDeductions = Math.round(
+          (gross - cpf - taxesDeduction - insuranceDeduction) * 100
+        ) / 100;
+
+        budget = {
+          id: `mb-${month}-${ownerId}`,
+          household_id: this.state.household.id,
+          owner_id: ownerId,
+          month,
+          gross_salary: gross,
+          bonus: 0,
+          cpf_deduction: cpf,
+          taxes_deduction: taxesDeduction,
+          insurance_deduction: insuranceDeduction,
+          after_deductions: afterDeductions,
+          notes: 'Generated monthly budget',
+          is_locked: isPast,
+          created_at: new Date().toISOString(),
+        };
+        this.state.monthlyBudgets.push(budget);
+        this.persist();
+      }
     }
 
     let budgetCategories = this.state.monthlyBudgetCategories.filter(
@@ -647,6 +682,7 @@ class MockFinanceServiceImpl implements FinanceService {
         allocated_amount: Math.round(budget!.after_deductions * alloc.target_percentage * 100) / 100,
       }));
       this.state.monthlyBudgetCategories.push(...generated);
+      this.persist();
       budgetCategories = generated;
     }
 
@@ -756,6 +792,9 @@ class MockFinanceServiceImpl implements FinanceService {
   public async updateMonthlyBudget(
     budgetUpdates: Partial<MonthlyBudget> & { id?: string }
   ): Promise<void> {
+    if (!budgetUpdates.id) {
+      throw new Error('Monthly budget ID is required for update');
+    }
     const budget = this.state.monthlyBudgets.find((b) => b.id === budgetUpdates.id);
     if (!budget) {
       throw new Error(`Monthly budget with id "${budgetUpdates.id}" not found`);

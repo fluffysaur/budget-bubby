@@ -640,7 +640,7 @@ export const mockMonthlyBudgets: MonthlyBudget[] = [
     insurance_deduction: 400.0,
     after_deductions: 4308.33,
     notes: 'September standard budget',
-    is_locked: false,
+    is_locked: true,
     created_at: '2026-09-01T00:00:00.000Z',
   },
   // Rachel - Sep 2026: gross 5200, bonus 0, cpf 1040 (20%), taxes 150.00, insurance 0.00, after deductions = 4010.00
@@ -656,7 +656,7 @@ export const mockMonthlyBudgets: MonthlyBudget[] = [
     insurance_deduction: 0.0,
     after_deductions: 4010.0,
     notes: 'September standard budget',
-    is_locked: false,
+    is_locked: true,
     created_at: '2026-09-01T00:00:00.000Z',
   },
 ];

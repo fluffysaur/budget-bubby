@@ -121,6 +121,38 @@ describe("supabaseFinanceService", () => {
                         select: vi.fn().mockReturnValue(queryChain),
                     };
                 }
+                if (table === "monthly_budgets") {
+                    const mbChain: any = {
+                        select: vi.fn(() => mbChain),
+                        eq: vi.fn(() => mbChain),
+                        gte: vi.fn(() => mbChain),
+                        limit: vi.fn(() => mbChain),
+                        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+                        insert: vi.fn().mockReturnValue({
+                            select: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { id: "00000000-0000-0000-0000-000000000301" },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                        update: vi.fn(() => mbChain),
+                        delete: vi.fn(() => mbChain),
+                        then: (resolve: any) => resolve({ data: [], error: null }),
+                    };
+                    return mbChain;
+                }
+                if (table === "monthly_budget_categories") {
+                    const mbcChain: any = {
+                        select: vi.fn(() => mbcChain),
+                        eq: vi.fn(() => mbcChain),
+                        insert: vi.fn().mockResolvedValue({ error: null }),
+                        delete: vi.fn(() => mbcChain),
+                        then: (resolve: any) => resolve({ data: [], error: null }),
+                    };
+                    return mbcChain;
+                }
                 return {};
             }),
             auth: {
@@ -547,6 +579,572 @@ describe("supabaseFinanceService", () => {
             expect(orSpy).toHaveBeenCalledWith(
                 `payer_id.eq.${validMemberId},payer_id.eq.${partnerId}`,
             );
+        });
+    });
+
+    describe("monthly budgets persistence and historical isolation (Issue #33 / H8)", () => {
+        const pastMonth = "2025-01";
+        const currentOrFutureMonth = "2099-01";
+        const sampleBudgetId = "00000000-0000-0000-0000-000000000777";
+
+        it("persists a newly generated monthly budget and category allocations to Supabase with real UUIDs", async () => {
+            let insertedBudgetRow: any = null;
+            let insertedCategoryRows: any[] = [];
+
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "households") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            limit: vi.fn().mockReturnValue({
+                                maybeSingle: vi.fn().mockResolvedValue({
+                                    data: { id: validHouseholdId },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "household_members") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({
+                                data: [{ id: validMemberId, display_name: "Yi Jia" }],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === "base_budget_profiles") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [
+                                {
+                                    id: validProfileId,
+                                    household_id: validHouseholdId,
+                                    owner_id: validMemberId,
+                                    gross_salary: 6000,
+                                    cpf_employee_rate: 0.2,
+                                },
+                            ],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "base_profile_allocations") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({
+                                data: [
+                                    {
+                                        id: "00000000-0000-0000-0000-000000000888",
+                                        profile_id: validProfileId,
+                                        category_id: validCategoryId,
+                                        target_percentage: 0.5,
+                                    },
+                                ],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === "categories") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [{ id: validCategoryId, name: "Food", is_spendable: true }],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "recurring_items") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "bonus_events") {
+                    const chain: any = {
+                        eq: vi.fn(() => chain),
+                        gte: vi.fn(() => chain),
+                        lt: vi.fn(() => chain),
+                        then: (resolve: any) => resolve({ data: [], error: null }),
+                    };
+                    return { select: vi.fn().mockReturnValue(chain) };
+                }
+                if (table === "expenses") {
+                    const chain: any = {
+                        gte: vi.fn(() => chain),
+                        lt: vi.fn(() => chain),
+                        then: (resolve: any) => resolve({ data: [], error: null }),
+                    };
+                    return { select: vi.fn().mockReturnValue(chain) };
+                }
+                if (table === "monthly_budgets") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockReturnValue({
+                                    limit: vi.fn().mockReturnValue({
+                                        maybeSingle: vi.fn().mockResolvedValue({
+                                            data: null, // no existing budget
+                                            error: null,
+                                        }),
+                                    }),
+                                }),
+                            }),
+                        }),
+                        insert: vi.fn((row: any) => {
+                            insertedBudgetRow = row;
+                            return {
+                                select: vi.fn().mockReturnValue({
+                                    single: vi.fn().mockResolvedValue({
+                                        data: {
+                                            ...row,
+                                            id: row.id || sampleBudgetId,
+                                        },
+                                        error: null,
+                                    }),
+                                }),
+                            };
+                        }),
+                    };
+                }
+                if (table === "monthly_budget_categories") {
+                    return {
+                        insert: vi.fn().mockImplementation((rows: any[]) => {
+                            insertedCategoryRows = rows;
+                            return Promise.resolve({ error: null });
+                        }),
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({
+                                data: [
+                                    {
+                                        id: "00000000-0000-0000-0000-000000000999",
+                                        monthly_budget_id: sampleBudgetId,
+                                        category_id: validCategoryId,
+                                        percentage: 0.5,
+                                        allocated_amount: 2400,
+                                        categories: {
+                                            id: validCategoryId,
+                                            name: "Food",
+                                            is_spendable: true,
+                                        },
+                                    },
+                                ],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                return {};
+            });
+
+            const result = await supabaseFinanceService.getMonthlyBudget(
+                currentOrFutureMonth,
+                validMemberId,
+            );
+
+            expect(insertedBudgetRow).toBeDefined();
+            expect(isValidUuid(insertedBudgetRow.id)).toBe(true);
+            expect(insertedBudgetRow.gross_salary).toBe(6000);
+            expect(insertedBudgetRow.is_locked).toBe(false);
+            expect(insertedCategoryRows.length).toBeGreaterThan(0);
+            expect(isValidUuid(result.budget.id)).toBe(true);
+        });
+
+        it("locks past months with is_locked: true both on newly generated months and existing unlocked past months", async () => {
+            let insertedPastRow: any = null;
+            let updatedLockId: string | null = null;
+
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "households") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            limit: vi.fn().mockReturnValue({
+                                maybeSingle: vi.fn().mockResolvedValue({
+                                    data: { id: validHouseholdId },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "household_members") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({
+                                data: [{ id: validMemberId, display_name: "Yi Jia" }],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === "base_budget_profiles") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [
+                                {
+                                    id: validProfileId,
+                                    household_id: validHouseholdId,
+                                    owner_id: validMemberId,
+                                    gross_salary: 6000,
+                                    cpf_employee_rate: 0.2,
+                                },
+                            ],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "base_profile_allocations") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({
+                                data: [],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === "categories") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [{ id: validCategoryId, name: "Food" }],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "recurring_items") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "bonus_events" || table === "expenses") {
+                    const chain: any = {
+                        gte: vi.fn(() => chain),
+                        lt: vi.fn(() => chain),
+                        eq: vi.fn(() => chain),
+                        then: (resolve: any) => resolve({ data: [], error: null }),
+                    };
+                    return { select: vi.fn().mockReturnValue(chain) };
+                }
+                if (table === "monthly_budgets") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockReturnValue({
+                                    limit: vi.fn().mockReturnValue({
+                                        maybeSingle: vi.fn().mockImplementation(() => {
+                                            if (insertedPastRow) {
+                                                return Promise.resolve({
+                                                    data: {
+                                                        id: sampleBudgetId,
+                                                        month: pastMonth,
+                                                        owner_id: validMemberId,
+                                                        gross_salary: 6000,
+                                                        is_locked: false, // unlocked past month
+                                                    },
+                                                    error: null,
+                                                });
+                                            }
+                                            return Promise.resolve({
+                                                data: null,
+                                                error: null,
+                                            });
+                                        }),
+                                    }),
+                                }),
+                            }),
+                        }),
+                        insert: vi.fn((row: any) => {
+                            insertedPastRow = row;
+                            return {
+                                select: vi.fn().mockReturnValue({
+                                    single: vi.fn().mockResolvedValue({
+                                        data: { ...row, id: sampleBudgetId },
+                                        error: null,
+                                    }),
+                                }),
+                            };
+                        }),
+                        update: vi.fn((updates: any) => {
+                            return {
+                                eq: vi.fn((_col: string, idVal: string) => {
+                                    if (updates.is_locked) {
+                                        updatedLockId = idVal;
+                                    }
+                                    return Promise.resolve({ error: null });
+                                }),
+                            };
+                        }),
+                    };
+                }
+                if (table === "monthly_budget_categories") {
+                    return {
+                        insert: vi.fn().mockResolvedValue({ error: null }),
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                        }),
+                    };
+                }
+                return {};
+            });
+
+            // 1. Newly generated past month is locked immediately
+            const res1 = await supabaseFinanceService.getMonthlyBudget(
+                pastMonth,
+                validMemberId,
+            );
+            expect(insertedPastRow).toBeDefined();
+            expect(insertedPastRow.is_locked).toBe(true);
+            expect(res1.budget.is_locked).toBe(true);
+
+            // 2. Existing unlocked past month gets locked on view
+            const res2 = await supabaseFinanceService.getMonthlyBudget(
+                pastMonth,
+                validMemberId,
+            );
+            expect(updatedLockId).toBe(sampleBudgetId);
+            expect(res2.budget.is_locked).toBe(true);
+        });
+
+        it("returns an empty 'no profile' budget when partner has no base profile, without falling back to profs[0] or 5000 salary", async () => {
+            const partnerId = "00000000-0000-0000-0000-000000000099";
+
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "households") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            limit: vi.fn().mockReturnValue({
+                                maybeSingle: vi.fn().mockResolvedValue({
+                                    data: { id: validHouseholdId },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "household_members") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({
+                                data: [
+                                    { id: validMemberId, display_name: "Yi Jia" },
+                                    { id: partnerId, display_name: "Partner" },
+                                ],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === "base_budget_profiles") {
+                    // Only Yi Jia has a profile; Partner has NONE
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [
+                                {
+                                    id: validProfileId,
+                                    household_id: validHouseholdId,
+                                    owner_id: validMemberId,
+                                    gross_salary: 8000,
+                                    cpf_employee_rate: 0.2,
+                                },
+                            ],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "categories") {
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: [{ id: validCategoryId, name: "Food" }],
+                            error: null,
+                        }),
+                    };
+                }
+                if (table === "recurring_items") {
+                    return {
+                        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    };
+                }
+                if (table === "bonus_events" || table === "expenses") {
+                    const chain: any = {
+                        gte: vi.fn(() => chain),
+                        lt: vi.fn(() => chain),
+                        eq: vi.fn(() => chain),
+                        then: (resolve: any) => resolve({ data: [], error: null }),
+                    };
+                    return { select: vi.fn().mockReturnValue(chain) };
+                }
+                if (table === "monthly_budgets") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockReturnValue({
+                                    limit: vi.fn().mockReturnValue({
+                                        maybeSingle: vi.fn().mockResolvedValue({
+                                            data: null,
+                                            error: null,
+                                        }),
+                                    }),
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                return {};
+            });
+
+            const partnerBudgetDetail = await supabaseFinanceService.getMonthlyBudget(
+                currentOrFutureMonth,
+                partnerId,
+            );
+
+            expect(partnerBudgetDetail.budget.owner_id).toBe(partnerId);
+            expect(partnerBudgetDetail.budget.gross_salary).toBe(0);
+            expect(partnerBudgetDetail.budget.cpf_deduction).toBe(0);
+            expect(partnerBudgetDetail.budget.after_deductions).toBe(0);
+            expect(partnerBudgetDetail.budget.notes).toBe("No base budget profile configured");
+            expect(partnerBudgetDetail.categories).toHaveLength(0);
+        });
+
+        it("synchronizes unlocked current and future months on salary update, leaving past months intact", async () => {
+            const updatedBudgetsMap = new Map<string, any>();
+
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "households") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            limit: vi.fn().mockReturnValue({
+                                maybeSingle: vi.fn().mockResolvedValue({
+                                    data: { id: validHouseholdId },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "base_budget_profiles") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockReturnValue({
+                                    maybeSingle: vi.fn().mockResolvedValue({
+                                        data: { id: validProfileId },
+                                        error: null,
+                                    }),
+                                }),
+                            }),
+                        }),
+                        upsert: vi.fn().mockReturnValue({
+                            select: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { id: validProfileId },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "base_profile_allocations") {
+                    return {
+                        upsert: vi.fn().mockResolvedValue({ error: null }),
+                        delete: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                not: vi.fn().mockResolvedValue({ error: null }),
+                                then: (res: any) => res({ error: null }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "recurring_items") {
+                    return {
+                        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    };
+                }
+                if (table === "monthly_budgets") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                gte: vi.fn((_col: string, _minMonth: string) => ({
+                                    eq: vi.fn((_col2: string, _lockedVal: boolean) => {
+                                        // Returns only current/future unlocked budget
+                                        return Promise.resolve({
+                                            data: [
+                                                {
+                                                    id: sampleBudgetId,
+                                                    owner_id: validMemberId,
+                                                    month: currentOrFutureMonth,
+                                                    gross_salary: 6000,
+                                                    cpf_deduction: 1200,
+                                                    is_locked: false,
+                                                },
+                                            ],
+                                            error: null,
+                                        });
+                                    }),
+                                })),
+                            }),
+                        }),
+                        update: vi.fn((updates: any) => ({
+                            eq: vi.fn((_col: string, id: string) => {
+                                updatedBudgetsMap.set(id, updates);
+                                return Promise.resolve({ error: null });
+                            }),
+                        })),
+                    };
+                }
+                if (table === "monthly_budget_categories") {
+                    return {
+                        delete: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ error: null }),
+                        }),
+                        insert: vi.fn().mockResolvedValue({ error: null }),
+                    };
+                }
+                return {};
+            });
+
+            await supabaseFinanceService.updateBaseProfile(
+                {
+                    id: validProfileId,
+                    household_id: validHouseholdId,
+                    owner_id: validMemberId,
+                    gross_salary: 7500,
+                    cpf_employee_rate: 0.2,
+                    tithing_enabled: true,
+                },
+                [
+                    {
+                        id: "00000000-0000-0000-0000-000000000888",
+                        profile_id: validProfileId,
+                        category_id: validCategoryId,
+                        target_percentage: 1.0,
+                    },
+                ],
+            );
+
+            expect(updatedBudgetsMap.has(sampleBudgetId)).toBe(true);
+            const updated = updatedBudgetsMap.get(sampleBudgetId);
+            expect(updated.gross_salary).toBe(7500);
+            expect(updated.cpf_deduction).toBe(1500); // 20% of 7500
+            expect(updated.after_deductions).toBe(6000); // 7500 - 1500
+        });
+
+        it("throws in updateMonthlyBudget when id is missing or not a valid UUID", async () => {
+            await expect(
+                supabaseFinanceService.updateMonthlyBudget({} as any),
+            ).rejects.toThrow("Monthly budget ID is required for update");
+
+            await expect(
+                supabaseFinanceService.updateMonthlyBudget({
+                    id: "mb-dyn-2026-11-user",
+                    notes: "test",
+                }),
+            ).rejects.toThrow(/Budget must be persisted with a valid UUID before update/);
         });
     });
 });

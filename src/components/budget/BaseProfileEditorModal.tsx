@@ -657,34 +657,36 @@ export function BaseProfileEditorModal({
                 parsedGross,
                 parsedCpf,
             ).cpfDeduction;
-            if (monthlyBudgetId && isValidUuid(monthlyBudgetId)) {
-                await financeService.updateMonthlyBudget({
-                    id: monthlyBudgetId,
-                    gross_salary: parsedGross,
-                    cpf_deduction: cpfDeduction,
-                    taxes_deduction: parsedTaxes,
-                    insurance_deduction: parsedInsurance,
-                });
-            } else if (selectedMonth) {
-                try {
-                    const monthDetail = await financeService.getMonthlyBudget(
-                        selectedMonth,
-                        profile.owner_id,
-                    );
-                    if (
-                        monthDetail?.budget?.id &&
-                        isValidUuid(monthDetail.budget.id)
-                    ) {
-                        await financeService.updateMonthlyBudget({
-                            id: monthDetail.budget.id,
-                            gross_salary: parsedGross,
-                            cpf_deduction: cpfDeduction,
-                            taxes_deduction: parsedTaxes,
-                            insurance_deduction: parsedInsurance,
-                        });
+
+            const currentMonth = getCurrentMonth();
+            const isTargetMonthPast = selectedMonth ? selectedMonth < currentMonth : false;
+
+            if (!isTargetMonthPast) {
+                let targetBudgetId = monthlyBudgetId;
+                if (!targetBudgetId && selectedMonth) {
+                    try {
+                        const monthDetail = await financeService.getMonthlyBudget(
+                            selectedMonth,
+                            profile.owner_id,
+                        );
+                        targetBudgetId = monthDetail?.budget?.id;
+                    } catch {
+                        // ignore if lookup fails
                     }
-                } catch {
-                    // ignore if lookup fails
+                }
+
+                const isValidTarget =
+                    targetBudgetId &&
+                    (isMockModeActive() ? targetBudgetId.length > 0 : isValidUuid(targetBudgetId));
+
+                if (targetBudgetId && isValidTarget) {
+                    await financeService.updateMonthlyBudget({
+                        id: targetBudgetId,
+                        gross_salary: parsedGross,
+                        cpf_deduction: cpfDeduction,
+                        taxes_deduction: parsedTaxes,
+                        insurance_deduction: parsedInsurance,
+                    });
                 }
             }
 
