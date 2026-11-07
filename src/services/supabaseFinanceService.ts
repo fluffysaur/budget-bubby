@@ -1185,6 +1185,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
 
     const insertPayload: Record<string, unknown> = {
+      ...(input.id ? { id: input.id } : {}),
       payer_id: resolvedPayerId,
       household_id: householdId,
       category_id: resolvedCategoryId,
@@ -1208,7 +1209,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       .insert(insertPayload)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      const code = (error as { code?: string }).code;
+      const message = (error as { message?: string }).message || '';
+      const isDuplicateKey = code === '23505' || /duplicate key/i.test(message);
+      if (!isDuplicateKey) {
+        throw error;
+      }
+    }
 
     // Auto-record daily checkin
     try {
@@ -1219,7 +1227,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
     if (!data || data.length === 0) {
       return {
-        id: `exp-${Date.now()}`,
+        id: input.id || `exp-${Date.now()}`,
         household_id: householdId,
         payer_id: resolvedPayerId,
         category_id: resolvedCategoryId,

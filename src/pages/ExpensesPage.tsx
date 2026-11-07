@@ -38,7 +38,11 @@ import {
     useBaseProfilesQuery,
     useBaseAllocationsQuery,
     useBudgetDetailQuery,
+    useInvalidateFinance,
+    useAddExpenseMutation,
+    useDeleteExpenseMutation,
 } from "../hooks/useFinanceQueries";
+import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { addMonths, getCurrentMonth } from "../lib/dateUtils";
@@ -81,8 +85,12 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         activeMember,
         members: ctxMembers,
         isMockMode,
-        refreshData: refreshHousehold,
     } = useHousehold();
+
+    const { invalidateExpenses, invalidateGoals } = useInvalidateFinance();
+    const addExpenseMutation = useAddExpenseMutation();
+    const deleteExpenseMutation = useDeleteExpenseMutation();
+    const { isPending: isSettling, runWithLock: runSettleLock } = useSubmitLock();
 
     const members = useMemo(
         () =>
@@ -121,6 +129,7 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
     const {
         data: expensesData,
         isLoading: expensesLoading,
+        isPlaceholderData: expensesPlaceholder,
         isError: expensesError,
         error: expensesErrorObj,
         refetch: refetchExpenses,
@@ -232,7 +241,7 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
                 });
             }
         }
-        await refreshHousehold();
+        invalidateGoals();
         if (sweepMonth) {
             handleDismissSweep(sweepMonth);
         }
@@ -240,14 +249,17 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
 
   // Handle adding an expense
   const handleExpenseAdded = async () => {
-    await refreshHousehold();
+    invalidateExpenses();
   };
+
 
   // Handle deleting an expense
   const handleDeleteExpense = async (id: string) => {
+    if (deleteExpenseMutation.isPending) return;
+    const exists = expenses.some((e) => e.id === id) || allExpenses.some((e) => e.id === id);
+    if (!exists) return;
     try {
-      await financeService.deleteExpense(id);
-      await refreshHousehold();
+      await deleteExpenseMutation.mutateAsync(id);
     } catch (err) {
       console.error('Failed to delete expense:', err);
     }
@@ -308,17 +320,19 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
 
   // Mark the unsettled shared expenses displayed in the settlement summary as settled
   const handleSettleUp = async () => {
-    const [m1, m2] = members;
-    if (!m1 || !m2) return;
-    const idsToSettle = settleTargetIds ?? settlement.expenseIds;
-    if (idsToSettle && idsToSettle.length > 0) {
-      await financeService.settleSharedExpenses(m1.id, m2.id, idsToSettle);
-    } else {
-      await financeService.settleSharedExpenses(m1.id, m2.id);
-    }
-    await refreshHousehold();
-    setIsSettleOpen(false);
-    setSettleTargetIds(undefined);
+    await runSettleLock(async () => {
+      const [m1, m2] = members;
+      if (!m1 || !m2) return;
+      const idsToSettle = settleTargetIds ?? settlement.expenseIds;
+      if (idsToSettle && idsToSettle.length > 0) {
+        await financeService.settleSharedExpenses(m1.id, m2.id, idsToSettle);
+      } else {
+        await financeService.settleSharedExpenses(m1.id, m2.id);
+      }
+      invalidateExpenses();
+      setIsSettleOpen(false);
+      setSettleTargetIds(undefined);
+    });
   };
 
   // Historical Expense Trends Calculation (6-month rolling averages & category benchmarks)
@@ -482,6 +496,43 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
                 </div>
             )}
 
+            {/* Mutation Error Banners */}
+            {addExpenseMutation.isError && (
+                <Alert
+                    variant="danger"
+                    title="Couldn't save expense"
+                    action={
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => addExpenseMutation.reset()}
+                        >
+                            Dismiss
+                        </Button>
+                    }
+                >
+                    {addExpenseMutation.error?.message || "Failed to add expense."}
+                </Alert>
+            )}
+
+            {deleteExpenseMutation.isError && (
+                <Alert
+                    variant="danger"
+                    title="Couldn't delete expense"
+                    action={
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => deleteExpenseMutation.reset()}
+                        >
+                            Dismiss
+                        </Button>
+                    }
+                >
+                    {deleteExpenseMutation.error?.message || "Failed to delete expense."}
+                </Alert>
+            )}
+
             {/* Expenses Query Error Banner */}
             {expensesError && (
                 <Alert
@@ -523,8 +574,10 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         />
       )}
 
-      {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Content Container (dimmed while loading new month or filter data) */}
+      <div className={expensesPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
+        {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Spendable Remaining (Primary Card) */}
         <StatCard
           title="Spendable"
@@ -633,70 +686,72 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         />
       </div>
 
-      <ConfirmModal
-        isOpen={isSettleOpen}
-        onClose={() => setIsSettleOpen(false)}
-        onConfirm={handleSettleUp}
-        title="Settle Up"
-        variant="primary"
-        confirmLabel="Settle"
-        icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />}
-      >
-        Mark all shared expenses as settled? The <CurrencyText amount={settlement.netBalance} /> balance resets to S$0.00.
-      </ConfirmModal>
-
-      {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
-      <ExpenseListTable
-        expenses={expenses}
-        categories={categories}
-        members={members}
-        goals={goals}
-        filter={filter}
-        onFilterChange={setFilter}
-        onResetFilters={handleResetFilters}
-        onDeleteExpense={handleDeleteExpense}
-        onExpenseSaved={handleExpenseAdded}
-        isLoading={isLoading}
-      />
-
-      {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
-      <div className="space-y-3 pt-2">
-        <CollapsibleSection
-          title="Spend Trends"
-          summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
-          icon={<BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
-          defaultOpen={false}
+        <ConfirmModal
+          isOpen={isSettleOpen}
+          onClose={() => setIsSettleOpen(false)}
+          onConfirm={handleSettleUp}
+          isLoading={isSettling}
+          title="Settle Up"
+          variant="primary"
+          confirmLabel="Settle"
+          icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />}
         >
-          <ExpenseTrendsCard
-            trends={trendsSummary}
-            perspectiveLabel={
-              perspective === 'household'
-                ? 'Household'
-                : activeMember?.display_name || 'Personal'
+          Mark all shared expenses as settled? The <CurrencyText amount={settlement.netBalance} /> balance resets to S$0.00.
+        </ConfirmModal>
+
+        {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
+        <ExpenseListTable
+          expenses={expenses}
+          categories={categories}
+          members={members}
+          goals={goals}
+          filter={filter}
+          onFilterChange={setFilter}
+          onResetFilters={handleResetFilters}
+          onDeleteExpense={handleDeleteExpense}
+          onExpenseSaved={handleExpenseAdded}
+          isLoading={isLoading}
+        />
+
+        {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
+        <div className="space-y-3 pt-2">
+          <CollapsibleSection
+            title="Spend Trends"
+            summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
+            icon={<BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+            defaultOpen={false}
+          >
+            <ExpenseTrendsCard
+              trends={trendsSummary}
+              perspectiveLabel={
+                perspective === 'household'
+                  ? 'Household'
+                  : activeMember?.display_name || 'Personal'
+              }
+            />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Tags & Trips"
+            badge={
+              filter.tag ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                  #{filter.tag}
+                </span>
+              ) : undefined
             }
-          />
-        </CollapsibleSection>
-
-        <CollapsibleSection
-          title="Tags & Trips"
-          badge={
-            filter.tag ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                #{filter.tag}
-              </span>
-            ) : undefined
-          }
-          icon={<Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
-          defaultOpen={Boolean(filter.tag)}
-        >
-          <SpendTagsOverviewCard
-            expenses={allExpenses && allExpenses.length > 0 ? allExpenses : expenses}
-            categories={categories}
-            activeTag={filter.tag}
-            onSelectTag={(tag) => setFilter((prev) => ({ ...prev, tag: prev.tag === tag ? undefined : tag }))}
-            onClearTag={() => setFilter((prev) => ({ ...prev, tag: undefined }))}
-          />
-        </CollapsibleSection>
+            icon={<Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
+            defaultOpen={Boolean(filter.tag)}
+          >
+            <SpendTagsOverviewCard
+              expenses={allExpenses && allExpenses.length > 0 ? allExpenses : expenses}
+              categories={categories}
+              activeTag={filter.tag}
+              onSelectTag={(tag) => setFilter((prev) => ({ ...prev, tag: prev.tag === tag ? undefined : tag }))}
+              onClearTag={() => setFilter((prev) => ({ ...prev, tag: undefined }))}
+            />
+          </CollapsibleSection>
+        </div>
       </div>
 
       {/* Bulk Add Expense Modal */}
@@ -715,6 +770,7 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onExpenseAdded={handleExpenseAdded}
+        addMutation={addExpenseMutation}
         defaultPayerId={filter.payerId}
         categories={categories}
         members={members}

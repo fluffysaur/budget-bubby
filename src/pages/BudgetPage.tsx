@@ -31,6 +31,7 @@ import {
   useBaseAllocationsQuery,
   useRecurringItemsQuery,
   useBudgetDetailQuery,
+  useInvalidateFinance,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -59,7 +60,8 @@ export interface BudgetPageProps {
 }
 
 export function BudgetPage({ className = '', embedded = false, onNavigateTab }: BudgetPageProps) {
-  const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
+  const { perspective, activeMember, members, overview, isMockMode } = useHousehold();
+  const { invalidateBudget, invalidateCategories } = useInvalidateFinance();
 
   // State
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
@@ -94,7 +96,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
   // Combined household budget in the Combined view, otherwise the member's budget
   const memberIds = useMemo(() => members.map((m) => m.id), [members]);
-  const { data: budgetDetailData, isLoading: budgetLoading } = useBudgetDetailQuery(
+  const {
+    data: budgetDetailData,
+    isLoading: budgetLoading,
+    isPlaceholderData: budgetPlaceholder,
+  } = useBudgetDetailQuery(
     selectedMonth,
     perspective,
     activeMember?.id,
@@ -168,11 +174,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
   }, [baseAllocations, activeProfile, categories]);
 
   const handleProfileSaved = async () => {
-    await refreshHousehold();
+    invalidateBudget();
   };
 
   const handleCategoriesChanged = async () => {
-    await refreshHousehold();
+    invalidateCategories();
   };
 
   // Split categories into Spendable (Food, Lifestyle, Transport, Buffer) vs Wealth/Fixed Allocations (Investments, Savings, Tithing)
@@ -253,7 +259,8 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
       <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />
 
       {/* High-Level Financial Metric Cards (2x2 on mobile, 4-col on desktop) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Gross Salary */}
         <StatCard
           title="Gross"
@@ -400,6 +407,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           </CollapsibleSection>
         </>
       )}
+      </div>
 
       {/* Unified Budget & Categories Editor Modal */}
       {activeProfile && (

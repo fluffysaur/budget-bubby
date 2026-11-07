@@ -27,6 +27,8 @@ import {
     RotateCcw,
     X,
 } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
+import { pop } from "../../lib/motion";
 import {
     addMonths,
     formatDisplayMonth,
@@ -165,17 +167,20 @@ export function MonthPicker({
             </button>
 
             {/* Month Selection Popover */}
-            {isOpen && (
-                <FloatingPortal>
-                    <div
-                        ref={setFloating}
-                        style={{
-                            ...floatingStyles,
-                            opacity: isPositioned ? 1 : 0,
-                        }}
-                        {...getFloatingProps()}
-                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute select-none animate-pop"
-                    >
+            <FloatingPortal>
+                <AnimatePresence>
+                    {isOpen && (
+                        <m.div
+                            key="month-popover"
+                            ref={setFloating}
+                            style={{
+                                ...floatingStyles,
+                                opacity: isPositioned ? 1 : 0,
+                            }}
+                            {...getFloatingProps()}
+                            {...pop}
+                            className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute select-none"
+                        >
                         {/* Popover Header: Year Stepper & Close Button */}
                         <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-(--border-subtle)">
                             <div className="flex items-center gap-1.5">
@@ -253,9 +258,10 @@ export function MonthPicker({
                                 <span>Jump to Current Month</span>
                             </button>
                         </div>
-                    </div>
-                </FloatingPortal>
-            )}
+                        </m.div>
+                    )}
+                </AnimatePresence>
+            </FloatingPortal>
         </div>
     );
 }

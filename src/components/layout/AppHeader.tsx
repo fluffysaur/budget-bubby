@@ -32,6 +32,8 @@ import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { m, AnimatePresence } from "motion/react";
+import { pop } from "../../lib/motion";
 
 export interface AppHeaderProps {
     className?: string;
@@ -228,12 +230,15 @@ export function AppHeader({
                             />
                         </button>
 
-                        {isDropdownOpen && (
-                            <div
-                                role="listbox"
-                                aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg z-50 animate-pop"
-                            >
+                        <AnimatePresence>
+                            {isDropdownOpen && (
+                                <m.div
+                                    key="perspective-dropdown"
+                                    role="listbox"
+                                    aria-label="Financial Perspectives"
+                                    {...pop}
+                                    className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg z-50"
+                                >
                                 <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                     Perspectives
                                 </div>
@@ -360,8 +365,9 @@ export function AppHeader({
                                         </button>
                                     )}
                                 </div>
-                            </div>
+                            </m.div>
                         )}
+                    </AnimatePresence>
                     </div>
 
                     {/* Desktop Perspective Switcher Pills */}

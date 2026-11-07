@@ -155,8 +155,11 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       });
 
       // Click "Log Statement" for DBS Altitude Visa
-      const logStmtBtns = screen.getAllByRole('button', { name: /Log statement for/i });
-      expect(logStmtBtns.length).toBeGreaterThan(0);
+      const logStmtBtns = await waitFor(() => {
+        const btns = screen.getAllByRole('button', { name: /Log statement for/i });
+        expect(btns.length).toBeGreaterThan(0);
+        return btns;
+      });
       fireEvent.click(logStmtBtns[0]);
 
       // Fill in amount

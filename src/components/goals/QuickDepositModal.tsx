@@ -74,6 +74,7 @@ export function QuickDepositModal({
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
         setErrorMessage(null);
 
         if (isNaN(numericDeposit) || numericDeposit <= 0) {
