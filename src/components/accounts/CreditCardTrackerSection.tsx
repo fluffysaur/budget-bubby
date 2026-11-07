@@ -46,6 +46,7 @@ import {
     formatDisplayDate,
     addMonths,
     ordinal,
+    getDefaultStatementDueDate,
 } from "../../lib/dateUtils";
 import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
 import {
@@ -241,13 +242,9 @@ export function CreditCardTrackerSection({
             setStmtNotesInput(stmt.notes || "");
         } else {
             setStmtAmountInput("");
-            // Calculate sensible default due date: next month on card's due_day
-            const nextMonthStr = addMonths(selectedMonth, 1);
-            const safeDay = String(Math.min(28, card.due_day || 5)).padStart(
-                2,
-                "0",
+            setStmtDueDateInput(
+                getDefaultStatementDueDate(selectedMonth, card.due_day || 5),
             );
-            setStmtDueDateInput(`${nextMonthStr}-${safeDay}`);
             setStmtNotesInput("");
         }
         setStmtError(null);

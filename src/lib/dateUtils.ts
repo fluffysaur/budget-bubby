@@ -315,6 +315,22 @@ export function clampDueDay(
     return Math.min(safeDay, getDaysInMonth(year, month));
 }
 
+/**
+ * Calculates the default statement due date: the subsequent month on the card's due_day,
+ * clamped to the actual length of that target month (e.g. 31 in Oct/Dec, 30 in Nov/Apr, 28/29 in Feb).
+ */
+export function getDefaultStatementDueDate(
+    statementMonth: string,
+    dueDay: number,
+): string {
+    const nextMonthStr = addMonths(statementMonth, 1);
+    const [yearStr, monthStr] = nextMonthStr.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = clampDueDay(dueDay, year, month);
+    return `${nextMonthStr}-${String(day).padStart(2, "0")}`;
+}
+
 export interface DueSchedule {
     frequency: "monthly" | "annually";
     due_day?: number | null;
