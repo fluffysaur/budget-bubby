@@ -1,6 +1,6 @@
 /**
  * CentsFirstAmountInput Component
- * Budget Bubby - Couples Finance & Daily Ledger
+ * Budget Bubby - Daily Ledger
  *
  * ATM / Cashier-style numeric amount input where typing digits shifts right-to-left:
  * - Initial: 0.00 (or 0 for zero-decimal currencies)

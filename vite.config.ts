@@ -20,7 +20,7 @@ export default defineConfig({
         'vite.svg',
       ],
       manifest: {
-        name: 'Budget Bubby - Couple Finance',
+        name: 'Budget Bubby',
         short_name: 'Budget Bubby',
         description: 'Couple & Personal Finance Planner for Singapore households',
         theme_color: '#e9e2da',
