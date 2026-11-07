@@ -11,6 +11,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
 } from 'react';
 import type { HouseholdMember, HouseholdOverview, Perspective } from '../types/finance';
 export type { Perspective, Perspective as PerspectiveType };
@@ -131,8 +132,29 @@ function HouseholdProviderInner({
     return found || null;
   }, [perspective, members]);
 
+  const themeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (themeTimerRef.current) {
+        clearTimeout(themeTimerRef.current);
+      }
+    };
+  }, []);
+
   // Theme toggle action
   const toggleTheme = useCallback(() => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      root.classList.add('theme-transition');
+      if (themeTimerRef.current) {
+        clearTimeout(themeTimerRef.current);
+      }
+      themeTimerRef.current = setTimeout(() => {
+        root.classList.remove('theme-transition');
+        themeTimerRef.current = null;
+      }, 200);
+    }
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   }, []);
 

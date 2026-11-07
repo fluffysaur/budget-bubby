@@ -112,7 +112,7 @@ describe("Page loading skeletons", () => {
         expect(screen.getAllByText("S$7,345").length).toBeGreaterThan(0);
     });
 
-    it("switching to an uncached month shows the skeleton, not the previous month's numbers", async () => {
+    it("switching to an uncached month keeps previous data visible (no skeleton flash)", async () => {
         const month = getCurrentMonth();
         const nextMonth = addMonths(month, 1);
         const nextPending = deferred<MonthlyBudgetDetail>();
@@ -134,8 +134,9 @@ describe("Page loading skeletons", () => {
 
         fireEvent.click(screen.getByRole("button", { name: "Next month" }));
 
-        expect(await screen.findByTestId("budget-skeleton")).toBeInTheDocument();
-        expect(screen.queryByText("S$7,345")).not.toBeInTheDocument();
+        // With keepPreviousData, skeleton is NOT shown, previous figures remain visible while in-flight
+        expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
+        expect(screen.getAllByText("S$7,345").length).toBeGreaterThan(0);
 
         await act(async () => {
             nextPending.resolve(makeBudget(nextMonth, 8120));

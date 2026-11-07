@@ -33,6 +33,8 @@ import { DeleteExpenseModal } from './DeleteExpenseModal';
 import { TruncatedText } from '../ui/TruncatedText';
 import { ExpenseRowsSkeleton } from '../ui/PageSkeletons';
 import { Select } from '../ui/Select';
+import { m, AnimatePresence } from 'motion/react';
+import { listItem } from '../../lib/motion';
 import { Button } from '../ui/Button';
 import { ExpenseFilterBar } from './ExpenseFilterBar';
 import { financeService, isMockModeActive } from '../../services/financeService';
@@ -380,20 +382,22 @@ export function ExpenseListTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-(--border-subtle) block sm:table-row-group">
-              {paginatedExpenses.map((expense) => {
-                const category = getCategory(expense.category_id);
-                const payer = getMember(expense.payer_id);
-                const hasForeignCurrency =
-                  expense.original_currency &&
-                  expense.original_currency !== 'SGD' &&
-                  expense.original_amount;
-                const displayTime = expense.time || (expense.created_at ? extractTimeFromISO(expense.created_at) : null);
+              <AnimatePresence initial={false}>
+                {paginatedExpenses.map((expense) => {
+                  const category = getCategory(expense.category_id);
+                  const payer = getMember(expense.payer_id);
+                  const hasForeignCurrency =
+                    expense.original_currency &&
+                    expense.original_currency !== 'SGD' &&
+                    expense.original_amount;
+                  const displayTime = expense.time || (expense.created_at ? extractTimeFromISO(expense.created_at) : null);
 
-                return (
-                  <tr
-                    key={expense.id}
-                    className="flex flex-wrap items-center sm:table-row p-3 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
-                  >
+                  return (
+                    <m.tr
+                      key={expense.id}
+                      {...listItem}
+                      className="flex flex-wrap items-center sm:table-row p-3 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
+                    >
                     {/* Date & Time */}
                     <td className="order-1 py-0 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 flex-1 sm:flex-initial sm:table-cell whitespace-nowrap font-mono-num font-bold sm:font-semibold text-[11px] sm:text-xs text-(--text-muted) sm:text-(--text-ink)">
                       <div className="flex flex-row sm:flex-col items-center sm:items-start gap-1.5 sm:gap-0.5">
@@ -501,7 +505,7 @@ export function ExpenseListTable({
                             setEditingExpense(expense);
                           }}
                           aria-label={`Edit ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                           title="Edit expense"
                         >
                           <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -510,16 +514,17 @@ export function ExpenseListTable({
                           type="button"
                           onClick={() => setDeletingExpense(expense)}
                           aria-label={`Delete ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                           title="Delete expense"
                         >
                           <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </div>
                     </td>
-                  </tr>
-                );
-              })}
+                    </m.tr>
+                  );
+                })}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
@@ -580,7 +585,7 @@ export function ExpenseListTable({
                       <button
                         type="button"
                         onClick={() => handlePageChange(p)}
-                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-all cursor-pointer ${
+                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-press cursor-pointer ${
                           p === validCurrentPage
                             ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-black'
                             : 'border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5'

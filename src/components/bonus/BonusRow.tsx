@@ -5,6 +5,8 @@
  */
 
 import { Pencil, Trash2 } from "lucide-react";
+import { m } from "motion/react";
+import { listItem } from "../../lib/motion";
 import { Badge, Button, CurrencyText, TruncatedText } from "../ui";
 import { BONUS_TYPE_LABELS, bonusGoalTotal } from "../../lib/bonusFormulas";
 import { MONTH_NAMES_SHORT } from "../../lib/dateUtils";
@@ -29,8 +31,9 @@ export function BonusRow({ event, recipientName, onEdit, onDelete }: BonusRowPro
     const goalTotal = bonusGoalTotal(event);
 
     return (
-        <div
+        <m.div
             data-testid="bonus-row"
+            {...listItem}
             // Tapping the row opens Edit. It is not a role="button": it holds
             // the Edit and Delete buttons, which serve keyboard and screen readers.
             onClick={() => onEdit(event)}
@@ -93,7 +96,7 @@ export function BonusRow({ event, recipientName, onEdit, onDelete }: BonusRowPro
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
-        </div>
+        </m.div>
     );
 }
 

@@ -14,6 +14,8 @@ import {
   CalendarClock,
   Sparkles,
 } from "lucide-react";
+import { m } from "motion/react";
+import { fadeRise } from "../lib/motion";
 import { PageHeader, SegmentedTabs } from "../components/ui";
 import { GoalsPage } from "./GoalsPage";
 import { RecurringPage } from "./RecurringPage";
@@ -74,13 +76,13 @@ export function PlanPage({ initialTab = "goals", className = "" }: PlanPageProps
         onChange={(id) => setActiveTab(id as PlanSubTab)}
       />
 
-      {/* Embedded Sub-Tab Content */}
-      <div className="pt-1">
+      {/* Embedded Sub-Tab Content with fadeRise animation */}
+      <m.div key={activeTab} {...fadeRise} className="pt-1">
         {activeTab === 'goals' && <GoalsPage embedded={true} />}
         {activeTab === 'recurring' && <RecurringPage embedded={true} />}
         {activeTab === 'bonus' && <BonusLogPanel />}
         {activeTab === 'loans' && <LoansPlaceholder />}
-      </div>
+      </m.div>
     </div>
   );
 }

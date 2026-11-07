@@ -1,5 +1,7 @@
 import React, { forwardRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 export interface SelectOption {
     value: string;
@@ -57,7 +59,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         ref={ref}
                         id={selectId}
                         disabled={disabled}
-                        className={`w-full min-w-0 appearance-none rounded-xl border-2 bg-(--bg-card) font-semibold text-(--text-ink) transition-all outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) cursor-pointer truncate ${sizeClasses} ${
+                        className={`w-full min-w-0 appearance-none rounded-xl border-2 bg-(--bg-card) font-semibold text-(--text-ink) transition-colors outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) cursor-pointer truncate ${sizeClasses} ${
                             error
                                 ? "border-(--accent-coral) focus:border-(--accent-coral)"
                                 : "border-(--border-ink) focus:border-(--border-ink)"
@@ -81,7 +83,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         strokeWidth={2.5}
                     />
                 </div>
-                {error && <p className="text-xs font-bold text-(--accent-coral) animate-in fade-in">{error}</p>}
+                <AnimatePresence initial={false}>
+                    {error && (
+                        <m.div key="select-error" {...collapse}>
+                            <p className="text-xs font-bold text-(--accent-coral)">
+                                {error}
+                            </p>
+                        </m.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     },

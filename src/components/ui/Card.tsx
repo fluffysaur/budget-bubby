@@ -56,7 +56,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         }
 
         const interactiveStyles = interactive
-            ? "cursor-pointer transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-cute-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            ? "cursor-pointer transition-press hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-cute-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
             : "";
 
         return (

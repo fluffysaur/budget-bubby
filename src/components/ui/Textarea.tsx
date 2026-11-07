@@ -1,4 +1,6 @@
 import React, { forwardRef } from "react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;
@@ -24,18 +26,22 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
                     ref={ref}
                     id={textareaId}
                     disabled={disabled}
-                    className={`w-full resize-none rounded-xl border-2 bg-(--bg-card) px-3.5 py-2.5 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-faint) transition-all outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) ${
+                    className={`w-full resize-none rounded-xl border-2 bg-(--bg-card) px-3.5 py-2.5 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-faint) transition-colors outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) ${
                         error
                             ? "border-(--accent-coral) focus:border-(--accent-coral)"
                             : "border-(--border-ink) focus:border-(--border-ink)"
                     } ${className}`}
                     {...props}
                 />
-                {error && (
-                    <p className="text-xs font-bold text-(--accent-coral) animate-in fade-in">
-                        {error}
-                    </p>
-                )}
+                <AnimatePresence initial={false}>
+                    {error && (
+                        <m.div key="textarea-error" {...collapse}>
+                            <p className="text-xs font-bold text-(--accent-coral)">
+                                {error}
+                            </p>
+                        </m.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     },

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 import { Badge, BadgeVariant } from "./Badge";
 
 export interface CollapsibleSectionProps {
@@ -41,7 +43,7 @@ export function CollapsibleSection({
 
     return (
         <div
-            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute overflow-hidden transition-all ${className}`}
+            className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute overflow-hidden transition-colors ${className}`}
         >
             <button
                 type="button"
@@ -75,7 +77,7 @@ export function CollapsibleSection({
                         </div>
                     )}
                     <div
-                        className={`flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) transition-all duration-200 group-hover:text-(--text-ink) ${
+                        className={`flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) transition-press group-hover:text-(--text-ink) ${
                             isOpen ? "bg-(--pastel-lilac) rotate-90 text-(--text-ink)" : ""
                         }`}
                     >
@@ -84,11 +86,15 @@ export function CollapsibleSection({
                 </div>
             </button>
 
-            {isOpen && (
-                <div className="border-t-2 border-(--border-ink) p-4 sm:p-5 bg-(--bg-card) animate-in fade-in slide-in-from-top-1 duration-200">
-                    {children}
-                </div>
-            )}
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <m.div key="collapsible-content" {...collapse}>
+                        <div className="border-t-2 border-(--border-ink) p-4 sm:p-5 bg-(--bg-card)">
+                            {children}
+                        </div>
+                    </m.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

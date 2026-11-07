@@ -1,4 +1,6 @@
 import React, { forwardRef } from "react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -47,7 +49,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         ref={ref}
                         id={inputId}
                         disabled={disabled}
-                        className={`w-full rounded-xl border-2 bg-(--bg-card) px-3.5 py-2.5 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-faint) transition-all outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) ${
+                        className={`w-full rounded-xl border-2 bg-(--bg-card) px-3.5 py-2.5 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-faint) transition-colors outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) ${
                             error
                                 ? "border-(--accent-coral) focus:border-(--accent-coral)"
                                 : "border-(--border-ink) focus:border-(--border-ink)"
@@ -62,11 +64,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         </div>
                     )}
                 </div>
-                {error && (
-                    <p className="text-xs font-bold text-(--accent-coral) animate-in fade-in">
-                        {error}
-                    </p>
-                )}
+                <AnimatePresence initial={false}>
+                    {error && (
+                        <m.div key="input-error" {...collapse}>
+                            <p className="text-xs font-bold text-(--accent-coral)">
+                                {error}
+                            </p>
+                        </m.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     },

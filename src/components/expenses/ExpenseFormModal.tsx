@@ -65,6 +65,7 @@ import {
 } from "../../lib/capture/inboxExpense";
 import { normalizeMerchant } from "../../lib/capture/merchant";
 import { TruncatedText } from "../ui/TruncatedText";
+import { useAddExpenseMutation } from "../../hooks/useFinanceQueries";
 
 export interface ExpenseFormModalProps {
     isOpen: boolean;
@@ -84,6 +85,7 @@ export interface ExpenseFormModalProps {
     categories?: Category[];
     members?: HouseholdMember[];
     goals?: SavingsGoal[];
+    addMutation?: ReturnType<typeof useAddExpenseMutation>;
 }
 
 export type ExpenseFormInitialValues = Partial<
@@ -164,7 +166,11 @@ export function ExpenseFormModal({
     categories: propCategories,
     members: propMembers,
     goals: propGoals,
+    addMutation: propAddMutation,
 }: ExpenseFormModalProps) {
+    const defaultAddMutation = useAddExpenseMutation();
+    const addExpenseMutation = propAddMutation ?? defaultAddMutation;
+
     // Optional so the form also works outside a HouseholdProvider (e.g. edit from a bare list)
     const household = useOptionalHousehold();
     const ctxMembers = household?.members;
@@ -666,8 +672,6 @@ export function ExpenseFormModal({
                 return;
             }
 
-            const created = await financeService.addExpense(input);
-
             storeLastSplit(isShared);
 
             // Persist tags globally for recent quick suggestions
@@ -675,17 +679,25 @@ export function ExpenseFormModal({
                 storeRecentTags(tags);
             }
 
-            // Dispatch global event for celebration toast, sound & category alerts
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(
-                    new CustomEvent("expenseAdded", {
-                        detail: { ...created, source: "form" },
-                    }),
+            // Optimistic mutation: updates cache immediately via onMutate
+            try {
+                const created = await addExpenseMutation.mutateAsync(input);
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                        new CustomEvent("expenseAdded", {
+                            detail: { ...created, source: "form" },
+                        }),
+                    );
+                }
+                onExpenseAdded?.(created);
+            } catch (err) {
+                setErrorMessage(
+                    err instanceof Error ? err.message : "Failed to save expense",
                 );
             }
 
-            onExpenseAdded?.(created);
             onClose();
+            return;
         } catch (err: unknown) {
             setErrorMessage(
                 err instanceof Error ? err.message : "Failed to save expense",

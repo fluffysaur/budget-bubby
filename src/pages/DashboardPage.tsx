@@ -66,7 +66,11 @@ export function DashboardPage({
     // TanStack Query Cached Data Hooks
     const { data: recurringItemsData } = useRecurringItemsQuery();
     // Combined view shows the household total, same as Budget
-    const { data: budgetData, isLoading: budgetLoading } = useBudgetDetailQuery(
+    const {
+        data: budgetData,
+        isLoading: budgetLoading,
+        isPlaceholderData: budgetPlaceholder,
+    } = useBudgetDetailQuery(
         currentMonth,
         perspective,
         activeMember?.id,
@@ -145,17 +149,7 @@ export function DashboardPage({
             {isLoading ? (
                 <DashboardSkeleton />
             ) : (
-                <>
-                    {/* Most urgent category limit alert */}
-                    <CategoryLimitWarningBanner
-                        single
-                        categories={monthlyBudget?.categories || []}
-                        onNavigateCategory={() => onNavigateTab?.("budget")}
-                    />
-
-                    {/* Unsorted captures */}
-                    <InboxHomeCard />
-
+                <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
                     {/* Left to Spend hero */}
                     <Card
                         role="region"
@@ -186,7 +180,7 @@ export function DashboardPage({
                                 <button
                                     type="button"
                                     onClick={() => onNavigateTab("budget")}
-                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer"
                                 >
                                     Budget
                                 </button>
@@ -253,6 +247,16 @@ export function DashboardPage({
                         )}
                     </Card>
 
+                    {/* Most urgent category limit alert (rendered below hero) */}
+                    <CategoryLimitWarningBanner
+                        single
+                        categories={monthlyBudget?.categories || []}
+                        onNavigateCategory={() => onNavigateTab?.("budget")}
+                    />
+
+                    {/* Unsorted captures (rendered below hero) */}
+                    <InboxHomeCard />
+
                     {/* Bubby's quests for today */}
                     <QuestCard />
 
@@ -272,7 +276,7 @@ export function DashboardPage({
                         recurringItems={recurringItems}
                         onViewAll={() => onNavigateTab?.("recurring")}
                     />
-                </>
+                </div>
             )}
         </div>
     );
