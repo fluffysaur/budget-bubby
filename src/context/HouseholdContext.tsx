@@ -93,7 +93,7 @@ function HouseholdProviderInner({
   }, [theme]);
 
   // Determine whether running in mock demo mode
-  const isMockMode = useMemo(() => !isSupabaseConfigured() || isDemoModeActive(), []);
+  const isMockMode = !isSupabaseConfigured() || isDemoModeActive();
   const queryClient = useQueryClient();
 
   // Query household overview through TanStack Query
@@ -104,8 +104,8 @@ function HouseholdProviderInner({
     if (overviewData?.members && overviewData.members.length > 0) {
       return overviewData.members;
     }
-    return mockMembers;
-  }, [overviewData]);
+    return isMockMode ? mockMembers : [];
+  }, [overviewData, isMockMode]);
 
   // Global refresh function: invalidates all finance queries and refetches active ones
   const refreshData = useCallback(async () => {

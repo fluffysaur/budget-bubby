@@ -12,7 +12,7 @@ import { ListPlus, Undo2 } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Select } from "../ui/Select";
-import { financeService } from "../../services/financeService";
+import { financeService, isMockModeActive } from "../../services/financeService";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFxRates } from "../../hooks/useFxRates";
@@ -60,15 +60,31 @@ export function BulkAddExpenseModal({
     defaultPayerId,
     defaultShared,
 }: BulkAddExpenseModalProps) {
-    const categories =
-        propCategories && propCategories.length > 0
-            ? propCategories
-            : mockCategories;
-    const members =
-        propMembers && propMembers.length > 0 ? propMembers : mockMembers;
-
     const household = useOptionalHousehold();
     const { loggedInPartner } = useAuth();
+    const isMockMode = household?.isMockMode ?? isMockModeActive();
+    const ctxMembers = household?.members;
+
+    const categories = useMemo(
+        () =>
+            propCategories && propCategories.length > 0
+                ? propCategories
+                : isMockMode
+                  ? mockCategories
+                  : [],
+        [propCategories, isMockMode],
+    );
+    const members = useMemo(
+        () =>
+            propMembers && propMembers.length > 0
+                ? propMembers
+                : ctxMembers && ctxMembers.length > 0
+                  ? ctxMembers
+                  : isMockMode
+                    ? mockMembers
+                    : [],
+        [propMembers, ctxMembers, isMockMode],
+    );
 
     const perspective = household?.perspective ?? "household";
     const activeMember = household?.activeMember ?? null;

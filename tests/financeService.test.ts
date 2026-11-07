@@ -395,5 +395,28 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       const checkins = await financeService.getDailyCheckins('mem-00000000-0011');
       expect(checkins.some((c) => c.checkin_date === today && c.type === 'no_spend')).toBe(true);
     });
+
+    it('in Supabase mode, a failing getExpenses rejects and does not return mock rows', async () => {
+      const supabaseClientModule = await import('../src/services/supabaseClient');
+      const supabaseFinanceModule = await import('../src/services/supabaseFinanceService');
+      const { vi } = await import('vitest');
+
+      const configSpy = vi
+        .spyOn(supabaseClientModule, 'isSupabaseConfigured')
+        .mockReturnValue(true);
+      const getExpensesSpy = vi
+        .spyOn(supabaseFinanceModule.supabaseFinanceService, 'getExpenses')
+        .mockRejectedValue(new Error('PostgREST network error'));
+
+      try {
+        await expect(financeService.getExpenses({ month: '2026-10' })).rejects.toThrow(
+          'PostgREST network error',
+        );
+        expect(getExpensesSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        configSpy.mockRestore();
+        getExpensesSpy.mockRestore();
+      }
+    });
   });
 });

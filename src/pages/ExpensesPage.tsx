@@ -7,177 +7,233 @@
  * - Collapsible Spend Trends & Tags drawers below the ledger
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from "react";
 import {
-  Receipt,
-  Plus,
-  ArrowRightLeft,
-  Scale,
-  CheckCircle2,
-  Tag,
-  ListPlus,
-  BarChart3,
-  PiggyBank,
-} from 'lucide-react';
-import { InboxShortcutButton } from '../components/inbox/InboxShortcutButton';
-import { useHousehold } from '../context/HouseholdContext';
-import { PageHeader, Button, StatCard, CollapsibleSection, ConfirmModal } from '../components/ui';
+    Receipt,
+    Plus,
+    ArrowRightLeft,
+    Scale,
+    CheckCircle2,
+    Tag,
+    ListPlus,
+    BarChart3,
+    PiggyBank,
+} from "lucide-react";
+import { InboxShortcutButton } from "../components/inbox/InboxShortcutButton";
+import { useHousehold } from "../context/HouseholdContext";
 import {
-  useExpensesQuery,
-  useAllExpensesQuery,
-  useRecurringItemsQuery,
-  useCategoriesQuery,
-  useGoalsQuery,
-  useBaseProfilesQuery,
-  useBaseAllocationsQuery,
-  useBudgetDetailQuery,
-} from '../hooks/useFinanceQueries';
-import { financeService } from '../services/financeService';
-import { formatSGD } from '../lib/currency';
-import { getCurrentMonth } from '../lib/dateUtils';
-import { useFollowCurrentMonth } from '../hooks/useCurrentMonth';
+    PageHeader,
+    Button,
+    StatCard,
+    CollapsibleSection,
+    ConfirmModal,
+    Alert,
+} from "../components/ui";
 import {
-  calculateSharedExpenseSettlement,
-  calculateExpenseTrendsSummary,
-  calculateSpendablePacing,
-  detectUnspentMonthEndSurplus,
-} from '../lib/financialFormulas';
-import { mockCategories, mockMembers, mockBaseProfiles, mockBaseAllocations } from '../data/mockSeedData';
-import { ExpenseFormModal } from '../components/expenses/ExpenseFormModal';
-import { BulkAddExpenseModal } from '../components/expenses/BulkAddExpenseModal';
-import { ExpenseListTable } from '../components/expenses/ExpenseListTable';
-import { ExpenseTrendsCard } from '../components/expenses/ExpenseTrendsCard';
-import { SpendTagsOverviewCard } from '../components/expenses/SpendTagsOverviewCard';
-import { MonthEndSweepBanner } from '../components/budget/MonthEndSweepBanner';
-import { SurplusSweepModal, type SurplusSweepAllocation } from '../components/budget/SurplusSweepModal';
-import { BankSurplusModal } from '../components/budget/BankSurplusModal';
-import type { ExpenseFilter } from '../types/finance';
-import { CurrencyText } from '../components/ui/CurrencyText';
+    useExpensesQuery,
+    useAllExpensesQuery,
+    useRecurringItemsQuery,
+    useCategoriesQuery,
+    useGoalsQuery,
+    useBaseProfilesQuery,
+    useBaseAllocationsQuery,
+    useBudgetDetailQuery,
+} from "../hooks/useFinanceQueries";
+import { financeService } from "../services/financeService";
+import { formatSGD } from "../lib/currency";
+import { addMonths, getCurrentMonth } from "../lib/dateUtils";
+import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
+import {
+    calculateSharedExpenseSettlement,
+    calculateExpenseTrendsSummary,
+    calculateSpendablePacing,
+    detectUnspentMonthEndSurplus,
+} from "../lib/financialFormulas";
+import {
+    mockCategories,
+    mockMembers,
+    mockBaseProfiles,
+    mockBaseAllocations,
+} from "../data/mockSeedData";
+import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
+import { BulkAddExpenseModal } from "../components/expenses/BulkAddExpenseModal";
+import { ExpenseListTable } from "../components/expenses/ExpenseListTable";
+import { ExpenseTrendsCard } from "../components/expenses/ExpenseTrendsCard";
+import { SpendTagsOverviewCard } from "../components/expenses/SpendTagsOverviewCard";
+import { MonthEndSweepBanner } from "../components/budget/MonthEndSweepBanner";
+import {
+    SurplusSweepModal,
+    type SurplusSweepAllocation,
+} from "../components/budget/SurplusSweepModal";
+import { BankSurplusModal } from "../components/budget/BankSurplusModal";
+import type { ExpenseFilter } from "../types/finance";
+import { CurrencyText } from "../components/ui/CurrencyText";
 
 export interface ExpensesPageProps {
-  className?: string;
-  embedded?: boolean;
+    className?: string;
+    embedded?: boolean;
 }
 
-export function ExpensesPage({ className = '', embedded = false }: ExpensesPageProps) {
-  const {
-    perspective,
-    overview,
-    activeMember,
-    members: ctxMembers,
-    refreshData: refreshHousehold,
-  } = useHousehold();
+export function ExpensesPage({ className = "", embedded = false }: ExpensesPageProps) {
+    const {
+        perspective,
+        overview,
+        activeMember,
+        members: ctxMembers,
+        isMockMode,
+        refreshData: refreshHousehold,
+    } = useHousehold();
 
-  const members = ctxMembers && ctxMembers.length > 0 ? ctxMembers : mockMembers;
+    const members = useMemo(
+        () =>
+            ctxMembers && ctxMembers.length > 0
+                ? ctxMembers
+                : isMockMode
+                  ? mockMembers
+                  : [],
+        [ctxMembers, isMockMode],
+    );
 
-  // Filter State
-  const [filter, setFilter] = useState<ExpenseFilter>({
-    month: getCurrentMonth(),
-    search: '',
-    categoryId: undefined,
-    payerId: undefined,
-    isShared: undefined,
-  });
+    // Filter State
+    const [filter, setFilter] = useState<ExpenseFilter>({
+        month: getCurrentMonth(),
+        search: "",
+        categoryId: undefined,
+        payerId: undefined,
+        isShared: undefined,
+    });
 
-  // Keep the default month filter on the live calendar month across rollover
-  const currentMonth = useFollowCurrentMonth(filter.month, (month) =>
-    setFilter((prev) => ({ ...prev, month })),
-  );
+    // Keep the default month filter on the live calendar month across rollover
+    const currentMonth = useFollowCurrentMonth(filter.month, (month) =>
+        setFilter((prev) => ({ ...prev, month })),
+    );
 
-  // Synchronize perspective filter if active member changes
-  useEffect(() => {
-    if (activeMember) {
-      setFilter((prev) => ({ ...prev, payerId: activeMember.id }));
-    } else {
-      setFilter((prev) => ({ ...prev, payerId: undefined }));
-    }
-  }, [activeMember]);
+    // Synchronize perspective filter if active member changes
+    useEffect(() => {
+        if (activeMember) {
+            setFilter((prev) => ({ ...prev, payerId: activeMember.id }));
+        } else {
+            setFilter((prev) => ({ ...prev, payerId: undefined }));
+        }
+    }, [activeMember]);
 
-  // TanStack Query Cached Data Hooks
-  const { data: expensesData, isLoading: expensesLoading } = useExpensesQuery(filter);
-  const { data: allExpensesData } = useAllExpensesQuery();
-  const { data: recurringItemsData } = useRecurringItemsQuery();
-  const { data: categoriesData } = useCategoriesQuery();
-  const { data: goalsData } = useGoalsQuery();
-  const { data: baseProfilesData } = useBaseProfilesQuery();
-  const { data: baseAllocationsData } = useBaseAllocationsQuery();
+    // TanStack Query Cached Data Hooks
+    const {
+        data: expensesData,
+        isLoading: expensesLoading,
+        isError: expensesError,
+        error: expensesErrorObj,
+        refetch: refetchExpenses,
+    } = useExpensesQuery(filter);
+    const { data: allExpensesData, isSuccess: allExpensesSuccess } =
+        useAllExpensesQuery();
+    const { data: recurringItemsData } = useRecurringItemsQuery();
+    const { data: categoriesData, isSuccess: categoriesSuccess } =
+        useCategoriesQuery();
+    const { data: goalsData } = useGoalsQuery();
+    const { data: baseProfilesData, isSuccess: baseProfilesSuccess } =
+        useBaseProfilesQuery();
+    const { data: baseAllocationsData, isSuccess: baseAllocationsSuccess } =
+        useBaseAllocationsQuery();
 
-  const expenses = useMemo(() => expensesData || [], [expensesData]);
-  const allExpenses = useMemo(() => allExpensesData || expensesData || [], [allExpensesData, expensesData]);
-  const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
-  const categories = useMemo(
-    () => (categoriesData && categoriesData.length > 0 ? categoriesData : mockCategories),
-    [categoriesData],
-  );
-  const goals = useMemo(() => goalsData || [], [goalsData]);
-  const baseProfiles = useMemo(
-    () => (baseProfilesData && baseProfilesData.length > 0 ? baseProfilesData : mockBaseProfiles),
-    [baseProfilesData],
-  );
-  const baseAllocations = useMemo(
-    () => (baseAllocationsData && baseAllocationsData.length > 0 ? baseAllocationsData : mockBaseAllocations),
-    [baseAllocationsData],
-  );
-  const isLoading = expensesLoading && !expensesData;
+    const expenses = useMemo(() => expensesData || [], [expensesData]);
+    const allExpenses = useMemo(
+        () => allExpensesData || expensesData || [],
+        [allExpensesData, expensesData],
+    );
+    const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
+    const categories = useMemo(
+        () =>
+            categoriesData && categoriesData.length > 0
+                ? categoriesData
+                : isMockMode
+                  ? mockCategories
+                  : [],
+        [categoriesData, isMockMode],
+    );
+    const goals = useMemo(() => goalsData || [], [goalsData]);
+    const baseProfiles = useMemo(
+        () =>
+            baseProfilesData && baseProfilesData.length > 0
+                ? baseProfilesData
+                : isMockMode
+                  ? mockBaseProfiles
+                  : [],
+        [baseProfilesData, isMockMode],
+    );
+    const baseAllocations = useMemo(
+        () =>
+            baseAllocationsData && baseAllocationsData.length > 0
+                ? baseAllocationsData
+                : isMockMode
+                  ? mockBaseAllocations
+                  : [],
+        [baseAllocationsData, isMockMode],
+    );
+    const isLoading = expensesLoading && !expensesData;
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
-  const [isSettleOpen, setIsSettleOpen] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
+    const [isSettleOpen, setIsSettleOpen] = useState<boolean>(false);
 
-  // Month-end Sweep Modal State
-  const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
-  const [sweepMonth, setSweepMonth] = useState<string>('');
-  const [sweepAmount, setSweepAmount] = useState<number>(0);
-  const [isBankSurplusModalOpen, setIsBankSurplusModalOpen] = useState<boolean>(false);
-  const [dismissedSweepMonth, setDismissedSweepMonth] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem('budget_bubby_dismissed_sweep');
-    } catch {
-      return null;
-    }
-  });
+    // Month-end Sweep Modal State
+    const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
+    const [sweepMonth, setSweepMonth] = useState<string>("");
+    const [sweepAmount, setSweepAmount] = useState<number>(0);
+    const [isBankSurplusModalOpen, setIsBankSurplusModalOpen] = useState<boolean>(false);
+    const [dismissedSweepMonth, setDismissedSweepMonth] = useState<string | null>(() => {
+        try {
+            return localStorage.getItem("budget_bubby_dismissed_sweep");
+        } catch {
+            return null;
+        }
+    });
 
-  const handleOpenSweep = (month: string, amount: number) => {
-    setSweepMonth(month);
-    setSweepAmount(amount);
-    setIsSweepModalOpen(true);
-  };
+    const handleOpenSweep = (month: string, amount: number) => {
+        setSweepMonth(month);
+        setSweepAmount(amount);
+        setIsSweepModalOpen(true);
+    };
 
-  const handleOpenBankSurplus = (month: string, amount: number) => {
-    setSweepMonth(month);
-    setSweepAmount(amount);
-    setIsBankSurplusModalOpen(true);
-  };
+    const handleOpenBankSurplus = (month: string, amount: number) => {
+        setSweepMonth(month);
+        setSweepAmount(amount);
+        setIsBankSurplusModalOpen(true);
+    };
 
-  const handleDismissSweep = (month: string) => {
-    setDismissedSweepMonth(month);
-    try {
-      localStorage.setItem('budget_bubby_dismissed_sweep', month);
-    } catch {
-      // Ignore storage errors in restricted contexts
-    }
-  };
+    const handleDismissSweep = (month: string) => {
+        setDismissedSweepMonth(month);
+        try {
+            localStorage.setItem("budget_bubby_dismissed_sweep", month);
+        } catch {
+            // Ignore storage errors in restricted contexts
+        }
+    };
 
-  const handleConfirmBankSurplus = () => {
-    if (sweepMonth) {
-      handleDismissSweep(sweepMonth);
-    }
-  };
+    const handleConfirmBankSurplus = () => {
+        if (sweepMonth) {
+            handleDismissSweep(sweepMonth);
+        }
+    };
 
-  const handleSweepComplete = async (allocations: SurplusSweepAllocation[]) => {
-    for (const alloc of allocations) {
-      const goal = goals.find((g) => g.id === alloc.goalId);
-      if (goal) {
-        await financeService.updateGoal(goal.id, {
-          saved_so_far: Math.round((goal.saved_so_far + alloc.amount) * 100) / 100,
-        });
-      }
-    }
-    await refreshHousehold();
-    if (sweepMonth) {
-      handleDismissSweep(sweepMonth);
-    }
-  };
+    const handleSweepComplete = async (allocations: SurplusSweepAllocation[]) => {
+        for (const alloc of allocations) {
+            const freshGoal = await financeService.getGoal(alloc.goalId);
+            const targetGoal = freshGoal ?? goals.find((g) => g.id === alloc.goalId);
+            if (targetGoal) {
+                await financeService.updateGoal(targetGoal.id, {
+                    saved_so_far:
+                        Math.round(
+                            (Number(targetGoal.saved_so_far) + alloc.amount) * 100,
+                        ) / 100,
+                });
+            }
+        }
+        await refreshHousehold();
+        if (sweepMonth) {
+            handleDismissSweep(sweepMonth);
+        }
+    };
 
   // Handle adding an expense
   const handleExpenseAdded = async () => {
@@ -270,104 +326,175 @@ export function ExpensesPage({ className = '', embedded = false }: ExpensesPageP
     );
   }, [allExpenses, expenses, categories, recurringItems, perspective, activeMember, filter.month, currentMonth]);
 
-  // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
-  // Same budget as Home and Budget, so the Spendable card matches them
-  const memberIds = useMemo(() => members.map((m) => m.id), [members]);
-  const { data: pacingBudget } = useBudgetDetailQuery(
-    filter.month || currentMonth,
-    perspective,
-    activeMember?.id,
-    memberIds,
-  );
+    // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
+    // Same budget as Home and Budget, so the Spendable card matches them
+    const memberIds = useMemo(() => members.map((m) => m.id), [members]);
+    const { data: pacingBudget } = useBudgetDetailQuery(
+        filter.month || currentMonth,
+        perspective,
+        activeMember?.id,
+        memberIds,
+    );
 
-  const spendablePacing = useMemo(() => {
-    return calculateSpendablePacing({
-      month: filter.month || currentMonth,
-      memberId: activeMember?.id,
-      perspective,
-      expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
-      categories,
-      baseProfiles,
-      baseAllocations,
-      monthlyBudget: pacingBudget ?? undefined,
-    });
-  }, [filter.month, currentMonth, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations, pacingBudget]);
+    const lastMonth = useMemo(() => addMonths(currentMonth, -1), [currentMonth]);
+    const { data: lastMonthBudget, isSuccess: lastMonthBudgetSuccess } =
+        useBudgetDetailQuery(lastMonth, perspective, activeMember?.id, memberIds);
 
-  // Check unspent surplus from the prior month
-  const unspentSurplusInfo = useMemo(() => {
-    return detectUnspentMonthEndSurplus({
-      currentMonth,
-      memberId: activeMember?.id,
-      perspective,
-      expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
-      categories,
-      baseProfiles,
-      baseAllocations,
-    });
-  }, [currentMonth, activeMember, perspective, allExpenses, expenses, categories, baseProfiles, baseAllocations]);
+    const spendablePacing = useMemo(() => {
+        return calculateSpendablePacing({
+            month: filter.month || currentMonth,
+            memberId: activeMember?.id,
+            perspective,
+            expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
+            categories,
+            baseProfiles,
+            baseAllocations,
+            monthlyBudget: pacingBudget ?? undefined,
+        });
+    }, [
+        filter.month,
+        currentMonth,
+        activeMember,
+        perspective,
+        allExpenses,
+        expenses,
+        categories,
+        baseProfiles,
+        baseAllocations,
+        pacingBudget,
+    ]);
 
-  const showSweepBanner =
-    unspentSurplusInfo.hasUnspentSurplus &&
-    dismissedSweepMonth !== unspentSurplusInfo.lastMonth &&
-    (!filter.month || filter.month === currentMonth);
+    const sweepQueriesReady =
+        allExpensesSuccess &&
+        categoriesSuccess &&
+        baseProfilesSuccess &&
+        baseAllocationsSuccess &&
+        lastMonthBudgetSuccess &&
+        (isMockMode || members.length > 0);
 
-  return (
-    <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
-      {/* Header Section */}
-      {!embedded ? (
-        <PageHeader
-          title="Expenses"
-          actions={
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <InboxShortcutButton />
-              <Button
-                variant="secondary"
-                aria-label="+ Bulk Add"
-                className="w-full sm:w-auto"
-                leftIcon={<ListPlus className="h-4 w-4 text-emerald-600" strokeWidth={2.5} />}
-                onClick={() => setIsBulkAddOpen(true)}
-              >
-                Bulk Add
-              </Button>
-              <Button
-                variant="primary"
-                aria-label="+ Add Expense"
-                className="hidden md:inline-flex"
-                leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
-                onClick={() => setIsModalOpen(true)}
-              >
-                Add Expense
-              </Button>
-            </div>
-          }
-        />
-      ) : (
-        <div className="flex items-center justify-end gap-2">
-          <InboxShortcutButton />
-          <Button
-            variant="secondary"
-            size="sm"
-            aria-label="+ Bulk Add"
-            className="w-full sm:w-auto"
-            leftIcon={<ListPlus className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.5} />}
-            onClick={() => setIsBulkAddOpen(true)}
-          >
-            Bulk Add
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            aria-label="+ Add Expense"
-            className="hidden md:inline-flex"
-            leftIcon={<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
-            onClick={() => setIsModalOpen(true)}
-          >
-            Add Expense
-          </Button>
-        </div>
-      )}
+    // Check unspent surplus from the prior month
+    const unspentSurplusInfo = useMemo(() => {
+        return detectUnspentMonthEndSurplus({
+            currentMonth,
+            lastMonth,
+            memberId: activeMember?.id,
+            perspective,
+            expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
+            categories,
+            baseProfiles,
+            baseAllocations,
+            monthlyBudget: lastMonthBudget ?? undefined,
+            queriesReady: sweepQueriesReady,
+        });
+    }, [
+        currentMonth,
+        lastMonth,
+        activeMember,
+        perspective,
+        allExpenses,
+        expenses,
+        categories,
+        baseProfiles,
+        baseAllocations,
+        lastMonthBudget,
+        sweepQueriesReady,
+    ]);
 
-      {/* Celebratory Month-End Sweep Notification Banner */}
+    const showSweepBanner =
+        unspentSurplusInfo.hasUnspentSurplus &&
+        dismissedSweepMonth !== unspentSurplusInfo.lastMonth &&
+        (!filter.month || filter.month === currentMonth);
+
+    return (
+        <div
+            className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}
+        >
+            {/* Header Section */}
+            {!embedded ? (
+                <PageHeader
+                    title="Expenses"
+                    actions={
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <InboxShortcutButton />
+                            <Button
+                                variant="secondary"
+                                aria-label="+ Bulk Add"
+                                className="w-full sm:w-auto"
+                                leftIcon={
+                                    <ListPlus
+                                        className="h-4 w-4 text-emerald-600"
+                                        strokeWidth={2.5}
+                                    />
+                                }
+                                onClick={() => setIsBulkAddOpen(true)}
+                            >
+                                Bulk Add
+                            </Button>
+                            <Button
+                                variant="primary"
+                                aria-label="+ Add Expense"
+                                className="hidden md:inline-flex"
+                                leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+                                onClick={() => setIsModalOpen(true)}
+                            >
+                                Add Expense
+                            </Button>
+                        </div>
+                    }
+                />
+            ) : (
+                <div className="flex items-center justify-end gap-2">
+                    <InboxShortcutButton />
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        aria-label="+ Bulk Add"
+                        className="w-full sm:w-auto"
+                        leftIcon={
+                            <ListPlus
+                                className="h-3.5 w-3.5 text-emerald-600"
+                                strokeWidth={2.5}
+                            />
+                        }
+                        onClick={() => setIsBulkAddOpen(true)}
+                    >
+                        Bulk Add
+                    </Button>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        aria-label="+ Add Expense"
+                        className="hidden md:inline-flex"
+                        leftIcon={<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Add Expense
+                    </Button>
+                </div>
+            )}
+
+            {/* Expenses Query Error Banner */}
+            {expensesError && (
+                <Alert
+                    variant="danger"
+                    title="Couldn't load expenses"
+                    action={
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => void refetchExpenses()}
+                        >
+                            Retry
+                        </Button>
+                    }
+                >
+                    {expensesErrorObj instanceof Error
+                        ? expensesErrorObj.message
+                        : "Check your connection and try again."}
+                </Alert>
+            )}
+
+            {/* Celebratory Month-End Sweep Notification Banner */}
       {showSweepBanner && (
         <MonthEndSweepBanner
           month={unspentSurplusInfo.lastMonth}

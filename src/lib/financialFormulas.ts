@@ -787,11 +787,13 @@ export interface DetectSurplusOptions {
     lastMonth?: string;
     memberId?: string;
     perspective?: Perspective;
-    expenses: Expense[];
+    expenses?: Expense[];
     categories?: Category[];
     monthlyCap?: number;
     baseProfiles?: BaseBudgetProfile[];
     baseAllocations?: BaseProfileAllocation[];
+    monthlyBudget?: MonthlyBudgetDetail | null;
+    queriesReady?: boolean;
 }
 
 /**
@@ -818,10 +820,7 @@ export function calculateSpendablePacing({
     let cap: number;
     if (monthlyCap !== undefined && monthlyCap > 0) {
         cap = monthlyCap;
-    } else if (
-        monthlyBudget?.spendableAllocated &&
-        monthlyBudget.spendableAllocated > 0
-    ) {
+    } else if (monthlyBudget?.spendableAllocated !== undefined) {
         cap = monthlyBudget.spendableAllocated;
     } else if (baseProfiles.length > 0 && baseAllocations.length > 0) {
         // Derive from base profiles & allocations
@@ -848,9 +847,9 @@ export function calculateSpendablePacing({
                 }
             }
         }
-        cap = totalCap > 0 ? totalCap : 1500;
+        cap = totalCap > 0 ? totalCap : 0;
     } else {
-        cap = 1500;
+        cap = 0;
     }
 
     // Calculate actual spendable spent this month
@@ -960,11 +959,13 @@ export function detectUnspentMonthEndSurplus({
     lastMonth,
     memberId,
     perspective = "household",
-    expenses,
+    expenses = [],
     categories = [],
     monthlyCap,
     baseProfiles,
     baseAllocations,
+    monthlyBudget,
+    queriesReady = true,
 }: DetectSurplusOptions): {
     hasUnspentSurplus: boolean;
     surplusAmount: number;
@@ -972,6 +973,42 @@ export function detectUnspentMonthEndSurplus({
 } {
     const activeCurrentMonth = currentMonth || getCurrentMonth();
     const targetLastMonth = lastMonth || addMonths(activeCurrentMonth, -1);
+
+    if (!queriesReady) {
+        return {
+            hasUnspentSurplus: false,
+            surplusAmount: 0,
+            lastMonth: targetLastMonth,
+        };
+    }
+
+    const activeProfiles =
+        baseProfiles === undefined
+            ? undefined
+            : perspective === "household" || !memberId
+              ? baseProfiles
+              : baseProfiles.filter(
+                    (p) => p.owner_id === memberId || p.id === memberId,
+                );
+
+    if (activeProfiles !== undefined && activeProfiles.length === 0) {
+        return {
+            hasUnspentSurplus: false,
+            surplusAmount: 0,
+            lastMonth: targetLastMonth,
+        };
+    }
+
+    if (monthlyBudget?.spendableRemaining !== undefined) {
+        const remaining =
+            Math.round(Number(monthlyBudget.spendableRemaining) * 100) / 100;
+        const hasUnspentSurplus = remaining > 0;
+        return {
+            hasUnspentSurplus,
+            surplusAmount: hasUnspentSurplus ? remaining : 0,
+            lastMonth: targetLastMonth,
+        };
+    }
 
     const pastPacing = calculateSpendablePacing({
         month: targetLastMonth,
@@ -983,6 +1020,7 @@ export function detectUnspentMonthEndSurplus({
         monthlyCap,
         baseProfiles,
         baseAllocations,
+        monthlyBudget,
     });
 
     const hasUnspentSurplus = pastPacing.spendableRemaining > 0;

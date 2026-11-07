@@ -20,7 +20,7 @@ import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
 import { CategoryBadge } from "../ui/CategoryBadge";
 import { Card } from "../ui/Card";
-import { financeService } from "../../services/financeService";
+import { financeService, isMockModeActive } from "../../services/financeService";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { feedback } from "../../lib/delight/feedback";
@@ -42,9 +42,12 @@ export function DeleteExpenseModal({
     onClose,
     expense,
     onDeleted,
-    categories = mockCategories,
-    members = mockMembers,
+    categories: propCategories,
+    members: propMembers,
 }: DeleteExpenseModalProps) {
+    const isMock = isMockModeActive();
+    const categories = propCategories ?? (isMock ? mockCategories : []);
+    const members = propMembers ?? (isMock ? mockMembers : []);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

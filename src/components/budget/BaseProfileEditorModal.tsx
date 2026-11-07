@@ -27,7 +27,7 @@ import {
     Sliders,
     ArrowUpRight,
 } from "lucide-react";
-import { financeService } from "../../services/financeService";
+import { financeService, isMockModeActive } from "../../services/financeService";
 import {
     AnimatedModal,
     ModalHeader,
@@ -85,7 +85,7 @@ export function BaseProfileEditorModal({
     onClose,
     profile,
     allocations,
-    categories = mockCategories,
+    categories: propCategories,
     members = [],
     recurringItems,
     initialTaxes = 0,
@@ -99,6 +99,10 @@ export function BaseProfileEditorModal({
     onManageRecurring,
     className = "",
 }: BaseProfileEditorModalProps) {
+    const categories = useMemo(
+        () => propCategories ?? (isMockModeActive() ? mockCategories : []),
+        [propCategories],
+    );
     const titleId = useId();
 
     // Local categories list synced with prop

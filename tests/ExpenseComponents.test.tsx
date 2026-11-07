@@ -335,10 +335,15 @@ describe('ExpenseFilterBar', () => {
       />
     );
 
-    // Type in search
+    // Type in search (debounced by 250ms)
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: 'FairPrice' } });
-    expect(onFilterChange).toHaveBeenCalled();
+    expect(onFilterChange).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onFilterChange).toHaveBeenCalledWith(
+        expect.objectContaining({ search: 'FairPrice' })
+      );
+    });
 
     // Change category dropdown
     const categorySelect = screen.getByLabelText(/category/i);
