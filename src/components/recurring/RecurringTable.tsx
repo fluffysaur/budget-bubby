@@ -37,6 +37,7 @@ export interface RecurringTableProps {
     recurringItems: RecurringItem[];
     onEdit?: (recurringItem: RecurringItem) => void;
     onDelete?: (itemId: string) => void;
+    isDeleting?: boolean;
     /** Shown as the empty-state CTA when there are no items at all */
     onAdd?: () => void;
     className?: string;
@@ -57,6 +58,7 @@ export function RecurringTable({
     recurringItems,
     onEdit,
     onDelete,
+    isDeleting = false,
     onAdd,
     className = "",
     referenceDate,
@@ -446,10 +448,11 @@ export function RecurringTable({
                                                     <button
                                                         type="button"
                                                         aria-label={`Delete ${recurringItem.name}`}
+                                                        disabled={isDeleting}
                                                         onClick={() =>
                                                             onDelete(recurringItem.id)
                                                         }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                                                         title="Delete recurring item"
                                                     >
                                                         <Trash2 className="w-4 h-4" />

@@ -28,7 +28,7 @@ import {
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PinLoginScreen } from './components/auth/PinLoginScreen';
 import { isSupabaseConfigured } from './services/supabaseClient';
-import { useCategoriesQuery } from './hooks/useFinanceQueries';
+import { useCategoriesQuery, useInvalidateFinance } from './hooks/useFinanceQueries';
 import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { AppHeader } from './components/layout/AppHeader';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
@@ -150,12 +150,13 @@ function AppLayoutInner() {
 
   // Inbox count for the Spend badges and the app icon badge
   const inboxCount = useInboxBadge();
+  const { invalidateExpenses } = useInvalidateFinance();
 
   const handleExpenseAdded = useCallback(
-    async (_newExpense: Expense) => {
-      await refreshData();
+    (_newExpense: Expense) => {
+      invalidateExpenses();
     },
-    [refreshData]
+    [invalidateExpenses]
   );
 
   // Keyboard shortcut: Press 'c' to open Quick Add modal (when not focused in inputs)

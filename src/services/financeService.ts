@@ -190,7 +190,7 @@ function invalidateInboxCache() {
 }
 
 function invalidateFinanceCache() {
-  if (!offlineSyncQueue.isOnline() && !isMockModeActive()) {
+  if (!offlineSyncQueue.isOnline()) {
     return;
   }
   try {
@@ -274,7 +274,7 @@ export const financeService: FinanceService = {
           : offlineSyncQueue.addExpense(expense)
     );
     const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
-    if (!queuedOffline || isMockModeActive()) {
+    if (!queuedOffline) {
       invalidateFinanceCache();
     }
     return res;
@@ -288,7 +288,7 @@ export const financeService: FinanceService = {
       res = await offlineSyncQueue.updateExpense(id, updates);
     }
     const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
-    if (!queuedOffline || isMockModeActive()) {
+    if (!queuedOffline) {
       invalidateFinanceCache();
     }
     return res;
@@ -304,7 +304,7 @@ export const financeService: FinanceService = {
           : offlineSyncQueue.bulkAddExpenses(expenses)
     );
     const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
-    if (!queuedOffline || isMockModeActive()) {
+    if (!queuedOffline) {
       invalidateFinanceCache();
     }
     return res;
@@ -317,7 +317,7 @@ export const financeService: FinanceService = {
       await offlineSyncQueue.deleteExpense(id);
     }
     const queuedOffline = offlineSyncQueue.getPendingSyncCount() > beforePending;
-    if (!queuedOffline || isMockModeActive()) {
+    if (!queuedOffline) {
       invalidateFinanceCache();
     }
   },

@@ -10,10 +10,13 @@ export const queryClient = new QueryClient({
         queries: {
             staleTime: 5 * 60 * 1000, // 5 minutes in-memory freshness
             gcTime: 30 * 60 * 1000, // 30 minutes garbage collection time
-            refetchOnWindowFocus: false, // Don't randomly refetch on tab switch
+            refetchOnWindowFocus: true, // Refresh stale data when returning to app
             refetchOnMount: false, // Use cached data immediately when navigating back to a page
             refetchOnReconnect: true,
             retry: 1,
+        },
+        mutations: {
+            networkMode: "always",
         },
     },
 });

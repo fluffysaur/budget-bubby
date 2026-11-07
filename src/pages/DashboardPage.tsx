@@ -66,7 +66,11 @@ export function DashboardPage({
     // TanStack Query Cached Data Hooks
     const { data: recurringItemsData } = useRecurringItemsQuery();
     // Combined view shows the household total, same as Budget
-    const { data: budgetData, isLoading: budgetLoading } = useBudgetDetailQuery(
+    const {
+        data: budgetData,
+        isLoading: budgetLoading,
+        isPlaceholderData: budgetPlaceholder,
+    } = useBudgetDetailQuery(
         currentMonth,
         perspective,
         activeMember?.id,
@@ -145,7 +149,7 @@ export function DashboardPage({
             {isLoading ? (
                 <DashboardSkeleton />
             ) : (
-                <>
+                <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
                     {/* Most urgent category limit alert */}
                     <CategoryLimitWarningBanner
                         single
@@ -272,7 +276,7 @@ export function DashboardPage({
                         recurringItems={recurringItems}
                         onViewAll={() => onNavigateTab?.("recurring")}
                     />
-                </>
+                </div>
             )}
         </div>
     );

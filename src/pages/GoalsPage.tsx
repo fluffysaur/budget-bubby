@@ -32,6 +32,7 @@ import {
     useGoalsQuery,
     useExpensesQuery,
     useCategoriesQuery,
+    useInvalidateFinance,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
 import { GoalCard } from "../components/goals/GoalCard";
@@ -57,8 +58,8 @@ export function GoalsPage({
         activeMember,
         overview,
         members: ctxMembers,
-        refreshData: refreshHousehold,
     } = useHousehold();
+    const { invalidateGoals, invalidateExpenses } = useInvalidateFinance();
 
     // Cached TanStack Queries
     const {
@@ -280,15 +281,16 @@ export function GoalsPage({
     };
 
     const handleGoalSaved = async () => {
-        await refreshHousehold();
+        invalidateGoals();
     };
 
     const handleDepositSaved = async () => {
-        await refreshHousehold();
+        invalidateGoals();
     };
 
     const handleSpendSaved = async () => {
-        await refreshHousehold();
+        invalidateGoals();
+        invalidateExpenses();
     };
 
     return (

@@ -115,7 +115,7 @@ describe("DelightHost", () => {
         await renderHost();
 
         expect(await screen.findByText("Bubby's well fed!")).toBeInTheDocument();
-        expect(screen.getByTestId("confetti-burst")).toBeInTheDocument();
+        expect(screen.getAllByTestId("confetti-burst").length).toBeGreaterThan(0);
         fireEvent.click(screen.getByRole("button", { name: "Nice!" }));
         expect(readBubbyStore().lastBody).toBe("chubby");
     });

@@ -29,6 +29,7 @@ import {
     useAccountsQuery,
     useAccountSnapshotsQuery,
     useCreditCardStatementsQuery,
+    useInvalidateFinance,
 } from "../hooks/useFinanceQueries";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { financeService } from "../services/financeService";
@@ -59,8 +60,8 @@ export function AccountsPage({
         perspective,
         activeMember,
         members,
-        refreshData: refreshHousehold,
     } = useHousehold();
+    const { invalidateAccounts } = useInvalidateFinance();
 
     const [activeTab, setActiveTab] = useState<"accounts" | "credit_cards">(
         defaultTab,
@@ -110,7 +111,7 @@ export function AccountsPage({
     };
 
     const handleBalanceUpdated = async () => {
-        await refreshHousehold();
+        invalidateAccounts();
     };
 
     // Handler for inline balance edit from AccountGroupList
@@ -120,7 +121,7 @@ export function AccountsPage({
     ) => {
         try {
             await financeService.updateAccountBalance(accountId, newBalance);
-            await refreshHousehold();
+            invalidateAccounts();
         } catch (err) {
             console.error("Failed to update inline balance:", err);
         }
@@ -276,7 +277,7 @@ export function AccountsPage({
                 defaultOwnerId={activeMember?.id}
                 isInitialSetup={accounts.length === 0}
                 onAccountCreated={async () => {
-                    await refreshHousehold();
+                    invalidateAccounts();
                 }}
             />
 
@@ -290,7 +291,7 @@ export function AccountsPage({
                 account={accountToEdit}
                 members={members}
                 onAccountUpdated={async () => {
-                    await refreshHousehold();
+                    invalidateAccounts();
                 }}
             />
 
@@ -303,7 +304,7 @@ export function AccountsPage({
                 }}
                 account={accountToDelete}
                 onAccountDeleted={async () => {
-                    await refreshHousehold();
+                    invalidateAccounts();
                 }}
             />
         </div>
