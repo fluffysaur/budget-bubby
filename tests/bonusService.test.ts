@@ -181,6 +181,22 @@ describe("supabaseFinanceService bonus log", () => {
         expect(update).toHaveBeenCalledWith({ id: BUDGET_ID, gross_salary: 7000 });
     });
 
+    it("uses the atomic increment RPC when a goal balance changes", async () => {
+        const client = installClient({
+            savings_goals: {
+                data: { id: GOAL, target_amount: 10000, saved_so_far: 0, target_date: "2027-12-31", monthly_contribution: 0 },
+                error: null,
+            },
+        });
+
+        await supabaseFinanceService.updateGoal(GOAL, { saved_so_far: 3200 });
+
+        expect(client.rpc).toHaveBeenCalledWith("increment_goal_saved", {
+            p_goal_id: GOAL,
+            p_amount: 3200,
+        });
+    });
+
     it("saves through the RPC and refreshes goal status", async () => {
         const client = installClient({
             households: { data: { id: "hh-uuid" }, error: null },

@@ -1536,14 +1536,37 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       merged.monthly_contribution
     );
 
-    const { data, error } = await client
-      .from('savings_goals')
-      .update({ ...updates, status: pacing.status })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data as SavingsGoal;
+    const savedSoFarBefore = Number(existing.saved_so_far ?? 0);
+    const savedSoFarRequested = updates.saved_so_far !== undefined ? Number(updates.saved_so_far) : undefined;
+    const hasAtomicSaveDelta =
+      savedSoFarRequested !== undefined &&
+      Number.isFinite(savedSoFarRequested) &&
+      savedSoFarRequested !== savedSoFarBefore;
+
+    const finalUpdates: Record<string, unknown> = { ...updates };
+    if (hasAtomicSaveDelta) {
+      const delta = Math.round((savedSoFarRequested - savedSoFarBefore) * 100) / 100;
+      const { error: incrementError } = await client.rpc('increment_goal_saved', {
+        p_goal_id: id,
+        p_amount: delta,
+      });
+      if (incrementError) throw incrementError;
+      delete finalUpdates.saved_so_far;
+    }
+
+    if (Object.keys(finalUpdates).length > 0 || hasAtomicSaveDelta) {
+      finalUpdates.status = pacing.status;
+      const { data, error } = await client
+        .from('savings_goals')
+        .update(finalUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as SavingsGoal;
+    }
+
+    return existing as SavingsGoal;
   }
 
   public async getRecurringItems(): Promise<RecurringItem[]> {
