@@ -17,6 +17,12 @@ test.describe('Mobile Viewport & Bottom Navigation', () => {
     const bottomNav = page.getByRole('navigation', { name: 'Mobile Navigation' });
     await expect(bottomNav).toBeVisible();
 
+    // Ensure bottom nav bounding box sits completely within the 390x844 viewport
+    const box = await bottomNav.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+
     // Centered Quick Add FAB should be visible
     const quickAddFab = bottomNav.getByRole('button', { name: 'Quick Add' });
     await expect(quickAddFab).toBeVisible();

@@ -135,7 +135,7 @@ export function DesktopSidebar({
                 key={item.id}
                 type="button"
                 onClick={() => onSelectTab?.(item.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-press cursor-pointer ${
                     isActive
                         ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-extrabold"
                         : "text-(--text-muted) hover:bg-(--bg-cream) hover:text-(--text-ink)"
@@ -202,7 +202,7 @@ export function DesktopSidebar({
                         onClick={handleOpenSettings}
                         aria-label="Settings"
                         title="Settings"
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                     >
                         <Settings
                             className="h-4 w-4 text-(--text-ink)"
@@ -216,7 +216,7 @@ export function DesktopSidebar({
                         onClick={toggleTheme}
                         aria-label={`Toggle theme (currently ${theme})`}
                         title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                     >
                         {theme === "dark" ? (
                             <Sun
@@ -238,7 +238,7 @@ export function DesktopSidebar({
                         disabled={isRefreshing}
                         aria-label="Refresh"
                         title="Refresh data from database"
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
                     >
                         <RotateCw
                             className={`h-4 w-4 ${isRefreshing ? "animate-spin text-purple-700 dark:text-(--pastel-lilac)" : ""}`}
@@ -253,7 +253,7 @@ export function DesktopSidebar({
                             onClick={() => setIsLogoutConfirmOpen(true)}
                             aria-label="Lock Budget Bubby"
                             title="Lock / Sign Out"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-cute-sm transition-all hover:bg-(--pastel-coral-light) hover:text-rose-800 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-cute-sm transition-press hover:bg-(--pastel-coral-light) hover:text-rose-800 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
                         >
                             <LogOut className="h-4 w-4" strokeWidth={2.5} />
                         </button>

@@ -36,6 +36,7 @@ import {
 } from '../src/lib/notificationScheduler';
 import { getDefaultNotificationPreferences } from '../src/data/mockSeedData';
 import { isSoundEffectsEnabled } from '../src/lib/soundEffects';
+import * as pushSubscriptionModule from '../src/lib/pushSubscription';
 import { getTodayDateString, getCurrentMonth } from '../src/lib/dateUtils';
 import { mockFinanceService } from '../src/services/mockFinanceService';
 import type {
@@ -68,6 +69,7 @@ describe('Notifications Engine', () => {
     localStorage.clear();
     sessionStorage.clear();
     vi.restoreAllMocks();
+    mockFinanceService.resetData();
     // Empty demo inbox: a pending inbox replaces the daily check-in nudge
     mockFinanceService.inbox.setItems([]);
   });
@@ -465,7 +467,7 @@ describe('Notifications Engine', () => {
       expect(after.find((r) => r.id === checkin!.id)).toBeUndefined();
     });
 
-    it('prompts initial notification permission on first launch', async () => {
+    it('does not request notification permission on mount and only prompts from an explicit button tap', async () => {
       const requestMock = vi.fn().mockResolvedValue('granted');
       Object.defineProperty(window, 'Notification', {
         value: {
@@ -477,14 +479,83 @@ describe('Notifications Engine', () => {
       });
 
       const perm = await checkAndPromptInitialNotificationPermission();
-      expect(perm).toBe('granted');
-      expect(requestMock).toHaveBeenCalledTimes(1);
-
-      // Second run does not prompt again
-      requestMock.mockClear();
-      const secondPerm = await checkAndPromptInitialNotificationPermission();
-      expect(secondPerm).toBe('default');
+      expect(perm).toBe('default');
       expect(requestMock).not.toHaveBeenCalled();
+      expect(localStorage.getItem('bb_notif_initial_prompted')).toBeNull();
+
+      renderWithProviders(<NotificationCenterPopover />);
+      const bellBtn = await screen.findByTestId('notification-bell-btn');
+      expect(requestMock).not.toHaveBeenCalled();
+      expect(localStorage.getItem('bb_notif_initial_prompted')).toBeNull();
+
+      await act(async () => {
+        fireEvent.click(bellBtn);
+      });
+
+      const enableBtn = await screen.findByTestId('enable-push-notifications-btn');
+      await act(async () => {
+        fireEvent.click(enableBtn);
+      });
+
+      expect(requestMock).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem('bb_notif_initial_prompted')).toBe('true');
+    });
+
+    it('uses logged-in member (me.id) for push sync, claims, read/dismiss state, and No Spend check-in in Combined view', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date('2026-10-29T19:00:00+08:00'));
+
+      const syncSpy = vi.spyOn(pushSubscriptionModule, 'syncPushSubscription').mockResolvedValue();
+      vi.spyOn(financeService, 'getDailyCheckins').mockResolvedValue([
+        { id: 'old', household_id: 'hh-00000000-0001', member_id: 'mem-00000000-0011', checkin_date: '2026-10-25', type: 'expense' },
+      ]);
+      vi.spyOn(financeService, 'getExpenses').mockResolvedValue([]);
+      vi.spyOn(financeService, 'getAllAccountSnapshots').mockResolvedValue([]);
+      const markReadSpy = vi.spyOn(financeService, 'markNotificationsRead');
+      const dismissSpy = vi.spyOn(financeService, 'dismissNotification');
+      const recordSpy = vi.spyOn(financeService, 'recordDailyCheckin').mockResolvedValue({
+        id: 'chk-rachel',
+        household_id: 'hh-00000000-0001',
+        member_id: 'mem-00000000-0012',
+        checkin_date: getTodayDateString(),
+        type: 'no_spend',
+      });
+
+      render(
+        <MemoryRouter>
+          <AuthProvider initialAuthenticated={true} initialPartner="rachel">
+            <HouseholdProvider defaultPerspective="household">
+              <NotificationCenterPopover />
+            </HouseholdProvider>
+          </AuthProvider>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(syncSpy).toHaveBeenCalledWith('mem-00000000-0012', expect.any(Boolean));
+      });
+
+      const bellBtn = await screen.findByTestId('notification-bell-btn');
+      await screen.findByTestId('notification-badge-count');
+
+      await act(async () => {
+        fireEvent.click(bellBtn);
+      });
+
+      await waitFor(() => {
+        expect(markReadSpy).toHaveBeenCalledWith('mem-00000000-0012', expect.any(Array));
+      });
+
+      const noSpendBtn = await screen.findByTestId('reminder-action-no-spend');
+      await act(async () => {
+        fireEvent.click(noSpendBtn);
+      });
+
+      expect(recordSpy).toHaveBeenCalledWith('mem-00000000-0012', getTodayDateString(), 'no_spend');
+      expect(dismissSpy).toHaveBeenCalledWith(
+        'mem-00000000-0012',
+        expect.objectContaining({ type: 'daily_checkin' })
+      );
     });
   });
 
@@ -1071,6 +1142,77 @@ describe('Notifications Engine', () => {
         JSON.stringify({ sound_enabled: true })
       );
       expect(isSoundEffectsEnabled()).toBe(true);
+    });
+
+    it('lets user type 65 into budget warning % without mid-typing clamping and saves on blur or Enter', async () => {
+      const updateSpy = vi.spyOn(financeService, 'updateNotificationPreferences');
+      renderWithProviders(
+        <NotificationSettingsModal isOpen={true} onClose={vi.fn()} memberId="mem-00000000-0011" />
+      );
+
+      const input = await screen.findByTestId('input-budget-warning-pct');
+      expect(input).toHaveValue(80);
+      updateSpy.mockClear();
+
+      // Clear and type "6" then "65"
+      fireEvent.change(input, { target: { value: '' } });
+      fireEvent.change(input, { target: { value: '6' } });
+      expect(input).toHaveValue(6);
+      fireEvent.change(input, { target: { value: '65' } });
+      expect(input).toHaveValue(65);
+      expect(updateSpy).not.toHaveBeenCalled();
+
+      // Save on blur
+      await act(async () => {
+        fireEvent.blur(input);
+      });
+      expect(input).toHaveValue(65);
+      expect(updateSpy).toHaveBeenCalledWith(
+        'mem-00000000-0011',
+        expect.objectContaining({ budget_warning_pct: 65 })
+      );
+
+      // Clamp and save on Enter
+      updateSpy.mockClear();
+      fireEvent.change(input, { target: { value: '30' } });
+      expect(input).toHaveValue(30);
+      await act(async () => {
+        fireEvent.keyDown(input, { key: 'Enter' });
+      });
+      expect(input).toHaveValue(50);
+      expect(updateSpy).toHaveBeenCalledWith(
+        'mem-00000000-0011',
+        expect.objectContaining({ budget_warning_pct: 50 })
+      );
+    });
+
+    it('hides the Haptic Feedback row when navigator.vibrate is missing', async () => {
+      const originalNavigator = window.navigator;
+      const navWithoutVibrate = Object.create(
+        Object.getPrototypeOf(originalNavigator),
+        Object.getOwnPropertyDescriptors(originalNavigator)
+      );
+      delete (navWithoutVibrate as { vibrate?: unknown }).vibrate;
+      Object.defineProperty(window, 'navigator', {
+        value: navWithoutVibrate,
+        configurable: true,
+        writable: true,
+      });
+
+      try {
+        renderWithProviders(
+          <NotificationSettingsModal isOpen={true} onClose={vi.fn()} memberId="mem-00000000-0011" />
+        );
+        expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+        expect(screen.queryByTestId('toggle-haptics-enabled')).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Haptic Feedback' })).not.toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, 'navigator', {
+          value: originalNavigator,
+          configurable: true,
+          writable: true,
+        });
+      }
     });
   });
 

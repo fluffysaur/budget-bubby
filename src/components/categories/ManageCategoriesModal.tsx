@@ -608,7 +608,7 @@ export function ManageCategoriesModal({
                                                                 : `Lock category`
                                                         }
                                                         data-testid={`manage-lock-${cat.id}`}
-                                                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                                        className={`p-1.5 rounded-lg border transition-press cursor-pointer ${
                                                             isLocked
                                                                 ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-600 dark:text-amber-400"
                                                                 : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200"
@@ -845,7 +845,7 @@ export function ManageCategoriesModal({
                                                             setIcon(item.id)
                                                         }
                                                         title={item.label}
-                                                        className={`p-2 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
+                                                        className={`p-2 rounded-xl flex flex-col items-center justify-center border transition-press cursor-pointer ${
                                                             isSelected
                                                                 ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
                                                                 : "border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"

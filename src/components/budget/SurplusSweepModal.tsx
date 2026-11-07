@@ -275,7 +275,7 @@ export function SurplusSweepModal({
                         <button
                             type="button"
                             onClick={() => handleModeSwitch("fixed")}
-                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-press ${
                                 mode === "fixed"
                                     ? "bg-(--border-ink) text-white"
                                     : "text-(--text-muted) hover:text-(--text-ink)"
@@ -286,7 +286,7 @@ export function SurplusSweepModal({
                         <button
                             type="button"
                             onClick={() => handleModeSwitch("percent")}
-                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-press ${
                                 mode === "percent"
                                     ? "bg-(--border-ink) text-white"
                                     : "text-(--text-muted) hover:text-(--text-ink)"
@@ -327,7 +327,7 @@ export function SurplusSweepModal({
                             return (
                                 <div
                                     key={goal.id}
-                                    className={`rounded-xl border-2 transition-all p-3 ${
+                                    className={`rounded-xl border-2 transition-colors p-3 ${
                                         isSelected
                                             ? "border-(--border-ink) bg-(--bg-card) shadow-cute-sm"
                                             : "border-(--border-subtle) bg-(--bg-cream) opacity-60"
@@ -338,7 +338,7 @@ export function SurplusSweepModal({
                                         <button
                                             type="button"
                                             onClick={() => handleToggleGoal(goal.id)}
-                                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
+                                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
                                                 isSelected
                                                     ? "border-(--border-ink) bg-(--accent-lilac) text-(--text-ink)"
                                                     : "border-slate-300 bg-white"

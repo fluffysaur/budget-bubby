@@ -157,7 +157,7 @@ export function RecurringTable({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search name or notes..."
-                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-all"
+                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-press"
                     />
                     {searchTerm && (
                         <button
@@ -436,7 +436,7 @@ export function RecurringTable({
                                                         onClick={() =>
                                                             onEdit(recurringItem)
                                                         }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                                         title="Edit recurring item"
                                                     >
                                                         <Pencil className="w-4 h-4" />
@@ -449,7 +449,7 @@ export function RecurringTable({
                                                         onClick={() =>
                                                             onDelete(recurringItem.id)
                                                         }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                                         title="Delete recurring item"
                                                     >
                                                         <Trash2 className="w-4 h-4" />

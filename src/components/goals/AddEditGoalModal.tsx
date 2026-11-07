@@ -230,7 +230,7 @@ export function AddEditGoalModal({
                                     type="button"
                                     aria-label={p.label}
                                     onClick={() => setEmoji(p.emoji)}
-                                    className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                                    className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-press cursor-pointer ${
                                         emoji === p.emoji
                                             ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                             : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"

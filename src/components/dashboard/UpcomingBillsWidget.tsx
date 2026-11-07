@@ -84,7 +84,7 @@ export function UpcomingBillsWidget({
                     <button
                         type="button"
                         onClick={onViewAll}
-                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                     >
                         <span>View All</span>
                         <ChevronRight
@@ -117,7 +117,7 @@ export function UpcomingBillsWidget({
                             return (
                                 <div
                                     key={recurringItem.id}
-                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-all hover:bg-(--bg-card)"
+                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)"
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">

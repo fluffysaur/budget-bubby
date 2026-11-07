@@ -15,6 +15,7 @@ import {
     checkContainerDirty,
     findScrollableAncestor,
 } from "../../lib/domUtils";
+import { prefersReducedMotion } from "../../lib/motion";
 
 const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -528,9 +529,10 @@ export function AnimatedModal({
                               transform: isSlidingOut
                                   ? "translate3d(0, 100%, 0)"
                                   : `translate3d(0, ${dragTranslateY}px, 0)`,
-                              transition: isDragging
-                                  ? "none"
-                                  : "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
+                              transition:
+                                  isDragging || prefersReducedMotion()
+                                      ? "none"
+                                      : "transform var(--duration-base) var(--ease-out-soft)",
                           }
                         : undefined
                 }
@@ -689,7 +691,7 @@ export function ModalHeader({
                     type="button"
                     onClick={handleClose}
                     aria-label={closeAriaLabel}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                 >
                     <X className="h-4 w-4" />
                 </button>
