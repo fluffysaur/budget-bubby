@@ -29,6 +29,7 @@ import {
   useBaseAllocationsQuery,
   useRecurringItemsQuery,
   useBudgetDetailQuery,
+  useInvalidateFinance,
 } from '../hooks/useFinanceQueries';
 import { financeService } from '../services/financeService';
 import { formatSGD } from '../lib/currency';
@@ -57,7 +58,8 @@ export interface BudgetPageProps {
 }
 
 export function BudgetPage({ className = '', embedded = false, onNavigateTab }: BudgetPageProps) {
-  const { perspective, activeMember, members, overview, isMockMode, refreshData: refreshHousehold } = useHousehold();
+  const { perspective, activeMember, members, overview, isMockMode } = useHousehold();
+  const { invalidateBudget, invalidateCategories } = useInvalidateFinance();
 
   // State
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
@@ -92,7 +94,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
 
   // Combined household budget in the Combined view, otherwise the member's budget
   const memberIds = useMemo(() => members.map((m) => m.id), [members]);
-  const { data: budgetDetailData, isLoading: budgetLoading } = useBudgetDetailQuery(
+  const {
+    data: budgetDetailData,
+    isLoading: budgetLoading,
+    isPlaceholderData: budgetPlaceholder,
+  } = useBudgetDetailQuery(
     selectedMonth,
     perspective,
     activeMember?.id,
@@ -166,11 +172,11 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
   }, [baseAllocations, activeProfile, categories]);
 
   const handleProfileSaved = async () => {
-    await refreshHousehold();
+    invalidateBudget();
   };
 
   const handleCategoriesChanged = async () => {
-    await refreshHousehold();
+    invalidateCategories();
   };
 
   // Split categories into Spendable (Food, Lifestyle, Transport, Buffer) vs Wealth/Fixed Allocations (Investments, Savings, Tithing)
@@ -240,31 +246,32 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
       <CategoryLimitWarningBanner categories={budgetDetail?.categories || []} />
 
       {/* High-Level Budget Hero Card */}
-      <StatCard
-        title={totalRemaining < 0 ? 'Over' : 'Left'}
-        loading={isLoading}
-        value={<CurrencyText formatted={formatSGD(Math.abs(totalRemaining), { showCents: false })} />}
-        badge={
-          totalRemaining < 0 ? (
-            <Badge variant="over">Over</Badge>
-          ) : (
-            <Badge variant="ok">On Track</Badge>
-          )
-        }
-        tooltip={`Take-home pool of ${formatSGD(disposablePool)} minus ${formatSGD(totalSpent)} spent.`}
-        icon={<Wallet className="h-4 w-4" />}
-        iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-        footer={
-          disposablePool > 0 ? (
-            <MeterBar
-              value={totalSpent}
-              max={disposablePool}
-              size="md"
-              aria-label="Monthly budget spent"
-            />
-          ) : undefined
-        }
-      />
+      <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
+        <StatCard
+          title={totalRemaining < 0 ? 'Over' : 'Left'}
+          loading={isLoading}
+          value={<CurrencyText formatted={formatSGD(Math.abs(totalRemaining), { showCents: false })} />}
+          badge={
+            totalRemaining < 0 ? (
+              <Badge variant="over">Over</Badge>
+            ) : (
+              <Badge variant="ok">On Track</Badge>
+            )
+          }
+          tooltip={`Take-home pool of ${formatSGD(disposablePool)} minus ${formatSGD(totalSpent)} spent.`}
+          icon={<Wallet className="h-4 w-4" />}
+          iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+          footer={
+            disposablePool > 0 ? (
+              <MeterBar
+                value={totalSpent}
+                max={disposablePool}
+                size="md"
+                aria-label="Monthly budget spent"
+              />
+            ) : undefined
+          }
+        />
 
       {/* Loading Indicator */}
       {isLoading ? (
@@ -357,6 +364,7 @@ export function BudgetPage({ className = '', embedded = false, onNavigateTab }: 
           </CollapsibleSection>
         </>
       )}
+      </div>
 
       {/* Unified Budget & Categories Editor Modal */}
       {activeProfile && (

@@ -33,6 +33,8 @@ import { Input } from "../ui/Input";
 import { CategoryModeToggle } from "./CategoryModeToggle";
 import { Alert } from "../ui/Alert";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { m, AnimatePresence } from "motion/react";
+import { listItem } from "../../lib/motion";
 import type {
     Category,
     CategoryGroup,
@@ -964,66 +966,69 @@ export function ManageCategoriesModal({
                                                     </span>
                                                 </h4>
                                                 <div className="space-y-1.5">
-                                                    {spendableCategories.map(
-                                                        (cat) => {
-                                                            const IconComp =
-                                                                getIconComponent(
-                                                                    cat.icon,
-                                                                );
-                                                            return (
-                                                                <div
-                                                                    key={cat.id}
-                                                                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div
-                                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
-                                                                            style={{
-                                                                                backgroundColor:
-                                                                                    cat.color ||
-                                                                                    "#64748B",
-                                                                            }}
-                                                                        >
-                                                                            <IconComp className="h-4 w-4" />
+                                                    <AnimatePresence initial={false}>
+                                                        {spendableCategories.map(
+                                                            (cat) => {
+                                                                const IconComp =
+                                                                    getIconComponent(
+                                                                        cat.icon,
+                                                                    );
+                                                                return (
+                                                                    <m.div
+                                                                        key={cat.id}
+                                                                        {...listItem}
+                                                                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div
+                                                                                className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                                                                                style={{
+                                                                                    backgroundColor:
+                                                                                        cat.color ||
+                                                                                        "#64748B",
+                                                                                }}
+                                                                            >
+                                                                                <IconComp className="h-4 w-4" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                                                    {
+                                                                                        cat.name
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
-                                                                        <div>
-                                                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                                {
-                                                                                    cat.name
+                                                                        <div className="flex items-center gap-1">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleOpenEdit(
+                                                                                        cat,
+                                                                                    )
                                                                                 }
-                                                                            </span>
+                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                title="Edit Category"
+                                                                            >
+                                                                                <Pencil className="h-3.5 w-3.5" />
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    setDeletingCategory(
+                                                                                        cat,
+                                                                                    )
+                                                                                }
+                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                title="Delete Category"
+                                                                            >
+                                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                            </button>
                                                                         </div>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                handleOpenEdit(
-                                                                                    cat,
-                                                                                )
-                                                                            }
-                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                                            title="Edit Category"
-                                                                        >
-                                                                            <Pencil className="h-3.5 w-3.5" />
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                setDeletingCategory(
-                                                                                    cat,
-                                                                                )
-                                                                            }
-                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                                            title="Delete Category"
-                                                                        >
-                                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        },
-                                                    )}
+                                                                    </m.div>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </AnimatePresence>
                                                 </div>
                                             </div>
 
@@ -1044,66 +1049,69 @@ export function ManageCategoriesModal({
                                                     </span>
                                                 </h4>
                                                 <div className="space-y-1.5">
-                                                    {allocationCategories.map(
-                                                        (cat) => {
-                                                            const IconComp =
-                                                                getIconComponent(
-                                                                    cat.icon,
-                                                                );
-                                                            return (
-                                                                <div
-                                                                    key={cat.id}
-                                                                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div
-                                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
-                                                                            style={{
-                                                                                backgroundColor:
-                                                                                    cat.color ||
-                                                                                    "#64748B",
-                                                                            }}
-                                                                        >
-                                                                            <IconComp className="h-4 w-4" />
+                                                    <AnimatePresence initial={false}>
+                                                        {allocationCategories.map(
+                                                            (cat) => {
+                                                                const IconComp =
+                                                                    getIconComponent(
+                                                                        cat.icon,
+                                                                    );
+                                                                return (
+                                                                    <m.div
+                                                                        key={cat.id}
+                                                                        {...listItem}
+                                                                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div
+                                                                                className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                                                                                style={{
+                                                                                    backgroundColor:
+                                                                                        cat.color ||
+                                                                                        "#64748B",
+                                                                                }}
+                                                                            >
+                                                                                <IconComp className="h-4 w-4" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                                                    {
+                                                                                        cat.name
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
-                                                                        <div>
-                                                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                                {
-                                                                                    cat.name
+                                                                        <div className="flex items-center gap-1">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleOpenEdit(
+                                                                                        cat,
+                                                                                    )
                                                                                 }
-                                                                            </span>
+                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                title="Edit Category"
+                                                                            >
+                                                                                <Pencil className="h-3.5 w-3.5" />
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    setDeletingCategory(
+                                                                                        cat,
+                                                                                    )
+                                                                                }
+                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                title="Delete Category"
+                                                                            >
+                                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                            </button>
                                                                         </div>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                handleOpenEdit(
-                                                                                    cat,
-                                                                                )
-                                                                            }
-                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                                            title="Edit Category"
-                                                                        >
-                                                                            <Pencil className="h-3.5 w-3.5" />
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                setDeletingCategory(
-                                                                                    cat,
-                                                                                )
-                                                                            }
-                                                                            className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                                                            title="Delete Category"
-                                                                        >
-                                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        },
-                                                    )}
+                                                                    </m.div>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </AnimatePresence>
                                                 </div>
                                             </div>
                                         </>

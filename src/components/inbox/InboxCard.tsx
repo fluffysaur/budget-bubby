@@ -206,4 +206,25 @@ export function InboxCard({
     );
 }
 
+export function InboxCardSkeleton() {
+    return (
+        <Card elevation="tactile" padding="md" className="motion-safe:animate-pulse" aria-label="Loading inbox">
+            <div className="space-y-4">
+                <div className="h-4 w-24 bg-(--border-subtle)/70 rounded-md" />
+                <div className="h-6 w-44 bg-(--border-subtle)/80 rounded-lg" />
+                <div className="space-y-1">
+                    <div className="h-8 w-32 bg-(--border-subtle)/90 rounded-lg" />
+                    <div className="h-3.5 w-36 bg-(--border-subtle)/50 rounded-md" />
+                </div>
+                <div className="flex gap-2">
+                    <div className="h-9 w-24 bg-(--border-subtle)/60 rounded-xl" />
+                    <div className="h-9 w-24 bg-(--border-subtle)/60 rounded-xl" />
+                    <div className="h-9 w-20 bg-(--border-subtle)/60 rounded-xl" />
+                </div>
+                <div className="h-9 w-40 bg-(--border-subtle)/50 rounded-xl" />
+            </div>
+        </Card>
+    );
+}
+
 export default InboxCard;

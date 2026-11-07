@@ -20,11 +20,12 @@ import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
 import { CategoryBadge } from "../ui/CategoryBadge";
 import { Card } from "../ui/Card";
-import { financeService, isMockModeActive } from "../../services/financeService";
+import { isMockModeActive } from "../../services/financeService";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { feedback } from "../../lib/delight/feedback";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { useDeleteExpenseMutation } from "../../hooks/useFinanceQueries";
 import type { Expense, Category, HouseholdMember } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
@@ -35,6 +36,7 @@ export interface DeleteExpenseModalProps {
     onDeleted?: (deletedId: string) => void;
     categories?: Category[];
     members?: HouseholdMember[];
+    deleteMutation?: ReturnType<typeof useDeleteExpenseMutation>;
 }
 
 export function DeleteExpenseModal({
@@ -44,11 +46,14 @@ export function DeleteExpenseModal({
     onDeleted,
     categories: propCategories,
     members: propMembers,
+    deleteMutation: propDeleteMutation,
 }: DeleteExpenseModalProps) {
     const isMock = isMockModeActive();
     const categories = propCategories ?? (isMock ? mockCategories : []);
     const members = propMembers ?? (isMock ? mockMembers : []);
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const defaultDeleteMutation = useDeleteExpenseMutation();
+    const deleteMutation = propDeleteMutation ?? defaultDeleteMutation;
+    const isDeleting = deleteMutation.isPending;
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     if (!expense) return null;
@@ -62,12 +67,12 @@ export function DeleteExpenseModal({
         expense.original_amount !== null;
 
     const handleDelete = async () => {
+        if (isDeleting) return;
         try {
-            setIsDeleting(true);
             setErrorMessage(null);
             feedback.routine("delete");
             onDeleted?.(expense.id);
-            await financeService.deleteExpense(expense.id);
+            await deleteMutation.mutateAsync(expense.id);
             onClose();
         } catch (err) {
             console.error("Failed to delete expense:", err);
@@ -76,8 +81,6 @@ export function DeleteExpenseModal({
                     ? err.message
                     : "Failed to delete expense.",
             );
-        } finally {
-            setIsDeleting(false);
         }
     };
 

@@ -7,6 +7,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import {
     Alert,
     Button,
@@ -247,15 +248,17 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                 defaultOpen={group.year === currentYear || group.year === groups[0].year}
                             >
                                 <div className="divide-y divide-(--border-subtle)">
-                                    {group.events.map((event) => (
-                                        <BonusRow
-                                            key={event.id}
-                                            event={event}
-                                            recipientName={memberName(event.recipient_id)}
-                                            onEdit={openEdit}
-                                            onDelete={setDeletingEvent}
-                                        />
-                                    ))}
+                                    <AnimatePresence initial={false}>
+                                        {group.events.map((event) => (
+                                            <BonusRow
+                                                key={event.id}
+                                                event={event}
+                                                recipientName={memberName(event.recipient_id)}
+                                                onEdit={openEdit}
+                                                onDelete={setDeletingEvent}
+                                            />
+                                        ))}
+                                    </AnimatePresence>
                                 </div>
                             </CollapsibleSection>
                         ))}

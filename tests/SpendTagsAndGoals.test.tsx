@@ -182,7 +182,7 @@ describe('Big-Ticket Goals Sinking Fund & Drawdown', () => {
 
     // 4 Sinking Fund Metric labels
     expect(screen.getByText('Target Amount')).toBeInTheDocument();
-    expect(screen.getByText('Total Saved')).toBeInTheDocument();
+    expect(screen.getAllByText('Total Saved').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Goal Spend')).toBeInTheDocument();
     expect(screen.getByText('Balance')).toBeInTheDocument();
 

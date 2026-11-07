@@ -1,4 +1,6 @@
 import React, { forwardRef } from "react";
+import { m, AnimatePresence } from "motion/react";
+import { collapse } from "../../lib/motion";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -62,11 +64,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         </div>
                     )}
                 </div>
-                {error && (
-                    <p className="text-xs font-bold text-(--accent-coral) animate-enter">
-                        {error}
-                    </p>
-                )}
+                <AnimatePresence initial={false}>
+                    {error && (
+                        <m.div key="input-error" {...collapse}>
+                            <p className="text-xs font-bold text-(--accent-coral)">
+                                {error}
+                            </p>
+                        </m.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     },

@@ -23,7 +23,9 @@ import { Alert } from "../components/ui/Alert";
 import {
     useCategoriesQuery,
     useRecurringItemsQuery,
+    useInvalidateFinance,
 } from "../hooks/useFinanceQueries";
+import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import {
@@ -54,8 +56,9 @@ export function RecurringPage({
         perspective,
         activeMember,
         members,
-        refreshData: refreshHousehold,
     } = useHousehold();
+    const { invalidateRecurring } = useInvalidateFinance();
+    const { isPending: isDeletingRecurring, runWithLock: runDeleteLock } = useSubmitLock();
 
     // Cached Recurring Items Query
     const {
@@ -158,16 +161,18 @@ export function RecurringPage({
     };
 
     const handleDeleteItem = async (itemId: string) => {
-        try {
-            setActionError(null);
-            await financeService.deleteRecurringItem(itemId);
-            await refreshHousehold();
-        } catch (err: unknown) {
-            console.error("Failed to delete recurring item:", err);
-            setActionError(
-                err instanceof Error ? err.message : "Failed to delete recurring item",
-            );
-        }
+        await runDeleteLock(async () => {
+            try {
+                setActionError(null);
+                await financeService.deleteRecurringItem(itemId);
+                invalidateRecurring();
+            } catch (err: unknown) {
+                console.error("Failed to delete recurring item:", err);
+                setActionError(
+                    err instanceof Error ? err.message : "Failed to delete recurring item",
+                );
+            }
+        });
     };
 
     const handleSaveItem = async (
@@ -178,7 +183,7 @@ export function RecurringPage({
         } else {
             await financeService.addRecurringItem(payload);
         }
-        await refreshHousehold();
+        invalidateRecurring();
     };
 
     return (
@@ -193,7 +198,7 @@ export function RecurringPage({
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button
                                 variant="secondary"
-                                onClick={() => refreshHousehold()}
+                                onClick={() => invalidateRecurring()}
                                 title="Refresh"
                                 leftIcon={
                                     <RefreshCw
@@ -220,7 +225,7 @@ export function RecurringPage({
                         <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => refreshHousehold()}
+                            onClick={() => invalidateRecurring()}
                             title="Refresh"
                             leftIcon={
                                 <RefreshCw
@@ -289,6 +294,7 @@ export function RecurringPage({
                         recurringItems={inScopeItems}
                         onEdit={handleEditItem}
                         onDelete={handleDeleteItem}
+                        isDeleting={isDeletingRecurring}
                         onAdd={handleOpenAddModal}
                     />
                 </>
