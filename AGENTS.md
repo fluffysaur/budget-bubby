@@ -110,6 +110,31 @@ Never re-declare shared constants or calculations locally across feature modules
     - **Reserve Confirmation**: Actions that bank or defer funds must provide a clear confirmation modal explaining the reserve cushion benefit and destination.
 - **Responsive Layout**: Always provide mobile-first responsive grid defaults (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`).
 
+### E. Motion & Animation
+
+- **Which tool:**
+  - Use `motion` (Framer Motion, imported from `motion/react`) for anything with an exit or layout animation: route and tab changes, toasts, popovers, sheets, list rows added or removed, and shared indicators.
+  - Use the CSS tokens and utilities for press, hover, progress fills and colour changes.
+- **Bundle:** Use `m.*` components inside the app-wide `<LazyMotion features={domAnimation} strict>`. Never import `motion.*` directly, since `strict` rejects it.
+- **Presets, never ad-hoc values:**
+  - Reuse the presets in `src/lib/motion.ts` (`fadeRise`, `pop`, `collapse`, `listItem`).
+  - Use the easing tokens (`--ease-out-soft`, `--ease-in-fast`, `--ease-spring`) and duration tokens (`--duration-instant/fast/base/slow`).
+  - Never add a new cubic-bezier or a one-off duration.
+- **CSS utilities:** `.animate-enter`, `.animate-pop`, `.transition-press` and `.progress-fill`. Never use `animate-in` / `fade-in` / `slide-in-from-*`: no plugin defines them, so they do nothing.
+- **Property choice:**
+  - Animate `transform` and `opacity` only. Height is the exception: animate it only through the `collapse` preset.
+  - Never use `transition-all`. List the properties instead (`transition-colors`, `.transition-press`).
+- **Reduced motion:**
+  - Every animation must respect `prefers-reduced-motion`.
+  - `MotionConfig reducedMotion="user"` covers `motion`. The global CSS rule covers CSS.
+  - Any JS-driven motion (smooth scroll, drag, pull-to-refresh) must check `matchMedia("(prefers-reduced-motion: reduce)")`.
+- **No layout shift:**
+  - Conditional banners and cards animate their height in and out through `collapse`. They never pop into the page flow.
+  - Async content keeps its previous data visible (`placeholderData: keepPreviousData`) instead of falling back to a skeleton.
+  - Numbers use `tabular-nums`.
+- **Viewport:** Use `dvh` (`h-dvh`, `min-h-dvh`), never `h-screen`. Fixed elements near the screen edges add `env(safe-area-inset-*)`.
+- **Never slower:** Navigation never waits for an exit animation to finish. Keep enter animations at 220ms or less.
+
 ## 6. Microcopy, UX Writing & Brevity Guidelines (`conciseCopyRule`)
 
 Always maintain a direct, functional, and concise editorial style across all UI text:
@@ -132,6 +157,12 @@ Always maintain a direct, functional, and concise editorial style across all UI 
 - **Notification & Alert Copy**:
     - **Notification Settings**: Keep toggle descriptions under 8 words (e.g. `Remind before credit card statement due date`, `Daily 6 PM reminder to log spending`).
     - **Alert Banners**: Metric-focused headline ≤ 6 words paired with a single concise actionable subtitle.
+- **One Figure, One Representation**:
+    - Show each figure once.
+    - When a bar or ring is shown, pair it with **one** amount, usually what's left.
+    - Don't also print the %, the spent and the cap next to it. Colour and the visual carry the status.
+    - Put secondary figures (%, spent, cap, pace) behind a tap `<TooltipPopover>`.
+    - Prefer the shared visuals (`MeterBar`, `ProgressRing`, `Sparkline`, `DeltaBadge`, `Badge` status variants) over extra numbers or labels.
 
 ## 7. Git & Workflow
 
@@ -170,3 +201,40 @@ Always maintain a direct, functional, and concise editorial style across all UI 
 - Name files with a full timestamp: `YYYYMMDDHHMMSS_name.sql`.
 - Edit a migration in place only while it is unapplied and unpushed. Once applied, add a new migration instead.
 - Do not squash migrations without asking.
+
+### G. PR Screenshots
+
+This repo is **public**, so everything in a screenshot is public too.
+
+- **Demo data only.** Capture from the e2e dev server, which forces mock mode (`playwright.config.ts` sets empty Supabase env vars). Never capture from the live DB.
+- **Nothing personal in the PR.** No real names, balances, salaries or emails, in images or in the PR body.
+- **Sizes:**
+  - 360×800 (Android) and 390×844 (iPhone), in light and dark mode.
+  - Set the theme via the app's theme `localStorage` key in an init script; the app uses a `dark` class, not media queries.
+  - Add 1280×800 when desktop layout changed.
+- **Before and after:**
+  - Capture "before" on the base branch and "after" on the PR branch.
+  - Text-only PRs may skip dark mode.
+- **Hosting:**
+  - Screenshots live on the orphan branch `chore/pr-screenshots`. It is never merged and never deleted.
+  - Use a separate worktree: `git worktree add --orphan -b chore/pr-screenshots ../bb-shots` the first time, or `git worktree add ../bb-shots chore/pr-screenshots` after that.
+  - Put the images in a folder named after the PR branch, with `/` replaced by `-`, e.g. `fix-offline-queue/after-390-dark-home.png`. Commit, push, then remove the worktree.
+  - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
+- **Not test baselines.** Screenshots are never committed to feature branches or used as visual-regression baselines.
+
+### H. Backlog
+
+[`docs/backlog.md`](docs/backlog.md) is the single list of known, unscheduled fixes and improvements. It is ordered by priority (P0–P3).
+
+- **Adding:** If you find a bug or improvement outside your task's scope, add it to the backlog in the backlog's format rather than fixing it in the same PR.
+- **Clearing:** The PR that fixes a backlog item deletes that item in the same PR. Git history is the record, so don't keep a "Done" list.
+- **Picking up:** Start with the highest unblocked item. Items marked as needing a DB change wait until the user has run the SQL.
+
+## 8. Subagent Delegation & Model Tiering
+
+When spawning subagents via `invoke_subagent` (built-in or custom via `define_subagent`), select the lightest model tier appropriate for the task rather than always defaulting to `inherit`:
+
+- **`flash_lite`**: Use for trivial, repetitive, or high-volume lookups (e.g., grepping across files, inventorying imports, simple pattern checks).
+- **`flash`**: Use for straightforward tasks (e.g., targeted codebase research, routine unit test writing, mechanical refactors, or well-scoped UI edits).
+- **`inherit` / `pro`**: Reserve for complex multi-file architecture, subtle bug investigation, or tasks requiring deep domain reasoning.
+
