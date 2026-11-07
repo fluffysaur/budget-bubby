@@ -725,6 +725,41 @@ describe('RecurringPage Component', () => {
     });
   });
 
+  it('resolves perspective filtering via member UUIDs without hardcoded name strings and weights joint items 50/50 per member (M1 & L8)', async () => {
+    await financeService.addRecurringItem({
+      owner_id: 'joint',
+      type: 'tax',
+      name: 'Joint Property Tax',
+      amount: 1200.0,
+      frequency: 'annually',
+      payment_month: 1,
+    });
+
+    // Render using Yi Jia's actual member UUID as the perspective
+    const { rerender } = render(
+      <HouseholdProvider initialPerspective="mem-00000000-0011">
+        <RecurringPage />
+      </HouseholdProvider>
+    );
+
+    await waitFor(() => {
+      // Yi Jia personal ($5,900) + 50% of Joint Property Tax ($600) = $6,500
+      expect(screen.getAllByText(formatSGD(6500.0)).length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Joint Property Tax').length).toBeGreaterThan(0);
+    });
+
+    // Combined household view counts Joint Property Tax once ($5,900 + $1,800 + $1,200 = $8,900)
+    rerender(
+      <HouseholdProvider initialPerspective="household">
+        <RecurringPage />
+      </HouseholdProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText(formatSGD(8900.0)).length).toBeGreaterThan(0);
+    });
+  });
+
   it('integrates AddRecurringModal to create a new recurring item and refresh view', async () => {
     render(
       <HouseholdProvider initialPerspective="household">

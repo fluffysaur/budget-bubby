@@ -9,9 +9,27 @@ import type {
     MonthlyBudget,
     MonthlyBudgetCategoryDetail,
     MonthlyBudgetDetail,
+    RecurringItem,
 } from "../types/finance";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Deduplicates recurring items by ID when merging member budgets.
+ * Joint (`owner_id === "joint"`) items are split 50/50 in each member's budget
+ * so their dollar amounts sum to 100% (1x) in the combined household budget,
+ * while the item reference itself should only appear once in the merged list.
+ */
+function dedupeRecurringItems(items: RecurringItem[]): RecurringItem[] {
+    const seen = new Set<string>();
+    const result: RecurringItem[] = [];
+    for (const item of items) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        result.push(item);
+    }
+    return result;
+}
 
 /** Sums an optional field only when every member budget provides it. */
 function sumOptional(
@@ -86,10 +104,10 @@ export function combineMonthlyBudgets(
                     recurringSpent: round2(
                         (existing.recurringSpent || 0) + (item.recurringSpent || 0),
                     ),
-                    recurringItems: [
+                    recurringItems: dedupeRecurringItems([
                         ...(existing.recurringItems || []),
                         ...(item.recurringItems || []),
-                    ],
+                    ]),
                 });
             } else {
                 categoryMap.set(item.category_id, {
@@ -105,8 +123,8 @@ export function combineMonthlyBudgets(
 
     const categories = Array.from(categoryMap.values());
     const uncategorizedRecurringSpent = round2(sum((b) => b.uncategorizedRecurringSpent));
-    const uncategorizedRecurringItems = memberBudgets.flatMap(
-        (mb) => mb.uncategorizedRecurringItems || [],
+    const uncategorizedRecurringItems = dedupeRecurringItems(
+        memberBudgets.flatMap((mb) => mb.uncategorizedRecurringItems || []),
     );
     const totalSpent = round2(
         categories.reduce((s, c) => s + (c.actualSpent || 0), 0) +

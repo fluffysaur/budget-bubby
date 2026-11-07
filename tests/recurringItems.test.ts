@@ -8,16 +8,19 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+    addMonths,
     clampDueDay,
     getDaysInMonth,
     getNextDueDate,
     getDaysUntilDue,
     formatDueInDays,
+    ordinal,
 } from "../src/lib/dateUtils";
 import {
     calculateRecurringCategorySpend,
     findDefaultRecurringCategoryId,
     getRecurringMonthlyAmount,
+    getRecurringMonthlyShare,
     isRecurringItemActiveInMonth,
     isDeductionType,
     resolveDueDay,
@@ -247,10 +250,10 @@ describe("calculateRecurringCategorySpend", () => {
         makeItem({ id: "ended", amount: 60, monthly_amortized_amount: 60, end_date: "2026-10-31", category_id: LIFESTYLE }),
     ];
 
-    it("sums monthly items in full and annual items amortized per category", () => {
+    it("sums monthly items in full (and 50% for joint items per member) and annual items amortized per category", () => {
         const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
         expect(res.byCategory[LIFESTYLE].total).toBe(140); // netflix + gym
-        expect(res.byCategory[UTILITIES].total).toBe(140); // power 90 + cloud 10 + joint 40
+        expect(res.byCategory[UTILITIES].total).toBe(120); // power 90 + cloud 10 + joint 20 (50% of 40)
         expect(res.byCategory[LIFESTYLE].items.map((i) => i.id)).toEqual(["netflix", "gym"]);
     });
 
@@ -258,7 +261,7 @@ describe("calculateRecurringCategorySpend", () => {
         const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
         expect(res.uncategorized.total).toBe(5);
         expect(res.uncategorized.items.map((i) => i.id)).toEqual(["misc"]);
-        expect(res.total).toBe(285);
+        expect(res.total).toBe(265);
     });
 
     it("excludes insurance/tax and items outside their active range", () => {
@@ -284,13 +287,119 @@ describe("calculateRecurringCategorySpend", () => {
             knownCategoryIds: [LIFESTYLE],
         });
         expect(res.byCategory[UTILITIES]).toBeUndefined();
-        expect(res.uncategorized.total).toBe(145); // misc 5 + utilities 140
-        expect(res.total).toBe(285);
+        expect(res.uncategorized.total).toBe(125); // misc 5 + utilities 120
+        expect(res.total).toBe(265);
     });
 
-    it("includes every owner when no owner is given", () => {
-        const res = calculateRecurringCategorySpend(items, "2026-11");
-        expect(res.byCategory[LIFESTYLE].total).toBe(155);
+    it("includes every owner when no owner is given and counts joint items once across both members (M1)", () => {
+        const householdRes = calculateRecurringCategorySpend(items, "2026-11");
+        expect(householdRes.byCategory[LIFESTYLE].total).toBe(155);
+        expect(householdRes.byCategory[UTILITIES].total).toBe(140); // power 90 + cloud 10 + joint 40 (1x)
+
+        const yjRes = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        const rcRes = calculateRecurringCategorySpend(items, "2026-11", { ownerId: RC });
+        expect(getRecurringMonthlyShare(items.find((i) => i.id === "joint-bill")!, YJ)).toBe(20);
+        expect(getRecurringMonthlyShare(items.find((i) => i.id === "joint-bill")!, RC)).toBe(20);
+        expect(getRecurringMonthlyShare(items.find((i) => i.id === "joint-bill")!, "household")).toBe(40);
+        expect(yjRes.byCategory[UTILITIES].total + rcRes.byCategory[UTILITIES].total).toBe(
+            householdRes.byCategory[UTILITIES].total,
+        );
+    });
+});
+
+describe("calculateMemberRecurringDeductions with month filter and joint items (M1 & M2)", () => {
+    it("excludes ended and future insurance/tax policies when month is provided and splits joint deductions 50/50", () => {
+        const deductionItems: RecurringItem[] = [
+            makeItem({
+                id: "active-ins",
+                owner_id: YJ,
+                type: "insurance",
+                frequency: "annually",
+                amount: 1200,
+                monthly_amortized_amount: 100,
+                start_date: "2025-01-01",
+                end_date: "2027-12-31",
+            }),
+            makeItem({
+                id: "ended-ins",
+                owner_id: YJ,
+                type: "insurance",
+                frequency: "annually",
+                amount: 600,
+                monthly_amortized_amount: 50,
+                start_date: "2024-01-01",
+                end_date: "2026-06-30",
+            }),
+            makeItem({
+                id: "future-tax",
+                owner_id: YJ,
+                type: "tax",
+                frequency: "monthly",
+                amount: 80,
+                monthly_amortized_amount: 80,
+                start_date: "2026-12-01",
+                end_date: null,
+            }),
+            makeItem({
+                id: "joint-tax",
+                owner_id: "joint",
+                type: "tax",
+                frequency: "monthly",
+                amount: 60,
+                monthly_amortized_amount: 60,
+                start_date: "2026-01-01",
+                end_date: null,
+            }),
+        ];
+
+        // In 2026-10: ended-ins (ended 2026-06) and future-tax (starts 2026-12) are excluded
+        const yjOct = calculateMemberRecurringDeductions(deductionItems, YJ, "2026-10");
+        expect(yjOct).toEqual({
+            insuranceMonthly: 100,
+            taxesMonthly: 30, // 50% of joint-tax (60)
+        });
+
+        const rcOct = calculateMemberRecurringDeductions(deductionItems, RC, "2026-10");
+        expect(rcOct).toEqual({
+            insuranceMonthly: 0,
+            taxesMonthly: 30, // 50% of joint-tax (60)
+        });
+
+        // Combined household counts joint-tax once (60)
+        const hhOct = calculateMemberRecurringDeductions(deductionItems, "household", "2026-10");
+        expect(hhOct).toEqual({
+            insuranceMonthly: 100,
+            taxesMonthly: 60,
+        });
+        expect(yjOct.taxesMonthly + rcOct.taxesMonthly).toBe(hhOct.taxesMonthly);
+
+        // In 2026-05: ended-ins is still active
+        const yjMay = calculateMemberRecurringDeductions(deductionItems, YJ, "2026-05");
+        expect(yjMay.insuranceMonthly).toBe(150);
+    });
+});
+
+describe("addMonths day clamping (L1) and ordinal formatting", () => {
+    it("clamps YYYY-MM-DD dates to the end of short target months instead of overflowing", () => {
+        expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
+        expect(addMonths("2024-01-31", 1)).toBe("2024-02-29");
+        expect(addMonths("2026-03-31", -1)).toBe("2026-02-28");
+        expect(addMonths("2026-05-31", -1)).toBe("2026-04-30");
+        expect(addMonths("2026-01", 1)).toBe("2026-02");
+    });
+
+    it("formats English ordinal suffixes accurately including 11th, 12th, 13th and 21st, 22nd, 23rd", () => {
+        expect(ordinal(1)).toBe("1st");
+        expect(ordinal(2)).toBe("2nd");
+        expect(ordinal(3)).toBe("3rd");
+        expect(ordinal(4)).toBe("4th");
+        expect(ordinal(11)).toBe("11th");
+        expect(ordinal(12)).toBe("12th");
+        expect(ordinal(13)).toBe("13th");
+        expect(ordinal(21)).toBe("21st");
+        expect(ordinal(22)).toBe("22nd");
+        expect(ordinal(23)).toBe("23rd");
+        expect(ordinal(31)).toBe("31st");
     });
 });
 

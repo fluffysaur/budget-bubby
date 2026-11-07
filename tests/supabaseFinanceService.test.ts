@@ -39,7 +39,10 @@ describe("supabaseFinanceService", () => {
         insertAllocationsSpy = vi.fn().mockResolvedValue({ error: null });
 
         deleteAllocationsSpy = vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
+            eq: vi.fn().mockReturnValue({
+                not: vi.fn().mockResolvedValue({ error: null }),
+                then: (resolve: any) => resolve({ error: null }),
+            }),
         });
 
         expensesOrSpy = vi.fn();
@@ -97,6 +100,7 @@ describe("supabaseFinanceService", () => {
                     return {
                         delete: deleteAllocationsSpy,
                         insert: insertAllocationsSpy,
+                        upsert: insertAllocationsSpy,
                     };
                 }
                 if (table === "expenses") {
@@ -271,6 +275,278 @@ describe("supabaseFinanceService", () => {
             await expect(
                 supabaseFinanceService.addExpense(badCategoryExpense),
             ).rejects.toThrow(/Invalid category ID/i);
+        });
+    });
+
+    describe("updateBaseProfile 0% CPF rate and atomic upsert-then-delete (M5)", () => {
+        it("preserves a 0% CPF rate as 0 instead of falling back to 0.20, and upserts allocations before deleting stale categories", async () => {
+            const callOrder: string[] = [];
+            const notSpy = vi.fn().mockImplementation(async () => {
+                callOrder.push("delete-stale");
+                return { error: null };
+            });
+            deleteAllocationsSpy.mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                    not: notSpy,
+                    then: (resolve: any) => {
+                        callOrder.push("delete-all");
+                        return resolve({ error: null });
+                    },
+                }),
+            });
+            insertAllocationsSpy.mockImplementation(async () => {
+                callOrder.push("upsert-allocs");
+                return { error: null };
+            });
+
+            const zeroCpfProfile: BaseBudgetProfile = {
+                id: validProfileId,
+                household_id: validHouseholdId,
+                owner_id: validMemberId,
+                gross_salary: 6000,
+                cpf_employee_rate: 0,
+                tithing_enabled: false,
+            };
+            const allocations: BaseProfileAllocation[] = [
+                {
+                    id: "00000000-0000-0000-0000-000000000301",
+                    profile_id: validProfileId,
+                    category_id: validCategoryId,
+                    target_percentage: 1.0,
+                },
+            ];
+
+            await supabaseFinanceService.updateBaseProfile(
+                zeroCpfProfile,
+                allocations,
+            );
+
+            const [upsertPayload] = upsertProfileSpy.mock.calls[0];
+            expect(upsertPayload.cpf_employee_rate).toBe(0);
+
+            expect(callOrder).toEqual(["upsert-allocs", "delete-stale"]);
+            expect(insertAllocationsSpy).toHaveBeenCalledWith(
+                expect.any(Array),
+                { onConflict: "profile_id,category_id" },
+            );
+            expect(notSpy).toHaveBeenCalledWith(
+                "category_id",
+                "in",
+                `(${validCategoryId})`,
+            );
+        });
+
+        it("does not delete existing allocations if the allocation upsert fails", async () => {
+            insertAllocationsSpy.mockResolvedValueOnce({
+                error: new Error("Upsert failed"),
+            });
+
+            const profile: BaseBudgetProfile = {
+                id: validProfileId,
+                household_id: validHouseholdId,
+                owner_id: validMemberId,
+                gross_salary: 6000,
+                cpf_employee_rate: 0.2,
+                tithing_enabled: true,
+            };
+            const allocations: BaseProfileAllocation[] = [
+                {
+                    id: "00000000-0000-0000-0000-000000000301",
+                    profile_id: validProfileId,
+                    category_id: validCategoryId,
+                    target_percentage: 1.0,
+                },
+            ];
+
+            await expect(
+                supabaseFinanceService.updateBaseProfile(profile, allocations),
+            ).rejects.toThrow("Upsert failed");
+            expect(deleteAllocationsSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("1,000-row PostgREST pagination & descending snapshot order (M8)", () => {
+        it("orders account_snapshots descending, paginates past 1,000 rows, and returns chronological ascending order", async () => {
+            const orderSpy = vi.fn();
+            const rangeSpy = vi.fn();
+
+            const page1 = Array.from({ length: 1000 }, (_, idx) => ({
+                id: `snap-p1-${idx}`,
+                account_id: "acc-1",
+                household_id: validHouseholdId,
+                balance: 1000 + idx,
+                snapshot_date: idx === 0 ? "2026-11-01" : "2026-10-15",
+            }));
+            const page2 = [
+                {
+                    id: "snap-oldest",
+                    account_id: "acc-1",
+                    household_id: validHouseholdId,
+                    balance: 500,
+                    snapshot_date: "2026-01-01",
+                },
+            ];
+
+            const baseFrom = mockClient.from;
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "account_snapshots") {
+                    const chain: any = {
+                        order: vi.fn((col: string, opts: any) => {
+                            orderSpy(col, opts);
+                            return chain;
+                        }),
+                        range: vi.fn(async (from: number, to: number) => {
+                            rangeSpy(from, to);
+                            return {
+                                data: from === 0 ? page1 : page2,
+                                error: null,
+                            };
+                        }),
+                    };
+                    return {
+                        select: vi.fn().mockReturnValue(chain),
+                    };
+                }
+                return baseFrom(table);
+            });
+
+            const snapshots =
+                await supabaseFinanceService.getAllAccountSnapshots("household");
+            expect(orderSpy).toHaveBeenCalledWith("snapshot_date", {
+                ascending: false,
+            });
+            expect(rangeSpy).toHaveBeenNthCalledWith(1, 0, 999);
+            expect(rangeSpy).toHaveBeenNthCalledWith(2, 1000, 1999);
+            expect(snapshots).toHaveLength(1001);
+            expect(snapshots[0].snapshot_date).toBe("2026-01-01");
+            expect(snapshots[snapshots.length - 1].snapshot_date).toBe(
+                "2026-11-01",
+            );
+        });
+
+        it("paginates unbounded getExpenses and getDailyCheckins across 1,000-row pages", async () => {
+            const expenseRangeSpy = vi.fn();
+            const checkinRangeSpy = vi.fn();
+
+            const expPage1 = Array.from({ length: 1000 }, (_, idx) => ({
+                id: `exp-${idx}`,
+                household_id: validHouseholdId,
+                payer_id: validMemberId,
+                category_id: validCategoryId,
+                date: "2026-10-10",
+                item: `Item ${idx}`,
+                amount: 10,
+                is_shared: false,
+                settled: false,
+            }));
+            const expPage2 = [
+                {
+                    id: "exp-1000",
+                    household_id: validHouseholdId,
+                    payer_id: validMemberId,
+                    category_id: validCategoryId,
+                    date: "2026-10-01",
+                    item: "Item 1000",
+                    amount: 20,
+                    is_shared: false,
+                    settled: false,
+                },
+            ];
+
+            const checkinPage1 = Array.from({ length: 1000 }, (_, idx) => ({
+                id: `ci-${idx}`,
+                household_id: validHouseholdId,
+                member_id: validMemberId,
+                checkin_date: "2026-10-10",
+                type: "expense",
+            }));
+            const checkinPage2 = [
+                {
+                    id: "ci-1000",
+                    household_id: validHouseholdId,
+                    member_id: validMemberId,
+                    checkin_date: "2026-01-01",
+                    type: "no_spend",
+                },
+            ];
+
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "expenses") {
+                    const chain: any = {
+                        order: vi.fn(() => chain),
+                        range: vi.fn(async (from: number, to: number) => {
+                            expenseRangeSpy(from, to);
+                            return {
+                                data: from === 0 ? expPage1 : expPage2,
+                                error: null,
+                            };
+                        }),
+                    };
+                    return { select: vi.fn().mockReturnValue(chain) };
+                }
+                if (table === "daily_checkins") {
+                    const chain: any = {
+                        order: vi.fn(() => chain),
+                        eq: vi.fn(() => chain),
+                        range: vi.fn(async (from: number, to: number) => {
+                            checkinRangeSpy(from, to);
+                            return {
+                                data: from === 0 ? checkinPage1 : checkinPage2,
+                                error: null,
+                            };
+                        }),
+                    };
+                    return { select: vi.fn().mockReturnValue(chain) };
+                }
+                return {};
+            });
+
+            const expenses = await supabaseFinanceService.getExpenses();
+            expect(expenses).toHaveLength(1001);
+            expect(expenseRangeSpy).toHaveBeenNthCalledWith(1, 0, 999);
+            expect(expenseRangeSpy).toHaveBeenNthCalledWith(2, 1000, 1999);
+
+            const checkins =
+                await supabaseFinanceService.getDailyCheckins(validMemberId);
+            expect(checkins).toHaveLength(1001);
+            expect(checkinRangeSpy).toHaveBeenNthCalledWith(1, 0, 999);
+            expect(checkinRangeSpy).toHaveBeenNthCalledWith(2, 1000, 1999);
+        });
+    });
+
+    describe("settleSharedExpenses by explicit expense IDs (M11)", () => {
+        it("filters by .in('id', expenseIds) when explicit expense IDs are passed", async () => {
+            const inSpy = vi.fn();
+            const orSpy = vi.fn().mockResolvedValue({ error: null });
+
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "expenses") {
+                    const updateChain: any = {
+                        eq: vi.fn(() => updateChain),
+                        in: vi.fn((col: string, ids: string[]) => {
+                            inSpy(col, ids);
+                            return updateChain;
+                        }),
+                        or: orSpy,
+                    };
+                    return {
+                        update: vi.fn().mockReturnValue(updateChain),
+                    };
+                }
+                return {};
+            });
+
+            const partnerId = "00000000-0000-0000-0000-000000000012";
+            await supabaseFinanceService.settleSharedExpenses(
+                validMemberId,
+                partnerId,
+                ["exp-1", "exp-2"],
+            );
+
+            expect(inSpy).toHaveBeenCalledWith("id", ["exp-1", "exp-2"]);
+            expect(orSpy).toHaveBeenCalledWith(
+                `payer_id.eq.${validMemberId},payer_id.eq.${partnerId}`,
+            );
         });
     });
 });

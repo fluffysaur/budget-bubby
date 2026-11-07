@@ -179,13 +179,23 @@ export function formatDisplayDate(dateStr: string): string {
 
 /**
  * Adds (or subtracts) a number of months to a 'YYYY-MM' or 'YYYY-MM-DD' date string.
- * Preserves day if provided in input.
+ * Preserves day if provided in input, clamping it to the target month's length.
  */
 export function addMonths(dateStr: string | Date, count: number): string {
     if (dateStr instanceof Date) {
-        const d = new Date(dateStr);
-        d.setMonth(d.getMonth() + count);
-        return formatISODate(d);
+        const firstOfTarget = new Date(
+            dateStr.getFullYear(),
+            dateStr.getMonth() + count,
+            1,
+        );
+        const targetYear = firstOfTarget.getFullYear();
+        const targetMonth = firstOfTarget.getMonth() + 1;
+        const clampedDay = clampDueDay(
+            dateStr.getDate(),
+            targetYear,
+            targetMonth,
+        );
+        return formatISODate(new Date(targetYear, targetMonth - 1, clampedDay));
     }
 
     const isFullDate = /^\d{4}-\d{2}-\d{2}/.test(dateStr);
@@ -194,12 +204,15 @@ export function addMonths(dateStr: string | Date, count: number): string {
     const month = parseInt(parts[1], 10) - 1; // 0-indexed
     const day = isFullDate ? parseInt(parts[2].slice(0, 2), 10) : 1;
 
-    const targetDate = new Date(year, month + count, day);
+    const firstOfTarget = new Date(year, month + count, 1);
+    const targetYear = firstOfTarget.getFullYear();
+    const targetMonth = firstOfTarget.getMonth() + 1;
 
     if (isFullDate) {
-        return formatISODate(targetDate);
+        const clampedDay = clampDueDay(day, targetYear, targetMonth);
+        return formatISODate(new Date(targetYear, targetMonth - 1, clampedDay));
     } else {
-        return formatMonth(targetDate);
+        return formatMonth(firstOfTarget);
     }
 }
 
@@ -365,4 +378,28 @@ export function formatDueInDays(days: number): string {
     if (days <= 0) return "Due today";
     if (days === 1) return "Due tomorrow";
     return `Due in ${days} days`;
+}
+
+/**
+ * Formats an integer with its English ordinal suffix (e.g. 1 -> "1st", 2 -> "2nd",
+ * 3 -> "3rd", 4 -> "4th", 11 -> "11th", 12 -> "12th", 13 -> "13th", 21 -> "21st",
+ * 22 -> "22nd", 23 -> "23rd", 31 -> "31st").
+ */
+export function ordinal(n: number): string {
+    const int = Math.trunc(n);
+    const abs = Math.abs(int);
+    const mod100 = abs % 100;
+    if (mod100 >= 11 && mod100 <= 13) {
+        return `${int}th`;
+    }
+    switch (abs % 10) {
+        case 1:
+            return `${int}st`;
+        case 2:
+            return `${int}nd`;
+        case 3:
+            return `${int}rd`;
+        default:
+            return `${int}th`;
+    }
 }

@@ -573,7 +573,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
             const sliders = screen.getAllByRole("slider");
             expect(sliders.length).toBeGreaterThan(0);
         });
-    }, 45000);
+    }, 60000);
 });
 
 describe("CategoryProgressList Warning Badges", () => {

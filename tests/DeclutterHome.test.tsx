@@ -132,6 +132,48 @@ describe("Expenses Settle Up", () => {
         });
     });
 
+    it("passes explicit unsettled shared expenseIds when settling up (M11)", async () => {
+        const real = await financeService.getHouseholdOverview();
+        const explicitIds = ["exp-shared-1", "exp-shared-2"];
+        const overview: HouseholdOverview = {
+            ...real,
+            settlementSummary: {
+                netBalance: 85,
+                debtorId: real.members[1]?.id ?? null,
+                creditorId: real.members[0]?.id ?? null,
+                settlementText: "Rachel owes Yi Jia S$85.00",
+                member1OwesMember2: 0,
+                member2OwesMember1: 85,
+                expenseIds: explicitIds,
+            },
+        };
+        vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue(overview);
+        const settleSpy = vi.spyOn(financeService, "settleSharedExpenses").mockResolvedValue();
+        const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        render(
+            <QueryClientProvider client={queryClient}>
+                <HouseholdProvider>
+                    <ExpensesPage />
+                </HouseholdProvider>
+            </QueryClientProvider>,
+        );
+
+        const settleBtn = await screen.findByRole("button", { name: /settle up/i });
+        fireEvent.click(settleBtn);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", { name: "Settle" }));
+        });
+
+        await waitFor(() => {
+            expect(settleSpy).toHaveBeenCalledWith(
+                overview.members[0].id,
+                overview.members[1].id,
+                explicitIds,
+            );
+        });
+    });
+
     it("hides Settle Up when nothing is owed", async () => {
         await renderExpensesWithBalance(0);
         await screen.findByText(/^Unsettled$/i);

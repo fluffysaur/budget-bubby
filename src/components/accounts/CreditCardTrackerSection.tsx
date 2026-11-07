@@ -45,6 +45,7 @@ import {
     formatDisplayMonth,
     formatDisplayDate,
     addMonths,
+    ordinal,
 } from "../../lib/dateUtils";
 import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
 import {
@@ -520,11 +521,17 @@ export function CreditCardTrackerSection({
                                     <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
                                         <div className="flex items-center gap-1.5 font-mono-num font-medium">
                                             <ReceiptText className="h-3.5 w-3.5 text-(--text-muted)" />
-                                            <span>Statement Day {card.billing_day}</span>
+                                            <span>Statement Day</span>
+                                            <span className="font-bold text-(--text-ink)">
+                                                {ordinal(card.billing_day)}
+                                            </span>
                                         </div>
                                         <div className="flex items-center gap-1.5 font-mono-num font-medium">
                                             <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-                                            <span>Due Day {card.due_day}</span>
+                                            <span>Due Day</span>
+                                            <span className="font-bold text-(--text-ink)">
+                                                {ordinal(card.due_day)}
+                                            </span>
                                         </div>
                                         <span className="font-mono-num font-medium text-[11px]">
                                             {card.credit_limit

@@ -31,7 +31,10 @@ import { formatSGD } from "../lib/currency";
 import {
     findNextRenewal,
     getRecurringItemStatus,
+    getRecurringMonthlyShare,
     isDeductionType,
+    isJointRecurringItem,
+    isRecurringItemOwnedBy,
 } from "../lib/recurringItems";
 import {
     formatMonth,
@@ -55,7 +58,6 @@ export function RecurringPage({
     const {
         perspective,
         activeMember,
-        members,
     } = useHousehold();
     const { invalidateRecurring } = useInvalidateFinance();
     const { isPending: isDeletingRecurring, runWithLock: runDeleteLock } = useSubmitLock();
@@ -81,38 +83,22 @@ export function RecurringPage({
         null,
     );
 
-    // Perspective filtering
+    // Perspective filtering: resolve member ID via activeMember from HouseholdContext
+    // rather than hard-coded member names or fallback IDs.
+    const ownerScopeId =
+        perspective === "household" ? "household" : activeMember?.id;
+
     const inScopeItems = useMemo(() => {
         return recurringItems.filter((recurringItem) => {
             if (perspective === "household") {
                 return true;
             }
-            if (perspective === "yijia") {
-                const yiJia = members.find((m) =>
-                    m.display_name.toLowerCase().includes("yi jia"),
-                );
-                const yjId = yiJia?.id || "mem-00000000-0011";
-                return (
-                    recurringItem.owner_id === yjId ||
-                    recurringItem.owner_id === "joint"
-                );
+            if (!activeMember) {
+                return false;
             }
-            if (perspective === "rachel") {
-                const rachel = members.find((m) =>
-                    m.display_name.toLowerCase().includes("rachel"),
-                );
-                const rcId = rachel?.id || "mem-00000000-0012";
-                return (
-                    recurringItem.owner_id === rcId ||
-                    recurringItem.owner_id === "joint"
-                );
-            }
-            return (
-                !recurringItem.owner_id ||
-                recurringItem.owner_id === activeMember?.id
-            );
+            return isRecurringItemOwnedBy(recurringItem, activeMember.id);
         });
-    }, [recurringItems, perspective, activeMember, members]);
+    }, [recurringItems, perspective, activeMember]);
 
     // Summary cards describe today, independent of the calendar's year
     const { totalAnnualOutflow, monthlyAmortizedOutflow, nextRenewal } =
@@ -125,19 +111,24 @@ export function RecurringPage({
                     getRecurringItemStatus(p, thisMonth) === "active",
             );
             return {
-                totalAnnualOutflow: activeDeductions.reduce(
-                    (sum, p) =>
-                        sum +
-                        (p.frequency === "monthly" ? p.amount * 12 : p.amount),
-                    0,
-                ),
+                totalAnnualOutflow: activeDeductions.reduce((sum, p) => {
+                    const annualAmt =
+                        p.frequency === "monthly" ? p.amount * 12 : p.amount;
+                    const shareFactor =
+                        ownerScopeId &&
+                        ownerScopeId !== "household" &&
+                        isJointRecurringItem(p)
+                            ? 0.5
+                            : 1;
+                    return sum + annualAmt * shareFactor;
+                }, 0),
                 monthlyAmortizedOutflow: activeDeductions.reduce(
-                    (sum, p) => sum + p.monthly_amortized_amount,
+                    (sum, p) => sum + getRecurringMonthlyShare(p, ownerScopeId),
                     0,
                 ),
                 nextRenewal: findNextRenewal(inScopeItems, today),
             };
-        }, [inScopeItems]);
+        }, [inScopeItems, ownerScopeId]);
 
     const nextRenewalSub = (() => {
         if (!nextRenewal) return "None";

@@ -526,7 +526,8 @@ class MockFinanceServiceImpl implements FinanceService {
 
       const { taxesMonthly, insuranceMonthly } = calculateMemberRecurringDeductions(
         this.state.recurringItems,
-        budget.owner_id
+        budget.owner_id,
+        budget.month
       );
       budget.taxes_deduction = taxesMonthly;
       budget.insurance_deduction = insuranceMonthly;
@@ -601,11 +602,11 @@ class MockFinanceServiceImpl implements FinanceService {
     if (!budget) {
       const ownerId = targetOwnerId || this.state.members[0].id;
       const gross = baseProfile ? baseProfile.gross_salary : 5000;
-      const rate = baseProfile ? baseProfile.cpf_employee_rate : 0.20;
+      const rate = baseProfile?.cpf_employee_rate ?? 0.20;
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
       const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberRecurringDeductions(this.state.recurringItems, ownerId);
+        calculateMemberRecurringDeductions(this.state.recurringItems, ownerId, month);
 
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
@@ -910,12 +911,21 @@ class MockFinanceServiceImpl implements FinanceService {
     this.persist();
   }
 
-  public async settleSharedExpenses(member1Id: string, member2Id: string): Promise<void> {
+  public async settleSharedExpenses(
+    member1Id: string,
+    member2Id: string,
+    expenseIds?: string[]
+  ): Promise<void> {
+    if (expenseIds !== undefined && expenseIds.length === 0) {
+      return;
+    }
+    const idSet = expenseIds && expenseIds.length > 0 ? new Set(expenseIds) : null;
     for (const exp of this.state.expenses) {
       if (
         exp.is_shared &&
         !exp.settled &&
-        (exp.payer_id === member1Id || exp.payer_id === member2Id)
+        (exp.payer_id === member1Id || exp.payer_id === member2Id) &&
+        (!idSet || idSet.has(exp.id))
       ) {
         exp.settled = true;
       }

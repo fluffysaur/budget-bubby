@@ -178,6 +178,38 @@ export function buildExpenseSearchOrFilter(search: string): string {
   return `item.ilike.${quoted},remarks.ilike.${quoted}`;
 }
 
+const POSTGREST_PAGE_SIZE = 1000;
+
+type PaginatableQuery<T> = PromiseLike<{ data: T[] | null; error: unknown }> & {
+  range?: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>;
+};
+
+async function fetchAllPages<T>(buildQuery: () => PaginatableQuery<T>): Promise<T[]> {
+  const firstQuery = buildQuery();
+  if (typeof firstQuery.range !== 'function') {
+    const { data, error } = await firstQuery;
+    if (error) throw error;
+    return (data || []) as T[];
+  }
+
+  const allRows: T[] = [];
+  let offset = 0;
+
+  while (true) {
+    const query = offset === 0 ? firstQuery : buildQuery();
+    const { data, error } = await query.range!(offset, offset + POSTGREST_PAGE_SIZE - 1);
+    if (error) throw error;
+    const batch = (data || []) as T[];
+    allRows.push(...batch);
+    if (batch.length < POSTGREST_PAGE_SIZE) {
+      break;
+    }
+    offset += POSTGREST_PAGE_SIZE;
+  }
+
+  return allRows;
+}
+
 export class SupabaseFinanceServiceImpl implements FinanceService {
   private readonly clientOverride?: SupabaseClient;
   private readonly localFallback: boolean;
@@ -534,12 +566,16 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
   public async getAllAccountSnapshots(perspective?: Perspective): Promise<AccountSnapshot[]> {
     const client = this.getClient();
-    const { data, error } = await client
-      .from('account_snapshots')
-      .select('*')
-      .order('snapshot_date', { ascending: true });
-    if (error) throw error;
-    const allSnaps = (data || []) as AccountSnapshot[];
+    const fetchedSnaps = await fetchAllPages<AccountSnapshot>(
+      () =>
+        client
+          .from('account_snapshots')
+          .select('*')
+          .order('snapshot_date', { ascending: false }) as unknown as PaginatableQuery<AccountSnapshot>
+    );
+    const allSnaps = [...fetchedSnaps].sort((a, b) =>
+      a.snapshot_date.localeCompare(b.snapshot_date)
+    );
 
     if (!perspective || perspective === 'household') {
       return allSnaps;
@@ -720,6 +756,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       throw new Error(`Invalid member ID for base profile: "${ownerId}"`);
     }
 
+    // Validate all allocation category IDs upfront before mutating anything
+    for (const alloc of allocations) {
+      if (!isValidUuid(alloc.category_id)) {
+        throw new Error(`Invalid category ID in base profile allocation: "${alloc.category_id}"`);
+      }
+    }
+
     // 3. Resolve profile.id: reuse existing row ID for (household_id, owner_id) if one exists
     const { data: existingProf } = await client
       .from('base_budget_profiles')
@@ -737,11 +780,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       profileId = crypto.randomUUID();
     }
 
+    const parsedCpfRate = Number(profile.cpf_employee_rate);
+    const cpfEmployeeRate = Number.isFinite(parsedCpfRate) ? parsedCpfRate : 0.20;
+
     const profileUpsertPayload: Record<string, unknown> = {
       household_id: householdId,
       owner_id: ownerId,
       gross_salary: Number(profile.gross_salary) || 0,
-      cpf_employee_rate: Number(profile.cpf_employee_rate) || 0.20,
+      cpf_employee_rate: cpfEmployeeRate,
       tithing_enabled: profile.tithing_enabled ?? true,
       updated_at: new Date().toISOString(),
     };
@@ -761,21 +807,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       throw new Error('Failed to resolve base budget profile ID');
     }
 
-    // 4. Delete existing allocations for this profile
-    const { error: delError } = await client
-      .from('base_profile_allocations')
-      .delete()
-      .eq('profile_id', finalProfileId);
-    if (delError) throw delError;
-
-    // 5. Insert new allocations with validated category UUIDs
+    // 4. Upsert new allocations first, then delete stale rows so a failed write never wipes existing allocations
     if (allocations.length > 0) {
       const sanitizedAllocations = allocations.map((alloc) => {
         const catId = alloc.category_id;
-        if (!isValidUuid(catId)) {
-          throw new Error(`Invalid category ID in base profile allocation: "${catId}"`);
-        }
-
         const allocRow: Record<string, unknown> = {
           profile_id: finalProfileId,
           category_id: catId,
@@ -791,10 +826,34 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         return allocRow;
       });
 
-      const { error: insError } = await client
+      const { error: upsertError } = await client
         .from('base_profile_allocations')
-        .insert(sanitizedAllocations);
-      if (insError) throw insError;
+        .upsert(sanitizedAllocations, { onConflict: 'profile_id,category_id' });
+      if (upsertError) throw upsertError;
+
+      const keepCategoryIds = sanitizedAllocations.map((a) => a.category_id as string);
+      const deleteChain = client
+        .from('base_profile_allocations')
+        .delete()
+        .eq('profile_id', finalProfileId) as unknown as {
+        not?: (
+          column: string,
+          operator: string,
+          value: string
+        ) => PromiseLike<{ error: unknown }>;
+      } & PromiseLike<{ error: unknown }>;
+
+      const { error: delError } =
+        typeof deleteChain.not === 'function'
+          ? await deleteChain.not('category_id', 'in', `(${keepCategoryIds.join(',')})`)
+          : await deleteChain;
+      if (delError) throw delError;
+    } else {
+      const { error: delError } = await client
+        .from('base_profile_allocations')
+        .delete()
+        .eq('profile_id', finalProfileId);
+      if (delError) throw delError;
     }
   }
 
@@ -843,7 +902,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       const cpf = calculateCPFAndNetPay(gross, rate).cpfDeduction;
 
       const { taxesMonthly: taxesDeduction, insuranceMonthly: insuranceDeduction } =
-        calculateMemberRecurringDeductions(recurringItems, ownerId);
+        calculateMemberRecurringDeductions(recurringItems, ownerId, month);
       const afterDeductions = Math.round(
         (gross - cpf - taxesDeduction - insuranceDeduction) * 100
       ) / 100;
@@ -909,7 +968,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
       if (hasTaxOrInsItems) {
         const { taxesMonthly, insuranceMonthly } = calculateMemberRecurringDeductions(
           recurringItems,
-          budget.owner_id
+          budget.owner_id,
+          month
         );
         budget = {
           ...budget,
@@ -1053,52 +1113,59 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     const client = this.getClient();
     const sortBy = filter?.sortBy || 'date';
     const ascending = filter?.sortOrder === 'asc';
-    let query = client.from('expenses').select('*');
 
-    if (sortBy === 'amount') {
-      query = query.order('amount', { ascending });
-    } else {
-      query = query
-        .order('date', { ascending })
-        .order('time', { ascending, nullsFirst: false })
-        .order('created_at', { ascending });
-    }
+    const buildQuery = () => {
+      let query = client.from('expenses').select('*');
 
-    if (filter?.month) {
-      const nextMonth = addMonths(filter.month, 1);
-      query = query.gte('date', `${filter.month}-01`).lt('date', `${nextMonth}-01`);
-    }
-    if (filter?.categoryId) {
-      query = query.eq('category_id', filter.categoryId);
-    }
-    if (filter?.payerId) {
-      query = query.eq('payer_id', filter.payerId);
-    }
-    if (filter?.isShared !== undefined) {
-      query = query.eq('is_shared', filter.isShared);
-    }
-    if (filter?.settled !== undefined) {
-      query = query.eq('settled', filter.settled);
-    }
-    if (filter?.goalId) {
-      query = query.eq('goal_id', filter.goalId);
-    }
-    if (filter?.tag) {
-      query = query.contains('tags', [filter.tag]);
-    }
-    if (filter?.search) {
-      query = query.or(buildExpenseSearchOrFilter(filter.search));
-    }
+      if (sortBy === 'amount') {
+        query = query.order('amount', { ascending });
+      } else {
+        query = query
+          .order('date', { ascending })
+          .order('time', { ascending, nullsFirst: false })
+          .order('created_at', { ascending });
+      }
+
+      if (filter?.month) {
+        const nextMonth = addMonths(filter.month, 1);
+        query = query.gte('date', `${filter.month}-01`).lt('date', `${nextMonth}-01`);
+      }
+      if (filter?.categoryId) {
+        query = query.eq('category_id', filter.categoryId);
+      }
+      if (filter?.payerId) {
+        query = query.eq('payer_id', filter.payerId);
+      }
+      if (filter?.isShared !== undefined) {
+        query = query.eq('is_shared', filter.isShared);
+      }
+      if (filter?.settled !== undefined) {
+        query = query.eq('settled', filter.settled);
+      }
+      if (filter?.goalId) {
+        query = query.eq('goal_id', filter.goalId);
+      }
+      if (filter?.tag) {
+        query = query.contains('tags', [filter.tag]);
+      }
+      if (filter?.search) {
+        query = query.or(buildExpenseSearchOrFilter(filter.search));
+      }
+
+      return query;
+    };
 
     if (filter?.page && filter?.pageSize) {
       const from = (filter.page - 1) * filter.pageSize;
       const to = from + filter.pageSize - 1;
-      query = query.range(from, to);
+      const { data, error } = await buildQuery().range(from, to);
+      if (error) throw error;
+      return (data || []) as Expense[];
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data || []) as Expense[];
+    return fetchAllPages<Expense>(
+      () => buildQuery() as unknown as PaginatableQuery<Expense>
+    );
   }
 
   public async addExpense(input: CreateExpenseInput): Promise<Expense> {
@@ -1210,14 +1277,26 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     if (error) throw error;
   }
 
-  public async settleSharedExpenses(member1Id: string, member2Id: string): Promise<void> {
+  public async settleSharedExpenses(
+    member1Id: string,
+    member2Id: string,
+    expenseIds?: string[]
+  ): Promise<void> {
+    if (expenseIds !== undefined && expenseIds.length === 0) {
+      return;
+    }
     const client = this.getClient();
-    const { error } = await client
+    let query = client
       .from('expenses')
       .update({ settled: true })
       .eq('is_shared', true)
-      .eq('settled', false)
-      .or(`payer_id.eq.${member1Id},payer_id.eq.${member2Id}`);
+      .eq('settled', false);
+
+    if (expenseIds && expenseIds.length > 0) {
+      query = query.in('id', expenseIds);
+    }
+
+    const { error } = await query.or(`payer_id.eq.${member1Id},payer_id.eq.${member2Id}`);
     if (error) throw error;
   }
 
@@ -1475,13 +1554,19 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
   // Daily Check-ins
   public async getDailyCheckins(memberId?: string): Promise<DailyCheckin[]> {
     const client = this.getClient();
-    let query = client.from('daily_checkins').select('*').order('checkin_date', { ascending: false });
-    if (memberId) {
-      query = query.eq('member_id', memberId);
-    }
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data || []) as DailyCheckin[];
+    const buildQuery = () => {
+      let query = client
+        .from('daily_checkins')
+        .select('*')
+        .order('checkin_date', { ascending: false });
+      if (memberId) {
+        query = query.eq('member_id', memberId);
+      }
+      return query;
+    };
+    return fetchAllPages<DailyCheckin>(
+      () => buildQuery() as unknown as PaginatableQuery<DailyCheckin>
+    );
   }
 
   public async recordDailyCheckin(
