@@ -28,6 +28,7 @@ import {
     FileCheck2,
 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { Alert } from "../ui/Alert";
 import { StatCard } from "../ui/StatCard";
 import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
@@ -169,6 +170,9 @@ export function CreditCardTrackerSection({
     // Delete card confirmation
     const [cardToDelete, setCardToDelete] = useState<CreditCard | null>(null);
 
+    // Toggle paid error state
+    const [toggleError, setToggleError] = useState<string | null>(null);
+
     // Filter cards by perspective
     const filteredCards = useMemo(() => {
         return cards.filter((c) => {
@@ -213,6 +217,7 @@ export function CreditCardTrackerSection({
 
     // 1-Tap Toggle Paid / Unpaid
     const handleTogglePaid = async (stmt: CreditCardStatement) => {
+        setToggleError(null);
         try {
             const nextPaid = !stmt.is_paid;
             const input: UpsertCreditCardStatementInput = {
@@ -228,6 +233,7 @@ export function CreditCardTrackerSection({
             invalidateCreditCards();
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
+            setToggleError("Failed to update statement paid status. Please try again.");
         }
     };
 
@@ -317,9 +323,10 @@ export function CreditCardTrackerSection({
                         <button
                             type="button"
                             aria-label="Previous Month"
-                            onClick={() =>
-                                setSelectedMonth((m) => addMonths(m, -1))
-                            }
+                            onClick={() => {
+                                setToggleError(null);
+                                setSelectedMonth((m) => addMonths(m, -1));
+                            }}
                             className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
                         >
                             <ChevronLeft className="h-4 w-4" />
@@ -330,9 +337,10 @@ export function CreditCardTrackerSection({
                         <button
                             type="button"
                             aria-label="Next Month"
-                            onClick={() =>
-                                setSelectedMonth((m) => addMonths(m, 1))
-                            }
+                            onClick={() => {
+                                setToggleError(null);
+                                setSelectedMonth((m) => addMonths(m, 1));
+                            }}
                             className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
                         >
                             <ChevronRight className="h-4 w-4" />
@@ -354,6 +362,15 @@ export function CreditCardTrackerSection({
                     </Button>
                 </div>
             </div>
+
+            {toggleError && (
+                <Alert
+                    variant="danger"
+                    onClose={() => setToggleError(null)}
+                >
+                    {toggleError}
+                </Alert>
+            )}
 
             {/* 3 Summary Cards & Card Listing (dimmed during month switch) */}
             <div className={statementsPlaceholder ? "space-y-4 opacity-60 transition-opacity" : "space-y-4 transition-opacity"}>
