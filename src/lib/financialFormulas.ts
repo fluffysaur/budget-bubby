@@ -1086,12 +1086,13 @@ export function parseAllocationInput(
 }
 
 /**
- * 18. Formats a percentage value (0-100) cleanly with up to 2 decimal places
- * (e.g., 15 -> "15%", 6.963 -> "6.96%").
+ * 18. Formats a percentage value (0-100) cleanly with up to 2 decimal places,
+ * without a trailing "%" (e.g., 15 -> "15", 6.963 -> "6.96"). Callers pair
+ * this with their own "%" suffix.
  */
 export function formatAllocationPercent(pct: number): string {
     const safe = isNaN(pct) ? 0 : Math.round(pct * 100) / 100;
-    return `${Number(safe.toFixed(2))}%`;
+    return `${Number(safe.toFixed(2))}`;
 }
 
 /**
