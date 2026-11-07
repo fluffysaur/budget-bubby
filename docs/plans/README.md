@@ -7,7 +7,7 @@
 | [bonus-log.md](./bonus-log.md) | Dated bonus entries, split, goal funding, Plan > Bonus log | `bonus_events`, `bonus_goal_contributions`, `bonus_split_defaults` + 2 RPCs |
 | [capture-inbox.md](./capture-inbox.md) | Apple Pay Shortcut → Inbox, triage, smarter reminders | `inbox_items`, `merchant_rules`, `capture_tokens` + RPC + Edge Function |
 | [delight-bubby.md](./delight-bubby.md) | Growing Bubby, moods, couple streak, recap, micro-interactions | None (optional `households.bubby_prefs`) |
-| [app-polish.md](./app-polish.md) | Data-bug fixes, offline queue, motion system, copy trim, visual meters (9 PRs, 4 lanes). Leftovers go to [backlog.md](../backlog.md). | None (backlog items may need SQL) |
+| [app-polish.md](./app-polish.md) | Data-bug fixes, offline queue, motion system, copy trim, visual meters (9 PRs, 4 lanes). Leftovers are GitHub issues labelled `backlog`. | None (`needs-db` issues may need SQL) |
 
 ## Cross-plan decisions (these override the individual plans)
 

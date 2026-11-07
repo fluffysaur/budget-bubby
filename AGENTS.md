@@ -222,13 +222,27 @@ This repo is **public**, so everything in a screenshot is public too.
   - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
 - **Not test baselines.** Screenshots are never committed to feature branches or used as visual-regression baselines.
 
-### H. Backlog
+### H. Backlog (GitHub Issues)
 
-[`docs/backlog.md`](docs/backlog.md) is the single list of known, unscheduled fixes and improvements. It is ordered by priority (P0–P3).
+Known, unscheduled fixes and improvements are GitHub issues labelled `backlog`. Each also carries one priority label:
 
-- **Adding:** If you find a bug or improvement outside your task's scope, add it to the backlog in the backlog's format rather than fixing it in the same PR.
-- **Clearing:** The PR that fixes a backlog item deletes that item in the same PR. Git history is the record, so don't keep a "Done" list.
-- **Picking up:** Start with the highest unblocked item. Items marked as needing a DB change wait until the user has run the SQL.
+- **`P0`:** money or data is wrong.
+- **`P1`:** something is broken or blocks a flow.
+- **`P2`:** friction or polish.
+- **`P3`:** ideas.
+
+Add `bug` or `enhancement` to every backlog issue. Add `needs-db` when the fix needs SQL the user runs on the live DB.
+
+- **Adding:** If you find a bug or improvement outside your task's scope, open an issue rather than fixing it in the same PR. Use `gh issue create --label backlog --label P<n> --label bug|enhancement`. The body has these lines:
+    - **Story:** As a <who>, I want <what>, so that <why>.
+    - **Where:** file:line
+    - **Done when:** acceptance criteria
+    - **Refs:** plan, audit ID or PR
+    - **DB change:** none, or the SQL the user must run
+
+  The repo is public, so never include personal names, real balances or other private data.
+- **Clearing:** The PR that fixes an issue says `Closes #<n>` in its body.
+- **Picking up:** Run `gh issue list --label backlog --label P0`, then P1 and so on, and take the highest unblocked issue. Issues labelled `needs-db` wait until the user confirms the SQL has run.
 
 ## 8. Subagent Delegation & Model Tiering
 
