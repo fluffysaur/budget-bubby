@@ -427,9 +427,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
           (clean === 'rachel' && m.display_name.toLowerCase().includes('rachel'))
       );
 
-      if (targetMember) {
-        query = query.or(`owner_id.eq.${targetMember.id},is_joint.eq.true`);
+      if (!targetMember) {
+        return [];
       }
+
+      query = query.or(`owner_id.eq.${targetMember.id},is_joint.eq.true`);
     }
 
     const { data, error } = await query;

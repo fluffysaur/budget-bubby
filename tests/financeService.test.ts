@@ -49,6 +49,11 @@ describe('FinanceService Layer (Dual-Mode & Mock Persistence)', () => {
       }
     });
 
+    it('returns an empty list for an unknown perspective', async () => {
+      const accounts = await mockFinanceService.getAccounts('unknown' as any);
+      expect(accounts).toEqual([]);
+    });
+
     it('computes accurate household overview with Net Worth = Total Assets', async () => {
       const overview = await mockFinanceService.getHouseholdOverview();
       const accounts = await mockFinanceService.getAccounts('household');
