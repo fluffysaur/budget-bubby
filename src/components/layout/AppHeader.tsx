@@ -32,6 +32,8 @@ import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { m, AnimatePresence } from "motion/react";
+import { pop } from "../../lib/motion";
 
 export interface AppHeaderProps {
     className?: string;
@@ -217,7 +219,7 @@ export function AppHeader({
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm transition-all cursor-pointer"
+                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm transition-press cursor-pointer"
                         >
                             <span>{currentOption.label}</span>
                             <ChevronDown
@@ -228,12 +230,15 @@ export function AppHeader({
                             />
                         </button>
 
-                        {isDropdownOpen && (
-                            <div
-                                role="listbox"
-                                aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
-                            >
+                        <AnimatePresence>
+                            {isDropdownOpen && (
+                                <m.div
+                                    key="perspective-dropdown"
+                                    role="listbox"
+                                    aria-label="Financial Perspectives"
+                                    {...pop}
+                                    className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg z-50"
+                                >
                                 <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                     Perspectives
                                 </div>
@@ -360,8 +365,9 @@ export function AppHeader({
                                         </button>
                                     )}
                                 </div>
-                            </div>
+                            </m.div>
                         )}
+                    </AnimatePresence>
                     </div>
 
                     {/* Desktop Perspective Switcher Pills */}
@@ -384,7 +390,7 @@ export function AppHeader({
                                             ? "Combined Household"
                                             : opt.label
                                     }
-                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all sm:text-xs cursor-pointer ${
+                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-press sm:text-xs cursor-pointer ${
                                         isSelected
                                             ? opt.activeBg
                                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"

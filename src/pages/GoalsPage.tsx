@@ -40,6 +40,8 @@ import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
 import { QuickDepositModal } from "../components/goals/QuickDepositModal";
 import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import type { SavingsGoal, Expense } from "../types/finance";
+import { m, AnimatePresence } from "motion/react";
+import { listItem } from "../lib/motion";
 
 export interface GoalsPageProps {
     className?: string;
@@ -214,7 +216,15 @@ export function GoalsPage({
         scrollTimerRef.current = setTimeout(() => {
             const el = document.getElementById(`goal-card-${targetGoalId}`);
             if (el) {
-                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                const reduced =
+                    typeof window !== "undefined" &&
+                    typeof window.matchMedia === "function" &&
+                    window.matchMedia("(prefers-reduced-motion: reduce)")
+                        .matches;
+                el.scrollIntoView({
+                    behavior: reduced ? "auto" : "smooth",
+                    block: "center",
+                });
             }
             scrollTimerRef.current = null;
         }, 100);
@@ -445,17 +455,20 @@ export function GoalsPage({
                     role="tabpanel"
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
-                    {displayedGoals.map((goal) => (
-                        <GoalCard
-                            key={goal.id}
-                            goal={goal}
-                            linkedExpenses={goalExpensesMap.get(goal.id) || []}
-                            onEdit={handleOpenEditModal}
-                            onQuickDeposit={handleOpenDepositModal}
-                            onSpendFromGoal={handleOpenSpendModal}
-                            isHighlighted={highlightedGoalId === goal.id}
-                        />
-                    ))}
+                    <AnimatePresence initial={false}>
+                        {displayedGoals.map((goal) => (
+                            <m.div key={goal.id} {...listItem}>
+                                <GoalCard
+                                    goal={goal}
+                                    linkedExpenses={goalExpensesMap.get(goal.id) || []}
+                                    onEdit={handleOpenEditModal}
+                                    onQuickDeposit={handleOpenDepositModal}
+                                    onSpendFromGoal={handleOpenSpendModal}
+                                    isHighlighted={highlightedGoalId === goal.id}
+                                />
+                            </m.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
             )}
 

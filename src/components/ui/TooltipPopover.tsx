@@ -15,6 +15,8 @@ import {
     type Placement,
 } from "@floating-ui/react";
 import { HelpCircle, X } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
+import { pop } from "../../lib/motion";
 
 export interface TooltipPopoverProps {
     title?: string;
@@ -128,38 +130,42 @@ export function TooltipPopover({
                 </button>
             )}
 
-            {isOpen && (
-                <FloatingPortal>
-                    <div
-                        ref={setFloating}
-                        style={{
-                            ...floatingStyles,
-                            opacity: isPositioned ? 1 : 0,
-                        }}
-                        {...getFloatingProps()}
-                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute select-text transition-opacity duration-150"
-                    >
-                        <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-(--border-subtle)">
-                            {title && (
-                                <h4 className="text-xs font-black uppercase tracking-wider text-(--text-ink) font-display">
-                                    {title}
-                                </h4>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => setIsOpen(false)}
-                                aria-label="Close tooltip"
-                                className="p-0.5 rounded text-(--text-muted) hover:text-(--text-ink) cursor-pointer ml-auto"
-                            >
-                                <X className="h-3.5 w-3.5" />
-                            </button>
-                        </div>
-                        <div className="text-xs font-medium text-(--text-muted) leading-relaxed">
-                            {children}
-                        </div>
-                    </div>
-                </FloatingPortal>
-            )}
+            <FloatingPortal>
+                <AnimatePresence>
+                    {isOpen && (
+                        <m.div
+                            key="tooltip-popover"
+                            ref={setFloating}
+                            style={{
+                                ...floatingStyles,
+                                opacity: isPositioned ? 1 : 0,
+                            }}
+                            {...getFloatingProps()}
+                            {...pop}
+                            className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute select-text"
+                        >
+                            <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-(--border-subtle)">
+                                {title && (
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-(--text-ink) font-display">
+                                        {title}
+                                    </h4>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    aria-label="Close tooltip"
+                                    className="p-0.5 rounded text-(--text-muted) hover:text-(--text-ink) cursor-pointer ml-auto"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                            <div className="text-xs font-medium text-(--text-muted) leading-relaxed">
+                                {children}
+                            </div>
+                        </m.div>
+                    )}
+                </AnimatePresence>
+            </FloatingPortal>
         </div>
     );
 }

@@ -34,7 +34,7 @@ export function MobileBottomNav({
     return (
         <nav
             aria-label="Mobile Navigation"
-            className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-(--bg-card)/95 backdrop-blur-lg border-t-2 border-(--border-ink) transition-colors duration-200 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
+            className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-(--bg-card) border-t-2 border-(--border-ink) transition-colors duration-200 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
         >
             <div className="grid grid-cols-5 h-16 max-w-lg mx-auto px-2 relative">
                 {/* Tab 1: Home / Dashboard */}
@@ -42,14 +42,14 @@ export function MobileBottomNav({
                     type="button"
                     onClick={() => onSelectTab?.("dashboard")}
                     aria-label="Dashboard"
-                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
+                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         activeTab === "dashboard"
                             ? "text-(--text-ink) font-black"
                             : "text-(--text-muted) hover:text-(--text-ink)"
                     }`}
                 >
                     <div
-                        className={`p-1 mb-1 rounded-xl transition-all ${
+                        className={`p-1 mb-1 rounded-xl transition-colors ${
                             activeTab === "dashboard"
                                 ? "bg-(--pastel-lilac) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
@@ -65,14 +65,14 @@ export function MobileBottomNav({
                     type="button"
                     onClick={() => onSelectTab?.("spend")}
                     aria-label={spendBadgeCount > 0 ? `Spend, ${spendBadgeCount} to sort` : "Spend"}
-                    className={`relative flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
+                    className={`relative flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         isSpendActive
                             ? "text-(--text-ink) font-black"
                             : "text-(--text-muted) hover:text-(--text-ink)"
                     }`}
                 >
                     <div
-                        className={`p-1 mb-1 rounded-xl transition-all ${
+                        className={`p-1 mb-1 rounded-xl transition-colors ${
                             isSpendActive
                                 ? "bg-(--pastel-butter) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
@@ -93,23 +93,19 @@ export function MobileBottomNav({
                 </button>
 
                 {/* Center Floating Quick Add Action (FAB) */}
-                <div
-                    onClick={onQuickAdd}
-                    className="flex flex-col items-center justify-end h-full pb-1.5 relative cursor-pointer group"
-                >
+                <div className="flex flex-col items-center justify-end h-full pb-1.5 relative group">
                     <button
                         type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
+                        onClick={() => {
                             feedback.routine("fab");
                             onQuickAdd?.();
                         }}
                         aria-label="Quick Add"
-                        className="absolute bottom-5.5 flex items-center justify-center w-12 h-12 rounded-2xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute group-hover:scale-105 active:scale-96 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all duration-120 cursor-pointer focus:outline-none"
+                        className="absolute bottom-5.5 flex items-center justify-center w-12 h-12 rounded-2xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute group-hover:scale-105 active:scale-96 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer focus:outline-none"
                     >
                         <Plus className="h-6 w-6 stroke-3" />
                     </button>
-                    <span className="text-[10px] font-bold leading-tight text-(--text-muted) group-hover:text-(--text-ink) transition-colors">
+                    <span className="text-[10px] font-bold leading-tight text-(--text-muted) group-hover:text-(--text-ink) transition-colors pointer-events-none">
                         Quick Add
                     </span>
                 </div>
@@ -119,14 +115,14 @@ export function MobileBottomNav({
                     type="button"
                     onClick={() => onSelectTab?.("accounts")}
                     aria-label="Accounts"
-                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
+                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         activeTab === "accounts"
                             ? "text-(--text-ink) font-black"
                             : "text-(--text-muted) hover:text-(--text-ink)"
                     }`}
                 >
                     <div
-                        className={`p-1 mb-1 rounded-xl transition-all ${
+                        className={`p-1 mb-1 rounded-xl transition-colors ${
                             activeTab === "accounts"
                                 ? "bg-(--pastel-pink) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""
@@ -142,14 +138,14 @@ export function MobileBottomNav({
                     type="button"
                     onClick={() => onSelectTab?.("plan")}
                     aria-label="Plan"
-                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-colors cursor-pointer ${
+                    className={`flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         isPlanActive
                             ? "text-(--text-ink) font-black"
                             : "text-(--text-muted) hover:text-(--text-ink)"
                     }`}
                 >
                     <div
-                        className={`p-1 mb-1 rounded-xl transition-all ${
+                        className={`p-1 mb-1 rounded-xl transition-colors ${
                             isPlanActive
                                 ? "bg-(--pastel-mint) border-2 border-(--border-ink) shadow-cute-sm animate-pill-pop"
                                 : ""

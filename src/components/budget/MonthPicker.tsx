@@ -27,6 +27,8 @@ import {
     RotateCcw,
     X,
 } from "lucide-react";
+import { m, AnimatePresence } from "motion/react";
+import { pop } from "../../lib/motion";
 import {
     addMonths,
     formatDisplayMonth,
@@ -127,7 +129,7 @@ export function MonthPicker({
                 type="button"
                 onClick={handlePrevMonth}
                 aria-label="Previous month"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
             >
                 <ChevronLeft className="h-4 w-4" />
             </button>
@@ -139,7 +141,7 @@ export function MonthPicker({
                 onClick={() => setIsOpen((prev) => !prev)}
                 aria-label={`Choose month: ${formatDisplayMonth(selectedMonth)}`}
                 aria-expanded={isOpen}
-                className={`h-9 flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-2 px-3 rounded-xl border transition-all cursor-pointer select-none active:translate-x-0.5 active:translate-y-0.5 ${
+                className={`h-9 flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-2 px-3 rounded-xl border transition-press cursor-pointer select-none active:translate-x-0.5 active:translate-y-0.5 ${
                     isOpen
                         ? "bg-(--bg-cream) border-(--border-ink)"
                         : "border-(--border-subtle) hover:border-(--border-ink) hover:bg-(--bg-cream)"
@@ -159,23 +161,26 @@ export function MonthPicker({
                 type="button"
                 onClick={handleNextMonth}
                 aria-label="Next month"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
             >
                 <ChevronRight className="h-4 w-4" />
             </button>
 
             {/* Month Selection Popover */}
-            {isOpen && (
-                <FloatingPortal>
-                    <div
-                        ref={setFloating}
-                        style={{
-                            ...floatingStyles,
-                            opacity: isPositioned ? 1 : 0,
-                        }}
-                        {...getFloatingProps()}
-                        className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute select-none transition-opacity duration-150 animate-in fade-in"
-                    >
+            <FloatingPortal>
+                <AnimatePresence>
+                    {isOpen && (
+                        <m.div
+                            key="month-popover"
+                            ref={setFloating}
+                            style={{
+                                ...floatingStyles,
+                                opacity: isPositioned ? 1 : 0,
+                            }}
+                            {...getFloatingProps()}
+                            {...pop}
+                            className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute select-none"
+                        >
                         {/* Popover Header: Year Stepper & Close Button */}
                         <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-(--border-subtle)">
                             <div className="flex items-center gap-1.5">
@@ -183,7 +188,7 @@ export function MonthPicker({
                                     type="button"
                                     onClick={() => setNavYear((y) => y - 1)}
                                     aria-label="Previous year"
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                 >
                                     <ChevronLeft className="h-3.5 w-3.5" />
                                 </button>
@@ -194,7 +199,7 @@ export function MonthPicker({
                                     type="button"
                                     onClick={() => setNavYear((y) => y + 1)}
                                     aria-label="Next year"
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                 >
                                     <ChevronRight className="h-3.5 w-3.5" />
                                 </button>
@@ -227,7 +232,7 @@ export function MonthPicker({
                                         type="button"
                                         onClick={() => handleSelectMonth(index)}
                                         aria-label={`Select ${monthName} ${navYear}`}
-                                        className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                                        className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                                             isSelected
                                                 ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                                 : isTodayMonth
@@ -247,15 +252,16 @@ export function MonthPicker({
                                 type="button"
                                 onClick={handleJumpFromPopover}
                                 aria-label="Jump to current month from picker"
-                                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) bg-(--pastel-butter-light) text-(--text-ink) hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) bg-(--pastel-butter-light) text-(--text-ink) hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                             >
                                 <RotateCcw className="h-3 w-3 shrink-0" />
                                 <span>Jump to Current Month</span>
                             </button>
                         </div>
-                    </div>
-                </FloatingPortal>
-            )}
+                        </m.div>
+                    )}
+                </AnimatePresence>
+            </FloatingPortal>
         </div>
     );
 }

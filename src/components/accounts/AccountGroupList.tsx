@@ -28,6 +28,8 @@ import {
   Plus,
 } from 'lucide-react';
 import type { Account, AccountType } from '../../types/finance';
+import { m, AnimatePresence } from 'motion/react';
+import { listItem } from '../../lib/motion';
 import { Card, EmptyStateCard, Button } from '../ui';
 import { TruncatedText } from '../ui/TruncatedText';
 import { AccountCard } from './AccountCard';
@@ -179,7 +181,7 @@ export function AccountGroupList({
           <button
             type="button"
             onClick={() => setScopeFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-press cursor-pointer ${
               scopeFilter === 'all'
                 ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
@@ -190,7 +192,7 @@ export function AccountGroupList({
           <button
             type="button"
             onClick={() => setScopeFilter('non-cpf')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-press cursor-pointer ${
               scopeFilter === 'non-cpf'
                 ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
@@ -205,7 +207,7 @@ export function AccountGroupList({
             type="button"
             onClick={() => setViewMode('table')}
             aria-label="Compact Table View"
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-press cursor-pointer ${
               viewMode === 'table'
                 ? 'bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink)'
@@ -218,7 +220,7 @@ export function AccountGroupList({
             type="button"
             onClick={() => setViewMode('cards')}
             aria-label="Cards View"
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-press cursor-pointer ${
               viewMode === 'cards'
                 ? 'bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink)'
@@ -287,26 +289,31 @@ export function AccountGroupList({
 
             {viewMode === 'cards' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {group.accounts.map((account) => (
-                  <AccountCard
-                    key={account.id}
-                    account={account}
-                    onUpdateBalance={onUpdateBalance}
-                    onEditAccount={onEditAccount}
-                    onDeleteAccount={onDeleteAccount}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {group.accounts.map((account) => (
+                    <m.div key={account.id} {...listItem}>
+                      <AccountCard
+                        account={account}
+                        onUpdateBalance={onUpdateBalance}
+                        onEditAccount={onEditAccount}
+                        onDeleteAccount={onDeleteAccount}
+                      />
+                    </m.div>
+                  ))}
+                </AnimatePresence>
               </div>
             ) : (
               /* Notion-Style Compact Table List */
               <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) divide-y-2 divide-(--border-ink) overflow-hidden shadow-cute">
-                {group.accounts.map((account) => {
-                  const isEditing = inlineEditingId === account.id;
-                  return (
-                    <div
-                      key={account.id}
-                      className="flex items-center justify-between gap-3 px-3.5 py-2 sm:py-2.5 hover:bg-(--bg-cream) transition-colors"
-                    >
+                <AnimatePresence initial={false}>
+                  {group.accounts.map((account) => {
+                    const isEditing = inlineEditingId === account.id;
+                    return (
+                      <m.div
+                        key={account.id}
+                        {...listItem}
+                        className="flex items-center justify-between gap-3 px-3.5 py-2 sm:py-2.5 hover:bg-(--bg-cream) transition-colors"
+                      >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap min-w-0">
                           <div className="text-sm font-bold text-(--text-ink) min-w-0 max-w-40 sm:max-w-60">
@@ -412,9 +419,10 @@ export function AccountGroupList({
                           </>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
+                      </m.div>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
             )}
           </section>

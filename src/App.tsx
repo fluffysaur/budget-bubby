@@ -8,7 +8,7 @@
  * - Global Quick Add Expense modal
  */
 
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import {
   BrowserRouter,
   MemoryRouter,
@@ -17,7 +17,10 @@ import {
   Navigate,
   useLocation,
   useNavigate,
+  useNavigationType,
 } from 'react-router-dom';
+import { LazyMotion, domAnimation, MotionConfig, m } from 'motion/react';
+import { fadeRise } from './lib/motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import {
@@ -54,39 +57,29 @@ const FastLogPage = lazy(() => import('./pages/FastLogPage'));
 const InboxPage = lazy(() => import('./pages/InboxPage'));
 
 /**
- * Branded Skeleton Loader displayed during route transition / lazy bundle resolution
+ * Minimal Header-Only Skeleton Loader displayed during route transition / lazy bundle resolution
+ * Delayed by 150ms to prevent skeleton flashes during quick cached navigations.
  */
 export function RouteSkeletonLoader() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 150);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div
       role="status"
       aria-label="Loading page content"
       data-testid="route-skeleton-loader"
-      className="w-full space-y-6 animate-pulse py-2"
+      className="w-full h-12 flex items-center justify-between py-2"
     >
-      {/* Header bar placeholder */}
-      <div className="flex items-center justify-between">
-        <div className="h-8 bg-(--border-subtle)/60 dark:bg-slate-800 rounded-xl w-48" />
-        <div className="h-8 bg-(--border-subtle)/60 dark:bg-slate-800 rounded-xl w-28" />
-      </div>
-
-      {/* Hero card / 3-column stats skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-cute-sm" />
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-cute-sm" />
-        <div className="h-28 bg-(--bg-card) rounded-2xl p-4 border-2 border-(--border-ink) shadow-cute-sm sm:col-span-2 lg:col-span-1" />
-      </div>
-
-      {/* Main card placeholder */}
-      <div className="h-72 bg-(--bg-card) rounded-2xl p-6 border-2 border-(--border-ink) shadow-cute flex flex-col justify-between">
-        <div className="h-6 bg-(--border-subtle)/70 dark:bg-slate-700 rounded-lg w-1/4" />
-        <div className="space-y-3">
-          <div className="h-4 bg-(--border-subtle)/50 dark:bg-slate-700/60 rounded-md w-full" />
-          <div className="h-4 bg-(--border-subtle)/50 dark:bg-slate-700/60 rounded-md w-5/6" />
-          <div className="h-4 bg-(--border-subtle)/40 dark:bg-slate-700/40 rounded-md w-4/6" />
+      {show && (
+        <div data-testid="route-skeleton-bars" className="w-full flex items-center justify-between">
+          <div className="h-8 bg-(--border-subtle)/60 dark:bg-slate-800 rounded-xl w-36 motion-safe:animate-pulse" />
+          <div className="h-8 bg-(--border-subtle)/60 dark:bg-slate-800 rounded-xl w-24 motion-safe:animate-pulse" />
         </div>
-        <div className="h-4 bg-(--border-subtle)/40 dark:bg-slate-700/40 rounded-md w-1/3" />
-      </div>
+      )}
     </div>
   );
 }
@@ -94,7 +87,66 @@ export function RouteSkeletonLoader() {
 function AppLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
+  const navType = useNavigationType();
   const { refreshData, members } = useHousehold();
+  const scrollPositions = useRef<Map<string, number>>(new Map());
+
+  // Track main scroller position
+  useEffect(() => {
+    const main = document.querySelector('main');
+    if (!main) return;
+    const handleScroll = () => {
+      scrollPositions.current.set(location.pathname, main.scrollTop);
+    };
+    main.addEventListener('scroll', handleScroll, { passive: true });
+    return () => main.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
+
+  // Restore scroll position on POP or scroll to top on PUSH; focus page h1
+  useEffect(() => {
+    const main = document.querySelector('main');
+    if (main) {
+      if (navType === 'POP') {
+        const saved = scrollPositions.current.get(location.pathname) ?? 0;
+        main.scrollTop = saved;
+        // In case transition animation or lazy-load sizes the container in the next frame
+        requestAnimationFrame(() => {
+          main.scrollTop = saved;
+        });
+      } else {
+        main.scrollTop = 0;
+      }
+    }
+    const h1 = document.querySelector('h1');
+    if (h1) {
+      h1.setAttribute('tabIndex', '-1');
+      h1.focus({ preventScroll: true });
+    }
+  }, [location.pathname, navType]);
+
+  // Preload lazy page chunks after first paint (browser idle only; skip during test runs)
+  useEffect(() => {
+    if (typeof window === 'undefined' || import.meta.env.MODE === 'test') return;
+    const preload = () => {
+      import('./pages/DashboardPage');
+      import('./pages/SpendPage');
+      import('./pages/AccountsPage');
+      import('./pages/PlanPage');
+      import('./pages/FastLogPage');
+      import('./pages/InboxPage');
+    };
+    if ('requestIdleCallback' in window) {
+      const handle = (window as unknown as { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(preload);
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(handle);
+        }
+      };
+    } else {
+      const timer = setTimeout(preload, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [quickAddValues, setQuickAddValues] = useState<
@@ -197,7 +249,7 @@ function AppLayoutInner() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
+    <div className="flex h-dvh bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
       {/* Desktop Navigation Sidebar */}
       <DesktopSidebar
         activeTab={activeTab}
@@ -220,25 +272,33 @@ function AppLayoutInner() {
         <PullToRefresh
           as="main"
           onRefresh={refreshData}
-          className="px-4 sm:px-6 py-6 pb-24 md:pb-10"
+          className="px-4 sm:px-6 py-6 pb-24 md:pb-10 [scrollbar-gutter:stable]"
         >
           <div className="mx-auto w-full max-w-5xl">
             <Suspense fallback={<RouteSkeletonLoader />}>
-              <Routes>
-                <Route path="/" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
-                <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
-                <Route path="/spend" element={<SpendPage onNavigateTab={handleSelectTab} />} />
-                <Route path="/budget" element={<SpendPage initialTab="budget" onNavigateTab={handleSelectTab} />} />
-                <Route path="/expenses" element={<SpendPage initialTab="expenses" onNavigateTab={handleSelectTab} />} />
-                <Route path="/fast-log" element={<FastLogPage onOpenQuickAdd={handleOpenQuickAdd} />} />
-                <Route path="/inbox" element={<InboxPage />} />
-                <Route path="/accounts" element={<AccountsPage />} />
-                <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
-                <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
-                <Route path="/recurring" element={<PlanPage initialTab="recurring" onNavigateTab={handleSelectTab} />} />
-                <Route path="/plan" element={<PlanPage onNavigateTab={handleSelectTab} />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              <m.div
+                key={location.pathname}
+                initial={fadeRise.initial}
+                animate={fadeRise.animate}
+                transition={fadeRise.transition}
+                className="w-full"
+              >
+                <Routes>
+                  <Route path="/" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
+                  <Route path="/dashboard" element={<DashboardPage onNavigateTab={handleSelectTab} />} />
+                  <Route path="/spend" element={<SpendPage onNavigateTab={handleSelectTab} />} />
+                  <Route path="/budget" element={<SpendPage initialTab="budget" onNavigateTab={handleSelectTab} />} />
+                  <Route path="/expenses" element={<SpendPage initialTab="expenses" onNavigateTab={handleSelectTab} />} />
+                  <Route path="/fast-log" element={<FastLogPage onOpenQuickAdd={handleOpenQuickAdd} />} />
+                  <Route path="/inbox" element={<InboxPage />} />
+                  <Route path="/accounts" element={<AccountsPage />} />
+                  <Route path="/goals" element={<PlanPage initialTab="goals" onNavigateTab={handleSelectTab} />} />
+                  <Route path="/loans" element={<PlanPage initialTab="loans" onNavigateTab={handleSelectTab} />} />
+                  <Route path="/recurring" element={<PlanPage initialTab="recurring" onNavigateTab={handleSelectTab} />} />
+                  <Route path="/plan" element={<PlanPage onNavigateTab={handleSelectTab} />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </m.div>
             </Suspense>
           </div>
         </PullToRefresh>
@@ -285,7 +345,7 @@ export function AppShell() {
   // If live Supabase is configured and we are still verifying the session
   if (isSupabaseConfigured() && authLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
+      <div className="flex h-dvh w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
         <div className="flex flex-col items-center gap-3">
           <div className="h-9 w-9 animate-spin rounded-full border-3 border-(--pastel-lilac) border-t-transparent" />
           <span className="text-xs font-bold text-(--text-muted) tracking-wider uppercase font-mono-num">Loading Budget Bubby...</span>
@@ -326,13 +386,17 @@ export function App({ initialEntries, initialAuthenticated }: AppProps = {}) {
   const routerProps = initialEntries ? { initialEntries } : {};
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider initialAuthenticated={initialAuthenticated}>
-        <RouterComponent {...routerProps}>
-          <AppShell />
-        </RouterComponent>
-      </AuthProvider>
-    </QueryClientProvider>
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider initialAuthenticated={initialAuthenticated}>
+            <RouterComponent {...routerProps}>
+              <AppShell />
+            </RouterComponent>
+          </AuthProvider>
+        </QueryClientProvider>
+      </MotionConfig>
+    </LazyMotion>
   );
 }
 

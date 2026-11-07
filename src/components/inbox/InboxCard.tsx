@@ -169,7 +169,7 @@ export function InboxCard({
                                     aria-pressed={selected}
                                     aria-label={`${c.name} (${idx + 1})`}
                                     onClick={() => onSelectCategory(c.id)}
-                                    className={`flex min-h-10 items-center rounded-xl border-2 px-1.5 transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+                                    className={`flex min-h-10 items-center rounded-xl border-2 px-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                                         selected
                                             ? "border-(--border-ink) bg-(--pastel-lilac-light) shadow-cute-sm"
                                             : "border-transparent hover:bg-(--bg-cream)"
@@ -203,6 +203,27 @@ export function InboxCard({
                 </div>
             </Card>
         </div>
+    );
+}
+
+export function InboxCardSkeleton() {
+    return (
+        <Card elevation="tactile" padding="md" className="motion-safe:animate-pulse" aria-label="Loading inbox">
+            <div className="space-y-4">
+                <div className="h-4 w-24 bg-(--border-subtle)/70 rounded-md" />
+                <div className="h-6 w-44 bg-(--border-subtle)/80 rounded-lg" />
+                <div className="space-y-1">
+                    <div className="h-8 w-32 bg-(--border-subtle)/90 rounded-lg" />
+                    <div className="h-3.5 w-36 bg-(--border-subtle)/50 rounded-md" />
+                </div>
+                <div className="flex gap-2">
+                    <div className="h-9 w-24 bg-(--border-subtle)/60 rounded-xl" />
+                    <div className="h-9 w-24 bg-(--border-subtle)/60 rounded-xl" />
+                    <div className="h-9 w-20 bg-(--border-subtle)/60 rounded-xl" />
+                </div>
+                <div className="h-9 w-40 bg-(--border-subtle)/50 rounded-xl" />
+            </div>
+        </Card>
     );
 }
 

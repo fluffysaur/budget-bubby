@@ -32,6 +32,8 @@ import {
 } from "../../lib/recurringItems";
 import type { RecurringItem, RecurringItemType } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { m, AnimatePresence } from "motion/react";
+import { listItem } from "../../lib/motion";
 
 export interface RecurringTableProps {
     recurringItems: RecurringItem[];
@@ -159,7 +161,7 @@ export function RecurringTable({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search name or notes..."
-                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-all"
+                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-press"
                     />
                     {searchTerm && (
                         <button
@@ -293,34 +295,36 @@ export function RecurringTable({
                                 </td>
                             </tr>
                         ) : (
-                            filteredItems.map((recurringItem) => {
-                                const isMonthly =
-                                    recurringItem.frequency === "monthly";
-                                const renewalMonthText = isMonthly
-                                    ? "Monthly"
-                                    : recurringItem.payment_month &&
-                                        recurringItem.payment_month >= 1 &&
-                                        recurringItem.payment_month <= 12
-                                      ? `${MONTH_NAMES[recurringItem.payment_month - 1]} (M${recurringItem.payment_month})`
-                                      : "N/A";
-                                const owner = getOwnerLabel(recurringItem.owner_id);
-                                const ownerIcon =
-                                    owner === "Yi Jia"
-                                        ? "👨"
-                                        : owner === "Rachel"
-                                          ? "👩"
-                                          : "👥";
+                            <AnimatePresence initial={false}>
+                                {filteredItems.map((recurringItem) => {
+                                    const isMonthly =
+                                        recurringItem.frequency === "monthly";
+                                    const renewalMonthText = isMonthly
+                                        ? "Monthly"
+                                        : recurringItem.payment_month &&
+                                            recurringItem.payment_month >= 1 &&
+                                            recurringItem.payment_month <= 12
+                                          ? `${MONTH_NAMES[recurringItem.payment_month - 1]} (M${recurringItem.payment_month})`
+                                          : "N/A";
+                                    const owner = getOwnerLabel(recurringItem.owner_id);
+                                    const ownerIcon =
+                                        owner === "Yi Jia"
+                                            ? "👨"
+                                            : owner === "Rachel"
+                                              ? "👩"
+                                              : "👥";
 
-                                const status = statusById.get(recurringItem.id);
-                                const isEnded = status === "ended";
+                                    const status = statusById.get(recurringItem.id);
+                                    const isEnded = status === "ended";
 
-                                return (
-                                    <tr
-                                        key={recurringItem.id}
-                                        className={`flex flex-wrap items-center gap-x-2 gap-y-1.5 p-3 sm:p-0 sm:table-row hover:bg-(--bg-cream)/70 transition-colors ${
-                                            isEnded ? "opacity-60" : ""
-                                        }`}
-                                    >
+                                    return (
+                                        <m.tr
+                                            key={recurringItem.id}
+                                            {...listItem}
+                                            className={`flex flex-wrap items-center gap-x-2 gap-y-1.5 p-3 sm:p-0 sm:table-row hover:bg-(--bg-cream)/70 transition-colors ${
+                                                isEnded ? "opacity-60" : ""
+                                            }`}
+                                        >
                                         {/* Name & Notes */}
                                         <td className="order-1 w-full min-w-0 sm:w-auto sm:table-cell sm:py-3.5 sm:px-4 font-bold text-(--color-ink) dark:text-white">
                                             <div className="flex items-start gap-2">
@@ -438,7 +442,7 @@ export function RecurringTable({
                                                         onClick={() =>
                                                             onEdit(recurringItem)
                                                         }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                                         title="Edit recurring item"
                                                     >
                                                         <Pencil className="w-4 h-4" />
@@ -452,7 +456,7 @@ export function RecurringTable({
                                                         onClick={() =>
                                                             onDelete(recurringItem.id)
                                                         }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                                                         title="Delete recurring item"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -460,9 +464,10 @@ export function RecurringTable({
                                                 )}
                                             </div>
                                         </td>
-                                    </tr>
-                                );
-                            })
+                                        </m.tr>
+                                    );
+                                })}
+                            </AnimatePresence>
                         )}
                     </tbody>
                 </table>
