@@ -31,6 +31,10 @@ describe('Credit Card Statements & Due Date Tracker', () => {
     mockFinanceService.resetData();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('getRelativeDueLabel Helper', () => {
     it('returns Paid label when statement is paid', () => {
       const result = getRelativeDueLabel('2026-11-05', true, '2026-10-25T10:00:00.000Z');
@@ -131,6 +135,40 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       await waitFor(() => {
         expect(screen.getByText(formatSGD(1462.50))).toBeInTheDocument();
       });
+    });
+
+    it('rolls back toggle and displays an alert when toggling paid status fails', async () => {
+      vi.spyOn(financeService, 'upsertCreditCardStatement')
+        .mockRejectedValueOnce(new Error('Network failure'));
+
+      render(
+        <CreditCardTrackerSection
+          members={testMembers}
+          perspective="household"
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('DBS Altitude Visa')).toBeInTheDocument();
+      });
+
+      const dbsMarkPaidBtn = screen.getByRole('button', { name: /Mark DBS Altitude Visa statement as Paid/i });
+      expect(dbsMarkPaidBtn).toBeInTheDocument();
+
+      fireEvent.click(dbsMarkPaidBtn);
+
+      // Verify failure alert is displayed
+      await waitFor(() => {
+        expect(screen.getByText(/Failed to update statement paid status/i)).toBeInTheDocument();
+      });
+
+      // Verify toggle button remains / rolls back to unpaid "Mark as Paid"
+      expect(screen.getByRole('button', { name: /Mark DBS Altitude Visa statement as Paid/i })).toBeInTheDocument();
+
+      // Dismiss the alert
+      const dismissBtn = screen.getByRole('button', { name: /Dismiss alert/i });
+      fireEvent.click(dismissBtn);
+      expect(screen.queryByText(/Failed to update statement paid status/i)).not.toBeInTheDocument();
     });
 
     it('allows logging a new statement balance for a card without one in the month', async () => {
