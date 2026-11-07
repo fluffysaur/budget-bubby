@@ -32,7 +32,6 @@ import {
 import {
     computeActiveReminders,
     requestNotificationPermission,
-    checkAndPromptInitialNotificationPermission,
     evaluateAndDispatchReminders,
     migrateLegacyDismissals,
     type AppReminder,
@@ -46,6 +45,7 @@ import { playChaChingSound } from "../../lib/soundEffects";
 import { m, AnimatePresence } from "motion/react";
 import { pop, fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 
 function useIsMobile(breakpoint = 640): boolean {
     const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -80,7 +80,8 @@ export function NotificationCenterPopover({
 }: NotificationCenterPopoverProps) {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { activeMember, members, refreshData } = useHousehold();
+    const { refreshData } = useHousehold();
+    const { me, members } = useLoggedInMember();
     const isMobile = useIsMobile();
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [reminders, setReminders] = useState<AppReminder[]>([]);
@@ -94,7 +95,7 @@ export function NotificationCenterPopover({
     const mobileOverlayRef = useRef<HTMLDivElement>(null);
 
     const activeMemberId =
-        activeMember?.id || members?.[0]?.id || "mem-00000000-0011";
+        me?.id || members?.[0]?.id || "mem-00000000-0011";
     const readParam = searchParams.get("read");
 
     // Sync browser notification permission state
@@ -135,10 +136,6 @@ export function NotificationCenterPopover({
         setReminders([]);
         setDismissedIds(new Set());
         setReadIds(new Set());
-
-        checkAndPromptInitialNotificationPermission().then((res) => {
-            if (res && isMounted) setPermission(res);
-        });
 
         migrateLegacyDismissals(activeMemberId)
             .then(() =>

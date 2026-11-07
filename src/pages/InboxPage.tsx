@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, Inbox, Pencil, Trash2 } from "lucide-react";
-import { useHousehold } from "../context/HouseholdContext";
+import { useLoggedInMember } from "../hooks/useLoggedInMember";
 import { useAllExpensesQuery, useCategoriesQuery } from "../hooks/useFinanceQueries";
 import {
     inboxQueryKeys,
@@ -68,12 +68,12 @@ interface ItemView {
 
 export function InboxPage() {
     const queryClient = useQueryClient();
-    const { members, activeMember } = useHousehold();
+    const { me, members } = useLoggedInMember();
     const { data, isLoading } = useInboxQuery();
     const { data: categoriesData } = useCategoriesQuery();
     const { data: expensesData } = useAllExpensesQuery();
     const { data: rulesData } = useMerchantRulesQuery();
-    const { data: tokensData } = useCaptureTokensQuery(activeMember?.id);
+    const { data: tokensData } = useCaptureTokensQuery(me?.id);
 
     const items = data?.items ?? EMPTY_ITEMS;
     const categories = categoriesData ?? EMPTY_CATEGORIES;
@@ -378,7 +378,7 @@ export function InboxPage() {
                                 key={top.item.id}
                                 item={top.item}
                                 payerName={payerName(top.item.member_id)}
-                                isPartnerItem={!activeMember || top.item.member_id !== activeMember.id}
+                                isPartnerItem={!me || top.item.member_id !== me.id}
                                 amountSgd={top.amountSgd}
                                 canConfirm={top.canConfirm}
                                 chipCategories={chipCategories}
