@@ -35,7 +35,7 @@ import {
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
-import { useHousehold } from "../../context/HouseholdContext";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import {
     requestNotificationPermission,
     dispatchPWANotification,
@@ -69,15 +69,22 @@ export function NotificationSettingsModal({
     onClose,
     memberId: propMemberId,
 }: NotificationSettingsModalProps) {
-    const { activeMember, members } = useHousehold();
-    const activeMemberId = propMemberId || activeMember?.id || members?.[0]?.id || "mem-00000000-0011";
+    const { me, members } = useLoggedInMember();
+    const activeMemberId = propMemberId || me?.id || members?.[0]?.id || "mem-00000000-0011";
 
     const [prefs, setPrefs] = useState<NotificationPreferences>(() =>
         getDefaultNotificationPreferences(activeMemberId),
     );
+    const [budgetWarningDraft, setBudgetWarningDraft] = useState<string>(() =>
+        String(getDefaultNotificationPreferences(activeMemberId).budget_warning_pct),
+    );
+    const [settlementThresholdDraft, setSettlementThresholdDraft] = useState<string>(() =>
+        String(getDefaultNotificationPreferences(activeMemberId).settlement_threshold_sgd),
+    );
     const [, setIsLoading] = useState<boolean>(true);
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [testPushSent, setTestPushSent] = useState<boolean>(false);
+    const hasVibrate = typeof navigator !== "undefined" && "vibrate" in navigator;
 
     // Sync browser permission status
     useEffect(() => {
@@ -92,6 +99,8 @@ export function NotificationSettingsModal({
             setIsLoading(true);
             const data = await financeService.getNotificationPreferences(activeMemberId);
             setPrefs(data);
+            setBudgetWarningDraft(String(data.budget_warning_pct));
+            setSettlementThresholdDraft(String(data.settlement_threshold_sgd));
         } catch (err) {
             console.error("Failed to load notification preferences:", err);
         } finally {
@@ -113,6 +122,28 @@ export function NotificationSettingsModal({
         } catch (err) {
             console.error("Failed to save notification preference update:", err);
         }
+    };
+
+    const commitBudgetWarningPct = () => {
+        const trimmed = budgetWarningDraft.trim();
+        const parsed = Number(trimmed);
+        const val =
+            trimmed === "" || !Number.isFinite(parsed)
+                ? 80
+                : Math.max(50, Math.min(99, Math.round(parsed)));
+        setBudgetWarningDraft(String(val));
+        handleUpdate({ budget_warning_pct: val });
+    };
+
+    const commitSettlementThreshold = () => {
+        const trimmed = settlementThresholdDraft.trim();
+        const parsed = Number(trimmed);
+        const val =
+            trimmed === "" || !Number.isFinite(parsed)
+                ? 200
+                : Math.max(10, Math.round(parsed));
+        setSettlementThresholdDraft(String(val));
+        handleUpdate({ settlement_threshold_sgd: val });
     };
 
     const ccDueDays = getCcDueReminderDays(prefs);
@@ -138,6 +169,8 @@ export function NotificationSettingsModal({
     const handleResetDefaults = async () => {
         const defaults = getDefaultNotificationPreferences(activeMemberId);
         setPrefs(defaults);
+        setBudgetWarningDraft(String(defaults.budget_warning_pct));
+        setSettlementThresholdDraft(String(defaults.settlement_threshold_sgd));
         try {
             await financeService.updateNotificationPreferences(activeMemberId, defaults);
         } catch (err) {
@@ -244,57 +277,59 @@ export function NotificationSettingsModal({
                     </div>
 
                     {/* Haptic Feedback Section */}
-                    <div>
-                        <h4 className="text-xs font-black uppercase tracking-wider text-(--text-muted) mb-3 font-display">
-                            Haptic Feedback
-                        </h4>
+                    {hasVibrate && (
+                        <div>
+                            <h4 className="text-xs font-black uppercase tracking-wider text-(--text-muted) mb-3 font-display">
+                                Haptic Feedback
+                            </h4>
 
-                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
-                                    <Vibrate className="h-4 w-4" strokeWidth={2.5} />
+                            <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
+                                        <Vibrate className="h-4 w-4" strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-bold text-(--text-ink)">
+                                            Haptic Feedback
+                                        </span>
+                                        <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
+                                            Tactile vibration for pulls, sweeps, logs & alerts
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className="text-xs font-bold text-(--text-ink)">
-                                        Haptic Feedback
-                                    </span>
-                                    <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        Tactile vibration for pulls, sweeps, logs & alerts
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleTestHaptic}
-                                    title="Test haptic vibration"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                >
-                                    <Vibrate className="h-3 w-3" strokeWidth={2.5} />
-                                    <span>Vibrate</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleTestHaptic}
+                                        title="Test haptic vibration"
+                                        className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    >
+                                        <Vibrate className="h-3 w-3" strokeWidth={2.5} />
+                                        <span>Vibrate</span>
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={prefs.haptics_enabled ?? true}
-                                    aria-label="Toggle haptic feedback"
-                                    data-testid="toggle-haptics-enabled"
-                                    onClick={() => handleUpdate({ haptics_enabled: !(prefs.haptics_enabled ?? true) })}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        (prefs.haptics_enabled ?? true) ? "bg-(--pastel-lilac)" : "bg-(--bg-card)"
-                                    }`}
-                                >
-                                    <span
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
-                                            (prefs.haptics_enabled ?? true) ? "translate-x-5" : "translate-x-0"
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={prefs.haptics_enabled ?? true}
+                                        aria-label="Toggle haptic feedback"
+                                        data-testid="toggle-haptics-enabled"
+                                        onClick={() => handleUpdate({ haptics_enabled: !(prefs.haptics_enabled ?? true) })}
+                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            (prefs.haptics_enabled ?? true) ? "bg-(--pastel-lilac)" : "bg-(--bg-card)"
                                         }`}
-                                    />
-                                </button>
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
+                                                (prefs.haptics_enabled ?? true) ? "translate-x-5" : "translate-x-0"
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Auto Capture (phone purchase capture tokens) */}
                     <AutoCaptureSection memberId={activeMemberId} />
@@ -524,11 +559,15 @@ export function NotificationSettingsModal({
                                                 type="number"
                                                 min={50}
                                                 max={99}
-                                                value={prefs.budget_warning_pct}
+                                                value={budgetWarningDraft}
                                                 data-testid="input-budget-warning-pct"
-                                                onChange={(e) => {
-                                                    const val = Math.max(50, Math.min(99, Number(e.target.value) || 80));
-                                                    handleUpdate({ budget_warning_pct: val });
+                                                onChange={(e) => setBudgetWarningDraft(e.target.value)}
+                                                onBlur={commitBudgetWarningPct}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        commitBudgetWarningPct();
+                                                    }
                                                 }}
                                                 className="w-16 px-2.5 py-1 text-base sm:text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
@@ -551,11 +590,15 @@ export function NotificationSettingsModal({
                                                 type="number"
                                                 min={50}
                                                 step={50}
-                                                value={prefs.settlement_threshold_sgd}
+                                                value={settlementThresholdDraft}
                                                 data-testid="input-settlement-threshold"
-                                                onChange={(e) => {
-                                                    const val = Math.max(10, Number(e.target.value) || 200);
-                                                    handleUpdate({ settlement_threshold_sgd: val });
+                                                onChange={(e) => setSettlementThresholdDraft(e.target.value)}
+                                                onBlur={commitSettlementThreshold}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        commitSettlementThreshold();
+                                                    }
                                                 }}
                                                 className="w-20 px-2.5 py-1 text-base sm:text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />

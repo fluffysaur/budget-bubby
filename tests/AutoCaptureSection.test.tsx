@@ -77,4 +77,29 @@ describe("AutoCaptureSection", () => {
         expect(await screen.findByText("Needs database update")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /New Token/i })).toBeDisabled();
     });
+
+    it("orders setup steps with Android first on Android user agents and iPhone first on iOS", async () => {
+        const uaSpy = vi
+            .spyOn(window.navigator, "userAgent", "get")
+            .mockReturnValue("Mozilla/5.0 (Linux; Android 14; Pixel 8)");
+
+        const { unmount } = renderSection();
+        const stepsContainer = await screen.findByTestId("auto-capture-setup-steps");
+        const buttons = within(stepsContainer).getAllByRole("button");
+        expect(buttons[0]).toHaveTextContent("Android Setup");
+        expect(buttons[0]).toHaveAttribute("aria-expanded", "true");
+        expect(buttons[1]).toHaveTextContent("iPhone Setup");
+        expect(buttons[1]).toHaveAttribute("aria-expanded", "false");
+        expect(within(stepsContainer).getByRole("link", { name: /issue #44/i })).toBeInTheDocument();
+
+        unmount();
+        uaSpy.mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)");
+        renderSection();
+        const iosSteps = await screen.findByTestId("auto-capture-setup-steps");
+        const iosButtons = within(iosSteps).getAllByRole("button");
+        expect(iosButtons[0]).toHaveTextContent("iPhone Setup");
+        expect(iosButtons[0]).toHaveAttribute("aria-expanded", "true");
+        expect(iosButtons[1]).toHaveTextContent("Android Setup");
+        expect(iosButtons[1]).toHaveAttribute("aria-expanded", "false");
+    });
 });
