@@ -2,11 +2,10 @@
  * GoalCard Component
  * Milestone savings goal card displaying:
  * - Emoji icon badge & goal title
- * - Target Amount, Total Saved, Goal-Funded Spend, and Remaining Balance
- * - Visual progress bar with accessible role="progressbar"
- * - Pacing indicator badge (Achieved, On Track, Behind)
- * - Monthly current contribution vs needed pace
+ * - ProgressRing displaying saved / target percentage and amounts
+ * - Status Badge (Achieved, On Track, Behind)
  * - Target date and remaining months countdown
+ * - Tap / Collapsible Breakdown for 2x2 grid (Target, Saved, Spend, Balance) and Monthly Pacing
  * - '+ Spend from Goal' button opens Add Expense with this goal picked
  * - List of linked expenses funded by this goal
  * - Quick Deposit and Edit actions
@@ -14,9 +13,6 @@
 
 import { useState } from "react";
 import {
-    CheckCircle2,
-    TrendingUp,
-    AlertCircle,
     Calendar,
     Pencil,
     Coins,
@@ -25,11 +21,14 @@ import {
     Receipt,
     ChevronDown,
     ChevronUp,
+    AlertCircle,
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatDisplayMonth, formatDisplayDate } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
+import { ProgressRing } from "../ui/ProgressRing";
+import { Badge, type BadgeVariant } from "../ui/Badge";
 import type { SavingsGoal, Expense } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
@@ -52,6 +51,7 @@ export function GoalCard({
     isHighlighted = false,
     className = "",
 }: GoalCardProps) {
+    const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
     const [showExpenses, setShowExpenses] = useState<boolean>(true);
 
     // Big-Ticket Goal Financial Highlights
@@ -74,35 +74,25 @@ export function GoalCard({
         goal.monthly_contribution,
     );
 
-    const isAchieved = pacing.status === "achieved";
-    const isBehind = pacing.status === "behind";
+    const effectiveStatus = goal.status || pacing.status;
+    const isAchieved = effectiveStatus === "achieved";
+    const isBehind = effectiveStatus === "behind";
 
     // Status configuration
     const statusConfig = {
         achieved: {
             label: "Achieved",
-            badgeClass:
-                "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60",
-            icon: CheckCircle2,
-            barClass: "bg-emerald-500",
+            variant: "ok" as BadgeVariant,
         },
         on_track: {
             label: "On Track",
-            badgeClass:
-                "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60",
-            icon: TrendingUp,
-            barClass: "bg-blue-600",
+            variant: "ok" as BadgeVariant,
         },
         behind: {
             label: "Behind",
-            badgeClass:
-                "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/60",
-            icon: AlertCircle,
-            barClass: "bg-amber-500",
+            variant: "near" as BadgeVariant,
         },
-    }[pacing.status];
-
-    const StatusIcon = statusConfig.icon;
+    }[effectiveStatus];
 
     // Shortfall per month if behind
     const monthlyShortfall = isBehind
@@ -167,124 +157,144 @@ export function GoalCard({
                         </div>
                     </div>
 
-                    <div
-                        className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold border-2 border-(--border-ink) shadow-cute-sm shrink-0 ${statusConfig.badgeClass}`}
+                    <Badge
+                        variant={statusConfig.variant}
+                        size="sm"
+                        className="shrink-0"
                     >
-                        <StatusIcon
-                            className="h-3.5 w-3.5 shrink-0"
-                            strokeWidth={2.5}
-                        />
-                        <span className="shrink-0">{statusConfig.label}</span>
-                    </div>
+                        {statusConfig.label}
+                    </Badge>
                 </div>
 
-                {/* Big-Ticket Financial Highlights (2x2 Grid) */}
-                <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-2.5 shadow-cute-sm">
-                    <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
-                        <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                            Target Amount
-                        </span>
-                        <span
-                            className="text-(--text-ink) mt-0.5 block truncate"
-                            title={formatSGD(targetAmount)}
-                        >
-                            <CurrencyText amount={targetAmount} size="md" />
-                        </span>
-                    </div>
-
-                    <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
-                        <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                {/* Hero: ProgressRing plus saved / target */}
+                <div className="mt-4 flex items-center gap-4 p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
+                    <ProgressRing
+                        value={progressPercent}
+                        size={56}
+                        strokeWidth={5}
+                        tone={isAchieved ? "ok" : isBehind ? "near" : "ok"}
+                        centerContent={
+                            <span className="text-xs font-black font-mono-num text-(--text-ink)">
+                                {progressPercent}%
+                            </span>
+                        }
+                    />
+                    <div className="min-w-0 flex-1">
+                        <span className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                             Total Saved
                         </span>
-                        <span
-                            className="text-emerald-700 dark:text-emerald-400 mt-0.5 block truncate"
-                            title={formatSGD(totalSaved)}
-                        >
-                            <CurrencyText amount={totalSaved} size="md" />
-                        </span>
-                    </div>
-
-                    <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
-                        <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                            Goal Spend
-                        </span>
-                        <span
-                            className="text-purple-700 dark:text-purple-300 mt-0.5 block truncate"
-                            title={formatSGD(goalSpend)}
-                        >
-                            <CurrencyText amount={goalSpend} size="md" />
-                        </span>
-                    </div>
-
-                    <div className="rounded-lg bg-(--bg-card) p-2.5 border border-(--border-subtle)">
-                        <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                            Balance
-                        </span>
-                        <span
-                            className="text-(--text-ink) mt-0.5 block truncate"
-                            title={formatSGD(balance)}
-                        >
-                            <CurrencyText amount={balance} size="md" />
-                        </span>
-                    </div>
-                </div>
-
-                {/* Progress Bar & Percentage */}
-                <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                        <span className="text-(--text-muted)">
-                            Milestone Progress
-                        </span>
-                        <span
-                            className={`font-mono-num font-black ${isAchieved ? "text-emerald-700 dark:text-emerald-400" : "text-(--text-ink)"}`}
-                        >
-                            {progressPercent}%
-                        </span>
-                    </div>
-                    <div
-                        role="progressbar"
-                        aria-valuenow={progressPercent}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`${goal.title} progress: ${progressPercent}%`}
-                        className="h-3 w-full overflow-hidden rounded-full border-2 border-(--border-ink) bg-(--bg-canvas)"
-                    >
-                        <div
-                            className={`h-full rounded-full transition-all duration-500 ${statusConfig.barClass}`}
-                            style={{ width: `${progressPercent}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Monthly Pacing Details */}
-                <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/80">
-                    <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500 dark:text-(--text-faint)">
-                            Current Monthly:
-                        </span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            <CurrencyText amount={goal.monthly_contribution} />/mo
-                        </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs">
-                        <span className="text-slate-500 dark:text-(--text-faint)">
-                            Required Pace:
-                        </span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {isAchieved
-                                ? "Target Met"
-                                : `${formatSGD(pacing.neededPerMonth)}/mo needed`}
-                        </span>
-                    </div>
-
-                    {/* Shortfall Alert Note if behind */}
-                    {isBehind && monthlyShortfall > 0 && (
-                        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-                            <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>
-                                + <CurrencyText amount={monthlyShortfall} />/mo to stay on
-                                track
+                        <div className="font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
+                            <span title={formatSGD(totalSaved)}>
+                                <CurrencyText amount={totalSaved} />
                             </span>
+                            <span className="text-xs font-bold text-(--text-muted) ml-1.5">
+                                of <CurrencyText amount={targetAmount} />
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Collapsible Breakdown: 2x2 grid and pacing */}
+                <div className="mt-3 border-t border-(--border-subtle) pt-2">
+                    <button
+                        type="button"
+                        onClick={() => setShowBreakdown((prev) => !prev)}
+                        aria-expanded={showBreakdown}
+                        className="flex items-center justify-between w-full text-xs font-bold text-(--text-muted) hover:text-(--text-ink) py-1 cursor-pointer transition-colors"
+                    >
+                        <span>Breakdown</span>
+                        <span className="flex items-center gap-1 font-mono-num text-[11px]">
+                            {showBreakdown ? (
+                                <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
+                            ) : (
+                                <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
+                            )}
+                        </span>
+                    </button>
+
+                    {showBreakdown && (
+                        <div className="space-y-3 pt-2">
+                            {/* 2x2 Grid */}
+                            <div className="grid grid-cols-2 gap-2 rounded-xl border border-(--border-subtle) bg-(--bg-card) p-2 text-xs">
+                                <div>
+                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                        Target Amount
+                                    </span>
+                                    <span
+                                        className="text-(--text-ink) font-bold mt-0.5 block truncate"
+                                        title={formatSGD(targetAmount)}
+                                    >
+                                        <CurrencyText amount={targetAmount} size="md" />
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                        Total Saved
+                                    </span>
+                                    <span
+                                        className="text-emerald-700 dark:text-emerald-400 font-bold mt-0.5 block truncate"
+                                        title={formatSGD(totalSaved)}
+                                    >
+                                        <CurrencyText amount={totalSaved} size="md" />
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                        Goal Spend
+                                    </span>
+                                    <span
+                                        className="text-purple-700 dark:text-purple-300 font-bold mt-0.5 block truncate"
+                                        title={formatSGD(goalSpend)}
+                                    >
+                                        <CurrencyText amount={goalSpend} size="md" />
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                        Balance
+                                    </span>
+                                    <span
+                                        className="text-(--text-ink) font-bold mt-0.5 block truncate"
+                                        title={formatSGD(balance)}
+                                    >
+                                        <CurrencyText amount={balance} size="md" />
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Monthly Pacing Details */}
+                            <div className="space-y-1 text-xs border-t border-(--border-subtle) pt-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-(--text-muted)">
+                                        Current Monthly:
+                                    </span>
+                                    <span className="font-semibold text-(--text-ink)">
+                                        <CurrencyText amount={goal.monthly_contribution} />/mo
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-(--text-muted)">
+                                        Required Pace:
+                                    </span>
+                                    <span className="font-semibold text-(--text-ink)">
+                                        {isAchieved
+                                            ? "Target Met"
+                                            : `${formatSGD(pacing.neededPerMonth)}/mo needed`}
+                                    </span>
+                                </div>
+
+                                {isBehind && monthlyShortfall > 0 && (
+                                    <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                                        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                        <span>
+                                            + <CurrencyText amount={monthlyShortfall} />/mo to stay on track
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -384,3 +394,5 @@ export function GoalCard({
         </div>
     );
 }
+
+export default GoalCard;

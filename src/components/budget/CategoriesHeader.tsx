@@ -1,12 +1,11 @@
 /**
  * CategoriesHeader
  * Heading for the spendable categories list: bold remaining amount, muted
- * allocation, and a thin progress bar (spent / allocated).
- * Bar colour thresholds match CategoryProgressList (<80 emerald, 80-99 amber,
- * >=100 rose).
+ * allocation, and a MeterBar (spent / allocated).
  */
 
 import { CurrencyText } from "../ui/CurrencyText";
+import { MeterBar } from "../ui/MeterBar";
 
 export interface CategoriesHeaderProps {
     remaining: number;
@@ -20,15 +19,7 @@ export function CategoriesHeader({
     spent,
 }: CategoriesHeaderProps) {
     const hasCap = allocated > 0;
-    const rawPercent = hasCap ? (spent / allocated) * 100 : 0;
-    const percent = Math.max(0, Math.min(rawPercent, 100));
     const isOver = remaining < 0;
-    const barColor =
-        rawPercent >= 100
-            ? "bg-rose-500"
-            : rawPercent >= 80
-              ? "bg-amber-500"
-              : "bg-emerald-500";
 
     return (
         <div className="space-y-2">
@@ -53,19 +44,12 @@ export function CategoriesHeader({
                 </p>
             </div>
             {hasCap && (
-                <div
-                    role="progressbar"
+                <MeterBar
+                    value={spent}
+                    max={allocated}
+                    size="sm"
                     aria-label="Categories spent"
-                    aria-valuenow={Math.round(percent)}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    className="h-1.5 w-full overflow-hidden rounded-full bg-(--bg-canvas)"
-                >
-                    <div
-                        className={`h-full rounded-full ${barColor}`}
-                        style={{ width: `${percent}%` }}
-                    />
-                </div>
+                />
             )}
         </div>
     );

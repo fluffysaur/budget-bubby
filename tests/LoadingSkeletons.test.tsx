@@ -100,7 +100,7 @@ describe("Page loading skeletons", () => {
         );
 
         expect(await screen.findByTestId("budget-skeleton")).toHaveAttribute("role", "status");
-        expect(screen.queryByText("S$7,345")).not.toBeInTheDocument();
+        expect(screen.queryByText("S$5,876")).not.toBeInTheDocument();
 
         await act(async () => {
             pending.resolve(makeBudget(month, 7345));
@@ -109,7 +109,7 @@ describe("Page loading skeletons", () => {
         await waitFor(() => {
             expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
         });
-        expect(screen.getAllByText("S$7,345").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("S$5,876").length).toBeGreaterThan(0);
     });
 
     it("switching to an uncached month shows the skeleton, not the previous month's numbers", async () => {
@@ -128,21 +128,21 @@ describe("Page loading skeletons", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getAllByText("S$7,345").length).toBeGreaterThan(0);
+            expect(screen.getAllByText("S$5,876").length).toBeGreaterThan(0);
         });
         expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: "Next month" }));
 
         expect(await screen.findByTestId("budget-skeleton")).toBeInTheDocument();
-        expect(screen.queryByText("S$7,345")).not.toBeInTheDocument();
+        expect(screen.queryByText("S$5,876")).not.toBeInTheDocument();
 
         await act(async () => {
             nextPending.resolve(makeBudget(nextMonth, 8120));
         });
 
         await waitFor(() => {
-            expect(screen.getAllByText("S$8,120").length).toBeGreaterThan(0);
+            expect(screen.getAllByText("S$6,496").length).toBeGreaterThan(0);
         });
         expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
         expect(screen.queryByText("S$7,345")).not.toBeInTheDocument();
