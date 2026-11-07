@@ -78,14 +78,18 @@ export async function computeActiveReminders(
 }
 
 /**
- * Requests browser notification permission.
+ * Requests browser notification permission (must be triggered by a user gesture).
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
     if (typeof window === "undefined" || !("Notification" in window)) {
         return "denied";
     }
     try {
-        return await Notification.requestPermission();
+        const permission = await Notification.requestPermission();
+        if (permission !== "default" && window.localStorage) {
+            window.localStorage.setItem("bb_notif_initial_prompted", "true");
+        }
+        return permission;
     } catch (err) {
         console.debug("Failed to request notification permission:", err);
         return "denied";
@@ -93,21 +97,10 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 }
 
 /**
- * Checks if first-launch permission request is needed and prompts user.
+ * Passive notification permission check (no automatic prompt on mount).
  */
 export async function checkAndPromptInitialNotificationPermission(): Promise<NotificationPermission | null> {
     if (typeof window === "undefined" || !("Notification" in window)) return null;
-    try {
-        const hasPrompted = window.localStorage.getItem("bb_notif_initial_prompted");
-        if (!hasPrompted) {
-            window.localStorage.setItem("bb_notif_initial_prompted", "true");
-            if (Notification.permission === "default") {
-                return await requestNotificationPermission();
-            }
-        }
-    } catch {
-        // ignore storage or permission error
-    }
     return Notification.permission;
 }
 
