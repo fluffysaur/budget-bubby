@@ -17,6 +17,30 @@ Read this whole section before starting any PR.
 - **Source findings.** These live in [app-polish/audits/](./app-polish/audits/): `bugs.md`, `motion.md` and `copy.md`. IDs like `H1`, `M5`, `1.6` and `2.4` refer to them. Line numbers come from a snapshot taken before `feat/delight-bubby` merged. If a line does not match, search for the quoted code.
 - **Backlog.** Anything you find but don't fix becomes a GitHub issue labelled `backlog` (AGENTS.md section 7H). Do not widen a PR. Run `gh issue list --label backlog` to see what is already known.
 
+## Audit findings already tracked as issues
+
+These findings are **not** fixed by the 9 PRs (or only partly). Do not open duplicates, and don't widen a PR to cover them.
+
+| Audit ID | Issue | Note |
+|---|---|---|
+| H8 | #33 | Past budgets change when salary changes (P0) |
+| L2 | #34, #35 | Card due day capped at 28; "paid" toggle fails silently |
+| L4 | #36 | Unknown perspective shows every account |
+| M6 | #37 | PR #1 narrows the race; the atomic increment stays here |
+| motion 4.3 | #38 | PR #5 covers expense add/delete only |
+| M11 | #39 | PR #4 settles by expense id; the settle-up history stays here |
+| L3 | #40 | Compact money format |
+| W2 | #41 | Two sign-out confirms |
+| motion 1.14 | #42 | Font reflow |
+| L5, motion 4.6 | #43, #48 | Context re-renders; Dashboard split |
+| copy audit (platform) | #44 | Android capture steps |
+| copy audit (new components) | #45 | Components PR #9 skips |
+| M7 | #46 | PR #5 adds refetch on resume; realtime stays here |
+| motion section 0 | #47 | Animated number changes |
+| motion section 3 | #49 | Haptics on key actions |
+| motion 4.5 | #50 | Pull-to-refresh diagonal swipes |
+| W3 | #51 | Settings opens via a window event |
+
 ## Rules for this plan (one-off exception)
 
 The user has approved these for the PRs in this plan only. AGENTS.md section 7A still applies everywhere else.
