@@ -27,12 +27,10 @@ import { useAuth } from "../../context/AuthContext";
 import { mockMembers } from "../../data/mockSeedData";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
-import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
-import { BubbyIcon } from "../ui/BubbyIcon";
 import { ConfirmModal } from "../ui/ConfirmModal";
 
 export interface AppHeaderProps {
@@ -44,19 +42,19 @@ export interface AppHeaderProps {
 const MEMBER_COLOR_PALETTE = [
     {
         activeBg:
-            "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
     {
         activeBg:
-            "bg-(--pastel-pink) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-pink) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
     {
         activeBg:
-            "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
     {
         activeBg:
-            "bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+            "bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
 ];
 
@@ -163,7 +161,7 @@ export function AppHeader({
                 memberId: null as string | null,
                 label: "Combined",
                 activeBg:
-                    "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) font-bold",
+                    "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
             },
         ];
 
@@ -202,11 +200,8 @@ export function AppHeader({
             className={`sticky top-0 z-40 w-full border-b-2 border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
         >
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
-                {/* Left: Brand Icon (Mobile) + Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
+                {/* Left: Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
                 <div className="flex items-center">
-                    <div className="flex md:hidden h-8 w-8 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-(--shadow-cute-sm) overflow-hidden shrink-0 mr-2.5 pt-0.5">
-                        <BubbyIcon className="h-7 w-7" />
-                    </div>
                     {/* Mobile Perspective Dropdown */}
                     <div className="relative sm:hidden" ref={dropdownRef}>
                         <button
@@ -215,7 +210,7 @@ export function AppHeader({
                             aria-haspopup="listbox"
                             aria-expanded={isDropdownOpen}
                             aria-label="Select Financial Perspective"
-                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm) transition-all cursor-pointer"
+                            className="flex items-center gap-2.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) pl-3.5 pr-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm transition-all cursor-pointer"
                         >
                             <span>{currentOption.label}</span>
                             <ChevronDown
@@ -230,7 +225,7 @@ export function AppHeader({
                             <div
                                 role="listbox"
                                 aria-label="Financial Perspectives"
-                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-(--shadow-cute-lg) transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
+                                className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg transition-all z-50 animate-in fade-in zoom-in-95 duration-100"
                             >
                                 <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                     Perspectives
@@ -424,7 +419,7 @@ export function AppHeader({
                     {isMockMode && (
                         <div
                             title="Running in local Demo Mode with sample seed data"
-                            className="flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter) px-2.5 py-1 text-xs font-bold text-(--text-ink) shadow-(--shadow-cute-sm)"
+                            className="flex items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-butter) px-2.5 py-1 text-xs font-bold text-(--text-ink) shadow-cute-sm"
                         >
                             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse border border-(--border-ink)" />
                             <span className="hidden xs:inline">Demo Mode</span>
@@ -437,64 +432,6 @@ export function AppHeader({
 
                     {/* Notification Center Popover */}
                     <NotificationCenterPopover onNavigateTab={onNavigateTab} />
-
-                    {/* Manual Refresh Button (Desktop only; Mobile uses swipe-down to refresh or dropdown menu) */}
-                    <button
-                        type="button"
-                        onClick={handleManualRefresh}
-                        disabled={isRefreshing}
-                        aria-label="Refresh"
-                        title="Refresh data from database"
-                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer disabled:opacity-50"
-                    >
-                        <RotateCw
-                            className={`h-4 w-4 ${isRefreshing ? "animate-spin text-purple-700 dark:text-(--pastel-lilac)" : ""}`}
-                            strokeWidth={2.5}
-                        />
-                    </button>
-
-                    {/* PWA Install Button (Desktop) */}
-                    {canInstall && !isInstalled && (
-                        <PWAInstallButton className="hidden sm:flex" />
-                    )}
-
-                    {/* Settings Button (Desktop) */}
-                    <button
-                        type="button"
-                        onClick={() => setIsSettingsOpen(true)}
-                        aria-label="Settings"
-                        title="Settings"
-                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
-                    >
-                        <Settings className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
-                    </button>
-
-                    {/* Theme Toggle Button (Desktop) */}
-                    <button
-                        type="button"
-                        onClick={toggleTheme}
-                        aria-label={`Toggle theme (currently ${theme})`}
-                        className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-(--shadow-cute-sm) transition-all hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
-                    >
-                        {theme === "dark" ? (
-                            <Sun className="h-4 w-4 text-(--pastel-butter)" strokeWidth={2.5} />
-                        ) : (
-                            <Moon className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
-                        )}
-                    </button>
-
-                    {/* Lock / Sign Out Button (Desktop) */}
-                    {(!isMockMode || isAuthenticated) && (
-                        <button
-                            type="button"
-                            onClick={() => setIsLogoutConfirmOpen(true)}
-                            aria-label="Lock Budget Bubby"
-                            title="Lock / Sign Out"
-                            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-muted) shadow-(--shadow-cute-sm) transition-all hover:bg-(--pastel-coral-light) hover:text-rose-800 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
-                        >
-                            <LogOut className="h-4 w-4" strokeWidth={2.5} />
-                        </button>
-                    )}
                 </div>
             </div>
 
