@@ -179,7 +179,7 @@ export function AccountGroupList({
           <button
             type="button"
             onClick={() => setScopeFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-press cursor-pointer ${
               scopeFilter === 'all'
                 ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
@@ -190,7 +190,7 @@ export function AccountGroupList({
           <button
             type="button"
             onClick={() => setScopeFilter('non-cpf')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-press cursor-pointer ${
               scopeFilter === 'non-cpf'
                 ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)'
@@ -205,7 +205,7 @@ export function AccountGroupList({
             type="button"
             onClick={() => setViewMode('table')}
             aria-label="Compact Table View"
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-press cursor-pointer ${
               viewMode === 'table'
                 ? 'bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink)'
@@ -218,7 +218,7 @@ export function AccountGroupList({
             type="button"
             onClick={() => setViewMode('cards')}
             aria-label="Cards View"
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-press cursor-pointer ${
               viewMode === 'cards'
                 ? 'bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm'
                 : 'text-(--text-muted) hover:text-(--text-ink)'

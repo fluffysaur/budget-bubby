@@ -189,7 +189,7 @@ export function BulkBalanceUpdateModal({
                                 <button
                                     type="button"
                                     onClick={() => setFilterType("all")}
-                                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-press cursor-pointer ${
                                         filterType === "all"
                                             ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
                                             : "text-(--text-muted) hover:text-(--text-ink)"
@@ -200,7 +200,7 @@ export function BulkBalanceUpdateModal({
                                 <button
                                     type="button"
                                     onClick={() => setFilterType("non-cpf")}
-                                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-press cursor-pointer ${
                                         filterType === "non-cpf"
                                             ? "bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
                                             : "text-(--text-muted) hover:text-(--text-ink)"
@@ -234,7 +234,7 @@ export function BulkBalanceUpdateModal({
                             return (
                                 <div
                                     key={account.id}
-                                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${
                                         isChanged
                                             ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
                                             : "border-(--border-subtle) bg-(--bg-card)"

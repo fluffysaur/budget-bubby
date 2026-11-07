@@ -171,7 +171,7 @@ export function RenewalCalendar({
                             onClick={() => setSelectedMonth(m.month)}
                             aria-pressed={isSelected}
                             aria-label={`${MONTH_NAMES_FULL[m.month - 1]} ${year}, ${formatSGD(m.total)}`}
-                            className={`relative overflow-hidden flex flex-col items-center justify-between gap-1.5 min-h-16 px-1 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) transition-all cursor-pointer ${
+                            className={`relative overflow-hidden flex flex-col items-center justify-between gap-1.5 min-h-16 px-1 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) transition-press cursor-pointer ${
                                 isSelected
                                     ? "ring-2 ring-(--border-ink) translate-x-0.5 translate-y-0.5"
                                     : "shadow-cute-sm hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5"

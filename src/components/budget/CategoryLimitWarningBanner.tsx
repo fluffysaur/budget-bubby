@@ -242,7 +242,7 @@ export function CategoryLimitWarningBanner({
         <div
           role="alert"
           aria-live="assertive"
-          className="fixed top-5 right-5 z-50 max-w-sm sm:max-w-md w-full animate-in slide-in-from-top-4 duration-300 pointer-events-auto"
+          className="fixed top-[calc(1.25rem+env(safe-area-inset-top))] left-4 right-4 sm:left-auto sm:right-5 z-50 max-w-sm sm:max-w-md sm:w-full animate-enter pointer-events-auto"
         >
           <div
             className={`p-4 rounded-2xl border-2 border-(--border-ink) shadow-cute-lg flex items-start gap-3 backdrop-blur-md ${
@@ -296,7 +296,7 @@ export function CategoryLimitWarningBanner({
           {shownExceeded.length > 0 && (
             <div
               data-testid="category-limit-exceeded-banner"
-              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-all"
+              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-colors"
             >
               <div className="flex items-start gap-3">
                 <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border border-(--border-ink) shrink-0 mt-0.5">
@@ -332,7 +332,7 @@ export function CategoryLimitWarningBanner({
           {shownWarning.length > 0 && (
             <div
               data-testid="category-limit-nearing-banner"
-              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-cute-sm transition-all"
+              className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 shadow-cute-sm transition-colors"
             >
               <div className="flex items-start gap-3">
                 <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shrink-0 mt-0.5">
