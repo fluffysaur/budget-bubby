@@ -265,7 +265,7 @@ class MockFinanceServiceImpl implements FinanceService {
     );
 
     if (!targetMember) {
-      return cloneDeep(this.state.accounts);
+      return [];
     }
 
     const filtered = this.state.accounts.filter(
