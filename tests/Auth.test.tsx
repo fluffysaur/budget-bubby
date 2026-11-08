@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { PinLoginScreen } from "../src/components/auth/PinLoginScreen";
 import { HouseholdProvider, useHousehold } from "../src/context/HouseholdContext";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
+import { AppHeader } from "../src/components/layout/AppHeader";
 import {
     isBiometricsAvailable,
     isBiometricsEnrolled,
@@ -162,7 +163,40 @@ describe("PIN Authentication & Access Control", () => {
         // Open again and click Sign Out
         fireEvent.click(lockBtn);
         expect(screen.getByRole("heading", { name: /lock & sign out\?/i })).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
+        });
+        expect(screen.queryByRole("heading", { name: /lock & sign out\?/i })).not.toBeInTheDocument();
+    });
+
+    it("Sign Out button in AppHeader mobile menu triggers SignOutConfirm and closes modal", async () => {
+        render(
+            <MemoryRouter>
+                <AuthProvider initialAuthenticated={true}>
+                    <HouseholdProvider>
+                        <AppHeader />
+                    </HouseholdProvider>
+                </AuthProvider>
+            </MemoryRouter>,
+        );
+
+        // Open mobile perspective / menu dropdown
+        const dropdownTrigger = screen.getByRole("button", {
+            name: /select financial perspective/i,
+        });
+        fireEvent.click(dropdownTrigger);
+
+        // Click Sign Out in dropdown
+        const signOutItem = screen.getByRole("button", { name: /^sign out$/i });
+        expect(signOutItem).toBeInTheDocument();
+        fireEvent.click(signOutItem);
+
+        // Verify shared SignOutConfirm modal opens with standard copy
+        expect(screen.getByRole("heading", { name: /lock & sign out\?/i })).toBeInTheDocument();
+        expect(screen.getByText(/you'll need your pin to unlock\./i)).toBeInTheDocument();
+
+        // Dismiss via cancel
+        fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
         expect(screen.queryByRole("heading", { name: /lock & sign out\?/i })).not.toBeInTheDocument();
     });
 
