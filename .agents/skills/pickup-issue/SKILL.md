@@ -44,16 +44,16 @@ gh issue view <number> --json number,title,labels,body,state,assignees,url
 Search for the highest priority unblocked issue in the backlog:
 1. Search priority tiers in strict order: `P0` -> `P1` -> `P2` -> `P3`:
    ```bash
-   gh issue list --label backlog --label P0 --state open --json number,title,labels,createdAt --limit 10
+   gh issue list --label backlog --label P0 --state open --search "no:assignee" --json number,title,labels,createdAt,assignees --limit 10
    ```
 2. If `P0` has no open issues, check `P1`:
    ```bash
-   gh issue list --label backlog --label P1 --state open --json number,title,labels,createdAt --limit 10
+   gh issue list --label backlog --label P1 --state open --search "no:assignee" --json number,title,labels,createdAt,assignees --limit 10
    ```
    Continue to `P2`, then `P3` if higher tiers are empty.
-3. **Filter blocked issues**:
+3. **Filter blocked & in-progress issues**:
+   - **Skip already assigned issues**: Skip any issue with assignees (`assignees.length > 0`), including issues assigned to yourself (`@me`). Any assigned issue has already been picked up.
    - Skip any issue with `needs-db` unless the user explicitly confirms the database change has been applied.
-   - Skip issues already assigned to someone else unless the user directs otherwise.
 4. **Tiebreak (FIFO)**:
    - When multiple issues exist in the same highest priority tier, select the **oldest first** (lowest issue number / earliest `createdAt`).
 5. Fetch the full issue body:
