@@ -16,7 +16,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import type { Account, AccountType, HouseholdMember } from '../../types/finance';
-import { financeService } from '../../services/financeService';
+import { useCreateAccountMutation } from '../../hooks/useFinanceQueries';
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from '../ui/AnimatedModal';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
@@ -62,6 +62,7 @@ export function AddAccountModal({
   isInitialSetup = false,
   onAccountCreated,
 }: AddAccountModalProps) {
+  const createAccountMutation = useCreateAccountMutation();
   const [name, setName] = useState('');
   const [institution, setInstitution] = useState('');
   const [type, setType] = useState<AccountType>('Cash');
@@ -122,7 +123,7 @@ export function AddAccountModal({
 
       const targetMember = members.find((m) => m.id === resolvedOwnerId);
 
-      const created = await financeService.createAccount({
+      const created = await createAccountMutation.mutateAsync({
         household_id: targetMember?.household_id,
         owner_id: resolvedOwnerId,
         name: name.trim(),

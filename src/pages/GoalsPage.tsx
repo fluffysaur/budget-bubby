@@ -291,11 +291,11 @@ export function GoalsPage({
     };
 
     const handleGoalSaved = async () => {
-        invalidateGoals();
+        // Invalidation is handled by the goal mutation hooks
     };
 
     const handleDepositSaved = async () => {
-        invalidateGoals();
+        // Invalidation is handled by the goal mutation hooks
     };
 
     const handleSpendSaved = async () => {

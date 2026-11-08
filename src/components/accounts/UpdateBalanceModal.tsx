@@ -19,7 +19,10 @@ import {
     ArrowDownRight,
 } from "lucide-react";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
-import { financeService } from "../../services/financeService";
+import {
+    useUpdateAccountBalanceMutation,
+    useBulkUpdateAccountBalancesMutation,
+} from "../../hooks/useFinanceQueries";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { TruncatedText } from "../ui/TruncatedText";
@@ -46,6 +49,8 @@ export function UpdateBalanceModal({
     onBalancesUpdated,
     onOpenAddAccount,
 }: UpdateBalanceModalProps) {
+    const updateBalanceMutation = useUpdateAccountBalanceMutation();
+    const bulkUpdateBalancesMutation = useBulkUpdateAccountBalancesMutation();
     const accountsList = useMemo(() => accounts || [], [accounts]);
 
     // Common states
@@ -136,12 +141,12 @@ export function UpdateBalanceModal({
             setError(null);
 
             const trimmedNotes = singleNotes.trim();
-            const updatedAccount = await financeService.updateAccountBalance(
-                account.id,
-                parsedBalance,
-                trimmedNotes,
-                date || getTodayDateString(),
-            );
+            const updatedAccount = await updateBalanceMutation.mutateAsync({
+                accountId: account.id,
+                newBalance: parsedBalance,
+                notes: trimmedNotes,
+                snapshotDate: date || getTodayDateString(),
+            });
 
             onBalanceUpdated?.(updatedAccount);
             onClose();
@@ -190,11 +195,11 @@ export function UpdateBalanceModal({
 
             const snapshotDate = date || getTodayDateString();
             const updatedAccounts =
-                await financeService.bulkUpdateAccountBalances(
+                await bulkUpdateBalancesMutation.mutateAsync({
                     updates,
                     snapshotDate,
-                );
-                recordExercise("balances");
+                });
+            recordExercise("balances");
 
             onBalancesUpdated?.(updatedAccounts);
             if (updatedAccounts.length > 0) {

@@ -20,7 +20,7 @@ import {
 } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
-import { financeService } from "../../services/financeService";
+import { useAddGoalMutation, useUpdateGoalMutation } from "../../hooks/useFinanceQueries";
 import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
 import { formatISODate } from "../../lib/dateUtils";
@@ -54,6 +54,8 @@ export function AddEditGoalModal({
     householdId,
 }: AddEditGoalModalProps) {
     const titleInputRef = useRef<HTMLInputElement>(null);
+    const addGoalMutation = useAddGoalMutation();
+    const updateGoalMutation = useUpdateGoalMutation();
 
     // Form State
     const [emoji, setEmoji] = useState<string>("🎯");
@@ -157,13 +159,16 @@ export function AddEditGoalModal({
 
             if (goal) {
                 // Update Mode
-                const updated = await financeService.updateGoal(goal.id, {
-                    emoji: emoji || "🎯",
-                    title: title.trim(),
-                    target_amount: numericTarget,
-                    saved_so_far: numericSaved,
-                    target_date: normalizedDate,
-                    monthly_contribution: numericMonthly,
+                const updated = await updateGoalMutation.mutateAsync({
+                    id: goal.id,
+                    updates: {
+                        emoji: emoji || "🎯",
+                        title: title.trim(),
+                        target_amount: numericTarget,
+                        saved_so_far: numericSaved,
+                        target_date: normalizedDate,
+                        monthly_contribution: numericMonthly,
+                    },
                 });
                 onGoalSaved?.(updated);
             } else {
@@ -177,7 +182,7 @@ export function AddEditGoalModal({
                     target_date: normalizedDate,
                     monthly_contribution: numericMonthly,
                 };
-                const created = await financeService.addGoal(input);
+                const created = await addGoalMutation.mutateAsync(input);
                 onGoalSaved?.(created);
             }
 

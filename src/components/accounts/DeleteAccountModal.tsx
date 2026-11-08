@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import type { Account } from "../../types/finance";
-import { financeService } from "../../services/financeService";
+import { useDeleteAccountMutation } from "../../hooks/useFinanceQueries";
 import { ConfirmModal } from "../ui/ConfirmModal";
 
 export interface DeleteAccountModalProps {
@@ -21,6 +21,7 @@ export function DeleteAccountModal({
     account,
     onAccountDeleted,
 }: DeleteAccountModalProps) {
+    const deleteAccountMutation = useDeleteAccountMutation();
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +31,7 @@ export function DeleteAccountModal({
         try {
             setIsDeleting(true);
             setError(null);
-            await financeService.deleteAccount(account.id);
+            await deleteAccountMutation.mutateAsync(account.id);
             onAccountDeleted?.(account.id);
             onClose();
         } catch (err: unknown) {

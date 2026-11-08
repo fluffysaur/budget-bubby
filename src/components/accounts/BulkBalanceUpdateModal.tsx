@@ -8,7 +8,7 @@
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { CalendarCheck2, Sparkles, Check, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { getTodayDateString } from "../../lib/dateUtils";
-import { financeService } from "../../services/financeService";
+import { useBulkUpdateAccountBalancesMutation } from "../../hooks/useFinanceQueries";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
@@ -28,6 +28,7 @@ export function BulkBalanceUpdateModal({
     accounts,
     onBalancesUpdated,
 }: BulkBalanceUpdateModalProps) {
+    const bulkUpdateBalancesMutation = useBulkUpdateAccountBalancesMutation();
     const [snapshotDate, setSnapshotDate] = useState<string>(getTodayDateString());
     const [balancesMap, setBalancesMap] = useState<Record<string, string>>({});
     const [filterType, setFilterType] = useState<"all" | "non-cpf">("all");
@@ -136,7 +137,10 @@ export function BulkBalanceUpdateModal({
 
         try {
             setIsSubmitting(true);
-            const updated = await financeService.bulkUpdateAccountBalances(updates, snapshotDate);
+            const updated = await bulkUpdateBalancesMutation.mutateAsync({
+                updates,
+                snapshotDate,
+            });
             recordExercise("balances");
             onBalancesUpdated?.(updated);
             onClose();
