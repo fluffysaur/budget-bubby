@@ -2,11 +2,57 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Self-hosted Variable Fonts */
+@font-face {
+    font-family: "Plus Jakarta Sans";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-weight: 600 800;
+    font-display: optional;
+    src: url("/fonts/bricolage-grotesque-latin.woff2") format("woff2");
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Bricolage Grotesque Fallback";
+    src: local("Arial"), local("Helvetica"), local("sans-serif");
+    ascent-override: 95%;
+    descent-override: 25%;
+    line-gap-override: 0%;
+    size-adjust: 100%;
+}
+
+@font-face {
+    font-family: "JetBrains Mono";
+    font-style: normal;
+    font-weight: 500 800;
+    font-display: swap;
+    src: url("/fonts/jetbrains-mono-latin.woff2") format("woff2");
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* 4px-grid Design Tokens & Custom Fonts */
 @theme {
     --font-display:
-        "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, sans-serif;
+        "Bricolage Grotesque", "Bricolage Grotesque Fallback", -apple-system,
+        BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-sans:
         "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
         Roboto, sans-serif;
@@ -444,13 +490,15 @@ html.theme-transition *::after {
 /* Responsive Modal Sheet: Drawer on mobile (<640px), Scale & Fade on desktop (>=640px) */
 @media (max-width: 639.98px) {
     .modal-sheet-enter {
-        animation: drawerSlideUp var(--duration-base) var(--ease-out-soft) forwards;
+        animation: drawerSlideUp var(--duration-base) var(--ease-out-soft)
+            forwards;
         will-change: transform;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
     }
     .modal-sheet-exit {
-        animation: drawerSlideDown var(--duration-fast) var(--ease-in-fast) forwards;
+        animation: drawerSlideDown var(--duration-fast) var(--ease-in-fast)
+            forwards;
         will-change: transform;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
@@ -459,11 +507,13 @@ html.theme-transition *::after {
 
 @media (min-width: 640px) {
     .modal-sheet-enter {
-        animation: modalScaleIn var(--duration-base) var(--ease-out-soft) forwards;
+        animation: modalScaleIn var(--duration-base) var(--ease-out-soft)
+            forwards;
         will-change: transform, opacity;
     }
     .modal-sheet-exit {
-        animation: modalScaleOut var(--duration-fast) var(--ease-in-fast) forwards;
+        animation: modalScaleOut var(--duration-fast) var(--ease-in-fast)
+            forwards;
         will-change: transform, opacity;
     }
 }
@@ -795,7 +845,8 @@ html.theme-transition *::after {
     }
 }
 .animate-confetti-fall {
-    animation: confettiFall var(--confetti-d, 1100ms) var(--ease-out-soft) forwards;
+    animation: confettiFall var(--confetti-d, 1100ms) var(--ease-out-soft)
+        forwards;
     will-change: transform, opacity;
 }
 
