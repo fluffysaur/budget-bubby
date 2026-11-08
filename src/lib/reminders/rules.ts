@@ -131,9 +131,15 @@ function isPastCheckinTime(currentHour: number | undefined, checkinTime: string)
 function sgNow(referenceDate?: Date | string): Date {
     if (!referenceDate) return getSingaporeDate();
     if (typeof referenceDate === "string") {
-        return referenceDate.includes("T")
-            ? new Date(referenceDate)
-            : new Date(referenceDate + "T12:00:00");
+        const isoString = referenceDate.includes("T")
+            ? referenceDate
+            : `${referenceDate}T12:00:00+08:00`;
+        const parsed = new Date(isoString);
+        if (isNaN(parsed.getTime())) return new Date(referenceDate);
+        const sgTimeString = parsed.toLocaleString("en-US", {
+            timeZone: "Asia/Singapore",
+        });
+        return new Date(sgTimeString);
     }
     return referenceDate;
 }
@@ -371,7 +377,7 @@ export function checkMissingCreditCardStatements(
             id: `reminder-cc-missing-${card.id}-${currentMonth}`,
             type: "credit_card_missing_stmt",
             title: `${card.name} Statement Needed`,
-            message: `Cycle closed on day ${card.billing_day}.`,
+            message: `Cycle closed on day ${effectiveBillingDay}.`,
             severity: "info",
             actionLabel: "Add Statement",
             actionType: "view_cc",

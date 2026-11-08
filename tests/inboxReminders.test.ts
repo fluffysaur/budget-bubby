@@ -176,6 +176,7 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         );
         expect(reminders).toHaveLength(1);
         expect(reminders[0].id).toBe("reminder-cc-missing-cc-nov-31-2026-11");
+        expect(reminders[0].message).toBe("Cycle closed on day 30.");
     });
 
     it("ignores inactive cards", () => {
@@ -238,5 +239,27 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         expect(dueReminders[0].type).toBe("credit_card_due");
         expect(dueReminders[0].title).toBe("DBS Altitude Due in 3 Days");
         expect(dueReminders[0].message).toBe("S$500.00 statement");
+    });
+
+    it("handles string reference dates and ISO strings normalized to Singapore time", () => {
+        const card = makeCard({ billing_day: 15 });
+        // UTC 16:30 on Oct 14 is 00:30 on Oct 15 in Singapore -> statement date reached
+        const reminders = checkMissingCreditCardStatements(
+            [card],
+            [],
+            "2026-10-14T16:30:00Z",
+        );
+        expect(reminders).toHaveLength(1);
+        expect(reminders[0].id).toBe("reminder-cc-missing-cc-test-1-2026-10");
+
+        // Date-only string "2026-10-14" is before billing day 15
+        expect(
+            checkMissingCreditCardStatements([card], [], "2026-10-14"),
+        ).toHaveLength(0);
+
+        // Date-only string "2026-10-15" triggers on billing day 15
+        expect(
+            checkMissingCreditCardStatements([card], [], "2026-10-15"),
+        ).toHaveLength(1);
     });
 });
