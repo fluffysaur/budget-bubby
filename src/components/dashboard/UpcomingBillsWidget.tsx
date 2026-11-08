@@ -138,15 +138,25 @@ export function UpcomingBillsWidget({
                                 >
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
-                                            <Bell className="h-4 w-4" strokeWidth={2.5} />
+                                            <Bell
+                                                className="h-4 w-4"
+                                                strokeWidth={2.5}
+                                            />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <TruncatedText
-                                                    text={recurringItem.name}
-                                                    className="text-sm font-bold text-(--text-ink) font-display"
+                                                <div className="min-w-0 flex-1">
+                                                    <TruncatedText
+                                                        text={
+                                                            recurringItem.name
+                                                        }
+                                                        className="text-sm font-bold text-(--text-ink) font-display"
+                                                    />
+                                                </div>
+                                                <RecurringTypeBadge
+                                                    type={recurringItem.type}
+                                                    compactOnMobile
                                                 />
-                                                <RecurringTypeBadge type={recurringItem.type} />
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span
@@ -167,12 +177,20 @@ export function UpcomingBillsWidget({
 
                                     <div className="text-right shrink-0">
                                         <div className="text-(--text-ink)">
-                                            <CurrencyText amount={recurringItem.amount} size="md" />
+                                            <CurrencyText
+                                                amount={recurringItem.amount}
+                                                size="md"
+                                            />
                                         </div>
-                                        {recurringItem.frequency === "annually" && (
+                                        {recurringItem.frequency ===
+                                            "annually" && (
                                             <div className="text-[10px] font-mono-num text-(--text-muted)">
                                                 ~
-                                                <CurrencyText amount={recurringItem.monthly_amortized_amount} />
+                                                <CurrencyText
+                                                    amount={
+                                                        recurringItem.monthly_amortized_amount
+                                                    }
+                                                />
                                                 /mo
                                             </div>
                                         )}

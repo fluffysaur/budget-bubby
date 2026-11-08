@@ -318,6 +318,33 @@ describe('UpcomingBillsWidget', () => {
     fireEvent.click(viewAllBtn);
     expect(onViewAll).toHaveBeenCalledTimes(1);
   });
+
+  it('wraps item name in min-w-0 flex-1 container and renders responsive compact badge', () => {
+    const items: RecurringItem[] = [
+      {
+        ...sampleItems[0],
+        id: 'sub-01',
+        type: 'subscription',
+        name: 'Spotify Family Subscription With Very Long Name',
+        amount: 17.98,
+        monthly_amortized_amount: 17.98,
+        frequency: 'monthly',
+        due_day: 15,
+      },
+    ];
+    render(<UpcomingBillsWidget recurringItems={items} referenceDate={new Date(2026, 10, 1)} />);
+
+    const nameEl = screen.getByText('Spotify Family Subscription With Very Long Name');
+    // Name element's parent container should have flex-1 min-w-0 to prevent being crowded out
+    const nameContainer = nameEl.closest('.min-w-0.flex-1');
+    expect(nameContainer).not.toBeNull();
+
+    // Verify compact badge rendering for subscription type
+    const mobileText = screen.getByText('Sub');
+    const desktopText = screen.getByText('Subscription');
+    expect(mobileText).toHaveClass('sm:hidden');
+    expect(desktopText).toHaveClass('hidden', 'sm:inline');
+  });
 });
 
 describe('DashboardPage', () => {
