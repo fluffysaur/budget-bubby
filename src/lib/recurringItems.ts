@@ -58,7 +58,7 @@ export const RECURRING_TYPE_LABELS: Record<RecurringItemType, string> = {
 };
 
 export const RECURRING_TYPE_SHORT_LABELS: Record<RecurringItemType, string> = {
-    insurance: "Ins",
+    insurance: "Insur.",
     tax: "Tax",
     subscription: "Sub",
     bill: "Bill",

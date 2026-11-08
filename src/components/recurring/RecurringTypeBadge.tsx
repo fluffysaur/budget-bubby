@@ -33,7 +33,6 @@ export function RecurringTypeBadge({
 
     return (
         <span
-            role="status"
             aria-label={label}
             className={`inline-flex shrink-0 ${className}`}
         >
