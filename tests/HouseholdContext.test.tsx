@@ -1,9 +1,11 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import {
     HouseholdProvider,
     useHousehold,
+    type HouseholdContextValue,
 } from "../src/context/HouseholdContext";
 import { AppHeader } from "../src/components/layout/AppHeader";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
@@ -139,6 +141,50 @@ describe("HouseholdContext", () => {
         });
         expect(screen.getByTestId("theme")).toHaveTextContent("light");
         expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
+
+    it("memoizes context value to preserve reference equality across re-renders when state has not changed", async () => {
+        const contextValues: HouseholdContextValue[] = [];
+
+        function Parent() {
+            const [, setTick] = useState(0);
+            return (
+                <HouseholdProvider>
+                    <button
+                        data-testid="re-render-parent"
+                        onClick={() => setTick((t) => t + 1)}
+                    >
+                        Re-render
+                    </button>
+                    <Consumer />
+                </HouseholdProvider>
+            );
+        }
+
+        function Consumer() {
+            const val = useHousehold();
+            contextValues.push(val);
+            return <div>Consumer: {val.loading ? "loading" : "ready"}</div>;
+        }
+
+        await act(async () => {
+            render(<Parent />);
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText("Consumer: ready")).toBeInTheDocument();
+        });
+
+        const initialLength = contextValues.length;
+        const settledValue = contextValues[initialLength - 1];
+
+        await act(async () => {
+            fireEvent.click(screen.getByTestId("re-render-parent"));
+        });
+
+        expect(contextValues.length).toBeGreaterThan(initialLength);
+        const latestValue = contextValues[contextValues.length - 1];
+        expect(latestValue).toBe(settledValue);
     });
 });
 
