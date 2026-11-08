@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import {
     HouseholdProvider,
