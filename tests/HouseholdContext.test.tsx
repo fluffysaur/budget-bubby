@@ -163,7 +163,9 @@ describe("HouseholdContext", () => {
 
         function Consumer() {
             const val = useHousehold();
-            contextValues.push(val);
+            useEffect(() => {
+                contextValues.push(val);
+            });
             return <div>Consumer: {val.loading ? "loading" : "ready"}</div>;
         }
 
