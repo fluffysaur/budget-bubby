@@ -2,51 +2,42 @@
 /**
  * Budget Bubby service worker (vite-plugin-pwa injectManifest).
  *
- * - Precaches the app shell and serves index.html for navigations.
- * - Caches Google Fonts.
+ * - Precaches the app shell (including self-hosted woff2 fonts) and serves index.html for navigations.
  * - Supports the "update available" prompt (SKIP_WAITING message).
  * - Shows Web Push notifications sent by the send-reminders function, and
  *   opens the right screen when one is tapped.
  */
 
-import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
+import {
+    precacheAndRoute,
+    cleanupOutdatedCaches,
+    createHandlerBoundToURL,
+} from "workbox-precaching";
 import { registerRoute, NavigationRoute } from "workbox-routing";
-import { CacheFirst } from "workbox-strategies";
-import { ExpirationPlugin } from "workbox-expiration";
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { withReadKeys, type PushMessage } from "./lib/reminders/pushMessage";
 
 declare let self: ServiceWorkerGlobalScope;
 
 const ICON = "/pwa-192x192.png";
-const YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 // App shell ------------------------------------------------------------------
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")));
 
-// Google Fonts ---------------------------------------------------------------
-registerRoute(
-    ({ url }) => url.origin === "https://fonts.googleapis.com",
-    new CacheFirst({
-        cacheName: "google-fonts-cache",
-        plugins: [
-            new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: YEAR_SECONDS }),
-            new CacheableResponsePlugin({ statuses: [0, 200] }),
-        ],
-    }),
-);
-registerRoute(
-    ({ url }) => url.origin === "https://fonts.gstatic.com",
-    new CacheFirst({
-        cacheName: "gstatic-fonts-cache",
-        plugins: [
-            new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: YEAR_SECONDS }),
-            new CacheableResponsePlugin({ statuses: [0, 200] }),
-        ],
-    }),
-);
+// One-time cleanup of the Google Fonts runtime caches from before fonts were
+// self-hosted; cleanupOutdatedCaches() only clears outdated precaches, not
+// these named runtime caches, so already-installed PWAs would otherwise keep
+// them forever.
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        Promise.all(
+            ["google-fonts-cache", "gstatic-fonts-cache"].map((name) =>
+                caches.delete(name),
+            ),
+        ),
+    );
+});
 
 // Update prompt --------------------------------------------------------------
 self.addEventListener("message", (event) => {
@@ -89,13 +80,22 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
-    const data = (event.notification.data ?? {}) as { url?: string; keys?: string[] };
+    const data = (event.notification.data ?? {}) as {
+        url?: string;
+        keys?: string[];
+    };
     // The app marks ?read= keys as read on load, then strips the param
-    const target = new URL(withReadKeys(data.url ?? "/", data.keys ?? []), self.location.origin).href;
+    const target = new URL(
+        withReadKeys(data.url ?? "/", data.keys ?? []),
+        self.location.origin,
+    ).href;
 
     event.waitUntil(
         (async () => {
-            const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+            const windows = await self.clients.matchAll({
+                type: "window",
+                includeUncontrolled: true,
+            });
             for (const client of windows) {
                 if (new URL(client.url).origin === self.location.origin) {
                     await client.focus();
