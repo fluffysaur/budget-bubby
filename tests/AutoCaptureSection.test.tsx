@@ -90,7 +90,8 @@ describe("AutoCaptureSection", () => {
         expect(buttons[0]).toHaveAttribute("aria-expanded", "true");
         expect(buttons[1]).toHaveTextContent("iPhone Setup");
         expect(buttons[1]).toHaveAttribute("aria-expanded", "false");
-        expect(within(stepsContainer).getByRole("link", { name: /issue #44/i })).toBeInTheDocument();
+        expect(within(stepsContainer).getByText(/MacroDroid/i)).toBeInTheDocument();
+        expect(within(stepsContainer).queryByRole("link", { name: /issue #44/i })).not.toBeInTheDocument();
 
         unmount();
         uaSpy.mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)");

@@ -158,18 +158,32 @@ function HouseholdProviderInner({
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   }, []);
 
-  const contextValue: HouseholdContextValue = {
-    perspective,
-    setPerspective,
-    members,
-    activeMember,
-    theme,
-    toggleTheme,
-    isMockMode,
-    overview,
-    loading,
-    refreshData,
-  };
+  const contextValue: HouseholdContextValue = useMemo(
+    () => ({
+      perspective,
+      setPerspective,
+      members,
+      activeMember,
+      theme,
+      toggleTheme,
+      isMockMode,
+      overview,
+      loading,
+      refreshData,
+    }),
+    [
+      perspective,
+      setPerspective,
+      members,
+      activeMember,
+      theme,
+      toggleTheme,
+      isMockMode,
+      overview,
+      loading,
+      refreshData,
+    ]
+  );
 
   return (
     <HouseholdContext.Provider value={contextValue}>
