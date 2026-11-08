@@ -25,6 +25,20 @@ cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")));
 
+// One-time cleanup of the Google Fonts runtime caches from before fonts were
+// self-hosted; cleanupOutdatedCaches() only clears outdated precaches, not
+// these named runtime caches, so already-installed PWAs would otherwise keep
+// them forever.
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        Promise.all(
+            ["google-fonts-cache", "gstatic-fonts-cache"].map((name) =>
+                caches.delete(name),
+            ),
+        ),
+    );
+});
+
 // Update prompt --------------------------------------------------------------
 self.addEventListener("message", (event) => {
     if (event.data && event.data.type === "SKIP_WAITING") {
