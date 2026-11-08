@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "check": "bash scripts/check.sh",
     "deploy:functions": "npm run build:functions && npx supabase functions deploy send-reminders --no-verify-jwt && npx supabase functions deploy capture-expense --no-verify-jwt"
   },
   "dependencies": {

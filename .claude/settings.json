@@ -1,0 +1,12 @@
+{
+    "permissions": {
+        "deny": [
+            "Read(./dist/**)",
+            "Read(./playwright-report/**)",
+            "Read(./test-results/**)",
+            "Read(./node_modules/**)",
+            "Read(./.superpowers/**)",
+            "Read(./**/*.tsbuildinfo)"
+        ]
+    }
+}

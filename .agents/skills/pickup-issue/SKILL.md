@@ -106,10 +106,9 @@ Once confirmed:
 
 Run baseline quality checks to ensure a clean starting point:
 ```bash
-npm test
-npm run lint
+bash scripts/check.sh lint test
 ```
-If baseline checks fail, notify the user immediately with the exact failure output before writing any code.
+(Prints one PASS/FAIL line per step, with the tail of the log only on failure.) If baseline checks fail, notify the user immediately with the exact failure output before writing any code.
 
 ---
 
@@ -120,3 +119,13 @@ Conclude the pickup phase by summarizing the work and proposing next steps:
 2. Pinpoint the files and lines identified in `Where`.
 3. Propose a reproduction test or TDD strategy.
 4. Present an implementation plan outline and wait for user guidance before modifying code.
+
+---
+
+## Session Hygiene (token budget)
+
+- One issue per session. Start a fresh session for the next issue or PR; use `/clear` between unrelated tasks.
+- Once context passes about 100k tokens, run `/compact` or restart with a short handoff note.
+- Effort: `low` for chore branches (formatting, lint sweeps, issue filing), `medium` otherwise.
+- Models: Opus only for planning and final review, Sonnet for implementation, Haiku for searches and running checks. When spawning subagents set `model` explicitly and avoid `fork`, which inherits the parent model.
+- Run checks through `npm run check` (or `scripts/check.sh`) to keep output short.
