@@ -31,7 +31,7 @@ import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { NotificationSettingsModal } from "./NotificationSettingsModal";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
-import { ConfirmModal } from "../ui/ConfirmModal";
+import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { m, AnimatePresence } from "motion/react";
 import { pop } from "../../lib/motion";
 
@@ -85,7 +85,7 @@ export function AppHeader({
         isMockMode,
         refreshData,
     } = useHousehold();
-    const { signOut, isAuthenticated } = useAuth();
+    const { isAuthenticated } = useAuth();
     const {
         canInstall,
         isInstalled,
@@ -449,23 +449,10 @@ export function AppHeader({
             </div>
 
             {/* Logout Confirmation Modal */}
-            <ConfirmModal
+            <SignOutConfirm
                 isOpen={isLogoutConfirmOpen}
                 onClose={() => setIsLogoutConfirmOpen(false)}
-                onConfirm={() => {
-                    setIsLogoutConfirmOpen(false);
-                    signOut();
-                }}
-                title="Lock & Sign Out?"
-                variant="danger"
-                confirmLabel="Sign Out"
-                icon={<LogOut className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />}
-                maxWidth="max-w-sm"
-            >
-                <p className="text-sm text-(--text-muted)">
-                    You&apos;ll need your PIN to unlock.
-                </p>
-            </ConfirmModal>
+            />
 
             {/* iOS install modal when prompt triggered from menu */}
             <IOSInstallModal

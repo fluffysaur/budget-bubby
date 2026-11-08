@@ -22,7 +22,7 @@ import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
-import { ConfirmModal } from "../ui/ConfirmModal";
+import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { BubbyIcon } from "../ui/BubbyIcon";
 import { Badge } from "../ui/Badge";
 import { formatBadgeCount } from "../../hooks/useInboxBadge";
@@ -78,7 +78,7 @@ export function DesktopSidebar({
             ? members.map((m) => m.display_name).join(" & ")
             : "Household Finance";
 
-    const { isAuthenticated, signOut } = useAuth();
+    const { isAuthenticated } = useAuth();
     const { canInstall, isInstalled } = usePWAInstall();
     const theme = household?.theme ?? "light";
     const toggleTheme = household?.toggleTheme ?? (() => {});
@@ -256,19 +256,10 @@ export function DesktopSidebar({
                 </div>
             </div>
 
-            <ConfirmModal
+            <SignOutConfirm
                 isOpen={isLogoutConfirmOpen}
                 onClose={() => setIsLogoutConfirmOpen(false)}
-                onConfirm={() => {
-                    signOut();
-                    setIsLogoutConfirmOpen(false);
-                }}
-                title="Lock & Sign Out?"
-                confirmLabel="Sign Out"
-                variant="danger"
-            >
-                <p>Lock the app? You&apos;ll need your PIN.</p>
-            </ConfirmModal>
+            />
         </aside>
     );
 }
