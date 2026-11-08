@@ -493,13 +493,13 @@ export function CreditCardTrackerSection({
                                                             •••• {card.last4}
                                                         </span>
                                                     )}
-                                                    <span className="font-semibold truncate">
+                                                    <span className="font-semibold truncate min-w-0">
                                                         {card.bank}
                                                     </span>
                                                     {owner && (
                                                         <>
                                                             <span className="shrink-0">•</span>
-                                                            <span className="font-semibold truncate whitespace-nowrap">
+                                                            <span className="font-semibold truncate whitespace-nowrap min-w-0">
                                                                 {
                                                                     owner.display_name
                                                                 }

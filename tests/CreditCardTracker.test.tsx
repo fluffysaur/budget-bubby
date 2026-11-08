@@ -95,7 +95,15 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       const ownerLabels = screen.getAllByText('Yi Jia');
       expect(ownerLabels.length).toBeGreaterThanOrEqual(1);
       ownerLabels.forEach((label) => {
-        expect(label).toHaveClass('truncate', 'whitespace-nowrap');
+        expect(label).toHaveClass('truncate', 'whitespace-nowrap', 'min-w-0');
+      });
+
+      // Bank label flex defense
+      const dbsLabels = screen.getAllByText('DBS');
+      dbsLabels.forEach((label) => {
+        if (label.tagName === 'SPAN') {
+          expect(label).toHaveClass('truncate', 'min-w-0');
+        }
       });
 
       // Summary cards
