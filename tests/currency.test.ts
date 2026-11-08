@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatSGD, parseSGD } from '../src/lib/currency';
+import { formatSGD, formatSGDCompact, parseSGD } from '../src/lib/currency';
 
 describe('currency utilities', () => {
   describe('formatSGD', () => {
@@ -33,6 +33,74 @@ describe('currency utilities', () => {
       expect(formatSGD(0, { showCents: false })).toBe('S$0');
       expect(formatSGD(-50, { showCents: false })).toBe('-S$50');
       expect(formatSGD(-1234.56, { showCents: false })).toBe('-S$1,235');
+    });
+  });
+
+  describe('formatSGDCompact', () => {
+    it('formats sub-thousand values as whole numbers without suffix', () => {
+      expect(formatSGDCompact(0)).toBe('S$0');
+      expect(formatSGDCompact(1)).toBe('S$1');
+      expect(formatSGDCompact(50)).toBe('S$50');
+      expect(formatSGDCompact(500)).toBe('S$500');
+      expect(formatSGDCompact(999)).toBe('S$999');
+      expect(formatSGDCompact(999.4)).toBe('S$999');
+    });
+
+    it('formats thousands with "k" suffix and rolls whole numbers without trailing zero', () => {
+      expect(formatSGDCompact(999.5)).toBe('S$1k');
+      expect(formatSGDCompact(1_000)).toBe('S$1k');
+      expect(formatSGDCompact(1_049)).toBe('S$1k');
+      expect(formatSGDCompact(1_050)).toBe('S$1.1k');
+      expect(formatSGDCompact(1_200)).toBe('S$1.2k');
+      expect(formatSGDCompact(1_940)).toBe('S$1.9k');
+      expect(formatSGDCompact(1_949)).toBe('S$1.9k');
+      expect(formatSGDCompact(1_950)).toBe('S$2k');
+      expect(formatSGDCompact(1_960)).toBe('S$2k');
+      expect(formatSGDCompact(2_000)).toBe('S$2k');
+      expect(formatSGDCompact(10_000)).toBe('S$10k');
+      expect(formatSGDCompact(500_000)).toBe('S$500k');
+      expect(formatSGDCompact(999_949)).toBe('S$999.9k');
+    });
+
+    it('rolls over near-million amounts to "M" instead of 1000.0k or 1000k', () => {
+      expect(formatSGDCompact(999_950)).toBe('S$1M');
+      expect(formatSGDCompact(999_999)).toBe('S$1M');
+      expect(formatSGDCompact(1_000_000)).toBe('S$1M');
+      expect(formatSGDCompact(1_049_999)).toBe('S$1M');
+      expect(formatSGDCompact(1_050_000)).toBe('S$1.1M');
+      expect(formatSGDCompact(1_200_000)).toBe('S$1.2M');
+      expect(formatSGDCompact(1_950_000)).toBe('S$2M');
+      expect(formatSGDCompact(999_949_999)).toBe('S$999.9M');
+    });
+
+    it('formats billions with "B" suffix and rolls over near-billion amounts', () => {
+      expect(formatSGDCompact(999_950_000)).toBe('S$1B');
+      expect(formatSGDCompact(1_000_000_000)).toBe('S$1B');
+      expect(formatSGDCompact(1_500_000_000)).toBe('S$1.5B');
+    });
+
+    it('formats negative amounts with minus sign preceding S$', () => {
+      expect(formatSGDCompact(-50)).toBe('-S$50');
+      expect(formatSGDCompact(-999)).toBe('-S$999');
+      expect(formatSGDCompact(-1_000)).toBe('-S$1k');
+      expect(formatSGDCompact(-1_950)).toBe('-S$2k');
+      expect(formatSGDCompact(-999_950)).toBe('-S$1M');
+      expect(formatSGDCompact(-999_999)).toBe('-S$1M');
+      expect(formatSGDCompact(-1_000_000)).toBe('-S$1M');
+      expect(formatSGDCompact(-1_000_000_000)).toBe('-S$1B');
+    });
+
+    it('handles zero, negative zero, and small fractional zero without negative sign', () => {
+      expect(formatSGDCompact(0)).toBe('S$0');
+      expect(formatSGDCompact(-0)).toBe('S$0');
+      expect(formatSGDCompact(0.4)).toBe('S$0');
+      expect(formatSGDCompact(-0.4)).toBe('S$0');
+    });
+
+    it('handles NaN and non-finite inputs safely', () => {
+      expect(formatSGDCompact(NaN)).toBe('S$0');
+      expect(formatSGDCompact(Infinity)).toBe('S$0');
+      expect(formatSGDCompact(-Infinity)).toBe('S$0');
     });
   });
 
