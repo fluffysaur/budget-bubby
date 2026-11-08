@@ -506,7 +506,7 @@ describe("BaseProfileEditorModal", () => {
         expect(screen.getByText(/135%/)).toBeInTheDocument();
 
         const saveBtn = screen.getByRole("button", {
-            name: /save profile|save budget|save changes/i,
+            name: /save profile|save budget|save changes|^save$/i,
         });
         // Should be disabled or error indicated
         expect(saveBtn).toBeDisabled();
@@ -534,7 +534,7 @@ describe("BaseProfileEditorModal", () => {
         fireEvent.change(salaryInput, { target: { value: "6500" } });
 
         const saveBtn = screen.getByRole("button", {
-            name: /save profile|save budget|save changes/i,
+            name: /save profile|save budget|save changes|^save$/i,
         });
         expect(saveBtn).not.toBeDisabled();
 
@@ -619,6 +619,31 @@ describe("BaseProfileEditorModal", () => {
         expect(totalBadge).toBeInTheDocument();
         const resetBtn = screen.getByRole("button", { name: /^reset$/i });
         expect(resetBtn).toBeInTheDocument();
+    });
+
+    it("renders mobile-friendly footer with shortened 'Save' button and clean status row", () => {
+        render(
+            <BaseProfileEditorModal
+                isOpen={true}
+                onClose={vi.fn()}
+                profile={profile}
+                allocations={allocations}
+                categories={mockCategories}
+            />,
+        );
+
+        // Submit button is "Save" per 1-3 words house style
+        const saveBtn = screen.getByRole("button", { name: /^save$/i });
+        expect(saveBtn).toBeInTheDocument();
+        expect(saveBtn).not.toBeDisabled();
+        expect(
+            screen.queryByRole("button", { name: /save budget/i }),
+        ).not.toBeInTheDocument();
+
+        // Cancel and Save buttons expand to equal width on mobile
+        expect(saveBtn).toHaveClass("flex-1");
+        const cancelBtn = screen.getByRole("button", { name: /^cancel$/i });
+        expect(cancelBtn).toHaveClass("flex-1");
     });
 
     it('converts smart dollar input "$300" in percentage field to percentage and auto-locks category', () => {
@@ -744,9 +769,9 @@ describe("BaseProfileEditorModal", () => {
         fireEvent.change(foodDollarInput, { target: { value: "480" } });
         expect(foodAllocInput.value).toBe("10");
 
-        // Click Auto-Balance to 100%
+        // Click Auto-Balance
         const autoBalanceBtn = screen.getByRole("button", {
-            name: /auto-balance to 100%/i,
+            name: /auto-balance/i,
         });
         fireEvent.click(autoBalanceBtn);
 
@@ -911,7 +936,7 @@ describe("BudgetPage", () => {
         expect(screen.getByRole("dialog")).toBeInTheDocument();
 
         const saveBtn = screen.getByRole("button", {
-            name: /save profile|save budget|save changes/i,
+            name: /save profile|save budget|save changes|^save$/i,
         });
         expect(saveBtn).not.toBeDisabled();
 

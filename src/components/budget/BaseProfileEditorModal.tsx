@@ -954,7 +954,7 @@ export function BaseProfileEditorModal({
                                         title="Auto-adjust unlocked categories to 100%"
                                     >
                                         <Scale className="h-3.5 w-3.5" />
-                                        <span>Auto-Balance to 100%</span>
+                                        <span>Auto-Balance</span>
                                     </button>
                                     <TooltipPopover
                                         title="Category Lock"
@@ -1127,8 +1127,8 @@ export function BaseProfileEditorModal({
                                                 key={cat.id}
                                                 className="p-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm space-y-2"
                                             >
-                                                <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                         {/* Category Lock Toggle */}
                                                         <button
                                                             type="button"
@@ -1258,7 +1258,7 @@ export function BaseProfileEditorModal({
                                                     </div>
 
                                                     {/* Live Dollar Equivalent & Numeric Input */}
-                                                    <div className="flex items-center gap-2 shrink-0">
+                                                    <div className="flex items-center justify-end gap-2 shrink-0">
                                                         {/* Editable Dollar Input */}
                                                         <div
                                                             data-testid={`cat-dollar-${cat.id}`}
@@ -1412,8 +1412,8 @@ export function BaseProfileEditorModal({
                     </ModalBody>
 
                     {/* Footer Actions with Sticky Total % */}
-                    <ModalFooter className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                    <ModalFooter className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
                             {/* Sticky Total Percentage Indicator */}
                             <div
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border-2 border-(--border-ink) shadow-cute-sm ${
@@ -1441,11 +1441,12 @@ export function BaseProfileEditorModal({
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
                             <Button
                                 variant="secondary"
                                 type="button"
                                 onClick={onClose}
+                                className="flex-1 sm:flex-none"
                             >
                                 Cancel
                             </Button>
@@ -1455,8 +1456,9 @@ export function BaseProfileEditorModal({
                                 disabled={!isValidTotal || isSubmitting}
                                 isLoading={isSubmitting}
                                 leftIcon={<Save className="h-3.5 w-3.5" />}
+                                className="flex-1 sm:flex-none"
                             >
-                                {isSubmitting ? "Saving..." : "Save Budget"}
+                                {isSubmitting ? "Saving..." : "Save"}
                             </Button>
                         </div>
                     </ModalFooter>

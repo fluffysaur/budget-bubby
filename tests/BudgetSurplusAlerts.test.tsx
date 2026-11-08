@@ -472,9 +472,9 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
             />,
         );
 
-        // Verify Auto-Balance to 100% button is rendered
+        // Verify Auto-Balance button is rendered
         const autoBalanceBtn = screen.getByRole("button", {
-            name: /auto-balance to 100%/i,
+            name: /auto-balance/i,
         });
         expect(autoBalanceBtn).toBeInTheDocument();
 
@@ -540,17 +540,17 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         const secondSlider = screen.getByTestId(`slider-${secondCat.id}`);
         fireEvent.change(secondSlider, { target: { value: "60" } });
 
-        // Click Auto-Balance to 100%
+        // Click Auto-Balance
         const autoBalanceBtn = screen.getByRole("button", {
-            name: /auto-balance to 100%/i,
+            name: /auto-balance/i,
         });
         fireEvent.click(autoBalanceBtn);
 
         // Total should now be restored to exactly 100%
         expect(screen.getByText("Total: 100%")).toBeInTheDocument();
 
-        // Verify Save Budget button is enabled
-        const saveBtn = screen.getByRole("button", { name: /save budget/i });
+        // Verify Save button is enabled
+        const saveBtn = screen.getByRole("button", { name: /^save$/i });
         expect(saveBtn).not.toBeDisabled();
     }, 45000);
 
