@@ -45,7 +45,7 @@ export function formatSGD(amount: number, options?: { showCents?: boolean }): st
  */
 export function formatSGDCompact(amount: number): string {
   if (isNaN(amount) || !isFinite(amount)) {
-    return "S$0";
+    return 'S$0';
   }
 
   const absAmount = Math.abs(amount);
@@ -61,11 +61,11 @@ export function formatSGDCompact(amount: number): string {
     const val = Math.round((absAmount / 1_000) * 10) / 10;
     formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}k`;
   } else {
-    formatted = Math.round(absAmount).toLocaleString("en-SG");
+    formatted = Math.round(absAmount).toLocaleString('en-SG');
   }
 
-  const isNegative = amount < 0 && formatted !== "0";
-  return `${isNegative ? "-" : ""}S$${formatted}`;
+  const isNegative = amount < 0 && formatted !== '0';
+  return `${isNegative ? '-' : ''}S$${formatted}`;
 }
 
 /**
