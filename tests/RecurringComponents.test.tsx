@@ -221,7 +221,9 @@ describe("RecurringTable Component", () => {
         expect(screen.getByText("Spotify Family Plan")).toBeInTheDocument();
 
         // Type badges
-        const badges = screen.getAllByRole("status");
+        const badges = screen.getAllByLabelText(
+            /^(Insurance|Tax|Subscription|Bill|Other)$/,
+        );
         expect(badges.length).toBeGreaterThan(0);
 
         // Currency values
@@ -293,7 +295,9 @@ describe("RecurringTable Component", () => {
             />,
         );
 
-        const badges = screen.getAllByRole("status").map((b) => b.textContent);
+        const badges = screen
+            .getAllByLabelText(/^(Insurance|Tax|Subscription|Bill|Other)$/)
+            .map((b) => b.getAttribute("aria-label"));
         expect(badges).toContain("Bill");
         expect(badges).toContain("Other");
 
