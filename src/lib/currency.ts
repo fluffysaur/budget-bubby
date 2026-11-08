@@ -30,29 +30,41 @@ export function formatSGD(amount: number, options?: { showCents?: boolean }): st
 }
 
 /**
- * Compact SGD representation (e.g., S$500k, S$1.2M) suitable for charts and dashboard cards.
+ * Compact SGD representation (e.g., S$500k, S$1.2M, S$1B) suitable for charts and dashboard cards.
+ *
+ * Formatting and rounding rules:
+ * - Rounded to at most 1 decimal place using standard half-up rounding.
+ * - Whole rounded values omit trailing ".0" (e.g. S$1M, S$2k).
+ * - Threshold rollover: Tier selection occurs at the half-up rounding boundary
+ *   (>= 999_950 rolls over to "M" so 999_999 formats as "S$1M" rather than "S$1000.0k";
+ *   >= 999.5 rolls over to "k"; >= 999_950_000 rolls over to "B").
+ * - Convention for near-whole amounts: 1,950 (1.95k) rounds half-up to 2.0k -> "S$2k"
+ *   (trailing ".0" omitted). 1,940 (1.94k) rounds half-up to 1.9k -> "S$1.9k".
+ * - Negative values format with leading minus sign before S$: -S$1M, -S$2k.
+ * - Negative values rounding to 0 format as S$0 (prevents negative zero "-S$0").
  */
 export function formatSGDCompact(amount: number): string {
   if (isNaN(amount) || !isFinite(amount)) {
     return 'S$0';
   }
 
-  const isNegative = amount < 0;
   const absAmount = Math.abs(amount);
 
   let formatted: string;
-  if (absAmount >= 1_000_000) {
-    const val = absAmount / 1_000_000;
+  if (absAmount >= 999_950_000) {
+    const val = Math.round((absAmount / 1_000_000_000) * 10) / 10;
+    formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}B`;
+  } else if (absAmount >= 999_950) {
+    const val = Math.round((absAmount / 1_000_000) * 10) / 10;
     formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}M`;
-  } else if (absAmount >= 1_000) {
-    const val = absAmount / 1_000;
+  } else if (absAmount >= 999.5) {
+    const val = Math.round((absAmount / 1_000) * 10) / 10;
     formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}k`;
   } else {
-    formatted = absAmount.toLocaleString('en-SG', {
-      maximumFractionDigits: 0,
-    });
+    formatted = Math.round(absAmount).toLocaleString('en-SG');
   }
 
+  const isNegative = amount < 0 && formatted !== '0';
   return `${isNegative ? '-' : ''}S$${formatted}`;
 }
 
