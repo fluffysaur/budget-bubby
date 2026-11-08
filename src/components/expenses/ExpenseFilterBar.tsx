@@ -78,7 +78,9 @@ export function ExpenseFilterBar({
     const currentMonth = useCurrentMonth();
 
     const [searchText, setSearchText] = useState<string>(filter.search || "");
-    const [prevPropSearch, setPrevPropSearch] = useState<string>(filter.search || "");
+    const [prevPropSearch, setPrevPropSearch] = useState<string>(
+        filter.search || "",
+    );
     if ((filter.search || "") !== prevPropSearch) {
         setPrevPropSearch(filter.search || "");
         setSearchText(filter.search || "");
@@ -186,7 +188,11 @@ export function ExpenseFilterBar({
 
     // Active filter chips
     const activeChips = useMemo(() => {
-        const chips: Array<{ id: string; label: string; onRemove: () => void }> = [];
+        const chips: Array<{
+            id: string;
+            label: string;
+            onRemove: () => void;
+        }> = [];
 
         if (filter.search?.trim()) {
             chips.push({
@@ -201,7 +207,8 @@ export function ExpenseFilterBar({
             chips.push({
                 id: "category",
                 label: cat ? cat.name : "Category",
-                onRemove: () => onFilterChange({ ...filter, categoryId: undefined }),
+                onRemove: () =>
+                    onFilterChange({ ...filter, categoryId: undefined }),
             });
         }
 
@@ -210,7 +217,8 @@ export function ExpenseFilterBar({
             chips.push({
                 id: "payer",
                 label: mem ? mem.display_name : "Payer",
-                onRemove: () => onFilterChange({ ...filter, payerId: undefined }),
+                onRemove: () =>
+                    onFilterChange({ ...filter, payerId: undefined }),
             });
         }
 
@@ -218,7 +226,8 @@ export function ExpenseFilterBar({
             chips.push({
                 id: "shared",
                 label: filter.isShared ? "Shared (50/50)" : "Personal",
-                onRemove: () => onFilterChange({ ...filter, isShared: undefined }),
+                onRemove: () =>
+                    onFilterChange({ ...filter, isShared: undefined }),
             });
         }
 
@@ -239,7 +248,14 @@ export function ExpenseFilterBar({
         }
 
         return chips;
-    }, [filter, categories, members, onFilterChange, currentMonth, handleClearSearch]);
+    }, [
+        filter,
+        categories,
+        members,
+        onFilterChange,
+        currentMonth,
+        handleClearSearch,
+    ]);
 
     const containerStyle = embeddedInCard
         ? `w-full min-w-0 transition-colors ${className}`
@@ -278,16 +294,17 @@ export function ExpenseFilterBar({
                         <ArrowUpDown className="h-3.5 w-3.5 text-(--text-muted) shrink-0" />
                         <Select
                             aria-label="Sort ledger"
-                            value={sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""}
+                            value={
+                                sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""
+                            }
                             onChange={(e) => {
                                 if (!e.target.value) {
                                     onSortChange?.("date", "desc");
                                     return;
                                 }
-                                const [field, order] = e.target.value.split("-") as [
-                                    ExpenseSortField,
-                                    SortDirection,
-                                ];
+                                const [field, order] = e.target.value.split(
+                                    "-",
+                                ) as [ExpenseSortField, SortDirection];
                                 onSortChange?.(field, order);
                             }}
                             sizeVariant="sm"
@@ -347,25 +364,32 @@ export function ExpenseFilterBar({
                             )}
                         </div>
                         {isMobileFilterOpen ? (
-                            <ChevronUp className="h-4 w-4 text-(--text-muted)" strokeWidth={2.5} />
+                            <ChevronUp
+                                className="h-4 w-4 text-(--text-muted)"
+                                strokeWidth={2.5}
+                            />
                         ) : (
-                            <ChevronDown className="h-4 w-4 text-(--text-muted)" strokeWidth={2.5} />
+                            <ChevronDown
+                                className="h-4 w-4 text-(--text-muted)"
+                                strokeWidth={2.5}
+                            />
                         )}
                     </button>
 
                     <div className="flex-1">
                         <Select
                             aria-label="Sort ledger"
-                            value={sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""}
+                            value={
+                                sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""
+                            }
                             onChange={(e) => {
                                 if (!e.target.value) {
                                     onSortChange?.("date", "desc");
                                     return;
                                 }
-                                const [field, order] = e.target.value.split("-") as [
-                                    ExpenseSortField,
-                                    SortDirection,
-                                ];
+                                const [field, order] = e.target.value.split(
+                                    "-",
+                                ) as [ExpenseSortField, SortDirection];
                                 onSortChange?.(field, order);
                             }}
                             sizeVariant="sm"
@@ -374,7 +398,9 @@ export function ExpenseFilterBar({
                             <option value="">Default order</option>
                             <option value="date-desc">Date (Newest)</option>
                             <option value="date-asc">Date (Oldest)</option>
-                            <option value="amount-desc">Amount (Highest)</option>
+                            <option value="amount-desc">
+                                Amount (Highest)
+                            </option>
                             <option value="amount-asc">Amount (Lowest)</option>
                             <option value="category-asc">Category (A-Z)</option>
                             <option value="payer-asc">Payer (A-Z)</option>
@@ -421,7 +447,10 @@ export function ExpenseFilterBar({
                                 >
                                     <option value="">All Payers</option>
                                     {members.map((member) => (
-                                        <option key={member.id} value={member.id}>
+                                        <option
+                                            key={member.id}
+                                            value={member.id}
+                                        >
                                             {member.display_name}
                                         </option>
                                     ))}

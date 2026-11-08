@@ -43,12 +43,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         },
         ref,
     ) => {
-        let borderAndShadow =
-            "border-2 border-(--border-ink) shadow-cute";
+        let borderAndShadow = "border-2 border-(--border-ink) shadow-cute";
 
         if (elevation === "sm") {
-            borderAndShadow =
-                "border-2 border-(--border-ink) shadow-cute-sm";
+            borderAndShadow = "border-2 border-(--border-ink) shadow-cute-sm";
         } else if (elevation === "flat") {
             borderAndShadow = "border-2 border-(--border-ink)";
         } else if (elevation === "subtle") {

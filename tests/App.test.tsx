@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    within,
+} from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { App, AppShell } from "../src/App";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
@@ -29,32 +35,60 @@ describe("App Integration & Routing", () => {
         render(<App initialEntries={["/"]} />);
 
         // Header perspective buttons and badges
-        const perspectiveNav = screen.getByRole("navigation", { name: /Perspective Switcher/i });
-        expect(within(perspectiveNav).getByRole("button", { name: /Combined Household/i })).toBeInTheDocument();
+        const perspectiveNav = screen.getByRole("navigation", {
+            name: /Perspective Switcher/i,
+        });
+        expect(
+            within(perspectiveNav).getByRole("button", {
+                name: /Combined Household/i,
+            }),
+        ).toBeInTheDocument();
 
         // Desktop sidebar navigation
         const sidebarNav = screen.getByRole("navigation", { name: "Sidebar" });
         expect(sidebarNav).toBeInTheDocument();
-        expect(within(sidebarNav).getByRole("button", { name: /Home/i })).toBeInTheDocument();
-        expect(within(sidebarNav).getByRole("button", { name: /Spend/i })).toBeInTheDocument();
-        expect(within(sidebarNav).getByRole("button", { name: /Accounts/i })).toBeInTheDocument();
-        expect(within(sidebarNav).getByRole("button", { name: /Plan/i })).toBeInTheDocument();
+        expect(
+            within(sidebarNav).getByRole("button", { name: /Home/i }),
+        ).toBeInTheDocument();
+        expect(
+            within(sidebarNav).getByRole("button", { name: /Spend/i }),
+        ).toBeInTheDocument();
+        expect(
+            within(sidebarNav).getByRole("button", { name: /Accounts/i }),
+        ).toBeInTheDocument();
+        expect(
+            within(sidebarNav).getByRole("button", { name: /Plan/i }),
+        ).toBeInTheDocument();
 
         // Default Dashboard page renders Net Worth card
-        await waitFor(() => {
-            expect(screen.getByRole("region", { name: "Left to Spend" })).toBeInTheDocument();
-        }, { timeout: 15000 });
+        await waitFor(
+            () => {
+                expect(
+                    screen.getByRole("region", { name: "Left to Spend" }),
+                ).toBeInTheDocument();
+            },
+            { timeout: 15000 },
+        );
     }, 30000);
 
     it("navigates to /spend and defaults to expenses ledger", async () => {
         render(<App initialEntries={["/spend"]} />);
 
-        await waitFor(() => {
-            const main = screen.getByRole("main");
-            expect(within(main).getByText(/Unsettled/i)).toBeInTheDocument();
-            expect(within(main).getByRole("tab", { name: /Expenses/i })).toHaveAttribute("aria-selected", "true");
-            expect(within(main).getByRole("tab", { name: /Budget/i })).toHaveAttribute("aria-selected", "false");
-        }, { timeout: 5000 });
+        await waitFor(
+            () => {
+                const main = screen.getByRole("main");
+                expect(
+                    within(main).getByText(/Unsettled/i),
+                ).toBeInTheDocument();
+                expect(
+                    within(main).getByRole("tab", { name: /Expenses/i }),
+                ).toHaveAttribute("aria-selected", "true");
+                expect(
+                    within(main).getByRole("tab", { name: /Budget/i }),
+                ).toHaveAttribute("aria-selected", "false");
+            },
+            { timeout: 5000 },
+        );
     });
 
     it("navigates to /spend?tab=budget and activates budget sub-tab", async () => {
@@ -62,8 +96,12 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/^Income Flow$/i)).toBeInTheDocument();
-            expect(within(main).getByRole("tab", { name: /Budget/i })).toHaveAttribute("aria-selected", "true");
+            expect(
+                within(main).getByText(/^Income Flow$/i),
+            ).toBeInTheDocument();
+            expect(
+                within(main).getByRole("tab", { name: /Budget/i }),
+            ).toHaveAttribute("aria-selected", "true");
         });
     });
 
@@ -81,36 +119,52 @@ describe("App Integration & Routing", () => {
         await waitFor(() => {
             const main = screen.getByRole("main");
             expect(within(main).getByText(/Unsettled/i)).toBeInTheDocument();
-            expect(within(main).getByPlaceholderText(/Search merchant/i)).toBeInTheDocument();
+            expect(
+                within(main).getByPlaceholderText(/Search merchant/i),
+            ).toBeInTheDocument();
         });
     });
 
     it("navigates to /accounts, /goals, /loans, and /recurring routes", async () => {
-        const { unmount: unmountAccounts } = render(<App initialEntries={["/accounts"]} />);
+        const { unmount: unmountAccounts } = render(
+            <App initialEntries={["/accounts"]} />,
+        );
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByRole("heading", { name: /^Accounts$/i })).toBeInTheDocument();
+            expect(
+                within(main).getByRole("heading", { name: /^Accounts$/i }),
+            ).toBeInTheDocument();
         });
         unmountAccounts();
 
-        const { unmount: unmountGoals } = render(<App initialEntries={["/goals"]} />);
+        const { unmount: unmountGoals } = render(
+            <App initialEntries={["/goals"]} />,
+        );
         await waitFor(() => {
             const main = screen.getByRole("main");
             expect(within(main).getByText(/^Target$/i)).toBeInTheDocument();
         });
         unmountGoals();
 
-        const { unmount: unmountLoans } = render(<App initialEntries={["/loans"]} />);
+        const { unmount: unmountLoans } = render(
+            <App initialEntries={["/loans"]} />,
+        );
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText("Under Construction")).toBeInTheDocument();
+            expect(
+                within(main).getByText("Under Construction"),
+            ).toBeInTheDocument();
         });
         unmountLoans();
 
-        const { unmount: unmountRecurring } = render(<App initialEntries={["/recurring"]} />);
+        const { unmount: unmountRecurring } = render(
+            <App initialEntries={["/recurring"]} />,
+        );
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/All Recurring/i)).toBeInTheDocument();
+            expect(
+                within(main).getByText(/All Recurring/i),
+            ).toBeInTheDocument();
         });
         unmountRecurring();
     });
@@ -118,15 +172,21 @@ describe("App Integration & Routing", () => {
     it("switches financial perspective when header pills are clicked", async () => {
         render(<App initialEntries={["/"]} />);
 
-        const perspectiveNav = screen.getByRole("navigation", { name: /Perspective Switcher/i });
-        const yijiaBtn = within(perspectiveNav).getByRole("button", { name: /Yi Jia/i });
+        const perspectiveNav = screen.getByRole("navigation", {
+            name: /Perspective Switcher/i,
+        });
+        const yijiaBtn = within(perspectiveNav).getByRole("button", {
+            name: /Yi Jia/i,
+        });
         fireEvent.click(yijiaBtn);
 
         await waitFor(() => {
             expect(yijiaBtn).toHaveAttribute("aria-pressed", "true");
         });
 
-        const householdBtn = within(perspectiveNav).getByRole("button", { name: /Combined/i });
+        const householdBtn = within(perspectiveNav).getByRole("button", {
+            name: /Combined/i,
+        });
         fireEvent.click(householdBtn);
 
         await waitFor(() => {
@@ -137,24 +197,38 @@ describe("App Integration & Routing", () => {
     it("/fast-log opens the Add Expense sheet over Home", async () => {
         render(<App initialEntries={["/fast-log"]} />);
         await waitFor(() => {
-            expect(screen.getByRole("heading", { name: "Add Expense" })).toBeInTheDocument();
+            expect(
+                screen.getByRole("heading", { name: "Add Expense" }),
+            ).toBeInTheDocument();
         });
-        expect(await screen.findByRole("heading", { level: 1, name: "Home", hidden: true })).toBeInTheDocument();
+        expect(
+            await screen.findByRole("heading", {
+                level: 1,
+                name: "Home",
+                hidden: true,
+            }),
+        ).toBeInTheDocument();
     });
 
     it("clicking mobile Quick Add FAB opens the Add Expense modal", async () => {
         render(<App initialEntries={["/"]} />);
 
         // Mobile FAB button
-        const mobileNav = screen.getByRole("navigation", { name: /Mobile Navigation/i });
-        const fabButton = within(mobileNav).getByRole("button", { name: "Quick Add" });
+        const mobileNav = screen.getByRole("navigation", {
+            name: /Mobile Navigation/i,
+        });
+        const fabButton = within(mobileNav).getByRole("button", {
+            name: "Quick Add",
+        });
         expect(fabButton).toBeInTheDocument();
 
         fireEvent.click(fabButton);
 
         await waitFor(() => {
             expect(screen.getByRole("dialog")).toBeInTheDocument();
-            expect(screen.getByRole("heading", { name: "Add Expense" })).toBeInTheDocument();
+            expect(
+                screen.getByRole("heading", { name: "Add Expense" }),
+            ).toBeInTheDocument();
         });
 
         // Close modal
@@ -172,7 +246,9 @@ describe("App Integration & Routing", () => {
         const sidebarNav = screen.getByRole("navigation", { name: "Sidebar" });
 
         // Click Spend in sidebar
-        const spendBtn = within(sidebarNav).getByRole("button", { name: /Spend/i });
+        const spendBtn = within(sidebarNav).getByRole("button", {
+            name: /Spend/i,
+        });
         fireEvent.click(spendBtn);
 
         await waitFor(() => {
@@ -186,7 +262,9 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/^Income Flow$/i)).toBeInTheDocument();
+            expect(
+                within(main).getByText(/^Income Flow$/i),
+            ).toBeInTheDocument();
         });
     });
 
@@ -201,7 +279,9 @@ describe("App Integration & Routing", () => {
 
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/^Income Flow$/i)).toBeInTheDocument();
+            expect(
+                within(main).getByText(/^Income Flow$/i),
+            ).toBeInTheDocument();
         });
     });
 });

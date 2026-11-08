@@ -6,11 +6,22 @@
  */
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
-import { CalendarCheck2, Sparkles, Check, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import {
+    CalendarCheck2,
+    Sparkles,
+    Check,
+    ArrowUpRight,
+    ArrowDownRight,
+} from "lucide-react";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { useBulkUpdateAccountBalancesMutation } from "../../hooks/useFinanceQueries";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
 import { recordExercise } from "../../lib/bubby/activity";
@@ -29,7 +40,8 @@ export function BulkBalanceUpdateModal({
     onBalancesUpdated,
 }: BulkBalanceUpdateModalProps) {
     const bulkUpdateBalancesMutation = useBulkUpdateAccountBalancesMutation();
-    const [snapshotDate, setSnapshotDate] = useState<string>(getTodayDateString());
+    const [snapshotDate, setSnapshotDate] =
+        useState<string>(getTodayDateString());
     const [balancesMap, setBalancesMap] = useState<Record<string, string>>({});
     const [filterType, setFilterType] = useState<"all" | "non-cpf">("all");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -65,7 +77,11 @@ export function BulkBalanceUpdateModal({
         for (const acc of accounts) {
             prevTotal += acc.balance;
             const currentEntered = balancesMap[acc.id];
-            const parsed = parseFloat(currentEntered !== undefined ? currentEntered : String(acc.balance));
+            const parsed = parseFloat(
+                currentEntered !== undefined
+                    ? currentEntered
+                    : String(acc.balance),
+            );
             const valid = !isNaN(parsed) ? parsed : acc.balance;
             newTotal += valid;
             if (Math.abs(valid - acc.balance) >= 0.01) {
@@ -94,7 +110,8 @@ export function BulkBalanceUpdateModal({
             const next = { ...prev };
             for (const acc of accounts) {
                 if (acc.type === "CPF") {
-                    const current = parseFloat(next[acc.id] || String(acc.balance)) || 0;
+                    const current =
+                        parseFloat(next[acc.id] || String(acc.balance)) || 0;
                     const increment = acc.name.includes("OA")
                         ? 1200
                         : acc.name.includes("SA")
@@ -118,7 +135,9 @@ export function BulkBalanceUpdateModal({
             if (entered !== undefined && entered.trim() !== "") {
                 const numeric = parseFloat(entered);
                 if (isNaN(numeric) || numeric < 0) {
-                    setErrorMessage(`Please enter a valid balance for ${acc.name}`);
+                    setErrorMessage(
+                        `Please enter a valid balance for ${acc.name}`,
+                    );
                     return;
                 }
                 if (Math.abs(numeric - acc.balance) >= 0.01) {
@@ -145,7 +164,11 @@ export function BulkBalanceUpdateModal({
             onBalancesUpdated?.(updated);
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save balance snapshots");
+            setErrorMessage(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to save balance snapshots",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -153,12 +176,20 @@ export function BulkBalanceUpdateModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     id="bulk-balance-modal-title"
                     title="Check-In"
                     subtitle="Edit what changed."
-                    icon={<CalendarCheck2 className="h-4.5 w-4.5" strokeWidth={2.5} />}
+                    icon={
+                        <CalendarCheck2
+                            className="h-4.5 w-4.5"
+                            strokeWidth={2.5}
+                        />
+                    }
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -183,7 +214,9 @@ export function BulkBalanceUpdateModal({
                                 id="bulk-snapshot-date"
                                 type="date"
                                 value={snapshotDate}
-                                onChange={(e) => setSnapshotDate(e.target.value)}
+                                onChange={(e) =>
+                                    setSnapshotDate(e.target.value)
+                                }
                                 className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 py-1 text-base sm:text-xs font-mono-num font-medium text-(--text-ink)"
                             />
                         </div>
@@ -210,7 +243,12 @@ export function BulkBalanceUpdateModal({
                                             : "text-(--text-muted) hover:text-(--text-ink)"
                                     }`}
                                 >
-                                    Non-CPF ({accounts.filter((a) => a.type !== "CPF").length})
+                                    Non-CPF (
+                                    {
+                                        accounts.filter((a) => a.type !== "CPF")
+                                            .length
+                                    }
+                                    )
                                 </button>
                             </div>
 
@@ -230,10 +268,17 @@ export function BulkBalanceUpdateModal({
                     {/* Account Rows */}
                     <div className="space-y-2.5">
                         {visibleAccounts.map((account) => {
-                            const entered = balancesMap[account.id] ?? String(account.balance);
+                            const entered =
+                                balancesMap[account.id] ??
+                                String(account.balance);
                             const numericEntered = parseFloat(entered);
-                            const isChanged = !isNaN(numericEntered) && Math.abs(numericEntered - account.balance) >= 0.01;
-                            const diff = !isNaN(numericEntered) ? numericEntered - account.balance : 0;
+                            const isChanged =
+                                !isNaN(numericEntered) &&
+                                Math.abs(numericEntered - account.balance) >=
+                                    0.01;
+                            const diff = !isNaN(numericEntered)
+                                ? numericEntered - account.balance
+                                : 0;
 
                             return (
                                 <div
@@ -258,11 +303,18 @@ export function BulkBalanceUpdateModal({
                                         <div className="flex items-center gap-2 mt-0.5 text-[11px] text-(--text-muted)">
                                             <span>{account.type}</span>
                                             <span>•</span>
-                                            <span className="font-mono-num">Last: <CurrencyText amount={account.balance} /></span>
+                                            <span className="font-mono-num">
+                                                Last:{" "}
+                                                <CurrencyText
+                                                    amount={account.balance}
+                                                />
+                                            </span>
                                             {isChanged && (
                                                 <span
                                                     className={`inline-flex items-center font-bold font-mono-num ${
-                                                        diff >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"
+                                                        diff >= 0
+                                                            ? "text-emerald-700 dark:text-emerald-300"
+                                                            : "text-rose-700 dark:text-rose-300"
                                                     }`}
                                                 >
                                                     {diff >= 0 ? (
@@ -270,7 +322,9 @@ export function BulkBalanceUpdateModal({
                                                     ) : (
                                                         <ArrowDownRight className="h-3 w-3" />
                                                     )}
-                                                    <CurrencyText amount={Math.abs(diff)} />
+                                                    <CurrencyText
+                                                        amount={Math.abs(diff)}
+                                                    />
                                                 </span>
                                             )}
                                         </div>
@@ -286,7 +340,10 @@ export function BulkBalanceUpdateModal({
                                             min="0"
                                             value={entered}
                                             onChange={(e) =>
-                                                handleBalanceChange(account.id, e.target.value)
+                                                handleBalanceChange(
+                                                    account.id,
+                                                    e.target.value,
+                                                )
                                             }
                                             className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-1.5 pl-8 pr-2.5 text-right text-base sm:text-sm font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                         />
@@ -300,14 +357,21 @@ export function BulkBalanceUpdateModal({
                 <ModalFooter className="flex-col sm:flex-row sm:justify-between">
                     <div className="flex items-center gap-3 text-xs w-full sm:w-auto justify-between sm:justify-start">
                         <div>
-                            <span className="text-(--text-muted) block text-[10px]">New Total Assets</span>
+                            <span className="text-(--text-muted) block text-[10px]">
+                                New Total Assets
+                            </span>
                             <span className="text-(--text-ink)">
-                                <CurrencyText amount={summary.newTotal} size="md" />
+                                <CurrencyText
+                                    amount={summary.newTotal}
+                                    size="md"
+                                />
                             </span>
                         </div>
                         <div className="h-7 w-px bg-(--border-subtle)" />
                         <div>
-                            <span className="text-(--text-muted) block text-[10px]">Net Change</span>
+                            <span className="text-(--text-muted) block text-[10px]">
+                                Net Change
+                            </span>
                             <span
                                 className={`text-sm font-black font-mono-num ${
                                     summary.delta >= 0
@@ -316,7 +380,8 @@ export function BulkBalanceUpdateModal({
                                 }`}
                             >
                                 {summary.delta >= 0 ? "+" : ""}
-                                <CurrencyText amount={summary.delta} /> ({summary.changedCount} edited)
+                                <CurrencyText amount={summary.delta} /> (
+                                {summary.changedCount} edited)
                             </span>
                         </div>
                     </div>
@@ -334,7 +399,9 @@ export function BulkBalanceUpdateModal({
                             variant="primary"
                             isLoading={isSubmitting}
                             disabled={isSubmitting}
-                            leftIcon={<Check className="h-4 w-4" strokeWidth={2.5} />}
+                            leftIcon={
+                                <Check className="h-4 w-4" strokeWidth={2.5} />
+                            }
                         >
                             Save Snapshot
                         </Button>

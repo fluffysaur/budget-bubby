@@ -94,7 +94,9 @@ describe("CategoryProgressList set-aside rows", () => {
         expect(
             screen.queryByTestId(`badge-rose-${allowance.category_id}`),
         ).not.toBeInTheDocument();
-        expect(screen.getAllByText("Set aside").length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText("Set aside").length).toBeGreaterThanOrEqual(
+            1,
+        );
         expect(screen.getByText("Funded")).toBeInTheDocument();
         expect(screen.getByText("S$350.00")).toBeInTheDocument();
         expect(screen.queryByText("Remaining")).not.toBeInTheDocument();
@@ -128,7 +130,9 @@ describe("CategoryProgressList set-aside rows", () => {
                 ]}
             />,
         );
-        expect(screen.getByText(/1 category has exceeded budget/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/1 category has exceeded budget/i),
+        ).toBeInTheDocument();
     });
 });
 
@@ -144,7 +148,9 @@ describe("CategoryLimitWarningBanner with allocation categories", () => {
             />,
         );
         expect(
-            container.querySelector('[data-testid="category-limit-warning-banner"]'),
+            container.querySelector(
+                '[data-testid="category-limit-warning-banner"]',
+            ),
         ).toBeNull();
     });
 
@@ -219,7 +225,14 @@ describe("checkBudgetLimitReminders with allocation categories", () => {
 
     it("documents the missing-join case: a bare category id is treated as spendable", () => {
         const alerts = checkBudgetLimitReminders(
-            base([detail(undefined, 100, 300, "0b9f7a52-3c1d-4e8a-9a41-6f2d1c7e5b10")]),
+            base([
+                detail(
+                    undefined,
+                    100,
+                    300,
+                    "0b9f7a52-3c1d-4e8a-9a41-6f2d1c7e5b10",
+                ),
+            ]),
             80,
         );
         expect(alerts).toHaveLength(1);

@@ -60,7 +60,10 @@ export function GoalCard({
     const goalSpend =
         Math.round(linkedExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) /
         100;
-    const balance = Math.max(0, Math.round((totalSaved - goalSpend) * 100) / 100);
+    const balance = Math.max(
+        0,
+        Math.round((totalSaved - goalSpend) * 100) / 100,
+    );
 
     const progressPercent =
         targetAmount > 0
@@ -205,9 +208,15 @@ export function GoalCard({
                         <span>Breakdown</span>
                         <span className="flex items-center gap-1 font-mono-num text-[11px]">
                             {showBreakdown ? (
-                                <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
+                                <ChevronUp
+                                    className="h-4 w-4"
+                                    strokeWidth={2.5}
+                                />
                             ) : (
-                                <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
+                                <ChevronDown
+                                    className="h-4 w-4"
+                                    strokeWidth={2.5}
+                                />
                             )}
                         </span>
                     </button>
@@ -224,7 +233,10 @@ export function GoalCard({
                                         className="text-(--text-ink) font-bold mt-0.5 block truncate"
                                         title={formatSGD(targetAmount)}
                                     >
-                                        <CurrencyText amount={targetAmount} size="md" />
+                                        <CurrencyText
+                                            amount={targetAmount}
+                                            size="md"
+                                        />
                                     </span>
                                 </div>
 
@@ -236,7 +248,10 @@ export function GoalCard({
                                         className="text-emerald-700 dark:text-emerald-400 font-bold mt-0.5 block truncate"
                                         title={formatSGD(totalSaved)}
                                     >
-                                        <CurrencyText amount={totalSaved} size="md" />
+                                        <CurrencyText
+                                            amount={totalSaved}
+                                            size="md"
+                                        />
                                     </span>
                                 </div>
 
@@ -248,7 +263,10 @@ export function GoalCard({
                                         className="text-purple-700 dark:text-purple-300 font-bold mt-0.5 block truncate"
                                         title={formatSGD(goalSpend)}
                                     >
-                                        <CurrencyText amount={goalSpend} size="md" />
+                                        <CurrencyText
+                                            amount={goalSpend}
+                                            size="md"
+                                        />
                                     </span>
                                 </div>
 
@@ -260,7 +278,10 @@ export function GoalCard({
                                         className="text-(--text-ink) font-bold mt-0.5 block truncate"
                                         title={formatSGD(balance)}
                                     >
-                                        <CurrencyText amount={balance} size="md" />
+                                        <CurrencyText
+                                            amount={balance}
+                                            size="md"
+                                        />
                                     </span>
                                 </div>
                             </div>
@@ -272,7 +293,10 @@ export function GoalCard({
                                         Current Monthly:
                                     </span>
                                     <span className="font-semibold text-(--text-ink)">
-                                        <CurrencyText amount={goal.monthly_contribution} />/mo
+                                        <CurrencyText
+                                            amount={goal.monthly_contribution}
+                                        />
+                                        /mo
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -290,7 +314,11 @@ export function GoalCard({
                                     <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                                         <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                                         <span>
-                                            + <CurrencyText amount={monthlyShortfall} />/mo to stay on track
+                                            +{" "}
+                                            <CurrencyText
+                                                amount={monthlyShortfall}
+                                            />
+                                            /mo to stay on track
                                         </span>
                                     </div>
                                 )}
@@ -309,16 +337,22 @@ export function GoalCard({
                         >
                             <span className="flex items-center gap-1.5">
                                 <Receipt className="h-3.5 w-3.5 text-purple-500" />
-                                <span>
-                                    Spends ({linkedExpenses.length})
-                                </span>
+                                <span>Spends ({linkedExpenses.length})</span>
                             </span>
                             <span className="flex items-center gap-1.5 text-[11px] text-purple-600 dark:text-purple-400 font-mono">
-                                <span><CurrencyText amount={goalSpend} /></span>
+                                <span>
+                                    <CurrencyText amount={goalSpend} />
+                                </span>
                                 {showExpenses ? (
-                                    <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
+                                    <ChevronUp
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
+                                    <ChevronDown
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 )}
                             </span>
                         </button>

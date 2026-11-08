@@ -802,10 +802,7 @@ export async function flushOutbox(
                 processedIds.add(mutation.id);
                 processed++;
             } catch (err) {
-                console.error(
-                    `Failed to replay mutation ${mutation.id}:`,
-                    err,
-                );
+                console.error(`Failed to replay mutation ${mutation.id}:`, err);
                 errors++;
                 let updatedPayload = mutation.payload;
                 if (

@@ -530,7 +530,9 @@ export function ManageCategoriesModal({
                             ]}
                             activeTab={activeView}
                             onChange={(tabId) => {
-                                setActiveView(tabId as "categories" | "allocations");
+                                setActiveView(
+                                    tabId as "categories" | "allocations",
+                                );
                                 setFormMode(null);
                             }}
                             size="sm"
@@ -555,7 +557,9 @@ export function ManageCategoriesModal({
                                     </h3>
                                     <p className="text-[11px] text-(--text-faint)">
                                         Calculated from estimated disposable
-                                        pool of <CurrencyText amount={disposablePool} />/mo
+                                        pool of{" "}
+                                        <CurrencyText amount={disposablePool} />
+                                        /mo
                                     </p>
                                 </div>
 
@@ -800,7 +804,9 @@ export function ManageCategoriesModal({
                                         type="text"
                                         required
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g. Groceries, Gym, Rent"
                                     />
 
@@ -915,7 +921,9 @@ export function ManageCategoriesModal({
                                                 size="sm"
                                                 type="button"
                                                 onClick={handleRestorePresets}
-                                                leftIcon={<RotateCcw className="h-3 w-3" />}
+                                                leftIcon={
+                                                    <RotateCcw className="h-3 w-3" />
+                                                }
                                                 title="Restore standard recommended Singapore categories"
                                             >
                                                 Restore Presets
@@ -925,7 +933,9 @@ export function ManageCategoriesModal({
                                                 size="sm"
                                                 type="button"
                                                 onClick={handleOpenCreate}
-                                                leftIcon={<Plus className="h-3.5 w-3.5" />}
+                                                leftIcon={
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                }
                                             >
                                                 Add Category
                                             </Button>
@@ -943,7 +953,8 @@ export function ManageCategoriesModal({
                                                 No Categories
                                             </h4>
                                             <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                                                Add a category or restore presets.
+                                                Add a category or restore
+                                                presets.
                                             </p>
                                             <div className="mt-4 flex items-center justify-center gap-3">
                                                 <Button
@@ -961,7 +972,9 @@ export function ManageCategoriesModal({
                                                     size="sm"
                                                     type="button"
                                                     onClick={handleOpenCreate}
-                                                    leftIcon={<Plus className="h-3.5 w-3.5" />}
+                                                    leftIcon={
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                    }
                                                 >
                                                     Add Category
                                                 </Button>
@@ -985,7 +998,9 @@ export function ManageCategoriesModal({
                                                     </span>
                                                 </h4>
                                                 <div className="space-y-1.5">
-                                                    <AnimatePresence initial={false}>
+                                                    <AnimatePresence
+                                                        initial={false}
+                                                    >
                                                         {spendableCategories.map(
                                                             (cat) => {
                                                                 const IconComp =
@@ -994,7 +1009,9 @@ export function ManageCategoriesModal({
                                                                     );
                                                                 return (
                                                                     <m.div
-                                                                        key={cat.id}
+                                                                        key={
+                                                                            cat.id
+                                                                        }
                                                                         {...listItem}
                                                                         className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
                                                                     >
@@ -1068,7 +1085,9 @@ export function ManageCategoriesModal({
                                                     </span>
                                                 </h4>
                                                 <div className="space-y-1.5">
-                                                    <AnimatePresence initial={false}>
+                                                    <AnimatePresence
+                                                        initial={false}
+                                                    >
                                                         {allocationCategories.map(
                                                             (cat) => {
                                                                 const IconComp =
@@ -1077,7 +1096,9 @@ export function ManageCategoriesModal({
                                                                     );
                                                                 return (
                                                                     <m.div
-                                                                        key={cat.id}
+                                                                        key={
+                                                                            cat.id
+                                                                        }
                                                                         {...listItem}
                                                                         className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
                                                                     >
@@ -1150,7 +1171,8 @@ export function ManageCategoriesModal({
                         isLoading={isSubmitting}
                     >
                         <p className="text-xs text-(--text-muted) leading-relaxed">
-                            Removes its budget share. Expenses become uncategorised.
+                            Removes its budget share. Expenses become
+                            uncategorised.
                         </p>
                     </ConfirmModal>
                 </div>

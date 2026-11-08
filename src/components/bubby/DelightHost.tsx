@@ -8,10 +8,21 @@
  * - Hosts milestone confetti, toasts and the lazy Bubby sheet
  */
 
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+    lazy,
+    Suspense,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { useBubby } from "../../hooks/useBubby";
 import { useActivityCheckins } from "../../hooks/useActivityCheckins";
-import { emitAppEvent, onAppEvent, type MilestoneDetail } from "../../lib/appEvents";
+import {
+    emitAppEvent,
+    onAppEvent,
+    type MilestoneDetail,
+} from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
 import { setInboxPending } from "../../lib/delight/inboxState";
 import {
@@ -47,7 +58,17 @@ const BODY_TITLE: Record<Exclude<BubbyBody, "regular">, string> = {
 export function DelightHost() {
     useActivityCheckins();
     const bubby = useBubby();
-    const { isReady, body, mood, condition, dailyQuests, weeklyQuests, today, me, members } = bubby;
+    const {
+        isReady,
+        body,
+        mood,
+        condition,
+        dailyQuests,
+        weeklyQuests,
+        today,
+        me,
+        members,
+    } = bubby;
 
     const [toasts, setToasts] = useState<QueuedToast[]>([]);
     const [burstKey, setBurstKey] = useState(0);
@@ -74,8 +95,15 @@ export function DelightHost() {
                 primary: { label: "See Bubby", event: "bubby:open-sheet" },
             });
         }
-        if (store.lastMood && store.lastMood !== "normal" && mood === "normal") {
-            feedback.milestone("reunion", { dedupeKey: `reunion:${today}`, title: "Welcome back! 🐧" });
+        if (
+            store.lastMood &&
+            store.lastMood !== "normal" &&
+            mood === "normal"
+        ) {
+            feedback.milestone("reunion", {
+                dedupeKey: `reunion:${today}`,
+                title: "Welcome back! 🐧",
+            });
         }
         if (store.lastBody !== body || store.lastMood !== mood) {
             updateBubbyStore({ lastBody: body, lastMood: mood });
@@ -113,7 +141,9 @@ export function DelightHost() {
     }, [isReady, weeklyDone, today]);
 
     // Both partners fed Bubby today: a small cheer, once a day
-    const bothFed = members.length >= 2 && members.every((m) => condition.fedToday.has(m.id));
+    const bothFed =
+        members.length >= 2 &&
+        members.every((m) => condition.fedToday.has(m.id));
     useEffect(() => {
         if (!isReady || !bothFed) return;
         const key = `both-fed:${today}`;
@@ -155,7 +185,9 @@ export function DelightHost() {
             if (remaining === 0) celebrateInboxZero(triaged, toSgtDateString());
         };
         const offs = [
-            onAppEvent("inbox:items-arrived", (d) => syncPending(d.pendingCount)),
+            onAppEvent("inbox:items-arrived", (d) =>
+                syncPending(d.pendingCount),
+            ),
             onAppEvent("inbox:item-confirmed", (d) => onTriaged(d.remaining)),
             onAppEvent("inbox:item-discarded", (d) => onTriaged(d.remaining)),
             onAppEvent("inbox:cleared", (d) => {
@@ -174,18 +206,26 @@ export function DelightHost() {
                 if (detail.title) {
                     toastSeq.current += 1;
                     const id = toastSeq.current;
-                    setToasts((prev) => [...prev, { ...detail, id }].slice(-MAX_QUEUED_TOASTS));
+                    setToasts((prev) =>
+                        [...prev, { ...detail, id }].slice(-MAX_QUEUED_TOASTS),
+                    );
                 }
             }),
         [],
     );
 
     // Bubby sheet: one lazy instance, kept mounted after first open for the exit animation
-    useEffect(() => onAppEvent("bubby:open-sheet", () => setSheetOpen(true)), []);
+    useEffect(
+        () => onAppEvent("bubby:open-sheet", () => setSheetOpen(true)),
+        [],
+    );
     const closeSheet = useCallback(() => setSheetOpen(false), []);
 
     const clearBurst = useCallback(() => setBurstKey(0), []);
-    const shiftToast = useCallback(() => setToasts((prev) => prev.slice(1)), []);
+    const shiftToast = useCallback(
+        () => setToasts((prev) => prev.slice(1)),
+        [],
+    );
     const acknowledge = useCallback(() => {
         feedback.routine("acknowledge");
         shiftToast();
@@ -200,7 +240,9 @@ export function DelightHost() {
                     <BubbySheet isOpen={sheetOpen} onClose={closeSheet} />
                 </Suspense>
             )}
-            {burstKey > 0 && <ConfettiBurst key={burstKey} onDone={clearBurst} />}
+            {burstKey > 0 && (
+                <ConfettiBurst key={burstKey} onDone={clearBurst} />
+            )}
             <AnimatePresence>
                 {current && (
                     <MilestoneToast

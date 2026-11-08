@@ -16,7 +16,13 @@ const members: HouseholdMember[] = [
 ];
 
 function checkin(member_id: string, checkin_date: string): DailyCheckin {
-    return { id: `${member_id}-${checkin_date}`, household_id: "hh", member_id, checkin_date, type: "expense" };
+    return {
+        id: `${member_id}-${checkin_date}`,
+        household_id: "hh",
+        member_id,
+        checkin_date,
+        type: "expense",
+    };
 }
 
 describe("resolveLoggedInMember", () => {
@@ -27,13 +33,17 @@ describe("resolveLoggedInMember", () => {
     });
 
     it("falls back to the given member, then the first member (demo mode)", () => {
-        expect(resolveLoggedInMember(members, null, members[1])?.id).toBe("mem-r");
+        expect(resolveLoggedInMember(members, null, members[1])?.id).toBe(
+            "mem-r",
+        );
         expect(resolveLoggedInMember(members, null)?.id).toBe("mem-yj");
         expect(resolveLoggedInMember([], null)).toBeNull();
     });
 
     it("prefers the logged-in partner over the perspective member", () => {
-        expect(resolveLoggedInMember(members, "rachel", members[0])?.id).toBe("mem-r");
+        expect(resolveLoggedInMember(members, "rachel", members[0])?.id).toBe(
+            "mem-r",
+        );
     });
 });
 
@@ -49,7 +59,9 @@ describe("recordActivityCheckin", () => {
             .spyOn(financeService, "recordDailyCheckin")
             .mockResolvedValue(checkin("mem-r", "2026-11-05"));
         // Yi Jia logged a dinner Rachel paid for on Monday: server checked in Rachel on Monday
-        queryClient.setQueryData(queryKeys.dailyCheckins(), [checkin("mem-r", "2026-11-02")]);
+        queryClient.setQueryData(queryKeys.dailyCheckins(), [
+            checkin("mem-r", "2026-11-02"),
+        ]);
 
         const events: AppEventMap["day:logged"][] = [];
         const off = onAppEvent("day:logged", (d) => events.push(d));
@@ -58,18 +70,34 @@ describe("recordActivityCheckin", () => {
 
         expect(result).toEqual({ firstForDate: true });
         expect(record).toHaveBeenCalledWith("mem-yj", "2026-11-05", "expense");
-        const cached = queryClient.getQueryData<DailyCheckin[]>(queryKeys.dailyCheckins());
-        expect(cached?.some((c) => c.member_id === "mem-yj" && c.checkin_date === "2026-11-05")).toBe(true);
+        const cached = queryClient.getQueryData<DailyCheckin[]>(
+            queryKeys.dailyCheckins(),
+        );
+        expect(
+            cached?.some(
+                (c) =>
+                    c.member_id === "mem-yj" && c.checkin_date === "2026-11-05",
+            ),
+        ).toBe(true);
         expect(events).toEqual([
-            { memberId: "mem-yj", date: "2026-11-05", source: "expense", firstForDate: true },
+            {
+                memberId: "mem-yj",
+                date: "2026-11-05",
+                source: "expense",
+                firstForDate: true,
+            },
         ]);
     });
 
     it("skips the network when today is already logged", () => {
         const record = vi.spyOn(financeService, "recordDailyCheckin");
-        queryClient.setQueryData(queryKeys.dailyCheckins(), [checkin("mem-yj", "2026-11-05")]);
+        queryClient.setQueryData(queryKeys.dailyCheckins(), [
+            checkin("mem-yj", "2026-11-05"),
+        ]);
 
-        expect(recordActivityCheckin("mem-yj", "expense", "2026-11-05")).toEqual({ firstForDate: false });
+        expect(
+            recordActivityCheckin("mem-yj", "expense", "2026-11-05"),
+        ).toEqual({ firstForDate: false });
         expect(record).not.toHaveBeenCalled();
     });
 

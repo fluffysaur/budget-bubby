@@ -239,135 +239,154 @@ export function AppHeader({
                                     {...pop}
                                     className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg z-50"
                                 >
-                                <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
-                                    Perspectives
-                                </div>
-                                {perspectiveOptions.map((opt) => {
-                                    const isSelected =
-                                        currentOption.key === opt.key;
-                                    return (
-                                        <button
-                                            key={opt.key}
-                                            type="button"
-                                            role="option"
-                                            aria-selected={isSelected}
-                                            onClick={() =>
-                                                handleSelectPerspective(opt.key)
-                                            }
-                                            className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors cursor-pointer ${
-                                                isSelected
-                                                    ? opt.activeBg
-                                                    : "text-(--text-ink) hover:bg-(--bg-cream)"
-                                            }`}
-                                        >
-                                            <span className="truncate">
-                                                {opt.label}
-                                            </span>
-                                            {isSelected && (
-                                                <Check className="h-3.5 w-3.5 shrink-0 stroke-3" />
-                                            )}
-                                        </button>
-                                    );
-                                })}
-
-                                {/* Mobile Settings & Utilities section */}
-                                <div className="mt-2 pt-2 border-t-2 border-(--border-subtle) space-y-1">
-                                    <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
-                                        Settings &amp; Tools
+                                    <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
+                                        Perspectives
                                     </div>
-                                    <button
-                                        type="button"
-                                        data-testid="mobile-settings-btn"
-                                        onClick={() => {
-                                            setIsDropdownOpen(false);
-                                            setIsSettingsOpen(true);
-                                        }}
-                                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
-                                    >
-                                        <Settings className="h-4 w-4 text-(--text-ink) dark:text-(--pastel-lilac)" strokeWidth={2.5} />
-                                        <span>Settings</span>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        data-testid="mobile-refresh-btn"
-                                        onClick={() => {
-                                            setIsDropdownOpen(false);
-                                            handleManualRefresh();
-                                        }}
-                                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <RotateCw
-                                                strokeWidth={2.5}
-                                                className={`h-4 w-4 ${
-                                                    isRefreshing
-                                                        ? "animate-spin text-purple-700 dark:text-(--pastel-lilac)"
-                                                        : "text-(--text-ink) dark:text-(--pastel-lilac)"
+                                    {perspectiveOptions.map((opt) => {
+                                        const isSelected =
+                                            currentOption.key === opt.key;
+                                        return (
+                                            <button
+                                                key={opt.key}
+                                                type="button"
+                                                role="option"
+                                                aria-selected={isSelected}
+                                                onClick={() =>
+                                                    handleSelectPerspective(
+                                                        opt.key,
+                                                    )
+                                                }
+                                                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors cursor-pointer ${
+                                                    isSelected
+                                                        ? opt.activeBg
+                                                        : "text-(--text-ink) hover:bg-(--bg-cream)"
                                                 }`}
+                                            >
+                                                <span className="truncate">
+                                                    {opt.label}
+                                                </span>
+                                                {isSelected && (
+                                                    <Check className="h-3.5 w-3.5 shrink-0 stroke-3" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+
+                                    {/* Mobile Settings & Utilities section */}
+                                    <div className="mt-2 pt-2 border-t-2 border-(--border-subtle) space-y-1">
+                                        <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
+                                            Settings &amp; Tools
+                                        </div>
+                                        <button
+                                            type="button"
+                                            data-testid="mobile-settings-btn"
+                                            onClick={() => {
+                                                setIsDropdownOpen(false);
+                                                setIsSettingsOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                        >
+                                            <Settings
+                                                className="h-4 w-4 text-(--text-ink) dark:text-(--pastel-lilac)"
+                                                strokeWidth={2.5}
                                             />
-                                            <span>Refresh</span>
-                                        </div>
-                                        {isRefreshing && (
-                                            <span className="text-[10px] text-(--text-muted) animate-pulse font-mono-num">
-                                                Refreshing...
-                                            </span>
-                                        )}
-                                    </button>
+                                            <span>Settings</span>
+                                        </button>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            toggleTheme();
-                                            setIsDropdownOpen(false);
-                                        }}
-                                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            {theme === "dark" ? (
-                                                <Sun className="h-4 w-4 text-(--pastel-butter)" strokeWidth={2.5} />
-                                            ) : (
-                                                <Moon className="h-4 w-4 text-(--text-ink)" strokeWidth={2.5} />
+                                        <button
+                                            type="button"
+                                            data-testid="mobile-refresh-btn"
+                                            onClick={() => {
+                                                setIsDropdownOpen(false);
+                                                handleManualRefresh();
+                                            }}
+                                            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <RotateCw
+                                                    strokeWidth={2.5}
+                                                    className={`h-4 w-4 ${
+                                                        isRefreshing
+                                                            ? "animate-spin text-purple-700 dark:text-(--pastel-lilac)"
+                                                            : "text-(--text-ink) dark:text-(--pastel-lilac)"
+                                                    }`}
+                                                />
+                                                <span>Refresh</span>
+                                            </div>
+                                            {isRefreshing && (
+                                                <span className="text-[10px] text-(--text-muted) animate-pulse font-mono-num">
+                                                    Refreshing...
+                                                </span>
                                             )}
-                                            <span>
-                                                {theme === "dark"
-                                                    ? "Light Mode"
-                                                    : "Dark Mode"}
-                                            </span>
-                                        </div>
-                                    </button>
+                                        </button>
 
-                                    {!isInstalled && canInstall && (
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                promptInstall();
+                                                toggleTheme();
                                                 setIsDropdownOpen(false);
                                             }}
-                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-(--pastel-mint)/30 transition-colors cursor-pointer"
+                                            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                                         >
-                                            <Download className="h-4 w-4" strokeWidth={2.5} />
-                                            <span>Install App</span>
+                                            <div className="flex items-center gap-2">
+                                                {theme === "dark" ? (
+                                                    <Sun
+                                                        className="h-4 w-4 text-(--pastel-butter)"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                ) : (
+                                                    <Moon
+                                                        className="h-4 w-4 text-(--text-ink)"
+                                                        strokeWidth={2.5}
+                                                    />
+                                                )}
+                                                <span>
+                                                    {theme === "dark"
+                                                        ? "Light Mode"
+                                                        : "Dark Mode"}
+                                                </span>
+                                            </div>
                                         </button>
-                                    )}
 
-                                    {(!isMockMode || isAuthenticated) && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsDropdownOpen(false);
-                                                setIsLogoutConfirmOpen(true);
-                                            }}
-                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-rose-800 dark:text-rose-300 hover:bg-(--pastel-coral-light) dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                                        >
-                                            <LogOut className="h-4 w-4" strokeWidth={2.5} />
-                                            <span>Sign Out</span>
-                                        </button>
-                                    )}
-                                </div>
-                            </m.div>
-                        )}
-                    </AnimatePresence>
+                                        {!isInstalled && canInstall && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    promptInstall();
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 hover:bg-(--pastel-mint)/30 transition-colors cursor-pointer"
+                                            >
+                                                <Download
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                                <span>Install App</span>
+                                            </button>
+                                        )}
+
+                                        {(!isMockMode || isAuthenticated) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsDropdownOpen(false);
+                                                    setIsLogoutConfirmOpen(
+                                                        true,
+                                                    );
+                                                }}
+                                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-rose-800 dark:text-rose-300 hover:bg-(--pastel-coral-light) dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                            >
+                                                <LogOut
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                                <span>Sign Out</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </m.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Desktop Perspective Switcher Pills */}
@@ -420,7 +439,10 @@ export function AppHeader({
                                 aria-label="Quick Add"
                                 className="hidden md:inline-flex"
                                 leftIcon={
-                                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                                    <Plus
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 }
                             >
                                 Add Expense

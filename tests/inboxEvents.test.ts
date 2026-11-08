@@ -6,7 +6,11 @@ import {
     noteInboxCount,
     INBOX_LAST_SEEN_KEY,
 } from "../src/lib/inbox/inboxEvents";
-import { isDayLogged, countDaysLogged, isCoupleDayLogged } from "../src/lib/logging/dayLogged";
+import {
+    isDayLogged,
+    countDaysLogged,
+    isCoupleDayLogged,
+} from "../src/lib/logging/dayLogged";
 import { financeService } from "../src/services/financeService";
 import { mockFinanceService } from "../src/services/mockFinanceService";
 import { queryClient } from "../src/lib/queryClient";
@@ -26,11 +30,23 @@ describe("inbox events", () => {
     it("emits and unsubscribes", () => {
         const handler = vi.fn();
         const off = onInboxEvent("inbox:item-discarded", handler);
-        emitInboxEvent("inbox:item-discarded", { itemId: "i1", reason: "discarded", remaining: 2 });
+        emitInboxEvent("inbox:item-discarded", {
+            itemId: "i1",
+            reason: "discarded",
+            remaining: 2,
+        });
         off();
-        emitInboxEvent("inbox:item-discarded", { itemId: "i2", reason: "duplicate", remaining: 1 });
+        emitInboxEvent("inbox:item-discarded", {
+            itemId: "i2",
+            reason: "duplicate",
+            remaining: 1,
+        });
         expect(handler).toHaveBeenCalledTimes(1);
-        expect(handler).toHaveBeenCalledWith({ itemId: "i1", reason: "discarded", remaining: 2 });
+        expect(handler).toHaveBeenCalledWith({
+            itemId: "i1",
+            reason: "discarded",
+            remaining: 2,
+        });
     });
 
     it("fires inbox:cleared once per session", () => {
@@ -44,7 +60,11 @@ describe("inbox events", () => {
         expect(tracker.update(0, "2026-11-05")).toBe(true);
         expect(tracker.update(0, "2026-11-05")).toBe(false);
         expect(handler).toHaveBeenCalledTimes(1);
-        expect(handler).toHaveBeenCalledWith({ clearedCount: 3, durationMs: 5000, date: "2026-11-05" });
+        expect(handler).toHaveBeenCalledWith({
+            clearedCount: 3,
+            durationMs: 5000,
+            date: "2026-11-05",
+        });
         // A new item starts a new session
         tracker.update(1, "2026-11-05");
         tracker.update(0, "2026-11-05");
@@ -77,7 +97,11 @@ describe("inbox events", () => {
 });
 
 describe("dayLogged", () => {
-    const rows = [checkin("a", "2026-11-04"), checkin("a", "2026-11-05"), checkin("b", "2026-11-05")];
+    const rows = [
+        checkin("a", "2026-11-04"),
+        checkin("a", "2026-11-05"),
+        checkin("b", "2026-11-05"),
+    ];
 
     it("answers per member and per couple", () => {
         expect(isDayLogged(rows, "a", "2026-11-04")).toBe(true);
@@ -101,7 +125,10 @@ describe("day:logged from the finance service", () => {
         const handler = vi.fn();
         const off = onInboxEvent("day:logged", handler);
         const [item] = (await financeService.getInboxItems()).items;
-        queryClient.setQueryData(["finance", "daily-checkins", "all"], [checkin(item.member_id, "2026-11-01")]);
+        queryClient.setQueryData(
+            ["finance", "daily-checkins", "all"],
+            [checkin(item.member_id, "2026-11-01")],
+        );
         await financeService.confirmInboxItem(item.id, {
             payer_id: item.member_id,
             date: "2026-11-01",

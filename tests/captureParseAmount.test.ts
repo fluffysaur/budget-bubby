@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { parseCapturedAmount } from "../src/lib/capture/parseAmount";
 
-const ok = (amount: number, currency: string) => ({ ok: true, amount, currency });
+const ok = (amount: number, currency: string) => ({
+    ok: true,
+    amount,
+    currency,
+});
 
 describe("parseCapturedAmount", () => {
     it("reads SGD amounts with and without symbols", () => {
@@ -29,26 +33,62 @@ describe("parseCapturedAmount", () => {
     });
 
     it("ignores refunds and zero amounts", () => {
-        expect(parseCapturedAmount("-5.00")).toEqual({ ok: false, reason: "ignored" });
-        expect(parseCapturedAmount("-S$5.00")).toEqual({ ok: false, reason: "ignored" });
-        expect(parseCapturedAmount("0")).toEqual({ ok: false, reason: "ignored" });
-        expect(parseCapturedAmount(0)).toEqual({ ok: false, reason: "ignored" });
+        expect(parseCapturedAmount("-5.00")).toEqual({
+            ok: false,
+            reason: "ignored",
+        });
+        expect(parseCapturedAmount("-S$5.00")).toEqual({
+            ok: false,
+            reason: "ignored",
+        });
+        expect(parseCapturedAmount("0")).toEqual({
+            ok: false,
+            reason: "ignored",
+        });
+        expect(parseCapturedAmount(0)).toEqual({
+            ok: false,
+            reason: "ignored",
+        });
     });
 
     it("rejects garbage", () => {
-        expect(parseCapturedAmount("abc")).toEqual({ ok: false, reason: "invalid" });
-        expect(parseCapturedAmount("")).toEqual({ ok: false, reason: "invalid" });
-        expect(parseCapturedAmount(null)).toEqual({ ok: false, reason: "invalid" });
-        expect(parseCapturedAmount({})).toEqual({ ok: false, reason: "invalid" });
-        expect(parseCapturedAmount(Number.NaN)).toEqual({ ok: false, reason: "invalid" });
-        expect(parseCapturedAmount("1".repeat(50))).toEqual({ ok: false, reason: "invalid" });
+        expect(parseCapturedAmount("abc")).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
+        expect(parseCapturedAmount("")).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
+        expect(parseCapturedAmount(null)).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
+        expect(parseCapturedAmount({})).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
+        expect(parseCapturedAmount(Number.NaN)).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
+        expect(parseCapturedAmount("1".repeat(50))).toEqual({
+            ok: false,
+            reason: "invalid",
+        });
     });
 
     it("caps implausible amounts per currency", () => {
-        expect(parseCapturedAmount("S$20,000.01")).toEqual({ ok: false, reason: "too_large" });
+        expect(parseCapturedAmount("S$20,000.01")).toEqual({
+            ok: false,
+            reason: "too_large",
+        });
         expect(parseCapturedAmount("S$20,000")).toEqual(ok(20000, "SGD"));
         // 2,000,000 yen is within the JPY bound
         expect(parseCapturedAmount("¥2,000,000")).toEqual(ok(2000000, "JPY"));
-        expect(parseCapturedAmount("¥99,000,000")).toEqual({ ok: false, reason: "too_large" });
+        expect(parseCapturedAmount("¥99,000,000")).toEqual({
+            ok: false,
+            reason: "too_large",
+        });
     });
 });

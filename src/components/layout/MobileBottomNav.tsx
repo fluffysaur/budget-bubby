@@ -8,7 +8,13 @@
  * 4. Plan (Goals, Recurring & Loans)
  */
 
-import { LayoutDashboard, Plus, Receipt, Landmark, Compass } from "lucide-react";
+import {
+    LayoutDashboard,
+    Plus,
+    Receipt,
+    Landmark,
+    Compass,
+} from "lucide-react";
 import { feedback } from "../../lib/delight/feedback";
 import { formatBadgeCount } from "../../hooks/useInboxBadge";
 
@@ -28,8 +34,13 @@ export function MobileBottomNav({
     spendBadgeCount = 0,
     className = "",
 }: MobileBottomNavProps) {
-    const isSpendActive = activeTab === "spend" || activeTab === "expenses" || activeTab === "budget";
-    const isPlanActive = ["plan", "goals", "loans", "recurring"].includes(activeTab);
+    const isSpendActive =
+        activeTab === "spend" ||
+        activeTab === "expenses" ||
+        activeTab === "budget";
+    const isPlanActive = ["plan", "goals", "loans", "recurring"].includes(
+        activeTab,
+    );
 
     return (
         <nav
@@ -55,16 +66,25 @@ export function MobileBottomNav({
                                 : ""
                         }`}
                     >
-                        <LayoutDashboard className="h-5 w-5" strokeWidth={2.5} />
+                        <LayoutDashboard
+                            className="h-5 w-5"
+                            strokeWidth={2.5}
+                        />
                     </div>
-                    <span className="text-[10px] font-bold leading-tight">Home</span>
+                    <span className="text-[10px] font-bold leading-tight">
+                        Home
+                    </span>
                 </button>
 
                 {/* Tab 2: Spend & Budget */}
                 <button
                     type="button"
                     onClick={() => onSelectTab?.("spend")}
-                    aria-label={spendBadgeCount > 0 ? `Spend, ${spendBadgeCount} to sort` : "Spend"}
+                    aria-label={
+                        spendBadgeCount > 0
+                            ? `Spend, ${spendBadgeCount} to sort`
+                            : "Spend"
+                    }
                     className={`relative flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         isSpendActive
                             ? "text-(--text-ink) font-black"
@@ -89,7 +109,9 @@ export function MobileBottomNav({
                             {formatBadgeCount(spendBadgeCount)}
                         </span>
                     )}
-                    <span className="text-[10px] font-bold leading-tight">Spend</span>
+                    <span className="text-[10px] font-bold leading-tight">
+                        Spend
+                    </span>
                 </button>
 
                 {/* Center Floating Quick Add Action (FAB) */}
@@ -130,7 +152,9 @@ export function MobileBottomNav({
                     >
                         <Landmark className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-bold leading-tight">Balances</span>
+                    <span className="text-[10px] font-bold leading-tight">
+                        Balances
+                    </span>
                 </button>
 
                 {/* Tab 4: Plan (Goals, Recurring, Loans) */}
@@ -153,7 +177,9 @@ export function MobileBottomNav({
                     >
                         <Compass className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-bold leading-tight">Plan</span>
+                    <span className="text-[10px] font-bold leading-tight">
+                        Plan
+                    </span>
                 </button>
             </div>
         </nav>

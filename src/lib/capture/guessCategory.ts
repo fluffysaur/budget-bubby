@@ -9,7 +9,12 @@ import { guessCategoryId } from "../categoryGuess";
 import { isSpendableCategory } from "../financialFormulas";
 import { normalizeMerchant } from "./merchant";
 import { shiftIsoDate, toSgtDateTime } from "./sgTime";
-import type { Category, Expense, InboxItem, MerchantRule } from "../../types/finance";
+import type {
+    Category,
+    Expense,
+    InboxItem,
+    MerchantRule,
+} from "../../types/finance";
 
 export type GuessConfidence = "rule" | "history" | "keyword" | "none";
 
@@ -40,9 +45,15 @@ export function guessInboxCategory({
 }: GuessInput): InboxCategoryGuess {
     const known = new Set(categories.map((c) => c.id));
 
-    const rule = rules.find((r) => r.merchant_key === merchantKey && r.action === "categorise");
+    const rule = rules.find(
+        (r) => r.merchant_key === merchantKey && r.action === "categorise",
+    );
     if (rule?.category_id && known.has(rule.category_id)) {
-        return { categoryId: rule.category_id, confidence: "rule", isShared: rule.is_shared ?? null };
+        return {
+            categoryId: rule.category_id,
+            confidence: "rule",
+            isShared: rule.is_shared ?? null,
+        };
     }
 
     const counts = new Map<string, number>();
@@ -60,7 +71,8 @@ export function guessInboxCategory({
     }
 
     const keyword = guessCategoryId(`${merchant} ${merchantKey}`, categories);
-    if (keyword) return { categoryId: keyword, confidence: "keyword", isShared: null };
+    if (keyword)
+        return { categoryId: keyword, confidence: "keyword", isShared: null };
 
     return { categoryId: null, confidence: "none", isShared: null };
 }
@@ -119,6 +131,8 @@ export function topCategoriesForMember(
         (a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0),
     );
     const guess = categories.find((c) => c.id === first);
-    const ordered = guess ? [guess, ...ranked.filter((c) => c.id !== guess.id)] : ranked;
+    const ordered = guess
+        ? [guess, ...ranked.filter((c) => c.id !== guess.id)]
+        : ranked;
     return ordered.slice(0, limit);
 }

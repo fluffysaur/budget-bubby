@@ -99,7 +99,9 @@ export function RecurringTable({
             // Search term
             if (searchTerm.trim()) {
                 const query = searchTerm.toLowerCase();
-                const matchesName = recurringItem.name.toLowerCase().includes(query);
+                const matchesName = recurringItem.name
+                    .toLowerCase()
+                    .includes(query);
                 const matchesNotes =
                     recurringItem.notes?.toLowerCase().includes(query) ?? false;
                 if (!matchesName && !matchesNotes) {
@@ -306,7 +308,9 @@ export function RecurringTable({
                                             recurringItem.payment_month <= 12
                                           ? `${MONTH_NAMES[recurringItem.payment_month - 1]} (M${recurringItem.payment_month})`
                                           : "N/A";
-                                    const owner = getOwnerLabel(recurringItem.owner_id);
+                                    const owner = getOwnerLabel(
+                                        recurringItem.owner_id,
+                                    );
                                     const ownerIcon =
                                         owner === "Yi Jia"
                                             ? "👨"
@@ -314,7 +318,9 @@ export function RecurringTable({
                                               ? "👩"
                                               : "👥";
 
-                                    const status = statusById.get(recurringItem.id);
+                                    const status = statusById.get(
+                                        recurringItem.id,
+                                    );
                                     const isEnded = status === "ended";
 
                                     return (
@@ -325,145 +331,153 @@ export function RecurringTable({
                                                 isEnded ? "opacity-60" : ""
                                             }`}
                                         >
-                                        {/* Name & Notes */}
-                                        <td className="order-1 w-full min-w-0 sm:w-auto sm:table-cell sm:py-3.5 sm:px-4 font-bold text-(--color-ink) dark:text-white">
-                                            <div className="flex items-start gap-2">
-                                                <div className="min-w-0 flex-1 sm:max-w-65">
-                                                    <TruncatedText
-                                                        text={
-                                                            recurringItem.name
-                                                        }
-                                                        className="font-display font-bold"
-                                                    />
-                                                    {recurringItem.notes && (
-                                                        <p className="text-xs text-slate-500 dark:text-(--text-faint) line-clamp-1 font-normal">
-                                                            {
-                                                                recurringItem.notes
+                                            {/* Name & Notes */}
+                                            <td className="order-1 w-full min-w-0 sm:w-auto sm:table-cell sm:py-3.5 sm:px-4 font-bold text-(--color-ink) dark:text-white">
+                                                <div className="flex items-start gap-2">
+                                                    <div className="min-w-0 flex-1 sm:max-w-65">
+                                                        <TruncatedText
+                                                            text={
+                                                                recurringItem.name
                                                             }
-                                                        </p>
+                                                            className="font-display font-bold"
+                                                        />
+                                                        {recurringItem.notes && (
+                                                            <p className="text-xs text-slate-500 dark:text-(--text-faint) line-clamp-1 font-normal">
+                                                                {
+                                                                    recurringItem.notes
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {(isEnded ||
+                                                            (status ===
+                                                                "upcoming" &&
+                                                                recurringItem.start_date)) && (
+                                                            <div className="mt-1">
+                                                                {isEnded ? (
+                                                                    <Badge
+                                                                        variant="slate"
+                                                                        size="sm"
+                                                                    >
+                                                                        Ended
+                                                                    </Badge>
+                                                                ) : (
+                                                                    <Badge
+                                                                        variant="lilac"
+                                                                        size="sm"
+                                                                    >
+                                                                        {formatStartsLabel(
+                                                                            recurringItem.start_date!,
+                                                                        )}
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {/* Amount (mobile) */}
+                                                    <span className="sm:hidden shrink-0">
+                                                        <CurrencyText
+                                                            amount={
+                                                                recurringItem.amount
+                                                            }
+                                                        />
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            {/* Type Badge */}
+                                            <td className="order-3 inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap">
+                                                <RecurringTypeBadge
+                                                    type={recurringItem.type}
+                                                />
+                                            </td>
+
+                                            {/* Owner / Insured */}
+                                            <td className="order-6 inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                                                <span className="inline-flex items-center gap-1 sm:gap-2 font-bold">
+                                                    <span className="text-xs">
+                                                        {ownerIcon}
+                                                    </span>
+                                                    {owner}
+                                                </span>
+                                            </td>
+
+                                            {/* Frequency */}
+                                            <td className="order-4 hidden sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 font-medium capitalize">
+                                                {recurringItem.frequency}
+                                            </td>
+
+                                            {/* Amount */}
+                                            <td className="hidden sm:table-cell py-3 px-4 whitespace-nowrap text-right text-(--color-ink) dark:text-white">
+                                                <CurrencyText
+                                                    amount={
+                                                        recurringItem.amount
+                                                    }
+                                                />
+                                            </td>
+
+                                            {/* Monthly Amortized Outflow */}
+                                            <td className="hidden sm:table-cell py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-bold font-mono-num">
+                                                <CurrencyText
+                                                    amount={
+                                                        recurringItem.monthly_amortized_amount
+                                                    }
+                                                />
+                                                <span className="text-xs text-(--text-faint) font-normal ml-0.5">
+                                                    /mo
+                                                </span>
+                                            </td>
+
+                                            {/* Renewal Month */}
+                                            <td className="order-5 inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                                                <span
+                                                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border-2 border-(--border-ink) ${
+                                                        isMonthly
+                                                            ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                                            : "bg-(--pastel-mint-subtle) text-emerald-900 dark:text-emerald-200"
+                                                    }`}
+                                                >
+                                                    {renewalMonthText}
+                                                </span>
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="order-7 ml-auto inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    {onEdit && (
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`Edit ${recurringItem.name}`}
+                                                            onClick={() =>
+                                                                onEdit(
+                                                                    recurringItem,
+                                                                )
+                                                            }
+                                                            className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                                            title="Edit recurring item"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
                                                     )}
-                                                    {(isEnded ||
-                                                        (status ===
-                                                            "upcoming" &&
-                                                            recurringItem.start_date)) && (
-                                                        <div className="mt-1">
-                                                            {isEnded ? (
-                                                                <Badge
-                                                                    variant="slate"
-                                                                    size="sm"
-                                                                >
-                                                                    Ended
-                                                                </Badge>
-                                                            ) : (
-                                                                <Badge
-                                                                    variant="lilac"
-                                                                    size="sm"
-                                                                >
-                                                                    {formatStartsLabel(
-                                                                        recurringItem.start_date!,
-                                                                    )}
-                                                                </Badge>
-                                                            )}
-                                                        </div>
+                                                    {onDelete && (
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`Delete ${recurringItem.name}`}
+                                                            disabled={
+                                                                isDeleting
+                                                            }
+                                                            onClick={() =>
+                                                                onDelete(
+                                                                    recurringItem.id,
+                                                                )
+                                                            }
+                                                            className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                                                            title="Delete recurring item"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
                                                     )}
                                                 </div>
-                                                {/* Amount (mobile) */}
-                                                <span className="sm:hidden shrink-0">
-                                                    <CurrencyText
-                                                        amount={
-                                                            recurringItem.amount
-                                                        }
-                                                    />
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        {/* Type Badge */}
-                                        <td className="order-3 inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap">
-                                            <RecurringTypeBadge
-                                                type={recurringItem.type}
-                                            />
-                                        </td>
-
-                                        {/* Owner / Insured */}
-                                        <td className="order-6 inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                                            <span className="inline-flex items-center gap-1 sm:gap-2 font-bold">
-                                                <span className="text-xs">
-                                                    {ownerIcon}
-                                                </span>
-                                                {owner}
-                                            </span>
-                                        </td>
-
-                                        {/* Frequency */}
-                                        <td className="order-4 hidden sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-slate-600 dark:text-slate-300 font-medium capitalize">
-                                            {recurringItem.frequency}
-                                        </td>
-
-                                        {/* Amount */}
-                                        <td className="hidden sm:table-cell py-3 px-4 whitespace-nowrap text-right text-(--color-ink) dark:text-white">
-                                            <CurrencyText
-                                                amount={recurringItem.amount}
-                                            />
-                                        </td>
-
-                                        {/* Monthly Amortized Outflow */}
-                                        <td className="hidden sm:table-cell py-3 px-4 whitespace-nowrap text-right text-slate-700 dark:text-slate-300 font-bold font-mono-num">
-                                            <CurrencyText
-                                                amount={
-                                                    recurringItem.monthly_amortized_amount
-                                                }
-                                            />
-                                            <span className="text-xs text-(--text-faint) font-normal ml-0.5">
-                                                /mo
-                                            </span>
-                                        </td>
-
-                                        {/* Renewal Month */}
-                                        <td className="order-5 inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                                            <span
-                                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border-2 border-(--border-ink) ${
-                                                    isMonthly
-                                                        ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                                        : "bg-(--pastel-mint-subtle) text-emerald-900 dark:text-emerald-200"
-                                                }`}
-                                            >
-                                                {renewalMonthText}
-                                            </span>
-                                        </td>
-
-                                        {/* Actions */}
-                                        <td className="order-7 ml-auto inline-flex sm:table-cell sm:py-3 sm:px-4 whitespace-nowrap text-right">
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                {onEdit && (
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Edit ${recurringItem.name}`}
-                                                        onClick={() =>
-                                                            onEdit(recurringItem)
-                                                        }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-butter) text-slate-600 hover:text-(--color-ink) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                                                        title="Edit recurring item"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                {onDelete && (
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Delete ${recurringItem.name}`}
-                                                        disabled={isDeleting}
-                                                        onClick={() =>
-                                                            onDelete(recurringItem.id)
-                                                        }
-                                                        className="p-1.5 rounded-lg border-2 border-transparent hover:border-(--border-ink) hover:bg-(--pastel-coral-subtle) text-rose-500 hover:text-rose-700 active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-                                                        title="Delete recurring item"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
+                                            </td>
                                         </m.tr>
                                     );
                                 })}

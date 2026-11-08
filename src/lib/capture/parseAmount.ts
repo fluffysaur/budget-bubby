@@ -6,7 +6,10 @@
  * link. Pure: no browser or Deno APIs.
  */
 
-import { SUPPORTED_CURRENCIES, isZeroDecimalCurrency } from "../currencyConverter";
+import {
+    SUPPORTED_CURRENCIES,
+    isZeroDecimalCurrency,
+} from "../currencyConverter";
 
 export type ParsedAmount =
     | { ok: true; amount: number; currency: string }
@@ -81,7 +84,10 @@ function parseNumber(text: string, currency: string): number {
     if (parts.length > 2) return Number(parts.join(""));
     const after = parts[1] ?? "";
     // "1,200" or "150.000" (zero-decimal currency) are thousands groups
-    if (after.length === 3 && (sep === "," || isZeroDecimalCurrency(currency))) {
+    if (
+        after.length === 3 &&
+        (sep === "," || isZeroDecimalCurrency(currency))
+    ) {
         return Number(parts.join(""));
     }
     return Number(`${parts[0] || "0"}.${after}`);
@@ -113,7 +119,8 @@ export function parseCapturedAmount(
         value = raw;
         currency = override ?? "SGD";
     } else if (typeof raw === "string") {
-        if (raw.length > MAX_RAW_AMOUNT_LENGTH) return { ok: false, reason: "invalid" };
+        if (raw.length > MAX_RAW_AMOUNT_LENGTH)
+            return { ok: false, reason: "invalid" };
         const compact = raw.replace(/\s/g, ""); // \s also matches NBSP and narrow NBSP
         const numeric = compact.match(/\d[\d.,']*/);
         if (!numeric) return { ok: false, reason: "invalid" };
@@ -135,6 +142,7 @@ export function parseCapturedAmount(
 
     const amount = Math.round(value * 100) / 100;
     if (amount <= 0) return { ok: false, reason: "ignored" };
-    if (amount > maxAmountFor(currency)) return { ok: false, reason: "too_large" };
+    if (amount > maxAmountFor(currency))
+        return { ok: false, reason: "too_large" };
     return { ok: true, amount, currency };
 }

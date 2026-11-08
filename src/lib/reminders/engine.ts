@@ -20,7 +20,10 @@ import {
     DEFAULT_CC_DUE_REMINDER_DAYS,
     type AppReminder,
 } from "./rules";
-import type { InboxSummary, NotificationPreferences } from "../../types/finance";
+import type {
+    InboxSummary,
+    NotificationPreferences,
+} from "../../types/finance";
 import type { FinanceService } from "../../services/financeService";
 
 /** The finance service reads the reminder engine needs. */
@@ -48,7 +51,10 @@ const NO_INBOX: InboxSummary = {
 };
 
 /** The member's own pending captures. Never throws: before the migration (or on any error) there is no inbox. */
-async function safeInboxSummary(source: ReminderDataSource, memberId: string): Promise<InboxSummary> {
+async function safeInboxSummary(
+    source: ReminderDataSource,
+    memberId: string,
+): Promise<InboxSummary> {
     if (!source.getInboxSummary) return NO_INBOX;
     try {
         return await source.getInboxSummary(memberId);

@@ -9,7 +9,9 @@ describe("Badge", () => {
     });
 
     it("renders status variants with their default icons and tone styles", () => {
-        const { container, rerender } = render(<Badge variant="ok">Done</Badge>);
+        const { container, rerender } = render(
+            <Badge variant="ok">Done</Badge>,
+        );
         expect(container.firstChild).toHaveClass("bg-(--tone-ok-bg)");
         expect(container.querySelector("svg")).toBeInTheDocument(); // Check icon
 
@@ -32,7 +34,10 @@ describe("Badge", () => {
 
     it("allows custom icon override for status variants", () => {
         render(
-            <Badge variant="ok" icon={<span data-testid="custom-icon">✨</span>}>
+            <Badge
+                variant="ok"
+                icon={<span data-testid="custom-icon">✨</span>}
+            >
                 Custom
             </Badge>,
         );
@@ -40,7 +45,9 @@ describe("Badge", () => {
     });
 
     it("renders backward compatible pastel and color variants", () => {
-        const { container, rerender } = render(<Badge variant="lilac">Lilac</Badge>);
+        const { container, rerender } = render(
+            <Badge variant="lilac">Lilac</Badge>,
+        );
         expect(container.firstChild).toHaveClass("bg-(--pastel-lilac-light)");
 
         rerender(<Badge variant="butter">Butter</Badge>);

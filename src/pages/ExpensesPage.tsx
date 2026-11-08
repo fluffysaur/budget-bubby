@@ -80,7 +80,10 @@ export interface ExpensesPageProps {
     embedded?: boolean;
 }
 
-export function ExpensesPage({ className = "", embedded = false }: ExpensesPageProps) {
+export function ExpensesPage({
+    className = "",
+    embedded = false,
+}: ExpensesPageProps) {
     const {
         perspective,
         overview,
@@ -92,7 +95,8 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
     const { invalidateExpenses } = useInvalidateFinance();
     const addExpenseMutation = useAddExpenseMutation();
     const deleteExpenseMutation = useDeleteExpenseMutation();
-    const { isPending: isSettling, runWithLock: runSettleLock } = useSubmitLock();
+    const { isPending: isSettling, runWithLock: runSettleLock } =
+        useSubmitLock();
 
     const members = useMemo(
         () =>
@@ -152,7 +156,10 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         () => allExpensesData || expensesData || [],
         [allExpensesData, expensesData],
     );
-    const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
+    const recurringItems = useMemo(
+        () => recurringItemsData || [],
+        [recurringItemsData],
+    );
     const categories = useMemo(
         () =>
             categoriesData && categoriesData.length > 0
@@ -195,8 +202,11 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
     const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
     const [sweepMonth, setSweepMonth] = useState<string>("");
     const [sweepAmount, setSweepAmount] = useState<number>(0);
-    const [isBankSurplusModalOpen, setIsBankSurplusModalOpen] = useState<boolean>(false);
-    const [dismissedSweepMonth, setDismissedSweepMonth] = useState<string | null>(() => {
+    const [isBankSurplusModalOpen, setIsBankSurplusModalOpen] =
+        useState<boolean>(false);
+    const [dismissedSweepMonth, setDismissedSweepMonth] = useState<
+        string | null
+    >(() => {
         try {
             return localStorage.getItem("budget_bubby_dismissed_sweep");
         } catch {
@@ -231,17 +241,22 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         }
     };
 
-    const handleSweepComplete = async (allocations: SurplusSweepAllocation[]) => {
+    const handleSweepComplete = async (
+        allocations: SurplusSweepAllocation[],
+    ) => {
         for (const alloc of allocations) {
             const freshGoal = await financeService.getGoal(alloc.goalId);
-            const targetGoal = freshGoal ?? goals.find((g) => g.id === alloc.goalId);
+            const targetGoal =
+                freshGoal ?? goals.find((g) => g.id === alloc.goalId);
             if (targetGoal) {
                 await updateGoalMutation.mutateAsync({
                     id: targetGoal.id,
                     updates: {
                         saved_so_far:
                             Math.round(
-                                (Number(targetGoal.saved_so_far) + alloc.amount) * 100,
+                                (Number(targetGoal.saved_so_far) +
+                                    alloc.amount) *
+                                    100,
                             ) / 100,
                     },
                 });
@@ -252,107 +267,122 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         }
     };
 
-  // Handle adding an expense
-  const handleExpenseAdded = async () => {
-    invalidateExpenses();
-  };
+    // Handle adding an expense
+    const handleExpenseAdded = async () => {
+        invalidateExpenses();
+    };
 
+    // Handle deleting an expense
+    const handleDeleteExpense = async (id: string) => {
+        if (deleteExpenseMutation.isPending) return;
+        const exists =
+            expenses.some((e) => e.id === id) ||
+            allExpenses.some((e) => e.id === id);
+        if (!exists) return;
+        try {
+            await deleteExpenseMutation.mutateAsync(id);
+        } catch (err) {
+            console.error("Failed to delete expense:", err);
+        }
+    };
 
-  // Handle deleting an expense
-  const handleDeleteExpense = async (id: string) => {
-    if (deleteExpenseMutation.isPending) return;
-    const exists = expenses.some((e) => e.id === id) || allExpenses.some((e) => e.id === id);
-    if (!exists) return;
-    try {
-      await deleteExpenseMutation.mutateAsync(id);
-    } catch (err) {
-      console.error('Failed to delete expense:', err);
-    }
-  };
+    // Reset all filters
+    const handleResetFilters = () => {
+        setFilter({
+            month: currentMonth,
+            search: "",
+            categoryId: undefined,
+            payerId: activeMember ? activeMember.id : undefined,
+            isShared: undefined,
+            tag: undefined,
+        });
+    };
 
-  // Reset all filters
-  const handleResetFilters = () => {
-    setFilter({
-      month: currentMonth,
-      search: '',
-      categoryId: undefined,
-      payerId: activeMember ? activeMember.id : undefined,
-      isShared: undefined,
-      tag: undefined,
-    });
-  };
+    // Metrics Calculations
+    const totalSpent = useMemo(() => {
+        const sum = expenses.reduce((acc, exp) => acc + exp.amount, 0);
+        return Math.round(sum * 100) / 100;
+    }, [expenses]);
 
-  // Metrics Calculations
-  const totalSpent = useMemo(() => {
-    const sum = expenses.reduce((acc, exp) => acc + exp.amount, 0);
-    return Math.round(sum * 100) / 100;
-  }, [expenses]);
+    const totalShared = useMemo(() => {
+        const sum = expenses
+            .filter((exp) => exp.is_shared)
+            .reduce((acc, exp) => acc + exp.amount, 0);
+        return Math.round(sum * 100) / 100;
+    }, [expenses]);
 
-  const totalShared = useMemo(() => {
-    const sum = expenses
-      .filter((exp) => exp.is_shared)
-      .reduce((acc, exp) => acc + exp.amount, 0);
-    return Math.round(sum * 100) / 100;
-  }, [expenses]);
+    // Unsettled Settlement Calculation
+    const settlement = useMemo(() => {
+        if (overview?.settlementSummary) {
+            return overview.settlementSummary;
+        }
 
-  // Unsettled Settlement Calculation
-  const settlement = useMemo(() => {
-    if (overview?.settlementSummary) {
-      return overview.settlementSummary;
-    }
+        const m1 = members[0];
+        const m2 = members[1];
+        if (!m1 || !m2) {
+            return {
+                netBalance: 0,
+                debtorId: null,
+                creditorId: null,
+                settlementText: "All settled up",
+                member1OwesMember2: 0,
+                member2OwesMember1: 0,
+            };
+        }
 
-    const m1 = members[0];
-    const m2 = members[1];
-    if (!m1 || !m2) {
-      return {
-        netBalance: 0,
-        debtorId: null,
-        creditorId: null,
-        settlementText: 'All settled up',
-        member1OwesMember2: 0,
-        member2OwesMember1: 0,
-      };
-    }
+        return calculateSharedExpenseSettlement(
+            expenses,
+            m1.id,
+            m2.id,
+            m1.display_name,
+            m2.display_name,
+        );
+    }, [overview, expenses, members]);
 
-    return calculateSharedExpenseSettlement(
-      expenses,
-      m1.id,
-      m2.id,
-      m1.display_name,
-      m2.display_name
-    );
-  }, [overview, expenses, members]);
+    // Mark the unsettled shared expenses displayed in the settlement summary as settled
+    const handleSettleUp = async () => {
+        await runSettleLock(async () => {
+            const [m1, m2] = members;
+            if (!m1 || !m2) return;
+            const idsToSettle = settleTargetIds ?? settlement.expenseIds;
+            if (idsToSettle && idsToSettle.length > 0) {
+                await financeService.settleSharedExpenses(
+                    m1.id,
+                    m2.id,
+                    idsToSettle,
+                );
+            } else {
+                await financeService.settleSharedExpenses(m1.id, m2.id);
+            }
+            invalidateExpenses();
+            setIsSettleOpen(false);
+            setSettleTargetIds(undefined);
+        });
+    };
 
-  // Mark the unsettled shared expenses displayed in the settlement summary as settled
-  const handleSettleUp = async () => {
-    await runSettleLock(async () => {
-      const [m1, m2] = members;
-      if (!m1 || !m2) return;
-      const idsToSettle = settleTargetIds ?? settlement.expenseIds;
-      if (idsToSettle && idsToSettle.length > 0) {
-        await financeService.settleSharedExpenses(m1.id, m2.id, idsToSettle);
-      } else {
-        await financeService.settleSharedExpenses(m1.id, m2.id);
-      }
-      invalidateExpenses();
-      setIsSettleOpen(false);
-      setSettleTargetIds(undefined);
-    });
-  };
-
-  // Historical Expense Trends Calculation (6-month rolling averages & category benchmarks)
-  const trendsSummary = useMemo(() => {
-    const trendsSource = allExpenses && allExpenses.length > 0 ? allExpenses : expenses;
-    return calculateExpenseTrendsSummary(
-      trendsSource,
-      categories,
-      recurringItems,
-      perspective,
-      activeMember?.id,
-      filter.month || currentMonth,
-      6
-    );
-  }, [allExpenses, expenses, categories, recurringItems, perspective, activeMember, filter.month, currentMonth]);
+    // Historical Expense Trends Calculation (6-month rolling averages & category benchmarks)
+    const trendsSummary = useMemo(() => {
+        const trendsSource =
+            allExpenses && allExpenses.length > 0 ? allExpenses : expenses;
+        return calculateExpenseTrendsSummary(
+            trendsSource,
+            categories,
+            recurringItems,
+            perspective,
+            activeMember?.id,
+            filter.month || currentMonth,
+            6,
+        );
+    }, [
+        allExpenses,
+        expenses,
+        categories,
+        recurringItems,
+        perspective,
+        activeMember,
+        filter.month,
+        currentMonth,
+    ]);
 
     // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
     // Same budget as Home and Budget, so the Spendable card matches them
@@ -364,16 +394,25 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         memberIds,
     );
 
-    const lastMonth = useMemo(() => addMonths(currentMonth, -1), [currentMonth]);
+    const lastMonth = useMemo(
+        () => addMonths(currentMonth, -1),
+        [currentMonth],
+    );
     const { data: lastMonthBudget, isSuccess: lastMonthBudgetSuccess } =
-        useBudgetDetailQuery(lastMonth, perspective, activeMember?.id, memberIds);
+        useBudgetDetailQuery(
+            lastMonth,
+            perspective,
+            activeMember?.id,
+            memberIds,
+        );
 
     const spendablePacing = useMemo(() => {
         return calculateSpendablePacing({
             month: filter.month || currentMonth,
             memberId: activeMember?.id,
             perspective,
-            expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
+            expenses:
+                allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
             categories,
             baseProfiles,
             baseAllocations,
@@ -407,7 +446,8 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
             lastMonth,
             memberId: activeMember?.id,
             perspective,
-            expenses: allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
+            expenses:
+                allExpenses && allExpenses.length > 0 ? allExpenses : expenses,
             categories,
             baseProfiles,
             baseAllocations,
@@ -462,7 +502,12 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
                                 variant="primary"
                                 aria-label="+ Add Expense"
                                 className="hidden md:inline-flex"
-                                leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+                                leftIcon={
+                                    <Plus
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
                                 onClick={() => setIsModalOpen(true)}
                             >
                                 Add Expense
@@ -493,7 +538,9 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
                         size="sm"
                         aria-label="+ Add Expense"
                         className="hidden md:inline-flex"
-                        leftIcon={<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                        leftIcon={
+                            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        }
                         onClick={() => setIsModalOpen(true)}
                     >
                         Add Expense
@@ -516,7 +563,8 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
                         </Button>
                     }
                 >
-                    {addExpenseMutation.error?.message || "Failed to add expense."}
+                    {addExpenseMutation.error?.message ||
+                        "Failed to add expense."}
                 </Alert>
             )}
 
@@ -534,7 +582,8 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
                         </Button>
                     }
                 >
-                    {deleteExpenseMutation.error?.message || "Failed to delete expense."}
+                    {deleteExpenseMutation.error?.message ||
+                        "Failed to delete expense."}
                 </Alert>
             )}
 
@@ -560,261 +609,335 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
             )}
 
             {/* Celebratory Month-End Sweep Notification Banner */}
-      {showSweepBanner && (
-        <MonthEndSweepBanner
-          month={unspentSurplusInfo.lastMonth}
-          surplusAmount={unspentSurplusInfo.surplusAmount}
-          onSweepClick={() =>
-            handleOpenSweep(
-              unspentSurplusInfo.lastMonth,
-              unspentSurplusInfo.surplusAmount
-            )
-          }
-          onBankSurplusClick={() =>
-            handleOpenBankSurplus(
-              unspentSurplusInfo.lastMonth,
-              unspentSurplusInfo.surplusAmount
-            )
-          }
-        />
-      )}
+            {showSweepBanner && (
+                <MonthEndSweepBanner
+                    month={unspentSurplusInfo.lastMonth}
+                    surplusAmount={unspentSurplusInfo.surplusAmount}
+                    onSweepClick={() =>
+                        handleOpenSweep(
+                            unspentSurplusInfo.lastMonth,
+                            unspentSurplusInfo.surplusAmount,
+                        )
+                    }
+                    onBankSurplusClick={() =>
+                        handleOpenBankSurplus(
+                            unspentSurplusInfo.lastMonth,
+                            unspentSurplusInfo.surplusAmount,
+                        )
+                    }
+                />
+            )}
 
-      {/* Content Container (dimmed while loading new month or filter data) */}
-      <div className={expensesPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
-        {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Card 1: Spendable Remaining (Primary Card) */}
-        <StatCard
-          title="Spendable"
-          loading={isLoading}
-          value={formatSGD(spendablePacing.spendableRemaining)}
-          subtitle={
-            spendablePacing.isCurrentMonth
-              ? `${spendablePacing.daysRemaining}d left`
-              : spendablePacing.spendableRemaining >= 0
-              ? `+${formatSGD(spendablePacing.spendableRemaining)}`
-              : `-${formatSGD(Math.abs(spendablePacing.spendableRemaining))}`
-          }
-          tooltip={
-            <div className="space-y-1.5 text-xs">
-              <p>Day-to-day categories only. Goal-funded spends excluded.</p>
-              <p className="text-[11px] text-(--text-muted)">
-                Limit: <CurrencyText amount={spendablePacing.spendableAllocated} /> (Spent: <CurrencyText amount={spendablePacing.spendableSpent} />)
-              </p>
-              {spendablePacing.isCurrentMonth && (
-                <p className="text-[11px] text-(--text-muted)">
-                  Daily pace: <CurrencyText amount={spendablePacing.dynamicDailyPace} />/day
-                </p>
-              )}
-              <CollapsibleSection title="Learn more" defaultOpen={false} className="mt-1">
-                <p className="text-[11px] text-(--text-muted) pt-1">
-                  In personal view, shared expenses count at your 50% share.
-                </p>
-              </CollapsibleSection>
-            </div>
-          }
-          icon={<PiggyBank className="h-4 w-4" />}
-          iconBg={
-            spendablePacing.pacingStatus === 'safe'
-              ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-              : spendablePacing.pacingStatus === 'warning'
-              ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
-              : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-          }
-          footer={
-            <div className="space-y-1.5 mt-1">
-              <MeterBar
-                value={spendablePacing.spendableSpent}
-                max={spendablePacing.spendableAllocated}
-                size="sm"
-                aria-label="Spendable spending progress"
-              />
-              {!spendablePacing.isCurrentMonth && spendablePacing.spendableRemaining > 0 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleOpenSweep(
-                      filter.month || unspentSurplusInfo.lastMonth,
-                      spendablePacing.spendableRemaining
-                    )
-                  }
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1 cursor-pointer pt-0.5"
+            {/* Content Container (dimmed while loading new month or filter data) */}
+            <div
+                className={
+                    expensesPlaceholder
+                        ? "space-y-5 opacity-60 transition-opacity"
+                        : "space-y-5 transition-opacity"
+                }
+            >
+                {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {/* Card 1: Spendable Remaining (Primary Card) */}
+                    <StatCard
+                        title="Spendable"
+                        loading={isLoading}
+                        value={formatSGD(spendablePacing.spendableRemaining)}
+                        subtitle={
+                            spendablePacing.isCurrentMonth
+                                ? `${spendablePacing.daysRemaining}d left`
+                                : spendablePacing.spendableRemaining >= 0
+                                  ? `+${formatSGD(spendablePacing.spendableRemaining)}`
+                                  : `-${formatSGD(Math.abs(spendablePacing.spendableRemaining))}`
+                        }
+                        tooltip={
+                            <div className="space-y-1.5 text-xs">
+                                <p>
+                                    Day-to-day categories only. Goal-funded
+                                    spends excluded.
+                                </p>
+                                <p className="text-[11px] text-(--text-muted)">
+                                    Limit:{" "}
+                                    <CurrencyText
+                                        amount={
+                                            spendablePacing.spendableAllocated
+                                        }
+                                    />{" "}
+                                    (Spent:{" "}
+                                    <CurrencyText
+                                        amount={spendablePacing.spendableSpent}
+                                    />
+                                    )
+                                </p>
+                                {spendablePacing.isCurrentMonth && (
+                                    <p className="text-[11px] text-(--text-muted)">
+                                        Daily pace:{" "}
+                                        <CurrencyText
+                                            amount={
+                                                spendablePacing.dynamicDailyPace
+                                            }
+                                        />
+                                        /day
+                                    </p>
+                                )}
+                                <CollapsibleSection
+                                    title="Learn more"
+                                    defaultOpen={false}
+                                    className="mt-1"
+                                >
+                                    <p className="text-[11px] text-(--text-muted) pt-1">
+                                        In personal view, shared expenses count
+                                        at your 50% share.
+                                    </p>
+                                </CollapsibleSection>
+                            </div>
+                        }
+                        icon={<PiggyBank className="h-4 w-4" />}
+                        iconBg={
+                            spendablePacing.pacingStatus === "safe"
+                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                : spendablePacing.pacingStatus === "warning"
+                                  ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                                  : "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                        }
+                        footer={
+                            <div className="space-y-1.5 mt-1">
+                                <MeterBar
+                                    value={spendablePacing.spendableSpent}
+                                    max={spendablePacing.spendableAllocated}
+                                    size="sm"
+                                    aria-label="Spendable spending progress"
+                                />
+                                {!spendablePacing.isCurrentMonth &&
+                                    spendablePacing.spendableRemaining > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleOpenSweep(
+                                                    filter.month ||
+                                                        unspentSurplusInfo.lastMonth,
+                                                    spendablePacing.spendableRemaining,
+                                                )
+                                            }
+                                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1 cursor-pointer pt-0.5"
+                                        >
+                                            <span>
+                                                Sweep{" "}
+                                                <CurrencyText
+                                                    amount={
+                                                        spendablePacing.spendableRemaining
+                                                    }
+                                                />{" "}
+                                                →
+                                            </span>
+                                        </button>
+                                    )}
+                            </div>
+                        }
+                    />
+
+                    {/* Card 2: Total Spent */}
+                    <StatCard
+                        title="Spent"
+                        loading={isLoading}
+                        value={formatSGD(totalSpent)}
+                        subtitle={`${expenses.length} transaction${expenses.length === 1 ? "" : "s"}`}
+                        icon={<Receipt className="h-4 w-4" />}
+                        iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                    />
+
+                    {/* Card 3: Shared Spending */}
+                    <StatCard
+                        title="Shared"
+                        loading={isLoading}
+                        value={formatSGD(totalShared)}
+                        tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
+                        icon={<ArrowRightLeft className="h-4 w-4" />}
+                        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+                    />
+
+                    {/* Card 4: Unsettled Balance (Who Owes Whom) */}
+                    <StatCard
+                        title="Unsettled"
+                        loading={isLoading}
+                        value={formatSGD(settlement.netBalance)}
+                        subtitle={
+                            settlement.netBalance === 0
+                                ? "All settled"
+                                : settlement.debtorName &&
+                                    settlement.creditorName
+                                  ? `${settlement.debtorName} → ${settlement.creditorName}`
+                                  : settlement.settlementText
+                        }
+                        icon={
+                            settlement.netBalance === 0 ? (
+                                <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                                <Scale className="h-4 w-4" />
+                            )
+                        }
+                        iconBg={
+                            settlement.netBalance === 0
+                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                        }
+                        footer={
+                            settlement.netBalance > 0 && members.length >= 2 ? (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSettleTargetIds(
+                                            settlement.expenseIds,
+                                        );
+                                        setIsSettleOpen(true);
+                                    }}
+                                    leftIcon={
+                                        <Scale
+                                            className="h-3.5 w-3.5"
+                                            strokeWidth={2.5}
+                                        />
+                                    }
+                                    className="mt-1"
+                                >
+                                    Settle Up
+                                </Button>
+                            ) : undefined
+                        }
+                    />
+                </div>
+
+                <ConfirmModal
+                    isOpen={isSettleOpen}
+                    onClose={() => setIsSettleOpen(false)}
+                    onConfirm={handleSettleUp}
+                    isLoading={isSettling}
+                    title="Settle Up"
+                    variant="primary"
+                    confirmLabel="Settle"
+                    icon={
+                        <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
+                    }
                 >
-                  <span>Sweep <CurrencyText amount={spendablePacing.spendableRemaining} /> →</span>
-                </button>
-              )}
+                    Mark shared expenses settled?
+                </ConfirmModal>
+
+                {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
+                <ExpenseListTable
+                    expenses={expenses}
+                    categories={categories}
+                    members={members}
+                    goals={goals}
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    onResetFilters={handleResetFilters}
+                    onDeleteExpense={handleDeleteExpense}
+                    onExpenseSaved={handleExpenseAdded}
+                    isLoading={isLoading}
+                />
+
+                {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
+                <div className="space-y-3 pt-2">
+                    <CollapsibleSection
+                        title="Spend Trends"
+                        summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
+                        icon={
+                            <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        }
+                        defaultOpen={false}
+                    >
+                        <ExpenseTrendsCard
+                            trends={trendsSummary}
+                            perspectiveLabel={
+                                perspective === "household"
+                                    ? "Household"
+                                    : activeMember?.display_name || "Personal"
+                            }
+                        />
+                    </CollapsibleSection>
+
+                    <CollapsibleSection
+                        title="Tags & Trips"
+                        badge={
+                            filter.tag ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                                    #{filter.tag}
+                                </span>
+                            ) : undefined
+                        }
+                        icon={
+                            <Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        }
+                        defaultOpen={Boolean(filter.tag)}
+                    >
+                        <SpendTagsOverviewCard
+                            expenses={
+                                allExpenses && allExpenses.length > 0
+                                    ? allExpenses
+                                    : expenses
+                            }
+                            categories={categories}
+                            activeTag={filter.tag}
+                            onSelectTag={(tag) =>
+                                setFilter((prev) => ({
+                                    ...prev,
+                                    tag: prev.tag === tag ? undefined : tag,
+                                }))
+                            }
+                            onClearTag={() =>
+                                setFilter((prev) => ({
+                                    ...prev,
+                                    tag: undefined,
+                                }))
+                            }
+                        />
+                    </CollapsibleSection>
+                </div>
             </div>
-          }
-        />
 
-        {/* Card 2: Total Spent */}
-        <StatCard
-          title="Spent"
-          loading={isLoading}
-          value={formatSGD(totalSpent)}
-          subtitle={`${expenses.length} transaction${expenses.length === 1 ? '' : 's'}`}
-          icon={<Receipt className="h-4 w-4" />}
-          iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-        />
-
-        {/* Card 3: Shared Spending */}
-        <StatCard
-          title="Shared"
-          loading={isLoading}
-          value={formatSGD(totalShared)}
-          tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
-          icon={<ArrowRightLeft className="h-4 w-4" />}
-          iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
-        />
-
-        {/* Card 4: Unsettled Balance (Who Owes Whom) */}
-        <StatCard
-          title="Unsettled"
-          loading={isLoading}
-          value={formatSGD(settlement.netBalance)}
-          subtitle={
-            settlement.netBalance === 0
-              ? "All settled"
-              : settlement.debtorName && settlement.creditorName
-              ? `${settlement.debtorName} → ${settlement.creditorName}`
-              : settlement.settlementText
-          }
-          icon={settlement.netBalance === 0 ? <CheckCircle2 className="h-4 w-4" /> : <Scale className="h-4 w-4" />}
-          iconBg={
-            settlement.netBalance === 0
-              ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
-              : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
-          }
-          footer={
-            settlement.netBalance > 0 && members.length >= 2 ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setSettleTargetIds(settlement.expenseIds);
-                  setIsSettleOpen(true);
-                }}
-                leftIcon={<Scale className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                className="mt-1"
-              >
-                Settle Up
-              </Button>
-            ) : undefined
-          }
-        />
-      </div>
-
-        <ConfirmModal
-          isOpen={isSettleOpen}
-          onClose={() => setIsSettleOpen(false)}
-          onConfirm={handleSettleUp}
-          isLoading={isSettling}
-          title="Settle Up"
-          variant="primary"
-          confirmLabel="Settle"
-          icon={<CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />}
-        >
-          Mark shared expenses settled?
-        </ConfirmModal>
-
-        {/* Expense List Table (Ledger-First with integrated Search, Filter, Sort!) */}
-        <ExpenseListTable
-          expenses={expenses}
-          categories={categories}
-          members={members}
-          goals={goals}
-          filter={filter}
-          onFilterChange={setFilter}
-          onResetFilters={handleResetFilters}
-          onDeleteExpense={handleDeleteExpense}
-          onExpenseSaved={handleExpenseAdded}
-          isLoading={isLoading}
-        />
-
-        {/* Collapsible Secondary Drawers: Spend Trends & Tags */}
-        <div className="space-y-3 pt-2">
-          <CollapsibleSection
-            title="Spend Trends"
-            summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
-            icon={<BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
-            defaultOpen={false}
-          >
-            <ExpenseTrendsCard
-              trends={trendsSummary}
-              perspectiveLabel={
-                perspective === 'household'
-                  ? 'Household'
-                  : activeMember?.display_name || 'Personal'
-              }
+            {/* Bulk Add Expense Modal */}
+            <BulkAddExpenseModal
+                isOpen={isBulkAddOpen}
+                onClose={() => setIsBulkAddOpen(false)}
+                onExpensesAdded={handleExpenseAdded}
+                categories={categories}
+                members={members}
+                goals={goals}
+                defaultPayerId={filter.payerId}
             />
-          </CollapsibleSection>
 
-          <CollapsibleSection
-            title="Tags & Trips"
-            badge={
-              filter.tag ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                  #{filter.tag}
-                </span>
-              ) : undefined
-            }
-            icon={<Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
-            defaultOpen={Boolean(filter.tag)}
-          >
-            <SpendTagsOverviewCard
-              expenses={allExpenses && allExpenses.length > 0 ? allExpenses : expenses}
-              categories={categories}
-              activeTag={filter.tag}
-              onSelectTag={(tag) => setFilter((prev) => ({ ...prev, tag: prev.tag === tag ? undefined : tag }))}
-              onClearTag={() => setFilter((prev) => ({ ...prev, tag: undefined }))}
+            {/* Quick Add Expense Modal */}
+            <ExpenseFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onExpenseAdded={handleExpenseAdded}
+                addMutation={addExpenseMutation}
+                defaultPayerId={filter.payerId}
+                categories={categories}
+                members={members}
+                goals={goals}
             />
-          </CollapsibleSection>
+
+            {/* Month-End Surplus Sweep to Goals Modal */}
+            <SurplusSweepModal
+                isOpen={isSweepModalOpen}
+                onClose={() => setIsSweepModalOpen(false)}
+                surplusAmount={sweepAmount}
+                month={sweepMonth}
+                goals={goals}
+                onSweepComplete={handleSweepComplete}
+            />
+
+            {/* Bank as Surplus Confirmation Modal */}
+            <BankSurplusModal
+                isOpen={isBankSurplusModalOpen}
+                onClose={() => setIsBankSurplusModalOpen(false)}
+                surplusAmount={sweepAmount}
+                month={sweepMonth}
+                onConfirm={handleConfirmBankSurplus}
+            />
         </div>
-      </div>
-
-      {/* Bulk Add Expense Modal */}
-      <BulkAddExpenseModal
-        isOpen={isBulkAddOpen}
-        onClose={() => setIsBulkAddOpen(false)}
-        onExpensesAdded={handleExpenseAdded}
-        categories={categories}
-        members={members}
-        goals={goals}
-        defaultPayerId={filter.payerId}
-      />
-
-      {/* Quick Add Expense Modal */}
-      <ExpenseFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onExpenseAdded={handleExpenseAdded}
-        addMutation={addExpenseMutation}
-        defaultPayerId={filter.payerId}
-        categories={categories}
-        members={members}
-        goals={goals}
-      />
-
-      {/* Month-End Surplus Sweep to Goals Modal */}
-      <SurplusSweepModal
-        isOpen={isSweepModalOpen}
-        onClose={() => setIsSweepModalOpen(false)}
-        surplusAmount={sweepAmount}
-        month={sweepMonth}
-        goals={goals}
-        onSweepComplete={handleSweepComplete}
-      />
-
-      {/* Bank as Surplus Confirmation Modal */}
-      <BankSurplusModal
-        isOpen={isBankSurplusModalOpen}
-        onClose={() => setIsBankSurplusModalOpen(false)}
-        surplusAmount={sweepAmount}
-        month={sweepMonth}
-        onConfirm={handleConfirmBankSurplus}
-      />
-    </div>
-  );
+    );
 }
 
 export default ExpensesPage;

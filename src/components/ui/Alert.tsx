@@ -25,7 +25,10 @@ const variantStyles: Record<
         container: string;
         title: string;
         icon: string;
-        defaultIcon: React.FC<{ className?: string; strokeWidth?: number | string }>;
+        defaultIcon: React.FC<{
+            className?: string;
+            strokeWidth?: number | string;
+        }>;
     }
 > = {
     danger: {
@@ -79,7 +82,10 @@ export function Alert({
                 {icon !== undefined ? (
                     icon
                 ) : (
-                    <DefaultIconComponent className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    <DefaultIconComponent
+                        className="h-4.5 w-4.5"
+                        strokeWidth={2.5}
+                    />
                 )}
             </div>
 

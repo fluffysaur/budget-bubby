@@ -64,7 +64,11 @@ export function InboxCard({
     swipeHandlers,
 }: InboxCardProps) {
     const sgt = toSgtDateTime(item.captured_at);
-    const dayLabel = sgt ? (sgt.date === todayDate ? "Today" : formatDisplayDate(sgt.date)) : "";
+    const dayLabel = sgt
+        ? sgt.date === todayDate
+            ? "Today"
+            : formatDisplayDate(sgt.date)
+        : "";
     const isForeign = item.currency !== "SGD";
     const chipIds = new Set(chipCategories.map((c) => c.id));
     const moreOptions = allCategories
@@ -78,21 +82,29 @@ export function InboxCard({
             data-testid="inbox-card"
             className="relative touch-pan-y select-none will-change-transform"
         >
-            <Card elevation="tactile" padding="md" className="relative overflow-hidden">
+            <Card
+                elevation="tactile"
+                padding="md"
+                className="relative overflow-hidden"
+            >
                 {/* Swipe tints */}
                 <div
                     ref={confirmTintRef}
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 flex items-center justify-start bg-(--pastel-mint-light) pl-5 opacity-0"
                 >
-                    <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">Confirm</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">
+                        Confirm
+                    </span>
                 </div>
                 <div
                     ref={discardTintRef}
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 flex items-center justify-end bg-(--pastel-coral-light) pr-5 opacity-0"
                 >
-                    <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">Discard</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-(--text-ink)">
+                        Discard
+                    </span>
                 </div>
 
                 <div className="relative space-y-3">
@@ -105,7 +117,11 @@ export function InboxCard({
                             />
                         </div>
                         {isPartnerItem && payerName && (
-                            <Badge variant="lilac" size="sm" className="shrink-0">
+                            <Badge
+                                variant="lilac"
+                                size="sm"
+                                className="shrink-0"
+                            >
                                 {payerName}
                             </Badge>
                         )}
@@ -118,7 +134,10 @@ export function InboxCard({
                         {isForeign ? (
                             <div className="flex flex-wrap items-baseline gap-2">
                                 <span className="text-2xl font-black font-display tracking-tight text-(--text-ink)">
-                                    {formatForeignAmount(item.amount, item.currency)}
+                                    {formatForeignAmount(
+                                        item.amount,
+                                        item.currency,
+                                    )}
                                 </span>
                                 {canConfirm && (
                                     <span className="text-xs font-bold text-(--text-muted)">
@@ -133,8 +152,15 @@ export function InboxCard({
                             />
                         )}
                         <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                            {item.card_name && <TruncatedText text={item.card_name} className="min-w-0" />}
-                            {item.card_name && <span className="shrink-0">·</span>}
+                            {item.card_name && (
+                                <TruncatedText
+                                    text={item.card_name}
+                                    className="min-w-0"
+                                />
+                            )}
+                            {item.card_name && (
+                                <span className="shrink-0">·</span>
+                            )}
                             <span className="shrink-0">{dayLabel}</span>
                         </div>
                     </div>
@@ -144,12 +170,18 @@ export function InboxCard({
                             variant="warning"
                             title="Looks logged already"
                             action={
-                                <Button type="button" variant="secondary" size="sm" onClick={onSameOne}>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={onSameOne}
+                                >
                                     Same One
                                 </Button>
                             }
                         >
-                            <CurrencyText amount={duplicate.amount} /> on {formatDisplayDate(duplicate.date)}.
+                            <CurrencyText amount={duplicate.amount} /> on{" "}
+                            {formatDisplayDate(duplicate.date)}.
                         </Alert>
                     )}
 
@@ -159,7 +191,11 @@ export function InboxCard({
                         </Alert>
                     )}
 
-                    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Category">
+                    <div
+                        className="flex flex-wrap gap-1.5"
+                        role="group"
+                        aria-label="Category"
+                    >
                         {chipCategories.map((c, idx) => {
                             const selected = c.id === selectedCategoryId;
                             return (
@@ -175,7 +211,12 @@ export function InboxCard({
                                             : "border-transparent hover:bg-(--bg-cream)"
                                     }`}
                                 >
-                                    <CategoryBadge name={c.name} color={c.color} icon={c.icon} size="md" />
+                                    <CategoryBadge
+                                        name={c.name}
+                                        color={c.color}
+                                        icon={c.icon}
+                                        size="md"
+                                    />
                                 </button>
                             );
                         })}
@@ -184,9 +225,19 @@ export function InboxCard({
                         <Select
                             aria-label="More categories"
                             sizeVariant="sm"
-                            value={chipIds.has(selectedCategoryId ?? "") ? "" : (selectedCategoryId ?? "")}
-                            onChange={(e) => e.target.value && onSelectCategory(e.target.value)}
-                            options={[{ value: "", label: "More…" }, ...moreOptions]}
+                            value={
+                                chipIds.has(selectedCategoryId ?? "")
+                                    ? ""
+                                    : (selectedCategoryId ?? "")
+                            }
+                            onChange={(e) =>
+                                e.target.value &&
+                                onSelectCategory(e.target.value)
+                            }
+                            options={[
+                                { value: "", label: "More…" },
+                                ...moreOptions,
+                            ]}
                         />
                     )}
 
@@ -196,7 +247,10 @@ export function InboxCard({
                         activeTab={isShared ? "shared" : "mine"}
                         onChange={(tab) => onShareChange(tab === "shared")}
                         tabs={[
-                            { id: "mine", label: isPartnerItem ? "Personal" : "Mine" },
+                            {
+                                id: "mine",
+                                label: isPartnerItem ? "Personal" : "Mine",
+                            },
                             { id: "shared", label: "Shared" },
                         ]}
                     />
@@ -208,7 +262,12 @@ export function InboxCard({
 
 export function InboxCardSkeleton() {
     return (
-        <Card elevation="tactile" padding="md" className="motion-safe:animate-pulse" aria-label="Loading inbox">
+        <Card
+            elevation="tactile"
+            padding="md"
+            className="motion-safe:animate-pulse"
+            aria-label="Loading inbox"
+        >
             <div className="space-y-4">
                 <div className="h-4 w-24 bg-(--border-subtle)/70 rounded-md" />
                 <div className="h-6 w-44 bg-(--border-subtle)/80 rounded-lg" />

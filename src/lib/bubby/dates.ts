@@ -8,7 +8,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** SGT calendar date for an instant. */
 export function toSgtDateString(instant: Date = new Date()): string {
-    return new Date(instant.getTime() + SGT_OFFSET_MS).toISOString().slice(0, 10);
+    return new Date(instant.getTime() + SGT_OFFSET_MS)
+        .toISOString()
+        .slice(0, 10);
 }
 
 /** Minutes since SGT midnight for an instant. */

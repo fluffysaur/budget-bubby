@@ -61,8 +61,8 @@ export function ExpenseTrendsCard({
                             ariaLabel="Expense Trends Methodology"
                             title="How Averages Are Calculated"
                         >
-                            Spendable categories plus subscriptions. Personal view
-                            uses your share.
+                            Spendable categories plus subscriptions. Personal
+                            view uses your share.
                         </TooltipPopover>
                     </div>
                     <div className="font-display font-black text-xl sm:text-2xl text-(--text-ink) font-mono-num mt-0.5">
@@ -80,7 +80,12 @@ export function ExpenseTrendsCard({
                         label="vs 3-mo avg"
                     />
                     <span className="text-[11px] text-(--text-muted) font-mono-num">
-                        3-mo avg: <CurrencyText formatted={formatSGD(rolling3MonthAvg, { showCents: false })} />
+                        3-mo avg:{" "}
+                        <CurrencyText
+                            formatted={formatSGD(rolling3MonthAvg, {
+                                showCents: false,
+                            })}
+                        />
                     </span>
                 </div>
             </div>
@@ -92,7 +97,12 @@ export function ExpenseTrendsCard({
                         6-Month Trend
                     </span>
                     <span className="block text-[11px] text-(--text-muted)">
-                        Baseline avg: <CurrencyText formatted={formatSGD(rolling6MonthAvg, { showCents: false })} />
+                        Baseline avg:{" "}
+                        <CurrencyText
+                            formatted={formatSGD(rolling6MonthAvg, {
+                                showCents: false,
+                            })}
+                        />
                     </span>
                 </div>
                 <div className="w-full sm:w-auto flex justify-end">
@@ -121,54 +131,82 @@ export function ExpenseTrendsCard({
                         </span>
                         <span className="flex items-center gap-1 font-mono-num text-[11px]">
                             {showCategoryDetails ? (
-                                <ChevronUp className="h-4 w-4" strokeWidth={2.5} />
+                                <ChevronUp
+                                    className="h-4 w-4"
+                                    strokeWidth={2.5}
+                                />
                             ) : (
-                                <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
+                                <ChevronDown
+                                    className="h-4 w-4"
+                                    strokeWidth={2.5}
+                                />
                             )}
                         </span>
                     </button>
 
                     {showCategoryDetails && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                            {categoryAverages.map((cat: CategoryAverageMetric) => {
-                                const isOver =
-                                    cat.averageMonthly > 0 &&
-                                    cat.currentMonth > cat.averageMonthly;
-                                return (
-                                    <div
-                                        key={cat.categoryId}
-                                        className="rounded-xl border border-(--border-subtle) bg-(--bg-cream) p-2 text-xs shadow-cute-sm"
-                                    >
-                                        <div className="flex items-center justify-between gap-1 mb-1.5">
-                                            <span className="font-bold text-(--text-ink) flex items-center gap-1.5 min-w-0 truncate">
-                                                <span
-                                                    className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"
-                                                    style={{ backgroundColor: cat.color }}
-                                                />
-                                                <span className="truncate">{cat.categoryName}</span>
-                                            </span>
-                                            <span className="font-mono-num font-bold shrink-0 text-[11px]">
-                                                <CurrencyText amount={cat.currentMonth} />
-                                                <span className="text-(--text-muted) font-normal">
-                                                    {" "}
-                                                    / <CurrencyText formatted={formatSGD(cat.averageMonthly, { showCents: false })} />
+                            {categoryAverages.map(
+                                (cat: CategoryAverageMetric) => {
+                                    const isOver =
+                                        cat.averageMonthly > 0 &&
+                                        cat.currentMonth > cat.averageMonthly;
+                                    return (
+                                        <div
+                                            key={cat.categoryId}
+                                            className="rounded-xl border border-(--border-subtle) bg-(--bg-cream) p-2 text-xs shadow-cute-sm"
+                                        >
+                                            <div className="flex items-center justify-between gap-1 mb-1.5">
+                                                <span className="font-bold text-(--text-ink) flex items-center gap-1.5 min-w-0 truncate">
+                                                    <span
+                                                        className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"
+                                                        style={{
+                                                            backgroundColor:
+                                                                cat.color,
+                                                        }}
+                                                    />
+                                                    <span className="truncate">
+                                                        {cat.categoryName}
+                                                    </span>
                                                 </span>
-                                            </span>
+                                                <span className="font-mono-num font-bold shrink-0 text-[11px]">
+                                                    <CurrencyText
+                                                        amount={
+                                                            cat.currentMonth
+                                                        }
+                                                    />
+                                                    <span className="text-(--text-muted) font-normal">
+                                                        {" "}
+                                                        /{" "}
+                                                        <CurrencyText
+                                                            formatted={formatSGD(
+                                                                cat.averageMonthly,
+                                                                {
+                                                                    showCents: false,
+                                                                },
+                                                            )}
+                                                        />
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <MeterBar
+                                                value={cat.currentMonth}
+                                                max={
+                                                    cat.averageMonthly > 0
+                                                        ? Math.max(
+                                                              cat.averageMonthly,
+                                                              cat.currentMonth,
+                                                          )
+                                                        : cat.currentMonth
+                                                }
+                                                marker={cat.averageMonthly}
+                                                size="sm"
+                                                tone={isOver ? "over" : "ok"}
+                                            />
                                         </div>
-                                        <MeterBar
-                                            value={cat.currentMonth}
-                                            max={
-                                                cat.averageMonthly > 0
-                                                    ? Math.max(cat.averageMonthly, cat.currentMonth)
-                                                    : cat.currentMonth
-                                            }
-                                            marker={cat.averageMonthly}
-                                            size="sm"
-                                            tone={isOver ? "over" : "ok"}
-                                        />
-                                    </div>
-                                );
-                            })}
+                                    );
+                                },
+                            )}
                         </div>
                     )}
                 </div>

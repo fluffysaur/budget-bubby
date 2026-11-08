@@ -11,19 +11,42 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
-import { queryKeys, useAccountSnapshotsQuery, useExpensesQuery } from "./useFinanceQueries";
+import {
+    queryKeys,
+    useAccountSnapshotsQuery,
+    useExpensesQuery,
+} from "./useFinanceQueries";
 import { useLoggedInMember } from "./useLoggedInMember";
 import { onAppEvent, emitAppEvent, type BubbyReaction } from "../lib/appEvents";
 import { collectFeedEvents, type BonusEventLike } from "../lib/bubby/sources";
-import { deriveCondition, type BubbyBody, type BubbyCondition, type BubbyMood } from "../lib/bubby/body";
+import {
+    deriveCondition,
+    type BubbyBody,
+    type BubbyCondition,
+    type BubbyMood,
+} from "../lib/bubby/body";
 import { dailyQuests, weeklyQuests, type Quest } from "../lib/bubby/quests";
 import { REACTION_MS } from "../lib/bubby/moods";
-import { addPetDay, readBubbyStore, type SnackEntry } from "../lib/bubby/storage";
-import { addDays, sgtMinutesOfDay, timeToMinutes, toSgtDateString } from "../lib/bubby/dates";
+import {
+    addPetDay,
+    readBubbyStore,
+    type SnackEntry,
+} from "../lib/bubby/storage";
+import {
+    addDays,
+    sgtMinutesOfDay,
+    timeToMinutes,
+    toSgtDateString,
+} from "../lib/bubby/dates";
 import { getInboxPending } from "../lib/delight/inboxState";
 import { feedback } from "../lib/delight/feedback";
 import { DEFAULT_CHECKIN_TIME } from "../lib/reminders/rules";
-import type { AccountSnapshot, DailyCheckin, Expense, HouseholdMember } from "../types/finance";
+import type {
+    AccountSnapshot,
+    DailyCheckin,
+    Expense,
+    HouseholdMember,
+} from "../types/finance";
 
 const EMPTY_CHECKINS: DailyCheckin[] = [];
 const EMPTY_EXPENSES: Expense[] = [];
@@ -53,14 +76,20 @@ function useBonusEventsForBubby(): BonusEventLike[] {
 
 /** SGT date and minute-of-day, refreshed every minute and on resume. */
 export function useSgtClock(): { today: string; minutes: number } {
-    const read = () => ({ today: toSgtDateString(), minutes: sgtMinutesOfDay() });
+    const read = () => ({
+        today: toSgtDateString(),
+        minutes: sgtMinutesOfDay(),
+    });
     const [clock, setClock] = useState(read);
 
     useEffect(() => {
         const tick = () =>
             setClock((prev) => {
                 const next = read();
-                return next.today === prev.today && next.minutes === prev.minutes ? prev : next;
+                return next.today === prev.today &&
+                    next.minutes === prev.minutes
+                    ? prev
+                    : next;
             });
         const id = window.setInterval(tick, 60_000);
         const onVisible = () => {
@@ -85,7 +114,10 @@ export function useBubbyReaction(): BubbyReaction | null {
         const off = onAppEvent("bubby:react", ({ kind }) => {
             setReaction(kind);
             window.clearTimeout(timer);
-            timer = window.setTimeout(() => setReaction(null), REACTION_MS[kind]);
+            timer = window.setTimeout(
+                () => setReaction(null),
+                REACTION_MS[kind],
+            );
         });
         return () => {
             off();
@@ -133,24 +165,44 @@ export function useBubby(): UseBubbyResult {
     const [store, setStore] = useState(readBubbyStore);
 
     const { data: checkinsData, isSuccess } = useHouseholdCheckinsQuery();
-    const { data: thisMonth, isSuccess: thisMonthReady } = useExpensesQuery({ month: today.slice(0, 7) });
+    const { data: thisMonth, isSuccess: thisMonthReady } = useExpensesQuery({
+        month: today.slice(0, 7),
+    });
     const { data: lastMonth, isSuccess: lastMonthReady } = useExpensesQuery({
         month: addDays(today.slice(0, 7) + "-01", -1).slice(0, 7),
     });
-    const { data: snapshotsData, isSuccess: snapshotsReady } = useAccountSnapshotsQuery("household");
+    const { data: snapshotsData, isSuccess: snapshotsReady } =
+        useAccountSnapshotsQuery("household");
     const bonusEvents = useBonusEventsForBubby();
 
-    useEffect(() => onAppEvent("bubby:store-changed", () => setStore(readBubbyStore())), []);
+    useEffect(
+        () =>
+            onAppEvent("bubby:store-changed", () => setStore(readBubbyStore())),
+        [],
+    );
 
     const checkins = checkinsData ?? EMPTY_CHECKINS;
     const snapshots = snapshotsData ?? EMPTY_SNAPSHOTS;
     const expenses = useMemo(
-        () => [...(thisMonth ?? EMPTY_EXPENSES), ...(lastMonth ?? EMPTY_EXPENSES)],
+        () => [
+            ...(thisMonth ?? EMPTY_EXPENSES),
+            ...(lastMonth ?? EMPTY_EXPENSES),
+        ],
         [thisMonth, lastMonth],
     );
 
     const condition = useMemo(
-        () => deriveCondition(collectFeedEvents({ checkins, expenses, snapshots, bonusEvents, store }), today),
+        () =>
+            deriveCondition(
+                collectFeedEvents({
+                    checkins,
+                    expenses,
+                    snapshots,
+                    bonusEvents,
+                    store,
+                }),
+                today,
+            ),
         [checkins, expenses, snapshots, bonusEvents, store, today],
     );
 
@@ -166,11 +218,17 @@ export function useBubby(): UseBubbyResult {
             }),
         [me?.id, today, checkins, expenses, store],
     );
-    const weekly = useMemo(() => weeklyQuests({ today, snapshots, store }), [today, snapshots, store]);
+    const weekly = useMemo(
+        () => weeklyQuests({ today, snapshots, store }),
+        [today, snapshots, store],
+    );
 
     const checkinMinutes = useMemo(() => readCheckinMinutes(me?.id), [me?.id]);
     const reaction = useBubbyReaction();
-    const partner = useMemo(() => members.find((m) => m.id !== me?.id) ?? null, [members, me]);
+    const partner = useMemo(
+        () => members.find((m) => m.id !== me?.id) ?? null,
+        [members, me],
+    );
 
     const meId = me?.id;
     const pet = useCallback(() => {
@@ -182,7 +240,8 @@ export function useBubby(): UseBubbyResult {
 
     return {
         // Every input loaded, so body and mood changes are real
-        isReady: isSuccess && thisMonthReady && lastMonthReady && snapshotsReady,
+        isReady:
+            isSuccess && thisMonthReady && lastMonthReady && snapshotsReady,
         body: condition.body,
         mood: condition.mood,
         condition,

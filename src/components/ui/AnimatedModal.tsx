@@ -209,7 +209,12 @@ export function AnimatedModal({
     useEffect(() => {
         if (!shouldRender || !isDrawerOnMobile) return;
         const drawerEl = drawerRef.current;
-        if (!drawerEl || typeof window === "undefined" || !window.visualViewport) return;
+        if (
+            !drawerEl ||
+            typeof window === "undefined" ||
+            !window.visualViewport
+        )
+            return;
 
         let focusedInput: HTMLElement | null = null;
 
@@ -231,7 +236,10 @@ export function AnimatedModal({
 
         const handleViewportResize = () => {
             if (focusedInput && document.activeElement === focusedInput) {
-                focusedInput.scrollIntoView({ block: "center", behavior: "smooth" });
+                focusedInput.scrollIntoView({
+                    block: "center",
+                    behavior: "smooth",
+                });
             }
         };
 
@@ -242,7 +250,10 @@ export function AnimatedModal({
         return () => {
             drawerEl.removeEventListener("focusin", handleFocusIn);
             drawerEl.removeEventListener("focusout", handleFocusOut);
-            window.visualViewport?.removeEventListener("resize", handleViewportResize);
+            window.visualViewport?.removeEventListener(
+                "resize",
+                handleViewportResize,
+            );
         };
     }, [shouldRender, isDrawerOnMobile]);
 

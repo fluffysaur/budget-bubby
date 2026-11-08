@@ -42,12 +42,16 @@ function sumOptional(
 }
 
 /** Field-wise sum of member bonus summaries; undefined when no member has one. */
-function combineBonusSummaries(budgets: MonthlyBudgetDetail[]): BonusMonthSummary | undefined {
+function combineBonusSummaries(
+    budgets: MonthlyBudgetDetail[],
+): BonusMonthSummary | undefined {
     const summaries = budgets
         .map((b) => b.bonusSummary)
         .filter((s): s is BonusMonthSummary => Boolean(s));
     if (summaries.length === 0) return undefined;
-    const source: BonusMonthSummary["source"] = summaries.some((s) => s.source === "events")
+    const source: BonusMonthSummary["source"] = summaries.some(
+        (s) => s.source === "events",
+    )
         ? "events"
         : summaries.some((s) => s.source === "legacy")
           ? "legacy"
@@ -93,16 +97,22 @@ export function combineMonthlyBudgets(
         for (const item of mb.categories) {
             const existing = categoryMap.get(item.category_id);
             if (existing) {
-                const allocated = round2(existing.allocated_amount + item.allocated_amount);
-                const spent = round2((existing.actualSpent || 0) + (item.actualSpent || 0));
+                const allocated = round2(
+                    existing.allocated_amount + item.allocated_amount,
+                );
+                const spent = round2(
+                    (existing.actualSpent || 0) + (item.actualSpent || 0),
+                );
                 categoryMap.set(item.category_id, {
                     ...existing,
                     allocated_amount: allocated,
                     actualSpent: spent,
                     remaining: round2(allocated - spent),
-                    percentage: combinedAfter > 0 ? allocated / combinedAfter : 0,
+                    percentage:
+                        combinedAfter > 0 ? allocated / combinedAfter : 0,
                     recurringSpent: round2(
-                        (existing.recurringSpent || 0) + (item.recurringSpent || 0),
+                        (existing.recurringSpent || 0) +
+                            (item.recurringSpent || 0),
                     ),
                     recurringItems: dedupeRecurringItems([
                         ...(existing.recurringItems || []),
@@ -122,7 +132,9 @@ export function combineMonthlyBudgets(
     }
 
     const categories = Array.from(categoryMap.values());
-    const uncategorizedRecurringSpent = round2(sum((b) => b.uncategorizedRecurringSpent));
+    const uncategorizedRecurringSpent = round2(
+        sum((b) => b.uncategorizedRecurringSpent),
+    );
     const uncategorizedRecurringItems = dedupeRecurringItems(
         memberBudgets.flatMap((mb) => mb.uncategorizedRecurringItems || []),
     );
@@ -137,9 +149,15 @@ export function combineMonthlyBudgets(
         disposablePool: combinedAfter,
         totalSpent,
         totalRemaining: round2(combinedAfter - totalSpent),
-        spendableAllocated: sumOptional(memberBudgets, (b) => b.spendableAllocated),
+        spendableAllocated: sumOptional(
+            memberBudgets,
+            (b) => b.spendableAllocated,
+        ),
         spendableSpent: sumOptional(memberBudgets, (b) => b.spendableSpent),
-        spendableRemaining: sumOptional(memberBudgets, (b) => b.spendableRemaining),
+        spendableRemaining: sumOptional(
+            memberBudgets,
+            (b) => b.spendableRemaining,
+        ),
         uncategorizedRecurringSpent,
         uncategorizedRecurringItems,
         bonusSummary: combineBonusSummaries(memberBudgets),

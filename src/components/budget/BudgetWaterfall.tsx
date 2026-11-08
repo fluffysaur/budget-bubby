@@ -106,7 +106,11 @@ export function BudgetWaterfall({
                 description="Set up a budget to see your income flow."
                 action={
                     onEditProfile ? (
-                        <Button variant="primary" size="sm" onClick={onEditProfile}>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={onEditProfile}
+                        >
                             Set Up Budget
                         </Button>
                     ) : undefined
@@ -161,7 +165,12 @@ export function BudgetWaterfall({
                         tone="negative"
                     />
                     {bonusCpf > 0 && (
-                        <FlowRow label="Bonus CPF" amount={bonusCpf} sign="-" sub />
+                        <FlowRow
+                            label="Bonus CPF"
+                            amount={bonusCpf}
+                            sign="-"
+                            sub
+                        />
                     )}
                 </div>
 
@@ -173,7 +182,11 @@ export function BudgetWaterfall({
                         tone="negative"
                     />
                     <FlowRow label="Taxes" amount={taxesDeduction} sub />
-                    <FlowRow label="Insurance" amount={insuranceDeduction} sub />
+                    <FlowRow
+                        label="Insurance"
+                        amount={insuranceDeduction}
+                        sub
+                    />
                 </div>
             </div>
 
@@ -190,7 +203,8 @@ export function BudgetWaterfall({
                         <Sparkles className="h-3.5 w-3.5 shrink-0 text-purple-700 dark:text-purple-300" />
                         <span>Bonus</span>
                         <TooltipPopover title="Bonus">
-                            Bonuses count as income but don't raise category limits. Split them in Plan › Bonus.
+                            Bonuses count as income but don't raise category
+                            limits. Split them in Plan › Bonus.
                         </TooltipPopover>
                     </div>
                     <span className="shrink-0 font-mono-num text-sm font-black text-purple-700 dark:text-purple-300">

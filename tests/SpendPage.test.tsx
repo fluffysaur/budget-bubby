@@ -12,7 +12,10 @@ vi.mock("recharts", async (importOriginal) => {
     return {
         ...original,
         ResponsiveContainer: ({ children }: any) => (
-            <div className="recharts-responsive-container" style={{ width: 800, height: 400 }}>
+            <div
+                className="recharts-responsive-container"
+                style={{ width: 800, height: 400 }}
+            >
                 {children}
             </div>
         ),
@@ -41,7 +44,9 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
     it("renders Spend page header and SegmentedTabs with Expenses selected by default", async () => {
         renderWithProviders(<SpendPage />);
 
-        expect(screen.getByRole("heading", { name: "Spend", level: 1 })).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: "Spend", level: 1 }),
+        ).toBeInTheDocument();
 
         const expensesTab = screen.getByRole("tab", { name: /Expenses/i });
         const budgetTab = screen.getByRole("tab", { name: /Budget/i });
@@ -54,7 +59,9 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
         // Embedded ExpensesPage content is rendered
         await waitFor(() => {
             expect(screen.getByText(/Spendable/i)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText(/Search merchant/i)).toBeInTheDocument();
+            expect(
+                screen.getByPlaceholderText(/Search merchant/i),
+            ).toBeInTheDocument();
         });
     });
 
@@ -65,7 +72,10 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
         fireEvent.click(budgetTab);
 
         expect(budgetTab).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("tab", { name: /Expenses/i })).toHaveAttribute("aria-selected", "false");
+        expect(screen.getByRole("tab", { name: /Expenses/i })).toHaveAttribute(
+            "aria-selected",
+            "false",
+        );
 
         await waitFor(() => {
             expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();

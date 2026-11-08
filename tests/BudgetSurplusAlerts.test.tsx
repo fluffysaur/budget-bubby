@@ -137,7 +137,9 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
             screen.getByTestId("category-limit-exceeded-banner"),
         ).toBeInTheDocument();
         expect(
-            screen.getByText(withText(/Lifestyle has exceeded cap by S\$45\.00!/i)),
+            screen.getByText(
+                withText(/Lifestyle has exceeded cap by S\$45\.00!/i),
+            ),
         ).toBeInTheDocument();
 
         // Amber Nearing Alert
@@ -146,7 +148,9 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
         ).toBeInTheDocument();
         expect(
             screen.getByText(
-                withText(/Food is at 84% \(S\$672\.00 of S\$800\.00\) — S\$128\.00 left/i),
+                withText(
+                    /Food is at 84% \(S\$672\.00 of S\$800\.00\) — S\$128\.00 left/i,
+                ),
             ),
         ).toBeInTheDocument();
     });
@@ -490,9 +494,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         });
         expect(lockInfoBtn).toBeInTheDocument();
         fireEvent.click(lockInfoBtn);
-        expect(
-            screen.getByText("Locked rows stay put."),
-        ).toBeInTheDocument();
+        expect(screen.getByText("Locked rows stay put.")).toBeInTheDocument();
         fireEvent.click(screen.getByRole("button", { name: "Close tooltip" }));
 
         // Verify category lock toggle buttons exist
@@ -620,7 +622,9 @@ describe("CategoryProgressList Warning Badges", () => {
         render(<CategoryProgressList categories={categories} />);
 
         // Streamlined remaining text on category meter
-        expect(screen.getByText(withText(/S\$80\.00 left/i))).toBeInTheDocument();
+        expect(
+            screen.getByText(withText(/S\$80\.00 left/i)),
+        ).toBeInTheDocument();
         expect(screen.queryByText("Amber Guardrail")).not.toBeInTheDocument();
 
         // Rose cap exceeded badge on progress bar

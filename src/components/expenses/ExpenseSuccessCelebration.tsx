@@ -98,7 +98,11 @@ export function ExpenseSuccessCelebration({
             }
         };
         window.addEventListener("expenseAdded", handleGlobalExpenseAdded);
-        return () => window.removeEventListener("expenseAdded", handleGlobalExpenseAdded);
+        return () =>
+            window.removeEventListener(
+                "expenseAdded",
+                handleGlobalExpenseAdded,
+            );
     }, [triggerCelebration]);
 
     const activeExpense = active?.expense;
@@ -135,7 +139,9 @@ export function ExpenseSuccessCelebration({
                             <span className="shrink-0">
                                 <CurrencyText amount={activeExpense.amount} />
                             </span>
-                            <span className="text-(--text-muted) shrink-0">•</span>
+                            <span className="text-(--text-muted) shrink-0">
+                                •
+                            </span>
                             <span className="truncate max-w-28 sm:max-w-48 text-(--text-ink) font-medium">
                                 {activeExpense.item}
                             </span>

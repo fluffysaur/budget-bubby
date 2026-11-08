@@ -43,7 +43,9 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
 
         await waitFor(() => {
             expect(screen.getByText(/\d+d left/i)).toBeInTheDocument();
-            expect(screen.getByRole('progressbar', { name: /spendable/i })).toBeInTheDocument();
+            expect(
+                screen.getByRole("progressbar", { name: /spendable/i }),
+            ).toBeInTheDocument();
         });
     });
 
@@ -150,10 +152,9 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
     });
 
     it("hides member picker in ExpenseFormModal in Supabase mode until real members load", () => {
-        vi.spyOn(
-            supabaseClientModule,
-            "isSupabaseConfigured",
-        ).mockReturnValue(true);
+        vi.spyOn(supabaseClientModule, "isSupabaseConfigured").mockReturnValue(
+            true,
+        );
 
         render(
             <ExpenseFormModal

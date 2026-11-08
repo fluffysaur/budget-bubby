@@ -37,7 +37,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         },
         ref,
     ) => {
-        const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
+        const selectId =
+            id ||
+            (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
         const sizeClasses =
             sizeVariant === "sm"
@@ -45,7 +47,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 : "px-3.5 py-2.5 text-base sm:text-sm pr-10";
 
         return (
-            <div className={`w-full min-w-0 ${label ? "space-y-1.5" : ""} ${containerClassName}`}>
+            <div
+                className={`w-full min-w-0 ${label ? "space-y-1.5" : ""} ${containerClassName}`}
+            >
                 {label && (
                     <label
                         htmlFor={selectId}

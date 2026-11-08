@@ -7,9 +7,21 @@
  */
 
 import { useMemo } from "react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+} from "recharts";
 import { CalendarCheck, TrendingUp } from "lucide-react";
-import type { Account, AccountSnapshot, CreditCardStatement } from "../../types/finance";
+import type {
+    Account,
+    AccountSnapshot,
+    CreditCardStatement,
+} from "../../types/finance";
 import { formatDisplayMonth } from "../../lib/dateUtils";
 import { calculateMonthlyBalanceTrends } from "../../lib/financialFormulas";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
@@ -97,11 +109,7 @@ export function NetWorthChart({
     const latestPoint = chartData[chartData.length - 1];
 
     return (
-        <Card
-            variant="white"
-            padding="lg"
-            className={className}
-        >
+        <Card variant="white" padding="lg" className={className}>
             {/* Header & Chart Legends */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b-2 border-(--border-ink) gap-3">
                 <div className="shrink-0">
@@ -130,9 +138,12 @@ export function NetWorthChart({
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
                         <span className="h-2 w-2 rounded-full bg-indigo-600" />
                         <span>Net Worth</span>
-                        {latestPoint && <span className="ml-1"><CurrencyText amount={latestPoint.netWorth} /></span>}
+                        {latestPoint && (
+                            <span className="ml-1">
+                                <CurrencyText amount={latestPoint.netWorth} />
+                            </span>
+                        )}
                     </div>
-
                 </div>
             </div>
 
@@ -153,78 +164,91 @@ export function NetWorthChart({
                             size="sm"
                             className="mt-4"
                             onClick={onUpdateBalances}
-                            leftIcon={<CalendarCheck className="h-4 w-4" strokeWidth={2.5} />}
+                            leftIcon={
+                                <CalendarCheck
+                                    className="h-4 w-4"
+                                    strokeWidth={2.5}
+                                />
+                            }
                         >
                             Update Balances
                         </Button>
                     )}
                 </div>
             ) : (
-            /* Chart Canvas */
-            <div className="w-full h-72 sm:h-80">
-                <ResponsiveContainer
-                    width="100%"
-                    height="100%"
-                >
-                    <AreaChart
-                        data={chartData}
-                        margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                    >
-                        <defs>
-                            <linearGradient
-                                id="colorNetWorth"
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                            >
-                                <stop
-                                    offset="5%"
-                                    stopColor="#6366F1"
-                                    stopOpacity={0.4}
-                                />
-                                <stop
-                                    offset="95%"
-                                    stopColor="#6366F1"
-                                    stopOpacity={0.0}
-                                />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                            opacity={0.12}
-                            vertical={false}
-                        />
-                        <XAxis
-                            dataKey="date"
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fontSize: 11, fill: "var(--text-faint)" }}
-                        />
-                        <YAxis
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fontSize: 10, fill: "var(--text-faint)" }}
-                            tickFormatter={(v) => {
-                                if (Math.abs(v) >= 1000) {
-                                    return `S$${(v / 1000).toFixed(0)}k`;
-                                }
-                                return `S$${v}`;
+                /* Chart Canvas */
+                <div className="w-full h-72 sm:h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                            data={chartData}
+                            margin={{
+                                top: 10,
+                                right: 10,
+                                left: -10,
+                                bottom: 0,
                             }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area
-                            type="monotone"
-                            dataKey="netWorth"
-                            name="Net Worth"
-                            stroke="#6366F1"
-                            strokeWidth={2.5}
-                            fillOpacity={1}
-                            fill="url(#colorNetWorth)"
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
-            </div>
+                        >
+                            <defs>
+                                <linearGradient
+                                    id="colorNetWorth"
+                                    x1="0"
+                                    y1="0"
+                                    x2="0"
+                                    y2="1"
+                                >
+                                    <stop
+                                        offset="5%"
+                                        stopColor="#6366F1"
+                                        stopOpacity={0.4}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="#6366F1"
+                                        stopOpacity={0.0}
+                                    />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                opacity={0.12}
+                                vertical={false}
+                            />
+                            <XAxis
+                                dataKey="date"
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{
+                                    fontSize: 11,
+                                    fill: "var(--text-faint)",
+                                }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{
+                                    fontSize: 10,
+                                    fill: "var(--text-faint)",
+                                }}
+                                tickFormatter={(v) => {
+                                    if (Math.abs(v) >= 1000) {
+                                        return `S$${(v / 1000).toFixed(0)}k`;
+                                    }
+                                    return `S$${v}`;
+                                }}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area
+                                type="monotone"
+                                dataKey="netWorth"
+                                name="Net Worth"
+                                stroke="#6366F1"
+                                strokeWidth={2.5}
+                                fillOpacity={1}
+                                fill="url(#colorNetWorth)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
             )}
         </Card>
     );

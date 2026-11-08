@@ -11,7 +11,11 @@ import { NotificationSettingsModal } from "../src/components/layout/Notification
 import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { financeService } from "../src/services/financeService";
-import type { Expense, SavingsGoal, MonthlyBudgetCategoryDetail } from "../src/types/finance";
+import type {
+    Expense,
+    SavingsGoal,
+    MonthlyBudgetCategoryDetail,
+} from "../src/types/finance";
 
 describe("Haptic Feedback Touchpoints Integration", () => {
     beforeEach(() => {
@@ -46,7 +50,9 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         const celebrateSpy = vi.spyOn(haptics, "celebrate");
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
         vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
-        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
+        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue(
+            [],
+        );
         vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue({
             id: "chk-1",
             household_id: "hh-1",
@@ -121,7 +127,9 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         );
 
         // Click "Split Evenly" preset to allocate the $500
-        const splitEvenlyBtn = screen.getByRole("button", { name: /split evenly/i });
+        const splitEvenlyBtn = screen.getByRole("button", {
+            name: /split evenly/i,
+        });
         fireEvent.click(splitEvenlyBtn);
 
         const sweepSubmitBtn = screen.getByRole("button", { name: /sweep /i });
@@ -199,7 +207,9 @@ describe("Haptic Feedback Touchpoints Integration", () => {
             />,
         );
 
-        const confirmDeleteBtn = screen.getByRole("button", { name: /confirm delete/i });
+        const confirmDeleteBtn = screen.getByRole("button", {
+            name: /confirm delete/i,
+        });
         await act(async () => {
             fireEvent.click(confirmDeleteBtn);
         });
@@ -273,16 +283,25 @@ describe("Haptic Feedback Touchpoints Integration", () => {
             writable: true,
         });
         const celebrateSpy = vi.spyOn(haptics, "celebrate");
-        const updateSpy = vi.spyOn(financeService, "updateNotificationPreferences");
+        const updateSpy = vi.spyOn(
+            financeService,
+            "updateNotificationPreferences",
+        );
 
         render(
             <HouseholdProvider>
-                <NotificationSettingsModal isOpen={true} onClose={vi.fn()} memberId="mem-1" />
+                <NotificationSettingsModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    memberId="mem-1"
+                />
             </HouseholdProvider>,
         );
 
         // Vibrate test button exists
-        const testVibrateBtn = await screen.findByRole("button", { name: /vibrate/i });
+        const testVibrateBtn = await screen.findByRole("button", {
+            name: /vibrate/i,
+        });
         fireEvent.click(testVibrateBtn);
         expect(celebrateSpy).toHaveBeenCalledTimes(1);
 

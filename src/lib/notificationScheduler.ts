@@ -11,8 +11,15 @@
 import { financeService } from "../services/financeService";
 import { getDefaultNotificationPreferences } from "../data/mockSeedData";
 import { isServerPushEnabled } from "./pushSubscription";
-import { currentMinutes, isWithinQuietHours, type AppReminder } from "./reminders/rules";
-import { computeRemindersFrom, type ComputeRemindersOptions } from "./reminders/engine";
+import {
+    currentMinutes,
+    isWithinQuietHours,
+    type AppReminder,
+} from "./reminders/rules";
+import {
+    computeRemindersFrom,
+    type ComputeRemindersOptions,
+} from "./reminders/engine";
 import type { NotificationPreferences } from "../types/finance";
 
 export * from "./reminders/rules";
@@ -25,7 +32,9 @@ export * from "./reminders/engine";
 export function getDismissedReminderIds(memberId: string): Set<string> {
     if (typeof window === "undefined" || !window.localStorage) return new Set();
     try {
-        const stored = window.localStorage.getItem(`bb_notif_dismissed_${memberId}`);
+        const stored = window.localStorage.getItem(
+            `bb_notif_dismissed_${memberId}`,
+        );
         if (stored) return new Set(JSON.parse(stored));
     } catch {
         // ignore storage error
@@ -51,7 +60,10 @@ export async function migrateLegacyDismissals(memberId: string): Promise<void> {
     if (legacy.size === 0) return;
     try {
         for (const key of legacy) {
-            await financeService.dismissNotification(memberId, { key, type: "legacy" });
+            await financeService.dismissNotification(memberId, {
+                key,
+                type: "legacy",
+            });
         }
         clearDismissedReminders(memberId);
     } catch (err) {
@@ -100,7 +112,8 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
  * Passive notification permission check (no automatic prompt on mount).
  */
 export async function checkAndPromptInitialNotificationPermission(): Promise<NotificationPermission | null> {
-    if (typeof window === "undefined" || !("Notification" in window)) return null;
+    if (typeof window === "undefined" || !("Notification" in window))
+        return null;
     return Notification.permission;
 }
 
@@ -111,12 +124,14 @@ export async function dispatchPWANotification(
     title: string,
     options?: NotificationOptions,
 ): Promise<boolean> {
-    if (typeof window === "undefined" || !("Notification" in window)) return false;
+    if (typeof window === "undefined" || !("Notification" in window))
+        return false;
     if (Notification.permission !== "granted") return false;
 
     try {
         if ("serviceWorker" in navigator) {
-            const registration = await navigator.serviceWorker.getRegistration();
+            const registration =
+                await navigator.serviceWorker.getRegistration();
             if (registration && registration.showNotification) {
                 await registration.showNotification(title, {
                     icon: "/pwa-192x192.png",
@@ -174,10 +189,13 @@ export async function evaluateAndDispatchReminders(
     ) {
         for (const reminder of reminders) {
             try {
-                const claimed = await financeService.claimNotificationSend(memberId, {
-                    key: reminder.id,
-                    type: reminder.type,
-                });
+                const claimed = await financeService.claimNotificationSend(
+                    memberId,
+                    {
+                        key: reminder.id,
+                        type: reminder.type,
+                    },
+                );
                 if (!claimed) continue;
                 await dispatchPWANotification(reminder.title, {
                     body: reminder.message,

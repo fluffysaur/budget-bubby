@@ -25,19 +25,33 @@ describe("BubbySheet", () => {
         vi.restoreAllMocks();
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
         vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
-        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
+        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue(
+            [],
+        );
     });
 
     it("shows meters without numbers, quests and an empty snack shelf", async () => {
         await renderSheet();
 
-        expect(screen.getByRole("img", { name: "Nourishment" })).toBeInTheDocument();
-        expect(screen.getByRole("img", { name: "Fitness" })).toBeInTheDocument();
-        expect(screen.getByRole("list", { name: "Today's quests" })).toBeInTheDocument();
-        expect(screen.getByRole("list", { name: "This week's quests" })).toBeInTheDocument();
-        expect(screen.getByText("Finish a week's quests to earn a treat.")).toBeInTheDocument();
+        expect(
+            screen.getByRole("img", { name: "Nourishment" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("img", { name: "Fitness" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("list", { name: "Today's quests" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("list", { name: "This week's quests" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("Finish a week's quests to earn a treat."),
+        ).toBeInTheDocument();
         // No counters anywhere in the sheet body
-        const dialogText = screen.getByRole("list", { name: "Today's quests" }).closest("div")?.textContent ?? "";
+        const dialogText =
+            screen.getByRole("list", { name: "Today's quests" }).closest("div")
+                ?.textContent ?? "";
         expect(dialogText).not.toMatch(/\d/);
     });
 

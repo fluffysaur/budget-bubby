@@ -13,7 +13,14 @@
 
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useHousehold } from "../context/HouseholdContext";
-import { Card, PageHeader, TruncatedText, DashboardSkeleton, MeterBar, ProgressRing } from "../components/ui";
+import {
+    Card,
+    PageHeader,
+    TruncatedText,
+    DashboardSkeleton,
+    MeterBar,
+    ProgressRing,
+} from "../components/ui";
 import {
     useRecurringItemsQuery,
     useBudgetDetailQuery,
@@ -32,7 +39,9 @@ import { readBubbyStore } from "../lib/bubby/storage";
 import { daysInMonthOf, toSgtDateString } from "../lib/bubby/dates";
 
 // Only loaded Monday to Wednesday, when a recap is due
-const WeeklyRecapCard = lazy(() => import("../components/dashboard/WeeklyRecapCard"));
+const WeeklyRecapCard = lazy(
+    () => import("../components/dashboard/WeeklyRecapCard"),
+);
 
 export interface DashboardPageProps {
     className?: string;
@@ -77,7 +86,10 @@ export function DashboardPage({
         memberIds,
     );
 
-    const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
+    const recurringItems = useMemo(
+        () => recurringItemsData || [],
+        [recurringItemsData],
+    );
     const monthlyBudget = budgetData || null;
 
     const isLoading = budgetLoading && !budgetData;
@@ -140,7 +152,8 @@ export function DashboardPage({
     const [showAllCategories, setShowAllCategories] = useState(false);
     const weeklyBudget =
         perspective === "household" && spendableSummary.totalAllocated > 0
-            ? (spendableSummary.totalAllocated * 7) / daysInMonthOf(toSgtDateString())
+            ? (spendableSummary.totalAllocated * 7) /
+              daysInMonthOf(toSgtDateString())
             : null;
 
     const displayedCategories = showAllCategories
@@ -150,18 +163,27 @@ export function DashboardPage({
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
-            <PageHeader title="Home" badge={<BubbyGreeting onOpenInbox={() => onNavigateTab?.("inbox")} />} />
+            <PageHeader
+                title="Home"
+                badge={
+                    <BubbyGreeting
+                        onOpenInbox={() => onNavigateTab?.("inbox")}
+                    />
+                }
+            />
 
             {isLoading ? (
                 <DashboardSkeleton />
             ) : (
-                <div className={budgetPlaceholder ? "space-y-5 opacity-60 transition-opacity" : "space-y-5 transition-opacity"}>
+                <div
+                    className={
+                        budgetPlaceholder
+                            ? "space-y-5 opacity-60 transition-opacity"
+                            : "space-y-5 transition-opacity"
+                    }
+                >
                     {/* Left to Spend hero */}
-                    <Card
-                        role="region"
-                        aria-label="Left to Spend"
-                        padding="lg"
-                    >
+                    <Card role="region" aria-label="Left to Spend" padding="lg">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
@@ -175,11 +197,20 @@ export function DashboardPage({
                                             : "text-(--text-ink)"
                                     }`}
                                 >
-                                    <CurrencyText amount={spendableSummary.totalRemaining} size="hero" />
+                                    <CurrencyText
+                                        amount={spendableSummary.totalRemaining}
+                                        size="hero"
+                                    />
                                 </div>
                                 <span className="mt-1 block text-xs font-semibold text-(--text-muted) font-mono-num">
-                                    <CurrencyText amount={spendableSummary.totalSpent} /> of{" "}
-                                    <CurrencyText amount={spendableSummary.totalAllocated} /> spent
+                                    <CurrencyText
+                                        amount={spendableSummary.totalSpent}
+                                    />{" "}
+                                    of{" "}
+                                    <CurrencyText
+                                        amount={spendableSummary.totalAllocated}
+                                    />{" "}
+                                    spent
                                 </span>
                             </div>
                             {onNavigateTab && (
@@ -227,14 +258,17 @@ export function DashboardPage({
                                                     <span
                                                         className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"
                                                         style={{
-                                                            backgroundColor: cat.color,
+                                                            backgroundColor:
+                                                                cat.color,
                                                         }}
                                                     />
                                                 }
                                             />
                                             <div className="min-w-0 flex-1">
                                                 <div className="text-xs font-bold text-(--text-ink) truncate font-display">
-                                                    <TruncatedText text={cat.name} />
+                                                    <TruncatedText
+                                                        text={cat.name}
+                                                    />
                                                 </div>
                                                 <div
                                                     className={`text-xs font-extrabold font-mono-num ${
@@ -243,7 +277,9 @@ export function DashboardPage({
                                                             : "text-(--text-ink)"
                                                     }`}
                                                 >
-                                                    <CurrencyText amount={cat.remaining} />
+                                                    <CurrencyText
+                                                        amount={cat.remaining}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -253,7 +289,11 @@ export function DashboardPage({
                                     <div className="mt-2 text-center">
                                         <button
                                             type="button"
-                                            onClick={() => setShowAllCategories((prev) => !prev)}
+                                            onClick={() =>
+                                                setShowAllCategories(
+                                                    (prev) => !prev,
+                                                )
+                                            }
                                             className="text-xs font-bold text-(--text-muted) hover:text-(--text-ink) py-1 px-3 rounded-lg hover:bg-(--bg-cream) cursor-pointer transition-colors"
                                         >
                                             {showAllCategories

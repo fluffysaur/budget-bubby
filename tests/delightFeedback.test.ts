@@ -69,7 +69,9 @@ describe("delight feedback", () => {
         setReducedMotion(true);
         const milestones: MilestoneDetail[] = [];
         const off = onAppEvent("delight:milestone", (d) => milestones.push(d));
-        const result = feedback.milestone("body-change", { title: "Bubby got buff!" });
+        const result = feedback.milestone("body-change", {
+            title: "Bubby got buff!",
+        });
         off();
         expect(result).toBe("milestone");
         expect(milestones[0].confetti).toBe(false);
@@ -99,11 +101,17 @@ describe("delight feedback", () => {
 
     it("dedupes by key, so inbox zero plays once a day", () => {
         const key = "inbox-zero:2026-11-05:mem-1";
-        expect(feedback.milestone("inbox-zero", { dedupeKey: key })).toBe("milestone");
+        expect(feedback.milestone("inbox-zero", { dedupeKey: key })).toBe(
+            "milestone",
+        );
         resetFeedbackState();
-        expect(feedback.milestone("inbox-zero", { dedupeKey: key })).toBe("duplicate");
+        expect(feedback.milestone("inbox-zero", { dedupeKey: key })).toBe(
+            "duplicate",
+        );
         expect(
-            feedback.milestone("inbox-zero", { dedupeKey: "inbox-zero:2026-11-06:mem-1" }),
+            feedback.milestone("inbox-zero", {
+                dedupeKey: "inbox-zero:2026-11-06:mem-1",
+            }),
         ).toBe("milestone");
     });
 

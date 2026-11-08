@@ -6,7 +6,9 @@
 
 import type { Transition } from "motion/react";
 
-export const EASE_OUT_SOFT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+export const EASE_OUT_SOFT: [number, number, number, number] = [
+    0.16, 1, 0.3, 1,
+];
 export const EASE_IN_FAST: [number, number, number, number] = [0.4, 0, 1, 1];
 export const EASE_SPRING: [number, number, number, number] = [0.3, 1.4, 0.5, 1];
 

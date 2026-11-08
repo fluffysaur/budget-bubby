@@ -26,15 +26,20 @@ const LUNCH_START = 11 * 60 + 30;
 const LUNCH_END = 14 * 60;
 
 export function pickGreeting(input: GreetingInputs): GreetingLine {
-    if (input.inboxPending > 0) return { text: `${input.inboxPending} to sort`, action: "inbox" };
+    if (input.inboxPending > 0)
+        return { text: `${input.inboxPending} to sort`, action: "inbox" };
     // Bubby looks hungry or lonely: a gentle nudge (never a mood word)
-    if (input.mood === "rumbly") return { text: "Snack time? 🍤", action: "sheet" };
-    if (input.mood !== "normal") return { text: "Over here! 🐧", action: "sheet" };
+    if (input.mood === "rumbly")
+        return { text: "Snack time? 🍤", action: "sheet" };
+    if (input.mood !== "normal")
+        return { text: "Over here! 🐧", action: "sheet" };
     if (!input.loggedToday && input.minutes >= input.checkinMinutes) {
         return { text: "Log today?", action: "sheet" };
     }
-    if (input.minutes < LUNCH_START) return { text: "Morning! ☕", action: "sheet" };
-    if (input.minutes < LUNCH_END) return { text: "Makan time?", action: "sheet" };
+    if (input.minutes < LUNCH_START)
+        return { text: "Morning! ☕", action: "sheet" };
+    if (input.minutes < LUNCH_END)
+        return { text: "Makan time?", action: "sheet" };
     if (input.bothFedToday) return { text: "Both fed ✓", action: "sheet" };
     return { text: "Hi again!", action: "sheet" };
 }

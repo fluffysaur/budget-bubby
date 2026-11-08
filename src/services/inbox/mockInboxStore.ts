@@ -21,7 +21,10 @@ import { generateCaptureToken } from "../../lib/capture/token";
 import { normalizeMerchant } from "../../lib/capture/merchant";
 import { generateUuid } from "../../lib/uuid";
 import type { InboxService } from "./inboxService";
-import { CaptureTokenLimitError, MAX_ACTIVE_CAPTURE_TOKENS } from "./inboxErrors";
+import {
+    CaptureTokenLimitError,
+    MAX_ACTIVE_CAPTURE_TOKENS,
+} from "./inboxErrors";
 import { summarizeInbox } from "./inboxSummary";
 
 export const MOCK_INBOX_STORAGE_KEY = "budget_bubby_mock_inbox_v1";
@@ -73,9 +76,33 @@ function seedItem(
 function seedState(): MockInboxState {
     return {
         items: [
-            seedItem("inbox-demo-1", MEMBER_A, "Grab Food", 18.4, "SGD", 45, "DBS Altitude"),
-            seedItem("inbox-demo-2", MEMBER_B, "Ntuc Fairprice", 42.15, "SGD", 180, "UOB One"),
-            seedItem("inbox-demo-3", MEMBER_A, "Starbucks", 7.9, "SGD", 26 * 60, "DBS Altitude"),
+            seedItem(
+                "inbox-demo-1",
+                MEMBER_A,
+                "Grab Food",
+                18.4,
+                "SGD",
+                45,
+                "DBS Altitude",
+            ),
+            seedItem(
+                "inbox-demo-2",
+                MEMBER_B,
+                "Ntuc Fairprice",
+                42.15,
+                "SGD",
+                180,
+                "UOB One",
+            ),
+            seedItem(
+                "inbox-demo-3",
+                MEMBER_A,
+                "Starbucks",
+                7.9,
+                "SGD",
+                26 * 60,
+                "DBS Altitude",
+            ),
         ],
         rules: [],
         tokens: [],
@@ -98,7 +125,11 @@ function load(): MockInboxState {
 export class MockInboxStore implements InboxService {
     private state: MockInboxState | null = null;
 
-    constructor(private readonly addExpense: (input: CreateExpenseInput) => Promise<Expense>) {}
+    constructor(
+        private readonly addExpense: (
+            input: CreateExpenseInput,
+        ) => Promise<Expense>,
+    ) {}
 
     private get data(): MockInboxState {
         if (!this.state) this.state = load();
@@ -107,7 +138,10 @@ export class MockInboxStore implements InboxService {
 
     private persist() {
         try {
-            window.localStorage.setItem(MOCK_INBOX_STORAGE_KEY, JSON.stringify(this.data));
+            window.localStorage.setItem(
+                MOCK_INBOX_STORAGE_KEY,
+                JSON.stringify(this.data),
+            );
         } catch {
             // Ignore storage errors
         }
@@ -129,7 +163,9 @@ export class MockInboxStore implements InboxService {
         this.persist();
     }
 
-    public async getInboxItems(status: InboxItemStatus = "pending"): Promise<InboxItemsResult> {
+    public async getInboxItems(
+        status: InboxItemStatus = "pending",
+    ): Promise<InboxItemsResult> {
         const items = this.data.items
             .filter((i) => i.status === status)
             .sort((a, b) => b.captured_at.localeCompare(a.captured_at))
@@ -140,15 +176,21 @@ export class MockInboxStore implements InboxService {
     public async getInboxSummary(memberId?: string): Promise<InboxSummary> {
         return summarizeInbox(
             this.data.items.filter(
-                (i) => i.status === "pending" && (!memberId || i.member_id === memberId),
+                (i) =>
+                    i.status === "pending" &&
+                    (!memberId || i.member_id === memberId),
             ),
         );
     }
 
-    public async confirmInboxItem(itemId: string, expense: CreateExpenseInput): Promise<string> {
+    public async confirmInboxItem(
+        itemId: string,
+        expense: CreateExpenseInput,
+    ): Promise<string> {
         const item = this.data.items.find((i) => i.id === itemId);
         if (!item) throw new Error("inbox_item_not_found");
-        if (item.status === "confirmed" && item.expense_id) return item.expense_id;
+        if (item.status === "confirmed" && item.expense_id)
+            return item.expense_id;
         if (item.status !== "pending") throw new Error("inbox_item_resolved");
 
         const created = await this.addExpense({
@@ -163,11 +205,15 @@ export class MockInboxStore implements InboxService {
         return created.id;
     }
 
-    public async resolveInboxItem(itemId: string, status: InboxResolveStatus): Promise<void> {
+    public async resolveInboxItem(
+        itemId: string,
+        status: InboxResolveStatus,
+    ): Promise<void> {
         const item = this.data.items.find((i) => i.id === itemId);
         if (!item || item.status === "confirmed") return;
         item.status = status;
-        item.resolved_at = status === "pending" ? null : new Date().toISOString();
+        item.resolved_at =
+            status === "pending" ? null : new Date().toISOString();
         this.persist();
     }
 
@@ -175,8 +221,12 @@ export class MockInboxStore implements InboxService {
         return this.data.rules.map((r) => ({ ...r }));
     }
 
-    public async upsertMerchantRule(rule: UpsertMerchantRuleInput): Promise<MerchantRule> {
-        let existing = this.data.rules.find((r) => r.merchant_key === rule.merchant_key);
+    public async upsertMerchantRule(
+        rule: UpsertMerchantRuleInput,
+    ): Promise<MerchantRule> {
+        let existing = this.data.rules.find(
+            (r) => r.merchant_key === rule.merchant_key,
+        );
         if (!existing) {
             existing = {
                 id: generateUuid(),
@@ -200,9 +250,13 @@ export class MockInboxStore implements InboxService {
         this.persist();
     }
 
-    public async listCaptureTokens(memberId?: string): Promise<CaptureTokensResult> {
+    public async listCaptureTokens(
+        memberId?: string,
+    ): Promise<CaptureTokensResult> {
         const tokens = this.data.tokens
-            .filter((t) => !t.revoked_at && (!memberId || t.member_id === memberId))
+            .filter(
+                (t) => !t.revoked_at && (!memberId || t.member_id === memberId),
+            )
             .map((t) => ({
                 id: t.id,
                 member_id: t.member_id,
@@ -220,7 +274,8 @@ export class MockInboxStore implements InboxService {
         memberId: string = MEMBER_A,
     ): Promise<{ token: string; row: CaptureToken }> {
         const { tokens } = await this.listCaptureTokens(memberId);
-        if (tokens.length >= MAX_ACTIVE_CAPTURE_TOKENS) throw new CaptureTokenLimitError();
+        if (tokens.length >= MAX_ACTIVE_CAPTURE_TOKENS)
+            throw new CaptureTokenLimitError();
         const generated = await generateCaptureToken();
         const row: MockTokenRow = {
             id: generateUuid(),
@@ -236,9 +291,9 @@ export class MockInboxStore implements InboxService {
         };
         this.data.tokens.push(row);
         this.persist();
-        const [publicRow] = (await this.listCaptureTokens(memberId)).tokens.filter(
-            (t) => t.id === row.id,
-        );
+        const [publicRow] = (
+            await this.listCaptureTokens(memberId)
+        ).tokens.filter((t) => t.id === row.id);
         return { token: generated.token, row: publicRow };
     }
 

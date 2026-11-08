@@ -181,83 +181,86 @@ export function MonthPicker({
                             {...pop}
                             className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-3.5 shadow-cute select-none"
                         >
-                        {/* Popover Header: Year Stepper & Close Button */}
-                        <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-(--border-subtle)">
-                            <div className="flex items-center gap-1.5">
+                            {/* Popover Header: Year Stepper & Close Button */}
+                            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-(--border-subtle)">
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setNavYear((y) => y - 1)}
+                                        aria-label="Previous year"
+                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                    >
+                                        <ChevronLeft className="h-3.5 w-3.5" />
+                                    </button>
+                                    <span className="font-display font-black text-sm tracking-tight text-(--text-ink) px-1 font-mono-num">
+                                        {navYear}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNavYear((y) => y + 1)}
+                                        aria-label="Next year"
+                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                    >
+                                        <ChevronRight className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+
                                 <button
                                     type="button"
-                                    onClick={() => setNavYear((y) => y - 1)}
-                                    aria-label="Previous year"
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                    onClick={() => setIsOpen(false)}
+                                    aria-label="Close month picker"
+                                    className="p-1 rounded-lg text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) cursor-pointer"
                                 >
-                                    <ChevronLeft className="h-3.5 w-3.5" />
-                                </button>
-                                <span className="font-display font-black text-sm tracking-tight text-(--text-ink) px-1 font-mono-num">
-                                    {navYear}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => setNavYear((y) => y + 1)}
-                                    aria-label="Next year"
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                                >
-                                    <ChevronRight className="h-3.5 w-3.5" />
+                                    <X className="h-4 w-4" />
                                 </button>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => setIsOpen(false)}
-                                aria-label="Close month picker"
-                                className="p-1 rounded-lg text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) cursor-pointer"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
+                            {/* 12-Month Grid (4 rows x 3 cols) */}
+                            <div className="grid grid-cols-3 gap-1.5">
+                                {MONTH_NAMES.map((monthName, index) => {
+                                    const monthNumStr = String(
+                                        index + 1,
+                                    ).padStart(2, "0");
+                                    const monthKey = `${navYear}-${monthNumStr}`;
+                                    const isSelected =
+                                        selectedMonth === monthKey;
+                                    const isTodayMonth =
+                                        currentMonth === monthKey;
 
-                        {/* 12-Month Grid (4 rows x 3 cols) */}
-                        <div className="grid grid-cols-3 gap-1.5">
-                            {MONTH_NAMES.map((monthName, index) => {
-                                const monthNumStr = String(index + 1).padStart(
-                                    2,
-                                    "0",
-                                );
-                                const monthKey = `${navYear}-${monthNumStr}`;
-                                const isSelected = selectedMonth === monthKey;
-                                const isTodayMonth = currentMonth === monthKey;
+                                    return (
+                                        <button
+                                            key={monthKey}
+                                            type="button"
+                                            onClick={() =>
+                                                handleSelectMonth(index)
+                                            }
+                                            aria-label={`Select ${monthName} ${navYear}`}
+                                            className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                                                isSelected
+                                                    ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
+                                                    : isTodayMonth
+                                                      ? "bg-(--pastel-mint) text-(--text-ink) border border-(--border-ink) hover:bg-(--pastel-mint-dark)"
+                                                      : "bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"
+                                            }`}
+                                        >
+                                            <span>{monthName}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
 
-                                return (
-                                    <button
-                                        key={monthKey}
-                                        type="button"
-                                        onClick={() => handleSelectMonth(index)}
-                                        aria-label={`Select ${monthName} ${navYear}`}
-                                        className={`h-10 flex items-center justify-center rounded-xl text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
-                                            isSelected
-                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
-                                                : isTodayMonth
-                                                  ? "bg-(--pastel-mint) text-(--text-ink) border border-(--border-ink) hover:bg-(--pastel-mint-dark)"
-                                                  : "bg-(--bg-canvas) text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"
-                                        }`}
-                                    >
-                                        <span>{monthName}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Quick Jump to Current Month */}
-                        <div className="mt-2.5 pt-2 border-t border-(--border-subtle)">
-                            <button
-                                type="button"
-                                onClick={handleJumpFromPopover}
-                                aria-label="Jump to current month from picker"
-                                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) bg-(--pastel-butter-light) text-(--text-ink) hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                            >
-                                <RotateCcw className="h-3 w-3 shrink-0" />
-                                <span>Jump to Current Month</span>
-                            </button>
-                        </div>
+                            {/* Quick Jump to Current Month */}
+                            <div className="mt-2.5 pt-2 border-t border-(--border-subtle)">
+                                <button
+                                    type="button"
+                                    onClick={handleJumpFromPopover}
+                                    aria-label="Jump to current month from picker"
+                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) bg-(--pastel-butter-light) text-(--text-ink) hover:bg-(--pastel-butter) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                >
+                                    <RotateCcw className="h-3 w-3 shrink-0" />
+                                    <span>Jump to Current Month</span>
+                                </button>
+                            </div>
                         </m.div>
                     )}
                 </AnimatePresence>

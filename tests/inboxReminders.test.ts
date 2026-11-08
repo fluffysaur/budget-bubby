@@ -5,10 +5,18 @@ import {
     checkCreditCardDueReminders,
     type AppReminder,
 } from "../src/lib/reminders/rules";
-import { computeRemindersFrom, getReminderUrl, type ReminderDataSource } from "../src/lib/reminders/engine";
+import {
+    computeRemindersFrom,
+    getReminderUrl,
+    type ReminderDataSource,
+} from "../src/lib/reminders/engine";
 import { classifyReminder } from "../src/lib/reminders/push";
 import { mockFinanceService } from "../src/services/mockFinanceService";
-import type { CreditCard, CreditCardStatement, InboxSummary } from "../src/types/finance";
+import type {
+    CreditCard,
+    CreditCardStatement,
+    InboxSummary,
+} from "../src/types/finance";
 
 const REF = new Date(2026, 10, 5, 19, 0, 0); // SGT wall clock, 7 PM
 const summary = (over: Partial<InboxSummary> = {}): InboxSummary => ({
@@ -21,7 +29,14 @@ const summary = (over: Partial<InboxSummary> = {}): InboxSummary => ({
 
 describe("checkInboxReminder", () => {
     it("fires after check-in time with a stable daily key and totals only", () => {
-        const r = checkInboxReminder(summary(), 19, "m1", "2026-11-05", "18:00", REF);
+        const r = checkInboxReminder(
+            summary(),
+            19,
+            "m1",
+            "2026-11-05",
+            "18:00",
+            REF,
+        );
         expect(r).toMatchObject({
             id: "reminder-inbox-m1-2026-11-05",
             type: "inbox_pending",
@@ -31,22 +46,45 @@ describe("checkInboxReminder", () => {
             actionLabel: "Sort Now",
             actionType: "view_inbox",
         });
-        expect(checkInboxReminder(summary(), 20, "m1", "2026-11-05", "18:00", REF)?.id).toBe(r?.id);
+        expect(
+            checkInboxReminder(summary(), 20, "m1", "2026-11-05", "18:00", REF)
+                ?.id,
+        ).toBe(r?.id);
     });
 
     it("is gated by check-in time, count and availability", () => {
-        expect(checkInboxReminder(summary(), 17, "m1", "2026-11-05", "18:00", REF)).toBeNull();
-        expect(checkInboxReminder(summary({ pendingCount: 0 }), 19, "m1", "2026-11-05")).toBeNull();
-        expect(checkInboxReminder(summary({ available: false }), 19, "m1", "2026-11-05")).toBeNull();
+        expect(
+            checkInboxReminder(summary(), 17, "m1", "2026-11-05", "18:00", REF),
+        ).toBeNull();
+        expect(
+            checkInboxReminder(
+                summary({ pendingCount: 0 }),
+                19,
+                "m1",
+                "2026-11-05",
+            ),
+        ).toBeNull();
+        expect(
+            checkInboxReminder(
+                summary({ available: false }),
+                19,
+                "m1",
+                "2026-11-05",
+            ),
+        ).toBeNull();
         expect(checkInboxReminder(null, 19, "m1", "2026-11-05")).toBeNull();
     });
 
     it("warns when the oldest item is over 3 days old", () => {
         const old = summary({
             pendingCount: 1,
-            oldestCapturedAt: new Date(REF.getTime() - 4 * 86_400_000).toISOString(),
+            oldestCapturedAt: new Date(
+                REF.getTime() - 4 * 86_400_000,
+            ).toISOString(),
         });
-        expect(checkInboxReminder(old, 19, "m1", "2026-11-05", "18:00", REF)).toMatchObject({
+        expect(
+            checkInboxReminder(old, 19, "m1", "2026-11-05", "18:00", REF),
+        ).toMatchObject({
             severity: "warning",
             title: "1 Purchase to Sort",
         });
@@ -55,7 +93,14 @@ describe("checkInboxReminder", () => {
 
 describe("inbox reminder", () => {
     it("routes and classifies the inbox nudge", () => {
-        const r = checkInboxReminder(summary(), 19, "m1", "2026-11-05", "18:00", REF) as AppReminder;
+        const r = checkInboxReminder(
+            summary(),
+            19,
+            "m1",
+            "2026-11-05",
+            "18:00",
+            REF,
+        ) as AppReminder;
         expect(getReminderUrl(r)).toBe("/inbox");
         expect(classifyReminder(r)).toBe("immediate");
     });
@@ -67,7 +112,11 @@ describe("engine with the inbox", () => {
         mockFinanceService.resetData();
     });
 
-    const opts = { memberId: "mem-00000000-0011", currentHour: 19, referenceDate: REF };
+    const opts = {
+        memberId: "mem-00000000-0011",
+        currentHour: 19,
+        referenceDate: REF,
+    };
 
     it("sends at most one logging nudge: inbox replaces daily check-in", async () => {
         const reminders = await computeRemindersFrom(mockFinanceService, opts);
@@ -78,17 +127,23 @@ describe("engine with the inbox", () => {
 
     it("survives a getInboxSummary throw (before the migration)", async () => {
         const source: ReminderDataSource = {
-            getNotificationPreferences: (id: string) => mockFinanceService.getNotificationPreferences(id),
-            getNotificationLog: (id: string) => mockFinanceService.getNotificationLog(id),
-            getAllAccountSnapshots: (p) => mockFinanceService.getAllAccountSnapshots(p),
-            getCreditCardStatements: (m) => mockFinanceService.getCreditCardStatements(m),
+            getNotificationPreferences: (id: string) =>
+                mockFinanceService.getNotificationPreferences(id),
+            getNotificationLog: (id: string) =>
+                mockFinanceService.getNotificationLog(id),
+            getAllAccountSnapshots: (p) =>
+                mockFinanceService.getAllAccountSnapshots(p),
+            getCreditCardStatements: (m) =>
+                mockFinanceService.getCreditCardStatements(m),
             getCreditCards: () => mockFinanceService.getCreditCards(),
-            getHouseholdOverview: () => mockFinanceService.getHouseholdOverview(),
+            getHouseholdOverview: () =>
+                mockFinanceService.getHouseholdOverview(),
             getExpenses: (f) => mockFinanceService.getExpenses(f),
             getRecurringItems: () => mockFinanceService.getRecurringItems(),
             getGoals: () => mockFinanceService.getGoals(),
             getDailyCheckins: (id) => mockFinanceService.getDailyCheckins(id),
-            getMonthlyBudget: (m, id) => mockFinanceService.getMonthlyBudget(m, id),
+            getMonthlyBudget: (m, id) =>
+                mockFinanceService.getMonthlyBudget(m, id),
             getInboxSummary: async () => {
                 throw { code: "42P01" };
             },
@@ -112,7 +167,9 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         ...over,
     });
 
-    const makeStatement = (over: Partial<CreditCardStatement> = {}): CreditCardStatement => ({
+    const makeStatement = (
+        over: Partial<CreditCardStatement> = {},
+    ): CreditCardStatement => ({
         id: "stmt-test-1",
         card_id: "cc-test-1",
         household_id: "hh-1",
@@ -126,7 +183,11 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
     it("fires on the statement date itself (billing_day) when no statement is logged", () => {
         const card = makeCard({ billing_day: 15 });
         const onBillingDay = new Date("2026-10-15T12:00:00");
-        const reminders = checkMissingCreditCardStatements([card], [], onBillingDay);
+        const reminders = checkMissingCreditCardStatements(
+            [card],
+            [],
+            onBillingDay,
+        );
         expect(reminders).toHaveLength(1);
         expect(reminders[0]).toMatchObject({
             id: "reminder-cc-missing-cc-test-1-2026-10",
@@ -142,14 +203,22 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
     it("does not fire before the statement date", () => {
         const card = makeCard({ billing_day: 15 });
         const beforeBillingDay = new Date("2026-10-14T12:00:00");
-        const reminders = checkMissingCreditCardStatements([card], [], beforeBillingDay);
+        const reminders = checkMissingCreditCardStatements(
+            [card],
+            [],
+            beforeBillingDay,
+        );
         expect(reminders).toHaveLength(0);
     });
 
     it("continues to fire after the statement date while statement is unlogged", () => {
         const card = makeCard({ billing_day: 15 });
         const afterBillingDay = new Date("2026-10-20T12:00:00");
-        const reminders = checkMissingCreditCardStatements([card], [], afterBillingDay);
+        const reminders = checkMissingCreditCardStatements(
+            [card],
+            [],
+            afterBillingDay,
+        );
         expect(reminders).toHaveLength(1);
         expect(reminders[0].id).toBe("reminder-cc-missing-cc-test-1-2026-10");
     });
@@ -158,7 +227,11 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         const card = makeCard({ billing_day: 15 });
         const stmt = makeStatement({ card_id: card.id, month: "2026-10" });
         const afterBillingDay = new Date("2026-10-20T12:00:00");
-        const reminders = checkMissingCreditCardStatements([card], [stmt], afterBillingDay);
+        const reminders = checkMissingCreditCardStatements(
+            [card],
+            [stmt],
+            afterBillingDay,
+        );
         expect(reminders).toHaveLength(0);
     });
 
@@ -166,7 +239,11 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         const card = makeCard({ id: "cc-nov-31", billing_day: 31 });
         // Nov 29: 30-day month, before effective clamped billing day (30)
         expect(
-            checkMissingCreditCardStatements([card], [], new Date("2026-11-29T12:00:00")),
+            checkMissingCreditCardStatements(
+                [card],
+                [],
+                new Date("2026-11-29T12:00:00"),
+            ),
         ).toHaveLength(0);
         // Nov 30: clamped billing day reached, statement missing
         const reminders = checkMissingCreditCardStatements(
@@ -181,20 +258,42 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
 
     it("ignores inactive cards", () => {
         const card = makeCard({ billing_day: 10, is_active: false });
-        const reminders = checkMissingCreditCardStatements([card], [], new Date("2026-10-15T12:00:00"));
+        const reminders = checkMissingCreditCardStatements(
+            [card],
+            [],
+            new Date("2026-10-15T12:00:00"),
+        );
         expect(reminders).toHaveLength(0);
     });
 
     it("scopes reminders to the active member when specified", () => {
-        const card1 = makeCard({ id: "c1", owner_id: "mem-1", billing_day: 10 });
-        const card2 = makeCard({ id: "c2", owner_id: "mem-2", billing_day: 10 });
+        const card1 = makeCard({
+            id: "c1",
+            owner_id: "mem-1",
+            billing_day: 10,
+        });
+        const card2 = makeCard({
+            id: "c2",
+            owner_id: "mem-2",
+            billing_day: 10,
+        });
         const testDate = new Date("2026-10-15T12:00:00");
 
-        const mem1Reminders = checkMissingCreditCardStatements([card1, card2], [], testDate, "mem-1");
+        const mem1Reminders = checkMissingCreditCardStatements(
+            [card1, card2],
+            [],
+            testDate,
+            "mem-1",
+        );
         expect(mem1Reminders).toHaveLength(1);
         expect(mem1Reminders[0].data?.cardId).toBe("c1");
 
-        const mem2Reminders = checkMissingCreditCardStatements([card1, card2], [], testDate, "mem-2");
+        const mem2Reminders = checkMissingCreditCardStatements(
+            [card1, card2],
+            [],
+            testDate,
+            "mem-2",
+        );
         expect(mem2Reminders).toHaveLength(1);
         expect(mem2Reminders[0].data?.cardId).toBe("c2");
     });
@@ -209,7 +308,9 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         );
         expect(missingOnStmtDate).toHaveLength(1);
         expect(missingOnStmtDate[0].type).toBe("credit_card_missing_stmt");
-        expect(missingOnStmtDate[0].title).toBe("DBS Altitude Statement Needed");
+        expect(missingOnStmtDate[0].title).toBe(
+            "DBS Altitude Statement Needed",
+        );
 
         // Phase 2: User logs statement for Oct (due 2026-11-05)
         const stmt = makeStatement({

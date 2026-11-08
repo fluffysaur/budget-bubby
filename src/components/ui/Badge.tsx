@@ -109,9 +109,7 @@ export function Badge({
             className={`inline-flex items-center font-bold rounded-full ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
             {...rest}
         >
-            {resolvedIcon && (
-                <span className="shrink-0">{resolvedIcon}</span>
-            )}
+            {resolvedIcon && <span className="shrink-0">{resolvedIcon}</span>}
             <span>{children}</span>
         </span>
     );

@@ -97,9 +97,14 @@ describe("Issue #38: Domain Save Mutations", () => {
             queryClient.setQueryData(queryKeys.goals, initialGoals);
 
             let rejectPromise!: (err: Error) => void;
-            const updateSpy = vi.spyOn(financeService, "updateGoal").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
-            );
+            const updateSpy = vi
+                .spyOn(financeService, "updateGoal")
+                .mockImplementation(
+                    () =>
+                        new Promise((_, reject) => {
+                            rejectPromise = reject;
+                        }),
+                );
 
             const { result } = renderHook(() => useUpdateGoalMutation(), {
                 wrapper: createWrapper(queryClient),
@@ -113,7 +118,9 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             // Optimistic update should immediately reflect in cache
-            const cachedBeforeServer = queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals);
+            const cachedBeforeServer = queryClient.getQueryData<SavingsGoal[]>(
+                queryKeys.goals,
+            );
             expect(cachedBeforeServer?.[0].saved_so_far).toBe(1500);
 
             // Server fails
@@ -122,9 +129,13 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             // Cache should be rolled back to initial state
-            const cachedAfterError = queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals);
+            const cachedAfterError = queryClient.getQueryData<SavingsGoal[]>(
+                queryKeys.goals,
+            );
             expect(cachedAfterError?.[0].saved_so_far).toBe(1200);
-            expect(updateSpy).toHaveBeenCalledWith("goal-1", { saved_so_far: 1500 });
+            expect(updateSpy).toHaveBeenCalledWith("goal-1", {
+                saved_so_far: 1500,
+            });
         });
 
         it("optimistically adds a goal and rolls back on error", async () => {
@@ -132,7 +143,10 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "addGoal").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
             const { result } = renderHook(() => useAddGoalMutation(), {
@@ -150,13 +164,17 @@ describe("Issue #38: Domain Save Mutations", () => {
                 });
             });
 
-            expect(queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals)).toHaveLength(2);
+            expect(
+                queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals),
+            ).toHaveLength(2);
 
             await act(async () => {
                 rejectPromise(new Error("Add failed"));
             });
 
-            expect(queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals)).toHaveLength(1);
+            expect(
+                queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals),
+            ).toHaveLength(1);
         });
     });
 
@@ -177,44 +195,73 @@ describe("Issue #38: Domain Save Mutations", () => {
         ];
 
         it("optimistically updates recurring item and rolls back on error", async () => {
-            queryClient.setQueryData(queryKeys.recurringItems, initialRecurring);
+            queryClient.setQueryData(
+                queryKeys.recurringItems,
+                initialRecurring,
+            );
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "updateRecurringItem").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
-            const { result } = renderHook(() => useUpdateRecurringItemMutation(), {
-                wrapper: createWrapper(queryClient),
-            });
+            const { result } = renderHook(
+                () => useUpdateRecurringItemMutation(),
+                {
+                    wrapper: createWrapper(queryClient),
+                },
+            );
 
             await act(async () => {
                 result.current.mutate({ id: "rec-1", amount: 30 });
             });
 
-            expect(queryClient.getQueryData<RecurringItem[]>(queryKeys.recurringItems)?.[0].amount).toBe(30);
+            expect(
+                queryClient.getQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                )?.[0].amount,
+            ).toBe(30);
 
             await act(async () => {
                 rejectPromise(new Error("Update failed"));
             });
 
-            expect(queryClient.getQueryData<RecurringItem[]>(queryKeys.recurringItems)?.[0].amount).toBe(25.98);
+            expect(
+                queryClient.getQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                )?.[0].amount,
+            ).toBe(25.98);
         });
 
         it("optimistically deletes recurring item", async () => {
-            queryClient.setQueryData(queryKeys.recurringItems, initialRecurring);
+            queryClient.setQueryData(
+                queryKeys.recurringItems,
+                initialRecurring,
+            );
 
-            vi.spyOn(financeService, "deleteRecurringItem").mockResolvedValue(undefined as never);
+            vi.spyOn(financeService, "deleteRecurringItem").mockResolvedValue(
+                undefined as never,
+            );
 
-            const { result } = renderHook(() => useDeleteRecurringItemMutation(), {
-                wrapper: createWrapper(queryClient),
-            });
+            const { result } = renderHook(
+                () => useDeleteRecurringItemMutation(),
+                {
+                    wrapper: createWrapper(queryClient),
+                },
+            );
 
             await act(async () => {
                 result.current.mutate("rec-1");
             });
 
-            expect(queryClient.getQueryData<RecurringItem[]>(queryKeys.recurringItems)).toHaveLength(0);
+            expect(
+                queryClient.getQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                ),
+            ).toHaveLength(0);
         });
     });
 
@@ -246,46 +293,80 @@ describe("Issue #38: Domain Save Mutations", () => {
 
         it("optimistically updates single account balance across perspective queries", async () => {
             queryClient.setQueryData(queryKeys.accounts(), initialAccounts);
-            queryClient.setQueryData(queryKeys.accounts("mem-1"), [initialAccounts[0]]);
+            queryClient.setQueryData(queryKeys.accounts("mem-1"), [
+                initialAccounts[0],
+            ]);
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "updateAccountBalance").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
-            const { result } = renderHook(() => useUpdateAccountBalanceMutation(), {
-                wrapper: createWrapper(queryClient),
-            });
+            const { result } = renderHook(
+                () => useUpdateAccountBalanceMutation(),
+                {
+                    wrapper: createWrapper(queryClient),
+                },
+            );
 
             await act(async () => {
-                result.current.mutate({ accountId: "acc-1", newBalance: 12500 });
+                result.current.mutate({
+                    accountId: "acc-1",
+                    newBalance: 12500,
+                });
             });
 
             // Check household perspective
-            expect(queryClient.getQueryData<Account[]>(queryKeys.accounts())?.[0].balance).toBe(12500);
+            expect(
+                queryClient.getQueryData<Account[]>(queryKeys.accounts())?.[0]
+                    .balance,
+            ).toBe(12500);
             // Check member perspective
-            expect(queryClient.getQueryData<Account[]>(queryKeys.accounts("mem-1"))?.[0].balance).toBe(12500);
+            expect(
+                queryClient.getQueryData<Account[]>(
+                    queryKeys.accounts("mem-1"),
+                )?.[0].balance,
+            ).toBe(12500);
 
             // Rollback on error
             await act(async () => {
                 rejectPromise(new Error("Balance update failed"));
             });
 
-            expect(queryClient.getQueryData<Account[]>(queryKeys.accounts())?.[0].balance).toBe(10000);
-            expect(queryClient.getQueryData<Account[]>(queryKeys.accounts("mem-1"))?.[0].balance).toBe(10000);
+            expect(
+                queryClient.getQueryData<Account[]>(queryKeys.accounts())?.[0]
+                    .balance,
+            ).toBe(10000);
+            expect(
+                queryClient.getQueryData<Account[]>(
+                    queryKeys.accounts("mem-1"),
+                )?.[0].balance,
+            ).toBe(10000);
         });
 
         it("optimistically performs bulk balance updates", async () => {
             queryClient.setQueryData(queryKeys.accounts(), initialAccounts);
 
             let resolvePromise!: (val: Account[]) => void;
-            vi.spyOn(financeService, "bulkUpdateAccountBalances").mockImplementation(
-                () => new Promise((resolve) => { resolvePromise = resolve; }),
+            vi.spyOn(
+                financeService,
+                "bulkUpdateAccountBalances",
+            ).mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        resolvePromise = resolve;
+                    }),
             );
 
-            const { result } = renderHook(() => useBulkUpdateAccountBalancesMutation(), {
-                wrapper: createWrapper(queryClient),
-            });
+            const { result } = renderHook(
+                () => useBulkUpdateAccountBalancesMutation(),
+                {
+                    wrapper: createWrapper(queryClient),
+                },
+            );
 
             await act(async () => {
                 result.current.mutate({
@@ -296,7 +377,9 @@ describe("Issue #38: Domain Save Mutations", () => {
                 });
             });
 
-            const updatedCached = queryClient.getQueryData<Account[]>(queryKeys.accounts());
+            const updatedCached = queryClient.getQueryData<Account[]>(
+                queryKeys.accounts(),
+            );
             expect(updatedCached?.[0].balance).toBe(11000);
             expect(updatedCached?.[1].balance).toBe(6000);
 
@@ -323,7 +406,10 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "updateCategory").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
             const { result } = renderHook(() => useUpdateCategoryMutation(), {
@@ -331,16 +417,25 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             await act(async () => {
-                result.current.mutate({ id: "cat-1", updates: { name: "Food & Dining" } });
+                result.current.mutate({
+                    id: "cat-1",
+                    updates: { name: "Food & Dining" },
+                });
             });
 
-            expect(queryClient.getQueryData<Category[]>(queryKeys.categories)?.[0].name).toBe("Food & Dining");
+            expect(
+                queryClient.getQueryData<Category[]>(queryKeys.categories)?.[0]
+                    .name,
+            ).toBe("Food & Dining");
 
             await act(async () => {
                 rejectPromise(new Error("Update failed"));
             });
 
-            expect(queryClient.getQueryData<Category[]>(queryKeys.categories)?.[0].name).toBe("Dining");
+            expect(
+                queryClient.getQueryData<Category[]>(queryKeys.categories)?.[0]
+                    .name,
+            ).toBe("Dining");
         });
 
         it("optimistically adds a category and rolls back on error", async () => {
@@ -348,7 +443,10 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "addCategory").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
             const { result } = renderHook(() => useAddCategoryMutation(), {
@@ -364,19 +462,25 @@ describe("Issue #38: Domain Save Mutations", () => {
                 });
             });
 
-            expect(queryClient.getQueryData<Category[]>(queryKeys.categories)).toHaveLength(2);
+            expect(
+                queryClient.getQueryData<Category[]>(queryKeys.categories),
+            ).toHaveLength(2);
 
             await act(async () => {
                 rejectPromise(new Error("Add category failed"));
             });
 
-            expect(queryClient.getQueryData<Category[]>(queryKeys.categories)).toHaveLength(1);
+            expect(
+                queryClient.getQueryData<Category[]>(queryKeys.categories),
+            ).toHaveLength(1);
         });
 
         it("optimistically deletes a category", async () => {
             queryClient.setQueryData(queryKeys.categories, initialCategories);
 
-            vi.spyOn(financeService, "deleteCategory").mockResolvedValue(undefined as never);
+            vi.spyOn(financeService, "deleteCategory").mockResolvedValue(
+                undefined as never,
+            );
 
             const { result } = renderHook(() => useDeleteCategoryMutation(), {
                 wrapper: createWrapper(queryClient),
@@ -386,7 +490,9 @@ describe("Issue #38: Domain Save Mutations", () => {
                 result.current.mutate("cat-1");
             });
 
-            expect(queryClient.getQueryData<Category[]>(queryKeys.categories)).toHaveLength(0);
+            expect(
+                queryClient.getQueryData<Category[]>(queryKeys.categories),
+            ).toHaveLength(0);
         });
     });
 
@@ -411,19 +517,30 @@ describe("Issue #38: Domain Save Mutations", () => {
 
         it("optimistically updates base profile allocations and rolls back on error", async () => {
             queryClient.setQueryData(queryKeys.baseProfiles, [mockProfile]);
-            queryClient.setQueryData(queryKeys.baseAllocations("prof-1"), mockAllocations);
+            queryClient.setQueryData(
+                queryKeys.baseAllocations("prof-1"),
+                mockAllocations,
+            );
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "updateBaseProfile").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
-            const { result } = renderHook(() => useUpdateBaseProfileMutation(), {
-                wrapper: createWrapper(queryClient),
-            });
+            const { result } = renderHook(
+                () => useUpdateBaseProfileMutation(),
+                {
+                    wrapper: createWrapper(queryClient),
+                },
+            );
 
             const updatedProfile = { ...mockProfile, gross_salary: 7000 };
-            const updatedAllocations = [{ ...mockAllocations[0], target_percentage: 0.6 }];
+            const updatedAllocations = [
+                { ...mockAllocations[0], target_percentage: 0.6 },
+            ];
 
             await act(async () => {
                 result.current.mutate({
@@ -432,15 +549,31 @@ describe("Issue #38: Domain Save Mutations", () => {
                 });
             });
 
-            expect(queryClient.getQueryData<BaseBudgetProfile[]>(queryKeys.baseProfiles)?.[0].gross_salary).toBe(7000);
-            expect(queryClient.getQueryData<BaseProfileAllocation[]>(queryKeys.baseAllocations("prof-1"))?.[0].target_percentage).toBe(0.6);
+            expect(
+                queryClient.getQueryData<BaseBudgetProfile[]>(
+                    queryKeys.baseProfiles,
+                )?.[0].gross_salary,
+            ).toBe(7000);
+            expect(
+                queryClient.getQueryData<BaseProfileAllocation[]>(
+                    queryKeys.baseAllocations("prof-1"),
+                )?.[0].target_percentage,
+            ).toBe(0.6);
 
             await act(async () => {
                 rejectPromise(new Error("Update failed"));
             });
 
-            expect(queryClient.getQueryData<BaseBudgetProfile[]>(queryKeys.baseProfiles)?.[0].gross_salary).toBe(6000);
-            expect(queryClient.getQueryData<BaseProfileAllocation[]>(queryKeys.baseAllocations("prof-1"))?.[0].target_percentage).toBe(0.5);
+            expect(
+                queryClient.getQueryData<BaseBudgetProfile[]>(
+                    queryKeys.baseProfiles,
+                )?.[0].gross_salary,
+            ).toBe(6000);
+            expect(
+                queryClient.getQueryData<BaseProfileAllocation[]>(
+                    queryKeys.baseAllocations("prof-1"),
+                )?.[0].target_percentage,
+            ).toBe(0.5);
         });
     });
 
@@ -468,7 +601,10 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "confirmInboxItem").mockImplementation(
-                () => new Promise((_, reject) => { rejectPromise = reject; }),
+                () =>
+                    new Promise((_, reject) => {
+                        rejectPromise = reject;
+                    }),
             );
 
             const { result } = renderHook(() => useConfirmInboxItemMutation(), {
@@ -494,14 +630,20 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             // Optimistically removed
-            expect(queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)?.items).toHaveLength(0);
+            expect(
+                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                    ?.items,
+            ).toHaveLength(0);
 
             // Error rolls back
             await act(async () => {
                 rejectPromise(new Error("Confirm failed"));
             });
 
-            expect(queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)?.items).toHaveLength(1);
+            expect(
+                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                    ?.items,
+            ).toHaveLength(1);
         });
 
         it("optimistically resolves item", async () => {
@@ -509,7 +651,10 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             let resolvePromise!: (val: void) => void;
             vi.spyOn(financeService, "resolveInboxItem").mockImplementation(
-                () => new Promise((resolve) => { resolvePromise = resolve; }),
+                () =>
+                    new Promise((resolve) => {
+                        resolvePromise = resolve;
+                    }),
             );
 
             const { result } = renderHook(() => useResolveInboxItemMutation(), {
@@ -520,7 +665,10 @@ describe("Issue #38: Domain Save Mutations", () => {
                 result.current.mutate({ id: "inbox-1", reason: "discarded" });
             });
 
-            expect(queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)?.items).toHaveLength(0);
+            expect(
+                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                    ?.items,
+            ).toHaveLength(0);
 
             await act(async () => {
                 resolvePromise();

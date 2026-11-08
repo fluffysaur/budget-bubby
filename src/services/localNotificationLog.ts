@@ -5,7 +5,10 @@
  * Supabase service when the notification_log table can't be reached.
  */
 
-import type { NotificationLogEntry, NotificationLogRef } from "../types/finance";
+import type {
+    NotificationLogEntry,
+    NotificationLogRef,
+} from "../types/finance";
 
 const RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 
@@ -48,7 +51,10 @@ function save(memberId: string, log: LogMap): void {
     }
     if (hasStorage()) {
         try {
-            window.localStorage.setItem(storageKey(memberId), JSON.stringify(log));
+            window.localStorage.setItem(
+                storageKey(memberId),
+                JSON.stringify(log),
+            );
         } catch {
             // ignore storage error
         }
@@ -72,7 +78,9 @@ function upsert(
     save(memberId, log);
 }
 
-export function getLocalNotificationLog(memberId: string): NotificationLogEntry[] {
+export function getLocalNotificationLog(
+    memberId: string,
+): NotificationLogEntry[] {
     return Object.values(load(memberId));
 }
 
@@ -80,21 +88,30 @@ export function getLocalNotificationLog(memberId: string): NotificationLogEntry[
  * Records a send for this reminder key. Returns true only for the first
  * caller; false when the key was already sent, read or dismissed.
  */
-export function claimLocalNotificationSend(memberId: string, ref: NotificationLogRef): boolean {
+export function claimLocalNotificationSend(
+    memberId: string,
+    ref: NotificationLogRef,
+): boolean {
     const log = load(memberId);
     if (log[ref.key]) return false;
     upsert(memberId, ref, { sent_at: new Date().toISOString() });
     return true;
 }
 
-export function markLocalNotificationsRead(memberId: string, refs: NotificationLogRef[]): void {
+export function markLocalNotificationsRead(
+    memberId: string,
+    refs: NotificationLogRef[],
+): void {
     const now = new Date().toISOString();
     for (const ref of refs) {
         upsert(memberId, ref, { read_at: now });
     }
 }
 
-export function dismissLocalNotification(memberId: string, ref: NotificationLogRef): void {
+export function dismissLocalNotification(
+    memberId: string,
+    ref: NotificationLogRef,
+): void {
     upsert(memberId, ref, { dismissed_at: new Date().toISOString() });
 }
 

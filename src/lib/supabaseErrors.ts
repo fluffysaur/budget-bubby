@@ -19,7 +19,9 @@ export function isMissingRelationError(err: unknown): boolean {
     }
     return (
         typeof message === "string" &&
-        /could not find the (table|function)|relation .* does not exist/i.test(message)
+        /could not find the (table|function)|relation .* does not exist/i.test(
+            message,
+        )
     );
 }
 

@@ -9,8 +9,13 @@ import type { BonusGoalContribution, SavingsGoal } from "../types/finance";
 export type GoalDistributionMode = "even" | "gap" | "single";
 
 /** Amount still needed to reach the goal's target (never negative). */
-export function goalGap(goal: Pick<SavingsGoal, "target_amount" | "saved_so_far">): number {
-    return Math.max(0, Math.round((goal.target_amount - goal.saved_so_far) * 100) / 100);
+export function goalGap(
+    goal: Pick<SavingsGoal, "target_amount" | "saved_so_far">,
+): number {
+    return Math.max(
+        0,
+        Math.round((goal.target_amount - goal.saved_so_far) * 100) / 100,
+    );
 }
 
 /** A goal can take more money while it is not achieved and below target. */
@@ -55,7 +60,9 @@ export function distributeGoalShare(
     let weights: number[];
     if (mode === "single") {
         const targetId =
-            singleId && eligible.some((g) => g.id === singleId) ? singleId : eligible[0].id;
+            singleId && eligible.some((g) => g.id === singleId)
+                ? singleId
+                : eligible[0].id;
         weights = eligible.map((g) => (g.id === targetId ? 1 : 0));
     } else if (mode === "gap") {
         weights = eligible.map((g) => goalGap(g));

@@ -108,7 +108,8 @@ export function useAccountsQuery(perspective?: Perspective) {
 export function useAccountSnapshotsQuery(perspective?: Perspective) {
     return useQuery<AccountSnapshot[]>({
         queryKey: ["finance", "account-snapshots", perspective ?? "household"],
-        queryFn: () => financeService.getAllAccountSnapshots(perspective || "household"),
+        queryFn: () =>
+            financeService.getAllAccountSnapshots(perspective || "household"),
         placeholderData: keepPreviousData,
     });
 }
@@ -176,12 +177,17 @@ export function useBudgetDetailQuery(
         queryFn: async () => {
             if (isCombined) {
                 const memberBudgets = await Promise.all(
-                    memberIds.map((id) => financeService.getMonthlyBudget(month, id)),
+                    memberIds.map((id) =>
+                        financeService.getMonthlyBudget(month, id),
+                    ),
                 );
                 const combined = combineMonthlyBudgets(memberBudgets, month);
                 if (combined) return combined;
             }
-            return financeService.getMonthlyBudget(month, activeMemberId ?? memberIds[0]);
+            return financeService.getMonthlyBudget(
+                month,
+                activeMemberId ?? memberIds[0],
+            );
         },
         enabled: Boolean(month) && options.enabled !== false,
         placeholderData: keepPreviousData,
@@ -212,28 +218,37 @@ export function useBaseAllocationsQuery(profileId?: string) {
 
 export function useCreditCardsQuery() {
     const queryClient = useSafeQueryClient();
-    return useQuery<CreditCard[]>({
-        queryKey: queryKeys.creditCards,
-        queryFn: () => financeService.getCreditCards(),
-    }, queryClient);
+    return useQuery<CreditCard[]>(
+        {
+            queryKey: queryKeys.creditCards,
+            queryFn: () => financeService.getCreditCards(),
+        },
+        queryClient,
+    );
 }
 
 export function useCreditCardStatementsQuery(month?: string) {
     const queryClient = useSafeQueryClient();
-    return useQuery<CreditCardStatement[]>({
-        queryKey: queryKeys.creditCardStatements(month),
-        queryFn: () => financeService.getCreditCardStatements(month),
-        placeholderData: keepPreviousData,
-    }, queryClient);
+    return useQuery<CreditCardStatement[]>(
+        {
+            queryKey: queryKeys.creditCardStatements(month),
+            queryFn: () => financeService.getCreditCardStatements(month),
+            placeholderData: keepPreviousData,
+        },
+        queryClient,
+    );
 }
 
 export function useDailyCheckinsQuery(memberId?: string) {
     const queryClient = useSafeQueryClient();
-    return useQuery<DailyCheckin[]>({
-        queryKey: queryKeys.dailyCheckins(memberId),
-        queryFn: () => financeService.getDailyCheckins(memberId),
-        placeholderData: keepPreviousData,
-    }, queryClient);
+    return useQuery<DailyCheckin[]>(
+        {
+            queryKey: queryKeys.dailyCheckins(memberId),
+            queryFn: () => financeService.getDailyCheckins(memberId),
+            placeholderData: keepPreviousData,
+        },
+        queryClient,
+    );
 }
 
 /**
@@ -367,17 +382,25 @@ export function useInvalidateFinance() {
 }
 
 /** Check if an expense matches the active filter */
-export function matchesExpenseFilter(expense: Expense, filter?: ExpenseFilter): boolean {
+export function matchesExpenseFilter(
+    expense: Expense,
+    filter?: ExpenseFilter,
+): boolean {
     if (!filter) return true;
     if (filter.month && !expense.date.startsWith(filter.month)) return false;
-    if (filter.categoryId && expense.category_id !== filter.categoryId) return false;
+    if (filter.categoryId && expense.category_id !== filter.categoryId)
+        return false;
     if (filter.payerId && expense.payer_id !== filter.payerId) return false;
-    if (filter.isShared !== undefined && expense.is_shared !== filter.isShared) return false;
-    if (filter.tag && (!expense.tags || !expense.tags.includes(filter.tag))) return false;
+    if (filter.isShared !== undefined && expense.is_shared !== filter.isShared)
+        return false;
+    if (filter.tag && (!expense.tags || !expense.tags.includes(filter.tag)))
+        return false;
     if (filter.search) {
         const term = filter.search.toLowerCase().trim();
         const itemMatch = expense.item.toLowerCase().includes(term);
-        const remarksMatch = Boolean(expense.remarks?.toLowerCase().includes(term));
+        const remarksMatch = Boolean(
+            expense.remarks?.toLowerCase().includes(term),
+        );
         if (!itemMatch && !remarksMatch) return false;
     }
     return true;
@@ -396,23 +419,33 @@ export function useAddExpenseMutation() {
         Error,
         CreateExpenseInput,
         {
-            previousExpensesQueries: [readonly unknown[], Expense[] | undefined][];
+            previousExpensesQueries: [
+                readonly unknown[],
+                Expense[] | undefined,
+            ][];
             previousAllExpenses: Expense[] | undefined;
             optimisticExpense: Expense;
         }
     >(
         {
             networkMode: "always",
-            mutationFn: (input: CreateExpenseInput) => financeService.addExpense(input),
+            mutationFn: (input: CreateExpenseInput) =>
+                financeService.addExpense(input),
             onMutate: async (input: CreateExpenseInput) => {
-                await queryClient.cancelQueries({ queryKey: ["finance", "expenses"] });
-                await queryClient.cancelQueries({ queryKey: ["finance", "all-expenses"] });
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "expenses"],
+                });
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "all-expenses"],
+                });
 
                 if (!input.id) {
                     input.id = generateUuid();
                 }
 
-                const previousExpensesQueries = queryClient.getQueriesData<Expense[]>({
+                const previousExpensesQueries = queryClient.getQueriesData<
+                    Expense[]
+                >({
                     queryKey: ["finance", "expenses"],
                 });
                 const previousAllExpenses = queryClient.getQueryData<Expense[]>(
@@ -421,7 +454,8 @@ export function useAddExpenseMutation() {
 
                 const optimisticExpense: Expense = {
                     id: input.id,
-                    household_id: (input as Partial<Expense>).household_id || "",
+                    household_id:
+                        (input as Partial<Expense>).household_id || "",
                     amount: input.amount,
                     category_id: input.category_id,
                     payer_id: input.payer_id,
@@ -441,8 +475,10 @@ export function useAddExpenseMutation() {
                 };
 
                 // Optimistically update allExpenses
-                queryClient.setQueryData<Expense[]>(queryKeys.allExpenses, (old) =>
-                    old ? [optimisticExpense, ...old] : [optimisticExpense],
+                queryClient.setQueryData<Expense[]>(
+                    queryKeys.allExpenses,
+                    (old) =>
+                        old ? [optimisticExpense, ...old] : [optimisticExpense],
                 );
 
                 // Optimistically update matching expense queries
@@ -450,7 +486,9 @@ export function useAddExpenseMutation() {
                     const filter = key[2] as ExpenseFilter | undefined;
                     if (matchesExpenseFilter(optimisticExpense, filter)) {
                         queryClient.setQueryData<Expense[]>(key, (old) =>
-                            old ? [optimisticExpense, ...old] : [optimisticExpense],
+                            old
+                                ? [optimisticExpense, ...old]
+                                : [optimisticExpense],
                         );
                     }
                 }
@@ -463,7 +501,10 @@ export function useAddExpenseMutation() {
             },
             onError: (_err, _input, context) => {
                 if (context?.previousExpensesQueries) {
-                    for (const [key, oldData] of context.previousExpensesQueries) {
+                    for (const [
+                        key,
+                        oldData,
+                    ] of context.previousExpensesQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
                 }
@@ -500,7 +541,10 @@ export function useDeleteExpenseMutation() {
         Error,
         string,
         {
-            previousExpensesQueries: [readonly unknown[], Expense[] | undefined][];
+            previousExpensesQueries: [
+                readonly unknown[],
+                Expense[] | undefined,
+            ][];
             previousAllExpenses: Expense[] | undefined;
             deletedExpense: Expense | undefined;
         }
@@ -509,17 +553,25 @@ export function useDeleteExpenseMutation() {
             networkMode: "always",
             mutationFn: (id: string) => financeService.deleteExpense(id),
             onMutate: async (id: string) => {
-                await queryClient.cancelQueries({ queryKey: ["finance", "expenses"] });
-                await queryClient.cancelQueries({ queryKey: ["finance", "all-expenses"] });
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "expenses"],
+                });
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "all-expenses"],
+                });
 
-                const previousExpensesQueries = queryClient.getQueriesData<Expense[]>({
+                const previousExpensesQueries = queryClient.getQueriesData<
+                    Expense[]
+                >({
                     queryKey: ["finance", "expenses"],
                 });
                 const previousAllExpenses = queryClient.getQueryData<Expense[]>(
                     queryKeys.allExpenses,
                 );
 
-                let deletedExpense = previousAllExpenses?.find((e) => e.id === id);
+                let deletedExpense = previousAllExpenses?.find(
+                    (e) => e.id === id,
+                );
                 if (!deletedExpense) {
                     for (const [, oldData] of previousExpensesQueries) {
                         const found = oldData?.find((e) => e.id === id);
@@ -531,8 +583,9 @@ export function useDeleteExpenseMutation() {
                 }
 
                 // Remove from allExpenses
-                queryClient.setQueryData<Expense[]>(queryKeys.allExpenses, (old) =>
-                    old ? old.filter((e) => e.id !== id) : [],
+                queryClient.setQueryData<Expense[]>(
+                    queryKeys.allExpenses,
+                    (old) => (old ? old.filter((e) => e.id !== id) : []),
                 );
 
                 // Remove from matching expenses queries
@@ -550,7 +603,10 @@ export function useDeleteExpenseMutation() {
             },
             onError: (_err, _id, context) => {
                 if (context?.previousExpensesQueries) {
-                    for (const [key, oldData] of context.previousExpensesQueries) {
+                    for (const [
+                        key,
+                        oldData,
+                    ] of context.previousExpensesQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
                 }
@@ -592,7 +648,9 @@ export function useAddGoalMutation() {
             mutationFn: (input) => financeService.addGoal(input),
             onMutate: async (input) => {
                 await queryClient.cancelQueries({ queryKey: queryKeys.goals });
-                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals);
+                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(
+                    queryKeys.goals,
+                );
                 const optimisticGoal: SavingsGoal = {
                     id: input.id || generateUuid(),
                     household_id: input.household_id || "",
@@ -602,17 +660,25 @@ export function useAddGoalMutation() {
                     target_date: input.target_date,
                     monthly_contribution: input.monthly_contribution ?? 0,
                     emoji: input.emoji || "🎯",
-                    status: (input.saved_so_far ?? 0) >= input.target_amount ? "achieved" : "on_track",
+                    status:
+                        (input.saved_so_far ?? 0) >= input.target_amount
+                            ? "achieved"
+                            : "on_track",
                     created_at: new Date().toISOString(),
                 };
-                queryClient.setQueryData<SavingsGoal[]>(queryKeys.goals, (old) =>
-                    old ? [...old, optimisticGoal] : [optimisticGoal],
+                queryClient.setQueryData<SavingsGoal[]>(
+                    queryKeys.goals,
+                    (old) =>
+                        old ? [...old, optimisticGoal] : [optimisticGoal],
                 );
                 return { previousGoals };
             },
             onError: (_err, _input, context) => {
                 if (context?.previousGoals) {
-                    queryClient.setQueryData(queryKeys.goals, context.previousGoals);
+                    queryClient.setQueryData(
+                        queryKeys.goals,
+                        context.previousGoals,
+                    );
                 }
             },
             onSettled: () => {
@@ -638,18 +704,30 @@ export function useUpdateGoalMutation() {
     >(
         {
             networkMode: "always",
-            mutationFn: ({ id, updates }) => financeService.updateGoal(id, updates),
+            mutationFn: ({ id, updates }) =>
+                financeService.updateGoal(id, updates),
             onMutate: async ({ id, updates }) => {
                 await queryClient.cancelQueries({ queryKey: queryKeys.goals });
-                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals);
-                queryClient.setQueryData<SavingsGoal[]>(queryKeys.goals, (old) =>
-                    old ? old.map((g) => (g.id === id ? { ...g, ...updates } : g)) : old,
+                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(
+                    queryKeys.goals,
+                );
+                queryClient.setQueryData<SavingsGoal[]>(
+                    queryKeys.goals,
+                    (old) =>
+                        old
+                            ? old.map((g) =>
+                                  g.id === id ? { ...g, ...updates } : g,
+                              )
+                            : old,
                 );
                 return { previousGoals };
             },
             onError: (_err, _vars, context) => {
                 if (context?.previousGoals) {
-                    queryClient.setQueryData(queryKeys.goals, context.previousGoals);
+                    queryClient.setQueryData(
+                        queryKeys.goals,
+                        context.previousGoals,
+                    );
                 }
             },
             onSettled: () => {
@@ -677,10 +755,12 @@ export function useAddRecurringItemMutation() {
             networkMode: "always",
             mutationFn: (payload) => financeService.addRecurringItem(payload),
             onMutate: async (payload) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.recurringItems });
-                const previousRecurring = queryClient.getQueryData<RecurringItem[]>(
-                    queryKeys.recurringItems,
-                );
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.recurringItems,
+                });
+                const previousRecurring = queryClient.getQueryData<
+                    RecurringItem[]
+                >(queryKeys.recurringItems);
                 const optimisticItem: RecurringItem = {
                     id: generateUuid(),
                     household_id: payload.household_id || "",
@@ -690,8 +770,10 @@ export function useAddRecurringItemMutation() {
                             : payload.amount,
                     ...payload,
                 };
-                queryClient.setQueryData<RecurringItem[]>(queryKeys.recurringItems, (old) =>
-                    old ? [...old, optimisticItem] : [optimisticItem],
+                queryClient.setQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                    (old) =>
+                        old ? [...old, optimisticItem] : [optimisticItem],
                 );
                 return { previousRecurring };
             },
@@ -729,12 +811,22 @@ export function useUpdateRecurringItemMutation() {
             mutationFn: (payload) =>
                 financeService.updateRecurringItem(payload.id, payload),
             onMutate: async (payload) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.recurringItems });
-                const previousRecurring = queryClient.getQueryData<RecurringItem[]>(
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.recurringItems,
+                });
+                const previousRecurring = queryClient.getQueryData<
+                    RecurringItem[]
+                >(queryKeys.recurringItems);
+                queryClient.setQueryData<RecurringItem[]>(
                     queryKeys.recurringItems,
-                );
-                queryClient.setQueryData<RecurringItem[]>(queryKeys.recurringItems, (old) =>
-                    old ? old.map((item) => (item.id === payload.id ? { ...item, ...payload } : item)) : old,
+                    (old) =>
+                        old
+                            ? old.map((item) =>
+                                  item.id === payload.id
+                                      ? { ...item, ...payload }
+                                      : item,
+                              )
+                            : old,
                 );
                 return { previousRecurring };
             },
@@ -771,12 +863,15 @@ export function useDeleteRecurringItemMutation() {
             networkMode: "always",
             mutationFn: (id) => financeService.deleteRecurringItem(id),
             onMutate: async (id) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.recurringItems });
-                const previousRecurring = queryClient.getQueryData<RecurringItem[]>(
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.recurringItems,
+                });
+                const previousRecurring = queryClient.getQueryData<
+                    RecurringItem[]
+                >(queryKeys.recurringItems);
+                queryClient.setQueryData<RecurringItem[]>(
                     queryKeys.recurringItems,
-                );
-                queryClient.setQueryData<RecurringItem[]>(queryKeys.recurringItems, (old) =>
-                    old ? old.filter((item) => item.id !== id) : old,
+                    (old) => (old ? old.filter((item) => item.id !== id) : old),
                 );
                 return { previousRecurring };
             },
@@ -812,7 +907,12 @@ export function useUpdateAccountBalanceMutation() {
             notes?: string;
             snapshotDate?: string;
         },
-        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+        {
+            previousAccountQueries: [
+                readonly unknown[],
+                Account[] | undefined,
+            ][];
+        }
     >(
         {
             networkMode: "always",
@@ -824,8 +924,12 @@ export function useUpdateAccountBalanceMutation() {
                     snapshotDate,
                 ),
             onMutate: async ({ accountId, newBalance }) => {
-                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
-                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "accounts"],
+                });
+                const previousAccountQueries = queryClient.getQueriesData<
+                    Account[]
+                >({
                     queryKey: ["finance", "accounts"],
                 });
                 const nowIso = new Date().toISOString();
@@ -848,7 +952,10 @@ export function useUpdateAccountBalanceMutation() {
             },
             onError: (_err, _vars, context) => {
                 if (context?.previousAccountQueries) {
-                    for (const [key, oldData] of context.previousAccountQueries) {
+                    for (const [
+                        key,
+                        oldData,
+                    ] of context.previousAccountQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
                 }
@@ -882,7 +989,12 @@ export function useBulkUpdateAccountBalancesMutation() {
             }>;
             snapshotDate?: string;
         },
-        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+        {
+            previousAccountQueries: [
+                readonly unknown[],
+                Account[] | undefined,
+            ][];
+        }
     >(
         {
             networkMode: "always",
@@ -899,8 +1011,12 @@ export function useBulkUpdateAccountBalancesMutation() {
                     snapshotDate ?? new Date().toISOString().slice(0, 10),
                 ),
             onMutate: async ({ updates }) => {
-                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
-                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "accounts"],
+                });
+                const previousAccountQueries = queryClient.getQueriesData<
+                    Account[]
+                >({
                     queryKey: ["finance", "accounts"],
                 });
                 const balanceMap = new Map(
@@ -929,7 +1045,10 @@ export function useBulkUpdateAccountBalancesMutation() {
             },
             onError: (_err, _vars, context) => {
                 if (context?.previousAccountQueries) {
-                    for (const [key, oldData] of context.previousAccountQueries) {
+                    for (const [
+                        key,
+                        oldData,
+                    ] of context.previousAccountQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
                 }
@@ -979,14 +1098,24 @@ export function useUpdateAccountMutation() {
             id: string;
             updates: Parameters<typeof financeService.updateAccount>[1];
         },
-        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+        {
+            previousAccountQueries: [
+                readonly unknown[],
+                Account[] | undefined,
+            ][];
+        }
     >(
         {
             networkMode: "always",
-            mutationFn: ({ id, updates }) => financeService.updateAccount(id, updates),
+            mutationFn: ({ id, updates }) =>
+                financeService.updateAccount(id, updates),
             onMutate: async ({ id, updates }) => {
-                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
-                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "accounts"],
+                });
+                const previousAccountQueries = queryClient.getQueriesData<
+                    Account[]
+                >({
                     queryKey: ["finance", "accounts"],
                 });
                 for (const [key] of previousAccountQueries) {
@@ -1002,7 +1131,10 @@ export function useUpdateAccountMutation() {
             },
             onError: (_err, _vars, context) => {
                 if (context?.previousAccountQueries) {
-                    for (const [key, oldData] of context.previousAccountQueries) {
+                    for (const [
+                        key,
+                        oldData,
+                    ] of context.previousAccountQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
                 }
@@ -1026,14 +1158,23 @@ export function useDeleteAccountMutation() {
         void,
         Error,
         string,
-        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+        {
+            previousAccountQueries: [
+                readonly unknown[],
+                Account[] | undefined,
+            ][];
+        }
     >(
         {
             networkMode: "always",
             mutationFn: (id) => financeService.deleteAccount(id),
             onMutate: async (id) => {
-                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
-                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "accounts"],
+                });
+                const previousAccountQueries = queryClient.getQueriesData<
+                    Account[]
+                >({
                     queryKey: ["finance", "accounts"],
                 });
                 for (const [key] of previousAccountQueries) {
@@ -1045,7 +1186,10 @@ export function useDeleteAccountMutation() {
             },
             onError: (_err, _id, context) => {
                 if (context?.previousAccountQueries) {
-                    for (const [key, oldData] of context.previousAccountQueries) {
+                    for (const [
+                        key,
+                        oldData,
+                    ] of context.previousAccountQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
                 }
@@ -1075,7 +1219,9 @@ export function useAddCategoryMutation() {
             networkMode: "always",
             mutationFn: (input) => financeService.addCategory(input),
             onMutate: async (input) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.categories });
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.categories,
+                });
                 const previousCategories = queryClient.getQueryData<Category[]>(
                     queryKeys.categories,
                 );
@@ -1088,8 +1234,12 @@ export function useAddCategoryMutation() {
                     group: input.group,
                     is_system: input.is_system ?? false,
                 };
-                queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
-                    old ? [...old, optimisticCategory] : [optimisticCategory],
+                queryClient.setQueryData<Category[]>(
+                    queryKeys.categories,
+                    (old) =>
+                        old
+                            ? [...old, optimisticCategory]
+                            : [optimisticCategory],
                 );
                 return { previousCategories };
             },
@@ -1124,14 +1274,23 @@ export function useUpdateCategoryMutation() {
     >(
         {
             networkMode: "always",
-            mutationFn: ({ id, updates }) => financeService.updateCategory(id, updates),
+            mutationFn: ({ id, updates }) =>
+                financeService.updateCategory(id, updates),
             onMutate: async ({ id, updates }) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.categories });
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.categories,
+                });
                 const previousCategories = queryClient.getQueryData<Category[]>(
                     queryKeys.categories,
                 );
-                queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
-                    old ? old.map((c) => (c.id === id ? { ...c, ...updates } : c)) : old,
+                queryClient.setQueryData<Category[]>(
+                    queryKeys.categories,
+                    (old) =>
+                        old
+                            ? old.map((c) =>
+                                  c.id === id ? { ...c, ...updates } : c,
+                              )
+                            : old,
                 );
                 return { previousCategories };
             },
@@ -1168,12 +1327,15 @@ export function useDeleteCategoryMutation() {
             networkMode: "always",
             mutationFn: (id) => financeService.deleteCategory(id),
             onMutate: async (id) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.categories });
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.categories,
+                });
                 const previousCategories = queryClient.getQueryData<Category[]>(
                     queryKeys.categories,
                 );
-                queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
-                    old ? old.filter((c) => c.id !== id) : old,
+                queryClient.setQueryData<Category[]>(
+                    queryKeys.categories,
+                    (old) => (old ? old.filter((c) => c.id !== id) : old),
                 );
                 return { previousCategories };
             },
@@ -1215,18 +1377,26 @@ export function useUpdateBaseProfileMutation() {
             mutationFn: ({ profile, allocations }) =>
                 financeService.updateBaseProfile(profile, allocations),
             onMutate: async ({ profile, allocations }) => {
-                await queryClient.cancelQueries({ queryKey: queryKeys.baseProfiles });
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.baseProfiles,
+                });
                 await queryClient.cancelQueries({
                     queryKey: queryKeys.baseAllocations(profile.id),
                 });
-                const previousProfiles = queryClient.getQueryData<BaseBudgetProfile[]>(
+                const previousProfiles = queryClient.getQueryData<
+                    BaseBudgetProfile[]
+                >(queryKeys.baseProfiles);
+                const previousAllocations = queryClient.getQueryData<
+                    BaseProfileAllocation[]
+                >(queryKeys.baseAllocations(profile.id));
+                queryClient.setQueryData<BaseBudgetProfile[]>(
                     queryKeys.baseProfiles,
-                );
-                const previousAllocations = queryClient.getQueryData<BaseProfileAllocation[]>(
-                    queryKeys.baseAllocations(profile.id),
-                );
-                queryClient.setQueryData<BaseBudgetProfile[]>(queryKeys.baseProfiles, (old) =>
-                    old ? old.map((p) => (p.id === profile.id ? profile : p)) : old,
+                    (old) =>
+                        old
+                            ? old.map((p) =>
+                                  p.id === profile.id ? profile : p,
+                              )
+                            : old,
                 );
                 queryClient.setQueryData<BaseProfileAllocation[]>(
                     queryKeys.baseAllocations(profile.id),
@@ -1282,4 +1452,3 @@ export function useUpdateMonthlyBudgetMutation() {
         queryClient,
     );
 }
-

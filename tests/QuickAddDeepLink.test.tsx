@@ -2,12 +2,19 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { useQuickAddDeepLink } from "../src/hooks/useQuickAddDeepLink";
-import { parseQuickAddDeepLink, stripQuickAddParams } from "../src/lib/capture/deepLink";
+import {
+    parseQuickAddDeepLink,
+    stripQuickAddParams,
+} from "../src/lib/capture/deepLink";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { mockCategories, mockMembers } from "../src/data/mockSeedData";
 import type { ExpenseFormInitialValues } from "../src/components/expenses/ExpenseFormModal";
 
-function Harness({ onOpen }: { onOpen: (v?: ExpenseFormInitialValues) => void }) {
+function Harness({
+    onOpen,
+}: {
+    onOpen: (v?: ExpenseFormInitialValues) => void;
+}) {
     useQuickAddDeepLink(onOpen);
     const location = useLocation();
     return <div data-testid="search">{location.search}</div>;
@@ -49,7 +56,9 @@ describe("parseQuickAddDeepLink", () => {
 
     it("drops invalid values", () => {
         expect(
-            parseQuickAddDeepLink("?action=new&amount=abc&merchant=%20%20&at=yesterday"),
+            parseQuickAddDeepLink(
+                "?action=new&amount=abc&merchant=%20%20&at=yesterday",
+            ),
         ).toEqual({});
         expect(
             parseQuickAddDeepLink("?action=new&at=2001-01-01T00:00:00Z"),
@@ -57,17 +66,23 @@ describe("parseQuickAddDeepLink", () => {
     });
 
     it("strips only the deep-link params", () => {
-        expect(stripQuickAddParams("?action=new&amount=1&tab=expenses")).toBe("?tab=expenses");
+        expect(stripQuickAddParams("?action=new&amount=1&tab=expenses")).toBe(
+            "?tab=expenses",
+        );
         expect(stripQuickAddParams("?action=new")).toBe("");
     });
 });
 
 describe("useQuickAddDeepLink", () => {
     it("opens a prefilled form and strips the params", async () => {
-        const onOpen = renderAt("/expenses?action=new&amount=S%2412.50&merchant=Grab");
+        const onOpen = renderAt(
+            "/expenses?action=new&amount=S%2412.50&merchant=Grab",
+        );
         await waitFor(() => expect(onOpen).toHaveBeenCalledTimes(1));
         expect(onOpen).toHaveBeenCalledWith({ amount: 12.5, item: "Grab" });
-        await waitFor(() => expect(screen.getByTestId("search")).toHaveTextContent(""));
+        await waitFor(() =>
+            expect(screen.getByTestId("search")).toHaveTextContent(""),
+        );
     });
 
     it("does nothing without action=new", () => {
@@ -92,7 +107,9 @@ describe("ExpenseFormModal initialValues", () => {
         expect(screen.getByLabelText("Description")).toHaveValue("Grab ride");
         const transport = mockCategories.find((c) => /transport/i.test(c.name));
         if (transport) {
-            const chip = screen.getByRole("button", { name: new RegExp(transport.name, "i") });
+            const chip = screen.getByRole("button", {
+                name: new RegExp(transport.name, "i"),
+            });
             expect(chip).toHaveAttribute("aria-pressed", "true");
         }
     });

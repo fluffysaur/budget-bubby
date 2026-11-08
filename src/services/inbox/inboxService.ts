@@ -22,7 +22,10 @@ export interface InboxService {
     /** Pending summary, for one member or (no id) the household. */
     getInboxSummary(memberId?: string): Promise<InboxSummary>;
     /** Saves the expense, resolves the item and checks in. Idempotent. Returns the expense id. */
-    confirmInboxItem(itemId: string, expense: CreateExpenseInput): Promise<string>;
+    confirmInboxItem(
+        itemId: string,
+        expense: CreateExpenseInput,
+    ): Promise<string>;
     /** `pending` undoes a discard. */
     resolveInboxItem(itemId: string, status: InboxResolveStatus): Promise<void>;
     getMerchantRules(): Promise<MerchantRule[]>;

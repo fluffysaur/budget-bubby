@@ -20,7 +20,9 @@ export function useInboxBadge(): number {
     useEffect(() => {
         if (!available) return;
         noteInboxCount(count);
-        const nav = (typeof navigator !== "undefined" ? navigator : undefined) as BadgeNavigator | undefined;
+        const nav = (
+            typeof navigator !== "undefined" ? navigator : undefined
+        ) as BadgeNavigator | undefined;
         try {
             if (count > 0) void nav?.setAppBadge?.(count)?.catch(() => {});
             else void nav?.clearAppBadge?.()?.catch(() => {});

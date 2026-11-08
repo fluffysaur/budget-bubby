@@ -60,7 +60,10 @@ export const DeltaBadge: React.FC<DeltaBadgeProps> = ({
     const icon = isZero ? (
         <Minus className={`${ICON_SIZE[size]} shrink-0`} strokeWidth={2.5} />
     ) : isDown ? (
-        <ArrowDown className={`${ICON_SIZE[size]} shrink-0`} strokeWidth={2.5} />
+        <ArrowDown
+            className={`${ICON_SIZE[size]} shrink-0`}
+            strokeWidth={2.5}
+        />
     ) : (
         <ArrowUp className={`${ICON_SIZE[size]} shrink-0`} strokeWidth={2.5} />
     );

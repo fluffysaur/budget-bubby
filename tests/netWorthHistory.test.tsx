@@ -14,11 +14,33 @@ vi.mock("recharts", async (importOriginal) => {
     };
 });
 
-function account(id: string, balance: number, type: Account["type"] = "Cash"): Account {
-    return { id, household_id: "hh", owner_id: "m1", name: id, type, balance, is_joint: false } as Account;
+function account(
+    id: string,
+    balance: number,
+    type: Account["type"] = "Cash",
+): Account {
+    return {
+        id,
+        household_id: "hh",
+        owner_id: "m1",
+        name: id,
+        type,
+        balance,
+        is_joint: false,
+    } as Account;
 }
-function snap(accountId: string, date: string, balance: number): AccountSnapshot {
-    return { id: `${accountId}-${date}`, account_id: accountId, household_id: "hh", balance, snapshot_date: date };
+function snap(
+    accountId: string,
+    date: string,
+    balance: number,
+): AccountSnapshot {
+    return {
+        id: `${accountId}-${date}`,
+        account_id: accountId,
+        household_id: "hh",
+        balance,
+        snapshot_date: date,
+    };
 }
 
 describe("calculateMonthlyBalanceTrends (real history only)", () => {
@@ -29,14 +51,22 @@ describe("calculateMonthlyBalanceTrends (real history only)", () => {
             6,
             "2026-11",
         );
-        expect(points.map((p) => p.month)).toEqual(["2026-09", "2026-10", "2026-11"]);
+        expect(points.map((p) => p.month)).toEqual([
+            "2026-09",
+            "2026-10",
+            "2026-11",
+        ]);
         expect(points.map((p) => p.netWorth)).toEqual([1000, 1100, 1200]);
     });
 
     it("counts a later account only from its first snapshot (no backfill)", () => {
         const points = calculateMonthlyBalanceTrends(
             [account("a", 1000), account("b", 500)],
-            [snap("a", "2026-09-30", 1000), snap("a", "2026-10-31", 1000), snap("b", "2026-10-15", 500)],
+            [
+                snap("a", "2026-09-30", 1000),
+                snap("a", "2026-10-31", 1000),
+                snap("b", "2026-10-15", 500),
+            ],
             6,
             "2026-11",
         );
@@ -65,7 +95,12 @@ describe("calculateMonthlyBalanceTrends (real history only)", () => {
     });
 
     it("returns only the current month when there are no snapshots", () => {
-        const points = calculateMonthlyBalanceTrends([account("a", 10)], [], 6, "2026-11");
+        const points = calculateMonthlyBalanceTrends(
+            [account("a", 10)],
+            [],
+            6,
+            "2026-11",
+        );
         expect(points).toHaveLength(1);
     });
 });
@@ -73,10 +108,18 @@ describe("calculateMonthlyBalanceTrends (real history only)", () => {
 describe("NetWorthChart", () => {
     it("shows No History with an Update Balances action when there is under 2 months of data", () => {
         const onUpdate = vi.fn();
-        render(<NetWorthChart accounts={[account("a", 10)]} snapshots={[]} onUpdateBalances={onUpdate} />);
+        render(
+            <NetWorthChart
+                accounts={[account("a", 10)]}
+                snapshots={[]}
+                onUpdateBalances={onUpdate}
+            />,
+        );
         expect(screen.getByTestId("net-worth-no-history")).toBeInTheDocument();
         expect(screen.getByText("No History")).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: "Update Balances" }));
+        fireEvent.click(
+            screen.getByRole("button", { name: "Update Balances" }),
+        );
         expect(onUpdate).toHaveBeenCalled();
     });
 
@@ -84,9 +127,14 @@ describe("NetWorthChart", () => {
         render(
             <NetWorthChart
                 accounts={[account("a", 1200)]}
-                snapshots={[snap("a", "2025-12-31", 900), snap("a", "2026-01-31", 1000)]}
+                snapshots={[
+                    snap("a", "2025-12-31", 900),
+                    snap("a", "2026-01-31", 1000),
+                ]}
             />,
         );
-        expect(screen.queryByTestId("net-worth-no-history")).not.toBeInTheDocument();
+        expect(
+            screen.queryByTestId("net-worth-no-history"),
+        ).not.toBeInTheDocument();
     });
 });

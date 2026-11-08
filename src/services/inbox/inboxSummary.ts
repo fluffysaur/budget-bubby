@@ -9,7 +9,9 @@ export const UNAVAILABLE_INBOX_SUMMARY: InboxSummary = {
 };
 
 /** Approximate SGD value of an inbox item, from cached FX rates. */
-export function inboxItemSgd(item: Pick<InboxItem, "amount" | "currency">): number {
+export function inboxItemSgd(
+    item: Pick<InboxItem, "amount" | "currency">,
+): number {
     return convertToSGD(Number(item.amount), item.currency).amountInSGD;
 }
 

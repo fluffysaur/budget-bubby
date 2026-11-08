@@ -10,7 +10,14 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, renderHook, act } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    renderHook,
+    act,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
@@ -149,9 +156,11 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
                 resolveAdd = resolve;
             });
 
-            vi.spyOn(financeService, "addExpense").mockImplementation(async () => {
-                return await addPromise;
-            });
+            vi.spyOn(financeService, "addExpense").mockImplementation(
+                async () => {
+                    return await addPromise;
+                },
+            );
 
             const wrapper = createWrapper(queryClient);
             const { result: mutationResult } = renderHook(
@@ -161,7 +170,9 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
 
             // Seed initial cache
             queryClient.setQueryData(queryKeys.allExpenses, [mockOctExpense]);
-            queryClient.setQueryData(queryKeys.expenses({ month: "2026-10" }), [mockOctExpense]);
+            queryClient.setQueryData(queryKeys.expenses({ month: "2026-10" }), [
+                mockOctExpense,
+            ]);
 
             const newExpenseInput: CreateExpenseInput = {
                 payer_id: "mem-00000000-0011",
@@ -179,13 +190,17 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             });
 
             // Check cache immediately (BEFORE server resolves!)
-            const cachedAll = queryClient.getQueryData<Expense[]>(queryKeys.allExpenses);
+            const cachedAll = queryClient.getQueryData<Expense[]>(
+                queryKeys.allExpenses,
+            );
             expect(cachedAll).toBeDefined();
             expect(cachedAll?.length).toBe(2);
             expect(cachedAll?.[0].item).toBe("Optimistic Kaya Toast");
             expect(cachedAll?.[0].amount).toBe(7.2);
 
-            const cachedOct = queryClient.getQueryData<Expense[]>(queryKeys.expenses({ month: "2026-10" }));
+            const cachedOct = queryClient.getQueryData<Expense[]>(
+                queryKeys.expenses({ month: "2026-10" }),
+            );
             expect(cachedOct).toBeDefined();
             expect(cachedOct?.length).toBe(2);
             expect(cachedOct?.[0].item).toBe("Optimistic Kaya Toast");
@@ -248,9 +263,13 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             await waitFor(() => {
                 expect(mutationResult.current.isError).toBe(true);
             });
-            expect(mutationResult.current.error?.message).toBe("Database connection timed out");
+            expect(mutationResult.current.error?.message).toBe(
+                "Database connection timed out",
+            );
 
-            const cachedAll = queryClient.getQueryData<Expense[]>(queryKeys.allExpenses);
+            const cachedAll = queryClient.getQueryData<Expense[]>(
+                queryKeys.allExpenses,
+            );
             expect(cachedAll).toEqual([mockOctExpense]);
         });
 
@@ -281,10 +300,14 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             await waitFor(() => {
                 expect(mutationResult.current.isError).toBe(true);
             });
-            expect(mutationResult.current.error?.message).toBe("Forbidden: Expense is locked");
+            expect(mutationResult.current.error?.message).toBe(
+                "Forbidden: Expense is locked",
+            );
 
             // Cache restored! Both items must be present
-            const cachedAll = queryClient.getQueryData<Expense[]>(queryKeys.allExpenses);
+            const cachedAll = queryClient.getQueryData<Expense[]>(
+                queryKeys.allExpenses,
+            );
             expect(cachedAll).toEqual(initialList);
         });
     });

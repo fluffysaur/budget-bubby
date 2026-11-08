@@ -65,17 +65,29 @@ export function MilestoneToast({
                     />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-black text-(--text-ink) font-display">{title}</p>
+                    <p className="truncate text-sm font-black text-(--text-ink) font-display">
+                        {title}
+                    </p>
                     {subtitle && (
-                        <p className="truncate text-xs font-semibold text-(--text-muted)">{subtitle}</p>
+                        <p className="truncate text-xs font-semibold text-(--text-muted)">
+                            {subtitle}
+                        </p>
                     )}
                     <div className="mt-2 flex items-center gap-2">
                         {primaryLabel && onPrimary && (
-                            <Button variant="primary" size="sm" onClick={onPrimary}>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={onPrimary}
+                            >
                                 {primaryLabel}
                             </Button>
                         )}
-                        <Button variant="secondary" size="sm" onClick={onAcknowledge}>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={onAcknowledge}
+                        >
                             Nice!
                         </Button>
                     </div>

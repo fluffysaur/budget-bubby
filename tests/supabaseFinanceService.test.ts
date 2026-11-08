@@ -66,7 +66,10 @@ describe("supabaseFinanceService", () => {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockResolvedValue({
                                 data: [
-                                    { id: validMemberId, display_name: "Yi Jia" },
+                                    {
+                                        id: validMemberId,
+                                        display_name: "Yi Jia",
+                                    },
                                 ],
                                 error: null,
                             }),
@@ -127,19 +130,26 @@ describe("supabaseFinanceService", () => {
                         eq: vi.fn(() => mbChain),
                         gte: vi.fn(() => mbChain),
                         limit: vi.fn(() => mbChain),
-                        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-                        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+                        maybeSingle: vi
+                            .fn()
+                            .mockResolvedValue({ data: null, error: null }),
+                        single: vi
+                            .fn()
+                            .mockResolvedValue({ data: null, error: null }),
                         insert: vi.fn().mockReturnValue({
                             select: vi.fn().mockReturnValue({
                                 single: vi.fn().mockResolvedValue({
-                                    data: { id: "00000000-0000-0000-0000-000000000301" },
+                                    data: {
+                                        id: "00000000-0000-0000-0000-000000000301",
+                                    },
                                     error: null,
                                 }),
                             }),
                         }),
                         update: vi.fn(() => mbChain),
                         delete: vi.fn(() => mbChain),
-                        then: (resolve: any) => resolve({ data: [], error: null }),
+                        then: (resolve: any) =>
+                            resolve({ data: [], error: null }),
                     };
                     return mbChain;
                 }
@@ -149,7 +159,8 @@ describe("supabaseFinanceService", () => {
                         eq: vi.fn(() => mbcChain),
                         insert: vi.fn().mockResolvedValue({ error: null }),
                         delete: vi.fn(() => mbcChain),
-                        then: (resolve: any) => resolve({ data: [], error: null }),
+                        then: (resolve: any) =>
+                            resolve({ data: [], error: null }),
                     };
                     return mbcChain;
                 }
@@ -443,7 +454,9 @@ describe("supabaseFinanceService", () => {
             });
 
             const snapshots =
-                await supabaseFinanceService.getAllAccountSnapshots("household");
+                await supabaseFinanceService.getAllAccountSnapshots(
+                    "household",
+                );
             expect(orderSpy).toHaveBeenCalledWith("snapshot_date", {
                 ascending: false,
             });
@@ -608,7 +621,12 @@ describe("supabaseFinanceService", () => {
                     return {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockResolvedValue({
-                                data: [{ id: validMemberId, display_name: "Yi Jia" }],
+                                data: [
+                                    {
+                                        id: validMemberId,
+                                        display_name: "Yi Jia",
+                                    },
+                                ],
                                 error: null,
                             }),
                         }),
@@ -650,7 +668,13 @@ describe("supabaseFinanceService", () => {
                 if (table === "categories") {
                     return {
                         select: vi.fn().mockResolvedValue({
-                            data: [{ id: validCategoryId, name: "Food", is_spendable: true }],
+                            data: [
+                                {
+                                    id: validCategoryId,
+                                    name: "Food",
+                                    is_spendable: true,
+                                },
+                            ],
                             error: null,
                         }),
                     };
@@ -668,7 +692,8 @@ describe("supabaseFinanceService", () => {
                         eq: vi.fn(() => chain),
                         gte: vi.fn(() => chain),
                         lt: vi.fn(() => chain),
-                        then: (resolve: any) => resolve({ data: [], error: null }),
+                        then: (resolve: any) =>
+                            resolve({ data: [], error: null }),
                     };
                     return { select: vi.fn().mockReturnValue(chain) };
                 }
@@ -676,7 +701,8 @@ describe("supabaseFinanceService", () => {
                     const chain: any = {
                         gte: vi.fn(() => chain),
                         lt: vi.fn(() => chain),
-                        then: (resolve: any) => resolve({ data: [], error: null }),
+                        then: (resolve: any) =>
+                            resolve({ data: [], error: null }),
                     };
                     return { select: vi.fn().mockReturnValue(chain) };
                 }
@@ -774,7 +800,12 @@ describe("supabaseFinanceService", () => {
                     return {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockResolvedValue({
-                                data: [{ id: validMemberId, display_name: "Yi Jia" }],
+                                data: [
+                                    {
+                                        id: validMemberId,
+                                        display_name: "Yi Jia",
+                                    },
+                                ],
                                 error: null,
                             }),
                         }),
@@ -827,7 +858,8 @@ describe("supabaseFinanceService", () => {
                         gte: vi.fn(() => chain),
                         lt: vi.fn(() => chain),
                         eq: vi.fn(() => chain),
-                        then: (resolve: any) => resolve({ data: [], error: null }),
+                        then: (resolve: any) =>
+                            resolve({ data: [], error: null }),
                     };
                     return { select: vi.fn().mockReturnValue(chain) };
                 }
@@ -837,24 +869,27 @@ describe("supabaseFinanceService", () => {
                             eq: vi.fn().mockReturnValue({
                                 eq: vi.fn().mockReturnValue({
                                     limit: vi.fn().mockReturnValue({
-                                        maybeSingle: vi.fn().mockImplementation(() => {
-                                            if (insertedPastRow) {
+                                        maybeSingle: vi
+                                            .fn()
+                                            .mockImplementation(() => {
+                                                if (insertedPastRow) {
+                                                    return Promise.resolve({
+                                                        data: {
+                                                            id: sampleBudgetId,
+                                                            month: pastMonth,
+                                                            owner_id:
+                                                                validMemberId,
+                                                            gross_salary: 6000,
+                                                            is_locked: false, // unlocked past month
+                                                        },
+                                                        error: null,
+                                                    });
+                                                }
                                                 return Promise.resolve({
-                                                    data: {
-                                                        id: sampleBudgetId,
-                                                        month: pastMonth,
-                                                        owner_id: validMemberId,
-                                                        gross_salary: 6000,
-                                                        is_locked: false, // unlocked past month
-                                                    },
+                                                    data: null,
                                                     error: null,
                                                 });
-                                            }
-                                            return Promise.resolve({
-                                                data: null,
-                                                error: null,
-                                            });
-                                        }),
+                                            }),
                                     }),
                                 }),
                             }),
@@ -886,7 +921,9 @@ describe("supabaseFinanceService", () => {
                     return {
                         insert: vi.fn().mockResolvedValue({ error: null }),
                         select: vi.fn().mockReturnValue({
-                            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                            eq: vi
+                                .fn()
+                                .mockResolvedValue({ data: [], error: null }),
                         }),
                     };
                 }
@@ -932,7 +969,10 @@ describe("supabaseFinanceService", () => {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockResolvedValue({
                                 data: [
-                                    { id: validMemberId, display_name: "Yi Jia" },
+                                    {
+                                        id: validMemberId,
+                                        display_name: "Yi Jia",
+                                    },
                                     { id: partnerId, display_name: "Partner" },
                                 ],
                                 error: null,
@@ -967,7 +1007,9 @@ describe("supabaseFinanceService", () => {
                 }
                 if (table === "recurring_items") {
                     return {
-                        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+                        select: vi
+                            .fn()
+                            .mockResolvedValue({ data: [], error: null }),
                     };
                 }
                 if (table === "bonus_events" || table === "expenses") {
@@ -975,7 +1017,8 @@ describe("supabaseFinanceService", () => {
                         gte: vi.fn(() => chain),
                         lt: vi.fn(() => chain),
                         eq: vi.fn(() => chain),
-                        then: (resolve: any) => resolve({ data: [], error: null }),
+                        then: (resolve: any) =>
+                            resolve({ data: [], error: null }),
                     };
                     return { select: vi.fn().mockReturnValue(chain) };
                 }
@@ -998,16 +1041,19 @@ describe("supabaseFinanceService", () => {
                 return {};
             });
 
-            const partnerBudgetDetail = await supabaseFinanceService.getMonthlyBudget(
-                currentOrFutureMonth,
-                partnerId,
-            );
+            const partnerBudgetDetail =
+                await supabaseFinanceService.getMonthlyBudget(
+                    currentOrFutureMonth,
+                    partnerId,
+                );
 
             expect(partnerBudgetDetail.budget.owner_id).toBe(partnerId);
             expect(partnerBudgetDetail.budget.gross_salary).toBe(0);
             expect(partnerBudgetDetail.budget.cpf_deduction).toBe(0);
             expect(partnerBudgetDetail.budget.after_deductions).toBe(0);
-            expect(partnerBudgetDetail.budget.notes).toBe("No base budget profile configured");
+            expect(partnerBudgetDetail.budget.notes).toBe(
+                "No base budget profile configured",
+            );
             expect(partnerBudgetDetail.categories).toHaveLength(0);
         });
 
@@ -1062,31 +1108,41 @@ describe("supabaseFinanceService", () => {
                 }
                 if (table === "recurring_items") {
                     return {
-                        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+                        select: vi
+                            .fn()
+                            .mockResolvedValue({ data: [], error: null }),
                     };
                 }
                 if (table === "monthly_budgets") {
                     return {
                         select: vi.fn().mockReturnValue({
                             eq: vi.fn().mockReturnValue({
-                                gte: vi.fn((_col: string, _minMonth: string) => ({
-                                    eq: vi.fn((_col2: string, _lockedVal: boolean) => {
-                                        // Returns only current/future unlocked budget
-                                        return Promise.resolve({
-                                            data: [
-                                                {
-                                                    id: sampleBudgetId,
-                                                    owner_id: validMemberId,
-                                                    month: currentOrFutureMonth,
-                                                    gross_salary: 6000,
-                                                    cpf_deduction: 1200,
-                                                    is_locked: false,
-                                                },
-                                            ],
-                                            error: null,
-                                        });
+                                gte: vi.fn(
+                                    (_col: string, _minMonth: string) => ({
+                                        eq: vi.fn(
+                                            (
+                                                _col2: string,
+                                                _lockedVal: boolean,
+                                            ) => {
+                                                // Returns only current/future unlocked budget
+                                                return Promise.resolve({
+                                                    data: [
+                                                        {
+                                                            id: sampleBudgetId,
+                                                            owner_id:
+                                                                validMemberId,
+                                                            month: currentOrFutureMonth,
+                                                            gross_salary: 6000,
+                                                            cpf_deduction: 1200,
+                                                            is_locked: false,
+                                                        },
+                                                    ],
+                                                    error: null,
+                                                });
+                                            },
+                                        ),
                                     }),
-                                })),
+                                ),
                             }),
                         }),
                         update: vi.fn((updates: any) => ({
@@ -1144,9 +1200,9 @@ describe("supabaseFinanceService", () => {
                     id: "mb-dyn-2026-11-user",
                     notes: "test",
                 }),
-            ).rejects.toThrow(/Budget must be persisted with a valid UUID before update/);
+            ).rejects.toThrow(
+                /Budget must be persisted with a valid UUID before update/,
+            );
         });
     });
 });
-
-

@@ -29,11 +29,21 @@ describe("delight micro-interactions", () => {
     });
 
     it("celebrates reaching a goal as a milestone", async () => {
-        vi.spyOn(financeService, "updateGoal").mockResolvedValue({ ...goal, saved_so_far: 1050 });
+        vi.spyOn(financeService, "updateGoal").mockResolvedValue({
+            ...goal,
+            saved_so_far: 1050,
+        });
         const milestones: MilestoneDetail[] = [];
         const off = onAppEvent("delight:milestone", (d) => milestones.push(d));
 
-        render(<QuickDepositModal isOpen onClose={vi.fn()} goal={goal} onDepositSaved={vi.fn()} />);
+        render(
+            <QuickDepositModal
+                isOpen
+                onClose={vi.fn()}
+                goal={goal}
+                onDepositSaved={vi.fn()}
+            />,
+        );
         fireEvent.click(screen.getByRole("button", { name: /\+S\$100/i }));
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^deposit$/i }));
@@ -47,7 +57,9 @@ describe("delight micro-interactions", () => {
     it("ticks on the Quick Add FAB and still opens Quick Add", () => {
         const tick = vi.spyOn(haptics, "tick");
         const onQuickAdd = vi.fn();
-        render(<MobileBottomNav activeTab="dashboard" onQuickAdd={onQuickAdd} />);
+        render(
+            <MobileBottomNav activeTab="dashboard" onQuickAdd={onQuickAdd} />,
+        );
 
         fireEvent.click(screen.getByRole("button", { name: "Quick Add" }));
 

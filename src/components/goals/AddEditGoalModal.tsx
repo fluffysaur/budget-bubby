@@ -20,7 +20,10 @@ import {
 } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
-import { useAddGoalMutation, useUpdateGoalMutation } from "../../hooks/useFinanceQueries";
+import {
+    useAddGoalMutation,
+    useUpdateGoalMutation,
+} from "../../hooks/useFinanceQueries";
 import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
 import { formatISODate } from "../../lib/dateUtils";

@@ -31,14 +31,19 @@ export function MonthEndSweepBanner({
                     >
                         <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--accent-lilac) text-(--text-ink) shadow-cute-sm">
-                                <PiggyBank className="h-5 w-5" strokeWidth={2.5} />
+                                <PiggyBank
+                                    className="h-5 w-5"
+                                    strokeWidth={2.5}
+                                />
                             </div>
                             <div className="min-w-0 flex-1 text-xs sm:text-sm">
                                 <h2 className="font-bold text-(--text-ink) truncate">
-                                    <CurrencyText amount={surplusAmount} /> unspent from {formatDisplayMonth(month)}
+                                    <CurrencyText amount={surplusAmount} />{" "}
+                                    unspent from {formatDisplayMonth(month)}
                                 </h2>
                                 <p className="text-(--text-muted) text-xs mt-0.5">
-                                    Sweep into savings goals or bank for cushion.
+                                    Sweep into savings goals or bank for
+                                    cushion.
                                 </p>
                             </div>
                         </div>
@@ -49,7 +54,9 @@ export function MonthEndSweepBanner({
                                 size="sm"
                                 onClick={onBankSurplusClick}
                                 aria-label="Bank surplus"
-                                leftIcon={<Shield className="h-3.5 w-3.5 text-(--text-muted)" />}
+                                leftIcon={
+                                    <Shield className="h-3.5 w-3.5 text-(--text-muted)" />
+                                }
                             >
                                 Bank Surplus
                             </Button>
@@ -58,7 +65,12 @@ export function MonthEndSweepBanner({
                                 size="sm"
                                 onClick={onSweepClick}
                                 aria-label="Sweep to goals"
-                                rightIcon={<ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                                rightIcon={
+                                    <ArrowRight
+                                        className="h-3.5 w-3.5"
+                                        strokeWidth={2.5}
+                                    />
+                                }
                             >
                                 Sweep to Goals
                             </Button>

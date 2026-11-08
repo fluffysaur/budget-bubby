@@ -55,7 +55,9 @@ describe("PR #7 Motion Surfaces & UI Polish", () => {
         expect(tab1).toHaveAttribute("aria-selected", "true");
         // Active tab renders indicator pill inside
         expect(tab1.querySelector(".absolute.inset-0")).not.toBeNull();
-        expect(tab1.querySelector(".absolute.inset-0")).toHaveClass("bg-(--pastel-lilac)");
+        expect(tab1.querySelector(".absolute.inset-0")).toHaveClass(
+            "bg-(--pastel-lilac)",
+        );
     });
 
     it("CollapsibleSection renders collapsed content when opened", () => {
@@ -79,7 +81,11 @@ describe("PR #7 Motion Surfaces & UI Polish", () => {
         renderWithMotion(
             <div>
                 <Input label="Name" error="Name is required" />
-                <Select label="Type" error="Type is required" options={[{ value: "a", label: "A" }]} />
+                <Select
+                    label="Type"
+                    error="Type is required"
+                    options={[{ value: "a", label: "A" }]}
+                />
                 <Textarea label="Notes" error="Notes too short" />
             </div>,
         );

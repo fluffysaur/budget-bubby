@@ -14,7 +14,10 @@
 
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
-import { createSupabaseSendDeps, runSendReminders } from "../_shared/dist/send-reminders.js";
+import {
+    createSupabaseSendDeps,
+    runSendReminders,
+} from "../_shared/dist/send-reminders.js";
 
 function env(name: string): string {
     const value = Deno.env.get(name);
@@ -38,11 +41,19 @@ Deno.serve(async (req: Request) => {
         // empty body
     }
 
-    webpush.setVapidDetails(env("VAPID_SUBJECT"), env("VAPID_PUBLIC_KEY"), env("VAPID_PRIVATE_KEY"));
+    webpush.setVapidDetails(
+        env("VAPID_SUBJECT"),
+        env("VAPID_PUBLIC_KEY"),
+        env("VAPID_PRIVATE_KEY"),
+    );
 
-    const client = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
-        auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const client = createClient(
+        env("SUPABASE_URL"),
+        env("SUPABASE_SERVICE_ROLE_KEY"),
+        {
+            auth: { persistSession: false, autoRefreshToken: false },
+        },
+    );
 
     try {
         const deps = createSupabaseSendDeps(client, {
@@ -51,15 +62,25 @@ Deno.serve(async (req: Request) => {
             async sendPush(target, message) {
                 try {
                     await webpush.sendNotification(
-                        { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
+                        {
+                            endpoint: target.endpoint,
+                            keys: { p256dh: target.p256dh, auth: target.auth },
+                        },
                         JSON.stringify(message),
                         { TTL: 6 * 60 * 60, urgency: "normal" },
                     );
                     return { ok: true };
                 } catch (err) {
                     const status = (err as { statusCode?: number }).statusCode;
-                    console.error("Push failed", status, (err as Error).message);
-                    return { ok: false, gone: status === 404 || status === 410 };
+                    console.error(
+                        "Push failed",
+                        status,
+                        (err as Error).message,
+                    );
+                    return {
+                        ok: false,
+                        gone: status === 404 || status === 410,
+                    };
                 }
             },
         });
@@ -67,6 +88,9 @@ Deno.serve(async (req: Request) => {
         return Response.json(result);
     } catch (err) {
         console.error("send-reminders failed", err);
-        return Response.json({ error: (err as Error).message }, { status: 500 });
+        return Response.json(
+            { error: (err as Error).message },
+            { status: 500 },
+        );
     }
 });

@@ -25,12 +25,18 @@ describe("WeeklyRecapCard", () => {
             );
         });
 
-        expect(screen.getByRole("region", { name: "Last Week" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("region", { name: "Last Week" }),
+        ).toBeInTheDocument();
         expect(screen.getByText("Logged 0 of 7 days")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "See Spend" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "See Spend" }),
+        ).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: "Nice!" }));
-        expect(screen.queryByRole("region", { name: "Last Week" })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("region", { name: "Last Week" }),
+        ).not.toBeInTheDocument();
         expect(readBubbyStore().recapSeenWeek).toBe(WEEK.start);
         expect(onSeeSpend).not.toHaveBeenCalled();
     });

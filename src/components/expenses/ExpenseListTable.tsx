@@ -11,640 +11,825 @@
  * - Responsive card layout on mobile so ledger never overflows or clips
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Trash2,
-  Pencil,
-  Receipt,
-  ArrowRightLeft,
-  ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  ChevronLeft,
-  ChevronRight,
-  ArrowUpDown,
-  RotateCcw,
-} from 'lucide-react';
-import { formatForeignAmount } from '../../lib/currencyConverter';
-import { formatDisplayDate, formatTime12h, extractTimeFromISO } from '../../lib/dateUtils';
-import { mockCategories, mockMembers } from '../../data/mockSeedData';
-import { ExpenseFormModal } from './ExpenseFormModal';
-import { DeleteExpenseModal } from './DeleteExpenseModal';
-import { TruncatedText } from '../ui/TruncatedText';
-import { ExpenseRowsSkeleton } from '../ui/PageSkeletons';
-import { Select } from '../ui/Select';
-import { m, AnimatePresence } from 'motion/react';
-import { listItem } from '../../lib/motion';
-import { Button } from '../ui/Button';
-import { ExpenseFilterBar } from './ExpenseFilterBar';
-import { financeService, isMockModeActive } from '../../services/financeService';
+    Trash2,
+    Pencil,
+    Receipt,
+    ArrowRightLeft,
+    ChevronDown,
+    ChevronUp,
+    ChevronsUpDown,
+    ChevronLeft,
+    ChevronRight,
+    ArrowUpDown,
+    RotateCcw,
+} from "lucide-react";
+import { formatForeignAmount } from "../../lib/currencyConverter";
+import {
+    formatDisplayDate,
+    formatTime12h,
+    extractTimeFromISO,
+} from "../../lib/dateUtils";
+import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { ExpenseFormModal } from "./ExpenseFormModal";
+import { DeleteExpenseModal } from "./DeleteExpenseModal";
+import { TruncatedText } from "../ui/TruncatedText";
+import { ExpenseRowsSkeleton } from "../ui/PageSkeletons";
+import { Select } from "../ui/Select";
+import { m, AnimatePresence } from "motion/react";
+import { listItem } from "../../lib/motion";
+import { Button } from "../ui/Button";
+import { ExpenseFilterBar } from "./ExpenseFilterBar";
+import {
+    financeService,
+    isMockModeActive,
+} from "../../services/financeService";
 import type {
-  Expense,
-  Category,
-  HouseholdMember,
-  SavingsGoal,
-  ExpenseSortField,
-  SortDirection,
-  ExpenseFilter,
-} from '../../types/finance';
-import { CurrencyText } from '../ui/CurrencyText';
+    Expense,
+    Category,
+    HouseholdMember,
+    SavingsGoal,
+    ExpenseSortField,
+    SortDirection,
+    ExpenseFilter,
+} from "../../types/finance";
+import { CurrencyText } from "../ui/CurrencyText";
 
 export interface ExpenseListTableProps {
-  expenses: Expense[];
-  categories?: Category[];
-  members?: HouseholdMember[];
-  goals?: SavingsGoal[];
-  onDeleteExpense?: (id: string) => Promise<void> | void;
-  onEditExpense?: (expense: Expense) => void;
-  onExpenseSaved?: (expense: Expense) => void;
-  isLoading?: boolean;
-  sortBy?: ExpenseSortField;
-  sortOrder?: SortDirection;
-  onSortChange?: (field: ExpenseSortField, order: SortDirection) => void;
-  currentPage?: number;
-  pageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  filter?: ExpenseFilter;
-  onFilterChange?: (newFilter: ExpenseFilter) => void;
-  onResetFilters?: () => void;
+    expenses: Expense[];
+    categories?: Category[];
+    members?: HouseholdMember[];
+    goals?: SavingsGoal[];
+    onDeleteExpense?: (id: string) => Promise<void> | void;
+    onEditExpense?: (expense: Expense) => void;
+    onExpenseSaved?: (expense: Expense) => void;
+    isLoading?: boolean;
+    sortBy?: ExpenseSortField;
+    sortOrder?: SortDirection;
+    onSortChange?: (field: ExpenseSortField, order: SortDirection) => void;
+    currentPage?: number;
+    pageSize?: number;
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    filter?: ExpenseFilter;
+    onFilterChange?: (newFilter: ExpenseFilter) => void;
+    onResetFilters?: () => void;
 }
 
 export function ExpenseListTable({
-  expenses,
-  categories: propCategories,
-  members: propMembers,
-  goals: propGoals,
-  onDeleteExpense,
-  onEditExpense,
-  onExpenseSaved,
-  isLoading = false,
-  sortBy: propSortBy,
-  sortOrder: propSortOrder,
-  onSortChange,
-  currentPage: propCurrentPage,
-  pageSize: propPageSize,
-  onPageChange,
-  onPageSizeChange,
-  filter,
-  onFilterChange,
-  onResetFilters,
+    expenses,
+    categories: propCategories,
+    members: propMembers,
+    goals: propGoals,
+    onDeleteExpense,
+    onEditExpense,
+    onExpenseSaved,
+    isLoading = false,
+    sortBy: propSortBy,
+    sortOrder: propSortOrder,
+    onSortChange,
+    currentPage: propCurrentPage,
+    pageSize: propPageSize,
+    onPageChange,
+    onPageSizeChange,
+    filter,
+    onFilterChange,
+    onResetFilters,
 }: ExpenseListTableProps) {
-  const isMock = isMockModeActive();
-  const categories = useMemo(
-    () => propCategories ?? (isMock ? mockCategories : []),
-    [propCategories, isMock],
-  );
-  const members = useMemo(
-    () => propMembers ?? (isMock ? mockMembers : []),
-    [propMembers, isMock],
-  );
-  // Goals for Goal Spend badges
-  const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(propGoals || []);
-
-  useEffect(() => {
-    if (propGoals && propGoals.length > 0) {
-      setInternalGoals(propGoals);
-      return;
-    }
-    let isMounted = true;
-    financeService
-      .getGoals()
-      .then((res) => {
-        if (isMounted && res) {
-          setInternalGoals(res);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      isMounted = false;
-    };
-  }, [propGoals]);
-  // Internal sort state (fallback if uncontrolled)
-  const [internalSortBy, setInternalSortBy] = useState<ExpenseSortField | null>(propSortBy || null);
-  const [internalSortOrder, setInternalSortOrder] = useState<SortDirection>(propSortOrder || 'desc');
-
-  // Internal pagination state (fallback if uncontrolled)
-  const [internalCurrentPage, setInternalCurrentPage] = useState<number>(1);
-  const [internalPageSize, setInternalPageSize] = useState<number>(20);
-
-  // Active modal targets
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
-
-  const activeSortBy = propSortBy ?? internalSortBy;
-  const activeSortOrder = propSortOrder ?? internalSortOrder;
-  const activeCurrentPage = propCurrentPage ?? internalCurrentPage;
-  const activePageSize = propPageSize ?? internalPageSize;
-
-  const handleSort = (field: ExpenseSortField) => {
-    const newOrder: SortDirection =
-      activeSortBy === field
-        ? activeSortOrder === 'asc'
-          ? 'desc'
-          : 'asc'
-        : field === 'date' || field === 'amount'
-          ? 'desc'
-          : 'asc';
-
-    if (onSortChange) {
-      onSortChange(field, newOrder);
-    } else {
-      setInternalSortBy(field);
-      setInternalSortOrder(newOrder);
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    if (onPageChange) {
-      onPageChange(page);
-    } else {
-      setInternalCurrentPage(page);
-    }
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    if (onPageSizeChange) {
-      onPageSizeChange(newSize);
-    } else {
-      setInternalPageSize(newSize);
-      setInternalCurrentPage(1);
-    }
-  };
-
-  const getCategory = useCallback((catId?: string | null): Category | undefined => {
-    if (!catId) return undefined;
-    return categories.find((c) => c.id === catId);
-  }, [categories]);
-
-  const getGoal = useCallback((goalId?: string | null): SavingsGoal | undefined => {
-    if (!goalId) return undefined;
-    return internalGoals.find((g) => g.id === goalId);
-  }, [internalGoals]);
-
-  const getMember = useCallback((memberId: string): HouseholdMember | undefined => {
-    return members.find((m) => m.id === memberId);
-  }, [members]);
-
-  // Sort expenses (preserves input order by default unless sort is active)
-  const sortedExpenses = useMemo(() => {
-    const list = [...expenses];
-    if (!activeSortBy) return list;
-    list.sort((a, b) => {
-      let comparison = 0;
-      if (activeSortBy === 'date') {
-        comparison = a.date.localeCompare(b.date);
-        if (comparison === 0) {
-          const timeA = a.time || (a.created_at ? extractTimeFromISO(a.created_at) : '');
-          const timeB = b.time || (b.created_at ? extractTimeFromISO(b.created_at) : '');
-          comparison = timeA.localeCompare(timeB);
-        }
-        if (comparison === 0 && a.created_at && b.created_at) {
-          comparison = a.created_at.localeCompare(b.created_at);
-        }
-      } else if (activeSortBy === 'amount') {
-        comparison = a.amount - b.amount;
-      } else if (activeSortBy === 'category') {
-        const catA = a.goal_id
-          ? (getGoal(a.goal_id)?.title || 'Goal')
-          : (getCategory(a.category_id)?.name || '');
-        const catB = b.goal_id
-          ? (getGoal(b.goal_id)?.title || 'Goal')
-          : (getCategory(b.category_id)?.name || '');
-        comparison = catA.localeCompare(catB);
-      } else if (activeSortBy === 'payer') {
-        const payerA = getMember(a.payer_id)?.display_name || a.payer_id;
-        const payerB = getMember(b.payer_id)?.display_name || b.payer_id;
-        comparison = payerA.localeCompare(payerB);
-      }
-      return activeSortOrder === 'desc' ? -comparison : comparison;
-    });
-    return list;
-  }, [expenses, activeSortBy, activeSortOrder, getCategory, getGoal, getMember]);
-
-  // Paginate sorted items
-  const totalItems = sortedExpenses.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / activePageSize));
-  const validCurrentPage = Math.min(Math.max(1, activeCurrentPage), totalPages);
-
-  const paginatedExpenses = useMemo(() => {
-    const start = (validCurrentPage - 1) * activePageSize;
-    return sortedExpenses.slice(start, start + activePageSize);
-  }, [sortedExpenses, validCurrentPage, activePageSize]);
-
-  const startIndex = totalItems === 0 ? 0 : (validCurrentPage - 1) * activePageSize + 1;
-  const endIndex = Math.min(totalItems, validCurrentPage * activePageSize);
-
-  // Render sort header icon
-  const renderSortIcon = (field: ExpenseSortField) => {
-    if (activeSortBy !== field) {
-      return <ChevronsUpDown className="h-3.5 w-3.5 text-(--text-faint) opacity-60 ml-1 inline" />;
-    }
-    return activeSortOrder === 'asc' ? (
-      <ChevronUp className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
-    ) : (
-      <ChevronDown className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
+    const isMock = isMockModeActive();
+    const categories = useMemo(
+        () => propCategories ?? (isMock ? mockCategories : []),
+        [propCategories, isMock],
     );
-  };
+    const members = useMemo(
+        () => propMembers ?? (isMock ? mockMembers : []),
+        [propMembers, isMock],
+    );
+    // Goals for Goal Spend badges
+    const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(
+        propGoals || [],
+    );
 
-  return (
-    <div className="space-y-4">
-      {/* Main Ledger Container */}
-      <div className="overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute transition-colors">
-        {/* Unified Card Header: Filter, Search & Sort Toolbar */}
-        {filter && onFilterChange ? (
-          <div className="border-b-2 border-(--border-ink) bg-(--bg-canvas)/40 p-3 sm:p-4">
-            <ExpenseFilterBar
-              filter={filter}
-              onFilterChange={onFilterChange}
-              onReset={onResetFilters}
-              categories={categories}
-              members={members}
-              sortBy={activeSortBy}
-              sortOrder={activeSortOrder}
-              onSortChange={(field, order) => {
-                if (onSortChange) {
-                  onSortChange(field, order);
-                } else {
-                  setInternalSortBy(field);
-                  setInternalSortOrder(order);
+    useEffect(() => {
+        if (propGoals && propGoals.length > 0) {
+            setInternalGoals(propGoals);
+            return;
+        }
+        let isMounted = true;
+        financeService
+            .getGoals()
+            .then((res) => {
+                if (isMounted && res) {
+                    setInternalGoals(res);
                 }
-              }}
-              embeddedInCard
-            />
-          </div>
+            })
+            .catch(() => {});
+        return () => {
+            isMounted = false;
+        };
+    }, [propGoals]);
+    // Internal sort state (fallback if uncontrolled)
+    const [internalSortBy, setInternalSortBy] =
+        useState<ExpenseSortField | null>(propSortBy || null);
+    const [internalSortOrder, setInternalSortOrder] = useState<SortDirection>(
+        propSortOrder || "desc",
+    );
+
+    // Internal pagination state (fallback if uncontrolled)
+    const [internalCurrentPage, setInternalCurrentPage] = useState<number>(1);
+    const [internalPageSize, setInternalPageSize] = useState<number>(20);
+
+    // Active modal targets
+    const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+    const [deletingExpense, setDeletingExpense] = useState<Expense | null>(
+        null,
+    );
+
+    const activeSortBy = propSortBy ?? internalSortBy;
+    const activeSortOrder = propSortOrder ?? internalSortOrder;
+    const activeCurrentPage = propCurrentPage ?? internalCurrentPage;
+    const activePageSize = propPageSize ?? internalPageSize;
+
+    const handleSort = (field: ExpenseSortField) => {
+        const newOrder: SortDirection =
+            activeSortBy === field
+                ? activeSortOrder === "asc"
+                    ? "desc"
+                    : "asc"
+                : field === "date" || field === "amount"
+                  ? "desc"
+                  : "asc";
+
+        if (onSortChange) {
+            onSortChange(field, newOrder);
+        } else {
+            setInternalSortBy(field);
+            setInternalSortOrder(newOrder);
+        }
+    };
+
+    const handlePageChange = (page: number) => {
+        if (onPageChange) {
+            onPageChange(page);
+        } else {
+            setInternalCurrentPage(page);
+        }
+    };
+
+    const handlePageSizeChange = (newSize: number) => {
+        if (onPageSizeChange) {
+            onPageSizeChange(newSize);
+        } else {
+            setInternalPageSize(newSize);
+            setInternalCurrentPage(1);
+        }
+    };
+
+    const getCategory = useCallback(
+        (catId?: string | null): Category | undefined => {
+            if (!catId) return undefined;
+            return categories.find((c) => c.id === catId);
+        },
+        [categories],
+    );
+
+    const getGoal = useCallback(
+        (goalId?: string | null): SavingsGoal | undefined => {
+            if (!goalId) return undefined;
+            return internalGoals.find((g) => g.id === goalId);
+        },
+        [internalGoals],
+    );
+
+    const getMember = useCallback(
+        (memberId: string): HouseholdMember | undefined => {
+            return members.find((m) => m.id === memberId);
+        },
+        [members],
+    );
+
+    // Sort expenses (preserves input order by default unless sort is active)
+    const sortedExpenses = useMemo(() => {
+        const list = [...expenses];
+        if (!activeSortBy) return list;
+        list.sort((a, b) => {
+            let comparison = 0;
+            if (activeSortBy === "date") {
+                comparison = a.date.localeCompare(b.date);
+                if (comparison === 0) {
+                    const timeA =
+                        a.time ||
+                        (a.created_at ? extractTimeFromISO(a.created_at) : "");
+                    const timeB =
+                        b.time ||
+                        (b.created_at ? extractTimeFromISO(b.created_at) : "");
+                    comparison = timeA.localeCompare(timeB);
+                }
+                if (comparison === 0 && a.created_at && b.created_at) {
+                    comparison = a.created_at.localeCompare(b.created_at);
+                }
+            } else if (activeSortBy === "amount") {
+                comparison = a.amount - b.amount;
+            } else if (activeSortBy === "category") {
+                const catA = a.goal_id
+                    ? getGoal(a.goal_id)?.title || "Goal"
+                    : getCategory(a.category_id)?.name || "";
+                const catB = b.goal_id
+                    ? getGoal(b.goal_id)?.title || "Goal"
+                    : getCategory(b.category_id)?.name || "";
+                comparison = catA.localeCompare(catB);
+            } else if (activeSortBy === "payer") {
+                const payerA =
+                    getMember(a.payer_id)?.display_name || a.payer_id;
+                const payerB =
+                    getMember(b.payer_id)?.display_name || b.payer_id;
+                comparison = payerA.localeCompare(payerB);
+            }
+            return activeSortOrder === "desc" ? -comparison : comparison;
+        });
+        return list;
+    }, [
+        expenses,
+        activeSortBy,
+        activeSortOrder,
+        getCategory,
+        getGoal,
+        getMember,
+    ]);
+
+    // Paginate sorted items
+    const totalItems = sortedExpenses.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / activePageSize));
+    const validCurrentPage = Math.min(
+        Math.max(1, activeCurrentPage),
+        totalPages,
+    );
+
+    const paginatedExpenses = useMemo(() => {
+        const start = (validCurrentPage - 1) * activePageSize;
+        return sortedExpenses.slice(start, start + activePageSize);
+    }, [sortedExpenses, validCurrentPage, activePageSize]);
+
+    const startIndex =
+        totalItems === 0 ? 0 : (validCurrentPage - 1) * activePageSize + 1;
+    const endIndex = Math.min(totalItems, validCurrentPage * activePageSize);
+
+    // Render sort header icon
+    const renderSortIcon = (field: ExpenseSortField) => {
+        if (activeSortBy !== field) {
+            return (
+                <ChevronsUpDown className="h-3.5 w-3.5 text-(--text-faint) opacity-60 ml-1 inline" />
+            );
+        }
+        return activeSortOrder === "asc" ? (
+            <ChevronUp className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
         ) : (
-          /* Fallback Mobile Sort Bar when standalone without filter toolbar */
-          <div className="sm:hidden border-b-2 border-(--border-ink) bg-(--bg-canvas)/40 p-3 flex items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-1.5 text-(--text-muted)">
-              <ArrowUpDown className="h-3.5 w-3.5" />
-              <span className="font-bold">Sort by:</span>
-            </div>
-            <Select
-              aria-label="Sort ledger"
-              value={activeSortBy ? `${activeSortBy}-${activeSortOrder}` : ''}
-              onChange={(e) => {
-                if (!e.target.value) {
-                  if (!onSortChange) setInternalSortBy(null);
-                  return;
-                }
-                const [field, order] = e.target.value.split('-') as [ExpenseSortField, SortDirection];
-                if (onSortChange) {
-                  onSortChange(field, order);
-                } else {
-                  setInternalSortBy(field);
-                  setInternalSortOrder(order);
-                }
-              }}
-              sizeVariant="sm"
-              containerClassName="w-auto"
-              className="bg-(--bg-canvas) font-bold text-xs py-1"
-            >
-              <option value="">Default order</option>
-              <option value="date-desc">Newest</option>
-              <option value="date-asc">Oldest</option>
-              <option value="amount-desc">Highest</option>
-              <option value="amount-asc">Lowest</option>
-              <option value="category-asc">Category (A-Z)</option>
-              <option value="payer-asc">Payer (A-Z)</option>
-            </Select>
-          </div>
-        )}
+            <ChevronDown className="h-3.5 w-3.5 text-(--text-ink) ml-1 inline" />
+        );
+    };
 
-        {/* Ledger Body: Skeleton, Empty State or Table + Cards */}
-        {isLoading ? (
-          <ExpenseRowsSkeleton />
-        ) : expenses.length === 0 ? (
-          <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-cute-sm mb-3">
-              <Receipt className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-extrabold text-(--text-ink) mb-1">No Expenses</h3>
-            <p className="text-xs text-(--text-muted) max-w-sm mb-4">
-              Clear filters or add an expense.
-            </p>
-            {onResetFilters && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onResetFilters}
-                leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
-              >
-                Reset Filters
-              </Button>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-(--text-ink) block sm:table">
-            <thead className="hidden sm:table-header-group bg-(--bg-canvas) border-b-2 border-(--border-ink) text-[11px] uppercase tracking-wider font-extrabold text-(--text-muted) select-none">
-              <tr>
-                <th
-                  scope="col"
-                  onClick={() => handleSort('date')}
-                  className="py-3.5 pl-6 pr-3 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
-                >
-                  <span className="inline-flex items-center">
-                    Date {renderSortIcon('date')}
-                  </span>
-                </th>
-                <th scope="col" className="px-3 py-3.5">Item &amp; Description</th>
-                <th
-                  scope="col"
-                  onClick={() => handleSort('category')}
-                  className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
-                >
-                  <span className="inline-flex items-center">
-                    Category {renderSortIcon('category')}
-                  </span>
-                </th>
-                <th
-                  scope="col"
-                  onClick={() => handleSort('payer')}
-                  className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
-                >
-                  <span className="inline-flex items-center">
-                    Payer {renderSortIcon('payer')}
-                  </span>
-                </th>
-                <th scope="col" className="px-3 py-3.5 whitespace-nowrap">Split</th>
-                <th
-                  scope="col"
-                  onClick={() => handleSort('amount')}
-                  className="px-3 py-3.5 text-right whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
-                >
-                  <span className="inline-flex items-center justify-end">
-                    Amount {renderSortIcon('amount')}
-                  </span>
-                </th>
-                <th scope="col" className="py-3.5 pl-3 pr-6 text-center whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-(--border-subtle) block sm:table-row-group">
-              <AnimatePresence initial={false}>
-                {paginatedExpenses.map((expense) => {
-                  const category = getCategory(expense.category_id);
-                  const payer = getMember(expense.payer_id);
-                  const hasForeignCurrency =
-                    expense.original_currency &&
-                    expense.original_currency !== 'SGD' &&
-                    expense.original_amount;
-                  const displayTime = expense.time || (expense.created_at ? extractTimeFromISO(expense.created_at) : null);
-
-                  return (
-                    <m.tr
-                      key={expense.id}
-                      {...listItem}
-                      className="flex flex-wrap items-center sm:table-row p-3 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
-                    >
-                    {/* Date & Time */}
-                    <td className="order-1 py-0 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 flex-1 sm:flex-initial sm:table-cell whitespace-nowrap font-mono-num font-bold sm:font-semibold text-[11px] sm:text-xs text-(--text-muted) sm:text-(--text-ink)">
-                      <div className="flex flex-row sm:flex-col items-center sm:items-start gap-1.5 sm:gap-0.5">
-                        <span>{formatDisplayDate(expense.date)}</span>
-                        {displayTime && (
-                          <span className="text-[10px] sm:text-[11px] font-mono-num font-normal text-(--text-muted)">
-                            {formatTime12h(displayTime)}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Formatted SGD Amount */}
-                    <td className="order-2 py-0 sm:py-4 px-0 sm:px-3 ml-auto sm:ml-0 shrink-0 sm:table-cell text-right">
-                      <div className="text-(--text-ink)"><CurrencyText amount={expense.amount} size="md" /></div>
-                      {hasForeignCurrency && (
-                        <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
-                          {formatForeignAmount(expense.original_amount!, expense.original_currency!)}
+    return (
+        <div className="space-y-4">
+            {/* Main Ledger Container */}
+            <div className="overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute transition-colors">
+                {/* Unified Card Header: Filter, Search & Sort Toolbar */}
+                {filter && onFilterChange ? (
+                    <div className="border-b-2 border-(--border-ink) bg-(--bg-canvas)/40 p-3 sm:p-4">
+                        <ExpenseFilterBar
+                            filter={filter}
+                            onFilterChange={onFilterChange}
+                            onReset={onResetFilters}
+                            categories={categories}
+                            members={members}
+                            sortBy={activeSortBy}
+                            sortOrder={activeSortOrder}
+                            onSortChange={(field, order) => {
+                                if (onSortChange) {
+                                    onSortChange(field, order);
+                                } else {
+                                    setInternalSortBy(field);
+                                    setInternalSortOrder(order);
+                                }
+                            }}
+                            embeddedInCard
+                        />
+                    </div>
+                ) : (
+                    /* Fallback Mobile Sort Bar when standalone without filter toolbar */
+                    <div className="sm:hidden border-b-2 border-(--border-ink) bg-(--bg-canvas)/40 p-3 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 text-(--text-muted)">
+                            <ArrowUpDown className="h-3.5 w-3.5" />
+                            <span className="font-bold">Sort by:</span>
                         </div>
-                      )}
-                    </td>
+                        <Select
+                            aria-label="Sort ledger"
+                            value={
+                                activeSortBy
+                                    ? `${activeSortBy}-${activeSortOrder}`
+                                    : ""
+                            }
+                            onChange={(e) => {
+                                if (!e.target.value) {
+                                    if (!onSortChange) setInternalSortBy(null);
+                                    return;
+                                }
+                                const [field, order] = e.target.value.split(
+                                    "-",
+                                ) as [ExpenseSortField, SortDirection];
+                                if (onSortChange) {
+                                    onSortChange(field, order);
+                                } else {
+                                    setInternalSortBy(field);
+                                    setInternalSortOrder(order);
+                                }
+                            }}
+                            sizeVariant="sm"
+                            containerClassName="w-auto"
+                            className="bg-(--bg-canvas) font-bold text-xs py-1"
+                        >
+                            <option value="">Default order</option>
+                            <option value="date-desc">Newest</option>
+                            <option value="date-asc">Oldest</option>
+                            <option value="amount-desc">Highest</option>
+                            <option value="amount-asc">Lowest</option>
+                            <option value="category-asc">Category (A-Z)</option>
+                            <option value="payer-asc">Payer (A-Z)</option>
+                        </Select>
+                    </div>
+                )}
 
-                    {/* Item Description & Remarks */}
-                    <td className="order-3 w-full py-1 sm:py-4 px-0 sm:px-3 sm:table-cell max-w-xs">
-                      <div className="font-bold text-sm text-(--text-ink) flex items-center gap-1.5 min-w-0">
-                        <TruncatedText text={expense.item} />
-                        {expense.tags && expense.tags.length > 0 && (
-                          <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
-                            #{expense.tags[0]}
-                          </span>
-                        )}
-                      </div>
-                      {expense.remarks && (
-                        <div className="text-[11px] text-(--text-muted) truncate mt-0.5">
-                          {expense.remarks}
+                {/* Ledger Body: Skeleton, Empty State or Table + Cards */}
+                {isLoading ? (
+                    <ExpenseRowsSkeleton />
+                ) : expenses.length === 0 ? (
+                    <div className="p-8 sm:p-12 text-center flex flex-col items-center justify-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-(--bg-canvas) border-2 border-(--border-ink) text-(--text-muted) shadow-cute-sm mb-3">
+                            <Receipt className="h-6 w-6" />
                         </div>
-                      )}
-                    </td>
-
-                    {/* Category or Goal Badge */}
-                    <td className="order-4 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
-                      {expense.goal_id ? (
-                        (() => {
-                          const goal = getGoal(expense.goal_id);
-                          return (
-                            <span
-                              className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-cute-sm"
-                              title={goal ? `Goal Spend: ${goal.title}` : 'Goal Spend'}
+                        <h3 className="text-base font-extrabold text-(--text-ink) mb-1">
+                            No Expenses
+                        </h3>
+                        <p className="text-xs text-(--text-muted) max-w-sm mb-4">
+                            Clear filters or add an expense.
+                        </p>
+                        {onResetFilters && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={onResetFilters}
+                                leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
                             >
-                              <span role="img" aria-label="Goal" className="text-xs shrink-0">
-                                {goal?.emoji || '🎯'}
-                              </span>
-                              <span className="truncate max-w-28 sm:max-w-36">
-                                {goal?.title || 'Goal Spend'}
-                              </span>
-                            </span>
-                          );
-                        })()
-                      ) : category ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
-                          <span
-                            className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
-                            style={{ backgroundColor: category.color || '#dfc2ff' }}
-                          />
-                          <span>{category.name}</span>
-                        </span>
-                      ) : (
-                        <span className="text-(--text-muted) text-[10px] sm:text-[11px]">Uncategorized</span>
-                      )}
-                    </td>
+                                Reset Filters
+                            </Button>
+                        )}
+                    </div>
+                ) : (
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs text-(--text-ink) block sm:table">
+                                <thead className="hidden sm:table-header-group bg-(--bg-canvas) border-b-2 border-(--border-ink) text-[11px] uppercase tracking-wider font-extrabold text-(--text-muted) select-none">
+                                    <tr>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("date")}
+                                            className="py-3.5 pl-6 pr-3 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
+                                        >
+                                            <span className="inline-flex items-center">
+                                                Date {renderSortIcon("date")}
+                                            </span>
+                                        </th>
+                                        <th scope="col" className="px-3 py-3.5">
+                                            Item &amp; Description
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() =>
+                                                handleSort("category")
+                                            }
+                                            className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
+                                        >
+                                            <span className="inline-flex items-center">
+                                                Category{" "}
+                                                {renderSortIcon("category")}
+                                            </span>
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("payer")}
+                                            className="px-3 py-3.5 whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
+                                        >
+                                            <span className="inline-flex items-center">
+                                                Payer {renderSortIcon("payer")}
+                                            </span>
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 whitespace-nowrap"
+                                        >
+                                            Split
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            onClick={() => handleSort("amount")}
+                                            className="px-3 py-3.5 text-right whitespace-nowrap cursor-pointer hover:text-(--text-ink) transition-colors"
+                                        >
+                                            <span className="inline-flex items-center justify-end">
+                                                Amount{" "}
+                                                {renderSortIcon("amount")}
+                                            </span>
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="py-3.5 pl-3 pr-6 text-center whitespace-nowrap"
+                                        >
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-(--border-subtle) block sm:table-row-group">
+                                    <AnimatePresence initial={false}>
+                                        {paginatedExpenses.map((expense) => {
+                                            const category = getCategory(
+                                                expense.category_id,
+                                            );
+                                            const payer = getMember(
+                                                expense.payer_id,
+                                            );
+                                            const hasForeignCurrency =
+                                                expense.original_currency &&
+                                                expense.original_currency !==
+                                                    "SGD" &&
+                                                expense.original_amount;
+                                            const displayTime =
+                                                expense.time ||
+                                                (expense.created_at
+                                                    ? extractTimeFromISO(
+                                                          expense.created_at,
+                                                      )
+                                                    : null);
 
-                    {/* Payer Avatar / Name */}
-                    <td className="order-5 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
-                      <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-(--text-ink)">
-                        <span className="text-xs">{payer?.avatar_url || '👤'}</span>
-                        <span className="text-[10px] sm:text-xs">{payer?.display_name || 'Unknown'}</span>
-                      </span>
-                    </td>
+                                            return (
+                                                <m.tr
+                                                    key={expense.id}
+                                                    {...listItem}
+                                                    className="flex flex-wrap items-center sm:table-row p-3 sm:p-0 hover:bg-(--pastel-butter-light)/40 transition-colors"
+                                                >
+                                                    {/* Date & Time */}
+                                                    <td className="order-1 py-0 sm:py-4 pl-0 sm:pl-6 pr-0 sm:pr-3 flex-1 sm:flex-initial sm:table-cell whitespace-nowrap font-mono-num font-bold sm:font-semibold text-[11px] sm:text-xs text-(--text-muted) sm:text-(--text-ink)">
+                                                        <div className="flex flex-row sm:flex-col items-center sm:items-start gap-1.5 sm:gap-0.5">
+                                                            <span>
+                                                                {formatDisplayDate(
+                                                                    expense.date,
+                                                                )}
+                                                            </span>
+                                                            {displayTime && (
+                                                                <span className="text-[10px] sm:text-[11px] font-mono-num font-normal text-(--text-muted)">
+                                                                    {formatTime12h(
+                                                                        displayTime,
+                                                                    )}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
 
-                    {/* Split Status Badge */}
-                    <td className="order-6 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap">
-                      {expense.is_shared ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-bold text-(--text-ink)">
-                          <ArrowRightLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                          <span>
-                            {expense.split_ratio && expense.split_ratio !== 0.5
-                              ? `Split ${Math.round(expense.split_ratio * 100)}%`
-                              : 'Shared 50/50'}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-medium text-(--text-muted)">
-                          <span>Personal</span>
-                        </span>
-                      )}
-                    </td>
+                                                    {/* Formatted SGD Amount */}
+                                                    <td className="order-2 py-0 sm:py-4 px-0 sm:px-3 ml-auto sm:ml-0 shrink-0 sm:table-cell text-right">
+                                                        <div className="text-(--text-ink)">
+                                                            <CurrencyText
+                                                                amount={
+                                                                    expense.amount
+                                                                }
+                                                                size="md"
+                                                            />
+                                                        </div>
+                                                        {hasForeignCurrency && (
+                                                            <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
+                                                                {formatForeignAmount(
+                                                                    expense.original_amount!,
+                                                                    expense.original_currency!,
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </td>
 
-                    {/* Edit & Delete Action Buttons */}
-                    <td className="order-7 py-0 sm:py-4 pl-0 sm:pl-3 pr-0 sm:pr-6 ml-auto sm:ml-0 inline-flex items-center sm:table-cell text-right sm:text-center whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (onEditExpense) onEditExpense(expense);
-                            setEditingExpense(expense);
-                          }}
-                          aria-label={`Edit ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                          title="Edit expense"
-                        >
-                          <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingExpense(expense)}
-                          aria-label={`Delete ${expense.item}`}
-                          className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                          title="Delete expense"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </button>
-                      </div>
-                    </td>
-                    </m.tr>
-                  );
-                })}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </div>
+                                                    {/* Item Description & Remarks */}
+                                                    <td className="order-3 w-full py-1 sm:py-4 px-0 sm:px-3 sm:table-cell max-w-xs">
+                                                        <div className="font-bold text-sm text-(--text-ink) flex items-center gap-1.5 min-w-0">
+                                                            <TruncatedText
+                                                                text={
+                                                                    expense.item
+                                                                }
+                                                            />
+                                                            {expense.tags &&
+                                                                expense.tags
+                                                                    .length >
+                                                                    0 && (
+                                                                    <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
+                                                                        #
+                                                                        {
+                                                                            expense
+                                                                                .tags[0]
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                        </div>
+                                                        {expense.remarks && (
+                                                            <div className="text-[11px] text-(--text-muted) truncate mt-0.5">
+                                                                {
+                                                                    expense.remarks
+                                                                }
+                                                            </div>
+                                                        )}
+                                                    </td>
 
-        {/* Pagination & Counter Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-(--border-ink) bg-(--bg-canvas) px-4 sm:px-6 py-3.5 text-xs">
-          {/* Counter Text */}
-          <div className="text-(--text-muted) font-medium">
-            Showing <span className="font-mono-num font-black text-(--text-ink)">{startIndex}–{endIndex}</span> of{' '}
-            <span className="font-mono-num font-black text-(--text-ink)">{totalItems}</span>
-          </div>
+                                                    {/* Category or Goal Badge */}
+                                                    <td className="order-4 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
+                                                        {expense.goal_id ? (
+                                                            (() => {
+                                                                const goal =
+                                                                    getGoal(
+                                                                        expense.goal_id,
+                                                                    );
+                                                                return (
+                                                                    <span
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-cute-sm"
+                                                                        title={
+                                                                            goal
+                                                                                ? `Goal Spend: ${goal.title}`
+                                                                                : "Goal Spend"
+                                                                        }
+                                                                    >
+                                                                        <span
+                                                                            role="img"
+                                                                            aria-label="Goal"
+                                                                            className="text-xs shrink-0"
+                                                                        >
+                                                                            {goal?.emoji ||
+                                                                                "🎯"}
+                                                                        </span>
+                                                                        <span className="truncate max-w-28 sm:max-w-36">
+                                                                            {goal?.title ||
+                                                                                "Goal Spend"}
+                                                                        </span>
+                                                                    </span>
+                                                                );
+                                                            })()
+                                                        ) : category ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
+                                                                <span
+                                                                    className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            category.color ||
+                                                                            "#dfc2ff",
+                                                                    }}
+                                                                />
+                                                                <span>
+                                                                    {
+                                                                        category.name
+                                                                    }
+                                                                </span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-(--text-muted) text-[10px] sm:text-[11px]">
+                                                                Uncategorized
+                                                            </span>
+                                                        )}
+                                                    </td>
 
-          <div className="flex items-center gap-3">
-            {/* Page Size Selector */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-(--text-muted) font-medium hidden sm:inline">Per page:</span>
-              <Select
-                aria-label="Select page size"
-                value={activePageSize}
-                onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10))}
-                sizeVariant="sm"
-                containerClassName="w-auto"
-                className="bg-(--bg-card) font-bold text-xs py-1 shadow-cute-sm"
-              >
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </Select>
+                                                    {/* Payer Avatar / Name */}
+                                                    <td className="order-5 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
+                                                        <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-(--text-ink)">
+                                                            <span className="text-xs">
+                                                                {payer?.avatar_url ||
+                                                                    "👤"}
+                                                            </span>
+                                                            <span className="text-[10px] sm:text-xs">
+                                                                {payer?.display_name ||
+                                                                    "Unknown"}
+                                                            </span>
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Split Status Badge */}
+                                                    <td className="order-6 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap">
+                                                        {expense.is_shared ? (
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-bold text-(--text-ink)">
+                                                                <ArrowRightLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                                                <span>
+                                                                    {expense.split_ratio &&
+                                                                    expense.split_ratio !==
+                                                                        0.5
+                                                                        ? `Split ${Math.round(expense.split_ratio * 100)}%`
+                                                                        : "Shared 50/50"}
+                                                                </span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-medium text-(--text-muted)">
+                                                                <span>
+                                                                    Personal
+                                                                </span>
+                                                            </span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Edit & Delete Action Buttons */}
+                                                    <td className="order-7 py-0 sm:py-4 pl-0 sm:pl-3 pr-0 sm:pr-6 ml-auto sm:ml-0 inline-flex items-center sm:table-cell text-right sm:text-center whitespace-nowrap">
+                                                        <div className="inline-flex items-center gap-1.5">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (
+                                                                        onEditExpense
+                                                                    )
+                                                                        onEditExpense(
+                                                                            expense,
+                                                                        );
+                                                                    setEditingExpense(
+                                                                        expense,
+                                                                    );
+                                                                }}
+                                                                aria-label={`Edit ${expense.item}`}
+                                                                className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                                                title="Edit expense"
+                                                            >
+                                                                <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setDeletingExpense(
+                                                                        expense,
+                                                                    )
+                                                                }
+                                                                aria-label={`Delete ${expense.item}`}
+                                                                className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                                                title="Delete expense"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </m.tr>
+                                            );
+                                        })}
+                                    </AnimatePresence>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination & Counter Footer */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-(--border-ink) bg-(--bg-canvas) px-4 sm:px-6 py-3.5 text-xs">
+                            {/* Counter Text */}
+                            <div className="text-(--text-muted) font-medium">
+                                Showing{" "}
+                                <span className="font-mono-num font-black text-(--text-ink)">
+                                    {startIndex}–{endIndex}
+                                </span>{" "}
+                                of{" "}
+                                <span className="font-mono-num font-black text-(--text-ink)">
+                                    {totalItems}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                {/* Page Size Selector */}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-(--text-muted) font-medium hidden sm:inline">
+                                        Per page:
+                                    </span>
+                                    <Select
+                                        aria-label="Select page size"
+                                        value={activePageSize}
+                                        onChange={(e) =>
+                                            handlePageSizeChange(
+                                                parseInt(e.target.value, 10),
+                                            )
+                                        }
+                                        sizeVariant="sm"
+                                        containerClassName="w-auto"
+                                        className="bg-(--bg-card) font-bold text-xs py-1 shadow-cute-sm"
+                                    >
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                    </Select>
+                                </div>
+
+                                {/* Prev / Next & Page Numbers */}
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handlePageChange(
+                                                validCurrentPage - 1,
+                                            )
+                                        }
+                                        disabled={validCurrentPage <= 1}
+                                        aria-label="Previous page"
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </button>
+
+                                    {/* Dynamic Page Numbers */}
+                                    {Array.from(
+                                        { length: totalPages },
+                                        (_, idx) => idx + 1,
+                                    )
+                                        .filter(
+                                            (p) =>
+                                                p === 1 ||
+                                                p === totalPages ||
+                                                Math.abs(
+                                                    p - validCurrentPage,
+                                                ) <= 1,
+                                        )
+                                        .map((p, index, array) => {
+                                            const prevPage = array[index - 1];
+                                            const hasGap =
+                                                prevPage && p - prevPage > 1;
+
+                                            return (
+                                                <React.Fragment key={p}>
+                                                    {hasGap && (
+                                                        <span className="px-1 text-(--text-muted)">
+                                                            …
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handlePageChange(p)
+                                                        }
+                                                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-press cursor-pointer ${
+                                                            p ===
+                                                            validCurrentPage
+                                                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-black"
+                                                                : "border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5"
+                                                        }`}
+                                                    >
+                                                        {p}
+                                                    </button>
+                                                </React.Fragment>
+                                            );
+                                        })}
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handlePageChange(
+                                                validCurrentPage + 1,
+                                            )
+                                        }
+                                        disabled={
+                                            validCurrentPage >= totalPages
+                                        }
+                                        aria-label="Next page"
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
-            {/* Prev / Next & Page Numbers */}
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handlePageChange(validCurrentPage - 1)}
-                disabled={validCurrentPage <= 1}
-                aria-label="Previous page"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
+            {/* Edit Expense Modal */}
+            {editingExpense && (
+                <ExpenseFormModal
+                    isOpen={Boolean(editingExpense)}
+                    onClose={() => setEditingExpense(null)}
+                    expense={editingExpense}
+                    categories={categories}
+                    members={members}
+                    goals={internalGoals}
+                    onExpenseUpdated={(updated) => {
+                        onExpenseSaved?.(updated);
+                        setEditingExpense(null);
+                    }}
+                />
+            )}
 
-              {/* Dynamic Page Numbers */}
-              {Array.from({ length: totalPages }, (_, idx) => idx + 1)
-                .filter(
-                  (p) =>
-                    p === 1 ||
-                    p === totalPages ||
-                    Math.abs(p - validCurrentPage) <= 1
-                )
-                .map((p, index, array) => {
-                  const prevPage = array[index - 1];
-                  const hasGap = prevPage && p - prevPage > 1;
-
-                  return (
-                    <React.Fragment key={p}>
-                      {hasGap && <span className="px-1 text-(--text-muted)">…</span>}
-                      <button
-                        type="button"
-                        onClick={() => handlePageChange(p)}
-                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-press cursor-pointer ${
-                          p === validCurrentPage
-                            ? 'bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-black'
-                            : 'border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    </React.Fragment>
-                  );
-                })}
-
-              <button
-                type="button"
-                onClick={() => handlePageChange(validCurrentPage + 1)}
-                disabled={validCurrentPage >= totalPages}
-                aria-label="Next page"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+            {/* Delete Expense Modal */}
+            {deletingExpense && (
+                <DeleteExpenseModal
+                    isOpen={Boolean(deletingExpense)}
+                    onClose={() => setDeletingExpense(null)}
+                    expense={deletingExpense}
+                    categories={categories}
+                    members={members}
+                    onDeleted={(deletedId) => {
+                        onDeleteExpense?.(deletedId);
+                        setDeletingExpense(null);
+                    }}
+                />
+            )}
         </div>
-          </>
-        )}
-      </div>
-
-      {/* Edit Expense Modal */}
-      {editingExpense && (
-        <ExpenseFormModal
-          isOpen={Boolean(editingExpense)}
-          onClose={() => setEditingExpense(null)}
-          expense={editingExpense}
-          categories={categories}
-          members={members}
-          goals={internalGoals}
-          onExpenseUpdated={(updated) => {
-            onExpenseSaved?.(updated);
-            setEditingExpense(null);
-          }}
-        />
-      )}
-
-      {/* Delete Expense Modal */}
-      {deletingExpense && (
-        <DeleteExpenseModal
-          isOpen={Boolean(deletingExpense)}
-          onClose={() => setDeletingExpense(null)}
-          expense={deletingExpense}
-          categories={categories}
-          members={members}
-          onDeleted={(deletedId) => {
-            onDeleteExpense?.(deletedId);
-            setDeletingExpense(null);
-          }}
-        />
-      )}
-    </div>
-  );
+    );
 }
 
 export default ExpenseListTable;

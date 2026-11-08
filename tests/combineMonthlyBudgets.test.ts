@@ -3,7 +3,10 @@ import { combineMonthlyBudgets } from "../src/lib/combineMonthlyBudgets";
 import { calculateSpendablePacing } from "../src/lib/financialFormulas";
 import type { MonthlyBudgetDetail } from "../src/types/finance";
 
-function memberBudget(owner: string, food: { allocated: number; spent: number }): MonthlyBudgetDetail {
+function memberBudget(
+    owner: string,
+    food: { allocated: number; spent: number },
+): MonthlyBudgetDetail {
     return {
         budget: {
             id: `mb-${owner}`,
@@ -42,14 +45,32 @@ describe("combineMonthlyBudgets", () => {
     it("sums bonus summaries and keeps the bonus out of take-home", () => {
         const a = memberBudget("m1", { allocated: 600, spent: 0 });
         a.budget.bonus = 10000;
-        a.bonusSummary = { gross: 10000, cpf: 2000, net: 8000, count: 1, source: "events" };
+        a.bonusSummary = {
+            gross: 10000,
+            cpf: 2000,
+            net: 8000,
+            count: 1,
+            source: "events",
+        };
         const b = memberBudget("m2", { allocated: 400, spent: 0 });
         b.budget.bonus = 1500;
-        b.bonusSummary = { gross: 1500, cpf: 0, net: 1500, count: 0, source: "legacy" };
+        b.bonusSummary = {
+            gross: 1500,
+            cpf: 0,
+            net: 1500,
+            count: 0,
+            source: "legacy",
+        };
 
         const combined = combineMonthlyBudgets([a, b], "2026-11")!;
         expect(combined.budget.bonus).toBe(11500);
-        expect(combined.bonusSummary).toEqual({ gross: 11500, cpf: 2000, net: 9500, count: 1, source: "events" });
+        expect(combined.bonusSummary).toEqual({
+            gross: 11500,
+            cpf: 2000,
+            net: 9500,
+            count: 1,
+            source: "events",
+        });
         expect(combined.budget.after_deductions).toBe(7600);
         expect(combined.disposablePool).toBe(7600);
     });
@@ -60,7 +81,10 @@ describe("combineMonthlyBudgets", () => {
 
     it("sums both members into one household budget", () => {
         const combined = combineMonthlyBudgets(
-            [memberBudget("m1", { allocated: 600, spent: 100 }), memberBudget("m2", { allocated: 400, spent: 50.5 })],
+            [
+                memberBudget("m1", { allocated: 600, spent: 100 }),
+                memberBudget("m2", { allocated: 400, spent: 50.5 }),
+            ],
             "2026-11",
         )!;
 
@@ -79,7 +103,10 @@ describe("combineMonthlyBudgets", () => {
     it("leaves spendable totals unset when a member budget lacks them", () => {
         const partial = memberBudget("m2", { allocated: 400, spent: 50 });
         delete partial.spendableSpent;
-        const combined = combineMonthlyBudgets([memberBudget("m1", { allocated: 600, spent: 100 }), partial], "2026-11")!;
+        const combined = combineMonthlyBudgets(
+            [memberBudget("m1", { allocated: 600, spent: 100 }), partial],
+            "2026-11",
+        )!;
         expect(combined.spendableSpent).toBeUndefined();
         expect(combined.spendableAllocated).toBe(1000);
     });
@@ -108,7 +135,9 @@ describe("combineMonthlyBudgets", () => {
         expect(combined.categories[0].recurringSpent).toBe(60);
         expect(combined.categories[0].actualSpent).toBe(60);
         expect(combined.categories[0].recurringItems).toHaveLength(1);
-        expect(combined.categories[0].recurringItems?.[0].id).toBe("ri-joint-internet");
+        expect(combined.categories[0].recurringItems?.[0].id).toBe(
+            "ri-joint-internet",
+        );
     });
 });
 

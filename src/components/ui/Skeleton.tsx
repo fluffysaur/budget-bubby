@@ -55,7 +55,11 @@ export function SkeletonGroup({
  * Placeholder for a StatCard value. Matches StatCard value line heights
  * (text-base / sm:text-xl / xl:text-2xl) so the card height does not jump.
  */
-export function SkeletonStatValue({ className = "w-24" }: { className?: string }) {
+export function SkeletonStatValue({
+    className = "w-24",
+}: {
+    className?: string;
+}) {
     return (
         <span className="flex h-6 sm:h-7 xl:h-8 items-center">
             <Skeleton className={`h-4 sm:h-5 xl:h-6 ${className}`} />

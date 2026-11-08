@@ -44,12 +44,17 @@ export interface BubbyCondition {
 }
 
 /** Capped food per (member, day). Events without a member share one bucket. */
-export function foodByMemberDay(events: readonly FeedEvent[]): Map<string, number> {
+export function foodByMemberDay(
+    events: readonly FeedEvent[],
+): Map<string, number> {
     const counts = new Map<string, number>();
     for (const e of events) {
         if (e.kind !== "food") continue;
         const key = `${e.memberId ?? "household"}|${e.date}`;
-        counts.set(key, Math.min(FOOD_CAP_PER_MEMBER_DAY, (counts.get(key) ?? 0) + 1));
+        counts.set(
+            key,
+            Math.min(FOOD_CAP_PER_MEMBER_DAY, (counts.get(key) ?? 0) + 1),
+        );
     }
     return counts;
 }
@@ -74,7 +79,10 @@ function within(date: string, today: string, windowDays: number): boolean {
     return date <= today && date > addDays(today, -windowDays);
 }
 
-export function deriveCondition(events: readonly FeedEvent[], today: string): BubbyCondition {
+export function deriveCondition(
+    events: readonly FeedEvent[],
+    today: string,
+): BubbyCondition {
     const food = foodByMemberDay(events);
     let foodInWeek = 0;
     let lastFed: string | null = null;
@@ -88,7 +96,8 @@ export function deriveCondition(events: readonly FeedEvent[], today: string): Bu
     }
 
     const exerciseInMonth = events.filter(
-        (e) => e.kind === "exercise" && within(e.date, today, FITNESS_WINDOW_DAYS),
+        (e) =>
+            e.kind === "exercise" && within(e.date, today, FITNESS_WINDOW_DAYS),
     ).length;
 
     const nourishment = Math.min(1, foodInWeek / NOURISH_FULL);

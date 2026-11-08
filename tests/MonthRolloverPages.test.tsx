@@ -4,7 +4,13 @@
  */
 
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+    act,
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { BudgetPage } from "../src/pages/BudgetPage";
@@ -50,32 +56,44 @@ describe("BudgetPage month rollover", () => {
     it("follows the current month into the new month", async () => {
         renderWithProviders(<BudgetPage />);
         expect(
-            screen.getAllByRole("button", { name: /Choose month: October 2026/i }).length,
+            screen.getAllByRole("button", {
+                name: /Choose month: October 2026/i,
+            }).length,
         ).toBeGreaterThan(0);
 
         rollOverToNovember();
 
         await waitFor(() => {
             expect(
-                screen.getAllByRole("button", { name: /Choose month: November 2026/i }).length,
+                screen.getAllByRole("button", {
+                    name: /Choose month: November 2026/i,
+                }).length,
             ).toBeGreaterThan(0);
         });
     });
 
     it("keeps a month the user picked", async () => {
         renderWithProviders(<BudgetPage />);
-        fireEvent.click(screen.getAllByRole("button", { name: "Previous month" })[0]);
+        fireEvent.click(
+            screen.getAllByRole("button", { name: "Previous month" })[0],
+        );
         expect(
-            screen.getAllByRole("button", { name: /Choose month: September 2026/i }).length,
+            screen.getAllByRole("button", {
+                name: /Choose month: September 2026/i,
+            }).length,
         ).toBeGreaterThan(0);
 
         rollOverToNovember();
 
         expect(
-            screen.getAllByRole("button", { name: /Choose month: September 2026/i }).length,
+            screen.getAllByRole("button", {
+                name: /Choose month: September 2026/i,
+            }).length,
         ).toBeGreaterThan(0);
         expect(
-            screen.queryByRole("button", { name: /Choose month: November 2026/i }),
+            screen.queryByRole("button", {
+                name: /Choose month: November 2026/i,
+            }),
         ).not.toBeInTheDocument();
     });
 });
@@ -106,7 +124,9 @@ describe("ExpensesPage month rollover", () => {
 
     it("keeps a month the user filtered to", async () => {
         const { container } = await renderExpensesPage();
-        fireEvent.change(monthInput(container), { target: { value: "2026-08" } });
+        fireEvent.change(monthInput(container), {
+            target: { value: "2026-08" },
+        });
         await waitFor(() => {
             expect(monthInput(container)?.value).toBe("2026-08");
         });
@@ -120,7 +140,9 @@ describe("ExpensesPage month rollover", () => {
 
     it("resets the filter to the new current month", async () => {
         const { container } = await renderExpensesPage();
-        fireEvent.change(monthInput(container), { target: { value: "2026-08" } });
+        fireEvent.change(monthInput(container), {
+            target: { value: "2026-08" },
+        });
         await waitFor(() => {
             expect(monthInput(container)?.value).toBe("2026-08");
         });
@@ -137,12 +159,16 @@ describe("ExpensesPage month rollover", () => {
 describe("CreditCardTrackerSection month default", () => {
     it("defaults to the real current month, not a hardcoded 2026 fallback", async () => {
         vi.setSystemTime(new Date("2027-03-15T04:00:00.000Z"));
-        render(<CreditCardTrackerSection members={[]} perspective="household" />);
+        render(
+            <CreditCardTrackerSection members={[]} perspective="household" />,
+        );
         expect(screen.getByText("March 2027")).toBeInTheDocument();
     });
 
     it("follows the current month across rollover", async () => {
-        render(<CreditCardTrackerSection members={[]} perspective="household" />);
+        render(
+            <CreditCardTrackerSection members={[]} perspective="household" />,
+        );
         expect(screen.getByText("October 2026")).toBeInTheDocument();
 
         rollOverToNovember();
@@ -153,7 +179,9 @@ describe("CreditCardTrackerSection month default", () => {
     });
 
     it("keeps a month the user stepped to", async () => {
-        render(<CreditCardTrackerSection members={[]} perspective="household" />);
+        render(
+            <CreditCardTrackerSection members={[]} perspective="household" />,
+        );
         fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
         expect(screen.getByText("September 2026")).toBeInTheDocument();
 

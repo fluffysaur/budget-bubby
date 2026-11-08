@@ -1,6 +1,12 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    act,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NotificationCenterPopover } from "../src/components/layout/NotificationCenterPopover";
@@ -51,18 +57,24 @@ function createTestQueryClient() {
     });
 }
 
-function renderWithProviders(ui: React.ReactElement, initialEntries: string[] = ["/"]) {
+function renderWithProviders(
+    ui: React.ReactElement,
+    initialEntries: string[] = ["/"],
+) {
     const queryClient = createTestQueryClient();
     return render(
         <QueryClientProvider client={queryClient}>
             <MemoryRouter initialEntries={initialEntries}>
-                <AuthProvider initialAuthenticated={true} initialPartner="yijia">
+                <AuthProvider
+                    initialAuthenticated={true}
+                    initialPartner="yijia"
+                >
                     <HouseholdProvider defaultPerspective="household">
                         {ui}
                     </HouseholdProvider>
                 </AuthProvider>
             </MemoryRouter>
-        </QueryClientProvider>
+        </QueryClientProvider>,
     );
 }
 
@@ -83,12 +95,14 @@ describe("Goal Notification Navigation and Scroll", () => {
     describe("NotificationCenterPopover - View Goal action", () => {
         it("triggers navigation to /goals?goalId=... and calls onNavigateTab when View Goal is tapped", async () => {
             // Mock getGoals to return behind goal which generates pacing reminder
-            vi.spyOn(financeService, "getGoals").mockResolvedValue([mockGoals[1]]);
+            vi.spyOn(financeService, "getGoals").mockResolvedValue([
+                mockGoals[1],
+            ]);
 
             const onNavigateTab = vi.fn();
 
             renderWithProviders(
-                <NotificationCenterPopover onNavigateTab={onNavigateTab} />
+                <NotificationCenterPopover onNavigateTab={onNavigateTab} />,
             );
 
             // Open notification popover
@@ -101,7 +115,9 @@ describe("Goal Notification Navigation and Scroll", () => {
             expect(popover).toBeInTheDocument();
 
             // Find View Goal button
-            const viewGoalBtns = await screen.findAllByTestId("reminder-action-view_goals");
+            const viewGoalBtns = await screen.findAllByTestId(
+                "reminder-action-view_goals",
+            );
             expect(viewGoalBtns.length).toBeGreaterThanOrEqual(1);
 
             // Tap "View Goal"
@@ -109,7 +125,9 @@ describe("Goal Notification Navigation and Scroll", () => {
                 fireEvent.click(viewGoalBtns[0]);
             });
 
-            expect(onNavigateTab).toHaveBeenCalledWith("goals?goalId=goal-reno-02");
+            expect(onNavigateTab).toHaveBeenCalledWith(
+                "goals?goalId=goal-reno-02",
+            );
         });
     });
 
@@ -127,7 +145,9 @@ describe("Goal Notification Navigation and Scroll", () => {
 
             // Target card should have the highlight ring
             await waitFor(() => {
-                expect(screen.getByTestId("goal-card-highlight-ring")).toBeInTheDocument();
+                expect(
+                    screen.getByTestId("goal-card-highlight-ring"),
+                ).toBeInTheDocument();
             });
 
             // Should have called scrollIntoView with smooth behavior
@@ -145,9 +165,11 @@ describe("Goal Notification Navigation and Scroll", () => {
             // Wait for highlight to gracefully fade out after 3s
             await waitFor(
                 () => {
-                    expect(screen.queryByTestId("goal-card-highlight-ring")).not.toBeInTheDocument();
+                    expect(
+                        screen.queryByTestId("goal-card-highlight-ring"),
+                    ).not.toBeInTheDocument();
                 },
-                { timeout: 4000 }
+                { timeout: 4000 },
             );
         });
 
@@ -156,7 +178,9 @@ describe("Goal Notification Navigation and Scroll", () => {
             window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
             // Target achieved goal (Wedding Fund), but user starts on in_progress filter
-            renderWithProviders(<GoalsPage />, ["/goals?goalId=goal-wedding-01"]);
+            renderWithProviders(<GoalsPage />, [
+                "/goals?goalId=goal-wedding-01",
+            ]);
 
             // Since Wedding Fund is achieved, GoalsPage should ensure it is displayed
             await waitFor(() => {
@@ -164,7 +188,9 @@ describe("Goal Notification Navigation and Scroll", () => {
             });
 
             await waitFor(() => {
-                expect(screen.getByTestId("goal-card-highlight-ring")).toBeInTheDocument();
+                expect(
+                    screen.getByTestId("goal-card-highlight-ring"),
+                ).toBeInTheDocument();
                 expect(scrollIntoViewMock).toHaveBeenCalled();
             });
         });
@@ -176,15 +202,20 @@ describe("Goal Notification Navigation and Scroll", () => {
             const queryClient = createTestQueryClient();
             render(
                 <QueryClientProvider client={queryClient}>
-                    <MemoryRouter initialEntries={["/goals?goalId=goal-reno-02"]}>
-                        <AuthProvider initialAuthenticated={true} initialPartner="yijia">
+                    <MemoryRouter
+                        initialEntries={["/goals?goalId=goal-reno-02"]}
+                    >
+                        <AuthProvider
+                            initialAuthenticated={true}
+                            initialPartner="yijia"
+                        >
                             {/* Start with yijia's personal perspective, but goal-reno-02 is Rachel's */}
                             <HouseholdProvider defaultPerspective="yijia">
                                 <GoalsPage />
                             </HouseholdProvider>
                         </AuthProvider>
                     </MemoryRouter>
-                </QueryClientProvider>
+                </QueryClientProvider>,
             );
 
             // Renovation Fund should be displayed because perspective switched to household
@@ -193,7 +224,9 @@ describe("Goal Notification Navigation and Scroll", () => {
             });
 
             await waitFor(() => {
-                expect(screen.getByTestId("goal-card-highlight-ring")).toBeInTheDocument();
+                expect(
+                    screen.getByTestId("goal-card-highlight-ring"),
+                ).toBeInTheDocument();
                 expect(scrollIntoViewMock).toHaveBeenCalled();
             });
         });
@@ -201,7 +234,9 @@ describe("Goal Notification Navigation and Scroll", () => {
 
     describe("PlanPage - Sub-tab routing with goalId param", () => {
         it("automatically activates 'goals' subtab when goalId param is present even if initialTab was another tab", async () => {
-            renderWithProviders(<PlanPage initialTab="recurring" />, ["/plan?goalId=goal-reno-02"]);
+            renderWithProviders(<PlanPage initialTab="recurring" />, [
+                "/plan?goalId=goal-reno-02",
+            ]);
 
             // GoalsPage should be rendered inside PlanPage
             await waitFor(() => {

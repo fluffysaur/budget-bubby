@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ExpenseFormInitialValues } from "../components/expenses/ExpenseFormModal";
-import { parseQuickAddDeepLink, stripQuickAddParams } from "../lib/capture/deepLink";
+import {
+    parseQuickAddDeepLink,
+    stripQuickAddParams,
+} from "../lib/capture/deepLink";
 
 /**
  * Opens Add Expense from `?action=new` (PWA shortcut, capture fallback),
@@ -26,5 +29,11 @@ export function useQuickAddDeepLink(
             },
             { replace: true },
         );
-    }, [location.pathname, location.search, location.hash, navigate, openQuickAdd]);
+    }, [
+        location.pathname,
+        location.search,
+        location.hash,
+        navigate,
+        openQuickAdd,
+    ]);
 }

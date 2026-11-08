@@ -19,13 +19,25 @@ import {
     useCategoriesQuery,
     useExpensesQuery,
 } from "../../hooks/useFinanceQueries";
-import { buildWeeklyRecap, recapMonths, type RecapWeek } from "../../lib/bubby/recap";
+import {
+    buildWeeklyRecap,
+    recapMonths,
+    type RecapWeek,
+} from "../../lib/bubby/recap";
 import { collectFeedEvents } from "../../lib/bubby/sources";
-import { addLocalExercise, readBubbyStore, updateBubbyStore } from "../../lib/bubby/storage";
+import {
+    addLocalExercise,
+    readBubbyStore,
+    updateBubbyStore,
+} from "../../lib/bubby/storage";
 import { toSgtDateString } from "../../lib/bubby/dates";
 import { emitAppEvent } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
-import type { AccountSnapshot, DailyCheckin, Expense } from "../../types/finance";
+import type {
+    AccountSnapshot,
+    DailyCheckin,
+    Expense,
+} from "../../types/finance";
 
 const NO_EXPENSES: Expense[] = [];
 const NO_CHECKINS: DailyCheckin[] = [];
@@ -39,7 +51,11 @@ export interface WeeklyRecapCardProps {
     onSeeSpend?: () => void;
 }
 
-export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapCardProps) {
+export function WeeklyRecapCard({
+    week,
+    weeklyBudget,
+    onSeeSpend,
+}: WeeklyRecapCardProps) {
     const [dismissed, setDismissed] = useState(false);
     const { body, members } = useBubby();
     const { data: checkinsData } = useHouseholdCheckinsQuery();
@@ -61,8 +77,23 @@ export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapC
             bonusEvents: [],
             store: readBubbyStore(),
         });
-        return buildWeeklyRecap({ week, expenses, checkins, events, weeklyBudget });
-    }, [expensesA, expensesB, monthA, monthB, week, checkinsData, snapshotsData, weeklyBudget]);
+        return buildWeeklyRecap({
+            week,
+            expenses,
+            checkins,
+            events,
+            weeklyBudget,
+        });
+    }, [
+        expensesA,
+        expensesB,
+        monthA,
+        monthB,
+        week,
+        checkinsData,
+        snapshotsData,
+        weeklyBudget,
+    ]);
 
     const topCategory = recap.topCategory
         ? categories?.find((c) => c.id === recap.topCategory?.categoryId)
@@ -84,7 +115,9 @@ export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapC
         <Card role="region" aria-label="Last Week" elevation="sm" padding="md">
             <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">Last Week</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                        Last Week
+                    </span>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-(--text-ink)">
                         <CurrencyText amount={recap.spent} size="lg" />
                         {change !== null && change !== 0 && (
@@ -104,28 +137,56 @@ export function WeeklyRecapCard({ week, weeklyBudget, onSeeSpend }: WeeklyRecapC
                                 />
                             </span>
                             <span className="shrink-0 font-mono-num">
-                                <CurrencyText amount={recap.topCategory.amount} />
+                                <CurrencyText
+                                    amount={recap.topCategory.amount}
+                                />
                             </span>
                         </div>
                     )}
                     <p className="mt-2 flex items-center gap-1 text-sm font-black text-(--text-ink) font-display">
-                        <Sparkles className="h-4 w-4 shrink-0 text-amber-500" strokeWidth={2.5} />
-                        <span className="min-w-0 truncate">{recap.win.text}</span>
+                        <Sparkles
+                            className="h-4 w-4 shrink-0 text-amber-500"
+                            strokeWidth={2.5}
+                        />
+                        <span className="min-w-0 truncate">
+                            {recap.win.text}
+                        </span>
                     </p>
                     {members.length > 0 && (
-                        <ol aria-label="Days Bubby was fed" className="mt-2 flex items-center gap-1.5">
+                        <ol
+                            aria-label="Days Bubby was fed"
+                            className="mt-2 flex items-center gap-1.5"
+                        >
                             {recap.days.map((d) => (
-                                <li key={d.date} className="flex flex-col items-center gap-0.5">
-                                    <FedTodayDots members={members} fedToday={new Set(d.fed)} size="xs" />
+                                <li
+                                    key={d.date}
+                                    className="flex flex-col items-center gap-0.5"
+                                >
+                                    <FedTodayDots
+                                        members={members}
+                                        fedToday={new Set(d.fed)}
+                                        size="xs"
+                                    />
                                     <span className="text-[9px] font-bold text-(--text-faint)">
-                                        {DAY_LETTERS[new Date(`${d.date}T00:00:00Z`).getUTCDay()]}
+                                        {
+                                            DAY_LETTERS[
+                                                new Date(
+                                                    `${d.date}T00:00:00Z`,
+                                                ).getUTCDay()
+                                            ]
+                                        }
                                     </span>
                                 </li>
                             ))}
                         </ol>
                     )}
                 </div>
-                <Bubby body={body} size="md" className="h-20 w-20 shrink-0" decorative />
+                <Bubby
+                    body={body}
+                    size="md"
+                    className="h-20 w-20 shrink-0"
+                    decorative
+                />
             </div>
             <div className="mt-3 flex items-center gap-2">
                 <Button

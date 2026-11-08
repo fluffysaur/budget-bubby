@@ -10,23 +10,27 @@
  * Formats a number as Singapore Dollars (S$X,XXX.XX or S$X,XXX).
  * Negative values are formatted with a preceding minus sign: -S$XX.XX.
  */
-export function formatSGD(amount: number, options?: { showCents?: boolean }): string {
-  if (isNaN(amount) || !isFinite(amount)) {
-    return options?.showCents === false ? 'S$0' : 'S$0.00';
-  }
+export function formatSGD(
+    amount: number,
+    options?: { showCents?: boolean },
+): string {
+    if (isNaN(amount) || !isFinite(amount)) {
+        return options?.showCents === false ? "S$0" : "S$0.00";
+    }
 
-  const showCents = options?.showCents ?? true;
-  // Round according to decimal precision to avoid -0.00 or floating point artifacts
-  const rounded = Math.round(amount * (showCents ? 100 : 1)) / (showCents ? 100 : 1);
-  const isNegative = rounded < 0;
-  const absAmount = Math.abs(rounded);
+    const showCents = options?.showCents ?? true;
+    // Round according to decimal precision to avoid -0.00 or floating point artifacts
+    const rounded =
+        Math.round(amount * (showCents ? 100 : 1)) / (showCents ? 100 : 1);
+    const isNegative = rounded < 0;
+    const absAmount = Math.abs(rounded);
 
-  const formattedAbs = absAmount.toLocaleString('en-SG', {
-    minimumFractionDigits: showCents ? 2 : 0,
-    maximumFractionDigits: showCents ? 2 : 0,
-  });
+    const formattedAbs = absAmount.toLocaleString("en-SG", {
+        minimumFractionDigits: showCents ? 2 : 0,
+        maximumFractionDigits: showCents ? 2 : 0,
+    });
 
-  return `${isNegative ? '-' : ''}S$${formattedAbs}`;
+    return `${isNegative ? "-" : ""}S$${formattedAbs}`;
 }
 
 /**
@@ -44,28 +48,28 @@ export function formatSGD(amount: number, options?: { showCents?: boolean }): st
  * - Negative values rounding to 0 format as S$0 (prevents negative zero "-S$0").
  */
 export function formatSGDCompact(amount: number): string {
-  if (isNaN(amount) || !isFinite(amount)) {
-    return 'S$0';
-  }
+    if (isNaN(amount) || !isFinite(amount)) {
+        return "S$0";
+    }
 
-  const absAmount = Math.abs(amount);
+    const absAmount = Math.abs(amount);
 
-  let formatted: string;
-  if (absAmount >= 999_950_000) {
-    const val = Math.round((absAmount / 1_000_000_000) * 10) / 10;
-    formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}B`;
-  } else if (absAmount >= 999_950) {
-    const val = Math.round((absAmount / 1_000_000) * 10) / 10;
-    formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}M`;
-  } else if (absAmount >= 999.5) {
-    const val = Math.round((absAmount / 1_000) * 10) / 10;
-    formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}k`;
-  } else {
-    formatted = Math.round(absAmount).toLocaleString('en-SG');
-  }
+    let formatted: string;
+    if (absAmount >= 999_950_000) {
+        const val = Math.round((absAmount / 1_000_000_000) * 10) / 10;
+        formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}B`;
+    } else if (absAmount >= 999_950) {
+        const val = Math.round((absAmount / 1_000_000) * 10) / 10;
+        formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}M`;
+    } else if (absAmount >= 999.5) {
+        const val = Math.round((absAmount / 1_000) * 10) / 10;
+        formatted = `${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)}k`;
+    } else {
+        formatted = Math.round(absAmount).toLocaleString("en-SG");
+    }
 
-  const isNegative = amount < 0 && formatted !== '0';
-  return `${isNegative ? '-' : ''}S$${formatted}`;
+    const isNegative = amount < 0 && formatted !== "0";
+    return `${isNegative ? "-" : ""}S$${formatted}`;
 }
 
 /**
@@ -73,37 +77,40 @@ export function formatSGDCompact(amount: number): string {
  * Strips whitespace, currency symbols (S$, $), commas, and handles accounting negative notation (X).
  */
 export function parseSGD(value: string): number {
-  if (!value || typeof value !== 'string') {
-    return 0;
-  }
+    if (!value || typeof value !== "string") {
+        return 0;
+    }
 
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return 0;
-  }
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return 0;
+    }
 
-  let isNegative = false;
-  let clean = trimmed;
+    let isNegative = false;
+    let clean = trimmed;
 
-  // Accounting parenthetical negative notation: (S$50)
-  if (clean.startsWith('(') && clean.endsWith(')')) {
-    isNegative = true;
-    clean = clean.slice(1, -1).trim();
-  }
+    // Accounting parenthetical negative notation: (S$50)
+    if (clean.startsWith("(") && clean.endsWith(")")) {
+        isNegative = true;
+        clean = clean.slice(1, -1).trim();
+    }
 
-  if (clean.startsWith('-')) {
-    isNegative = true;
-    clean = clean.slice(1).trim();
-  }
+    if (clean.startsWith("-")) {
+        isNegative = true;
+        clean = clean.slice(1).trim();
+    }
 
-  // Remove S$, $, commas, and whitespace
-  clean = clean.replace(/^[sS]?\$/i, '').replace(/,/g, '').trim();
+    // Remove S$, $, commas, and whitespace
+    clean = clean
+        .replace(/^[sS]?\$/i, "")
+        .replace(/,/g, "")
+        .trim();
 
-  const parsed = parseFloat(clean);
-  if (isNaN(parsed) || !isFinite(parsed)) {
-    return 0;
-  }
+    const parsed = parseFloat(clean);
+    if (isNaN(parsed) || !isFinite(parsed)) {
+        return 0;
+    }
 
-  const result = isNegative ? -parsed : parsed;
-  return Math.round(result * 100) / 100;
+    const result = isNegative ? -parsed : parsed;
+    return Math.round(result * 100) / 100;
 }

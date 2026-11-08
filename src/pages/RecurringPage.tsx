@@ -57,12 +57,10 @@ export function RecurringPage({
     className = "",
     embedded = false,
 }: RecurringPageProps) {
-    const {
-        perspective,
-        activeMember,
-    } = useHousehold();
+    const { perspective, activeMember } = useHousehold();
     const { invalidateRecurring } = useInvalidateFinance();
-    const { isPending: isDeletingRecurring, runWithLock: runDeleteLock } = useSubmitLock();
+    const { isPending: isDeletingRecurring, runWithLock: runDeleteLock } =
+        useSubmitLock();
     const addRecurringMutation = useAddRecurringItemMutation();
     const updateRecurringMutation = useUpdateRecurringItemMutation();
     const deleteRecurringMutation = useDeleteRecurringItemMutation();
@@ -73,7 +71,10 @@ export function RecurringPage({
         isLoading: recurringItemsLoading,
         error: recurringItemsError,
     } = useRecurringItemsQuery();
-    const recurringItems = useMemo(() => recurringItemsData || [], [recurringItemsData]);
+    const recurringItems = useMemo(
+        () => recurringItemsData || [],
+        [recurringItemsData],
+    );
     const { data: categoriesData } = useCategoriesQuery();
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = recurringItemsLoading && !recurringItemsData;
@@ -84,9 +85,7 @@ export function RecurringPage({
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [editingItem, setEditingItem] = useState<RecurringItem | null>(
-        null,
-    );
+    const [editingItem, setEditingItem] = useState<RecurringItem | null>(null);
 
     // Perspective filtering: resolve member ID via activeMember from HouseholdContext
     // rather than hard-coded member names or fallback IDs.
@@ -164,7 +163,9 @@ export function RecurringPage({
             } catch (err: unknown) {
                 console.error("Failed to delete recurring item:", err);
                 setActionError(
-                    err instanceof Error ? err.message : "Failed to delete recurring item",
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to delete recurring item",
                 );
             }
         });
@@ -207,7 +208,10 @@ export function RecurringPage({
                                 variant="primary"
                                 className="w-full sm:w-auto"
                                 leftIcon={
-                                    <Plus className="w-4 h-4" strokeWidth={2.5} />
+                                    <Plus
+                                        className="w-4 h-4"
+                                        strokeWidth={2.5}
+                                    />
                                 }
                                 onClick={handleOpenAddModal}
                             >
@@ -235,7 +239,10 @@ export function RecurringPage({
                             size="sm"
                             className="flex-1 sm:flex-initial whitespace-nowrap"
                             leftIcon={
-                                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                <Plus
+                                    className="w-3.5 h-3.5"
+                                    strokeWidth={2.5}
+                                />
                             }
                             onClick={handleOpenAddModal}
                         >

@@ -1,6 +1,11 @@
 import React from "react";
 import { Share, PlusSquare } from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 
 interface IOSInstallModalProps {
@@ -8,7 +13,10 @@ interface IOSInstallModalProps {
     onClose: () => void;
 }
 
-export const IOSInstallModal: React.FC<IOSInstallModalProps> = ({ isOpen, onClose }) => {
+export const IOSInstallModal: React.FC<IOSInstallModalProps> = ({
+    isOpen,
+    onClose,
+}) => {
     if (!isOpen) return null;
 
     return (

@@ -34,7 +34,11 @@ export interface SwipeCardOptions {
     onCommit: (direction: SwipeDirection) => void;
 }
 
-export function useSwipeCard({ enabled, canConfirm, onCommit }: SwipeCardOptions) {
+export function useSwipeCard({
+    enabled,
+    canConfirm,
+    onCommit,
+}: SwipeCardOptions) {
     const cardRef = useRef<HTMLDivElement | null>(null);
     const confirmTintRef = useRef<HTMLDivElement | null>(null);
     const discardTintRef = useRef<HTMLDivElement | null>(null);
@@ -64,8 +68,12 @@ export function useSwipeCard({ enabled, canConfirm, onCommit }: SwipeCardOptions
             : `translateX(${dx}px) rotate(${dx / 20}deg)`;
         const width = card.offsetWidth || 1;
         const progress = Math.min(1, Math.abs(dx) / (width * COMMIT_RATIO));
-        if (confirmTintRef.current) confirmTintRef.current.style.opacity = dx > 0 ? String(progress) : "0";
-        if (discardTintRef.current) discardTintRef.current.style.opacity = dx < 0 ? String(progress) : "0";
+        if (confirmTintRef.current)
+            confirmTintRef.current.style.opacity =
+                dx > 0 ? String(progress) : "0";
+        if (discardTintRef.current)
+            discardTintRef.current.style.opacity =
+                dx < 0 ? String(progress) : "0";
     }, []);
 
     const reset = useCallback(() => {
@@ -80,7 +88,8 @@ export function useSwipeCard({ enabled, canConfirm, onCommit }: SwipeCardOptions
         (e: React.PointerEvent<HTMLDivElement>) => {
             if (!enabled || e.button !== 0) return;
             // Let buttons and chips inside the card take their own taps
-            if ((e.target as HTMLElement).closest("button, a, select, input")) return;
+            if ((e.target as HTMLElement).closest("button, a, select, input"))
+                return;
             const s = state.current;
             s.pointerId = e.pointerId;
             s.startX = s.lastX = e.clientX;
@@ -100,7 +109,8 @@ export function useSwipeCard({ enabled, canConfirm, onCommit }: SwipeCardOptions
             const dx = e.clientX - s.startX;
             const dy = e.clientY - s.startY;
             if (!s.axis) {
-                if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return;
+                if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX)
+                    return;
                 s.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
                 if (s.axis === "x") {
                     try {
@@ -141,7 +151,8 @@ export function useSwipeCard({ enabled, canConfirm, onCommit }: SwipeCardOptions
                     if (prefersReducedMotion()) {
                         card.style.transition = "opacity 120ms ease";
                     } else {
-                        const out = direction === "right" ? width * 1.5 : -width * 1.5;
+                        const out =
+                            direction === "right" ? width * 1.5 : -width * 1.5;
                         paint(out, SPRING);
                     }
                     card.style.opacity = "0";
