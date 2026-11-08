@@ -81,8 +81,8 @@ export function AddEditCreditCardModal({
     const [bank, setBank] = useState<string>("DBS");
     const [customBank, setCustomBank] = useState<string>("");
     const [last4, setLast4] = useState<string>("");
-    const [billingDay, setBillingDay] = useState<number>(15);
-    const [dueDay, setDueDay] = useState<number>(5);
+    const [billingDay, setBillingDay] = useState<number | string>(15);
+    const [dueDay, setDueDay] = useState<number | string>(5);
     const [creditLimit, setCreditLimit] = useState<string>("");
     const [color, setColor] = useState<string>(PRESET_COLORS[0].hex);
     const [ownerId, setOwnerId] = useState<string>(
@@ -148,11 +148,23 @@ export function AddEditCreditCardModal({
 
         const bDay = Number(billingDay);
         const dDay = Number(dueDay);
-        if (isNaN(bDay) || bDay < 1 || bDay > 31) {
+        if (
+            String(billingDay).trim() === "" ||
+            isNaN(bDay) ||
+            !Number.isInteger(bDay) ||
+            bDay < 1 ||
+            bDay > 31
+        ) {
             setErrorMessage("Day must be 1-31");
             return;
         }
-        if (isNaN(dDay) || dDay < 1 || dDay > 31) {
+        if (
+            String(dueDay).trim() === "" ||
+            isNaN(dDay) ||
+            !Number.isInteger(dDay) ||
+            dDay < 1 ||
+            dDay > 31
+        ) {
             setErrorMessage("Day must be 1-31");
             return;
         }
@@ -321,9 +333,7 @@ export function AddEditCreditCardModal({
                                     max={31}
                                     value={billingDay}
                                     onChange={(e) =>
-                                        setBillingDay(
-                                            parseInt(e.target.value) || 1,
-                                        )
+                                        setBillingDay(e.target.value)
                                     }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
@@ -352,7 +362,7 @@ export function AddEditCreditCardModal({
                                     max={31}
                                     value={dueDay}
                                     onChange={(e) =>
-                                        setDueDay(parseInt(e.target.value) || 1)
+                                        setDueDay(e.target.value)
                                     }
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />

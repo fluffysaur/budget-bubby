@@ -109,5 +109,30 @@ describe('dateUtils', () => {
       expect(getDefaultStatementDueDate('2026-01', 15)).toBe('2026-02-15');
       expect(getDefaultStatementDueDate('2028-01', 15)).toBe('2028-02-15');
     });
+
+    describe('cycle-aware defaults with billingDay (Issue #80)', () => {
+      it('defaults to current month when due_day > billing_day (same cycle)', () => {
+        // Statement day 5, due day 25 -> same month (2026-10-25)
+        expect(getDefaultStatementDueDate('2026-10', 25, 5)).toBe('2026-10-25');
+        // Statement day 1, due day 31 -> same month, clamped if necessary
+        expect(getDefaultStatementDueDate('2026-10', 31, 1)).toBe('2026-10-31');
+        expect(getDefaultStatementDueDate('2026-04', 31, 1)).toBe('2026-04-30');
+        expect(getDefaultStatementDueDate('2026-02', 31, 1)).toBe('2026-02-28');
+      });
+
+      it('rolls to subsequent month when due_day <= billing_day (next cycle)', () => {
+        // Statement day 25, due day 5 -> next month (2026-11-05)
+        expect(getDefaultStatementDueDate('2026-10', 5, 25)).toBe('2026-11-05');
+        // Statement day 20, due day 20 -> next month (2026-11-20)
+        expect(getDefaultStatementDueDate('2026-10', 20, 20)).toBe('2026-11-20');
+        // Statement day 31, due day 31 -> next month, clamped to 30 in Nov
+        expect(getDefaultStatementDueDate('2026-10', 31, 31)).toBe('2026-11-30');
+      });
+
+      it('rolls to subsequent month when billing_day is omitted (backwards compatibility)', () => {
+        expect(getDefaultStatementDueDate('2026-10', 25)).toBe('2026-11-25');
+        expect(getDefaultStatementDueDate('2026-10', 5)).toBe('2026-11-05');
+      });
+    });
   });
 });
