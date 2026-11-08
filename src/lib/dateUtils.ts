@@ -316,19 +316,25 @@ export function clampDueDay(
 }
 
 /**
- * Calculates the default statement due date: the subsequent month on the card's due_day,
- * clamped to the actual length of that target month (e.g. 31 in Oct/Dec, 30 in Nov/Apr, 28/29 in Feb).
+ * Calculates the default statement due date.
+ * If billingDay is defined and dueDay > billingDay, payment is due later in the same statementMonth.
+ * Otherwise (dueDay <= billingDay or billingDay omitted), payment rolls over to the subsequent month.
+ * The day is clamped to the actual length of that target month (e.g. 31 in Oct/Dec, 30 in Nov/Apr, 28/29 in Feb).
  */
 export function getDefaultStatementDueDate(
     statementMonth: string,
     dueDay: number,
+    billingDay?: number,
 ): string {
-    const nextMonthStr = addMonths(statementMonth, 1);
-    const [yearStr, monthStr] = nextMonthStr.split("-");
+    const targetMonthStr =
+        billingDay !== undefined && dueDay > billingDay
+            ? statementMonth
+            : addMonths(statementMonth, 1);
+    const [yearStr, monthStr] = targetMonthStr.split("-");
     const year = Number(yearStr);
     const month = Number(monthStr);
     const day = clampDueDay(dueDay, year, month);
-    return `${nextMonthStr}-${String(day).padStart(2, "0")}`;
+    return `${targetMonthStr}-${String(day).padStart(2, "0")}`;
 }
 
 export interface DueSchedule {

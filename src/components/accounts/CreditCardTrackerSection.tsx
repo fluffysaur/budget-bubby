@@ -249,7 +249,11 @@ export function CreditCardTrackerSection({
         } else {
             setStmtAmountInput("");
             setStmtDueDateInput(
-                getDefaultStatementDueDate(selectedMonth, card.due_day || 5),
+                getDefaultStatementDueDate(
+                    selectedMonth,
+                    card.due_day || 5,
+                    card.billing_day,
+                ),
             );
             setStmtNotesInput("");
         }
@@ -469,7 +473,7 @@ export function CreditCardTrackerSection({
                                 <div>
                                     {/* Card Header */}
                                     <div className="flex items-start justify-between gap-2 mt-1">
-                                        <div className="flex items-center gap-2.5">
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                             <div
                                                 className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
                                                 style={{
@@ -483,19 +487,19 @@ export function CreditCardTrackerSection({
                                                 <h4 className="font-display font-black text-sm text-(--text-ink) truncate">
                                                     <TruncatedText text={card.name} />
                                                 </h4>
-                                                <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5">
+                                                <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5 min-w-0">
                                                     {card.last4 && (
-                                                        <span className="font-mono-num font-bold text-xs bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink) px-1.5 py-0.5 rounded-md">
+                                                        <span className="font-mono-num font-bold text-xs bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink) px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap">
                                                             •••• {card.last4}
                                                         </span>
                                                     )}
-                                                    <span className="font-semibold">
+                                                    <span className="font-semibold truncate">
                                                         {card.bank}
                                                     </span>
                                                     {owner && (
                                                         <>
-                                                            <span>•</span>
-                                                            <span className="font-semibold">
+                                                            <span className="shrink-0">•</span>
+                                                            <span className="font-semibold truncate whitespace-nowrap">
                                                                 {
                                                                     owner.display_name
                                                                 }

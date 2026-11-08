@@ -86,8 +86,17 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       });
 
       // Card last 4 and bank details
-      expect(screen.getByText(/4128/)).toBeInTheDocument();
+      const last4Chip = screen.getByText(/4128/);
+      expect(last4Chip).toBeInTheDocument();
+      expect(last4Chip).toHaveClass('shrink-0', 'whitespace-nowrap');
       expect(screen.getByText(/8832/)).toBeInTheDocument();
+
+      // Owner label flex defense
+      const ownerLabels = screen.getAllByText('Yi Jia');
+      expect(ownerLabels.length).toBeGreaterThanOrEqual(1);
+      ownerLabels.forEach((label) => {
+        expect(label).toHaveClass('truncate', 'whitespace-nowrap');
+      });
 
       // Summary cards
       expect(screen.getByText('Due')).toBeInTheDocument();
@@ -246,7 +255,7 @@ describe('Credit Card Statements & Due Date Tracker', () => {
         name: 'End-of-Month Card',
         bank: 'Standard Chartered',
         last4: '9900',
-        billing_day: 1,
+        billing_day: 31,
         due_day: 31,
       });
 
@@ -269,6 +278,37 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       const dueDateInput = screen.getByLabelText(/Due Date/i) as HTMLInputElement;
       // October statement -> November due date (30 days in Nov): 2026-11-30, NOT 2026-11-28
       expect(dueDateInput.value).toBe('2026-11-30');
+    });
+
+    it('defaults due date to current month when due_day > billing_day (Issue #80)', async () => {
+      await financeService.addCreditCard({
+        owner_id: testMembers[0].id,
+        name: 'Mid-Month Due Card',
+        bank: 'DBS',
+        last4: '1234',
+        billing_day: 5,
+        due_day: 25,
+      });
+
+      render(
+        <CreditCardTrackerSection
+          members={testMembers}
+          perspective="household"
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Mid-Month Due Card')).toBeInTheDocument();
+      });
+
+      const logStmtBtn = screen.getByRole('button', {
+        name: /Log statement for Mid-Month Due Card/i,
+      });
+      fireEvent.click(logStmtBtn);
+
+      const dueDateInput = screen.getByLabelText(/Due Date/i) as HTMLInputElement;
+      // October statement: billing day 5, due day 25 -> same month 2026-10-25
+      expect(dueDateInput.value).toBe('2026-10-25');
     });
   });
 
@@ -308,6 +348,83 @@ describe('Credit Card Statements & Due Date Tracker', () => {
       expect(hsbc).toBeDefined();
       expect(hsbc?.last4).toBe('5566');
       expect(hsbc?.credit_limit).toBe(8000);
+    });
+
+    it('allows clearing and retyping billing day and due day (Issue #79)', async () => {
+      const onCardSaved = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <AddEditCreditCardModal
+          isOpen={true}
+          onClose={onClose}
+          members={testMembers}
+          onCardSaved={onCardSaved}
+        />
+      );
+
+      const billingDayInput = screen.getByLabelText(/Statement Day/i);
+      const dueDayInput = screen.getByLabelText(/Payment Due Day/i);
+
+      // Verify defaults
+      expect(billingDayInput).toHaveValue(15);
+      expect(dueDayInput).toHaveValue(5);
+
+      // Clearing input sets it to empty without forcing it to 1
+      fireEvent.change(billingDayInput, { target: { value: '' } });
+      expect(billingDayInput).toHaveValue(null);
+
+      // Retype value
+      fireEvent.change(billingDayInput, { target: { value: '25' } });
+      expect(billingDayInput).toHaveValue(25);
+
+      // Same for due day
+      fireEvent.change(dueDayInput, { target: { value: '' } });
+      expect(dueDayInput).toHaveValue(null);
+
+      fireEvent.change(dueDayInput, { target: { value: '18' } });
+      expect(dueDayInput).toHaveValue(18);
+
+      // Fill in required name and save
+      fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
+        target: { value: 'Custom Cycle Card' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add Card' }));
+
+      await waitFor(() => {
+        expect(onCardSaved).toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalled();
+      });
+
+      const cards = await financeService.getCreditCards();
+      const savedCard = cards.find((c) => c.name === 'Custom Cycle Card');
+      expect(savedCard).toBeDefined();
+      expect(savedCard?.billing_day).toBe(25);
+      expect(savedCard?.due_day).toBe(18);
+    });
+
+    it('validates that billing day and due day must not be empty or out-of-range on submit', async () => {
+      render(
+        <AddEditCreditCardModal
+          isOpen={true}
+          onClose={vi.fn()}
+          members={testMembers}
+        />
+      );
+
+      fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
+        target: { value: 'Invalid Day Card' },
+      });
+
+      // Clear billing day
+      fireEvent.change(screen.getByLabelText(/Statement Day/i), {
+        target: { value: '' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add Card' }));
+
+      expect(await screen.findByText('Day must be 1-31')).toBeInTheDocument();
     });
   });
 });
