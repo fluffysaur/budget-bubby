@@ -17,14 +17,20 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
             </AnimatedModal>,
         );
 
-        expect(screen.getByRole("heading", { name: "Test Drawer" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: "Test Drawer" }),
+        ).toBeInTheDocument();
         expect(screen.getByText("Drawer content")).toBeInTheDocument();
     });
 
     it("closes when dragging down past 80px threshold when at top", () => {
         const handleClose = vi.fn();
         render(
-            <AnimatedModal isOpen={true} onClose={handleClose} isDrawerOnMobile={true}>
+            <AnimatedModal
+                isOpen={true}
+                onClose={handleClose}
+                isDrawerOnMobile={true}
+            >
                 <ModalHeader title="Draggable Drawer" onClose={handleClose} />
                 <ModalBody>
                     <p>Body at top</p>
@@ -53,7 +59,11 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
     it("does not close when dragging down below threshold (deltaY < 80px with low velocity)", () => {
         const handleClose = vi.fn();
         render(
-            <AnimatedModal isOpen={true} onClose={handleClose} isDrawerOnMobile={true}>
+            <AnimatedModal
+                isOpen={true}
+                onClose={handleClose}
+                isDrawerOnMobile={true}
+            >
                 <ModalHeader title="Draggable Drawer" onClose={handleClose} />
                 <ModalBody>
                     <p>Body at top</p>
@@ -82,7 +92,11 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
     it("does not drag drawer down when inner scrollable container is scrolled down (scrollTop > 0)", () => {
         const handleClose = vi.fn();
         render(
-            <AnimatedModal isOpen={true} onClose={handleClose} isDrawerOnMobile={true}>
+            <AnimatedModal
+                isOpen={true}
+                onClose={handleClose}
+                isDrawerOnMobile={true}
+            >
                 <ModalHeader title="Scrollable Drawer" onClose={handleClose} />
                 <ModalBody className="overflow-y-auto">
                     <div data-testid="scrollable-content">Long content</div>
@@ -118,25 +132,48 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
     it("ignores drag when touching exempt elements like range inputs or data-drag-ignore", () => {
         const handleClose = vi.fn();
         render(
-            <AnimatedModal isOpen={true} onClose={handleClose} isDrawerOnMobile={true}>
+            <AnimatedModal
+                isOpen={true}
+                onClose={handleClose}
+                isDrawerOnMobile={true}
+            >
                 <ModalHeader title="Exempt Elements" onClose={handleClose} />
                 <ModalBody>
-                    <input type="range" min="0" max="100" data-testid="range-slider" />
-                    <div data-drag-ignore="true" data-testid="ignored-box">Ignore Me</div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        data-testid="range-slider"
+                    />
+                    <div data-drag-ignore="true" data-testid="ignored-box">
+                        Ignore Me
+                    </div>
                 </ModalBody>
             </AnimatedModal>,
         );
 
         const slider = screen.getByTestId("range-slider");
-        fireEvent.touchStart(slider, { touches: [{ clientX: 100, clientY: 100 }] });
-        fireEvent.touchMove(slider, { touches: [{ clientX: 100, clientY: 220 }] });
-        fireEvent.touchEnd(slider, { changedTouches: [{ clientX: 100, clientY: 220 }] });
+        fireEvent.touchStart(slider, {
+            touches: [{ clientX: 100, clientY: 100 }],
+        });
+        fireEvent.touchMove(slider, {
+            touches: [{ clientX: 100, clientY: 220 }],
+        });
+        fireEvent.touchEnd(slider, {
+            changedTouches: [{ clientX: 100, clientY: 220 }],
+        });
         expect(handleClose).not.toHaveBeenCalled();
 
         const ignored = screen.getByTestId("ignored-box");
-        fireEvent.touchStart(ignored, { touches: [{ clientX: 100, clientY: 100 }] });
-        fireEvent.touchMove(ignored, { touches: [{ clientX: 100, clientY: 220 }] });
-        fireEvent.touchEnd(ignored, { changedTouches: [{ clientX: 100, clientY: 220 }] });
+        fireEvent.touchStart(ignored, {
+            touches: [{ clientX: 100, clientY: 100 }],
+        });
+        fireEvent.touchMove(ignored, {
+            touches: [{ clientX: 100, clientY: 220 }],
+        });
+        fireEvent.touchEnd(ignored, {
+            changedTouches: [{ clientX: 100, clientY: 220 }],
+        });
         expect(handleClose).not.toHaveBeenCalled();
     });
 
@@ -184,10 +221,14 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
 
         // Should show discard confirmation
         expect(screen.getByRole("alertdialog")).toBeInTheDocument();
-        expect(screen.getByText("Discard unsaved changes?")).toBeInTheDocument();
+        expect(
+            screen.getByText("Discard unsaved changes?"),
+        ).toBeInTheDocument();
 
         // Click Keep editing
-        const keepEditingBtn = screen.getByRole("button", { name: /keep editing/i });
+        const keepEditingBtn = screen.getByRole("button", {
+            name: /keep editing/i,
+        });
         fireEvent.click(keepEditingBtn);
 
         expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
@@ -201,7 +242,9 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
         expect(screen.getByRole("alertdialog")).toBeInTheDocument();
 
         // Click Discard changes
-        const discardBtn = screen.getByRole("button", { name: /discard changes/i });
+        const discardBtn = screen.getByRole("button", {
+            name: /discard changes/i,
+        });
         fireEvent.click(discardBtn);
 
         expect(handleDiscard).toHaveBeenCalledTimes(1);
@@ -218,7 +261,10 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
                 isDirty={true}
                 isDrawerOnMobile={true}
             >
-                <ModalHeader title="Dirty Backdrop Modal" onClose={handleClose} />
+                <ModalHeader
+                    title="Dirty Backdrop Modal"
+                    onClose={handleClose}
+                />
                 <ModalBody>
                     <p>Unsaved content</p>
                 </ModalBody>
@@ -272,7 +318,10 @@ describe("AnimatedModal - Swipe Down to Close & Discard Confirmation", () => {
                 isDirty={true}
                 isDrawerOnMobile={true}
             >
-                <ModalHeader title="Custom Dirty Drawer" onClose={handleClose} />
+                <ModalHeader
+                    title="Custom Dirty Drawer"
+                    onClose={handleClose}
+                />
                 <ModalBody>
                     <p>Some state managed outside form inputs</p>
                 </ModalBody>

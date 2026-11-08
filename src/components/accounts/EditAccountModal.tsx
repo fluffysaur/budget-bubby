@@ -6,10 +6,19 @@
 
 import React, { useState, useEffect } from "react";
 import { Pencil, AlertCircle, Check } from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
-import type { Account, AccountType, HouseholdMember } from "../../types/finance";
+import type {
+    Account,
+    AccountType,
+    HouseholdMember,
+} from "../../types/finance";
 import { useUpdateAccountMutation } from "../../hooks/useFinanceQueries";
 
 export interface EditAccountModalProps {
@@ -78,7 +87,11 @@ export function EditAccountModal({
             onAccountUpdated?.(updated);
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to update account details");
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to update account details",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -86,7 +99,10 @@ export function EditAccountModal({
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col min-h-0 flex-1 overflow-hidden"
+            >
                 <ModalHeader
                     id="edit-account-title"
                     title="Edit Account"
@@ -147,7 +163,9 @@ export function EditAccountModal({
                                 id="edit-account-type"
                                 label="Type"
                                 value={type}
-                                onChange={(e) => setType(e.target.value as AccountType)}
+                                onChange={(e) =>
+                                    setType(e.target.value as AccountType)
+                                }
                                 className="bg-(--bg-canvas)"
                             >
                                 <option value="Cash">Cash</option>
@@ -166,10 +184,7 @@ export function EditAccountModal({
                                 className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
-                                    <option
-                                        key={m.id}
-                                        value={m.id}
-                                    >
+                                    <option key={m.id} value={m.id}>
                                         {m.display_name}
                                     </option>
                                 ))}
@@ -232,7 +247,9 @@ export function EditAccountModal({
                         variant="primary"
                         isLoading={isSubmitting}
                         disabled={isSubmitting}
-                        leftIcon={<Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                        leftIcon={
+                            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        }
                     >
                         Save Changes
                     </Button>

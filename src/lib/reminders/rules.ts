@@ -104,7 +104,10 @@ export function timeToMinutes(time: string | undefined | null): number | null {
  * Minutes after midnight in Singapore time. A given `currentHour` is
  * treated as the start of that hour.
  */
-export function currentMinutes(currentHour?: number, referenceDate?: Date): number {
+export function currentMinutes(
+    currentHour?: number,
+    referenceDate?: Date,
+): number {
     if (currentHour !== undefined) return currentHour * 60;
     const d = sgNow(referenceDate);
     return d.getHours() * 60 + d.getMinutes();
@@ -118,13 +121,19 @@ export function isWithinQuietHours(
 ): boolean {
     const startMin = timeToMinutes(start);
     const endMin = timeToMinutes(end);
-    if (startMin === null || endMin === null || startMin === endMin) return false;
+    if (startMin === null || endMin === null || startMin === endMin)
+        return false;
     if (startMin < endMin) return minutes >= startMin && minutes < endMin;
     return minutes >= startMin || minutes < endMin;
 }
 
-function isPastCheckinTime(currentHour: number | undefined, checkinTime: string): boolean {
-    const target = timeToMinutes(checkinTime) ?? (timeToMinutes(DEFAULT_CHECKIN_TIME) as number);
+function isPastCheckinTime(
+    currentHour: number | undefined,
+    checkinTime: string,
+): boolean {
+    const target =
+        timeToMinutes(checkinTime) ??
+        (timeToMinutes(DEFAULT_CHECKIN_TIME) as number);
     return currentMinutes(currentHour) >= target;
 }
 
@@ -163,7 +172,10 @@ function daysBetween(fromDate: string, toDate: string): number {
 }
 
 /** Bubby's gentle lines, by visual mood (never a mood word). */
-export const BUBBY_REMINDER_LINES: Record<Exclude<BubbyMood, "normal">, string> = {
+export const BUBBY_REMINDER_LINES: Record<
+    Exclude<BubbyMood, "normal">,
+    string
+> = {
     rumbly: "Bubby's tummy is rumbling 🐧",
     teary: "Bubby's eyes are a little watery 🐧",
     missyou: "Bubby misses you 🐧",
@@ -232,14 +244,18 @@ export function checkInboxReminder(
 
     const today = todayStr || sgToday();
     const count = summary.pendingCount;
-    const oldestMs = summary.oldestCapturedAt ? new Date(summary.oldestCapturedAt).getTime() : NaN;
+    const oldestMs = summary.oldestCapturedAt
+        ? new Date(summary.oldestCapturedAt).getTime()
+        : NaN;
     const nowMs = (referenceDate ?? new Date()).getTime();
-    const isStale = !Number.isNaN(oldestMs) && nowMs - oldestMs > INBOX_STALE_DAYS * DAY_MS;
+    const isStale =
+        !Number.isNaN(oldestMs) && nowMs - oldestMs > INBOX_STALE_DAYS * DAY_MS;
 
     return {
         id: `reminder-inbox-${memberPrefix(memberId)}${today}`,
         type: "inbox_pending",
-        title: count === 1 ? "1 Purchase to Sort" : `${count} Purchases to Sort`,
+        title:
+            count === 1 ? "1 Purchase to Sort" : `${count} Purchases to Sort`,
         message: `${formatSGD(summary.pendingTotalSgd)} waiting.`,
         severity: isStale ? "warning" : "info",
         actionLabel: "Sort Now",
@@ -265,7 +281,8 @@ export function checkBalanceUpdateReminder(
     const isFirstOrLastDays = day === 1 || day >= lastDay - 3;
     if (!isFirstOrLastDays) return null;
 
-    if (snapshots.some((s) => s.snapshot_date.startsWith(currentMonth))) return null;
+    if (snapshots.some((s) => s.snapshot_date.startsWith(currentMonth)))
+        return null;
 
     return {
         id: `reminder-balance-update-${memberPrefix(memberId)}${currentMonth}`,
@@ -283,7 +300,10 @@ export function checkBalanceUpdateReminder(
  * Picks the reminder stage for a due date: the most urgent configured offset
  * already reached, or "overdue". Returns null when outside every offset.
  */
-export function getDueStage(daysUntilDue: number, offsets: number[]): string | null {
+export function getDueStage(
+    daysUntilDue: number,
+    offsets: number[],
+): string | null {
     if (daysUntilDue < 0) return "overdue";
     const reached = offsets.filter((o) => o >= 0 && daysUntilDue <= o);
     if (reached.length === 0) return null;
@@ -308,13 +328,16 @@ export function checkCreditCardDueReminders(
     memberId?: string,
 ): AppReminder[] {
     const today = todayStr || sgToday();
-    const offsets = Array.isArray(dueDaysBefore) ? dueDaysBefore : [dueDaysBefore];
+    const offsets = Array.isArray(dueDaysBefore)
+        ? dueDaysBefore
+        : [dueDaysBefore];
     const reminders: AppReminder[] = [];
 
     for (const stmt of statements) {
         if (stmt.is_paid || !stmt.due_date) continue;
         // Card owner only
-        if (memberId && stmt.card?.owner_id && stmt.card.owner_id !== memberId) continue;
+        if (memberId && stmt.card?.owner_id && stmt.card.owner_id !== memberId)
+            continue;
 
         const days = daysBetween(today, stmt.due_date);
         if (days < -1) continue;
@@ -403,7 +426,8 @@ export function checkPartnerSharedSpendReminders(
     const byPayer = new Map<string, Expense[]>();
 
     for (const exp of expenses) {
-        if (!exp.is_shared || exp.settled || exp.payer_id === activeMemberId) continue;
+        if (!exp.is_shared || exp.settled || exp.payer_id === activeMemberId)
+            continue;
         const age = daysBetween(exp.date, today);
         if (age < 0 || age > 3) continue;
         const list = byPayer.get(exp.payer_id) ?? [];
@@ -413,12 +437,15 @@ export function checkPartnerSharedSpendReminders(
 
     const reminders: AppReminder[] = [];
     for (const [payerId, list] of byPayer) {
-        const partnerName = members.find((m) => m.id === payerId)?.display_name || "Partner";
+        const partnerName =
+            members.find((m) => m.id === payerId)?.display_name || "Partner";
         const yourShare = list.reduce(
             (sum, exp) => sum + exp.amount * (1 - (exp.split_ratio ?? 0.5)),
             0,
         );
-        const latest = list.reduce((a, b) => ((a.created_at || "") >= (b.created_at || "") ? a : b));
+        const latest = list.reduce((a, b) =>
+            (a.created_at || "") >= (b.created_at || "") ? a : b,
+        );
 
         reminders.push({
             id: `reminder-partner-spend-${activeMemberId}-${payerId}-${today}`,
@@ -465,7 +492,10 @@ export function checkSettlementReminder(
     if (activeMemberId && activeMemberId === settlementSummary.debtorId) {
         title = `You Owe ${settlementSummary.creditorName || "Partner"}`;
         message = `${amount} to settle`;
-    } else if (activeMemberId && activeMemberId === settlementSummary.creditorId) {
+    } else if (
+        activeMemberId &&
+        activeMemberId === settlementSummary.creditorId
+    ) {
         title = `${settlementSummary.debtorName || "Partner"} Owes You`;
         message = `${amount} to settle`;
         actionLabel = "View";
@@ -558,12 +588,15 @@ export function checkRecurringBillsReminders(
         if (p.start_date && formatISODate(dueDate) < p.start_date) continue;
 
         const windowDays =
-            p.frequency === "monthly" ? RECURRING_MONTHLY_REMINDER_DAYS : RECURRING_ANNUAL_REMINDER_DAYS;
+            p.frequency === "monthly"
+                ? RECURRING_MONTHLY_REMINDER_DAYS
+                : RECURRING_ANNUAL_REMINDER_DAYS;
         if (days > windowDays) continue;
 
         // "Due in 5 days" -> "Due in 5 Days"; annual items say "Renews" instead
-        const dueLabel = formatDueInDays(days).replace(/\b(today|tomorrow|days)\b/, (w) =>
-            w.charAt(0).toUpperCase() + w.slice(1),
+        const dueLabel = formatDueInDays(days).replace(
+            /\b(today|tomorrow|days)\b/,
+            (w) => w.charAt(0).toUpperCase() + w.slice(1),
         );
         const title =
             p.frequency === "monthly"
@@ -637,7 +670,11 @@ export function checkMonthlyBudgetReviewReminder(
     referenceDate?: Date,
     memberId?: string,
 ): AppReminder | null {
-    if (sgNow(referenceDate).getDate() > 5 || monthlyBudgetDetail.budget.is_locked) return null;
+    if (
+        sgNow(referenceDate).getDate() > 5 ||
+        monthlyBudgetDetail.budget.is_locked
+    )
+        return null;
 
     const month = monthlyBudgetDetail.budget.month;
     const shortMonth = formatShortMonth(month).split(" ")[0];

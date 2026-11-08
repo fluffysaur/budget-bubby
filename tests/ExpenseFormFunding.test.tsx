@@ -5,7 +5,14 @@
  * - Edit mode shares the form, without add-only side effects
  */
 
-import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    act,
+    within,
+} from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { financeService } from "../src/services/financeService";
@@ -20,7 +27,11 @@ vi.mock("../src/lib/soundEffects", () => ({
     initAudioUnlock: vi.fn(),
 }));
 
-function makeGoal(id: string, title: string, overrides: Partial<SavingsGoal> = {}): SavingsGoal {
+function makeGoal(
+    id: string,
+    title: string,
+    overrides: Partial<SavingsGoal> = {},
+): SavingsGoal {
     return {
         id,
         household_id: "hh-1",
@@ -40,7 +51,10 @@ const goals = [
     makeGoal("g2", "Japan Trip"),
     makeGoal("g3", "New Car"),
     makeGoal("g4", "Baby Fund"),
-    makeGoal("g5", "Fully Funded Reno", { status: "achieved", saved_so_far: 1000 }),
+    makeGoal("g5", "Fully Funded Reno", {
+        status: "achieved",
+        saved_so_far: 1000,
+    }),
 ];
 
 const goalExpense: Expense = {
@@ -60,7 +74,9 @@ const goalExpense: Expense = {
     goal_id: "g2",
 };
 
-function renderForm(props: Partial<React.ComponentProps<typeof ExpenseFormModal>> = {}) {
+function renderForm(
+    props: Partial<React.ComponentProps<typeof ExpenseFormModal>> = {},
+) {
     return render(
         <ExpenseFormModal
             isOpen
@@ -74,8 +90,12 @@ function renderForm(props: Partial<React.ComponentProps<typeof ExpenseFormModal>
 }
 
 function fillRequired() {
-    fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "20.00" } });
-    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Thing" } });
+    fireEvent.change(screen.getByPlaceholderText("0.00"), {
+        target: { value: "20.00" },
+    });
+    fireEvent.change(screen.getByLabelText("Description"), {
+        target: { value: "Thing" },
+    });
 }
 
 describe("Expense form funding source", () => {
@@ -88,7 +108,9 @@ describe("Expense form funding source", () => {
 
     it("hides the Budget | Goal switch when there are no goals", () => {
         renderForm({ goals: [] });
-        expect(screen.queryByRole("tab", { name: /goal/i })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("tab", { name: /goal/i }),
+        ).not.toBeInTheDocument();
         expect(screen.getByText("Category")).toBeInTheDocument();
     });
 
@@ -101,7 +123,9 @@ describe("Expense form funding source", () => {
         renderForm();
         fireEvent.click(screen.getByRole("tab", { name: /goal/i }));
         fireEvent.click(screen.getByRole("button", { name: /\+ more/i }));
-        expect(screen.getByRole("button", { name: /fully funded reno/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /fully funded reno/i }),
+        ).toBeInTheDocument();
     });
 
     it("requires picking a goal when there are several", async () => {
@@ -118,14 +142,18 @@ describe("Expense form funding source", () => {
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
         });
-        expect(screen.getByText(/select which savings goal/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/select which savings goal/i),
+        ).toBeInTheDocument();
         expect(addSpy).not.toHaveBeenCalled();
     });
 
     it("pre-selects the goal when there's only one", () => {
         renderForm({ goals: [goals[0]] });
         fireEvent.click(screen.getByRole("tab", { name: /goal/i }));
-        expect(screen.getByRole("button", { name: /wedding/i })).toHaveAttribute("aria-pressed", "true");
+        expect(
+            screen.getByRole("button", { name: /wedding/i }),
+        ).toHaveAttribute("aria-pressed", "true");
     });
 
     it("restores the picked goal after switching to Budget and back", () => {
@@ -135,30 +163,50 @@ describe("Expense form funding source", () => {
         fireEvent.click(screen.getByRole("tab", { name: /budget/i }));
         expect(screen.getByLabelText("Category Selection")).toBeInTheDocument();
         fireEvent.click(screen.getByRole("tab", { name: /goal/i }));
-        expect(screen.getByRole("button", { name: /japan trip/i })).toHaveAttribute("aria-pressed", "true");
+        expect(
+            screen.getByRole("button", { name: /japan trip/i }),
+        ).toHaveAttribute("aria-pressed", "true");
     });
 
     it("opens with an initial goal picked and visible even beyond the first four chips", async () => {
         const addSpy = vi
             .spyOn(financeService, "addExpense")
-            .mockImplementation(async (input) => ({ id: "new", household_id: "hh", settled: false, ...input }) as Expense);
+            .mockImplementation(
+                async (input) =>
+                    ({
+                        id: "new",
+                        household_id: "hh",
+                        settled: false,
+                        ...input,
+                    }) as Expense,
+            );
         renderForm({ initialGoalId: "g5" });
 
-        expect(screen.getByRole("tab", { name: /goal/i })).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("button", { name: /fully funded reno/i })).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByRole("tab", { name: /goal/i })).toHaveAttribute(
+            "aria-selected",
+            "true",
+        );
+        expect(
+            screen.getByRole("button", { name: /fully funded reno/i }),
+        ).toHaveAttribute("aria-pressed", "true");
 
         fillRequired();
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
         });
         await waitFor(() =>
-            expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ goal_id: "g5", category_id: null })),
+            expect(addSpy).toHaveBeenCalledWith(
+                expect.objectContaining({ goal_id: "g5", category_id: null }),
+            ),
         );
     });
 
     it("doesn't open More just because goal funding is on", () => {
         renderForm({ initialGoalId: "g1" });
-        expect(screen.getByRole("button", { name: /^more/i })).toHaveAttribute("aria-expanded", "false");
+        expect(screen.getByRole("button", { name: /^more/i })).toHaveAttribute(
+            "aria-expanded",
+            "false",
+        );
     });
 });
 
@@ -172,15 +220,25 @@ describe("Expense form edit mode", () => {
 
     it("loads a goal-funded expense with its goal picked", () => {
         renderForm({ expense: goalExpense });
-        expect(screen.getByRole("heading", { name: "Edit Expense" })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: /goal/i })).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("button", { name: /japan trip/i })).toHaveAttribute("aria-pressed", "true");
+        expect(
+            screen.getByRole("heading", { name: "Edit Expense" }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: /goal/i })).toHaveAttribute(
+            "aria-selected",
+            "true",
+        );
+        expect(
+            screen.getByRole("button", { name: /japan trip/i }),
+        ).toHaveAttribute("aria-pressed", "true");
     });
 
     it("requires a category when moving a goal expense to Budget, then clears the goal", async () => {
         const updateSpy = vi
             .spyOn(financeService, "updateExpense")
-            .mockImplementation(async (_id, updates) => ({ ...goalExpense, ...updates }) as Expense);
+            .mockImplementation(
+                async (_id, updates) =>
+                    ({ ...goalExpense, ...updates }) as Expense,
+            );
         renderForm({ expense: goalExpense });
 
         fireEvent.click(screen.getByRole("tab", { name: /budget/i }));
@@ -190,20 +248,30 @@ describe("Expense form edit mode", () => {
         expect(screen.getByText(/pick a category/i)).toBeInTheDocument();
         expect(updateSpy).not.toHaveBeenCalled();
 
-        fireEvent.click(within(screen.getByLabelText("Category Selection")).getByRole("button", { name: /food/i }));
+        fireEvent.click(
+            within(screen.getByLabelText("Category Selection")).getByRole(
+                "button",
+                { name: /food/i },
+            ),
+        );
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
         });
         await waitFor(() =>
             expect(updateSpy).toHaveBeenCalledWith(
                 "exp-goal-1",
-                expect.objectContaining({ goal_id: null, category_id: "cat-00000000-0101" }),
+                expect.objectContaining({
+                    goal_id: null,
+                    category_id: "cat-00000000-0101",
+                }),
             ),
         );
     });
 
     it("skips the celebration event and leaves the remembered split alone", async () => {
-        vi.spyOn(financeService, "updateExpense").mockResolvedValue(goalExpense);
+        vi.spyOn(financeService, "updateExpense").mockResolvedValue(
+            goalExpense,
+        );
         const onUpdated = vi.fn();
         const eventSpy = vi.fn();
         window.addEventListener("expenseAdded", eventSpy);
@@ -216,23 +284,35 @@ describe("Expense form edit mode", () => {
 
         await waitFor(() => expect(onUpdated).toHaveBeenCalled());
         expect(eventSpy).not.toHaveBeenCalled();
-        expect(localStorage.getItem("budget_bubby_last_split_v1")).toBe("personal");
+        expect(localStorage.getItem("budget_bubby_last_split_v1")).toBe(
+            "personal",
+        );
         window.removeEventListener("expenseAdded", eventSpy);
     });
 
     it("opens More for a custom split and keeps the ratio on save", async () => {
-        const updateSpy = vi.spyOn(financeService, "updateExpense").mockResolvedValue(goalExpense);
+        const updateSpy = vi
+            .spyOn(financeService, "updateExpense")
+            .mockResolvedValue(goalExpense);
         renderForm({ expense: { ...goalExpense, split_ratio: 0.7 } });
 
-        expect(screen.getByRole("button", { name: /^more/i })).toHaveAttribute("aria-expanded", "true");
-        expect(screen.getByTestId("expense-more-summary")).toHaveTextContent("Shared 30/70");
+        expect(screen.getByRole("button", { name: /^more/i })).toHaveAttribute(
+            "aria-expanded",
+            "true",
+        );
+        expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
+            "Shared 30/70",
+        );
         expect(screen.getByLabelText(/partner's share/i)).toHaveValue("0.7");
 
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
         });
         await waitFor(() =>
-            expect(updateSpy).toHaveBeenCalledWith("exp-goal-1", expect.objectContaining({ split_ratio: 0.7 })),
+            expect(updateSpy).toHaveBeenCalledWith(
+                "exp-goal-1",
+                expect.objectContaining({ split_ratio: 0.7 }),
+            ),
         );
     });
 });
@@ -245,18 +325,30 @@ describe("Expense form custom split (add mode)", () => {
     it("saves a custom partner share chosen on the slider", async () => {
         const addSpy = vi
             .spyOn(financeService, "addExpense")
-            .mockImplementation(async (input) => ({ id: "new", household_id: "hh", settled: false, ...input }) as Expense);
+            .mockImplementation(
+                async (input) =>
+                    ({
+                        id: "new",
+                        household_id: "hh",
+                        settled: false,
+                        ...input,
+                    }) as Expense,
+            );
         renderForm({ defaultShared: true });
         fillRequired();
 
         fireEvent.click(screen.getByRole("button", { name: /^more/i }));
-        fireEvent.change(screen.getByLabelText(/partner's share/i), { target: { value: "0.25" } });
+        fireEvent.change(screen.getByLabelText(/partner's share/i), {
+            target: { value: "0.25" },
+        });
 
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
         });
         await waitFor(() =>
-            expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ is_shared: true, split_ratio: 0.25 })),
+            expect(addSpy).toHaveBeenCalledWith(
+                expect.objectContaining({ is_shared: true, split_ratio: 0.25 }),
+            ),
         );
     });
 });

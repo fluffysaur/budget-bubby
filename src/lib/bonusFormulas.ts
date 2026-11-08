@@ -12,7 +12,11 @@ import type {
     HouseholdMember,
 } from "../types/finance";
 
-export { distributeGoalShare, goalGap, isGoalFundable } from "./goalDistribution";
+export {
+    distributeGoalShare,
+    goalGap,
+    isGoalFundable,
+} from "./goalDistribution";
 export type { GoalDistributionMode } from "./goalDistribution";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -32,7 +36,8 @@ export const BONUS_SPLIT_BUCKETS: readonly BonusSplitBucket[] = [
     { key: "lifestyle", label: "Lifestyle", color: "#EC4899" },
 ];
 
-export const BONUS_SPLIT_KEYS: readonly BonusSplitKey[] = BONUS_SPLIT_BUCKETS.map((b) => b.key);
+export const BONUS_SPLIT_KEYS: readonly BonusSplitKey[] =
+    BONUS_SPLIT_BUCKETS.map((b) => b.key);
 
 /** Seeded default split: Tithing 10 / Goals 40 / Savings 10 / Investments 20 / Lifestyle 20. */
 export const DEFAULT_BONUS_SPLIT: readonly BonusSplitShare[] = [
@@ -43,7 +48,12 @@ export const DEFAULT_BONUS_SPLIT: readonly BonusSplitShare[] = [
     { key: "lifestyle", pct: 0.2 },
 ];
 
-export const BONUS_TYPES: readonly BonusType[] = ["aws", "performance", "sign_on", "other"];
+export const BONUS_TYPES: readonly BonusType[] = [
+    "aws",
+    "performance",
+    "sign_on",
+    "other",
+];
 
 export const BONUS_TYPE_LABELS: Record<BonusType, string> = {
     aws: "AWS",
@@ -55,9 +65,13 @@ export const BONUS_TYPE_LABELS: Record<BonusType, string> = {
 export const DEFAULT_BONUS_CPF_RATE = 0.2;
 
 /** Employee CPF on a bonus, rounded to cents. */
-export function defaultBonusCpf(gross: number, rate: number = DEFAULT_BONUS_CPF_RATE): number {
+export function defaultBonusCpf(
+    gross: number,
+    rate: number = DEFAULT_BONUS_CPF_RATE,
+): number {
     const safeGross = Math.max(0, Number(gross) || 0);
-    const safeRate = Number.isFinite(rate) && rate >= 0 ? rate : DEFAULT_BONUS_CPF_RATE;
+    const safeRate =
+        Number.isFinite(rate) && rate >= 0 ? rate : DEFAULT_BONUS_CPF_RATE;
     return round2(safeGross * safeRate);
 }
 
@@ -105,9 +119,15 @@ export function normalizeBonusSplit(raw: unknown): BonusSplitShare[] {
  * Applies a split to the net bonus. Amounts are rounded to cents and the last
  * non-zero bucket absorbs the remainder, so the shares always sum to `net`.
  */
-export function computeBonusSplit(net: number, split: readonly BonusSplitShare[]): BonusSplitShare[] {
+export function computeBonusSplit(
+    net: number,
+    split: readonly BonusSplitShare[],
+): BonusSplitShare[] {
     const netCents = Math.round(Math.max(0, Number(net) || 0) * 100);
-    const lastIdx = split.reduce((last, s, idx) => (s.pct > 0 ? idx : last), -1);
+    const lastIdx = split.reduce(
+        (last, s, idx) => (s.pct > 0 ? idx : last),
+        -1,
+    );
     let assigned = 0;
     return split.map((s, idx) => {
         let cents = 0;
@@ -124,7 +144,10 @@ export function computeBonusSplit(net: number, split: readonly BonusSplitShare[]
 }
 
 /** The amount assigned to one bucket of a computed split. */
-export function getSplitAmount(split: readonly BonusSplitShare[], key: BonusSplitKey): number {
+export function getSplitAmount(
+    split: readonly BonusSplitShare[],
+    key: BonusSplitKey,
+): number {
     return split.find((s) => s.key === key)?.amount ?? 0;
 }
 
@@ -148,8 +171,12 @@ function sumEvents(events: readonly BonusEvent[]): BonusTotals {
 }
 
 /** Total amount a bonus sent to goals. */
-export function bonusGoalTotal(event: Pick<BonusEvent, "goal_contributions">): number {
-    return round2((event.goal_contributions || []).reduce((s, c) => s + c.amount, 0));
+export function bonusGoalTotal(
+    event: Pick<BonusEvent, "goal_contributions">,
+): number {
+    return round2(
+        (event.goal_contributions || []).reduce((s, c) => s + c.amount, 0),
+    );
 }
 
 /**
@@ -174,7 +201,13 @@ export function summarizeBonusesForMonth(
     }
     const legacy = round2(Number(legacyBonus) || 0);
     if (legacy > 0) {
-        return { gross: legacy, cpf: 0, net: legacy, count: 0, source: "legacy" };
+        return {
+            gross: legacy,
+            cpf: 0,
+            net: legacy,
+            count: 0,
+            source: "legacy",
+        };
     }
     return { gross: 0, cpf: 0, net: 0, count: 0, source: "none" };
 }
@@ -210,7 +243,9 @@ export interface BonusYearGroup {
 }
 
 /** Groups events by year, newest year first, events newest first. */
-export function groupBonusesByYear(events: readonly BonusEvent[]): BonusYearGroup[] {
+export function groupBonusesByYear(
+    events: readonly BonusEvent[],
+): BonusYearGroup[] {
     const byYear = new Map<number, BonusEvent[]>();
     for (const e of events) {
         const year = Number(e.received_on.slice(0, 4));

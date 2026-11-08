@@ -6,7 +6,10 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
-import { INBOX_ITEMS_QUERY_KEY, afterInboxConfirmed } from "../lib/inbox/inboxConfirm";
+import {
+    INBOX_ITEMS_QUERY_KEY,
+    afterInboxConfirmed,
+} from "../lib/inbox/inboxConfirm";
 import { useSafeQueryClient } from "./useFinanceQueries";
 import type { InboxEventMap } from "../lib/inbox/inboxEvents";
 import type {
@@ -21,9 +24,11 @@ import type {
 export const inboxQueryKeys = {
     all: ["finance", "inbox"] as const,
     items: INBOX_ITEMS_QUERY_KEY,
-    summary: (memberId?: string) => ["finance", "inbox", "summary", memberId ?? "household"] as const,
+    summary: (memberId?: string) =>
+        ["finance", "inbox", "summary", memberId ?? "household"] as const,
     rules: ["finance", "inbox", "rules"] as const,
-    tokens: (memberId?: string) => ["finance", "inbox", "tokens", memberId ?? "me"] as const,
+    tokens: (memberId?: string) =>
+        ["finance", "inbox", "tokens", memberId ?? "me"] as const,
 };
 
 const INBOX_STALE_MS = 30_000;
@@ -39,7 +44,8 @@ function useRefetchInboxOnVisible() {
             }
         };
         document.addEventListener("visibilitychange", onVisible);
-        return () => document.removeEventListener("visibilitychange", onVisible);
+        return () =>
+            document.removeEventListener("visibilitychange", onVisible);
     }, [queryClient]);
 }
 
@@ -107,78 +113,104 @@ export function useConfirmInboxItemMutation() {
     >(
         {
             networkMode: "always",
-        mutationFn: async ({ item, input, via, guessedCategoryId }) => {
-            const expenseId = await financeService.confirmInboxItem(item.id, input);
-            await afterInboxConfirmed({
-                item,
-                expenseId,
-                input,
-                via,
-                guessedCategoryId,
-            });
-            return expenseId;
-        },
-        onMutate: async ({ item }) => {
-            await queryClient.cancelQueries({ queryKey: inboxQueryKeys.items });
-            await queryClient.cancelQueries({
-                queryKey: ["finance", "inbox", "summary"],
-            });
-
-            const previousItems = queryClient.getQueryData<InboxItemsResult>(
-                inboxQueryKeys.items,
-            );
-            const previousSummaries = queryClient.getQueriesData<InboxSummary>({
-                queryKey: ["finance", "inbox", "summary"],
-            });
-
-            // Optimistically remove from items list
-            queryClient.setQueryData<InboxItemsResult>(inboxQueryKeys.items, (old) => {
-                if (!old) return old;
-                return {
-                    ...old,
-                    items: old.items.filter((i) => i.id !== item.id),
-                };
-            });
-
-            for (const [key] of previousSummaries) {
-                queryClient.setQueryData<InboxSummary>(key, (old) =>
-                    old
-                        ? {
-                              ...old,
-                              pendingCount: Math.max(0, old.pendingCount - 1),
-                          }
-                        : old,
+            mutationFn: async ({ item, input, via, guessedCategoryId }) => {
+                const expenseId = await financeService.confirmInboxItem(
+                    item.id,
+                    input,
                 );
-            }
+                await afterInboxConfirmed({
+                    item,
+                    expenseId,
+                    input,
+                    via,
+                    guessedCategoryId,
+                });
+                return expenseId;
+            },
+            onMutate: async ({ item }) => {
+                await queryClient.cancelQueries({
+                    queryKey: inboxQueryKeys.items,
+                });
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "inbox", "summary"],
+                });
 
-            return { previousItems, previousSummaries };
-        },
-        onError: (_err, _vars, context) => {
-            if (context?.previousItems) {
-                queryClient.setQueryData(inboxQueryKeys.items, context.previousItems);
-            }
-            if (context?.previousSummaries) {
-                for (const [key, oldData] of context.previousSummaries) {
-                    queryClient.setQueryData(key, oldData);
+                const previousItems =
+                    queryClient.getQueryData<InboxItemsResult>(
+                        inboxQueryKeys.items,
+                    );
+                const previousSummaries =
+                    queryClient.getQueriesData<InboxSummary>({
+                        queryKey: ["finance", "inbox", "summary"],
+                    });
+
+                // Optimistically remove from items list
+                queryClient.setQueryData<InboxItemsResult>(
+                    inboxQueryKeys.items,
+                    (old) => {
+                        if (!old) return old;
+                        return {
+                            ...old,
+                            items: old.items.filter((i) => i.id !== item.id),
+                        };
+                    },
+                );
+
+                for (const [key] of previousSummaries) {
+                    queryClient.setQueryData<InboxSummary>(key, (old) =>
+                        old
+                            ? {
+                                  ...old,
+                                  pendingCount: Math.max(
+                                      0,
+                                      old.pendingCount - 1,
+                                  ),
+                              }
+                            : old,
+                    );
                 }
-            }
+
+                return { previousItems, previousSummaries };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousItems) {
+                    queryClient.setQueryData(
+                        inboxQueryKeys.items,
+                        context.previousItems,
+                    );
+                }
+                if (context?.previousSummaries) {
+                    for (const [key, oldData] of context.previousSummaries) {
+                        queryClient.setQueryData(key, oldData);
+                    }
+                }
+            },
+            onSettled: (_data, _err, vars) => {
+                queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
+                queryClient.invalidateQueries({
+                    queryKey: ["finance", "expenses"],
+                });
+                queryClient.invalidateQueries({
+                    queryKey: ["finance", "all-expenses"],
+                });
+                queryClient.invalidateQueries({
+                    queryKey: ["finance", "monthly-budget"],
+                });
+                queryClient.invalidateQueries({
+                    queryKey: ["finance", "budget-detail"],
+                });
+                queryClient.invalidateQueries({
+                    queryKey: ["finance", "household-overview"],
+                });
+                if (vars?.input?.goal_id) {
+                    queryClient.invalidateQueries({
+                        queryKey: ["finance", "goals"],
+                    });
+                }
+            },
         },
-        onSettled: (_data, _err, vars) => {
-            queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
-            queryClient.invalidateQueries({ queryKey: ["finance", "expenses"] });
-            queryClient.invalidateQueries({ queryKey: ["finance", "all-expenses"] });
-            queryClient.invalidateQueries({
-                queryKey: ["finance", "monthly-budget"],
-            });
-            queryClient.invalidateQueries({ queryKey: ["finance", "budget-detail"] });
-            queryClient.invalidateQueries({
-                queryKey: ["finance", "household-overview"],
-            });
-            if (vars?.input?.goal_id) {
-                queryClient.invalidateQueries({ queryKey: ["finance", "goals"] });
-            }
-        },
-    }, queryClient);
+        queryClient,
+    );
 }
 
 export interface ResolveInboxItemParams {
@@ -203,60 +235,71 @@ export function useResolveInboxItemMutation() {
     >(
         {
             networkMode: "always",
-        mutationFn: async ({ id, reason }) => {
-            await financeService.resolveInboxItem(id, reason);
-        },
-        onMutate: async ({ id, reason }) => {
-            await queryClient.cancelQueries({ queryKey: inboxQueryKeys.items });
-            await queryClient.cancelQueries({
-                queryKey: ["finance", "inbox", "summary"],
-            });
+            mutationFn: async ({ id, reason }) => {
+                await financeService.resolveInboxItem(id, reason);
+            },
+            onMutate: async ({ id, reason }) => {
+                await queryClient.cancelQueries({
+                    queryKey: inboxQueryKeys.items,
+                });
+                await queryClient.cancelQueries({
+                    queryKey: ["finance", "inbox", "summary"],
+                });
 
-            const previousItems = queryClient.getQueryData<InboxItemsResult>(
-                inboxQueryKeys.items,
-            );
-            const previousSummaries = queryClient.getQueriesData<InboxSummary>({
-                queryKey: ["finance", "inbox", "summary"],
-            });
+                const previousItems =
+                    queryClient.getQueryData<InboxItemsResult>(
+                        inboxQueryKeys.items,
+                    );
+                const previousSummaries =
+                    queryClient.getQueriesData<InboxSummary>({
+                        queryKey: ["finance", "inbox", "summary"],
+                    });
 
-            if (reason === "discarded" || reason === "duplicate") {
-                queryClient.setQueryData<InboxItemsResult>(
-                    inboxQueryKeys.items,
-                    (old) => {
-                        if (!old) return old;
-                        return {
-                            ...old,
-                            items: old.items.filter((i) => i.id !== id),
-                        };
-                    },
-                );
-                for (const [key] of previousSummaries) {
-                    queryClient.setQueryData<InboxSummary>(key, (old) =>
-                        old
-                            ? {
-                                  ...old,
-                                  pendingCount: Math.max(0, old.pendingCount - 1),
-                              }
-                            : old,
+                if (reason === "discarded" || reason === "duplicate") {
+                    queryClient.setQueryData<InboxItemsResult>(
+                        inboxQueryKeys.items,
+                        (old) => {
+                            if (!old) return old;
+                            return {
+                                ...old,
+                                items: old.items.filter((i) => i.id !== id),
+                            };
+                        },
+                    );
+                    for (const [key] of previousSummaries) {
+                        queryClient.setQueryData<InboxSummary>(key, (old) =>
+                            old
+                                ? {
+                                      ...old,
+                                      pendingCount: Math.max(
+                                          0,
+                                          old.pendingCount - 1,
+                                      ),
+                                  }
+                                : old,
+                        );
+                    }
+                }
+
+                return { previousItems, previousSummaries };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousItems) {
+                    queryClient.setQueryData(
+                        inboxQueryKeys.items,
+                        context.previousItems,
                     );
                 }
-            }
-
-            return { previousItems, previousSummaries };
-        },
-        onError: (_err, _vars, context) => {
-            if (context?.previousItems) {
-                queryClient.setQueryData(inboxQueryKeys.items, context.previousItems);
-            }
-            if (context?.previousSummaries) {
-                for (const [key, oldData] of context.previousSummaries) {
-                    queryClient.setQueryData(key, oldData);
+                if (context?.previousSummaries) {
+                    for (const [key, oldData] of context.previousSummaries) {
+                        queryClient.setQueryData(key, oldData);
+                    }
                 }
-            }
+            },
+            onSettled: () => {
+                queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
+            },
         },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
-        },
-    }, queryClient);
+        queryClient,
+    );
 }
-

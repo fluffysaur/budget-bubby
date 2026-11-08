@@ -6,7 +6,8 @@
 export const MAX_MERCHANT_LENGTH = 120;
 
 // Payment processor prefixes dropped entirely ("SQ *Cafe" -> "cafe")
-const PROCESSOR_PREFIX = /^(sq|paypal|sumup|zettle|izettle|stripe|tst|sp)\s*\*\s*/;
+const PROCESSOR_PREFIX =
+    /^(sq|paypal|sumup|zettle|izettle|stripe|tst|sp)\s*\*\s*/;
 // Location noise at the end of card descriptors
 const LOCATION_SUFFIXES = new Set(["singapore", "sg", "sgp", "sin"]);
 
@@ -35,7 +36,10 @@ export function cleanMerchant(raw: unknown): string | null {
     if (!isAllCaps) return cleaned;
     return cleaned
         .toLowerCase()
-        .replace(/(^|[\s*/&(-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase());
+        .replace(
+            /(^|[\s*/&(-])(\p{L})/gu,
+            (_, sep: string, ch: string) => sep + ch.toUpperCase(),
+        );
 }
 
 /**

@@ -1,9 +1,14 @@
 import React from "react";
 import { formatSGD } from "../../lib/currency";
-import { MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES, type MoneySize } from "../../lib/moneyStyles";
+import {
+    MONEY_BASE_CLASSES,
+    MONEY_SIZE_CLASSES,
+    type MoneySize,
+} from "../../lib/moneyStyles";
 
 export type CurrencySize = MoneySize;
-export type CurrencyTone = "inherit" | "default" | "positive" | "negative" | "muted";
+export type CurrencyTone =
+    "inherit" | "default" | "positive" | "negative" | "muted";
 
 export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     amount?: number;
@@ -32,7 +37,12 @@ export function CurrencyText({
     ...props
 }: CurrencyTextProps) {
     const displayValue = formatted ?? formatSGD(amount ?? 0);
-    const classes = [MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES[size], toneMap[tone], className]
+    const classes = [
+        MONEY_BASE_CLASSES,
+        MONEY_SIZE_CLASSES[size],
+        toneMap[tone],
+        className,
+    ]
         .filter(Boolean)
         .join(" ");
 

@@ -35,7 +35,10 @@ export function PageHeader({
                     {badge && <div className="shrink-0">{badge}</div>}
                     {tooltip && (
                         <TooltipPopover
-                            title={tooltipTitle || (typeof title === "string" ? title : "Details")}
+                            title={
+                                tooltipTitle ||
+                                (typeof title === "string" ? title : "Details")
+                            }
                             ariaLabel={`${typeof title === "string" ? title : "Page"} info`}
                             align="left"
                         >

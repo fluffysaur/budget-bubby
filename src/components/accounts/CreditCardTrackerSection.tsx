@@ -8,11 +8,7 @@
  * - Add / Edit Credit Card modal to configure new cards or update billing/due days
  */
 
-import {
-    useState,
-    useMemo,
-    type FormEvent,
-} from "react";
+import { useState, useMemo, type FormEvent } from "react";
 import {
     CreditCard as CreditCardIcon,
     Plus,
@@ -34,7 +30,12 @@ import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
 import { Badge } from "../ui/Badge";
 import { MeterBar } from "../ui/MeterBar";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
@@ -134,8 +135,7 @@ export function CreditCardTrackerSection({
 }: CreditCardTrackerSectionProps) {
     const { invalidateCreditCards } = useInvalidateFinance();
 
-    const [selectedMonth, setSelectedMonth] =
-        useState<string>(getCurrentMonth);
+    const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
     useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
     const { data: cardsData, isLoading: cardsLoading } = useCreditCardsQuery();
@@ -148,8 +148,7 @@ export function CreditCardTrackerSection({
     const cards = useMemo(() => cardsData || [], [cardsData]);
     const statements = useMemo(() => statementsData || [], [statementsData]);
     const isLoading =
-        (cardsLoading && !cardsData) ||
-        (statementsLoading && !statementsData);
+        (cardsLoading && !cardsData) || (statementsLoading && !statementsData);
 
     // Card modal states
     const [isAddEditCardOpen, setIsAddEditCardOpen] = useState<boolean>(false);
@@ -233,7 +232,9 @@ export function CreditCardTrackerSection({
             invalidateCreditCards();
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
-            setToggleError("Failed to update statement paid status. Please try again.");
+            setToggleError(
+                "Failed to update statement paid status. Please try again.",
+            );
         }
     };
 
@@ -268,9 +269,7 @@ export function CreditCardTrackerSection({
 
         const amount = parseFloat(stmtAmountInput);
         if (isNaN(amount) || amount < 0) {
-            setStmtError(
-                "Enter an amount",
-            );
+            setStmtError("Enter an amount");
             return;
         }
 
@@ -368,320 +367,358 @@ export function CreditCardTrackerSection({
             </div>
 
             {toggleError && (
-                <Alert
-                    variant="danger"
-                    onClose={() => setToggleError(null)}
-                >
+                <Alert variant="danger" onClose={() => setToggleError(null)}>
                     {toggleError}
                 </Alert>
             )}
 
             {/* 3 Summary Cards & Card Listing (dimmed during month switch) */}
-            <div className={statementsPlaceholder ? "space-y-4 opacity-60 transition-opacity" : "space-y-4 transition-opacity"}>
+            <div
+                className={
+                    statementsPlaceholder
+                        ? "space-y-4 opacity-60 transition-opacity"
+                        : "space-y-4 transition-opacity"
+                }
+            >
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <StatCard
-                    title="Due"
-                    loading={isLoading}
-                    value={formatSGD(totalBillDue)}
-                    subtitle={`${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
-                    icon={<ReceiptText className="h-4 w-4" />}
-                    iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
-                />
+                    <StatCard
+                        title="Due"
+                        loading={isLoading}
+                        value={formatSGD(totalBillDue)}
+                        subtitle={`${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
+                        icon={<ReceiptText className="h-4 w-4" />}
+                        iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
+                    />
 
-                <StatCard
-                    title="Paid"
-                    loading={isLoading}
-                    value={formatSGD(totalPaid)}
-                    icon={<FileCheck2 className="h-4 w-4" />}
-                    iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                />
+                    <StatCard
+                        title="Paid"
+                        loading={isLoading}
+                        value={formatSGD(totalPaid)}
+                        icon={<FileCheck2 className="h-4 w-4" />}
+                        iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    />
 
-                <StatCard
-                    title="Unpaid"
-                    loading={isLoading}
-                    value={formatSGD(totalUnpaid)}
-                    subtitle={totalUnpaid > 0 ? "Pending" : "All paid"}
-                    icon={<AlertTriangle className="h-4 w-4" />}
-                    iconBg={
-                        totalUnpaid > 0
-                            ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                            : "bg-slate-100 text-slate-500 dark:bg-slate-800"
-                    }
-                />
-            </div>
-
-            {/* Card Listing */}
-            {isLoading ? (
-                <CreditCardListSkeleton />
-            ) : filteredCards.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
-                    <CreditCardIcon className="h-10 w-10 text-(--text-faint) mb-3" />
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-                        No Cards
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-(--text-faint) max-w-sm mt-1">
-                        Add a card to track statements.
-                    </p>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        className="mt-4"
-                        leftIcon={<Plus className="h-4 w-4" />}
-                        onClick={() => {
-                            setCardToEdit(null);
-                            setIsAddEditCardOpen(true);
-                        }}
-                    >
-                        Add Card
-                    </Button>
+                    <StatCard
+                        title="Unpaid"
+                        loading={isLoading}
+                        value={formatSGD(totalUnpaid)}
+                        subtitle={totalUnpaid > 0 ? "Pending" : "All paid"}
+                        icon={<AlertTriangle className="h-4 w-4" />}
+                        iconBg={
+                            totalUnpaid > 0
+                                ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                        }
+                    />
                 </div>
-            ) : (
-                <div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                    data-testid="credit-card-list"
-                >
-                    <AnimatePresence initial={false}>
-                        {filteredCards.map((card) => {
-                            const stmt = statementMap.get(card.id);
-                            const owner = members.find(
-                                (m) => m.id === card.owner_id,
-                            );
-                            const dueStatus = stmt
-                                ? getRelativeDueLabel(
-                                      stmt.due_date,
-                                      stmt.is_paid,
-                                      stmt.paid_at,
-                                  )
-                                : null;
 
-                            return (
-                                <m.div
-                                    key={card.id}
-                                    data-testid={`credit-card-card-${card.id}`}
-                                    {...listItem}
-                                    className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
-                                >
-                                {/* Color Top Stripe */}
-                                <div
-                                    className="absolute top-0 left-0 right-0 h-1.5"
-                                    style={{
-                                        backgroundColor:
-                                            card.color || "#dfc2ff",
-                                    }}
-                                />
+                {/* Card Listing */}
+                {isLoading ? (
+                    <CreditCardListSkeleton />
+                ) : filteredCards.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
+                        <CreditCardIcon className="h-10 w-10 text-(--text-faint) mb-3" />
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                            No Cards
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-(--text-faint) max-w-sm mt-1">
+                            Add a card to track statements.
+                        </p>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className="mt-4"
+                            leftIcon={<Plus className="h-4 w-4" />}
+                            onClick={() => {
+                                setCardToEdit(null);
+                                setIsAddEditCardOpen(true);
+                            }}
+                        >
+                            Add Card
+                        </Button>
+                    </div>
+                ) : (
+                    <div
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                        data-testid="credit-card-list"
+                    >
+                        <AnimatePresence initial={false}>
+                            {filteredCards.map((card) => {
+                                const stmt = statementMap.get(card.id);
+                                const owner = members.find(
+                                    (m) => m.id === card.owner_id,
+                                );
+                                const dueStatus = stmt
+                                    ? getRelativeDueLabel(
+                                          stmt.due_date,
+                                          stmt.is_paid,
+                                          stmt.paid_at,
+                                      )
+                                    : null;
 
-                                <div>
-                                    {/* Card Header */}
-                                    <div className="flex items-start justify-between gap-2 mt-1">
-                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                            <div
-                                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
-                                                style={{
-                                                    backgroundColor:
-                                                        card.color || "#dfc2ff",
-                                                }}
-                                            >
-                                                {card.bank.slice(0, 4)}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="font-display font-black text-sm text-(--text-ink) truncate">
-                                                    <TruncatedText text={card.name} />
-                                                </h4>
-                                                <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5 min-w-0">
-                                                    {card.last4 && (
-                                                        <span className="font-mono-num font-bold text-xs bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink) px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap">
-                                                            •••• {card.last4}
-                                                        </span>
-                                                    )}
-                                                    <span className="font-semibold truncate min-w-0">
-                                                        {card.bank}
-                                                    </span>
-                                                    {owner && (
-                                                        <>
-                                                            <span className="shrink-0">•</span>
-                                                            <span className="font-semibold truncate whitespace-nowrap min-w-0">
-                                                                {
-                                                                    owner.display_name
-                                                                }
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                return (
+                                    <m.div
+                                        key={card.id}
+                                        data-testid={`credit-card-card-${card.id}`}
+                                        {...listItem}
+                                        className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
+                                    >
+                                        {/* Color Top Stripe */}
+                                        <div
+                                            className="absolute top-0 left-0 right-0 h-1.5"
+                                            style={{
+                                                backgroundColor:
+                                                    card.color || "#dfc2ff",
+                                            }}
+                                        />
 
-                                        <div className="flex items-center gap-1 shrink-0">
-                                            <button
-                                                type="button"
-                                                aria-label={`Edit ${card.name}`}
-                                                onClick={() => {
-                                                    setCardToEdit(card);
-                                                    setIsAddEditCardOpen(true);
-                                                }}
-                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
-                                            >
-                                                <Pencil className="h-3.5 w-3.5" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                aria-label={`Delete ${card.name}`}
-                                                onClick={() =>
-                                                    setCardToDelete(card)
-                                                }
-                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Card Configuration Specs as Icon Rows */}
-                                    <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
-                                        <div className="flex items-center gap-1.5 font-mono-num font-medium">
-                                            <ReceiptText className="h-3.5 w-3.5 text-(--text-muted)" />
-                                            <span>Statement Day</span>
-                                            <span className="font-bold text-(--text-ink)">
-                                                {ordinal(card.billing_day)}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 font-mono-num font-medium">
-                                            <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-                                            <span>Due Day</span>
-                                            <span className="font-bold text-(--text-ink)">
-                                                {ordinal(card.due_day)}
-                                            </span>
-                                        </div>
-                                        <span className="font-mono-num font-medium text-[11px]">
-                                            {card.credit_limit
-                                                ? `Limit ${formatSGD(card.credit_limit, { showCents: false })}`
-                                                : "No limit"}
-                                        </span>
-                                    </div>
-
-                                    {/* Statement Information for Selected Month */}
-                                    <div className="mt-3 border-t border-(--border-subtle) pt-3">
-                                        {stmt ? (
-                                            <div className="space-y-2.5">
-                                                <div className="flex items-baseline justify-between">
-                                                    <span className="text-xs font-bold text-(--text-muted)">
-                                                        Statement
-                                                    </span>
-                                                    <span className="text-(--text-ink) font-display font-black text-lg">
-                                                        <CurrencyText amount={stmt.statement_amount} size="md" />
-                                                    </span>
-                                                </div>
-
-                                                {/* Due Date & Status Badge Countdown */}
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span
-                                                        className="text-[11px] font-mono-num text-(--text-muted)"
-                                                        title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                        <div>
+                                            {/* Card Header */}
+                                            <div className="flex items-start justify-between gap-2 mt-1">
+                                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                    <div
+                                                        className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
+                                                        style={{
+                                                            backgroundColor:
+                                                                card.color ||
+                                                                "#dfc2ff",
+                                                        }}
                                                     >
-                                                        {formatDisplayDate(stmt.due_date)}
-                                                    </span>
-
-                                                    {dueStatus && (
-                                                        <Badge
-                                                            variant={
-                                                                stmt.is_paid
-                                                                    ? "paid"
-                                                                    : dueStatus.isOverdue
-                                                                      ? "over"
-                                                                      : "due"
-                                                            }
-                                                            size="sm"
-                                                            title={`Due ${formatDisplayDate(stmt.due_date)}`}
-                                                        >
-                                                            {dueStatus.label}
-                                                        </Badge>
-                                                    )}
+                                                        {card.bank.slice(0, 4)}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <h4 className="font-display font-black text-sm text-(--text-ink) truncate">
+                                                            <TruncatedText
+                                                                text={card.name}
+                                                            />
+                                                        </h4>
+                                                        <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5 min-w-0">
+                                                            {card.last4 && (
+                                                                <span className="font-mono-num font-bold text-xs bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink) px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap">
+                                                                    ••••{" "}
+                                                                    {card.last4}
+                                                                </span>
+                                                            )}
+                                                            <span className="font-semibold truncate min-w-0">
+                                                                {card.bank}
+                                                            </span>
+                                                            {owner && (
+                                                                <>
+                                                                    <span className="shrink-0">
+                                                                        •
+                                                                    </span>
+                                                                    <span className="font-semibold truncate whitespace-nowrap min-w-0">
+                                                                        {
+                                                                            owner.display_name
+                                                                        }
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                {/* Utilisation meter if limit configured */}
-                                                {card.credit_limit && card.credit_limit > 0 && (
-                                                    <div className="pt-1">
-                                                        <MeterBar
-                                                            value={stmt.statement_amount}
-                                                            max={card.credit_limit}
-                                                            size="sm"
-                                                            aria-label={`${card.name} limit utilisation`}
-                                                        />
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Edit ${card.name}`}
+                                                        onClick={() => {
+                                                            setCardToEdit(card);
+                                                            setIsAddEditCardOpen(
+                                                                true,
+                                                            );
+                                                        }}
+                                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Delete ${card.name}`}
+                                                        onClick={() =>
+                                                            setCardToDelete(
+                                                                card,
+                                                            )
+                                                        }
+                                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Card Configuration Specs as Icon Rows */}
+                                            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
+                                                <div className="flex items-center gap-1.5 font-mono-num font-medium">
+                                                    <ReceiptText className="h-3.5 w-3.5 text-(--text-muted)" />
+                                                    <span>Statement Day</span>
+                                                    <span className="font-bold text-(--text-ink)">
+                                                        {ordinal(
+                                                            card.billing_day,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 font-mono-num font-medium">
+                                                    <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
+                                                    <span>Due Day</span>
+                                                    <span className="font-bold text-(--text-ink)">
+                                                        {ordinal(card.due_day)}
+                                                    </span>
+                                                </div>
+                                                <span className="font-mono-num font-medium text-[11px]">
+                                                    {card.credit_limit
+                                                        ? `Limit ${formatSGD(card.credit_limit, { showCents: false })}`
+                                                        : "No limit"}
+                                                </span>
+                                            </div>
+
+                                            {/* Statement Information for Selected Month */}
+                                            <div className="mt-3 border-t border-(--border-subtle) pt-3">
+                                                {stmt ? (
+                                                    <div className="space-y-2.5">
+                                                        <div className="flex items-baseline justify-between">
+                                                            <span className="text-xs font-bold text-(--text-muted)">
+                                                                Statement
+                                                            </span>
+                                                            <span className="text-(--text-ink) font-display font-black text-lg">
+                                                                <CurrencyText
+                                                                    amount={
+                                                                        stmt.statement_amount
+                                                                    }
+                                                                    size="md"
+                                                                />
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Due Date & Status Badge Countdown */}
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span
+                                                                className="text-[11px] font-mono-num text-(--text-muted)"
+                                                                title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                                            >
+                                                                {formatDisplayDate(
+                                                                    stmt.due_date,
+                                                                )}
+                                                            </span>
+
+                                                            {dueStatus && (
+                                                                <Badge
+                                                                    variant={
+                                                                        stmt.is_paid
+                                                                            ? "paid"
+                                                                            : dueStatus.isOverdue
+                                                                              ? "over"
+                                                                              : "due"
+                                                                    }
+                                                                    size="sm"
+                                                                    title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                                                >
+                                                                    {
+                                                                        dueStatus.label
+                                                                    }
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Utilisation meter if limit configured */}
+                                                        {card.credit_limit &&
+                                                            card.credit_limit >
+                                                                0 && (
+                                                                <div className="pt-1">
+                                                                    <MeterBar
+                                                                        value={
+                                                                            stmt.statement_amount
+                                                                        }
+                                                                        max={
+                                                                            card.credit_limit
+                                                                        }
+                                                                        size="sm"
+                                                                        aria-label={`${card.name} limit utilisation`}
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                        {stmt.notes && (
+                                                            <p className="text-xs text-(--text-muted) italic line-clamp-1">
+                                                                &ldquo;
+                                                                {stmt.notes}
+                                                                &rdquo;
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="py-2 text-center text-xs text-(--text-muted)">
+                                                        No statement
                                                     </div>
                                                 )}
-
-                                                {stmt.notes && (
-                                                    <p className="text-xs text-(--text-muted) italic line-clamp-1">
-                                                        &ldquo;{stmt.notes}&rdquo;
-                                                    </p>
-                                                )}
                                             </div>
-                                        ) : (
-                                            <div className="py-2 text-center text-xs text-(--text-muted)">
-                                                No statement
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                        </div>
 
-                                {/* Footer Actions: 1-Tap Paid / Unpaid Toggle & Log Statement */}
-                                <div className="mt-4 border-t border-(--border-subtle) pt-3 flex items-center justify-between gap-2">
-                                    {stmt ? (
-                                        <>
-                                            <button
-                                                type="button"
-                                                aria-label={
-                                                    stmt.is_paid
-                                                        ? `Mark ${card.name} statement as Unpaid`
-                                                        : `Mark ${card.name} statement as Paid`
-                                                }
-                                                onClick={() =>
-                                                    handleTogglePaid(stmt)
-                                                }
-                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer ${
-                                                    stmt.is_paid
-                                                        ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
-                                                        : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
-                                                }`}
-                                            >
-                                                <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
-                                                <span>
-                                                    {stmt.is_paid
-                                                        ? "Paid"
-                                                        : "Mark as Paid"}
-                                                </span>
-                                            </button>
+                                        {/* Footer Actions: 1-Tap Paid / Unpaid Toggle & Log Statement */}
+                                        <div className="mt-4 border-t border-(--border-subtle) pt-3 flex items-center justify-between gap-2">
+                                            {stmt ? (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={
+                                                            stmt.is_paid
+                                                                ? `Mark ${card.name} statement as Unpaid`
+                                                                : `Mark ${card.name} statement as Paid`
+                                                        }
+                                                        onClick={() =>
+                                                            handleTogglePaid(
+                                                                stmt,
+                                                            )
+                                                        }
+                                                        className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer ${
+                                                            stmt.is_paid
+                                                                ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
+                                                                : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
+                                                        }`}
+                                                    >
+                                                        <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
+                                                        <span>
+                                                            {stmt.is_paid
+                                                                ? "Paid"
+                                                                : "Mark as Paid"}
+                                                        </span>
+                                                    </button>
 
-                                            <button
-                                                type="button"
-                                                aria-label={`Edit ${card.name} statement`}
-                                                onClick={() =>
-                                                    handleOpenLogStatement(card)
-                                                }
-                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
-                                            >
-                                                Edit
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            aria-label={`Log statement for ${card.name}`}
-                                            onClick={() =>
-                                                handleOpenLogStatement(card)
-                                            }
-                                            className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer"
-                                        >
-                                            <Plus className="h-3.5 w-3.5 stroke-3" />
-                                            <span>Log</span>
-                                        </button>
-                                    )}
-                                </div>
-                            </m.div>
-                        );
-                    })}
-                </AnimatePresence>
-            </div>
-            )}
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Edit ${card.name} statement`}
+                                                        onClick={() =>
+                                                            handleOpenLogStatement(
+                                                                card,
+                                                            )
+                                                        }
+                                                        className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Log statement for ${card.name}`}
+                                                    onClick={() =>
+                                                        handleOpenLogStatement(
+                                                            card,
+                                                        )
+                                                    }
+                                                    className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer"
+                                                >
+                                                    <Plus className="h-3.5 w-3.5 stroke-3" />
+                                                    <span>Log</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </m.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </div>
+                )}
             </div>
 
             {/* Add / Edit Card Modal */}
@@ -705,9 +742,18 @@ export function CreditCardTrackerSection({
                     className="flex flex-col min-h-0 flex-1 overflow-hidden"
                 >
                     <ModalHeader
-                        title={existingStatement ? "Edit Statement" : "Log Monthly Statement"}
+                        title={
+                            existingStatement
+                                ? "Edit Statement"
+                                : "Log Monthly Statement"
+                        }
                         subtitle={`${statementCard?.name || ""} • ${formatDisplayMonth(selectedMonth)}`}
-                        icon={<ReceiptText className="h-5 w-5" strokeWidth={2.5} />}
+                        icon={
+                            <ReceiptText
+                                className="h-5 w-5"
+                                strokeWidth={2.5}
+                            />
+                        }
                         iconBgColor="bg-(--pastel-lilac)"
                         onClose={() => setIsLogStatementOpen(false)}
                     />

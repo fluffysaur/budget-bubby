@@ -33,7 +33,10 @@ const CONFETTI = [
     "absolute -top-4 right-18 h-3 w-1.5 rotate-12 rounded-xs bg-(--pastel-mint) animate-confetti-right [animation-delay:0.1s]",
 ];
 
-export function BonusCelebration({ celebration, onDone }: BonusCelebrationProps) {
+export function BonusCelebration({
+    celebration,
+    onDone,
+}: BonusCelebrationProps) {
     const celebrationId = celebration?.id;
 
     useEffect(() => {
@@ -65,9 +68,15 @@ export function BonusCelebration({ celebration, onDone }: BonusCelebrationProps)
             className="fixed top-16 sm:top-20 left-1/2 z-9999 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] px-2 animate-cha-ching select-none cursor-pointer"
         >
             <div className="relative flex items-center gap-2 sm:gap-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) px-3.5 py-2.5 sm:px-4.5 sm:py-3 text-(--text-ink) shadow-cute">
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-visible">
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 overflow-visible"
+                >
                     {CONFETTI.map((cls) => (
-                        <span key={cls} className={`${cls} border border-(--border-ink)`} />
+                        <span
+                            key={cls}
+                            className={`${cls} border border-(--border-ink)`}
+                        />
                     ))}
                 </div>
 
@@ -80,7 +89,9 @@ export function BonusCelebration({ celebration, onDone }: BonusCelebrationProps)
                         <CurrencyText amount={celebration.net} /> bonus logged
                     </p>
                     {subtitle && (
-                        <p className="truncate text-xs font-bold text-(--text-muted)">{subtitle}</p>
+                        <p className="truncate text-xs font-bold text-(--text-muted)">
+                            {subtitle}
+                        </p>
                     )}
                 </div>
 

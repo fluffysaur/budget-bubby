@@ -45,7 +45,7 @@ export function SurplusSweepModal({
 
     const [mode, setMode] = useState<AllocationMode>("fixed");
     const [selectedGoalIds, setSelectedGoalIds] = useState<Set<string>>(
-        new Set()
+        new Set(),
     );
     // Stores allocated value per goal (dollar or percent based on mode)
     const [allocations, setAllocations] = useState<Record<string, number>>({});
@@ -92,7 +92,7 @@ export function SurplusSweepModal({
     const totalAllocatedDollars = useMemo(() => {
         return (
             Math.round(
-                Object.values(computedDollars).reduce((s, v) => s + v, 0) * 100
+                Object.values(computedDollars).reduce((s, v) => s + v, 0) * 100,
             ) / 100
         );
     }, [computedDollars]);
@@ -100,7 +100,8 @@ export function SurplusSweepModal({
     const remainingDollars =
         Math.round((surplusAmount - totalAllocatedDollars) * 100) / 100;
     const isExceeded = remainingDollars < -0.01;
-    const isFullyAllocated = Math.abs(remainingDollars) <= 0.01 && totalAllocatedDollars > 0;
+    const isFullyAllocated =
+        Math.abs(remainingDollars) <= 0.01 && totalAllocatedDollars > 0;
 
     // Toggle goal inclusion
     const handleToggleGoal = (goalId: string) => {
@@ -160,7 +161,8 @@ export function SurplusSweepModal({
         const topId = ids[0];
         const newMap: Record<string, number> = {};
         ids.forEach((id) => {
-            newMap[id] = id === topId ? (mode === "percent" ? 100 : surplusAmount) : 0;
+            newMap[id] =
+                id === topId ? (mode === "percent" ? 100 : surplusAmount) : 0;
         });
         setAllocations(newMap);
     };
@@ -176,7 +178,7 @@ export function SurplusSweepModal({
                 const dollars = computedDollars[goal.id] || 0;
                 newMap[goal.id] =
                     surplusAmount > 0
-                        ? Math.round(((dollars / surplusAmount) * 100) * 10) / 10
+                        ? Math.round((dollars / surplusAmount) * 100 * 10) / 10
                         : 0;
             } else {
                 newMap[goal.id] = computedDollars[goal.id] || 0;
@@ -211,7 +213,7 @@ export function SurplusSweepModal({
             setErrorMessage(
                 err instanceof Error
                     ? err.message
-                    : "Failed to allocate surplus. Please try again."
+                    : "Failed to allocate surplus. Please try again.",
             );
         } finally {
             setIsSubmitting(false);
@@ -292,8 +294,12 @@ export function SurplusSweepModal({
                 <div className="space-y-2.5 max-h-75 overflow-y-auto pr-1">
                     {activeGoals.length === 0 ? (
                         <div className="text-center py-6 text-xs text-(--text-muted) space-y-2">
-                            <h4 className="font-bold text-sm text-(--text-ink)">No Goals</h4>
-                            <p className="text-xs text-(--text-muted)">Add a goal to sweep surplus.</p>
+                            <h4 className="font-bold text-sm text-(--text-ink)">
+                                No Goals
+                            </h4>
+                            <p className="text-xs text-(--text-muted)">
+                                Add a goal to sweep surplus.
+                            </p>
                             <Button
                                 variant="primary"
                                 size="sm"
@@ -315,7 +321,9 @@ export function SurplusSweepModal({
                             const currentPct =
                                 goal.target_amount > 0
                                     ? Math.round(
-                                          (goal.saved_so_far / goal.target_amount) * 100
+                                          (goal.saved_so_far /
+                                              goal.target_amount) *
+                                              100,
                                       )
                                     : 0;
                             const newPct =
@@ -323,8 +331,9 @@ export function SurplusSweepModal({
                                     ? Math.min(
                                           100,
                                           Math.round(
-                                              (newTotal / goal.target_amount) * 100
-                                          )
+                                              (newTotal / goal.target_amount) *
+                                                  100,
+                                          ),
                                       )
                                     : 0;
 
@@ -341,7 +350,9 @@ export function SurplusSweepModal({
                                         {/* Toggle Checkbox */}
                                         <button
                                             type="button"
-                                            onClick={() => handleToggleGoal(goal.id)}
+                                            onClick={() =>
+                                                handleToggleGoal(goal.id)
+                                            }
                                             className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
                                                 isSelected
                                                     ? "border-(--border-ink) bg-(--accent-lilac) text-(--text-ink)"
@@ -349,13 +360,17 @@ export function SurplusSweepModal({
                                             }`}
                                             aria-label={`Toggle ${goal.title}`}
                                         >
-                                            {isSelected && <Check className="h-3.5 w-3.5 stroke-3" />}
+                                            {isSelected && (
+                                                <Check className="h-3.5 w-3.5 stroke-3" />
+                                            )}
                                         </button>
 
                                         {/* Emoji & Goal Info */}
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
-                                                <span className="text-base">{goal.emoji || "🎯"}</span>
+                                                <span className="text-base">
+                                                    {goal.emoji || "🎯"}
+                                                </span>
                                                 <span className="text-xs sm:text-sm font-bold text-(--text-ink) truncate">
                                                     {goal.title}
                                                 </span>
@@ -369,7 +384,12 @@ export function SurplusSweepModal({
                                                 </span>
                                                 <span>•</span>
                                                 <span>
-                                                    Target: <CurrencyText amount={goal.target_amount} />
+                                                    Target:{" "}
+                                                    <CurrencyText
+                                                        amount={
+                                                            goal.target_amount
+                                                        }
+                                                    />
                                                 </span>
                                             </div>
                                         </div>
@@ -379,18 +399,32 @@ export function SurplusSweepModal({
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 <div className="relative">
                                                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-(--text-muted)">
-                                                        {mode === "fixed" ? "S$" : "%"}
+                                                        {mode === "fixed"
+                                                            ? "S$"
+                                                            : "%"}
                                                     </span>
                                                     <input
                                                         type="number"
-                                                        step={mode === "fixed" ? "5" : "1"}
+                                                        step={
+                                                            mode === "fixed"
+                                                                ? "5"
+                                                                : "1"
+                                                        }
                                                         min="0"
-                                                        max={mode === "fixed" ? surplusAmount : 100}
-                                                        value={allocations[goal.id] ?? 0}
+                                                        max={
+                                                            mode === "fixed"
+                                                                ? surplusAmount
+                                                                : 100
+                                                        }
+                                                        value={
+                                                            allocations[
+                                                                goal.id
+                                                            ] ?? 0
+                                                        }
                                                         onChange={(e) =>
                                                             handleValueChange(
                                                                 goal.id,
-                                                                e.target.value
+                                                                e.target.value,
                                                             )
                                                         }
                                                         className="w-24 sm:w-28 rounded-lg border-2 border-(--border-ink) py-1 pl-7 pr-2 text-right text-base sm:text-xs sm:text-sm font-bold text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--accent-lilac)"
@@ -421,13 +455,17 @@ export function SurplusSweepModal({
                     <div>
                         {isExceeded ? (
                             <Badge variant="rose">
-                                Exceeded by <CurrencyText amount={Math.abs(remainingDollars)} />
+                                Exceeded by{" "}
+                                <CurrencyText
+                                    amount={Math.abs(remainingDollars)}
+                                />
                             </Badge>
                         ) : isFullyAllocated ? (
                             <Badge variant="emerald">100% Allocated</Badge>
                         ) : (
                             <Badge variant="slate">
-                                <CurrencyText amount={remainingDollars} /> unallocated
+                                <CurrencyText amount={remainingDollars} />{" "}
+                                unallocated
                             </Badge>
                         )}
                     </div>
@@ -460,7 +498,9 @@ export function SurplusSweepModal({
                             activeGoals.length === 0
                         }
                         isLoading={isSubmitting}
-                        leftIcon={<PiggyBank className="h-4 w-4" strokeWidth={2.5} />}
+                        leftIcon={
+                            <PiggyBank className="h-4 w-4" strokeWidth={2.5} />
+                        }
                     >
                         Sweep <CurrencyText amount={totalAllocatedDollars} />
                     </Button>

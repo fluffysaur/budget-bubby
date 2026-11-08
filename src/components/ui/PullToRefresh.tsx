@@ -78,7 +78,11 @@ export function PullToRefresh({
             }
         };
 
-        const handleMove = (clientX: number | undefined, clientY: number | undefined, e: TouchEvent) => {
+        const handleMove = (
+            clientX: number | undefined,
+            clientY: number | undefined,
+            e: TouchEvent,
+        ) => {
             if (
                 disabledRef.current ||
                 isRefreshingRef.current ||
@@ -94,7 +98,10 @@ export function PullToRefresh({
             const diffX = currentX - (touchStartX.current ?? 0);
 
             // Disambiguate horizontal swipes (carousels, tabs) from vertical pull
-            if (!isPullingRef.current && Math.abs(diffX) > Math.abs(diffY) * 0.8) {
+            if (
+                !isPullingRef.current &&
+                Math.abs(diffX) > Math.abs(diffY) * 0.8
+            ) {
                 isReadyRef.current = false;
                 return;
             }
@@ -185,10 +192,16 @@ export function PullToRefresh({
             handleEnd();
         };
 
-        container.addEventListener("touchstart", onTouchStart, { passive: true });
-        container.addEventListener("touchmove", onTouchMove, { passive: false });
+        container.addEventListener("touchstart", onTouchStart, {
+            passive: true,
+        });
+        container.addEventListener("touchmove", onTouchMove, {
+            passive: false,
+        });
         container.addEventListener("touchend", onTouchEnd, { passive: true });
-        container.addEventListener("touchcancel", onTouchEnd, { passive: true });
+        container.addEventListener("touchcancel", onTouchEnd, {
+            passive: true,
+        });
 
         return () => {
             container.removeEventListener("touchstart", onTouchStart);
@@ -219,7 +232,9 @@ export function PullToRefresh({
                         initial={{ opacity: 0 }}
                         animate={{
                             opacity: isRefreshing ? 1 : Math.max(0.2, progress),
-                            y: reducedMotion ? 0 : Math.max(0, pullDistance - 28),
+                            y: reducedMotion
+                                ? 0
+                                : Math.max(0, pullDistance - 28),
                         }}
                         exit={{ opacity: 0, transition: { duration: 0.15 } }}
                         transition={
@@ -257,8 +272,8 @@ export function PullToRefresh({
                                 {isRefreshing
                                     ? "Refreshing..."
                                     : isPastThreshold
-                                    ? "Release to refresh"
-                                    : "Pull down to refresh"}
+                                      ? "Release to refresh"
+                                      : "Pull down to refresh"}
                             </span>
                         </div>
                     </m.div>

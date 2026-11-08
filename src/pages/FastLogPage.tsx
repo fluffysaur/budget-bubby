@@ -7,15 +7,15 @@ import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 
 export interface FastLogPageProps {
-  onOpenQuickAdd?: () => void;
+    onOpenQuickAdd?: () => void;
 }
 
 export function FastLogPage({ onOpenQuickAdd }: FastLogPageProps) {
-  useEffect(() => {
-    onOpenQuickAdd?.();
-  }, [onOpenQuickAdd]);
+    useEffect(() => {
+        onOpenQuickAdd?.();
+    }, [onOpenQuickAdd]);
 
-  return <Navigate to="/" replace />;
+    return <Navigate to="/" replace />;
 }
 
 export default FastLogPage;

@@ -8,10 +8,7 @@ import { mockFinanceService } from "../src/services/mockFinanceService";
 import { supabaseFinanceService } from "../src/services/supabaseFinanceService";
 import * as supabaseClientModule from "../src/services/supabaseClient";
 import { mockMembers } from "../src/data/mockSeedData";
-import type {
-    MonthlyBudgetDetail,
-    RecurringItem,
-} from "../src/types/finance";
+import type { MonthlyBudgetDetail, RecurringItem } from "../src/types/finance";
 
 const FOOD = "cat-00000000-0101";
 const LIFESTYLE = "cat-00000000-0102";
@@ -108,7 +105,8 @@ describe("mockFinanceService recurring spend by category", () => {
                 100,
         ).toBe(130);
         expect(
-            after.categories.find((c) => c.category_id === FOOD)!.recurringSpent,
+            after.categories.find((c) => c.category_id === FOOD)!
+                .recurringSpent,
         ).toBe(130);
         expect(spentFor(after, LIFESTYLE)).toBe(spentFor(before, LIFESTYLE));
 
@@ -118,12 +116,15 @@ describe("mockFinanceService recurring spend by category", () => {
         ]);
 
         // Total spend includes category spend + uncategorized line
-        expect(Math.round((after.totalSpent - before.totalSpent) * 100) / 100).toBe(
-            155,
-        );
+        expect(
+            Math.round((after.totalSpent - before.totalSpent) * 100) / 100,
+        ).toBe(155);
 
         // Starting January, the gym bill counts too
-        const jan = await mockFinanceService.getMonthlyBudget("2027-01", yiJia.id);
+        const jan = await mockFinanceService.getMonthlyBudget(
+            "2027-01",
+            yiJia.id,
+        );
         expect(
             jan.categories.find((c) => c.category_id === FOOD)!.recurringSpent,
         ).toBe(210);
@@ -140,9 +141,12 @@ describe("mockFinanceService recurring spend by category", () => {
             category_id: FOOD,
         });
         expect(created.category_id).toBe(FOOD);
-        const updated = await mockFinanceService.updateRecurringItem(created.id, {
-            type: "insurance",
-        });
+        const updated = await mockFinanceService.updateRecurringItem(
+            created.id,
+            {
+                type: "insurance",
+            },
+        );
         expect(updated.category_id).toBeNull();
     });
 });
@@ -186,12 +190,49 @@ describe("supabaseFinanceService recurring spend by category", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
         const recurringItems = [
-            item({ id: "netflix", type: "subscription", amount: 20, monthly_amortized_amount: 20, category_id: LIFESTYLE }),
-            item({ id: "power", amount: 90, monthly_amortized_amount: 90, category_id: FOOD }),
-            item({ id: "annual", type: "other", frequency: "annually", payment_month: 2, amount: 120, monthly_amortized_amount: 10, category_id: FOOD }),
-            item({ id: "loose", type: "other", amount: 7, monthly_amortized_amount: 7, category_id: null }),
-            item({ id: "ended", amount: 50, monthly_amortized_amount: 50, end_date: "2026-10-31", category_id: FOOD }),
-            item({ id: "other-owner", owner_id: "someone-else", amount: 99, monthly_amortized_amount: 99, category_id: FOOD }),
+            item({
+                id: "netflix",
+                type: "subscription",
+                amount: 20,
+                monthly_amortized_amount: 20,
+                category_id: LIFESTYLE,
+            }),
+            item({
+                id: "power",
+                amount: 90,
+                monthly_amortized_amount: 90,
+                category_id: FOOD,
+            }),
+            item({
+                id: "annual",
+                type: "other",
+                frequency: "annually",
+                payment_month: 2,
+                amount: 120,
+                monthly_amortized_amount: 10,
+                category_id: FOOD,
+            }),
+            item({
+                id: "loose",
+                type: "other",
+                amount: 7,
+                monthly_amortized_amount: 7,
+                category_id: null,
+            }),
+            item({
+                id: "ended",
+                amount: 50,
+                monthly_amortized_amount: 50,
+                end_date: "2026-10-31",
+                category_id: FOOD,
+            }),
+            item({
+                id: "other-owner",
+                owner_id: "someone-else",
+                amount: 99,
+                monthly_amortized_amount: 99,
+                category_id: FOOD,
+            }),
         ];
         const tables: Record<string, unknown> = {
             monthly_budgets: {
@@ -212,8 +253,36 @@ describe("supabaseFinanceService recurring spend by category", () => {
             },
             monthly_budget_categories: {
                 data: [
-                    { id: "mbc-food", monthly_budget_id: budgetId, category_id: FOOD, percentage: 0.2, allocated_amount: 960, categories: { id: FOOD, household_id: "hh", name: "Food", color: "#000", icon: "utensils", is_system: false } },
-                    { id: "mbc-life", monthly_budget_id: budgetId, category_id: LIFESTYLE, percentage: 0.2, allocated_amount: 960, categories: { id: LIFESTYLE, household_id: "hh", name: "Lifestyle", color: "#000", icon: "sparkles", is_system: false } },
+                    {
+                        id: "mbc-food",
+                        monthly_budget_id: budgetId,
+                        category_id: FOOD,
+                        percentage: 0.2,
+                        allocated_amount: 960,
+                        categories: {
+                            id: FOOD,
+                            household_id: "hh",
+                            name: "Food",
+                            color: "#000",
+                            icon: "utensils",
+                            is_system: false,
+                        },
+                    },
+                    {
+                        id: "mbc-life",
+                        monthly_budget_id: budgetId,
+                        category_id: LIFESTYLE,
+                        percentage: 0.2,
+                        allocated_amount: 960,
+                        categories: {
+                            id: LIFESTYLE,
+                            household_id: "hh",
+                            name: "Lifestyle",
+                            color: "#000",
+                            icon: "sparkles",
+                            is_system: false,
+                        },
+                    },
                 ],
                 error: null,
             },
@@ -221,7 +290,9 @@ describe("supabaseFinanceService recurring spend by category", () => {
             recurring_items: { data: recurringItems, error: null },
         };
         const mockClient = {
-            from: vi.fn((table: string) => chain(tables[table] ?? { data: [], error: null })),
+            from: vi.fn((table: string) =>
+                chain(tables[table] ?? { data: [], error: null }),
+            ),
         };
         vi.spyOn(supabaseClientModule, "supabase", "get").mockReturnValue(
             mockClient as never,
@@ -229,15 +300,23 @@ describe("supabaseFinanceService recurring spend by category", () => {
     });
 
     it("reads from recurring_items and assigns spend per category", async () => {
-        const detail = await supabaseFinanceService.getMonthlyBudget("2026-11", ownerId);
+        const detail = await supabaseFinanceService.getMonthlyBudget(
+            "2026-11",
+            ownerId,
+        );
 
         const food = detail.categories.find((c) => c.category_id === FOOD)!;
-        const lifestyle = detail.categories.find((c) => c.category_id === LIFESTYLE)!;
+        const lifestyle = detail.categories.find(
+            (c) => c.category_id === LIFESTYLE,
+        )!;
         expect(food.recurringSpent).toBe(100); // 90 monthly + 10 amortized
         expect(food.actualSpent).toBe(100);
         expect(lifestyle.recurringSpent).toBe(20);
         expect(detail.uncategorizedRecurringSpent).toBe(7);
         expect(detail.totalSpent).toBe(127);
-        expect(food.recurringItems?.map((i) => i.id)).toEqual(["power", "annual"]);
+        expect(food.recurringItems?.map((i) => i.id)).toEqual([
+            "power",
+            "annual",
+        ]);
     });
 });

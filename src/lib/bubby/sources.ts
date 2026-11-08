@@ -16,7 +16,11 @@
  * To add a source, append to FEED_SOURCES.
  */
 
-import type { AccountSnapshot, DailyCheckin, Expense } from "../../types/finance";
+import type {
+    AccountSnapshot,
+    DailyCheckin,
+    Expense,
+} from "../../types/finance";
 import type { BubbyStore, LocalExerciseKind } from "./storage";
 import { mondayOf, toSgtDateString } from "./dates";
 
@@ -65,11 +69,16 @@ function localDays(store: BubbyStore, kind: LocalExerciseKind): string[] {
     return store.exercise?.[kind] ?? [];
 }
 
-const exercise = (id: string, period: FeedPeriod, dates: (ctx: FeedContext) => string[]): FeedSource => ({
+const exercise = (
+    id: string,
+    period: FeedPeriod,
+    dates: (ctx: FeedContext) => string[],
+): FeedSource => ({
     id,
     kind: "exercise",
     period,
-    collect: (ctx) => dates(ctx).map((date) => ({ sourceId: id, kind: "exercise", date })),
+    collect: (ctx) =>
+        dates(ctx).map((date) => ({ sourceId: id, kind: "exercise", date })),
 });
 
 export const FEED_SOURCES: readonly FeedSource[] = [
@@ -90,17 +99,33 @@ export const FEED_SOURCES: readonly FeedSource[] = [
         collect: ({ checkins }) =>
             checkins
                 .filter((c) => c.type === "no_spend")
-                .map((c) => ({ sourceId: "no-spend", kind: "food", date: c.checkin_date, memberId: c.member_id })),
+                .map((c) => ({
+                    sourceId: "no-spend",
+                    kind: "food",
+                    date: c.checkin_date,
+                    memberId: c.member_id,
+                })),
     },
     {
         // The logger's check-in (e.g. logging a dinner the partner paid for)
         id: "logged",
         kind: "food",
         collect: ({ checkins, expenses }) => {
-            const paid = new Set(expenses.map((e) => `${e.payer_id}|${loggedDateOf(e)}`));
+            const paid = new Set(
+                expenses.map((e) => `${e.payer_id}|${loggedDateOf(e)}`),
+            );
             return checkins
-                .filter((c) => c.type === "expense" && !paid.has(`${c.member_id}|${c.checkin_date}`))
-                .map((c) => ({ sourceId: "logged", kind: "food", date: c.checkin_date, memberId: c.member_id }));
+                .filter(
+                    (c) =>
+                        c.type === "expense" &&
+                        !paid.has(`${c.member_id}|${c.checkin_date}`),
+                )
+                .map((c) => ({
+                    sourceId: "logged",
+                    kind: "food",
+                    date: c.checkin_date,
+                    memberId: c.member_id,
+                }));
         },
     },
     {
@@ -108,21 +133,37 @@ export const FEED_SOURCES: readonly FeedSource[] = [
         kind: "food",
         collect: ({ store }) =>
             Object.entries(store.petDays ?? {}).flatMap(([memberId, days]) =>
-                days.map((date) => ({ sourceId: "pet", kind: "food" as const, date, memberId })),
+                days.map((date) => ({
+                    sourceId: "pet",
+                    kind: "food" as const,
+                    date,
+                    memberId,
+                })),
             ),
     },
-    exercise("inbox-clear", "day", ({ store }) => localDays(store, "inbox-clear")),
+    exercise("inbox-clear", "day", ({ store }) =>
+        localDays(store, "inbox-clear"),
+    ),
     exercise("balances", "day", ({ store, snapshots }) => [
         ...localDays(store, "balances"),
         ...snapshots.map((s) => s.snapshot_date),
     ]),
     exercise("goal-add", "day", ({ store }) => localDays(store, "goal-add")),
-    exercise("bonus", "day", ({ bonusEvents }) => bonusEvents.map((b) => b.event_date)),
-    exercise("month-end", "month", ({ store }) => localDays(store, "month-end")),
-    exercise("recap-read", "week", ({ store }) => localDays(store, "recap-read")),
+    exercise("bonus", "day", ({ bonusEvents }) =>
+        bonusEvents.map((b) => b.event_date),
+    ),
+    exercise("month-end", "month", ({ store }) =>
+        localDays(store, "month-end"),
+    ),
+    exercise("recap-read", "week", ({ store }) =>
+        localDays(store, "recap-read"),
+    ),
 ];
 
-export function periodKey(period: FeedPeriod | undefined, date: string): string {
+export function periodKey(
+    period: FeedPeriod | undefined,
+    date: string,
+): string {
     if (period === "month") return date.slice(0, 7);
     if (period === "week") return mondayOf(date);
     return date;

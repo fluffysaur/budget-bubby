@@ -58,11 +58,7 @@ export function AccountsPage({
     className = "",
     defaultTab = "accounts",
 }: AccountsPageProps) {
-    const {
-        perspective,
-        activeMember,
-        members,
-    } = useHousehold();
+    const { perspective, activeMember, members } = useHousehold();
     const { invalidateAccounts } = useInvalidateFinance();
 
     const [activeTab, setActiveTab] = useState<"accounts" | "credit_cards">(
@@ -187,7 +183,10 @@ export function AccountsPage({
                                 aria-label="Add Account"
                                 className="flex-1 sm:flex-initial"
                                 leftIcon={
-                                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                                    <Plus
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 }
                                 onClick={() => setIsAddModalOpen(true)}
                             >
@@ -198,7 +197,10 @@ export function AccountsPage({
                                 aria-label="Update Balances"
                                 className="flex-1 sm:flex-initial"
                                 leftIcon={
-                                    <CalendarCheck className="h-4 w-4" strokeWidth={2.5} />
+                                    <CalendarCheck
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 }
                                 onClick={() => {
                                     setSelectedAccount(null);
@@ -243,7 +245,9 @@ export function AccountsPage({
                                 <AccountGroupList
                                     accounts={accounts}
                                     onUpdateBalance={handleOpenUpdateModal}
-                                    onQuickSaveBalance={handleInlineUpdateBalance}
+                                    onQuickSaveBalance={
+                                        handleInlineUpdateBalance
+                                    }
                                     onEditAccount={(acc) => {
                                         setAccountToEdit(acc);
                                         setIsEditModalOpen(true);

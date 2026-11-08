@@ -8,12 +8,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  Target,
-  CreditCard,
-  CalendarClock,
-  Sparkles,
-} from "lucide-react";
+import { Target, CreditCard, CalendarClock, Sparkles } from "lucide-react";
 import { m } from "motion/react";
 import { fadeRise } from "../lib/motion";
 import { PageHeader, SegmentedTabs } from "../components/ui";
@@ -25,66 +20,70 @@ import { LoansPlaceholder } from "../components/loans/LoansPlaceholder";
 export type PlanSubTab = "goals" | "loans" | "recurring" | "bonus";
 
 export interface PlanPageProps {
-  initialTab?: PlanSubTab;
-  onNavigateTab?: (tab: string) => void;
-  className?: string;
+    initialTab?: PlanSubTab;
+    onNavigateTab?: (tab: string) => void;
+    className?: string;
 }
 
 const SUB_TABS: { id: PlanSubTab; label: string; icon: typeof Target }[] = [
-  { id: "goals", label: "Goals", icon: Target },
-  { id: "recurring", label: "Recurring", icon: CalendarClock },
-  { id: "bonus", label: "Bonus", icon: Sparkles },
-  { id: "loans", label: "Loans", icon: CreditCard },
+    { id: "goals", label: "Goals", icon: Target },
+    { id: "recurring", label: "Recurring", icon: CalendarClock },
+    { id: "bonus", label: "Bonus", icon: Sparkles },
+    { id: "loans", label: "Loans", icon: CreditCard },
 ];
 
-export function PlanPage({ initialTab = "goals", className = "" }: PlanPageProps) {
-  const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab") as PlanSubTab | null;
-  const goalIdParam = searchParams.get("goalId");
-  const validTab = tabParam && SUB_TABS.some((t) => t.id === tabParam) ? tabParam : null;
+export function PlanPage({
+    initialTab = "goals",
+    className = "",
+}: PlanPageProps) {
+    const [searchParams] = useSearchParams();
+    const tabParam = searchParams.get("tab") as PlanSubTab | null;
+    const goalIdParam = searchParams.get("goalId");
+    const validTab =
+        tabParam && SUB_TABS.some((t) => t.id === tabParam) ? tabParam : null;
 
-  const [activeTab, setActiveTab] = useState<PlanSubTab>(
-    goalIdParam ? "goals" : validTab || initialTab
-  );
+    const [activeTab, setActiveTab] = useState<PlanSubTab>(
+        goalIdParam ? "goals" : validTab || initialTab,
+    );
 
-  useEffect(() => {
-    if (goalIdParam) {
-      setActiveTab("goals");
-    } else if (validTab) {
-      setActiveTab(validTab);
-    } else if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [goalIdParam, validTab, initialTab]);
+    useEffect(() => {
+        if (goalIdParam) {
+            setActiveTab("goals");
+        } else if (validTab) {
+            setActiveTab(validTab);
+        } else if (initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [goalIdParam, validTab, initialTab]);
 
-  return (
-    <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
-      {/* Page Header */}
-      <PageHeader title="Plan" />
+    return (
+        <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
+            {/* Page Header */}
+            <PageHeader title="Plan" />
 
-      {/* Segmented Sub-Tab Bar */}
-      <SegmentedTabs
-        tabs={SUB_TABS.map((tab) => {
-          const Icon = tab.icon;
-          return {
-            id: tab.id,
-            label: tab.label,
-            icon: <Icon className="h-4 w-4" />,
-          };
-        })}
-        activeTab={activeTab}
-        onChange={(id) => setActiveTab(id as PlanSubTab)}
-      />
+            {/* Segmented Sub-Tab Bar */}
+            <SegmentedTabs
+                tabs={SUB_TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    return {
+                        id: tab.id,
+                        label: tab.label,
+                        icon: <Icon className="h-4 w-4" />,
+                    };
+                })}
+                activeTab={activeTab}
+                onChange={(id) => setActiveTab(id as PlanSubTab)}
+            />
 
-      {/* Embedded Sub-Tab Content with fadeRise animation */}
-      <m.div key={activeTab} {...fadeRise} className="pt-1">
-        {activeTab === 'goals' && <GoalsPage embedded={true} />}
-        {activeTab === 'recurring' && <RecurringPage embedded={true} />}
-        {activeTab === 'bonus' && <BonusLogPanel />}
-        {activeTab === 'loans' && <LoansPlaceholder />}
-      </m.div>
-    </div>
-  );
+            {/* Embedded Sub-Tab Content with fadeRise animation */}
+            <m.div key={activeTab} {...fadeRise} className="pt-1">
+                {activeTab === "goals" && <GoalsPage embedded={true} />}
+                {activeTab === "recurring" && <RecurringPage embedded={true} />}
+                {activeTab === "bonus" && <BonusLogPanel />}
+                {activeTab === "loans" && <LoansPlaceholder />}
+            </m.div>
+        </div>
+    );
 }
 
 export default PlanPage;

@@ -15,262 +15,263 @@ let sharedAudioCtx: AudioContext | null = null;
 let isAudioUnlocked = false;
 
 function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  const AudioContextClass =
-    window.AudioContext ||
-    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  if (!AudioContextClass) return null;
+    if (typeof window === "undefined") return null;
+    const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext;
+    if (!AudioContextClass) return null;
 
-  if (!sharedAudioCtx) {
-    try {
-      sharedAudioCtx = new AudioContextClass();
-    } catch (err) {
-      console.debug('Failed to initialize AudioContext:', err);
-      return null;
+    if (!sharedAudioCtx) {
+        try {
+            sharedAudioCtx = new AudioContextClass();
+        } catch (err) {
+            console.debug("Failed to initialize AudioContext:", err);
+            return null;
+        }
     }
-  }
 
-  if (sharedAudioCtx.state === 'suspended') {
-    sharedAudioCtx.resume().catch(() => {});
-  }
+    if (sharedAudioCtx.state === "suspended") {
+        sharedAudioCtx.resume().catch(() => {});
+    }
 
-  return sharedAudioCtx;
+    return sharedAudioCtx;
 }
 
 // Global user gesture listener to unlock audio on first interaction
 export function initAudioUnlock(): void {
-  if (typeof window === 'undefined' || isAudioUnlocked) return;
+    if (typeof window === "undefined" || isAudioUnlocked) return;
 
-  const unlock = () => {
-    const ctx = getAudioContext();
-    if (ctx) {
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-      }
-      isAudioUnlocked = true;
-    }
-    window.removeEventListener('pointerdown', unlock);
-    window.removeEventListener('keydown', unlock);
-    window.removeEventListener('touchstart', unlock);
-  };
+    const unlock = () => {
+        const ctx = getAudioContext();
+        if (ctx) {
+            if (ctx.state === "suspended") {
+                ctx.resume().catch(() => {});
+            }
+            isAudioUnlocked = true;
+        }
+        window.removeEventListener("pointerdown", unlock);
+        window.removeEventListener("keydown", unlock);
+        window.removeEventListener("touchstart", unlock);
+    };
 
-  window.addEventListener('pointerdown', unlock, { passive: true });
-  window.addEventListener('keydown', unlock, { passive: true });
-  window.addEventListener('touchstart', unlock, { passive: true });
+    window.addEventListener("pointerdown", unlock, { passive: true });
+    window.addEventListener("keydown", unlock, { passive: true });
+    window.addEventListener("touchstart", unlock, { passive: true });
 }
 
 // Auto-run unlock listener on module evaluation
-if (typeof window !== 'undefined') {
-  initAudioUnlock();
+if (typeof window !== "undefined") {
+    initAudioUnlock();
 }
 
 /**
  * Check if sound effects are enabled in user notification preferences.
  */
 export function isSoundEffectsEnabled(): boolean {
-  if (typeof window === 'undefined' || !window.localStorage) return true;
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('bb_notif_prefs_')) {
-        const item = localStorage.getItem(key);
-        if (item) {
-          const parsed = JSON.parse(item);
-          if (parsed && typeof parsed.sound_enabled === 'boolean') {
-            return parsed.sound_enabled;
-          }
+    if (typeof window === "undefined" || !window.localStorage) return true;
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("bb_notif_prefs_")) {
+                const item = localStorage.getItem(key);
+                if (item) {
+                    const parsed = JSON.parse(item);
+                    if (parsed && typeof parsed.sound_enabled === "boolean") {
+                        return parsed.sound_enabled;
+                    }
+                }
+            }
         }
-      }
+    } catch {
+        // fallback to enabled
     }
-  } catch {
-    // fallback to enabled
-  }
-  return true;
+    return true;
 }
 
 /**
  * Play pleasant "cha-ching" celebratory cash chime.
  */
 export function playChaChingSound(): void {
-  if (!isSoundEffectsEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-  try {
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+    try {
+        if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+        }
+
+        const now = ctx.currentTime;
+
+        // First bell chime (high E: ~1318.5 Hz sliding up to G6)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(1318.5, now);
+        osc1.frequency.exponentialRampToValueAtTime(1567.98, now + 0.08);
+        gain1.gain.setValueAtTime(0.2, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // Second cash chime (higher C7: ~2093 Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = "triangle";
+        osc2.frequency.setValueAtTime(2093.0, now + 0.09);
+        gain2.gain.setValueAtTime(0.25, now + 0.09);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.09);
+        osc2.stop(now + 0.55);
+    } catch (err) {
+        console.debug("Audio playback skipped:", err);
     }
-
-    const now = ctx.currentTime;
-
-    // First bell chime (high E: ~1318.5 Hz sliding up to G6)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(1318.5, now);
-    osc1.frequency.exponentialRampToValueAtTime(1567.98, now + 0.08);
-    gain1.gain.setValueAtTime(0.2, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.35);
-
-    // Second cash chime (higher C7: ~2093 Hz)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(2093.0, now + 0.09);
-    gain2.gain.setValueAtTime(0.25, now + 0.09);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.09);
-    osc2.stop(now + 0.55);
-  } catch (err) {
-    console.debug('Audio playback skipped:', err);
-  }
 }
 
 /**
  * Play budget warning chime (gentle two-tone ascending alert for nearing 80% limit).
  */
 export function playBudgetWarningSound(): void {
-  if (!isSoundEffectsEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-  try {
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+    try {
+        if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+        }
+
+        const now = ctx.currentTime;
+
+        // Tone 1: A4 (440 Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(440, now);
+        gain1.gain.setValueAtTime(0.15, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.2);
+
+        // Tone 2: C#5 (554.37 Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(554.37, now + 0.12);
+        gain2.gain.setValueAtTime(0.18, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.4);
+    } catch (err) {
+        console.debug("Audio warning skipped:", err);
     }
-
-    const now = ctx.currentTime;
-
-    // Tone 1: A4 (440 Hz)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(440, now);
-    gain1.gain.setValueAtTime(0.15, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.2);
-
-    // Tone 2: C#5 (554.37 Hz)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(554.37, now + 0.12);
-    gain2.gain.setValueAtTime(0.18, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.12);
-    osc2.stop(now + 0.4);
-  } catch (err) {
-    console.debug('Audio warning skipped:', err);
-  }
 }
 
 /**
  * Play budget exceeded alert (distinct descending alert for >= 100% cap).
  */
 export function playBudgetExceededSound(): void {
-  if (!isSoundEffectsEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-  try {
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+    try {
+        if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+        }
+
+        const now = ctx.currentTime;
+
+        // Tone 1: E5 (659.25 Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = "triangle";
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.2, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.22);
+
+        // Tone 2: C5 (523.25 Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = "triangle";
+        osc2.frequency.setValueAtTime(523.25, now + 0.16);
+        gain2.gain.setValueAtTime(0.22, now + 0.16);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.16);
+        osc2.stop(now + 0.45);
+    } catch (err) {
+        console.debug("Audio exceeded alert skipped:", err);
     }
-
-    const now = ctx.currentTime;
-
-    // Tone 1: E5 (659.25 Hz)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(659.25, now);
-    gain1.gain.setValueAtTime(0.2, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.22);
-
-    // Tone 2: C5 (523.25 Hz)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(523.25, now + 0.16);
-    gain2.gain.setValueAtTime(0.22, now + 0.16);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.16);
-    osc2.stop(now + 0.45);
-  } catch (err) {
-    console.debug('Audio exceeded alert skipped:', err);
-  }
 }
 
 /**
  * Play a tiny soft "pop" for routine feedback (~70ms sine blip, 880 to 660 Hz).
  */
 export function playSoftPop(): void {
-  if (!isSoundEffectsEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-  try {
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, now);
-    osc.frequency.exponentialRampToValueAtTime(660, now + 0.07);
-    gain.gain.setValueAtTime(0.06, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.08);
-  } catch (err) {
-    console.debug('Soft pop skipped:', err);
-  }
+    try {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(660, now + 0.07);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+    } catch (err) {
+        console.debug("Soft pop skipped:", err);
+    }
 }
 
 /**
  * Play the milestone success chime: a bright C6-E6-G6 arpeggio (~420ms).
  */
 export function playSuccessSound(): void {
-  if (!isSoundEffectsEnabled()) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-  try {
-    const now = ctx.currentTime;
-    const notes = [1046.5, 1318.51, 1567.98];
-    notes.forEach((freq, i) => {
-      const start = now + i * 0.09;
-      const end = start + (i === notes.length - 1 ? 0.24 : 0.16);
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = i === notes.length - 1 ? 'triangle' : 'sine';
-      osc.frequency.setValueAtTime(freq, start);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.setValueAtTime(0.16, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, end);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(end);
-    });
-  } catch (err) {
-    console.debug('Success chime skipped:', err);
-  }
+    try {
+        const now = ctx.currentTime;
+        const notes = [1046.5, 1318.51, 1567.98];
+        notes.forEach((freq, i) => {
+            const start = now + i * 0.09;
+            const end = start + (i === notes.length - 1 ? 0.24 : 0.16);
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = i === notes.length - 1 ? "triangle" : "sine";
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.setValueAtTime(0.16, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, end);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(end);
+        });
+    } catch (err) {
+        console.debug("Success chime skipped:", err);
+    }
 }

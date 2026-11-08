@@ -6,7 +6,10 @@ export function getCaptureEndpointUrl(): string | null {
 }
 
 /** "Used 2h ago" style label. */
-export function formatLastUsed(iso: string | null | undefined, now: number = Date.now()): string {
+export function formatLastUsed(
+    iso: string | null | undefined,
+    now: number = Date.now(),
+): string {
     if (!iso) return "Never used";
     const ms = now - new Date(iso).getTime();
     if (Number.isNaN(ms)) return "Never used";

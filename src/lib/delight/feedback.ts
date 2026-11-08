@@ -37,7 +37,14 @@ export type RoutineKind =
     | "acknowledge"
     | "fab";
 
-type HapticName = "tick" | "lightTap" | "success" | "celebrate" | "sweep" | "goalMilestone" | "destructive";
+type HapticName =
+    | "tick"
+    | "lightTap"
+    | "success"
+    | "celebrate"
+    | "sweep"
+    | "goalMilestone"
+    | "destructive";
 type SoundName = "chaChing" | "softPop" | "success";
 
 interface Cue {
@@ -53,7 +60,11 @@ const ROUTINE_CUES: Record<RoutineKind, Cue> = {
     "no-spend": { haptic: "celebrate", sound: "chaChing", react: "munch" },
     triage: { haptic: "lightTap", sound: "softPop", react: "nod" },
     pet: { haptic: "lightTap", sound: "softPop", react: "pat" },
-    "goal-deposit": { haptic: "goalMilestone", sound: "softPop", react: "cheer" },
+    "goal-deposit": {
+        haptic: "goalMilestone",
+        sound: "softPop",
+        react: "cheer",
+    },
     acknowledge: { sound: "softPop", react: "cheer" },
     fab: { haptic: "tick" },
 };
@@ -64,13 +75,48 @@ interface MilestoneCue extends Cue {
 }
 
 const MILESTONE_CUES: Record<MilestoneKind, MilestoneCue> = {
-    "inbox-zero": { haptic: "celebrate", sound: "success", react: "celebrate", big: true },
-    "full-belly": { haptic: "celebrate", sound: "success", react: "pat", big: false },
-    "weekly-treat": { haptic: "goalMilestone", sound: "success", react: "munch", big: false },
-    "body-change": { haptic: "celebrate", sound: "success", react: "celebrate", big: true },
-    reunion: { haptic: "celebrate", sound: "success", react: "reunion", big: false },
-    "goal-complete": { haptic: "goalMilestone", sound: "success", react: "celebrate", big: true },
-    sweep: { haptic: "sweep", sound: "chaChing", react: "celebrate", big: true },
+    "inbox-zero": {
+        haptic: "celebrate",
+        sound: "success",
+        react: "celebrate",
+        big: true,
+    },
+    "full-belly": {
+        haptic: "celebrate",
+        sound: "success",
+        react: "pat",
+        big: false,
+    },
+    "weekly-treat": {
+        haptic: "goalMilestone",
+        sound: "success",
+        react: "munch",
+        big: false,
+    },
+    "body-change": {
+        haptic: "celebrate",
+        sound: "success",
+        react: "celebrate",
+        big: true,
+    },
+    reunion: {
+        haptic: "celebrate",
+        sound: "success",
+        react: "reunion",
+        big: false,
+    },
+    "goal-complete": {
+        haptic: "goalMilestone",
+        sound: "success",
+        react: "celebrate",
+        big: true,
+    },
+    sweep: {
+        haptic: "sweep",
+        sound: "chaChing",
+        react: "celebrate",
+        big: true,
+    },
 };
 
 export const BIG_CELEBRATION_COOLDOWN_MS = 8000;
@@ -145,7 +191,10 @@ export const feedback = {
     },
 
     /** Real milestones: chime, haptic, Bubby celebrate, optional confetti and toast. */
-    milestone(kind: MilestoneKind, options: MilestoneOptions = {}): MilestoneResult {
+    milestone(
+        kind: MilestoneKind,
+        options: MilestoneOptions = {},
+    ): MilestoneResult {
         if (options.dedupeKey && hasCelebrated(options.dedupeKey)) {
             return "duplicate";
         }

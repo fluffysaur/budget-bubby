@@ -2,438 +2,500 @@
  * Credit Card Tracker: Statements, Due Dates & Card Management
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { CreditCardTrackerSection, getRelativeDueLabel } from '../src/components/accounts/CreditCardTrackerSection';
-import { AddEditCreditCardModal } from '../src/components/accounts/AddEditCreditCardModal';
-import { financeService } from '../src/services/financeService';
-import { mockFinanceService } from '../src/services/mockFinanceService';
-import { formatSGD } from '../src/lib/currency';
-import type { HouseholdMember } from '../src/types/finance';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+    CreditCardTrackerSection,
+    getRelativeDueLabel,
+} from "../src/components/accounts/CreditCardTrackerSection";
+import { AddEditCreditCardModal } from "../src/components/accounts/AddEditCreditCardModal";
+import { financeService } from "../src/services/financeService";
+import { mockFinanceService } from "../src/services/mockFinanceService";
+import { formatSGD } from "../src/lib/currency";
+import type { HouseholdMember } from "../src/types/finance";
 
 const testMembers: HouseholdMember[] = [
-  {
-    id: 'mem-00000000-0011',
-    household_id: 'hh-00000000-0001',
-    display_name: 'Yi Jia',
-    role: 'owner',
-  },
-  {
-    id: 'mem-00000000-0012',
-    household_id: 'hh-00000000-0001',
-    display_name: 'Rachel',
-    role: 'member',
-  },
+    {
+        id: "mem-00000000-0011",
+        household_id: "hh-00000000-0001",
+        display_name: "Yi Jia",
+        role: "owner",
+    },
+    {
+        id: "mem-00000000-0012",
+        household_id: "hh-00000000-0001",
+        display_name: "Rachel",
+        role: "member",
+    },
 ];
 
-describe('Credit Card Statements & Due Date Tracker', () => {
-  beforeEach(() => {
-    mockFinanceService.resetData();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('getRelativeDueLabel Helper', () => {
-    it('returns Paid label when statement is paid', () => {
-      const result = getRelativeDueLabel('2026-11-05', true, '2026-10-25T10:00:00.000Z');
-      expect(result.label).toContain('Paid on');
-      expect(result.isOverdue).toBe(false);
-    });
-
-    it('returns Due in X days when due date is in the future', () => {
-      // Future date relative to today
-      const futureDate = '2099-12-31';
-      const result = getRelativeDueLabel(futureDate, false);
-      expect(result.label).toMatch(/Due in \d+ days/i);
-      expect(result.isOverdue).toBe(false);
-    });
-
-    it('returns Overdue by X days when due date is in the past', () => {
-      const pastDate = '2020-01-01';
-      const result = getRelativeDueLabel(pastDate, false);
-      expect(result.label).toMatch(/Overdue by \d+ days/i);
-      expect(result.isOverdue).toBe(true);
-    });
-  });
-
-  describe('CreditCardTrackerSection Component', () => {
-    // Mock seed statements live in 2026-10; pin the clock so the tracker
-    // (which defaults to the current month) opens on that month.
+describe("Credit Card Statements & Due Date Tracker", () => {
     beforeEach(() => {
-      vi.useFakeTimers({ toFake: ['Date'] });
-      vi.setSystemTime(new Date('2026-10-15T04:00:00.000Z'));
+        mockFinanceService.resetData();
     });
 
     afterEach(() => {
-      vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
-    it('renders configured cards and monthly summary statistics for 2026-10', async () => {
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
+    describe("getRelativeDueLabel Helper", () => {
+        it("returns Paid label when statement is paid", () => {
+            const result = getRelativeDueLabel(
+                "2026-11-05",
+                true,
+                "2026-10-25T10:00:00.000Z",
+            );
+            expect(result.label).toContain("Paid on");
+            expect(result.isOverdue).toBe(false);
+        });
 
-      // Wait for cards to load
-      await waitFor(() => {
-        expect(screen.getByText('DBS Altitude Visa')).toBeInTheDocument();
-        expect(screen.getByText('UOB One Card')).toBeInTheDocument();
-        expect(screen.getByText('OCBC 365 Dining & Groceries')).toBeInTheDocument();
-      });
+        it("returns Due in X days when due date is in the future", () => {
+            // Future date relative to today
+            const futureDate = "2099-12-31";
+            const result = getRelativeDueLabel(futureDate, false);
+            expect(result.label).toMatch(/Due in \d+ days/i);
+            expect(result.isOverdue).toBe(false);
+        });
 
-      // Card last 4 and bank details
-      const last4Chip = screen.getByText(/4128/);
-      expect(last4Chip).toBeInTheDocument();
-      expect(last4Chip).toHaveClass('shrink-0', 'whitespace-nowrap');
-      expect(screen.getByText(/8832/)).toBeInTheDocument();
-
-      // Owner label flex defense
-      const ownerLabels = screen.getAllByText('Yi Jia');
-      expect(ownerLabels.length).toBeGreaterThanOrEqual(1);
-      ownerLabels.forEach((label) => {
-        expect(label).toHaveClass('truncate', 'whitespace-nowrap', 'min-w-0');
-      });
-
-      // Bank label flex defense
-      const dbsLabels = screen.getAllByText('DBS');
-      dbsLabels.forEach((label) => {
-        if (label.tagName === 'SPAN') {
-          expect(label).toHaveClass('truncate', 'min-w-0');
-        }
-      });
-
-      // Summary cards
-      expect(screen.getByText('Due')).toBeInTheDocument();
-      expect(screen.getAllByText('Paid').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText('Unpaid')).toBeInTheDocument();
-
-      // In mock seed data for 2026-10:
-      // DBS: 842.50 (unpaid)
-      // UOB: 620.00 (paid)
-      // OCBC: 350.20 (unpaid)
-      // Total due = 842.50 + 620.00 + 350.20 = 1812.70
-      // Total paid = 620.00
-      // Total unpaid = 842.50 + 350.20 = 1192.70
-      expect(screen.getByText(formatSGD(1812.70))).toBeInTheDocument();
-      expect(screen.getAllByText(formatSGD(620.00)).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText(formatSGD(1192.70))).toBeInTheDocument();
+        it("returns Overdue by X days when due date is in the past", () => {
+            const pastDate = "2020-01-01";
+            const result = getRelativeDueLabel(pastDate, false);
+            expect(result.label).toMatch(/Overdue by \d+ days/i);
+            expect(result.isOverdue).toBe(true);
+        });
     });
 
-    it('toggles statement 1-tap paid / unpaid status with timestamp', async () => {
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
+    describe("CreditCardTrackerSection Component", () => {
+        // Mock seed statements live in 2026-10; pin the clock so the tracker
+        // (which defaults to the current month) opens on that month.
+        beforeEach(() => {
+            vi.useFakeTimers({ toFake: ["Date"] });
+            vi.setSystemTime(new Date("2026-10-15T04:00:00.000Z"));
+        });
 
-      await waitFor(() => {
-        expect(screen.getByText('DBS Altitude Visa')).toBeInTheDocument();
-      });
+        afterEach(() => {
+            vi.useRealTimers();
+        });
 
-      // DBS Altitude Visa is initially unpaid: find Mark as Paid button
-      const dbsMarkPaidBtn = screen.getByRole('button', { name: /Mark DBS Altitude Visa statement as Paid/i });
-      expect(dbsMarkPaidBtn).toBeInTheDocument();
+        it("renders configured cards and monthly summary statistics for 2026-10", async () => {
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
 
-      // Tap Mark as Paid
-      fireEvent.click(dbsMarkPaidBtn);
+            // Wait for cards to load
+            await waitFor(() => {
+                expect(
+                    screen.getByText("DBS Altitude Visa"),
+                ).toBeInTheDocument();
+                expect(screen.getByText("UOB One Card")).toBeInTheDocument();
+                expect(
+                    screen.getByText("OCBC 365 Dining & Groceries"),
+                ).toBeInTheDocument();
+            });
 
-      // Verify it toggles to Paid
-      await waitFor(() => {
-        const dbsUnpaidBtn = screen.getByRole('button', { name: /Mark DBS Altitude Visa statement as Unpaid/i });
-        expect(dbsUnpaidBtn).toBeInTheDocument();
-      });
+            // Card last 4 and bank details
+            const last4Chip = screen.getByText(/4128/);
+            expect(last4Chip).toBeInTheDocument();
+            expect(last4Chip).toHaveClass("shrink-0", "whitespace-nowrap");
+            expect(screen.getByText(/8832/)).toBeInTheDocument();
 
-      // Check updated Total Paid summary: 620.00 + 842.50 = 1462.50
-      await waitFor(() => {
-        expect(screen.getByText(formatSGD(1462.50))).toBeInTheDocument();
-      });
+            // Owner label flex defense
+            const ownerLabels = screen.getAllByText("Yi Jia");
+            expect(ownerLabels.length).toBeGreaterThanOrEqual(1);
+            ownerLabels.forEach((label) => {
+                expect(label).toHaveClass(
+                    "truncate",
+                    "whitespace-nowrap",
+                    "min-w-0",
+                );
+            });
+
+            // Bank label flex defense
+            const dbsLabels = screen.getAllByText("DBS");
+            dbsLabels.forEach((label) => {
+                if (label.tagName === "SPAN") {
+                    expect(label).toHaveClass("truncate", "min-w-0");
+                }
+            });
+
+            // Summary cards
+            expect(screen.getByText("Due")).toBeInTheDocument();
+            expect(screen.getAllByText("Paid").length).toBeGreaterThanOrEqual(
+                1,
+            );
+            expect(screen.getByText("Unpaid")).toBeInTheDocument();
+
+            // In mock seed data for 2026-10:
+            // DBS: 842.50 (unpaid)
+            // UOB: 620.00 (paid)
+            // OCBC: 350.20 (unpaid)
+            // Total due = 842.50 + 620.00 + 350.20 = 1812.70
+            // Total paid = 620.00
+            // Total unpaid = 842.50 + 350.20 = 1192.70
+            expect(screen.getByText(formatSGD(1812.7))).toBeInTheDocument();
+            expect(
+                screen.getAllByText(formatSGD(620.0)).length,
+            ).toBeGreaterThanOrEqual(1);
+            expect(screen.getByText(formatSGD(1192.7))).toBeInTheDocument();
+        });
+
+        it("toggles statement 1-tap paid / unpaid status with timestamp", async () => {
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("DBS Altitude Visa"),
+                ).toBeInTheDocument();
+            });
+
+            // DBS Altitude Visa is initially unpaid: find Mark as Paid button
+            const dbsMarkPaidBtn = screen.getByRole("button", {
+                name: /Mark DBS Altitude Visa statement as Paid/i,
+            });
+            expect(dbsMarkPaidBtn).toBeInTheDocument();
+
+            // Tap Mark as Paid
+            fireEvent.click(dbsMarkPaidBtn);
+
+            // Verify it toggles to Paid
+            await waitFor(() => {
+                const dbsUnpaidBtn = screen.getByRole("button", {
+                    name: /Mark DBS Altitude Visa statement as Unpaid/i,
+                });
+                expect(dbsUnpaidBtn).toBeInTheDocument();
+            });
+
+            // Check updated Total Paid summary: 620.00 + 842.50 = 1462.50
+            await waitFor(() => {
+                expect(screen.getByText(formatSGD(1462.5))).toBeInTheDocument();
+            });
+        });
+
+        it("rolls back toggle and displays an alert when toggling paid status fails", async () => {
+            vi.spyOn(
+                financeService,
+                "upsertCreditCardStatement",
+            ).mockRejectedValueOnce(new Error("Network failure"));
+
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("DBS Altitude Visa"),
+                ).toBeInTheDocument();
+            });
+
+            const dbsMarkPaidBtn = screen.getByRole("button", {
+                name: /Mark DBS Altitude Visa statement as Paid/i,
+            });
+            expect(dbsMarkPaidBtn).toBeInTheDocument();
+
+            fireEvent.click(dbsMarkPaidBtn);
+
+            // Verify failure alert is displayed
+            await waitFor(() => {
+                expect(
+                    screen.getByText(/Failed to update statement paid status/i),
+                ).toBeInTheDocument();
+            });
+
+            // Verify toggle button remains / rolls back to unpaid "Mark as Paid"
+            expect(
+                screen.getByRole("button", {
+                    name: /Mark DBS Altitude Visa statement as Paid/i,
+                }),
+            ).toBeInTheDocument();
+
+            // Dismiss the alert
+            const dismissBtn = screen.getByRole("button", {
+                name: /Dismiss alert/i,
+            });
+            fireEvent.click(dismissBtn);
+            expect(
+                screen.queryByText(/Failed to update statement paid status/i),
+            ).not.toBeInTheDocument();
+        });
+
+        it("allows logging a new statement balance for a card without one in the month", async () => {
+            // Change month to 2026-12 (which has no statements in mock seed)
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("DBS Altitude Visa"),
+                ).toBeInTheDocument();
+            });
+
+            // Navigate to next month
+            const nextMonthBtn = screen.getByRole("button", {
+                name: "Next Month",
+            });
+            fireEvent.click(nextMonthBtn);
+
+            await waitFor(() => {
+                expect(screen.getByText(/November 2026/i)).toBeInTheDocument();
+            });
+
+            // Click "Log Statement" for DBS Altitude Visa
+            const logStmtBtns = await waitFor(() => {
+                const btns = screen.getAllByRole("button", {
+                    name: /Log statement for/i,
+                });
+                expect(btns.length).toBeGreaterThan(0);
+                return btns;
+            });
+            fireEvent.click(logStmtBtns[0]);
+
+            // Fill in amount
+            const amountInput = screen.getByLabelText(/Balance/i);
+            fireEvent.change(amountInput, { target: { value: "450.75" } });
+
+            // Save Statement
+            const saveBtn = screen.getByRole("button", {
+                name: "Save Statement",
+            });
+            fireEvent.click(saveBtn);
+
+            await waitFor(() => {
+                expect(
+                    screen.getAllByText(formatSGD(450.75)).length,
+                ).toBeGreaterThanOrEqual(1);
+            });
+        });
+
+        it("renders proper English ordinals (1st, 22nd) instead of 1th/22th for billing and due days", async () => {
+            await financeService.addCreditCard({
+                owner_id: testMembers[0].id,
+                name: "Citibank Rewards",
+                bank: "Citi",
+                last4: "1122",
+                billing_day: 1,
+                due_day: 22,
+            });
+
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("Citibank Rewards"),
+                ).toBeInTheDocument();
+            });
+
+            expect(screen.getByText("1st")).toBeInTheDocument();
+            expect(screen.getByText("22nd")).toBeInTheDocument();
+            expect(screen.queryByText("1th")).not.toBeInTheDocument();
+            expect(screen.queryByText("22th")).not.toBeInTheDocument();
+        });
+
+        it("sets default due date input using the real due day clamped to month length (not clamped to 28)", async () => {
+            await financeService.addCreditCard({
+                owner_id: testMembers[0].id,
+                name: "End-of-Month Card",
+                bank: "Standard Chartered",
+                last4: "9900",
+                billing_day: 31,
+                due_day: 31,
+            });
+
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("End-of-Month Card"),
+                ).toBeInTheDocument();
+            });
+
+            const logStmtBtn = screen.getByRole("button", {
+                name: /Log statement for End-of-Month Card/i,
+            });
+            fireEvent.click(logStmtBtn);
+
+            const dueDateInput = screen.getByLabelText(
+                /Due Date/i,
+            ) as HTMLInputElement;
+            // October statement -> November due date (30 days in Nov): 2026-11-30, NOT 2026-11-28
+            expect(dueDateInput.value).toBe("2026-11-30");
+        });
+
+        it("defaults due date to current month when due_day > billing_day (Issue #80)", async () => {
+            await financeService.addCreditCard({
+                owner_id: testMembers[0].id,
+                name: "Mid-Month Due Card",
+                bank: "DBS",
+                last4: "1234",
+                billing_day: 5,
+                due_day: 25,
+            });
+
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("Mid-Month Due Card"),
+                ).toBeInTheDocument();
+            });
+
+            const logStmtBtn = screen.getByRole("button", {
+                name: /Log statement for Mid-Month Due Card/i,
+            });
+            fireEvent.click(logStmtBtn);
+
+            const dueDateInput = screen.getByLabelText(
+                /Due Date/i,
+            ) as HTMLInputElement;
+            // October statement: billing day 5, due day 25 -> same month 2026-10-25
+            expect(dueDateInput.value).toBe("2026-10-25");
+        });
     });
 
-    it('rolls back toggle and displays an alert when toggling paid status fails', async () => {
-      vi.spyOn(financeService, 'upsertCreditCardStatement')
-        .mockRejectedValueOnce(new Error('Network failure'));
+    describe("AddEditCreditCardModal Component", () => {
+        it("creates a new credit card and saves to financeService", async () => {
+            const onCardSaved = vi.fn();
+            const onClose = vi.fn();
 
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
+            render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={onClose}
+                    members={testMembers}
+                    onCardSaved={onCardSaved}
+                />,
+            );
 
-      await waitFor(() => {
-        expect(screen.getByText('DBS Altitude Visa')).toBeInTheDocument();
-      });
+            fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
+                target: { value: "HSBC Revolution" },
+            });
+            fireEvent.change(screen.getByLabelText(/Last 4 Digits/i), {
+                target: { value: "5566" },
+            });
+            fireEvent.change(screen.getByLabelText(/Credit Limit/i), {
+                target: { value: "8000" },
+            });
 
-      const dbsMarkPaidBtn = screen.getByRole('button', { name: /Mark DBS Altitude Visa statement as Paid/i });
-      expect(dbsMarkPaidBtn).toBeInTheDocument();
+            fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
 
-      fireEvent.click(dbsMarkPaidBtn);
+            await waitFor(() => {
+                expect(onCardSaved).toHaveBeenCalled();
+                expect(onClose).toHaveBeenCalled();
+            });
 
-      // Verify failure alert is displayed
-      await waitFor(() => {
-        expect(screen.getByText(/Failed to update statement paid status/i)).toBeInTheDocument();
-      });
+            const cards = await financeService.getCreditCards();
+            const hsbc = cards.find((c) => c.name === "HSBC Revolution");
+            expect(hsbc).toBeDefined();
+            expect(hsbc?.last4).toBe("5566");
+            expect(hsbc?.credit_limit).toBe(8000);
+        });
 
-      // Verify toggle button remains / rolls back to unpaid "Mark as Paid"
-      expect(screen.getByRole('button', { name: /Mark DBS Altitude Visa statement as Paid/i })).toBeInTheDocument();
+        it("allows clearing and retyping billing day and due day (Issue #79)", async () => {
+            const onCardSaved = vi.fn();
+            const onClose = vi.fn();
 
-      // Dismiss the alert
-      const dismissBtn = screen.getByRole('button', { name: /Dismiss alert/i });
-      fireEvent.click(dismissBtn);
-      expect(screen.queryByText(/Failed to update statement paid status/i)).not.toBeInTheDocument();
+            render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={onClose}
+                    members={testMembers}
+                    onCardSaved={onCardSaved}
+                />,
+            );
+
+            const billingDayInput = screen.getByLabelText(/Statement Day/i);
+            const dueDayInput = screen.getByLabelText(/Payment Due Day/i);
+
+            // Verify defaults
+            expect(billingDayInput).toHaveValue(15);
+            expect(dueDayInput).toHaveValue(5);
+
+            // Clearing input sets it to empty without forcing it to 1
+            fireEvent.change(billingDayInput, { target: { value: "" } });
+            expect(billingDayInput).toHaveValue(null);
+
+            // Retype value
+            fireEvent.change(billingDayInput, { target: { value: "25" } });
+            expect(billingDayInput).toHaveValue(25);
+
+            // Same for due day
+            fireEvent.change(dueDayInput, { target: { value: "" } });
+            expect(dueDayInput).toHaveValue(null);
+
+            fireEvent.change(dueDayInput, { target: { value: "18" } });
+            expect(dueDayInput).toHaveValue(18);
+
+            // Fill in required name and save
+            fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
+                target: { value: "Custom Cycle Card" },
+            });
+
+            fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
+
+            await waitFor(() => {
+                expect(onCardSaved).toHaveBeenCalled();
+                expect(onClose).toHaveBeenCalled();
+            });
+
+            const cards = await financeService.getCreditCards();
+            const savedCard = cards.find((c) => c.name === "Custom Cycle Card");
+            expect(savedCard).toBeDefined();
+            expect(savedCard?.billing_day).toBe(25);
+            expect(savedCard?.due_day).toBe(18);
+        });
+
+        it("validates that billing day and due day must not be empty or out-of-range on submit", async () => {
+            render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={testMembers}
+                />,
+            );
+
+            fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
+                target: { value: "Invalid Day Card" },
+            });
+
+            // Clear billing day
+            fireEvent.change(screen.getByLabelText(/Statement Day/i), {
+                target: { value: "" },
+            });
+
+            fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
+
+            expect(
+                await screen.findByText("Day must be 1-31"),
+            ).toBeInTheDocument();
+        });
     });
-
-    it('allows logging a new statement balance for a card without one in the month', async () => {
-      // Change month to 2026-12 (which has no statements in mock seed)
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('DBS Altitude Visa')).toBeInTheDocument();
-      });
-
-      // Navigate to next month
-      const nextMonthBtn = screen.getByRole('button', { name: 'Next Month' });
-      fireEvent.click(nextMonthBtn);
-
-      await waitFor(() => {
-        expect(screen.getByText(/November 2026/i)).toBeInTheDocument();
-      });
-
-      // Click "Log Statement" for DBS Altitude Visa
-      const logStmtBtns = await waitFor(() => {
-        const btns = screen.getAllByRole('button', { name: /Log statement for/i });
-        expect(btns.length).toBeGreaterThan(0);
-        return btns;
-      });
-      fireEvent.click(logStmtBtns[0]);
-
-      // Fill in amount
-      const amountInput = screen.getByLabelText(/Balance/i);
-      fireEvent.change(amountInput, { target: { value: '450.75' } });
-
-      // Save Statement
-      const saveBtn = screen.getByRole('button', { name: 'Save Statement' });
-      fireEvent.click(saveBtn);
-
-      await waitFor(() => {
-        expect(screen.getAllByText(formatSGD(450.75)).length).toBeGreaterThanOrEqual(1);
-      });
-    });
-
-    it('renders proper English ordinals (1st, 22nd) instead of 1th/22th for billing and due days', async () => {
-      await financeService.addCreditCard({
-        owner_id: testMembers[0].id,
-        name: 'Citibank Rewards',
-        bank: 'Citi',
-        last4: '1122',
-        billing_day: 1,
-        due_day: 22,
-      });
-
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Citibank Rewards')).toBeInTheDocument();
-      });
-
-      expect(screen.getByText('1st')).toBeInTheDocument();
-      expect(screen.getByText('22nd')).toBeInTheDocument();
-      expect(screen.queryByText('1th')).not.toBeInTheDocument();
-      expect(screen.queryByText('22th')).not.toBeInTheDocument();
-    });
-
-    it('sets default due date input using the real due day clamped to month length (not clamped to 28)', async () => {
-      await financeService.addCreditCard({
-        owner_id: testMembers[0].id,
-        name: 'End-of-Month Card',
-        bank: 'Standard Chartered',
-        last4: '9900',
-        billing_day: 31,
-        due_day: 31,
-      });
-
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('End-of-Month Card')).toBeInTheDocument();
-      });
-
-      const logStmtBtn = screen.getByRole('button', {
-        name: /Log statement for End-of-Month Card/i,
-      });
-      fireEvent.click(logStmtBtn);
-
-      const dueDateInput = screen.getByLabelText(/Due Date/i) as HTMLInputElement;
-      // October statement -> November due date (30 days in Nov): 2026-11-30, NOT 2026-11-28
-      expect(dueDateInput.value).toBe('2026-11-30');
-    });
-
-    it('defaults due date to current month when due_day > billing_day (Issue #80)', async () => {
-      await financeService.addCreditCard({
-        owner_id: testMembers[0].id,
-        name: 'Mid-Month Due Card',
-        bank: 'DBS',
-        last4: '1234',
-        billing_day: 5,
-        due_day: 25,
-      });
-
-      render(
-        <CreditCardTrackerSection
-          members={testMembers}
-          perspective="household"
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Mid-Month Due Card')).toBeInTheDocument();
-      });
-
-      const logStmtBtn = screen.getByRole('button', {
-        name: /Log statement for Mid-Month Due Card/i,
-      });
-      fireEvent.click(logStmtBtn);
-
-      const dueDateInput = screen.getByLabelText(/Due Date/i) as HTMLInputElement;
-      // October statement: billing day 5, due day 25 -> same month 2026-10-25
-      expect(dueDateInput.value).toBe('2026-10-25');
-    });
-  });
-
-  describe('AddEditCreditCardModal Component', () => {
-    it('creates a new credit card and saves to financeService', async () => {
-      const onCardSaved = vi.fn();
-      const onClose = vi.fn();
-
-      render(
-        <AddEditCreditCardModal
-          isOpen={true}
-          onClose={onClose}
-          members={testMembers}
-          onCardSaved={onCardSaved}
-        />
-      );
-
-      fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
-        target: { value: 'HSBC Revolution' },
-      });
-      fireEvent.change(screen.getByLabelText(/Last 4 Digits/i), {
-        target: { value: '5566' },
-      });
-      fireEvent.change(screen.getByLabelText(/Credit Limit/i), {
-        target: { value: '8000' },
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: 'Add Card' }));
-
-      await waitFor(() => {
-        expect(onCardSaved).toHaveBeenCalled();
-        expect(onClose).toHaveBeenCalled();
-      });
-
-      const cards = await financeService.getCreditCards();
-      const hsbc = cards.find((c) => c.name === 'HSBC Revolution');
-      expect(hsbc).toBeDefined();
-      expect(hsbc?.last4).toBe('5566');
-      expect(hsbc?.credit_limit).toBe(8000);
-    });
-
-    it('allows clearing and retyping billing day and due day (Issue #79)', async () => {
-      const onCardSaved = vi.fn();
-      const onClose = vi.fn();
-
-      render(
-        <AddEditCreditCardModal
-          isOpen={true}
-          onClose={onClose}
-          members={testMembers}
-          onCardSaved={onCardSaved}
-        />
-      );
-
-      const billingDayInput = screen.getByLabelText(/Statement Day/i);
-      const dueDayInput = screen.getByLabelText(/Payment Due Day/i);
-
-      // Verify defaults
-      expect(billingDayInput).toHaveValue(15);
-      expect(dueDayInput).toHaveValue(5);
-
-      // Clearing input sets it to empty without forcing it to 1
-      fireEvent.change(billingDayInput, { target: { value: '' } });
-      expect(billingDayInput).toHaveValue(null);
-
-      // Retype value
-      fireEvent.change(billingDayInput, { target: { value: '25' } });
-      expect(billingDayInput).toHaveValue(25);
-
-      // Same for due day
-      fireEvent.change(dueDayInput, { target: { value: '' } });
-      expect(dueDayInput).toHaveValue(null);
-
-      fireEvent.change(dueDayInput, { target: { value: '18' } });
-      expect(dueDayInput).toHaveValue(18);
-
-      // Fill in required name and save
-      fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
-        target: { value: 'Custom Cycle Card' },
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: 'Add Card' }));
-
-      await waitFor(() => {
-        expect(onCardSaved).toHaveBeenCalled();
-        expect(onClose).toHaveBeenCalled();
-      });
-
-      const cards = await financeService.getCreditCards();
-      const savedCard = cards.find((c) => c.name === 'Custom Cycle Card');
-      expect(savedCard).toBeDefined();
-      expect(savedCard?.billing_day).toBe(25);
-      expect(savedCard?.due_day).toBe(18);
-    });
-
-    it('validates that billing day and due day must not be empty or out-of-range on submit', async () => {
-      render(
-        <AddEditCreditCardModal
-          isOpen={true}
-          onClose={vi.fn()}
-          members={testMembers}
-        />
-      );
-
-      fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
-        target: { value: 'Invalid Day Card' },
-      });
-
-      // Clear billing day
-      fireEvent.change(screen.getByLabelText(/Statement Day/i), {
-        target: { value: '' },
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: 'Add Card' }));
-
-      expect(await screen.findByText('Day must be 1-31')).toBeInTheDocument();
-    });
-  });
 });
-

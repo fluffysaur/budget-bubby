@@ -42,10 +42,14 @@ describe("Sparkline", () => {
 
         rerender(<Sparkline data={[10, 20]} tone="over" />);
         polyline = container.querySelector("polyline");
-        expect(polyline?.getAttribute("class")).toContain("stroke-(--tone-over)");
+        expect(polyline?.getAttribute("class")).toContain(
+            "stroke-(--tone-over)",
+        );
 
         rerender(<Sparkline data={[10, 20]} tone="neutral" />);
         polyline = container.querySelector("polyline");
-        expect(polyline?.getAttribute("class")).toContain("stroke-(--text-muted)");
+        expect(polyline?.getAttribute("class")).toContain(
+            "stroke-(--text-muted)",
+        );
     });
 });

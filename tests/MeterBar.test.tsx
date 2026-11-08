@@ -52,7 +52,9 @@ describe("MeterBar", () => {
     });
 
     it("applies size classes correctly", () => {
-        const { rerender } = render(<MeterBar value={50} max={100} size="sm" />);
+        const { rerender } = render(
+            <MeterBar value={50} max={100} size="sm" />,
+        );
         expect(screen.getByRole("progressbar").className).toContain("h-1.5");
 
         rerender(<MeterBar value={50} max={100} size="md" />);

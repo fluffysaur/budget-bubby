@@ -20,7 +20,9 @@ beforeAll(async () => {
 function makeDeps(overrides: Partial<CaptureDeps> = {}) {
     const deps = {
         findToken: vi.fn(async (h: string) =>
-            h === hash ? { id: "tok-1", member_id: "m1", household_id: "hh" } : null,
+            h === hash
+                ? { id: "tok-1", member_id: "m1", household_id: "hh" }
+                : null,
         ),
         countRecentByToken: vi.fn(async () => 0),
         findRule: vi.fn(async () => null),
@@ -35,7 +37,10 @@ function makeDeps(overrides: Partial<CaptureDeps> = {}) {
     return deps;
 }
 
-function req(body: unknown, over: Partial<CaptureRequest> = {}): CaptureRequest {
+function req(
+    body: unknown,
+    over: Partial<CaptureRequest> = {},
+): CaptureRequest {
     return {
         method: "POST",
         authorization: `Bearer ${token}`,
@@ -44,28 +49,47 @@ function req(body: unknown, over: Partial<CaptureRequest> = {}): CaptureRequest 
     };
 }
 
-const valid = { amount: "S$12.50", merchant: "GRAB*FOOD 8812", card: "DBS Altitude", timestamp: "2026-11-05T12:00:00+08:00" };
+const valid = {
+    amount: "S$12.50",
+    merchant: "GRAB*FOOD 8812",
+    card: "DBS Altitude",
+    timestamp: "2026-11-05T12:00:00+08:00",
+};
 
 describe("handleCapture", () => {
     it("rejects non-POST methods", async () => {
         const deps = makeDeps();
-        expect((await handleCapture(deps, req(valid, { method: "GET" }))).status).toBe(405);
-        expect((await handleCapture(deps, req(valid, { method: "OPTIONS" }))).status).toBe(405);
+        expect(
+            (await handleCapture(deps, req(valid, { method: "GET" }))).status,
+        ).toBe(405);
+        expect(
+            (await handleCapture(deps, req(valid, { method: "OPTIONS" })))
+                .status,
+        ).toBe(405);
     });
 
     it("401s malformed tokens without a DB hit, and unknown/revoked tokens identically", async () => {
         const deps = makeDeps();
-        const bad = await handleCapture(deps, req(valid, { authorization: "Bearer nope" }));
+        const bad = await handleCapture(
+            deps,
+            req(valid, { authorization: "Bearer nope" }),
+        );
         expect(bad).toEqual({ status: 401, body: { error: "unauthorized" } });
         expect(deps.findToken).not.toHaveBeenCalled();
 
         const other = await generateCaptureToken();
-        const unknown = await handleCapture(deps, req(valid, { authorization: `Bearer ${other.token}` }));
+        const unknown = await handleCapture(
+            deps,
+            req(valid, { authorization: `Bearer ${other.token}` }),
+        );
         expect(unknown).toEqual(bad);
     });
 
     it("413s oversized bodies", async () => {
-        const res = await handleCapture(makeDeps(), req({ ...valid, pad: "x".repeat(5000) }));
+        const res = await handleCapture(
+            makeDeps(),
+            req({ ...valid, pad: "x".repeat(5000) }),
+        );
         expect(res.status).toBe(413);
     });
 
@@ -77,25 +101,48 @@ describe("handleCapture", () => {
         });
         const day = makeDeps({
             countRecentByToken: vi.fn(async (_id: string, since: string) =>
-                since > new Date(NOW.getTime() - 120_000).toISOString() ? 1 : 150,
+                since > new Date(NOW.getTime() - 120_000).toISOString()
+                    ? 1
+                    : 150,
             ),
         });
-        expect((await handleCapture(day, req(valid))).body).toEqual({ error: "rate_limited", retry_after: 3600 });
+        expect((await handleCapture(day, req(valid))).body).toEqual({
+            error: "rate_limited",
+            retry_after: 3600,
+        });
     });
 
     it("400s per field", async () => {
         const deps = makeDeps();
-        expect((await handleCapture(deps, req("{not json"))).body).toEqual({ error: "invalid_json" });
-        expect((await handleCapture(deps, req("[1]"))).body).toEqual({ error: "invalid_json" });
-        expect((await handleCapture(deps, req({ ...valid, amount: "abc" }))).body).toEqual({ error: "invalid_amount" });
-        expect((await handleCapture(deps, req({ ...valid, merchant: "  " }))).body).toEqual({ error: "invalid_merchant" });
+        expect((await handleCapture(deps, req("{not json"))).body).toEqual({
+            error: "invalid_json",
+        });
+        expect((await handleCapture(deps, req("[1]"))).body).toEqual({
+            error: "invalid_json",
+        });
+        expect(
+            (await handleCapture(deps, req({ ...valid, amount: "abc" }))).body,
+        ).toEqual({ error: "invalid_amount" });
+        expect(
+            (await handleCapture(deps, req({ ...valid, merchant: "  " }))).body,
+        ).toEqual({ error: "invalid_merchant" });
         expect(deps.insertItem).not.toHaveBeenCalled();
     });
 
     it("ignores refunds and ignore-rule merchants", async () => {
-        const deps = makeDeps({ findRule: vi.fn(async () => ({ action: "ignore" as const, category_id: null })) });
-        expect(await handleCapture(deps, req(valid))).toEqual({ status: 200, body: { status: "ignored" } });
-        expect(await handleCapture(makeDeps(), req({ ...valid, amount: "-5.00" }))).toEqual({
+        const deps = makeDeps({
+            findRule: vi.fn(async () => ({
+                action: "ignore" as const,
+                category_id: null,
+            })),
+        });
+        expect(await handleCapture(deps, req(valid))).toEqual({
+            status: 200,
+            body: { status: "ignored" },
+        });
+        expect(
+            await handleCapture(makeDeps(), req({ ...valid, amount: "-5.00" })),
+        ).toEqual({
             status: 200,
             body: { status: "ignored" },
         });
@@ -104,11 +151,20 @@ describe("handleCapture", () => {
 
     it("captures with the right row and touches the token", async () => {
         const deps = makeDeps({
-            findRule: vi.fn(async () => ({ action: "categorise" as const, category_id: "cat-food" })),
+            findRule: vi.fn(async () => ({
+                action: "categorise" as const,
+                category_id: "cat-food",
+            })),
             findLikelyDuplicate: vi.fn(async () => "exp-9"),
         });
-        const res = await handleCapture(deps, req({ ...valid, source: "Wallet" }));
-        expect(res).toEqual({ status: 201, body: { status: "captured", id: "item-1", inboxCount: 3 } });
+        const res = await handleCapture(
+            deps,
+            req({ ...valid, source: "Wallet" }),
+        );
+        expect(res).toEqual({
+            status: 201,
+            body: { status: "captured", id: "item-1", inboxCount: 3 },
+        });
         const row = vi.mocked(deps.insertItem).mock.calls[0][0];
         expect(row).toMatchObject({
             household_id: "hh",
@@ -133,14 +189,23 @@ describe("handleCapture", () => {
             dateFrom: "2026-11-04",
             dateTo: "2026-11-06",
         });
-        expect(deps.touchToken).toHaveBeenCalledWith("tok-1", NOW.toISOString());
+        expect(deps.touchToken).toHaveBeenCalledWith(
+            "tok-1",
+            NOW.toISOString(),
+        );
     });
 
     it("accepts the generic Android-style body (number amount, occurred_at)", async () => {
         const deps = makeDeps();
         const res = await handleCapture(
             deps,
-            req({ amount: 4.99, currency: "usd", merchant: "Steam", occurred_at: "2026-11-05T03:30:00Z", source: "android" }),
+            req({
+                amount: 4.99,
+                currency: "usd",
+                merchant: "Steam",
+                occurred_at: "2026-11-05T03:30:00Z",
+                source: "android",
+            }),
         );
         expect(res.status).toBe(201);
         expect(vi.mocked(deps.insertItem).mock.calls[0][0]).toMatchObject({
@@ -161,11 +226,25 @@ describe("handleCapture", () => {
     });
 
     it("503s before the migration and 500s on other errors", async () => {
-        const missing = makeDeps({ findToken: vi.fn(async () => { throw { code: "42P01" }; }) });
-        expect(await handleCapture(missing, req(valid))).toEqual({ status: 503, body: { error: "not_ready" } });
+        const missing = makeDeps({
+            findToken: vi.fn(async () => {
+                throw { code: "42P01" };
+            }),
+        });
+        expect(await handleCapture(missing, req(valid))).toEqual({
+            status: 503,
+            body: { error: "not_ready" },
+        });
         const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-        const broken = makeDeps({ insertItem: vi.fn(async () => { throw new Error("boom"); }) });
-        expect(await handleCapture(broken, req(valid))).toEqual({ status: 500, body: { error: "server_error" } });
+        const broken = makeDeps({
+            insertItem: vi.fn(async () => {
+                throw new Error("boom");
+            }),
+        });
+        expect(await handleCapture(broken, req(valid))).toEqual({
+            status: 500,
+            body: { error: "server_error" },
+        });
         expect(JSON.stringify(spy.mock.calls)).not.toContain(token);
         spy.mockRestore();
     });
@@ -177,7 +256,9 @@ describe("resolveCapturedAt", () => {
         expect(resolveCapturedAt("garbage", NOW)).toBe(NOW);
         expect(resolveCapturedAt("2026-10-01T00:00:00Z", NOW)).toBe(NOW);
         expect(resolveCapturedAt("2026-11-05T05:00:00Z", NOW)).toBe(NOW);
-        expect(resolveCapturedAt("2026-11-05T04:05:00Z", NOW).toISOString()).toBe("2026-11-05T04:05:00.000Z");
+        expect(
+            resolveCapturedAt("2026-11-05T04:05:00Z", NOW).toISOString(),
+        ).toBe("2026-11-05T04:05:00.000Z");
     });
 });
 
@@ -185,11 +266,23 @@ describe("createSupabaseCaptureDeps", () => {
     it("exposes only the scoped methods and touches only capture tables", async () => {
         const tables: string[] = [];
         const builder: Record<string, unknown> = {};
-        for (const m of ["select", "eq", "is", "gte", "lte", "limit", "upsert", "update", "maybeSingle"]) {
+        for (const m of [
+            "select",
+            "eq",
+            "is",
+            "gte",
+            "lte",
+            "limit",
+            "upsert",
+            "update",
+            "maybeSingle",
+        ]) {
             builder[m] = () => builder;
         }
         builder.then = (resolve: (v: unknown) => unknown) =>
-            Promise.resolve({ data: null, error: null, count: 0 }).then(resolve);
+            Promise.resolve({ data: null, error: null, count: 0 }).then(
+                resolve,
+            );
         const client = {
             from: (t: string) => {
                 tables.push(t);
@@ -215,11 +308,24 @@ describe("createSupabaseCaptureDeps", () => {
         await deps.findToken("x");
         await deps.countRecentByToken("t", "s");
         await deps.findRule("h", "k");
-        await deps.findLikelyDuplicate({ memberId: "m", amount: 1, currency: "SGD", dateFrom: "a", dateTo: "b" });
+        await deps.findLikelyDuplicate({
+            memberId: "m",
+            amount: 1,
+            currency: "SGD",
+            dateFrom: "a",
+            dateTo: "b",
+        });
         await deps.insertItem({} as never);
         await deps.findByIdempotencyKey("m", "k");
         await deps.countPending("h");
         await deps.touchToken("t", "n");
-        expect(new Set(tables)).toEqual(new Set(["capture_tokens", "inbox_items", "merchant_rules", "expenses"]));
+        expect(new Set(tables)).toEqual(
+            new Set([
+                "capture_tokens",
+                "inbox_items",
+                "merchant_rules",
+                "expenses",
+            ]),
+        );
     });
 });

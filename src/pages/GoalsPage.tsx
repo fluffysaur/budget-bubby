@@ -81,11 +81,15 @@ export function GoalsPage({
     const isLoading = goalsLoading && !goalsData;
     const errorMessage = goalsError ? (goalsError as Error).message : null;
     const [activeTab, setActiveTab] = useState<GoalFilterTab>("all");
-    const [highlightedGoalId, setHighlightedGoalId] = useState<string | null>(null);
+    const [highlightedGoalId, setHighlightedGoalId] = useState<string | null>(
+        null,
+    );
 
     const processedGoalIdRef = useRef<string | null>(null);
     const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null,
+    );
 
     // Modal states
     const [isAddEditOpen, setIsAddEditOpen] = useState<boolean>(false);
@@ -234,7 +238,9 @@ export function GoalsPage({
             clearTimeout(highlightTimerRef.current);
         }
         highlightTimerRef.current = setTimeout(() => {
-            setHighlightedGoalId((curr) => (curr === targetGoalId ? null : curr));
+            setHighlightedGoalId((curr) =>
+                curr === targetGoalId ? null : curr,
+            );
             highlightTimerRef.current = null;
         }, 3000);
     }, [
@@ -304,7 +310,9 @@ export function GoalsPage({
     };
 
     return (
-        <div className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}>
+        <div
+            className={`space-y-5 ${!embedded ? "pb-20 md:pb-12" : ""} ${className}`.trim()}
+        >
             {/* Page Header (Compact if embedded) */}
             {!embedded ? (
                 <PageHeader
@@ -314,7 +322,9 @@ export function GoalsPage({
                             variant="primary"
                             aria-label="+ New Goal"
                             className="w-full sm:w-auto"
-                            leftIcon={<Plus className="h-4 w-4" strokeWidth={2.5} />}
+                            leftIcon={
+                                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                            }
                             onClick={handleOpenCreateModal}
                         >
                             New Goal
@@ -328,7 +338,9 @@ export function GoalsPage({
                         size="sm"
                         aria-label="+ New Goal"
                         className="w-full sm:w-auto"
-                        leftIcon={<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                        leftIcon={
+                            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        }
                         onClick={handleOpenCreateModal}
                     >
                         New Goal
@@ -459,11 +471,15 @@ export function GoalsPage({
                             <m.div key={goal.id} {...listItem}>
                                 <GoalCard
                                     goal={goal}
-                                    linkedExpenses={goalExpensesMap.get(goal.id) || []}
+                                    linkedExpenses={
+                                        goalExpensesMap.get(goal.id) || []
+                                    }
                                     onEdit={handleOpenEditModal}
                                     onQuickDeposit={handleOpenDepositModal}
                                     onSpendFromGoal={handleOpenSpendModal}
-                                    isHighlighted={highlightedGoalId === goal.id}
+                                    isHighlighted={
+                                        highlightedGoalId === goal.id
+                                    }
                                 />
                             </m.div>
                         ))}

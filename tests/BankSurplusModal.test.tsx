@@ -1,9 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { BankSurplusModal } from '../src/components/budget/BankSurplusModal';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { BankSurplusModal } from "../src/components/budget/BankSurplusModal";
 
-describe('BankSurplusModal', () => {
-    it('renders modal with title, amount, and reserve cushion explanation', () => {
+describe("BankSurplusModal", () => {
+    it("renders modal with title, amount, and reserve cushion explanation", () => {
         render(
             <BankSurplusModal
                 isOpen={true}
@@ -11,15 +11,17 @@ describe('BankSurplusModal', () => {
                 surplusAmount={1200}
                 month="2026-09"
                 onConfirm={vi.fn()}
-            />
+            />,
         );
 
-        expect(screen.getByRole('heading', { name: /bank surplus/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: /bank surplus/i }),
+        ).toBeInTheDocument();
         expect(screen.getByText(/Reserve Cushion/i)).toBeInTheDocument();
         expect(screen.getByText(/Destination:/i)).toBeInTheDocument();
     });
 
-    it('calls onConfirm when confirming and close', () => {
+    it("calls onConfirm when confirming and close", () => {
         const handleConfirm = vi.fn();
         const handleClose = vi.fn();
 
@@ -30,10 +32,12 @@ describe('BankSurplusModal', () => {
                 surplusAmount={1200}
                 month="2026-09"
                 onConfirm={handleConfirm}
-            />
+            />,
         );
 
-        const confirmBtn = screen.getByRole('button', { name: /^bank surplus$/i });
+        const confirmBtn = screen.getByRole("button", {
+            name: /^bank surplus$/i,
+        });
         fireEvent.click(confirmBtn);
 
         expect(handleConfirm).toHaveBeenCalledTimes(1);

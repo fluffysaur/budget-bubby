@@ -154,7 +154,9 @@ export function ExpenseRowsSkeleton({
     );
 }
 
-export function RecurringContentSkeleton({ className = "" }: PageSkeletonProps) {
+export function RecurringContentSkeleton({
+    className = "",
+}: PageSkeletonProps) {
     return (
         <SkeletonGroup
             label="Loading policies"

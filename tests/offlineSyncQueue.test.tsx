@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    act,
+    cleanup,
+} from "@testing-library/react";
 import {
     offlineSyncQueue,
     getPendingSyncCount,
@@ -23,7 +30,9 @@ import type { CreateExpenseInput, Expense } from "../src/types/finance";
 const SAMPLE_PAYER_ID = "00000000-0000-4000-8000-000000000011";
 const SAMPLE_CATEGORY_ID = "00000000-0000-4000-8000-000000000101";
 
-function makeExpenseInput(overrides: Partial<CreateExpenseInput> = {}): CreateExpenseInput {
+function makeExpenseInput(
+    overrides: Partial<CreateExpenseInput> = {},
+): CreateExpenseInput {
     return {
         household_id: "00000000-0000-4000-8000-000000000001",
         payer_id: SAMPLE_PAYER_ID,
@@ -137,17 +146,22 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
                     ...input,
                     id: input.id!,
                 })),
-                updateExpense: vi.fn(async (id: string, updates: Partial<Expense>) => ({
-                    ...created,
-                    ...updates,
-                    id,
-                })),
+                updateExpense: vi.fn(
+                    async (id: string, updates: Partial<Expense>) => ({
+                        ...created,
+                        ...updates,
+                        id,
+                    }),
+                ),
             };
 
             const res = await flushOutbox(fakeBackend);
             expect(res).toEqual({ processed: 2, errors: 0 });
             expect(fakeBackend.addExpense).toHaveBeenCalledWith(
-                expect.objectContaining({ id: created.id, item: "Chicken Rice" }),
+                expect.objectContaining({
+                    id: created.id,
+                    item: "Chicken Rice",
+                }),
             );
             expect(fakeBackend.updateExpense).toHaveBeenCalledWith(created.id, {
                 amount: 6.0,
@@ -184,9 +198,10 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
 
     describe("3. Offline edits of server rows in Supabase mode (H5)", () => {
         it("queues updateExpense for a server row without calling mockFinanceService and patches TanStack Query cache", async () => {
-            vi.spyOn(supabaseClientModule, "isSupabaseConfigured").mockReturnValue(
-                true,
-            );
+            vi.spyOn(
+                supabaseClientModule,
+                "isSupabaseConfigured",
+            ).mockReturnValue(true);
             setNetworkOverride(false);
 
             const serverExpense: Expense = {
@@ -206,12 +221,18 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
                 ["finance", "expenses", { month: "2026-11" }],
                 [serverExpense],
             );
-            queryClient.setQueryData(["finance", "all-expenses"], [serverExpense]);
+            queryClient.setQueryData(
+                ["finance", "all-expenses"],
+                [serverExpense],
+            );
 
-            const updated = await financeService.updateExpense(serverExpense.id, {
-                item: "Server MRT Ride (Edited Offline)",
-                amount: 2.4,
-            });
+            const updated = await financeService.updateExpense(
+                serverExpense.id,
+                {
+                    item: "Server MRT Ride (Edited Offline)",
+                    amount: 2.4,
+                },
+            );
 
             expect(updated.id).toBe(serverExpense.id);
             expect(updated.item).toBe("Server MRT Ride (Edited Offline)");
@@ -222,7 +243,9 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
                 "expenses",
                 { month: "2026-11" },
             ]);
-            expect(cachedMonth?.[0].item).toBe("Server MRT Ride (Edited Offline)");
+            expect(cachedMonth?.[0].item).toBe(
+                "Server MRT Ride (Edited Offline)",
+            );
             expect(cachedMonth?.[0].amount).toBe(2.4);
 
             const cachedAll = queryClient.getQueryData<Expense[]>([
@@ -236,13 +259,14 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
 
     describe("4. Only network errors queue (H5)", () => {
         it("rethrows non-network backend errors and does not enqueue in addExpense, updateExpense, deleteExpense, bulkAddExpenses", async () => {
-            vi.spyOn(supabaseClientModule, "isSupabaseConfigured").mockReturnValue(
-                true,
-            );
+            vi.spyOn(
+                supabaseClientModule,
+                "isSupabaseConfigured",
+            ).mockReturnValue(true);
             setNetworkOverride(true);
 
             const rlsError = new Error(
-                "new row violates row-level security policy for table \"expenses\"",
+                'new row violates row-level security policy for table "expenses"',
             );
             vi.spyOn(supabaseFinanceService, "addExpense").mockRejectedValue(
                 rlsError,
@@ -253,9 +277,10 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
             vi.spyOn(supabaseFinanceService, "deleteExpense").mockRejectedValue(
                 rlsError,
             );
-            vi.spyOn(supabaseFinanceService, "bulkAddExpenses").mockRejectedValue(
-                rlsError,
-            );
+            vi.spyOn(
+                supabaseFinanceService,
+                "bulkAddExpenses",
+            ).mockRejectedValue(rlsError);
 
             await expect(
                 offlineSyncQueue.addExpense(makeExpenseInput()),
@@ -301,7 +326,10 @@ describe("PR #2 fix/offline-queue — Offline Sync Queue & Banner", () => {
             // Also verify startup flush via flushIfOnline()
             setNetworkOverride(false);
             await offlineSyncQueue.addExpense(
-                makeExpenseInput({ item: "Queued Before Cold Start", amount: 14 }),
+                makeExpenseInput({
+                    item: "Queued Before Cold Start",
+                    amount: 14,
+                }),
             );
             expect(getPendingSyncCount()).toBe(1);
 

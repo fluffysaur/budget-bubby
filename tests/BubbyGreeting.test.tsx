@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, act, fireEvent, waitFor } from "@testing-library/react";
+import {
+    render,
+    screen,
+    act,
+    fireEvent,
+    waitFor,
+} from "@testing-library/react";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { BubbyGreeting } from "../src/components/bubby/BubbyGreeting";
 import { financeService } from "../src/services/financeService";
@@ -50,7 +56,9 @@ describe("BubbyGreeting", () => {
     it("is suppressed within 4h of the last greeting", async () => {
         writeBubbyStore({ lastGreetingAt: Date.now() - 60 * 60 * 1000 });
         await renderGreeting();
-        await waitFor(() => expect(financeService.getDailyCheckins).toHaveBeenCalled());
+        await waitFor(() =>
+            expect(financeService.getDailyCheckins).toHaveBeenCalled(),
+        );
         await act(async () => {
             await new Promise((r) => setTimeout(r, 300));
         });
@@ -69,13 +77,28 @@ describe("pickGreeting", () => {
     };
 
     it("picks lines in priority order", () => {
-        expect(pickGreeting({ ...base, inboxPending: 3 }).text).toBe("3 to sort");
-        expect(pickGreeting({ ...base, mood: "rumbly" }).text).toBe("Snack time? 🍤");
-        expect(pickGreeting({ ...base, mood: "missyou" }).text).toBe("Over here! 🐧");
-        expect(pickGreeting({ ...base, loggedToday: false, minutes: 19 * 60 }).text).toBe("Log today?");
-        expect(pickGreeting({ ...base, minutes: 8 * 60 }).text).toBe("Morning! ☕");
-        expect(pickGreeting({ ...base, minutes: 12 * 60 }).text).toBe("Makan time?");
-        expect(pickGreeting({ ...base, bothFedToday: true }).text).toBe("Both fed ✓");
+        expect(pickGreeting({ ...base, inboxPending: 3 }).text).toBe(
+            "3 to sort",
+        );
+        expect(pickGreeting({ ...base, mood: "rumbly" }).text).toBe(
+            "Snack time? 🍤",
+        );
+        expect(pickGreeting({ ...base, mood: "missyou" }).text).toBe(
+            "Over here! 🐧",
+        );
+        expect(
+            pickGreeting({ ...base, loggedToday: false, minutes: 19 * 60 })
+                .text,
+        ).toBe("Log today?");
+        expect(pickGreeting({ ...base, minutes: 8 * 60 }).text).toBe(
+            "Morning! ☕",
+        );
+        expect(pickGreeting({ ...base, minutes: 12 * 60 }).text).toBe(
+            "Makan time?",
+        );
+        expect(pickGreeting({ ...base, bothFedToday: true }).text).toBe(
+            "Both fed ✓",
+        );
         expect(pickGreeting(base).text).toBe("Hi again!");
     });
 });

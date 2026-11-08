@@ -3,7 +3,8 @@
  * "Food is S$80.00 over". Matches the innermost element whose full text
  * content (including child elements) matches, instead of only its own text nodes.
  */
-const normalize = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
+const normalize = (s: string | null | undefined) =>
+    (s ?? "").replace(/\s+/g, " ").trim();
 
 export function withText(pattern: RegExp) {
     return (_content: string, element: Element | null): boolean => {

@@ -10,7 +10,8 @@
 export const BUBBY_STORAGE_KEY = "bb_bubby_v2";
 
 /** Local exercise records: SGT dates the action happened on this device. */
-export type LocalExerciseKind = "inbox-clear" | "balances" | "goal-add" | "month-end" | "recap-read";
+export type LocalExerciseKind =
+    "inbox-clear" | "balances" | "goal-add" | "month-end" | "recap-read";
 
 export interface SnackEntry {
     id: string;
@@ -50,7 +51,9 @@ export function readBubbyStore(): BubbyStore {
         const raw = window.localStorage.getItem(BUBBY_STORAGE_KEY);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === "object" ? (parsed as BubbyStore) : {};
+        return parsed && typeof parsed === "object"
+            ? (parsed as BubbyStore)
+            : {};
     } catch {
         return {};
     }
@@ -95,13 +98,19 @@ export function markCelebrated(key: string): void {
 
 export function addLocalExercise(kind: LocalExerciseKind, date: string): void {
     updateBubbyStore((prev) => ({
-        exercise: { ...(prev.exercise ?? {}), [kind]: addDay(prev.exercise?.[kind], date) },
+        exercise: {
+            ...(prev.exercise ?? {}),
+            [kind]: addDay(prev.exercise?.[kind], date),
+        },
     }));
 }
 
 export function addPetDay(memberId: string, date: string): void {
     updateBubbyStore((prev) => ({
-        petDays: { ...(prev.petDays ?? {}), [memberId]: addDay(prev.petDays?.[memberId], date) },
+        petDays: {
+            ...(prev.petDays ?? {}),
+            [memberId]: addDay(prev.petDays?.[memberId], date),
+        },
     }));
 }
 

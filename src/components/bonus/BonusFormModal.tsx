@@ -80,7 +80,9 @@ export interface BonusFormModalProps {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const EMPTY_GOALS: SavingsGoal[] = [];
 
-function splitToPercentInputs(split: readonly BonusSplitShare[]): Record<BonusSplitKey, string> {
+function splitToPercentInputs(
+    split: readonly BonusSplitShare[],
+): Record<BonusSplitKey, string> {
     const out = {} as Record<BonusSplitKey, string>;
     for (const key of BONUS_SPLIT_KEYS) {
         const pct = split.find((s) => s.key === key)?.pct ?? 0;
@@ -136,15 +138,23 @@ export function BonusFormModal({
     const [cpfAuto, setCpfAuto] = useState<boolean>(true);
     const [note, setNote] = useState<string>("");
 
-    const [pctInputs, setPctInputs] = useState<Record<BonusSplitKey, string>>(() =>
-        splitToPercentInputs(cloneDefaultSplit()),
+    const [pctInputs, setPctInputs] = useState<Record<BonusSplitKey, string>>(
+        () => splitToPercentInputs(cloneDefaultSplit()),
     );
-    const [lockedBuckets, setLockedBuckets] = useState<Record<string, boolean>>({});
+    const [lockedBuckets, setLockedBuckets] = useState<Record<string, boolean>>(
+        {},
+    );
     const [splitTouched, setSplitTouched] = useState<boolean>(false);
 
-    const [selectedGoalIds, setSelectedGoalIds] = useState<Set<string>>(new Set());
-    const [goalPreset, setGoalPreset] = useState<GoalDistributionMode | null>(null);
-    const [manualAmounts, setManualAmounts] = useState<Record<string, string>>({});
+    const [selectedGoalIds, setSelectedGoalIds] = useState<Set<string>>(
+        new Set(),
+    );
+    const [goalPreset, setGoalPreset] = useState<GoalDistributionMode | null>(
+        null,
+    );
+    const [manualAmounts, setManualAmounts] = useState<Record<string, string>>(
+        {},
+    );
     const [goalsInitialized, setGoalsInitialized] = useState<boolean>(false);
 
     const [saveAsDefault, setSaveAsDefault] = useState<boolean>(false);
@@ -173,14 +183,21 @@ export function BonusFormModal({
             setNote(editingEvent.note ?? "");
             setPctInputs(
                 splitToPercentInputs(
-                    editingEvent.split.length > 0 ? editingEvent.split : cloneDefaultSplit(),
+                    editingEvent.split.length > 0
+                        ? editingEvent.split
+                        : cloneDefaultSplit(),
                 ),
             );
             setSplitTouched(true);
-            setSelectedGoalIds(new Set(editingEvent.goal_contributions.map((c) => c.goal_id)));
+            setSelectedGoalIds(
+                new Set(editingEvent.goal_contributions.map((c) => c.goal_id)),
+            );
             setManualAmounts(
                 Object.fromEntries(
-                    editingEvent.goal_contributions.map((c) => [c.goal_id, String(c.amount)]),
+                    editingEvent.goal_contributions.map((c) => [
+                        c.goal_id,
+                        String(c.amount),
+                    ]),
                 ),
             );
             setGoalPreset(null);
@@ -212,24 +229,29 @@ export function BonusFormModal({
     const recipient = members.find((m) => m.id === recipientId);
     const recipientName = recipient?.display_name ?? "Recipient";
     const cpfRate =
-        Number(baseProfiles.find((p) => p.owner_id === recipientId)?.cpf_employee_rate) ||
-        DEFAULT_BONUS_CPF_RATE;
+        Number(
+            baseProfiles.find((p) => p.owner_id === recipientId)
+                ?.cpf_employee_rate,
+        ) || DEFAULT_BONUS_CPF_RATE;
 
     const gross = Math.max(0, parseFloat(grossInput) || 0);
-    const cpf = cpfAuto ? defaultBonusCpf(gross, cpfRate) : Math.max(0, parseFloat(cpfInput) || 0);
+    const cpf = cpfAuto
+        ? defaultBonusCpf(gross, cpfRate)
+        : Math.max(0, parseFloat(cpfInput) || 0);
     const net = round2(gross - cpf);
 
-    const detailsError =
-        !recipientId
-            ? "Pick a recipient."
-            : !receivedOn
-              ? "Pick the date received."
-              : gross <= 0
-                ? null
-                : cpf > gross
-                  ? "CPF can't exceed gross."
-                  : null;
-    const detailsValid = Boolean(recipientId && receivedOn && gross > 0 && cpf <= gross);
+    const detailsError = !recipientId
+        ? "Pick a recipient."
+        : !receivedOn
+          ? "Pick the date received."
+          : gross <= 0
+            ? null
+            : cpf > gross
+              ? "CPF can't exceed gross."
+              : null;
+    const detailsValid = Boolean(
+        recipientId && receivedOn && gross > 0 && cpf <= gross,
+    );
 
     const splitShares = useMemo<BonusSplitShare[]>(
         () =>
@@ -241,18 +263,25 @@ export function BonusFormModal({
     );
     const pctTotal = round2(splitShares.reduce((s, x) => s + x.pct * 100, 0));
     const splitValid = Math.abs(pctTotal - 100) < 0.01;
-    const computedSplit = useMemo(() => computeBonusSplit(net, splitShares), [net, splitShares]);
+    const computedSplit = useMemo(
+        () => computeBonusSplit(net, splitShares),
+        [net, splitShares],
+    );
     const goalShare = getSplitAmount(computedSplit, "goals");
 
     // Recipient's goals first, then joint goals. Goals already funded by this
     // bonus stay listed even if they are now achieved.
     const eligibleGoals = useMemo(() => {
-        const fundedIds = new Set(editingEvent?.goal_contributions.map((c) => c.goal_id) ?? []);
+        const fundedIds = new Set(
+            editingEvent?.goal_contributions.map((c) => c.goal_id) ?? [],
+        );
         const list = (goals ?? EMPTY_GOALS).filter(
             (g) =>
                 fundedIds.has(g.id) ||
                 (isGoalFundable(g) &&
-                    (!g.owner_id || g.owner_id === "joint" || g.owner_id === recipientId)),
+                    (!g.owner_id ||
+                        g.owner_id === "joint" ||
+                        g.owner_id === recipientId)),
         );
         return [...list].sort((a, b) => {
             const aOwn = a.owner_id === recipientId ? 0 : 1;
@@ -277,7 +306,10 @@ export function BonusFormModal({
             return Object.fromEntries(dist.map((c) => [c.goal_id, c.amount]));
         }
         return Object.fromEntries(
-            Object.entries(manualAmounts).map(([id, v]) => [id, Math.max(0, parseFloat(v) || 0)]),
+            Object.entries(manualAmounts).map(([id, v]) => [
+                id,
+                Math.max(0, parseFloat(v) || 0),
+            ]),
         );
     }, [goalPreset, goalShare, selectedGoals, manualAmounts]);
 
@@ -289,7 +321,9 @@ export function BonusFormModal({
         ? getSplitAmount(
               computeBonusSplit(
                   editingEvent.net,
-                  editingEvent.split.length > 0 ? editingEvent.split : cloneDefaultSplit(),
+                  editingEvent.split.length > 0
+                      ? editingEvent.split
+                      : cloneDefaultSplit(),
               ),
               "goals",
           )
@@ -339,11 +373,16 @@ export function BonusFormModal({
             setPctInputs(next);
             return;
         }
-        setPctInputs({ ...(balanced.updatedPercentages as Record<BonusSplitKey, string>), [key]: raw });
+        setPctInputs({
+            ...(balanced.updatedPercentages as Record<BonusSplitKey, string>),
+            [key]: raw,
+        });
     };
 
     const handleResetSplit = () => {
-        setPctInputs(splitToPercentInputs(splitDefaultData ?? cloneDefaultSplit()));
+        setPctInputs(
+            splitToPercentInputs(splitDefaultData ?? cloneDefaultSplit()),
+        );
         setLockedBuckets({});
     };
 
@@ -368,7 +407,10 @@ export function BonusFormModal({
         setManualAmounts((prev) => {
             const base = goalPreset
                 ? Object.fromEntries(
-                      Object.entries(goalAmounts).map(([id, amt]) => [id, String(amt)]),
+                      Object.entries(goalAmounts).map(([id, amt]) => [
+                          id,
+                          String(amt),
+                      ]),
                   )
                 : prev;
             return { ...base, [goalId]: value };
@@ -393,7 +435,10 @@ export function BonusFormModal({
         if (!canSave) return;
 
         const contributions = selectedGoals
-            .map((g) => ({ goal_id: g.id, amount: round2(goalAmounts[g.id] || 0) }))
+            .map((g) => ({
+                goal_id: g.id,
+                amount: round2(goalAmounts[g.id] || 0),
+            }))
             .filter((c) => c.amount > 0);
 
         try {
@@ -411,34 +456,53 @@ export function BonusFormModal({
                 goal_contributions: contributions,
             });
             if (saveAsDefault && canSaveDefault) {
-                await financeService.saveBonusSplitDefault(recipientId, splitShares);
+                await financeService.saveBonusSplitDefault(
+                    recipientId,
+                    splitShares,
+                );
             }
 
             const previous = new Map(
-                editingEvent?.goal_contributions.map((c) => [c.goal_id, c.amount]) ?? [],
+                editingEvent?.goal_contributions.map((c) => [
+                    c.goal_id,
+                    c.amount,
+                ]) ?? [],
             );
             const reached = contributions.find((c) => {
                 const g = goals.find((x) => x.id === c.goal_id);
                 if (!g || g.saved_so_far >= g.target_amount) return false;
-                return g.saved_so_far - (previous.get(c.goal_id) ?? 0) + c.amount >= g.target_amount;
+                return (
+                    g.saved_so_far -
+                        (previous.get(c.goal_id) ?? 0) +
+                        c.amount >=
+                    g.target_amount
+                );
             });
             onSaved?.({
                 event: saved,
                 created: !isEdit,
-                goalTotal: round2(contributions.reduce((s, c) => s + c.amount, 0)),
+                goalTotal: round2(
+                    contributions.reduce((s, c) => s + c.amount, 0),
+                ),
                 reachedGoalTitle: reached
-                    ? (goals.find((g) => g.id === reached.goal_id)?.title ?? null)
+                    ? (goals.find((g) => g.id === reached.goal_id)?.title ??
+                      null)
                     : null,
             });
             onClose();
         } catch (err: unknown) {
-            setErrorMessage(err instanceof Error ? err.message : "Failed to save bonus.");
+            setErrorMessage(
+                err instanceof Error ? err.message : "Failed to save bonus.",
+            );
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const memberOptions = members.map((m) => ({ value: m.id, label: m.display_name }));
+    const memberOptions = members.map((m) => ({
+        value: m.id,
+        label: m.display_name,
+    }));
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
@@ -450,7 +514,9 @@ export function BonusFormModal({
                 <ModalHeader
                     id="bonus-form-title"
                     title={isEdit ? "Edit Bonus" : "Log Bonus"}
-                    icon={<Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />}
+                    icon={
+                        <Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    }
                     iconBgColor="bg-(--pastel-lilac-light)"
                     onClose={onClose}
                 />
@@ -469,7 +535,9 @@ export function BonusFormModal({
                         }}
                     />
 
-                    {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
+                    {errorMessage && (
+                        <Alert variant="danger">{errorMessage}</Alert>
+                    )}
                     {!online && (
                         <Alert variant="warning" title="You're offline">
                             Reconnect to save bonuses.
@@ -482,7 +550,9 @@ export function BonusFormModal({
                                 label="Recipient"
                                 id="bonus-recipient"
                                 value={recipientId}
-                                onChange={(e) => handleRecipientChange(e.target.value)}
+                                onChange={(e) =>
+                                    handleRecipientChange(e.target.value)
+                                }
                                 options={memberOptions}
                             />
 
@@ -490,13 +560,21 @@ export function BonusFormModal({
                                 <span className="block text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                                     Type
                                 </span>
-                                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Type">
+                                <div
+                                    className="flex flex-wrap gap-1.5"
+                                    role="group"
+                                    aria-label="Type"
+                                >
                                     {BONUS_TYPES.map((t) => (
                                         <Button
                                             key={t}
                                             type="button"
                                             size="sm"
-                                            variant={type === t ? "secondary" : "outline"}
+                                            variant={
+                                                type === t
+                                                    ? "secondary"
+                                                    : "outline"
+                                            }
                                             aria-pressed={type === t}
                                             onClick={() => setType(t)}
                                         >
@@ -512,14 +590,18 @@ export function BonusFormModal({
                                     id="bonus-received"
                                     type="date"
                                     value={receivedOn}
-                                    onChange={(e) => setReceivedOn(e.target.value)}
+                                    onChange={(e) =>
+                                        setReceivedOn(e.target.value)
+                                    }
                                 />
                                 <div className="flex gap-1.5">
                                     <Button
                                         type="button"
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => setReceivedOn(getTodayDateString())}
+                                        onClick={() =>
+                                            setReceivedOn(getTodayDateString())
+                                        }
                                     >
                                         Today
                                     </Button>
@@ -527,7 +609,9 @@ export function BonusFormModal({
                                         type="button"
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => setReceivedOn(lastMonthDate())}
+                                        onClick={() =>
+                                            setReceivedOn(lastMonthDate())
+                                        }
                                     >
                                         Last month
                                     </Button>
@@ -542,7 +626,9 @@ export function BonusFormModal({
                                     mono
                                     placeholder="0.00"
                                     value={grossInput}
-                                    onChange={(e) => setGrossInput(e.target.value)}
+                                    onChange={(e) =>
+                                        setGrossInput(e.target.value)
+                                    }
                                 />
                                 <div className="space-y-1.5">
                                     <Input
@@ -550,7 +636,13 @@ export function BonusFormModal({
                                         id="bonus-cpf"
                                         inputMode="decimal"
                                         mono
-                                        value={cpfAuto ? (gross > 0 ? String(cpf) : "") : cpfInput}
+                                        value={
+                                            cpfAuto
+                                                ? gross > 0
+                                                    ? String(cpf)
+                                                    : ""
+                                                : cpfInput
+                                        }
                                         placeholder="0.00"
                                         onChange={(e) => {
                                             setCpfAuto(false);
@@ -569,7 +661,9 @@ export function BonusFormModal({
                                             type="button"
                                             size="sm"
                                             variant="ghost"
-                                            leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+                                            leftIcon={
+                                                <RotateCcw className="h-3.5 w-3.5" />
+                                            }
                                             onClick={() => setCpfAuto(true)}
                                         >
                                             Reset
@@ -598,7 +692,9 @@ export function BonusFormModal({
                                 onChange={(e) => setNote(e.target.value)}
                             />
 
-                            {detailsError && <Alert variant="danger">{detailsError}</Alert>}
+                            {detailsError && (
+                                <Alert variant="danger">{detailsError}</Alert>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -610,7 +706,9 @@ export function BonusFormModal({
                                     type="button"
                                     size="sm"
                                     variant="ghost"
-                                    leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+                                    leftIcon={
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                    }
                                     onClick={handleResetSplit}
                                 >
                                     Reset
@@ -619,7 +717,9 @@ export function BonusFormModal({
 
                             <div className="divide-y divide-(--border-subtle)">
                                 {BONUS_SPLIT_BUCKETS.map((bucket) => {
-                                    const locked = Boolean(lockedBuckets[bucket.key]);
+                                    const locked = Boolean(
+                                        lockedBuckets[bucket.key],
+                                    );
                                     return (
                                         <div
                                             key={bucket.key}
@@ -628,10 +728,15 @@ export function BonusFormModal({
                                         >
                                             <span
                                                 className="h-2.5 w-2.5 shrink-0 rounded-full"
-                                                style={{ backgroundColor: bucket.color }}
+                                                style={{
+                                                    backgroundColor:
+                                                        bucket.color,
+                                                }}
                                             />
                                             <div className="min-w-0 flex-1 text-sm font-bold text-(--text-ink)">
-                                                <TruncatedText text={bucket.label} />
+                                                <TruncatedText
+                                                    text={bucket.label}
+                                                />
                                             </div>
                                             <div className="w-20 shrink-0">
                                                 <Input
@@ -639,12 +744,19 @@ export function BonusFormModal({
                                                     aria-label={`${bucket.label} %`}
                                                     inputMode="decimal"
                                                     mono
-                                                    value={pctInputs[bucket.key]}
+                                                    value={
+                                                        pctInputs[bucket.key]
+                                                    }
                                                     onChange={(e) =>
-                                                        handlePctChange(bucket.key, e.target.value)
+                                                        handlePctChange(
+                                                            bucket.key,
+                                                            e.target.value,
+                                                        )
                                                     }
                                                     rightElement={
-                                                        <span className="text-xs text-(--text-muted)">%</span>
+                                                        <span className="text-xs text-(--text-muted)">
+                                                            %
+                                                        </span>
                                                     }
                                                 />
                                             </div>
@@ -655,10 +767,15 @@ export function BonusFormModal({
                                                 aria-label={`${locked ? "Unlock" : "Lock"} ${bucket.label}`}
                                                 aria-pressed={locked}
                                                 onClick={() =>
-                                                    setLockedBuckets((prev) => ({
-                                                        ...prev,
-                                                        [bucket.key]: !prev[bucket.key],
-                                                    }))
+                                                    setLockedBuckets(
+                                                        (prev) => ({
+                                                            ...prev,
+                                                            [bucket.key]:
+                                                                !prev[
+                                                                    bucket.key
+                                                                ],
+                                                        }),
+                                                    )
                                                 }
                                             >
                                                 {locked ? (
@@ -669,7 +786,10 @@ export function BonusFormModal({
                                             </Button>
                                             <span className="w-20 shrink-0 text-right font-mono-num text-sm font-bold text-(--text-ink)">
                                                 <CurrencyText
-                                                    amount={getSplitAmount(computedSplit, bucket.key)}
+                                                    amount={getSplitAmount(
+                                                        computedSplit,
+                                                        bucket.key,
+                                                    )}
                                                 />
                                             </span>
                                         </div>
@@ -678,7 +798,9 @@ export function BonusFormModal({
                             </div>
 
                             {!splitValid && (
-                                <Alert variant="danger">Split totals {pctTotal}%, not 100%.</Alert>
+                                <Alert variant="danger">
+                                    Split totals {pctTotal}%, not 100%.
+                                </Alert>
                             )}
 
                             <div className="space-y-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3">
@@ -691,7 +813,10 @@ export function BonusFormModal({
                                     </span>
                                 </div>
                                 {eligibleGoals.length === 0 ? (
-                                    <Alert variant="info" title="No active goals">
+                                    <Alert
+                                        variant="info"
+                                        title="No active goals"
+                                    >
                                         Goals share is recorded only.
                                     </Alert>
                                 ) : (
@@ -704,7 +829,9 @@ export function BonusFormModal({
                                                         type="button"
                                                         size="sm"
                                                         variant="outline"
-                                                        onClick={() => handlePreset("gap")}
+                                                        onClick={() =>
+                                                            handlePreset("gap")
+                                                        }
                                                     >
                                                         Rebalance
                                                     </Button>
@@ -717,11 +844,17 @@ export function BonusFormModal({
                                             goals={eligibleGoals}
                                             selectedIds={selectedGoalIds}
                                             amounts={goalAmounts}
-                                            amountInputs={goalPreset ? undefined : manualAmounts}
+                                            amountInputs={
+                                                goalPreset
+                                                    ? undefined
+                                                    : manualAmounts
+                                            }
                                             goalShare={goalShare}
                                             activePreset={goalPreset}
                                             onToggle={handleToggleGoal}
-                                            onAmountChange={handleGoalAmountChange}
+                                            onAmountChange={
+                                                handleGoalAmountChange
+                                            }
                                             onPreset={handlePreset}
                                         />
                                     </>
@@ -733,7 +866,9 @@ export function BonusFormModal({
                                     <input
                                         type="checkbox"
                                         checked={saveAsDefault}
-                                        onChange={(e) => setSaveAsDefault(e.target.checked)}
+                                        onChange={(e) =>
+                                            setSaveAsDefault(e.target.checked)
+                                        }
                                         className="h-4 w-4 cursor-pointer rounded-md border-(--border-ink) accent-(--text-ink)"
                                     />
                                     <span className="text-xs font-bold text-(--text-ink)">
@@ -748,16 +883,28 @@ export function BonusFormModal({
                 <ModalFooter>
                     {step === "details" ? (
                         <>
-                            <Button type="button" variant="ghost" onClick={onClose}>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={onClose}
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" variant="primary" disabled={!detailsValid}>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={!detailsValid}
+                            >
                                 Next
                             </Button>
                         </>
                     ) : (
                         <>
-                            <Button type="button" variant="ghost" onClick={() => setStep("details")}>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setStep("details")}
+                            >
                                 Back
                             </Button>
                             <Button

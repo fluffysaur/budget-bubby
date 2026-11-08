@@ -24,7 +24,10 @@ const FADE_MS = 150;
 
 function scheduleIdle(cb: () => void): () => void {
     const w = window as Window & {
-        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        requestIdleCallback?: (
+            cb: () => void,
+            opts?: { timeout: number },
+        ) => number;
         cancelIdleCallback?: (id: number) => void;
     };
     if (typeof w.requestIdleCallback === "function") {
@@ -41,7 +44,8 @@ export interface BubbyGreetingProps {
 }
 
 export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
-    const { isReady, mood, condition, me, members, minutes, checkinMinutes } = useBubby();
+    const { isReady, mood, condition, me, members, minutes, checkinMinutes } =
+        useBubby();
     const [line, setLine] = useState<GreetingLine | null>(null);
     const [leaving, setLeaving] = useState(false);
     const [wake, setWake] = useState(0);
@@ -52,7 +56,9 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
         inputsRef.current = {
             mood,
             loggedToday: Boolean(me && condition.fedToday.has(me.id)),
-            bothFedToday: members.length >= 2 && members.every((m) => condition.fedToday.has(m.id)),
+            bothFedToday:
+                members.length >= 2 &&
+                members.every((m) => condition.fedToday.has(m.id)),
             minutes,
             checkinMinutes,
         };
@@ -64,7 +70,8 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
             if (document.visibilityState === "visible") setWake((w) => w + 1);
         };
         document.addEventListener("visibilitychange", onVisible);
-        return () => document.removeEventListener("visibilitychange", onVisible);
+        return () =>
+            document.removeEventListener("visibilitychange", onVisible);
     }, []);
 
     useEffect(() => {
@@ -77,7 +84,11 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
         let removeTimer: number | undefined;
 
         const cancel = (e: Event) => {
-            if (bubbleRef.current && e.target instanceof Node && bubbleRef.current.contains(e.target)) {
+            if (
+                bubbleRef.current &&
+                e.target instanceof Node &&
+                bubbleRef.current.contains(e.target)
+            ) {
                 return;
             }
             cancelled = true;
@@ -91,7 +102,12 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
             // A stage-up or other milestone takes the slot instead
             if (feedback.hadRecentMilestone(3000)) return;
             setLeaving(false);
-            setLine(pickGreeting({ ...inputsRef.current, inboxPending: getInboxPending() }));
+            setLine(
+                pickGreeting({
+                    ...inputsRef.current,
+                    inboxPending: getInboxPending(),
+                }),
+            );
             emitAppEvent("bubby:react", { kind: "wave" });
             hideTimer = window.setTimeout(() => {
                 setLeaving(true);

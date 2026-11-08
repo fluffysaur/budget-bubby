@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    act,
+    waitFor,
+} from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useEffect, useState } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -351,21 +357,29 @@ describe("Layout Components", () => {
             expect(onSelectTab).toHaveBeenCalledWith("spend");
 
             // Desktop utility footer buttons
-            const settingsBtn = screen.getByRole("button", { name: /^settings$/i });
+            const settingsBtn = screen.getByRole("button", {
+                name: /^settings$/i,
+            });
             expect(settingsBtn).toBeInTheDocument();
             fireEvent.click(settingsBtn);
             expect(openSettingsSpy).toHaveBeenCalled();
             window.removeEventListener("openSettings", openSettingsSpy);
 
-            const refreshBtn = screen.getByRole("button", { name: /^refresh$/i });
+            const refreshBtn = screen.getByRole("button", {
+                name: /^refresh$/i,
+            });
             expect(refreshBtn).toBeInTheDocument();
 
-            const themeBtn = screen.getByRole("button", { name: /toggle theme/i });
+            const themeBtn = screen.getByRole("button", {
+                name: /toggle theme/i,
+            });
             expect(themeBtn).toBeInTheDocument();
             await act(async () => {
                 fireEvent.click(themeBtn);
             });
-            expect(document.documentElement.classList.contains("dark")).toBe(true);
+            expect(document.documentElement.classList.contains("dark")).toBe(
+                true,
+            );
         });
     });
 

@@ -26,7 +26,8 @@ import {
 } from "./inboxErrors";
 import { summarizeInbox, UNAVAILABLE_INBOX_SUMMARY } from "./inboxSummary";
 
-const TOKEN_COLUMNS = "id, member_id, label, token_hint, created_at, last_used_at, revoked_at";
+const TOKEN_COLUMNS =
+    "id, member_id, label, token_hint, created_at, last_used_at, revoked_at";
 const INBOX_LIMIT = 200;
 
 function rethrow(err: unknown): never {
@@ -35,7 +36,9 @@ function rethrow(err: unknown): never {
 }
 
 /** The RPC's expense payload. */
-export function toConfirmPayload(input: CreateExpenseInput): Record<string, unknown> {
+export function toConfirmPayload(
+    input: CreateExpenseInput,
+): Record<string, unknown> {
     return {
         payer_id: input.payer_id || null,
         category_id: input.category_id || null,
@@ -75,7 +78,9 @@ export class SupabaseInboxStore implements InboxService {
         return (member?.id as string | undefined) ?? null;
     }
 
-    public async getInboxItems(status: InboxItemStatus = "pending"): Promise<InboxItemsResult> {
+    public async getInboxItems(
+        status: InboxItemStatus = "pending",
+    ): Promise<InboxItemsResult> {
         const { data, error } = await this.getClient()
             .from("inbox_items")
             .select("*")
@@ -83,7 +88,8 @@ export class SupabaseInboxStore implements InboxService {
             .order("captured_at", { ascending: false })
             .limit(INBOX_LIMIT);
         if (error) {
-            if (isMissingRelationError(error)) return { available: false, items: [] };
+            if (isMissingRelationError(error))
+                return { available: false, items: [] };
             throw error;
         }
         const items = (data || []).map((row) => ({
@@ -113,22 +119,35 @@ export class SupabaseInboxStore implements InboxService {
         );
     }
 
-    public async confirmInboxItem(itemId: string, expense: CreateExpenseInput): Promise<string> {
-        const { data, error } = await this.getClient().rpc("confirm_inbox_item", {
-            p_item_id: itemId,
-            p_expense: toConfirmPayload(expense),
-        });
+    public async confirmInboxItem(
+        itemId: string,
+        expense: CreateExpenseInput,
+    ): Promise<string> {
+        const { data, error } = await this.getClient().rpc(
+            "confirm_inbox_item",
+            {
+                p_item_id: itemId,
+                p_expense: toConfirmPayload(expense),
+            },
+        );
         if (error) rethrow(error);
         return data as string;
     }
 
-    public async resolveInboxItem(itemId: string, status: InboxResolveStatus): Promise<void> {
-        const resolvedBy = status === "pending" ? null : await this.getOwnMemberId().catch(() => null);
+    public async resolveInboxItem(
+        itemId: string,
+        status: InboxResolveStatus,
+    ): Promise<void> {
+        const resolvedBy =
+            status === "pending"
+                ? null
+                : await this.getOwnMemberId().catch(() => null);
         const { error } = await this.getClient()
             .from("inbox_items")
             .update({
                 status,
-                resolved_at: status === "pending" ? null : new Date().toISOString(),
+                resolved_at:
+                    status === "pending" ? null : new Date().toISOString(),
                 resolved_by: resolvedBy,
             })
             .eq("id", itemId)
@@ -138,7 +157,9 @@ export class SupabaseInboxStore implements InboxService {
     }
 
     public async getMerchantRules(): Promise<MerchantRule[]> {
-        const { data, error } = await this.getClient().from("merchant_rules").select("*");
+        const { data, error } = await this.getClient()
+            .from("merchant_rules")
+            .select("*");
         if (error) {
             if (isMissingRelationError(error)) return [];
             throw error;
@@ -146,7 +167,9 @@ export class SupabaseInboxStore implements InboxService {
         return (data || []) as MerchantRule[];
     }
 
-    public async upsertMerchantRule(rule: UpsertMerchantRuleInput): Promise<MerchantRule> {
+    public async upsertMerchantRule(
+        rule: UpsertMerchantRuleInput,
+    ): Promise<MerchantRule> {
         const client = this.getClient();
         const householdId = await this.getHouseholdId();
         const { data: existing, error: readError } = await client
@@ -166,7 +189,8 @@ export class SupabaseInboxStore implements InboxService {
                     action: rule.action ?? "categorise",
                     category_id: rule.category_id ?? null,
                     is_shared: rule.is_shared ?? null,
-                    hit_count: (existing?.hit_count ?? 0) + (rule.hit_increment ?? 1),
+                    hit_count:
+                        (existing?.hit_count ?? 0) + (rule.hit_increment ?? 1),
                     updated_at: new Date().toISOString(),
                 },
                 { onConflict: "household_id,merchant_key" },
@@ -178,7 +202,10 @@ export class SupabaseInboxStore implements InboxService {
     }
 
     public async deleteMerchantRule(id: string): Promise<void> {
-        const { error } = await this.getClient().from("merchant_rules").delete().eq("id", id);
+        const { error } = await this.getClient()
+            .from("merchant_rules")
+            .delete()
+            .eq("id", id);
         if (error) rethrow(error);
     }
 
@@ -190,7 +217,8 @@ export class SupabaseInboxStore implements InboxService {
             .is("revoked_at", null)
             .order("created_at", { ascending: true });
         if (error) {
-            if (isMissingRelationError(error)) return { available: false, tokens: [] };
+            if (isMissingRelationError(error))
+                return { available: false, tokens: [] };
             throw error;
         }
         return { available: true, tokens: (data || []) as CaptureToken[] };

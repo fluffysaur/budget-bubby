@@ -9,7 +9,8 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 const MEMBER = "mem-00000000-0011";
 // Any 65-byte P-256 public key shape works for the decoder
-const VAPID_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+const VAPID_KEY =
+    "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
 
 function mockNotificationPermission(permission: NotificationPermission) {
     Object.defineProperty(window, "Notification", {
@@ -42,7 +43,10 @@ describe("syncPushSubscription", () => {
             }),
         } as unknown as PushSubscription;
         subscribe = vi.fn().mockResolvedValue(subscription);
-        Object.defineProperty(window, "PushManager", { value: class {}, configurable: true });
+        Object.defineProperty(window, "PushManager", {
+            value: class {},
+            configurable: true,
+        });
         Object.defineProperty(navigator, "serviceWorker", {
             value: {
                 ready: Promise.resolve({
@@ -63,11 +67,13 @@ describe("syncPushSubscription", () => {
 
     it("subscribes and saves the device when push is on and permitted", async () => {
         mockNotificationPermission("granted");
-        const { financeService: service } = await import("../src/services/financeService");
-        const save = vi.spyOn(service, "savePushSubscription").mockResolvedValue();
-        const { syncPushSubscription, isServerPushEnabled } = await import(
-            "../src/lib/pushSubscription"
-        );
+        const { financeService: service } =
+            await import("../src/services/financeService");
+        const save = vi
+            .spyOn(service, "savePushSubscription")
+            .mockResolvedValue();
+        const { syncPushSubscription, isServerPushEnabled } =
+            await import("../src/lib/pushSubscription");
 
         expect(isServerPushEnabled()).toBe(true);
         await syncPushSubscription(MEMBER, true);
@@ -88,10 +94,16 @@ describe("syncPushSubscription", () => {
     it("unsubscribes and deletes the device when push is turned off", async () => {
         mockNotificationPermission("granted");
         existing = subscription;
-        const { financeService: service } = await import("../src/services/financeService");
-        const remove = vi.spyOn(service, "deletePushSubscription").mockResolvedValue();
-        const save = vi.spyOn(service, "savePushSubscription").mockResolvedValue();
-        const { syncPushSubscription } = await import("../src/lib/pushSubscription");
+        const { financeService: service } =
+            await import("../src/services/financeService");
+        const remove = vi
+            .spyOn(service, "deletePushSubscription")
+            .mockResolvedValue();
+        const save = vi
+            .spyOn(service, "savePushSubscription")
+            .mockResolvedValue();
+        const { syncPushSubscription } =
+            await import("../src/lib/pushSubscription");
 
         await syncPushSubscription(MEMBER, false);
 
@@ -103,9 +115,8 @@ describe("syncPushSubscription", () => {
     it("does nothing without a VAPID key", async () => {
         vi.stubEnv("VITE_VAPID_PUBLIC_KEY", "");
         mockNotificationPermission("granted");
-        const { syncPushSubscription, isServerPushEnabled } = await import(
-            "../src/lib/pushSubscription"
-        );
+        const { syncPushSubscription, isServerPushEnabled } =
+            await import("../src/lib/pushSubscription");
         expect(isServerPushEnabled()).toBe(false);
         await syncPushSubscription(MEMBER, true);
         expect(subscribe).not.toHaveBeenCalled();
@@ -128,12 +139,17 @@ describe("server push mode", () => {
         mockNotificationPermission("granted");
         const showNotification = vi.fn().mockResolvedValue(undefined);
         Object.defineProperty(navigator, "serviceWorker", {
-            value: { getRegistration: vi.fn().mockResolvedValue({ showNotification }) },
+            value: {
+                getRegistration: vi
+                    .fn()
+                    .mockResolvedValue({ showNotification }),
+            },
             configurable: true,
         });
         localStorage.clear();
 
-        const { evaluateAndDispatchReminders } = await import("../src/lib/notificationScheduler");
+        const { evaluateAndDispatchReminders } =
+            await import("../src/lib/notificationScheduler");
         const reminders = await evaluateAndDispatchReminders({
             memberId: MEMBER,
             currentHour: 19,
@@ -149,22 +165,32 @@ describe("tapped push ?read= handling", () => {
     it("marks the pushed keys read and strips the param", async () => {
         // Load providers, service and popover from one fresh module graph
         vi.resetModules();
-        const { NotificationCenterPopover } = await import(
-            "../src/components/layout/NotificationCenterPopover"
-        );
+        const { NotificationCenterPopover } =
+            await import("../src/components/layout/NotificationCenterPopover");
         const { AuthProvider } = await import("../src/context/AuthContext");
-        const { HouseholdProvider } = await import("../src/context/HouseholdContext");
-        const { financeService } = await import("../src/services/financeService");
-        const markRead = vi.spyOn(financeService, "markNotificationsRead").mockResolvedValue();
+        const { HouseholdProvider } =
+            await import("../src/context/HouseholdContext");
+        const { financeService } =
+            await import("../src/services/financeService");
+        const markRead = vi
+            .spyOn(financeService, "markNotificationsRead")
+            .mockResolvedValue();
 
         function LocationProbe() {
             const location = useLocation();
-            return <div data-testid="location">{location.pathname + location.search}</div>;
+            return (
+                <div data-testid="location">
+                    {location.pathname + location.search}
+                </div>
+            );
         }
 
         render(
             <MemoryRouter initialEntries={["/budget?read=key-a%2Ckey-b"]}>
-                <AuthProvider initialAuthenticated={true} initialPartner="yijia">
+                <AuthProvider
+                    initialAuthenticated={true}
+                    initialPartner="yijia"
+                >
                     <HouseholdProvider defaultPerspective="household">
                         <NotificationCenterPopover />
                         <LocationProbe />

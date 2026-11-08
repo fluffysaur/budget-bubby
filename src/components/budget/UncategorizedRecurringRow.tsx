@@ -51,7 +51,11 @@ export function UncategorizedRecurringRow({
                                         <TruncatedText text={item.name} />
                                     </span>
                                     <span className="shrink-0">
-                                        <CurrencyText amount={getRecurringMonthlyAmount(item)} />
+                                        <CurrencyText
+                                            amount={getRecurringMonthlyAmount(
+                                                item,
+                                            )}
+                                        />
                                     </span>
                                 </li>
                             ))}

@@ -13,7 +13,10 @@ export interface QuestListProps {
 
 export function QuestList({ quests, label, className = "" }: QuestListProps) {
     return (
-        <ul aria-label={label} className={`flex flex-wrap gap-1.5 ${className}`}>
+        <ul
+            aria-label={label}
+            className={`flex flex-wrap gap-1.5 ${className}`}
+        >
             {quests.map((q) => (
                 <li
                     key={q.id}
@@ -25,9 +28,15 @@ export function QuestList({ quests, label, className = "" }: QuestListProps) {
                     }`}
                 >
                     {q.done ? (
-                        <Check className="h-3 w-3 shrink-0" strokeWidth={3} aria-label="Done" />
+                        <Check
+                            className="h-3 w-3 shrink-0"
+                            strokeWidth={3}
+                            aria-label="Done"
+                        />
                     ) : (
-                        <span aria-hidden="true">{q.reward === "food" ? "🍤" : "💪"}</span>
+                        <span aria-hidden="true">
+                            {q.reward === "food" ? "🍤" : "💪"}
+                        </span>
                     )}
                     <span>{q.label}</span>
                 </li>

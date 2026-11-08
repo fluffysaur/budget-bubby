@@ -161,7 +161,9 @@ export function QuickDepositModal({
                                             : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"
                                     }`}
                                 >
-                                    <CurrencyText formatted={`+${formatSGD(amt)}`} />
+                                    <CurrencyText
+                                        formatted={`+${formatSGD(amt)}`}
+                                    />
                                 </button>
                             ))}
                         </div>
@@ -232,7 +234,9 @@ export function QuickDepositModal({
                         variant="primary"
                         isLoading={isSubmitting}
                         disabled={isSubmitting || numericDeposit <= 0}
-                        leftIcon={<Coins className="h-4 w-4" strokeWidth={2.5} />}
+                        leftIcon={
+                            <Coins className="h-4 w-4" strokeWidth={2.5} />
+                        }
                     >
                         Deposit
                     </Button>

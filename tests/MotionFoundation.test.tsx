@@ -2,10 +2,23 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { Button } from "../src/components/ui/Button";
 import { SegmentedTabs } from "../src/components/ui/SegmentedTabs";
-import { AnimatedModal, ModalBody, ModalHeader } from "../src/components/ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalBody,
+    ModalHeader,
+} from "../src/components/ui/AnimatedModal";
 import { MobileBottomNav } from "../src/components/layout/MobileBottomNav";
-import { HouseholdProvider, useHousehold } from "../src/context/HouseholdContext";
-import { fadeRise, pop, collapse, listItem, springSnappy } from "../src/lib/motion";
+import {
+    HouseholdProvider,
+    useHousehold,
+} from "../src/context/HouseholdContext";
+import {
+    fadeRise,
+    pop,
+    collapse,
+    listItem,
+    springSnappy,
+} from "../src/lib/motion";
 
 describe("Motion Foundation & Touch Ergonomics", () => {
     it("gives Button size='sm' and size='icon-sm' a 44px hit area via after:-inset-2", () => {
@@ -71,7 +84,9 @@ describe("Motion Foundation & Touch Ergonomics", () => {
         const onQuickAdd = vi.fn();
         render(<MobileBottomNav onQuickAdd={onQuickAdd} />);
 
-        const nav = screen.getByRole("navigation", { name: "Mobile Navigation" });
+        const nav = screen.getByRole("navigation", {
+            name: "Mobile Navigation",
+        });
         expect(nav.className).toContain("bg-(--bg-card)");
         expect(nav.className).not.toContain("backdrop-blur-lg");
 
@@ -100,12 +115,16 @@ describe("Motion Foundation & Touch Ergonomics", () => {
 
         const btn = screen.getByRole("button", { name: "Toggle" });
         fireEvent.click(btn);
-        expect(document.documentElement.classList.contains("theme-transition")).toBe(true);
+        expect(
+            document.documentElement.classList.contains("theme-transition"),
+        ).toBe(true);
 
         act(() => {
             vi.advanceTimersByTime(200);
         });
-        expect(document.documentElement.classList.contains("theme-transition")).toBe(false);
+        expect(
+            document.documentElement.classList.contains("theme-transition"),
+        ).toBe(false);
 
         vi.useRealTimers();
     });

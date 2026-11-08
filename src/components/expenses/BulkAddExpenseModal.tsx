@@ -12,7 +12,10 @@ import { ListPlus, Undo2 } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Select } from "../ui/Select";
-import { financeService, isMockModeActive } from "../../services/financeService";
+import {
+    financeService,
+    isMockModeActive,
+} from "../../services/financeService";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFxRates } from "../../hooks/useFxRates";

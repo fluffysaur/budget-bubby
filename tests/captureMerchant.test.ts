@@ -10,8 +10,12 @@ import {
 describe("normalizeMerchant", () => {
     it("strips prefixes, reference numbers and locations", () => {
         expect(normalizeMerchant("GRAB*FOOD 8812")).toBe("grab food");
-        expect(normalizeMerchant("NTUC FAIRPRICE-TAMPINES SG")).toBe("ntuc fairprice tampines");
-        expect(normalizeMerchant("SQ *Common Man Coffee #1234")).toBe("common man coffee");
+        expect(normalizeMerchant("NTUC FAIRPRICE-TAMPINES SG")).toBe(
+            "ntuc fairprice tampines",
+        );
+        expect(normalizeMerchant("SQ *Common Man Coffee #1234")).toBe(
+            "common man coffee",
+        );
         expect(normalizeMerchant("PAYPAL *SPOTIFY")).toBe("spotify");
         expect(normalizeMerchant("Shopee*Mall Singapore")).toBe("shopee mall");
         expect(normalizeMerchant("  Ya  Kun\tKaya ")).toBe("ya kun kaya");

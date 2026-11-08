@@ -26,13 +26,18 @@ function env(name: string): string {
     return value;
 }
 
-const client = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
-    auth: { persistSession: false, autoRefreshToken: false },
-});
+const client = createClient(
+    env("SUPABASE_URL"),
+    env("SUPABASE_SERVICE_ROLE_KEY"),
+    {
+        auth: { persistSession: false, autoRefreshToken: false },
+    },
+);
 const deps = createSupabaseCaptureDeps(client);
 
 Deno.serve(async (req: Request) => {
-    const contentLength = Number(req.headers.get("Content-Length") ?? 0) || null;
+    const contentLength =
+        Number(req.headers.get("Content-Length") ?? 0) || null;
     let bodyText = "";
     if (req.method === "POST" && (contentLength ?? 0) <= MAX_BODY_BYTES) {
         // Keep a little over the cap so oversized bodies still get 413

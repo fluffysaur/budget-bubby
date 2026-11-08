@@ -239,8 +239,9 @@ export function CumulativeSurplusCard({
                     id: goal.id,
                     updates: {
                         saved_so_far:
-                            Math.round((goal.saved_so_far + alloc.amount) * 100) /
-                            100,
+                            Math.round(
+                                (goal.saved_so_far + alloc.amount) * 100,
+                            ) / 100,
                     },
                 });
             }
@@ -267,7 +268,8 @@ export function CumulativeSurplusCard({
                             ariaLabel="Goal-Funded Protection info"
                             align="left"
                         >
-                            Unspent cap carries over. Goal-funded spends are excluded.
+                            Unspent cap carries over. Goal-funded spends are
+                            excluded.
                         </TooltipPopover>
                     </div>
                 </div>
@@ -324,7 +326,10 @@ export function CumulativeSurplusCard({
                         {isCurrentSurplusPositive ? (
                             <TrendingUp className="h-5 w-5" strokeWidth={2.5} />
                         ) : (
-                            <TrendingDown className="h-5 w-5" strokeWidth={2.5} />
+                            <TrendingDown
+                                className="h-5 w-5"
+                                strokeWidth={2.5}
+                            />
                         )}
                     </div>
                 </div>
@@ -358,7 +363,9 @@ export function CumulativeSurplusCard({
                             Last 6 Months
                         </span>
                         <Sparkline
-                            data={summary.monthlyHistory.map((p) => p.cumulative)}
+                            data={summary.monthlyHistory.map(
+                                (p) => p.cumulative,
+                            )}
                             tone={isBankedPositive ? "ok" : "over"}
                             width={96}
                             height={24}
@@ -403,7 +410,9 @@ export function CumulativeSurplusCard({
                                             }`}
                                         >
                                             {isPos ? "+" : "-"}
-                                            <CurrencyText amount={Math.abs(point.delta)} />
+                                            <CurrencyText
+                                                amount={Math.abs(point.delta)}
+                                            />
                                         </div>
                                     </div>
                                 </div>

@@ -8,7 +8,9 @@
 
 import { financeService } from "../services/financeService";
 
-const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined)?.trim();
+const VAPID_PUBLIC_KEY = (
+    import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+)?.trim();
 
 /** True when pushes come from the server instead of the open app. */
 export function isServerPushEnabled(): boolean {
@@ -38,7 +40,10 @@ function base64UrlToUint8Array(base64Url: string): Uint8Array<ArrayBuffer> {
  * (key configured, permission granted, push_enabled on). Otherwise removes
  * any existing subscription. Safe to call on every launch.
  */
-export async function syncPushSubscription(memberId: string, pushEnabled: boolean): Promise<void> {
+export async function syncPushSubscription(
+    memberId: string,
+    pushEnabled: boolean,
+): Promise<void> {
     if (!VAPID_PUBLIC_KEY || !isPushSupported()) return;
     try {
         const registration = await navigator.serviceWorker.ready;

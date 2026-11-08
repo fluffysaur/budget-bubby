@@ -1,7 +1,7 @@
 /**
  * NotificationSettingsModal Component
  * Full-featured notification settings and threshold configuration modal.
- * 
+ *
  * Features:
  * - Master delivery channels: PWA Push Notifications & Audio Chimes
  * - Per-category toggles for all 8 notification domains
@@ -32,7 +32,12 @@ import {
     Clock,
     Moon,
 } from "lucide-react";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
@@ -48,7 +53,10 @@ import { formatTime12h } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
 import { getDefaultNotificationPreferences } from "../../data/mockSeedData";
-import type { NotificationPreferences, UpdateNotificationPreferencesInput } from "../../types/finance";
+import type {
+    NotificationPreferences,
+    UpdateNotificationPreferencesInput,
+} from "../../types/finance";
 
 /** CC due reminder chips: days before due (0 = due day). */
 const CC_DUE_DAY_OPTIONS: { day: number; label: string }[] = [
@@ -70,21 +78,31 @@ export function NotificationSettingsModal({
     memberId: propMemberId,
 }: NotificationSettingsModalProps) {
     const { me, members } = useLoggedInMember();
-    const activeMemberId = propMemberId || me?.id || members?.[0]?.id || "mem-00000000-0011";
+    const activeMemberId =
+        propMemberId || me?.id || members?.[0]?.id || "mem-00000000-0011";
 
     const [prefs, setPrefs] = useState<NotificationPreferences>(() =>
         getDefaultNotificationPreferences(activeMemberId),
     );
     const [budgetWarningDraft, setBudgetWarningDraft] = useState<string>(() =>
-        String(getDefaultNotificationPreferences(activeMemberId).budget_warning_pct),
+        String(
+            getDefaultNotificationPreferences(activeMemberId)
+                .budget_warning_pct,
+        ),
     );
-    const [settlementThresholdDraft, setSettlementThresholdDraft] = useState<string>(() =>
-        String(getDefaultNotificationPreferences(activeMemberId).settlement_threshold_sgd),
-    );
+    const [settlementThresholdDraft, setSettlementThresholdDraft] =
+        useState<string>(() =>
+            String(
+                getDefaultNotificationPreferences(activeMemberId)
+                    .settlement_threshold_sgd,
+            ),
+        );
     const [, setIsLoading] = useState<boolean>(true);
-    const [permission, setPermission] = useState<NotificationPermission>("default");
+    const [permission, setPermission] =
+        useState<NotificationPermission>("default");
     const [testPushSent, setTestPushSent] = useState<boolean>(false);
-    const hasVibrate = typeof navigator !== "undefined" && "vibrate" in navigator;
+    const hasVibrate =
+        typeof navigator !== "undefined" && "vibrate" in navigator;
 
     // Sync browser permission status
     useEffect(() => {
@@ -97,7 +115,8 @@ export function NotificationSettingsModal({
     const loadPreferences = useCallback(async () => {
         try {
             setIsLoading(true);
-            const data = await financeService.getNotificationPreferences(activeMemberId);
+            const data =
+                await financeService.getNotificationPreferences(activeMemberId);
             setPrefs(data);
             setBudgetWarningDraft(String(data.budget_warning_pct));
             setSettlementThresholdDraft(String(data.settlement_threshold_sgd));
@@ -115,12 +134,20 @@ export function NotificationSettingsModal({
     }, [isOpen, loadPreferences]);
 
     // Update single preference
-    const handleUpdate = async (updates: UpdateNotificationPreferencesInput) => {
+    const handleUpdate = async (
+        updates: UpdateNotificationPreferencesInput,
+    ) => {
         setPrefs((prev) => ({ ...prev, ...updates }));
         try {
-            await financeService.updateNotificationPreferences(activeMemberId, updates);
+            await financeService.updateNotificationPreferences(
+                activeMemberId,
+                updates,
+            );
         } catch (err) {
-            console.error("Failed to save notification preference update:", err);
+            console.error(
+                "Failed to save notification preference update:",
+                err,
+            );
         }
     };
 
@@ -154,8 +181,14 @@ export function NotificationSettingsModal({
             ? ccDueDays.filter((d) => d !== day)
             : [...ccDueDays, day].sort((a, b) => b - a);
         // Keep the legacy lead time in sync for the previously deployed frontend
-        const legacyLeadDays = Math.max(1, Math.min(14, next.length ? Math.max(...next) : 1));
-        handleUpdate({ cc_due_reminder_days: next, cc_due_days_before: legacyLeadDays });
+        const legacyLeadDays = Math.max(
+            1,
+            Math.min(14, next.length ? Math.max(...next) : 1),
+        );
+        handleUpdate({
+            cc_due_reminder_days: next,
+            cc_due_days_before: legacyLeadDays,
+        });
     };
 
     const handleTimeUpdate = (
@@ -172,7 +205,10 @@ export function NotificationSettingsModal({
         setBudgetWarningDraft(String(defaults.budget_warning_pct));
         setSettlementThresholdDraft(String(defaults.settlement_threshold_sgd));
         try {
-            await financeService.updateNotificationPreferences(activeMemberId, defaults);
+            await financeService.updateNotificationPreferences(
+                activeMemberId,
+                defaults,
+            );
         } catch (err) {
             console.error("Failed to reset notification preferences:", err);
         }
@@ -186,10 +222,13 @@ export function NotificationSettingsModal({
             setPermission(currentPerm);
         }
         if (currentPerm === "granted") {
-            const success = await dispatchPWANotification("Budget Bubby Test Notification 🔔", {
-                body: "Notifications are working smoothly on your device! ✨",
-                tag: "test-notification",
-            });
+            const success = await dispatchPWANotification(
+                "Budget Bubby Test Notification 🔔",
+                {
+                    body: "Notifications are working smoothly on your device! ✨",
+                    tag: "test-notification",
+                },
+            );
             if (success) {
                 setTestPushSent(true);
                 setTimeout(() => setTestPushSent(false), 3000);
@@ -208,15 +247,16 @@ export function NotificationSettingsModal({
     };
 
     return (
-        <AnimatedModal
-            isOpen={isOpen}
-            onClose={onClose}
-            maxWidth="max-w-xl"
-        >
+        <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
             <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
                 <ModalHeader
                     title="Settings"
-                    icon={<Settings className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />}
+                    icon={
+                        <Settings
+                            className="h-5 w-5 text-(--text-ink)"
+                            strokeWidth={2.5}
+                        />
+                    }
                     iconBgColor="bg-(--pastel-lilac)"
                     onClose={onClose}
                 />
@@ -231,7 +271,10 @@ export function NotificationSettingsModal({
                         <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
-                                    <Volume2 className="h-4 w-4" strokeWidth={2.5} />
+                                    <Volume2
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 </div>
                                 <div>
                                     <span className="text-xs font-bold text-(--text-ink)">
@@ -250,7 +293,10 @@ export function NotificationSettingsModal({
                                     title="Play test audio chime"
                                     className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
-                                    <Volume2 className="h-3 w-3" strokeWidth={2.5} />
+                                    <Volume2
+                                        className="h-3 w-3"
+                                        strokeWidth={2.5}
+                                    />
                                     <span>Play</span>
                                 </button>
 
@@ -260,14 +306,22 @@ export function NotificationSettingsModal({
                                     aria-checked={prefs.sound_enabled}
                                     aria-label="Toggle sound effects"
                                     data-testid="toggle-sound-enabled"
-                                    onClick={() => handleUpdate({ sound_enabled: !prefs.sound_enabled })}
+                                    onClick={() =>
+                                        handleUpdate({
+                                            sound_enabled: !prefs.sound_enabled,
+                                        })
+                                    }
                                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        prefs.sound_enabled ? "bg-(--pastel-butter)" : "bg-(--bg-card)"
+                                        prefs.sound_enabled
+                                            ? "bg-(--pastel-butter)"
+                                            : "bg-(--bg-card)"
                                     }`}
                                 >
                                     <span
                                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
-                                            prefs.sound_enabled ? "translate-x-5" : "translate-x-0"
+                                            prefs.sound_enabled
+                                                ? "translate-x-5"
+                                                : "translate-x-0"
                                         }`}
                                     />
                                 </button>
@@ -285,7 +339,10 @@ export function NotificationSettingsModal({
                             <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
-                                        <Vibrate className="h-4 w-4" strokeWidth={2.5} />
+                                        <Vibrate
+                                            className="h-4 w-4"
+                                            strokeWidth={2.5}
+                                        />
                                     </div>
                                     <div>
                                         <span className="text-xs font-bold text-(--text-ink)">
@@ -304,24 +361,40 @@ export function NotificationSettingsModal({
                                         title="Test haptic vibration"
                                         className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                     >
-                                        <Vibrate className="h-3 w-3" strokeWidth={2.5} />
+                                        <Vibrate
+                                            className="h-3 w-3"
+                                            strokeWidth={2.5}
+                                        />
                                         <span>Vibrate</span>
                                     </button>
 
                                     <button
                                         type="button"
                                         role="switch"
-                                        aria-checked={prefs.haptics_enabled ?? true}
+                                        aria-checked={
+                                            prefs.haptics_enabled ?? true
+                                        }
                                         aria-label="Toggle haptic feedback"
                                         data-testid="toggle-haptics-enabled"
-                                        onClick={() => handleUpdate({ haptics_enabled: !(prefs.haptics_enabled ?? true) })}
+                                        onClick={() =>
+                                            handleUpdate({
+                                                haptics_enabled: !(
+                                                    prefs.haptics_enabled ??
+                                                    true
+                                                ),
+                                            })
+                                        }
                                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                            (prefs.haptics_enabled ?? true) ? "bg-(--pastel-lilac)" : "bg-(--bg-card)"
+                                            (prefs.haptics_enabled ?? true)
+                                                ? "bg-(--pastel-lilac)"
+                                                : "bg-(--bg-card)"
                                         }`}
                                     >
                                         <span
                                             className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
-                                                (prefs.haptics_enabled ?? true) ? "translate-x-5" : "translate-x-0"
+                                                (prefs.haptics_enabled ?? true)
+                                                    ? "translate-x-5"
+                                                    : "translate-x-0"
                                             }`}
                                         />
                                     </button>
@@ -342,7 +415,10 @@ export function NotificationSettingsModal({
                         <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-mint) text-(--accent-mint-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
-                                    <Bell className="h-4 w-4" strokeWidth={2.5} />
+                                    <Bell
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
@@ -354,8 +430,8 @@ export function NotificationSettingsModal({
                                                 permission === "granted"
                                                     ? "bg-(--pastel-mint) text-(--accent-mint-ink) border-(--accent-mint-ink)/40"
                                                     : permission === "denied"
-                                                    ? "bg-(--pastel-coral-light) text-(--accent-coral-ink) border-(--accent-coral-ink)/40"
-                                                    : "bg-(--pastel-butter) text-amber-900 border-amber-900/40"
+                                                      ? "bg-(--pastel-coral-light) text-(--accent-coral-ink) border-(--accent-coral-ink)/40"
+                                                      : "bg-(--pastel-butter) text-amber-900 border-amber-900/40"
                                             }`}
                                         >
                                             {permission}
@@ -374,8 +450,13 @@ export function NotificationSettingsModal({
                                     title="Send test push notification"
                                     className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
-                                    <Send className="h-3 w-3" strokeWidth={2.5} />
-                                    <span>{testPushSent ? "Sent!" : "Test"}</span>
+                                    <Send
+                                        className="h-3 w-3"
+                                        strokeWidth={2.5}
+                                    />
+                                    <span>
+                                        {testPushSent ? "Sent!" : "Test"}
+                                    </span>
                                 </button>
 
                                 <button
@@ -384,14 +465,22 @@ export function NotificationSettingsModal({
                                     aria-checked={prefs.push_enabled}
                                     aria-label="Toggle push notifications"
                                     data-testid="toggle-push-enabled"
-                                    onClick={() => handleUpdate({ push_enabled: !prefs.push_enabled })}
+                                    onClick={() =>
+                                        handleUpdate({
+                                            push_enabled: !prefs.push_enabled,
+                                        })
+                                    }
                                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        prefs.push_enabled ? "bg-(--pastel-mint)" : "bg-(--bg-card)"
+                                        prefs.push_enabled
+                                            ? "bg-(--pastel-mint)"
+                                            : "bg-(--bg-card)"
                                     }`}
                                 >
                                     <span
                                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-(--text-ink) shadow-md ring-0 transition duration-200 ease-in-out ${
-                                            prefs.push_enabled ? "translate-x-5" : "translate-x-0"
+                                            prefs.push_enabled
+                                                ? "translate-x-5"
+                                                : "translate-x-0"
                                         }`}
                                     />
                                 </button>
@@ -411,92 +500,148 @@ export function NotificationSettingsModal({
                                 <div className="space-y-2.5">
                                     {/* CC Payment Due */}
                                     <CategoryToggleRow
-                                        icon={<CreditCard className="h-4 w-4 text-rose-500 shrink-0" />}
+                                        icon={
+                                            <CreditCard className="h-4 w-4 text-rose-500 shrink-0" />
+                                        }
                                         title="Card Due"
                                         description="Alert before statement due date"
                                         isChecked={prefs.cc_payment_due}
                                         testId="toggle-cc-payment-due"
-                                        onChange={(val) => handleUpdate({ cc_payment_due: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                cc_payment_due: val,
+                                            })
+                                        }
                                     />
 
                                     {/* CC Missing Statement */}
                                     <CategoryToggleRow
-                                        icon={<CreditCard className="h-4 w-4 text-amber-500 shrink-0" />}
+                                        icon={
+                                            <CreditCard className="h-4 w-4 text-amber-500 shrink-0" />
+                                        }
                                         title="Card Statement"
                                         description="Alert when statement is not yet logged"
                                         isChecked={prefs.cc_missing_statement}
                                         testId="toggle-cc-missing-statement"
-                                        onChange={(val) => handleUpdate({ cc_missing_statement: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                cc_missing_statement: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Bubby nudges (stored as streak_and_logging) */}
                                     <CategoryToggleRow
-                                        icon={<Flame className="h-4 w-4 text-amber-500 shrink-0" />}
+                                        icon={
+                                            <Flame className="h-4 w-4 text-amber-500 shrink-0" />
+                                        }
                                         title="Bubby Nudges"
                                         description={`${formatTime12h(checkinTime)} nudge when Bubby needs a snack`}
                                         isChecked={prefs.streak_and_logging}
                                         testId="toggle-streak-logging"
-                                        onChange={(val) => handleUpdate({ streak_and_logging: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                streak_and_logging: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Monthly Balance Updates */}
                                     <CategoryToggleRow
-                                        icon={<Landmark className="h-4 w-4 text-blue-500 shrink-0" />}
+                                        icon={
+                                            <Landmark className="h-4 w-4 text-blue-500 shrink-0" />
+                                        }
                                         title="Balances"
                                         description="Month-end balance refresh prompt"
-                                        isChecked={prefs.monthly_balance_updates}
+                                        isChecked={
+                                            prefs.monthly_balance_updates
+                                        }
                                         testId="toggle-monthly-balances"
-                                        onChange={(val) => handleUpdate({ monthly_balance_updates: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                monthly_balance_updates: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Partner & Shared Spend */}
                                     <CategoryToggleRow
-                                        icon={<Users className="h-4 w-4 text-purple-500 shrink-0" />}
+                                        icon={
+                                            <Users className="h-4 w-4 text-purple-500 shrink-0" />
+                                        }
                                         title="Partner Spend"
                                         description="Partner spend and split updates"
                                         isChecked={prefs.partner_shared_spend}
                                         testId="toggle-partner-shared-spend"
-                                        onChange={(val) => handleUpdate({ partner_shared_spend: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                partner_shared_spend: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Budget Limit Warnings */}
                                     <CategoryToggleRow
-                                        icon={<AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />}
+                                        icon={
+                                            <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+                                        }
                                         title="Budget Limits"
                                         description="Warn when categories near budget limit"
                                         isChecked={prefs.budget_limit_alerts}
                                         testId="toggle-budget-limit-alerts"
-                                        onChange={(val) => handleUpdate({ budget_limit_alerts: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                budget_limit_alerts: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Recurring Bills Due */}
                                     <CategoryToggleRow
-                                        icon={<CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />}
+                                        icon={
+                                            <CalendarClock className="h-4 w-4 text-emerald-500 shrink-0" />
+                                        }
                                         title="Recurring"
                                         description="Remind before recurring items are due"
                                         isChecked={prefs.recurring_bills_due}
                                         testId="toggle-recurring-bills"
-                                        onChange={(val) => handleUpdate({ recurring_bills_due: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                recurring_bills_due: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Savings Goals Pacing */}
                                     <CategoryToggleRow
-                                        icon={<Target className="h-4 w-4 text-emerald-500 shrink-0" />}
+                                        icon={
+                                            <Target className="h-4 w-4 text-emerald-500 shrink-0" />
+                                        }
                                         title="Goals"
                                         description="Goal pacing and achievement alerts"
                                         isChecked={prefs.goal_pacing_alerts}
                                         testId="toggle-goal-pacing"
-                                        onChange={(val) => handleUpdate({ goal_pacing_alerts: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                goal_pacing_alerts: val,
+                                            })
+                                        }
                                     />
 
                                     {/* Monthly Budget Review */}
                                     <CategoryToggleRow
-                                        icon={<BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />}
+                                        icon={
+                                            <BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />
+                                        }
                                         title="Budget Review"
                                         description="Early month budget review prompt"
                                         isChecked={prefs.monthly_budget_review}
                                         testId="toggle-monthly-budget-review"
-                                        onChange={(val) => handleUpdate({ monthly_budget_review: val })}
+                                        onChange={(val) =>
+                                            handleUpdate({
+                                                monthly_budget_review: val,
+                                            })
+                                        }
                                     />
                                 </div>
                             </div>
@@ -520,30 +665,36 @@ export function NotificationSettingsModal({
                                         aria-labelledby="cc-due-days-label"
                                         className="flex flex-wrap gap-2"
                                     >
-                                        {CC_DUE_DAY_OPTIONS.map(({ day, label }) => {
-                                            const isOn = ccDueDays.includes(day);
-                                            return (
-                                                <button
-                                                    key={day}
-                                                    type="button"
-                                                    aria-pressed={isOn}
-                                                    data-testid={`chip-cc-due-${day}`}
-                                                    onClick={() => handleToggleCcDueDay(day)}
-                                                    className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
-                                                        isOn
-                                                            ? "bg-(--pastel-lilac) text-(--text-ink)"
-                                                            : "bg-(--bg-cream) text-(--text-muted)"
-                                                    }`}
-                                                >
-                                                    {label}
-                                                </button>
-                                            );
-                                        })}
+                                        {CC_DUE_DAY_OPTIONS.map(
+                                            ({ day, label }) => {
+                                                const isOn =
+                                                    ccDueDays.includes(day);
+                                                return (
+                                                    <button
+                                                        key={day}
+                                                        type="button"
+                                                        aria-pressed={isOn}
+                                                        data-testid={`chip-cc-due-${day}`}
+                                                        onClick={() =>
+                                                            handleToggleCcDueDay(
+                                                                day,
+                                                            )
+                                                        }
+                                                        className={`h-10 min-w-14 px-3 rounded-xl border-2 border-(--border-ink) text-xs font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer ${
+                                                            isOn
+                                                                ? "bg-(--pastel-lilac) text-(--text-ink)"
+                                                                : "bg-(--bg-cream) text-(--text-muted)"
+                                                        }`}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                );
+                                            },
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
                                     {/* Budget Warning % */}
                                     <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
                                         <label
@@ -560,7 +711,11 @@ export function NotificationSettingsModal({
                                                 max={99}
                                                 value={budgetWarningDraft}
                                                 data-testid="input-budget-warning-pct"
-                                                onChange={(e) => setBudgetWarningDraft(e.target.value)}
+                                                onChange={(e) =>
+                                                    setBudgetWarningDraft(
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 onBlur={commitBudgetWarningPct}
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter") {
@@ -570,7 +725,9 @@ export function NotificationSettingsModal({
                                                 }}
                                                 className="w-16 px-2.5 py-1 text-base sm:text-xs font-bold font-mono-num rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) focus:outline-none"
                                             />
-                                            <span className="text-[11px] font-bold text-(--text-muted)">% of cap</span>
+                                            <span className="text-[11px] font-bold text-(--text-muted)">
+                                                % of cap
+                                            </span>
                                         </div>
                                     </div>
 
@@ -583,7 +740,9 @@ export function NotificationSettingsModal({
                                             Settlement Cap
                                         </label>
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-xs font-bold text-(--text-muted)">SGD</span>
+                                            <span className="text-xs font-bold text-(--text-muted)">
+                                                SGD
+                                            </span>
                                             <input
                                                 id="settlement-threshold-input"
                                                 type="number"
@@ -591,8 +750,14 @@ export function NotificationSettingsModal({
                                                 step={50}
                                                 value={settlementThresholdDraft}
                                                 data-testid="input-settlement-threshold"
-                                                onChange={(e) => setSettlementThresholdDraft(e.target.value)}
-                                                onBlur={commitSettlementThreshold}
+                                                onChange={(e) =>
+                                                    setSettlementThresholdDraft(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                onBlur={
+                                                    commitSettlementThreshold
+                                                }
                                                 onKeyDown={(e) => {
                                                     if (e.key === "Enter") {
                                                         e.preventDefault();
@@ -616,26 +781,62 @@ export function NotificationSettingsModal({
                                     <TimeField
                                         id="checkin-time-input"
                                         label="Check-in Time"
-                                        icon={<Clock className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                                        icon={
+                                            <Clock
+                                                className="h-3.5 w-3.5"
+                                                strokeWidth={2.5}
+                                            />
+                                        }
                                         value={checkinTime}
                                         testId="input-checkin-time"
-                                        onChange={(val) => handleTimeUpdate("checkin_time", val)}
+                                        onChange={(val) =>
+                                            handleTimeUpdate(
+                                                "checkin_time",
+                                                val,
+                                            )
+                                        }
                                     />
                                     <TimeField
                                         id="quiet-start-input"
                                         label="Quiet From"
-                                        icon={<Moon className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                                        value={prefs.quiet_hours_start || DEFAULT_QUIET_HOURS_START}
+                                        icon={
+                                            <Moon
+                                                className="h-3.5 w-3.5"
+                                                strokeWidth={2.5}
+                                            />
+                                        }
+                                        value={
+                                            prefs.quiet_hours_start ||
+                                            DEFAULT_QUIET_HOURS_START
+                                        }
                                         testId="input-quiet-start"
-                                        onChange={(val) => handleTimeUpdate("quiet_hours_start", val)}
+                                        onChange={(val) =>
+                                            handleTimeUpdate(
+                                                "quiet_hours_start",
+                                                val,
+                                            )
+                                        }
                                     />
                                     <TimeField
                                         id="quiet-end-input"
                                         label="Quiet Until"
-                                        icon={<Moon className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                                        value={prefs.quiet_hours_end || DEFAULT_QUIET_HOURS_END}
+                                        icon={
+                                            <Moon
+                                                className="h-3.5 w-3.5"
+                                                strokeWidth={2.5}
+                                            />
+                                        }
+                                        value={
+                                            prefs.quiet_hours_end ||
+                                            DEFAULT_QUIET_HOURS_END
+                                        }
                                         testId="input-quiet-end"
-                                        onChange={(val) => handleTimeUpdate("quiet_hours_end", val)}
+                                        onChange={(val) =>
+                                            handleTimeUpdate(
+                                                "quiet_hours_end",
+                                                val,
+                                            )
+                                        }
                                     />
                                 </div>
                             </div>
@@ -683,7 +884,14 @@ interface TimeFieldProps {
     onChange: (val: string) => void;
 }
 
-function TimeField({ id, label, icon, value, testId, onChange }: TimeFieldProps) {
+function TimeField({
+    id,
+    label,
+    icon,
+    value,
+    testId,
+    onChange,
+}: TimeFieldProps) {
     return (
         <div className="p-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-sm">
             <label
@@ -729,7 +937,9 @@ function CategoryToggleRow({
                     {icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-(--text-ink)">{title}</div>
+                    <div className="text-xs font-bold text-(--text-ink)">
+                        {title}
+                    </div>
                     <div className="text-[11px] text-(--text-muted) font-medium truncate">
                         {description}
                     </div>

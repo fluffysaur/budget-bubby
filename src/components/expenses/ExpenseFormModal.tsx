@@ -14,13 +14,22 @@
  * "More" opens automatically when any of its non-default fields is set.
  */
 
-import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react";
+import {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    type FormEvent,
+} from "react";
 import { Plus, Save, Hash, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { useSgtClock } from "../../hooks/useBubby";
 import { addDays } from "../../lib/bubby/dates";
-import { financeService, isMockModeActive } from "../../services/financeService";
+import {
+    financeService,
+    isMockModeActive,
+} from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
 import {
     getTodayDateString,
@@ -407,7 +416,9 @@ export function ExpenseFormModal({
                     "",
             );
             setIsShared(
-                defaultShared ?? getStoredLastSplit() ?? perspective === "household",
+                defaultShared ??
+                    getStoredLastSplit() ??
+                    perspective === "household",
             );
             setSplitRatio(0.5);
             setDate(getTodayDateString());
@@ -571,7 +582,17 @@ export function ExpenseFormModal({
         ]
             .filter(Boolean)
             .join(" · ");
-    }, [date, todayStr, yesterdayStr, twoDaysAgoStr, members, payerId, isShared, splitRatio, currencyCode]);
+    }, [
+        date,
+        todayStr,
+        yesterdayStr,
+        twoDaysAgoStr,
+        members,
+        payerId,
+        isShared,
+        splitRatio,
+        currencyCode,
+    ]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -654,8 +675,11 @@ export function ExpenseFormModal({
                 const expenseId = await confirmInboxMutation.mutateAsync({
                     item: {
                         id: linkedInboxId,
-                        merchant_key: linked?.merchant_key ?? normalizeMerchant(input.item),
-                        suggested_category_id: linked?.suggested_category_id ?? null,
+                        merchant_key:
+                            linked?.merchant_key ??
+                            normalizeMerchant(input.item),
+                        suggested_category_id:
+                            linked?.suggested_category_id ?? null,
                     },
                     input,
                     via: "edit",
@@ -687,7 +711,9 @@ export function ExpenseFormModal({
                 onExpenseAdded?.(created);
             } catch (err) {
                 setErrorMessage(
-                    err instanceof Error ? err.message : "Failed to save expense",
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to save expense",
                 );
             }
 
@@ -736,53 +762,78 @@ export function ExpenseFormModal({
                         <div>
                             <button
                                 type="button"
-                                aria-expanded={showInboxChips || Boolean(linkedInboxId)}
-                                onClick={() => setShowInboxChips((prev) => !prev)}
+                                aria-expanded={
+                                    showInboxChips || Boolean(linkedInboxId)
+                                }
+                                onClick={() =>
+                                    setShowInboxChips((prev) => !prev)
+                                }
                                 className="flex items-center gap-1 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                             >
                                 {`From Inbox (${inboxItems.length})`}
                                 {showInboxChips || linkedInboxId ? (
-                                    <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                    <ChevronUp
+                                        className="h-3.5 w-3.5"
+                                        strokeWidth={2.5}
+                                    />
                                 ) : (
-                                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                    <ChevronDown
+                                        className="h-3.5 w-3.5"
+                                        strokeWidth={2.5}
+                                    />
                                 )}
                             </button>
                             {(showInboxChips || linkedInboxId) && (
-                            <div className="flex flex-wrap gap-1.5" aria-label="From Inbox">
-                                {inboxChips.map((chip) => {
-                                    const isLinked = chip.id === linkedInboxId;
-                                    return (
-                                        <button
-                                            key={chip.id}
-                                            type="button"
-                                            aria-pressed={isLinked}
-                                            onClick={() => {
-                                                if (isLinked) {
-                                                    setLinkedInboxId(null);
-                                                    return;
-                                                }
-                                                setLinkedInboxId(chip.id);
-                                                applyPrefill(
-                                                    inboxItemFormValues(chip, {
-                                                        categoryId: chip.suggested_category_id ?? null,
-                                                        isShared: null,
-                                                    }),
-                                                );
-                                            }}
-                                            className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
-                                                isLinked
-                                                    ? "bg-(--pastel-mint-light) shadow-cute-sm"
-                                                    : "bg-(--bg-card) hover:bg-(--bg-cream)"
-                                            }`}
-                                        >
-                                            <TruncatedText text={chip.merchant} className="min-w-0 max-w-32" />
-                                            <span className="shrink-0 font-mono-num text-(--text-muted)">
-                                                {formatForeignAmount(chip.amount, chip.currency)}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                                <div
+                                    className="flex flex-wrap gap-1.5"
+                                    aria-label="From Inbox"
+                                >
+                                    {inboxChips.map((chip) => {
+                                        const isLinked =
+                                            chip.id === linkedInboxId;
+                                        return (
+                                            <button
+                                                key={chip.id}
+                                                type="button"
+                                                aria-pressed={isLinked}
+                                                onClick={() => {
+                                                    if (isLinked) {
+                                                        setLinkedInboxId(null);
+                                                        return;
+                                                    }
+                                                    setLinkedInboxId(chip.id);
+                                                    applyPrefill(
+                                                        inboxItemFormValues(
+                                                            chip,
+                                                            {
+                                                                categoryId:
+                                                                    chip.suggested_category_id ??
+                                                                    null,
+                                                                isShared: null,
+                                                            },
+                                                        ),
+                                                    );
+                                                }}
+                                                className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+                                                    isLinked
+                                                        ? "bg-(--pastel-mint-light) shadow-cute-sm"
+                                                        : "bg-(--bg-card) hover:bg-(--bg-cream)"
+                                                }`}
+                                            >
+                                                <TruncatedText
+                                                    text={chip.merchant}
+                                                    className="min-w-0 max-w-32"
+                                                />
+                                                <span className="shrink-0 font-mono-num text-(--text-muted)">
+                                                    {formatForeignAmount(
+                                                        chip.amount,
+                                                        chip.currency,
+                                                    )}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             )}
                         </div>
                     )}
@@ -807,7 +858,6 @@ export function ExpenseFormModal({
                             currencyCode={currencyCode}
                             autoFocus
                         />
-
                     </div>
 
                     {/* Funding source (Budget | Goal) with its picker right below */}
@@ -818,7 +868,9 @@ export function ExpenseFormModal({
                                     <SegmentedTabs<FundingSource>
                                         size="sm"
                                         ariaLabel="Funding Source"
-                                        activeTab={isGoalSpend ? "goal" : "budget"}
+                                        activeTab={
+                                            isGoalSpend ? "goal" : "budget"
+                                        }
                                         onChange={handleFundingChange}
                                         tabs={[
                                             { id: "budget", label: "Budget" },
@@ -840,7 +892,8 @@ export function ExpenseFormModal({
                                         align="left"
                                         className="shrink-0"
                                     >
-                                        Paid from goal savings. Excluded from caps.
+                                        Paid from goal savings. Excluded from
+                                        caps.
                                     </TooltipPopover>
                                 </div>
                             ) : (
@@ -890,15 +943,23 @@ export function ExpenseFormModal({
                             >
                                 {goals.length === 0 ? (
                                     <div className="py-2 text-center w-full">
-                                        <p className="text-xs font-bold text-(--text-ink)">No Goals</p>
-                                        <p className="text-xs text-(--text-muted) mt-0.5">Create a goal to link this expense.</p>
+                                        <p className="text-xs font-bold text-(--text-ink)">
+                                            No Goals
+                                        </p>
+                                        <p className="text-xs text-(--text-muted) mt-0.5">
+                                            Create a goal to link this expense.
+                                        </p>
                                         <a
                                             href="/goals"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 onClose();
-                                                if (typeof window !== "undefined") {
-                                                    window.location.href = "/goals";
+                                                if (
+                                                    typeof window !==
+                                                    "undefined"
+                                                ) {
+                                                    window.location.href =
+                                                        "/goals";
                                                 }
                                             }}
                                             className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-purple-700 dark:text-purple-400 hover:underline cursor-pointer"
@@ -1090,7 +1151,9 @@ export function ExpenseFormModal({
                                             type="date"
                                             aria-label="Custom Date"
                                             value={date}
-                                            onChange={(e) => setDate(e.target.value)}
+                                            onChange={(e) =>
+                                                setDate(e.target.value)
+                                            }
                                             required
                                             className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                         />
@@ -1101,13 +1164,17 @@ export function ExpenseFormModal({
                                             type="time"
                                             aria-label="Expense Time"
                                             value={time}
-                                            onChange={(e) => setTime(e.target.value)}
+                                            onChange={(e) =>
+                                                setTime(e.target.value)
+                                            }
                                             className="rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-2 py-1 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) cursor-pointer"
                                         />
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setTime(getCurrentSingaporeTime())
+                                                setTime(
+                                                    getCurrentSingaporeTime(),
+                                                )
                                             }
                                             className="rounded-lg px-2 py-1 text-xs font-bold bg-(--bg-canvas) hover:bg-(--pastel-butter-light) text-(--text-muted) hover:text-(--text-ink) border border-(--border-subtle) transition-all cursor-pointer"
                                             title="Reset to current time"
@@ -1137,9 +1204,13 @@ export function ExpenseFormModal({
                                                     <button
                                                         key={member.id}
                                                         type="button"
-                                                        aria-pressed={isSelected}
+                                                        aria-pressed={
+                                                            isSelected
+                                                        }
                                                         onClick={() =>
-                                                            setPayerId(member.id)
+                                                            setPayerId(
+                                                                member.id,
+                                                            )
                                                         }
                                                         className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                                                             isSelected
@@ -1152,7 +1223,9 @@ export function ExpenseFormModal({
                                                                 "👤"}
                                                         </span>
                                                         <span>
-                                                            {member.display_name}
+                                                            {
+                                                                member.display_name
+                                                            }
                                                         </span>
                                                     </button>
                                                 );
@@ -1169,7 +1242,9 @@ export function ExpenseFormModal({
                                         type="checkbox"
                                         aria-label="Shared"
                                         checked={isShared}
-                                        onChange={(e) => setIsShared(e.target.checked)}
+                                        onChange={(e) =>
+                                            setIsShared(e.target.checked)
+                                        }
                                         className="sr-only"
                                     />
 
@@ -1215,9 +1290,12 @@ export function ExpenseFormModal({
                                                 Partner's share
                                             </label>
                                             <span className="shrink-0 text-(--text-ink)">
-                                                {Math.round(splitRatio * 100)}% (
+                                                {Math.round(splitRatio * 100)}%
+                                                (
                                                 <CurrencyText
-                                                    amount={amountInSGD * splitRatio}
+                                                    amount={
+                                                        amountInSGD * splitRatio
+                                                    }
                                                 />
                                                 )
                                             </span>
@@ -1240,7 +1318,9 @@ export function ExpenseFormModal({
                                             <span>0%</span>
                                             <button
                                                 type="button"
-                                                onClick={() => setSplitRatio(0.5)}
+                                                onClick={() =>
+                                                    setSplitRatio(0.5)
+                                                }
                                                 className="font-semibold text-(--text-ink) hover:underline cursor-pointer"
                                             >
                                                 50/50
@@ -1256,35 +1336,37 @@ export function ExpenseFormModal({
                                 <span className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1">
                                     Currency
                                 </span>
-                                    {/* Inline Currency Selector Dropdown Pill */}
-                                    <div className="relative flex w-fit items-center">
-                                        <select
-                                            aria-label="Select currency"
-                                            value={currencyCode}
-                                            onChange={(e) => {
-                                                setCurrencyCode(e.target.value);
-                                                setCustomExchangeRate(undefined);
-                                            }}
-                                            className="appearance-none rounded-full bg-(--bg-canvas) text-base sm:text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                        >
-                                            {SUPPORTED_CURRENCIES.map((c) => (
-                                                <option key={c.code} value={c.code}>
-                                                    {c.flag} {c.code} ({c.symbol})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown
-                                            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
-                                            strokeWidth={2.5}
-                                        />
-                                    </div>
+                                {/* Inline Currency Selector Dropdown Pill */}
+                                <div className="relative flex w-fit items-center">
+                                    <select
+                                        aria-label="Select currency"
+                                        value={currencyCode}
+                                        onChange={(e) => {
+                                            setCurrencyCode(e.target.value);
+                                            setCustomExchangeRate(undefined);
+                                        }}
+                                        className="appearance-none rounded-full bg-(--bg-canvas) text-base sm:text-xs font-bold pl-3 pr-8 py-1 text-(--text-ink) border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    >
+                                        {SUPPORTED_CURRENCIES.map((c) => (
+                                            <option key={c.code} value={c.code}>
+                                                {c.flag} {c.code} ({c.symbol})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown
+                                        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)"
+                                        strokeWidth={2.5}
+                                    />
+                                </div>
                                 {/* Foreign Currency Live Conversion Preview & Editable Rate */}
                                 {currencyCode !== "SGD" && (
                                     <FxRateField
                                         currencyCode={currencyCode}
                                         foreignAmount={amount}
                                         customRate={customExchangeRate}
-                                        onCustomRateChange={setCustomExchangeRate}
+                                        onCustomRateChange={
+                                            setCustomExchangeRate
+                                        }
                                     />
                                 )}
                             </div>
@@ -1323,7 +1405,9 @@ export function ExpenseFormModal({
                                                 key={tag}
                                                 className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) px-2.5 py-0.5 text-[11px] font-bold"
                                             >
-                                                <span>#{tag.replace(/^#/, "")}</span>
+                                                <span>
+                                                    #{tag.replace(/^#/, "")}
+                                                </span>
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -1399,11 +1483,7 @@ export function ExpenseFormModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        onClick={onClose}
-                    >
+                    <Button variant="secondary" type="button" onClick={onClose}>
                         Cancel
                     </Button>
                     <Button

@@ -94,8 +94,7 @@ export function NotificationCenterPopover({
     const desktopPopoverRef = useRef<HTMLDivElement>(null);
     const mobileOverlayRef = useRef<HTMLDivElement>(null);
 
-    const activeMemberId =
-        me?.id || members?.[0]?.id || "mem-00000000-0011";
+    const activeMemberId = me?.id || members?.[0]?.id || "mem-00000000-0011";
     const readParam = searchParams.get("read");
 
     // Sync browser notification permission state
@@ -580,7 +579,10 @@ export function NotificationCenterPopover({
                         <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
-                                    <Bell className="h-4 w-4" strokeWidth={2.5} />
+                                    <Bell
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                 </div>
 
                                 <h3 className="text-xs font-black text-(--text-ink) font-display">
@@ -655,7 +657,10 @@ export function NotificationCenterPopover({
                                         onClick={() => setIsOpen(false)}
                                         className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                     >
-                                        <X className="h-4 w-4" strokeWidth={2.5} />
+                                        <X
+                                            className="h-4 w-4"
+                                            strokeWidth={2.5}
+                                        />
                                     </button>
                                 </div>
 

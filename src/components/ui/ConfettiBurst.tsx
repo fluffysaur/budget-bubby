@@ -27,7 +27,10 @@ const MAX_MS = 1200;
 
 function reducedMotion(): boolean {
     try {
-        return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+        return (
+            window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+            false
+        );
     } catch {
         return false;
     }
@@ -51,7 +54,10 @@ function piece(i: number) {
     };
 }
 
-export function ConfettiBurst({ onDone, pieces = MAX_PIECES }: ConfettiBurstProps) {
+export function ConfettiBurst({
+    onDone,
+    pieces = MAX_PIECES,
+}: ConfettiBurstProps) {
     const [done, setDone] = useState(false);
     const [still] = useState(reducedMotion);
     const count = Math.min(Math.max(pieces, 0), MAX_PIECES);
@@ -73,7 +79,10 @@ export function ConfettiBurst({ onDone, pieces = MAX_PIECES }: ConfettiBurstProp
                 data-testid="confetti-static"
                 className="pointer-events-none fixed left-1/2 top-28 z-9998 -translate-x-1/2 rounded-full border-2 border-(--border-ink) bg-(--pastel-butter) p-2 shadow-cute-sm"
             >
-                <Sparkles className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />
+                <Sparkles
+                    className="h-5 w-5 text-(--text-ink)"
+                    strokeWidth={2.5}
+                />
             </div>
         );
     }

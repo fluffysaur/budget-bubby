@@ -27,7 +27,10 @@ import {
     Sliders,
     ArrowUpRight,
 } from "lucide-react";
-import { financeService, isMockModeActive } from "../../services/financeService";
+import {
+    financeService,
+    isMockModeActive,
+} from "../../services/financeService";
 import {
     useAddCategoryMutation,
     useUpdateCategoryMutation,
@@ -675,16 +678,19 @@ export function BaseProfileEditorModal({
             ).cpfDeduction;
 
             const currentMonth = getCurrentMonth();
-            const isTargetMonthPast = selectedMonth ? selectedMonth < currentMonth : false;
+            const isTargetMonthPast = selectedMonth
+                ? selectedMonth < currentMonth
+                : false;
 
             if (!isTargetMonthPast) {
                 let targetBudgetId = monthlyBudgetId;
                 if (!targetBudgetId && selectedMonth) {
                     try {
-                        const monthDetail = await financeService.getMonthlyBudget(
-                            selectedMonth,
-                            profile.owner_id,
-                        );
+                        const monthDetail =
+                            await financeService.getMonthlyBudget(
+                                selectedMonth,
+                                profile.owner_id,
+                            );
                         targetBudgetId = monthDetail?.budget?.id;
                     } catch {
                         // ignore if lookup fails
@@ -693,7 +699,9 @@ export function BaseProfileEditorModal({
 
                 const isValidTarget =
                     targetBudgetId &&
-                    (isMockModeActive() ? targetBudgetId.length > 0 : isValidUuid(targetBudgetId));
+                    (isMockModeActive()
+                        ? targetBudgetId.length > 0
+                        : isValidUuid(targetBudgetId));
 
                 if (targetBudgetId && isValidTarget) {
                     await updateMonthlyBudgetMutation.mutateAsync({
@@ -873,7 +881,10 @@ export function BaseProfileEditorModal({
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-(--text-ink)">
-                                            <CurrencyText amount={effectiveTaxes} size="md" />
+                                            <CurrencyText
+                                                amount={effectiveTaxes}
+                                                size="md"
+                                            />
                                         </span>
                                         <span className="text-[11px] font-bold text-(--text-muted)">
                                             /mo
@@ -893,7 +904,10 @@ export function BaseProfileEditorModal({
                                     </span>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-(--text-ink)">
-                                            <CurrencyText amount={effectiveInsurance} size="md" />
+                                            <CurrencyText
+                                                amount={effectiveInsurance}
+                                                size="md"
+                                            />
                                         </span>
                                         <span className="text-[11px] font-bold text-(--text-muted)">
                                             /mo
@@ -1075,7 +1089,8 @@ export function BaseProfileEditorModal({
                                             No Categories
                                         </h4>
                                         <p className="text-xs text-(--text-muted) mb-3">
-                                            Add a category to allocate your budget.
+                                            Add a category to allocate your
+                                            budget.
                                         </p>
                                         <button
                                             type="button"
@@ -1176,7 +1191,8 @@ export function BaseProfileEditorModal({
                                                                     </button>
                                                                 )}
                                                             >
-                                                                Locked rows stay put.
+                                                                Locked rows stay
+                                                                put.
                                                             </TooltipPopover>
                                                         )}
 

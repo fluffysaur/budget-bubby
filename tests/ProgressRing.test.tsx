@@ -51,7 +51,10 @@ describe("ProgressRing", () => {
 
     it("renders centerContent or children inside the ring", () => {
         renderWithMotion(
-            <ProgressRing value={50} centerContent={<span data-testid="center-icon">🏆</span>} />,
+            <ProgressRing
+                value={50}
+                centerContent={<span data-testid="center-icon">🏆</span>}
+            />,
         );
         expect(screen.getByTestId("center-icon")).toBeInTheDocument();
     });
@@ -61,7 +64,9 @@ describe("ProgressRing", () => {
             <ProgressRing value={60} />,
         );
         let animatedCircle = container.querySelector("circle:nth-child(2)");
-        expect(animatedCircle?.getAttribute("class")).toContain("stroke-(--tone-ok)");
+        expect(animatedCircle?.getAttribute("class")).toContain(
+            "stroke-(--tone-ok)",
+        );
 
         rerender(
             <LazyMotion features={domAnimation} strict>
@@ -69,7 +74,9 @@ describe("ProgressRing", () => {
             </LazyMotion>,
         );
         animatedCircle = container.querySelector("circle:nth-child(2)");
-        expect(animatedCircle?.getAttribute("class")).toContain("stroke-(--tone-near)");
+        expect(animatedCircle?.getAttribute("class")).toContain(
+            "stroke-(--tone-near)",
+        );
 
         rerender(
             <LazyMotion features={domAnimation} strict>
@@ -77,7 +84,9 @@ describe("ProgressRing", () => {
             </LazyMotion>,
         );
         animatedCircle = container.querySelector("circle:nth-child(2)");
-        expect(animatedCircle?.getAttribute("class")).toContain("stroke-(--tone-over)");
+        expect(animatedCircle?.getAttribute("class")).toContain(
+            "stroke-(--tone-over)",
+        );
 
         rerender(
             <LazyMotion features={domAnimation} strict>
@@ -85,6 +94,8 @@ describe("ProgressRing", () => {
             </LazyMotion>,
         );
         animatedCircle = container.querySelector("circle:nth-child(2)");
-        expect(animatedCircle?.getAttribute("class")).toContain("stroke-(--tone-over)");
+        expect(animatedCircle?.getAttribute("class")).toContain(
+            "stroke-(--tone-over)",
+        );
     });
 });

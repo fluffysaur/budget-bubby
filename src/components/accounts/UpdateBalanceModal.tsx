@@ -24,7 +24,12 @@ import {
     useBulkUpdateAccountBalancesMutation,
 } from "../../hooks/useFinanceQueries";
 import { getTodayDateString } from "../../lib/dateUtils";
-import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/AnimatedModal";
+import {
+    AnimatedModal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+} from "../ui/AnimatedModal";
 import { TruncatedText } from "../ui/TruncatedText";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
@@ -270,7 +275,12 @@ export function UpdateBalanceModal({
                         id="single-modal-title"
                         title="Update Account Balance"
                         subtitle={`${account.name} ${account.institution ? `(${account.institution})` : ""}`}
-                        icon={<Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />}
+                        icon={
+                            <Landmark
+                                className="h-4.5 w-4.5"
+                                strokeWidth={2.5}
+                            />
+                        }
                         iconBgColor="bg-(--pastel-butter-light)"
                         onClose={onClose}
                     />
@@ -328,9 +338,7 @@ export function UpdateBalanceModal({
                                     id="single-date-input"
                                     type="date"
                                     value={date}
-                                    onChange={(e) =>
-                                        setDate(e.target.value)
-                                    }
+                                    onChange={(e) => setDate(e.target.value)}
                                     className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
@@ -368,7 +376,12 @@ export function UpdateBalanceModal({
                             variant="primary"
                             isLoading={isSubmitting}
                             disabled={isSubmitting}
-                            leftIcon={<CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />}
+                            leftIcon={
+                                <CheckCircle2
+                                    className="h-4 w-4"
+                                    strokeWidth={2.5}
+                                />
+                            }
                         >
                             Save Balance
                         </Button>
@@ -386,7 +399,9 @@ export function UpdateBalanceModal({
                 <ModalHeader
                     id="multi-modal-title"
                     title="Update Balances"
-                    icon={<Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />}
+                    icon={
+                        <Landmark className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    }
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -510,7 +525,9 @@ export function UpdateBalanceModal({
                                                 <span>•</span>
                                                 <span>
                                                     Prev:{" "}
-                                                    <CurrencyText amount={currentVal} />
+                                                    <CurrencyText
+                                                        amount={currentVal}
+                                                    />
                                                 </span>
                                             </div>
                                         </div>
@@ -590,7 +607,12 @@ export function UpdateBalanceModal({
                         onClick={handleMultiSubmit}
                         isLoading={isSubmitting}
                         disabled={isSubmitting || modifiedAccounts.length === 0}
-                        leftIcon={<CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />}
+                        leftIcon={
+                            <CheckCircle2
+                                className="h-4 w-4"
+                                strokeWidth={2.5}
+                            />
+                        }
                     >
                         {modifiedAccounts.length > 0
                             ? `Save ${modifiedAccounts.length} Modified Account${modifiedAccounts.length === 1 ? "" : "s"}`

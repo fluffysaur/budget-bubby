@@ -25,7 +25,10 @@ import {
 import { BonusAllocationCollapsible } from "../budget/BonusAllocationCollapsible";
 import { BonusRow } from "./BonusRow";
 import { BonusFormModal, type BonusSavedInfo } from "./BonusFormModal";
-import { BonusCelebration, type BonusCelebrationData } from "./BonusCelebration";
+import {
+    BonusCelebration,
+    type BonusCelebrationData,
+} from "./BonusCelebration";
 import { useHousehold } from "../../context/HouseholdContext";
 import {
     useBaseProfilesQuery,
@@ -41,7 +44,11 @@ import {
 import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { financeService } from "../../services/financeService";
-import type { BaseBudgetProfile, BonusEvent, SavingsGoal } from "../../types/finance";
+import type {
+    BaseBudgetProfile,
+    BonusEvent,
+    SavingsGoal,
+} from "../../types/finance";
 
 const EMPTY_BONUSES: BonusEvent[] = [];
 const EMPTY_GOALS: SavingsGoal[] = [];
@@ -60,7 +67,9 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
     const [editingEvent, setEditingEvent] = useState<BonusEvent | null>(null);
     const [deletingEvent, setDeletingEvent] = useState<BonusEvent | null>(null);
-    const [celebration, setCelebration] = useState<BonusCelebrationData | null>(null);
+    const [celebration, setCelebration] = useState<BonusCelebrationData | null>(
+        null,
+    );
     const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
     const events = bonusData?.events ?? EMPTY_BONUSES;
@@ -81,7 +90,8 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
         [events, ytdYear, members],
     );
     const memberName = useCallback(
-        (id: string) => members.find((m) => m.id === id)?.display_name ?? "Member",
+        (id: string) =>
+            members.find((m) => m.id === id)?.display_name ?? "Member",
         [members],
     );
 
@@ -115,7 +125,10 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
 
     if (isLoading && !bonusData) {
         return (
-            <div className={`space-y-4 ${className}`} data-testid="bonus-log-loading">
+            <div
+                className={`space-y-4 ${className}`}
+                data-testid="bonus-log-loading"
+            >
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                     <SkeletonStatCard />
                     <SkeletonStatCard />
@@ -138,7 +151,9 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     }
 
     const avgCpfPct =
-        ytd.household.gross > 0 ? Math.round((ytd.household.cpf / ytd.household.gross) * 100) : 0;
+        ytd.household.gross > 0
+            ? Math.round((ytd.household.cpf / ytd.household.gross) * 100)
+            : 0;
     const deletingGoalTotal = deletingEvent ? bonusGoalTotal(deletingEvent) : 0;
 
     return (
@@ -173,22 +188,32 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                         <StatCard
                             title="Gross"
-                            value={formatSGD(ytd.household.gross, { showCents: false })}
+                            value={formatSGD(ytd.household.gross, {
+                                showCents: false,
+                            })}
                             subtitle={`${ytd.household.count} ${ytd.household.count === 1 ? "bonus" : "bonuses"}`}
                         />
                         <StatCard
                             title="CPF"
-                            value={formatSGD(ytd.household.cpf, { showCents: false })}
+                            value={formatSGD(ytd.household.cpf, {
+                                showCents: false,
+                            })}
                             subtitle={`${avgCpfPct}% avg`}
                         />
                         <StatCard
                             title="Net"
-                            value={formatSGD(ytd.household.net, { showCents: false })}
+                            value={formatSGD(ytd.household.net, {
+                                showCents: false,
+                            })}
                             subtitle={`${ytdYear} YTD`}
                         />
                     </div>
 
-                    <Card elevation="sm" padding="sm" data-testid="bonus-ytd-table">
+                    <Card
+                        elevation="sm"
+                        padding="sm"
+                        data-testid="bonus-ytd-table"
+                    >
                         <div className="mb-2 flex items-center justify-between gap-3">
                             <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                                 By person
@@ -200,8 +225,15 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                         id="bonus-ytd-year"
                                         sizeVariant="sm"
                                         value={String(ytdYear)}
-                                        onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                        options={years.map((y) => ({ value: String(y), label: String(y) }))}
+                                        onChange={(e) =>
+                                            setSelectedYear(
+                                                Number(e.target.value),
+                                            )
+                                        }
+                                        options={years.map((y) => ({
+                                            value: String(y),
+                                            label: String(y),
+                                        }))}
                                     />
                                 </div>
                             )}
@@ -209,13 +241,29 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                         <div className="divide-y divide-(--border-subtle) text-sm">
                             <div className="flex items-center gap-2 pb-1.5 text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                                 <span className="min-w-0 flex-1">Name</span>
-                                <span className="w-20 shrink-0 text-right">Gross</span>
-                                <span className="hidden w-20 shrink-0 text-right sm:block">CPF</span>
-                                <span className="w-20 shrink-0 text-right">Net</span>
+                                <span className="w-20 shrink-0 text-right">
+                                    Gross
+                                </span>
+                                <span className="hidden w-20 shrink-0 text-right sm:block">
+                                    CPF
+                                </span>
+                                <span className="w-20 shrink-0 text-right">
+                                    Net
+                                </span>
                             </div>
                             {[
-                                ...ytd.members.map((m) => ({ key: m.memberId, name: m.name, totals: m, bold: false })),
-                                { key: "household", name: "Household", totals: ytd.household, bold: true },
+                                ...ytd.members.map((m) => ({
+                                    key: m.memberId,
+                                    name: m.name,
+                                    totals: m,
+                                    bold: false,
+                                })),
+                                {
+                                    key: "household",
+                                    name: "Household",
+                                    totals: ytd.household,
+                                    bold: true,
+                                },
                             ].map((row) => (
                                 <div
                                     key={row.key}
@@ -225,13 +273,28 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                         <TruncatedText text={row.name} />
                                     </div>
                                     <span className="w-20 shrink-0 text-right font-mono-num">
-                                        <CurrencyText formatted={formatSGD(row.totals.gross, { showCents: false })} />
+                                        <CurrencyText
+                                            formatted={formatSGD(
+                                                row.totals.gross,
+                                                { showCents: false },
+                                            )}
+                                        />
                                     </span>
                                     <span className="hidden w-20 shrink-0 text-right font-mono-num sm:block">
-                                        <CurrencyText formatted={formatSGD(row.totals.cpf, { showCents: false })} />
+                                        <CurrencyText
+                                            formatted={formatSGD(
+                                                row.totals.cpf,
+                                                { showCents: false },
+                                            )}
+                                        />
                                     </span>
                                     <span className="w-20 shrink-0 text-right font-mono-num">
-                                        <CurrencyText formatted={formatSGD(row.totals.net, { showCents: false })} />
+                                        <CurrencyText
+                                            formatted={formatSGD(
+                                                row.totals.net,
+                                                { showCents: false },
+                                            )}
+                                        />
                                     </span>
                                 </div>
                             ))}
@@ -244,8 +307,13 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                 key={group.year}
                                 title={String(group.year)}
                                 subtitle={`${formatSGD(group.totals.net, { showCents: false })} net · ${group.totals.count} ${group.totals.count === 1 ? "bonus" : "bonuses"}`}
-                                icon={<Sparkles className="h-5 w-5 text-purple-700 dark:text-purple-300" />}
-                                defaultOpen={group.year === currentYear || group.year === groups[0].year}
+                                icon={
+                                    <Sparkles className="h-5 w-5 text-purple-700 dark:text-purple-300" />
+                                }
+                                defaultOpen={
+                                    group.year === currentYear ||
+                                    group.year === groups[0].year
+                                }
                             >
                                 <div className="divide-y divide-(--border-subtle)">
                                     <AnimatePresence initial={false}>
@@ -253,7 +321,9 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                             <BonusRow
                                                 key={event.id}
                                                 event={event}
-                                                recipientName={memberName(event.recipient_id)}
+                                                recipientName={memberName(
+                                                    event.recipient_id,
+                                                )}
                                                 onEdit={openEdit}
                                                 onDelete={setDeletingEvent}
                                             />
@@ -288,14 +358,25 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
             >
                 {deletingEvent && (
                     <p className="text-sm text-(--text-ink)">
-                        <CurrencyText amount={deletingEvent.gross} /> {BONUS_TYPE_LABELS[deletingEvent.type]} for{" "}
+                        <CurrencyText amount={deletingEvent.gross} />{" "}
+                        {BONUS_TYPE_LABELS[deletingEvent.type]} for{" "}
                         {memberName(deletingEvent.recipient_id)}.
-                        {deletingGoalTotal > 0 && <> Removes <CurrencyText amount={deletingGoalTotal} /> from goals.</>}
+                        {deletingGoalTotal > 0 && (
+                            <>
+                                {" "}
+                                Removes{" "}
+                                <CurrencyText amount={deletingGoalTotal} /> from
+                                goals.
+                            </>
+                        )}
                     </p>
                 )}
             </ConfirmModal>
 
-            <BonusCelebration celebration={celebration} onDone={handleCelebrationDone} />
+            <BonusCelebration
+                celebration={celebration}
+                onDone={handleCelebrationDone}
+            />
         </div>
     );
 }

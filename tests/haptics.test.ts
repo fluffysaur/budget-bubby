@@ -154,7 +154,9 @@ describe("Haptics Engine (src/lib/haptics.ts)", () => {
     });
 
     it("handles vibration exceptions without throwing", () => {
-        const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+        const consoleDebugSpy = vi
+            .spyOn(console, "debug")
+            .mockImplementation(() => {});
         Object.defineProperty(window, "navigator", {
             value: {
                 vibrate: vi.fn().mockImplementation(() => {

@@ -263,7 +263,10 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                             </>
                         ) : (
                             <>
-                                <Fingerprint className="h-5 w-5 text-(--text-ink)" strokeWidth={2.5} />
+                                <Fingerprint
+                                    className="h-5 w-5 text-(--text-ink)"
+                                    strokeWidth={2.5}
+                                />
                                 <span>Biometric Unlock</span>
                             </>
                         )}
@@ -274,7 +277,9 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 <div
                     data-testid="pin-dots-container"
                     className={`flex items-center justify-center gap-3.5 mb-8 transition-transform duration-200 ${
-                        isShaking ? "animate-bounce text-(--accent-coral-ink)" : ""
+                        isShaking
+                            ? "animate-bounce text-(--accent-coral-ink)"
+                            : ""
                     }`}
                 >
                     {Array.from({ length: 6 }).map((_, idx) => {
@@ -300,7 +305,10 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         data-testid="biometric-error-alert"
                         className="flex items-center gap-2 mb-4 px-3.5 py-2 rounded-xl bg-amber-50 border-2 border-(--border-ink) text-amber-900 text-xs font-bold shadow-cute-sm animate-enter"
                     >
-                        <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                        <AlertCircle
+                            className="h-4 w-4 shrink-0"
+                            strokeWidth={2.5}
+                        />
                         <span>{biometricError}</span>
                     </div>
                 )}
@@ -311,7 +319,10 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         role="alert"
                         className="flex items-center gap-2 mb-6 px-3.5 py-2 rounded-xl bg-(--accent-coral-subtle) border-2 border-(--border-ink) text-(--accent-coral-ink) text-xs font-bold shadow-cute-sm animate-enter"
                     >
-                        <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                        <AlertCircle
+                            className="h-4 w-4 shrink-0"
+                            strokeWidth={2.5}
+                        />
                         <span>{authError}</span>
                     </div>
                 )}
@@ -319,7 +330,10 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                 {/* Loading Spinner during authentication */}
                 {authLoading && (
                     <div className="flex items-center gap-2 mb-6 text-purple-700 dark:text-(--pastel-lilac) text-xs font-bold animate-enter">
-                        <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+                        <Loader2
+                            className="h-4 w-4 animate-spin"
+                            strokeWidth={2.5}
+                        />
                         <span>Unlocking...</span>
                     </div>
                 )}
@@ -418,12 +432,18 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         >
                             {isEnrolling ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+                                    <Loader2
+                                        className="h-4 w-4 animate-spin"
+                                        strokeWidth={2.5}
+                                    />
                                     <span>Enrolling Device...</span>
                                 </>
                             ) : (
                                 <>
-                                    <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />
+                                    <CheckCircle2
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
                                     <span>Enable Biometrics</span>
                                 </>
                             )}

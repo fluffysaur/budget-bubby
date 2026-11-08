@@ -10,7 +10,14 @@ import { cleanMerchant } from "./merchant";
 import { parseCapturedAmount } from "./parseAmount";
 import { toSgtDateTime } from "./sgTime";
 
-export const DEEP_LINK_PARAMS = ["action", "amount", "merchant", "card", "at", "currency"] as const;
+export const DEEP_LINK_PARAMS = [
+    "action",
+    "amount",
+    "merchant",
+    "card",
+    "at",
+    "currency",
+] as const;
 
 const MAX_PARAM_LENGTH = 200;
 
@@ -21,7 +28,9 @@ function param(params: URLSearchParams, key: string): string | null {
 }
 
 /** Null when the URL is not an Add Expense deep link. */
-export function parseQuickAddDeepLink(search: string): ExpenseFormInitialValues | null {
+export function parseQuickAddDeepLink(
+    search: string,
+): ExpenseFormInitialValues | null {
     const params = new URLSearchParams(search);
     if (params.get("action") !== "new") return null;
 
@@ -29,7 +38,10 @@ export function parseQuickAddDeepLink(search: string): ExpenseFormInitialValues 
 
     const rawAmount = param(params, "amount");
     if (rawAmount) {
-        const parsed = parseCapturedAmount(rawAmount, param(params, "currency"));
+        const parsed = parseCapturedAmount(
+            rawAmount,
+            param(params, "currency"),
+        );
         if (parsed.ok) {
             if (parsed.currency === "SGD") {
                 values.amount = parsed.amount;
@@ -48,7 +60,11 @@ export function parseQuickAddDeepLink(search: string): ExpenseFormInitialValues 
         const sgt = toSgtDateTime(at);
         const ms = new Date(at).getTime();
         // Only the last week: older or future stamps are probably wrong
-        if (sgt && ms <= Date.now() + 10 * 60_000 && ms >= Date.now() - 7 * 86_400_000) {
+        if (
+            sgt &&
+            ms <= Date.now() + 10 * 60_000 &&
+            ms >= Date.now() - 7 * 86_400_000
+        ) {
             values.date = sgt.date;
             values.time = sgt.time;
         }

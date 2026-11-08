@@ -26,10 +26,17 @@ export interface ActivityCheckinResult {
 }
 
 /** True if the cached check-ins show this member logged on `date`. */
-export function isMemberLoggedInCache(memberId: string, date: string): boolean | null {
-    const cached = queryClient.getQueryData<DailyCheckin[]>(queryKeys.dailyCheckins());
+export function isMemberLoggedInCache(
+    memberId: string,
+    date: string,
+): boolean | null {
+    const cached = queryClient.getQueryData<DailyCheckin[]>(
+        queryKeys.dailyCheckins(),
+    );
     if (!cached) return null;
-    return cached.some((c) => c.member_id === memberId && c.checkin_date === date);
+    return cached.some(
+        (c) => c.member_id === memberId && c.checkin_date === date,
+    );
 }
 
 export function recordActivityCheckin(
@@ -39,11 +46,16 @@ export function recordActivityCheckin(
 ): ActivityCheckinResult | null {
     if (!memberId) return null;
     const key = `${memberId}|${today}`;
-    const cached = queryClient.getQueryData<DailyCheckin[]>(queryKeys.dailyCheckins());
+    const cached = queryClient.getQueryData<DailyCheckin[]>(
+        queryKeys.dailyCheckins(),
+    );
     const alreadyLogged =
-        cached?.some((c) => c.member_id === memberId && c.checkin_date === today) ?? false;
+        cached?.some(
+            (c) => c.member_id === memberId && c.checkin_date === today,
+        ) ?? false;
     // Unknown cache: don't claim a first log (no false celebrations)
-    const firstForDate = Boolean(cached) && !alreadyLogged && lastRecordedKey !== key;
+    const firstForDate =
+        Boolean(cached) && !alreadyLogged && lastRecordedKey !== key;
 
     if (cached && !alreadyLogged) {
         const optimistic: DailyCheckin = {
@@ -77,7 +89,10 @@ export function recordActivityCheckin(
  * Exercise 💪 with no table behind it (goal adds, month-end actions, balance
  * updates): recorded on this device for today. Counts once per period.
  */
-export function recordExercise(kind: LocalExerciseKind, today: string = toSgtDateString()): void {
+export function recordExercise(
+    kind: LocalExerciseKind,
+    today: string = toSgtDateString(),
+): void {
     addLocalExercise(kind, today);
     emitAppEvent("bubby:store-changed", {});
 }

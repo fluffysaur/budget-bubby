@@ -12,7 +12,10 @@ import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, Inbox, Pencil, Trash2 } from "lucide-react";
 import { useLoggedInMember } from "../hooks/useLoggedInMember";
-import { useAllExpensesQuery, useCategoriesQuery } from "../hooks/useFinanceQueries";
+import {
+    useAllExpensesQuery,
+    useCategoriesQuery,
+} from "../hooks/useFinanceQueries";
 import {
     inboxQueryKeys,
     useCaptureTokensQuery,
@@ -21,8 +24,16 @@ import {
     useConfirmInboxItemMutation,
     useResolveInboxItemMutation,
 } from "../hooks/useInboxQueries";
-import { guessInboxCategory, findLikelyDuplicate, topCategoriesForMember } from "../lib/capture/guessCategory";
-import { buildInboxExpenseInput, canQuickConfirm, inboxItemFormValues } from "../lib/capture/inboxExpense";
+import {
+    guessInboxCategory,
+    findLikelyDuplicate,
+    topCategoriesForMember,
+} from "../lib/capture/guessCategory";
+import {
+    buildInboxExpenseInput,
+    canQuickConfirm,
+    inboxItemFormValues,
+} from "../lib/capture/inboxExpense";
 import { inboxItemSgd } from "../services/inbox/inboxSummary";
 import { emitInboxEvent, InboxSessionTracker } from "../lib/inbox/inboxEvents";
 import { getStoredLastSplit } from "../lib/lastSplit";
@@ -34,9 +45,21 @@ import { Button } from "../components/ui/Button";
 import { Alert } from "../components/ui/Alert";
 import { EmptyStateCard } from "../components/ui/EmptyStateCard";
 import { InboxCard, InboxCardSkeleton } from "../components/inbox/InboxCard";
-import { useSwipeCard, type SwipeDirection } from "../components/inbox/useSwipeCard";
-import { ExpenseFormModal, type ExpenseFormInitialValues } from "../components/expenses/ExpenseFormModal";
-import type { Category, Expense, InboxItem, InboxItemsResult, MerchantRule } from "../types/finance";
+import {
+    useSwipeCard,
+    type SwipeDirection,
+} from "../components/inbox/useSwipeCard";
+import {
+    ExpenseFormModal,
+    type ExpenseFormInitialValues,
+} from "../components/expenses/ExpenseFormModal";
+import type {
+    Category,
+    Expense,
+    InboxItem,
+    InboxItemsResult,
+    MerchantRule,
+} from "../types/finance";
 
 const EMPTY_ITEMS: InboxItem[] = [];
 const EMPTY_CATEGORIES: Category[] = [];
@@ -54,7 +77,12 @@ interface Choice {
 
 type FailedAction =
     | { message: string; kind: "confirm"; view: ItemView; via: Via }
-    | { message: string; kind: "resolve"; view: ItemView; reason: "discarded" | "duplicate" };
+    | {
+          message: string;
+          kind: "resolve";
+          view: ItemView;
+          reason: "discarded" | "duplicate";
+      };
 
 interface ItemView {
     item: InboxItem;
@@ -83,10 +111,15 @@ export function InboxPage() {
     const rules = rulesData ?? EMPTY_RULES;
     const hasToken = (tokensData?.tokens.length ?? 0) > 0;
 
-    const [overrides, setOverrides] = useState<Record<string, Partial<Choice>>>({});
+    const [overrides, setOverrides] = useState<Record<string, Partial<Choice>>>(
+        {},
+    );
     const [error, setError] = useState<FailedAction | null>(null);
     const [undoItem, setUndoItem] = useState<InboxItem | null>(null);
-    const [editing, setEditing] = useState<{ item: InboxItem; values: ExpenseFormInitialValues } | null>(null);
+    const [editing, setEditing] = useState<{
+        item: InboxItem;
+        values: ExpenseFormInitialValues;
+    } | null>(null);
     const [busy, setBusy] = useState(false);
     const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const tracker = useRef(new InboxSessionTracker());
@@ -103,19 +136,25 @@ export function InboxPage() {
                     recentExpenses: expenses,
                     categories,
                 });
-                const guessId = guess.categoryId ?? item.suggested_category_id ?? null;
+                const guessId =
+                    guess.categoryId ?? item.suggested_category_id ?? null;
                 const override = overrides[item.id] ?? {};
                 const duplicateId = item.likely_duplicate_of;
                 const duplicate =
-                    (duplicateId && expenses.find((e) => e.id === duplicateId)) ||
+                    (duplicateId &&
+                        expenses.find((e) => e.id === duplicateId)) ||
                     findLikelyDuplicate(item, expenses);
                 return {
                     item,
                     guessId,
                     isRuleMatch: guess.confidence === "rule",
                     choice: {
-                        categoryId: override.categoryId !== undefined ? override.categoryId : guessId,
-                        isShared: override.isShared ?? guess.isShared ?? lastSplit,
+                        categoryId:
+                            override.categoryId !== undefined
+                                ? override.categoryId
+                                : guessId,
+                        isShared:
+                            override.isShared ?? guess.isShared ?? lastSplit,
                     },
                     duplicate: duplicate || undefined,
                     canConfirm: canQuickConfirm(item),
@@ -127,12 +166,22 @@ export function InboxPage() {
 
     const top = views[0];
     const next = views[1];
-    const matched = useMemo(() => views.filter((v) => v.isRuleMatch && v.canConfirm), [views]);
+    const matched = useMemo(
+        () => views.filter((v) => v.isRuleMatch && v.canConfirm),
+        [views],
+    );
 
     const chipCategories = useMemo(
         () =>
             top
-                ? topCategoriesForMember(expenses, categories, top.item.member_id, top.choice.categoryId, 5, todayDate)
+                ? topCategoriesForMember(
+                      expenses,
+                      categories,
+                      top.item.member_id,
+                      top.choice.categoryId,
+                      5,
+                      todayDate,
+                  )
                 : EMPTY_CATEGORIES,
         [top, expenses, categories, todayDate],
     );
@@ -183,9 +232,8 @@ export function InboxPage() {
         async (view: ItemView, reason: "discarded" | "duplicate") => {
             setError(null);
             const cachedItems =
-                queryClient.getQueryData<InboxItemsResult>(
-                    inboxQueryKeys.items,
-                )?.items ?? [];
+                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                    ?.items ?? [];
             const remaining = Math.max(0, cachedItems.length - 1);
             haptics.lightTap();
             try {
@@ -286,7 +334,13 @@ export function InboxPage() {
             if (editing || e.metaKey || e.ctrlKey || e.altKey) return;
             const el = document.activeElement as HTMLElement | null;
             const tag = el?.tagName.toLowerCase();
-            if (tag === "input" || tag === "textarea" || tag === "select" || el?.isContentEditable) return;
+            if (
+                tag === "input" ||
+                tag === "textarea" ||
+                tag === "select" ||
+                el?.isContentEditable
+            )
+                return;
             if (document.querySelector('[role="dialog"]')) return;
             if ((e.key === "z" || e.key === "Z") && undoItem) {
                 e.preventDefault();
@@ -297,7 +351,10 @@ export function InboxPage() {
             if (e.key === "ArrowLeft") {
                 e.preventDefault();
                 void resolveView(top, "discarded");
-            } else if (e.key === "ArrowRight" || (e.key === "Enter" && tag !== "button")) {
+            } else if (
+                e.key === "ArrowRight" ||
+                (e.key === "Enter" && tag !== "button")
+            ) {
                 e.preventDefault();
                 void confirmView(top, "button");
             } else if (e.key === "e" || e.key === "E") {
@@ -313,13 +370,24 @@ export function InboxPage() {
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    }, [editing, top, undoItem, chipCategories, handleUndo, resolveView, confirmView, openEdit, setChoice]);
+    }, [
+        editing,
+        top,
+        undoItem,
+        chipCategories,
+        handleUndo,
+        resolveView,
+        confirmView,
+        openEdit,
+        setChoice,
+    ]);
 
     if (!isLoading && data && !data.available) {
         return <Navigate to="/expenses" replace />;
     }
 
-    const payerName = (id: string) => members.find((m) => m.id === id)?.display_name;
+    const payerName = (id: string) =>
+        members.find((m) => m.id === id)?.display_name;
 
     return (
         <div className="space-y-5 pb-20 md:pb-12">
@@ -341,7 +409,12 @@ export function InboxPage() {
                         variant="danger"
                         title="Couldn't save"
                         action={
-                            <Button type="button" variant="secondary" size="sm" onClick={handleRetry}>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleRetry}
+                            >
                                 Retry
                             </Button>
                         }
@@ -366,17 +439,25 @@ export function InboxPage() {
                                 key={top.item.id}
                                 item={top.item}
                                 payerName={payerName(top.item.member_id)}
-                                isPartnerItem={!me || top.item.member_id !== me.id}
+                                isPartnerItem={
+                                    !me || top.item.member_id !== me.id
+                                }
                                 amountSgd={top.amountSgd}
                                 canConfirm={top.canConfirm}
                                 chipCategories={chipCategories}
                                 allCategories={categories}
                                 selectedCategoryId={top.choice.categoryId}
-                                onSelectCategory={(id) => setChoice(top.item.id, { categoryId: id })}
+                                onSelectCategory={(id) =>
+                                    setChoice(top.item.id, { categoryId: id })
+                                }
                                 isShared={top.choice.isShared}
-                                onShareChange={(shared) => setChoice(top.item.id, { isShared: shared })}
+                                onShareChange={(shared) =>
+                                    setChoice(top.item.id, { isShared: shared })
+                                }
                                 duplicate={top.duplicate}
-                                onSameOne={() => void resolveView(top, "duplicate")}
+                                onSameOne={() =>
+                                    void resolveView(top, "duplicate")
+                                }
                                 todayDate={todayDate}
                                 cardRef={swipe.cardRef}
                                 confirmTintRef={swipe.confirmTintRef}
@@ -390,8 +471,15 @@ export function InboxPage() {
                                 type="button"
                                 variant="ghost"
                                 className="min-h-11"
-                                onClick={() => void resolveView(top, "discarded")}
-                                leftIcon={<Trash2 className="h-4 w-4" strokeWidth={2.5} />}
+                                onClick={() =>
+                                    void resolveView(top, "discarded")
+                                }
+                                leftIcon={
+                                    <Trash2
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
                             >
                                 Discard
                             </Button>
@@ -400,7 +488,12 @@ export function InboxPage() {
                                 variant={top.canConfirm ? "outline" : "primary"}
                                 className="min-h-11"
                                 onClick={() => openEdit(top)}
-                                leftIcon={<Pencil className="h-4 w-4" strokeWidth={2.5} />}
+                                leftIcon={
+                                    <Pencil
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
                             >
                                 Edit
                             </Button>
@@ -408,9 +501,16 @@ export function InboxPage() {
                                 type="button"
                                 variant="primary"
                                 className="min-h-11"
-                                disabled={!top.canConfirm || !top.choice.categoryId}
+                                disabled={
+                                    !top.canConfirm || !top.choice.categoryId
+                                }
                                 onClick={() => void confirmView(top, "button")}
-                                leftIcon={<Check className="h-4 w-4" strokeWidth={2.5} />}
+                                leftIcon={
+                                    <Check
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
                             >
                                 Confirm
                             </Button>
@@ -437,7 +537,11 @@ export function InboxPage() {
                             <Button
                                 type="button"
                                 variant="primary"
-                                onClick={() => window.dispatchEvent(new Event("openQuickAdd"))}
+                                onClick={() =>
+                                    window.dispatchEvent(
+                                        new Event("openQuickAdd"),
+                                    )
+                                }
                             >
                                 Add Expense
                             </Button>
@@ -452,7 +556,11 @@ export function InboxPage() {
                             <Button
                                 type="button"
                                 variant="primary"
-                                onClick={() => window.dispatchEvent(new Event("openSettings"))}
+                                onClick={() =>
+                                    window.dispatchEvent(
+                                        new Event("openSettings"),
+                                    )
+                                }
                             >
                                 Set Up
                             </Button>
@@ -462,12 +570,20 @@ export function InboxPage() {
             </div>
 
             {undoItem && (
-                <div className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md md:bottom-6" role="status">
+                <div
+                    className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md md:bottom-6"
+                    role="status"
+                >
                     <Alert
                         variant="info"
                         title="Discarded"
                         action={
-                            <Button type="button" variant="secondary" size="sm" onClick={() => void handleUndo()}>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => void handleUndo()}
+                            >
                                 Undo
                             </Button>
                         }

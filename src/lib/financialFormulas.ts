@@ -384,7 +384,8 @@ export function calculateMonthlyBalanceTrends(
     const snapshotMonths = snapshots
         .filter((s) => accountIds.has(s.account_id))
         .map((s) => s.snapshot_date.slice(0, 7));
-    const firstMonth = snapshotMonths.length > 0 ? snapshotMonths.sort()[0] : currentM;
+    const firstMonth =
+        snapshotMonths.length > 0 ? snapshotMonths.sort()[0] : currentM;
 
     const windowStart = addMonths(currentM, -(monthsCount - 1));
     const startMonth = firstMonth > windowStart ? firstMonth : windowStart;
@@ -411,7 +412,8 @@ export function calculateMonthlyBalanceTrends(
             } else {
                 const accSnaps = snapsByAccount.get(acc.id) ?? [];
                 for (const snap of accSnaps) {
-                    if (snap.snapshot_date.slice(0, 7) <= month) bal = Number(snap.balance);
+                    if (snap.snapshot_date.slice(0, 7) <= month)
+                        bal = Number(snap.balance);
                     else break;
                 }
             }
@@ -435,10 +437,16 @@ export function calculateMonthlyBalanceTrends(
         const nonCpfNetWorth = round2(nonCpfAssets - cardDebt);
 
         const prevPoint = points.length > 0 ? points[points.length - 1] : null;
-        const momChange = prevPoint ? round2(totalAssets - prevPoint.totalAssets) : 0;
+        const momChange = prevPoint
+            ? round2(totalAssets - prevPoint.totalAssets)
+            : 0;
         const momChangePct =
             prevPoint && prevPoint.totalAssets > 0
-                ? Math.round(((totalAssets - prevPoint.totalAssets) / prevPoint.totalAssets) * 1000) / 10
+                ? Math.round(
+                      ((totalAssets - prevPoint.totalAssets) /
+                          prevPoint.totalAssets) *
+                          1000,
+                  ) / 10
                 : 0;
 
         points.push({

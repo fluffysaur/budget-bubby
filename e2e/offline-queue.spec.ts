@@ -35,7 +35,9 @@ test.describe("Offline Queue Sync Flow", () => {
 
         // 2. Go offline
         await context.setOffline(true);
-        await expect(page.getByRole("status").first()).toContainText(/offline/i);
+        await expect(page.getByRole("status").first()).toContainText(
+            /offline/i,
+        );
 
         // 3. Add a new expense while offline
         const addModal = await openAddExpenseModal(page, isMobile);
@@ -55,9 +57,7 @@ test.describe("Offline Queue Sync Flow", () => {
         const editModal = page.getByRole("dialog");
         await expect(editModal).toBeVisible();
         await editModal.locator('input[placeholder="0.00"]').fill("28.00");
-        await editModal
-            .locator("#expense-item")
-            .fill("Offline Laksa Upsized");
+        await editModal.locator("#expense-item").fill("Offline Laksa Upsized");
         await editModal.getByRole("button", { name: /^Save$/i }).click();
         await expect(editModal).not.toBeVisible();
 

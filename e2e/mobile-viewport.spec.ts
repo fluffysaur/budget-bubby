@@ -1,55 +1,72 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Mobile Viewport & Bottom Navigation', () => {
-  test('should display bottom navigation bar and toggle Quick Add modal on mobile', async ({ page, isMobile }) => {
-    // If running on desktop, adjust viewport to mobile dimensions
-    if (!isMobile) {
-      await page.setViewportSize({ width: 390, height: 844 });
-    }
+test.describe("Mobile Viewport & Bottom Navigation", () => {
+    test("should display bottom navigation bar and toggle Quick Add modal on mobile", async ({
+        page,
+        isMobile,
+    }) => {
+        // If running on desktop, adjust viewport to mobile dimensions
+        if (!isMobile) {
+            await page.setViewportSize({ width: 390, height: 844 });
+        }
 
-    await page.goto('/');
+        await page.goto("/");
 
-    // Desktop sidebar should be hidden
-    const sidebar = page.locator('aside');
-    await expect(sidebar).toBeHidden();
+        // Desktop sidebar should be hidden
+        const sidebar = page.locator("aside");
+        await expect(sidebar).toBeHidden();
 
-    // Mobile bottom navigation should be visible
-    const bottomNav = page.getByRole('navigation', { name: 'Mobile Navigation' });
-    await expect(bottomNav).toBeVisible();
+        // Mobile bottom navigation should be visible
+        const bottomNav = page.getByRole("navigation", {
+            name: "Mobile Navigation",
+        });
+        await expect(bottomNav).toBeVisible();
 
-    // Ensure bottom nav bounding box sits completely within the 390x844 viewport
-    const box = await bottomNav.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y).toBeGreaterThanOrEqual(0);
-    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+        // Ensure bottom nav bounding box sits completely within the 390x844 viewport
+        const box = await bottomNav.boundingBox();
+        expect(box).not.toBeNull();
+        expect(box!.y).toBeGreaterThanOrEqual(0);
+        expect(box!.y + box!.height).toBeLessThanOrEqual(844);
 
-    // Centered Quick Add FAB should be visible
-    const quickAddFab = bottomNav.getByRole('button', { name: 'Quick Add' });
-    await expect(quickAddFab).toBeVisible();
+        // Centered Quick Add FAB should be visible
+        const quickAddFab = bottomNav.getByRole("button", {
+            name: "Quick Add",
+        });
+        await expect(quickAddFab).toBeVisible();
 
-    // Click Quick Add FAB to open modal
-    await quickAddFab.click();
-    const modal = page.getByRole('dialog');
-    await expect(modal).toBeVisible();
-    await expect(modal.getByRole('heading', { level: 2, name: /^Add Expense$/i })).toBeVisible();
+        // Click Quick Add FAB to open modal
+        await quickAddFab.click();
+        const modal = page.getByRole("dialog");
+        await expect(modal).toBeVisible();
+        await expect(
+            modal.getByRole("heading", { level: 2, name: /^Add Expense$/i }),
+        ).toBeVisible();
 
-    // Close modal via Escape key or close button
-    await page.keyboard.press('Escape');
-    await expect(modal).not.toBeVisible();
+        // Close modal via Escape key or close button
+        await page.keyboard.press("Escape");
+        await expect(modal).not.toBeVisible();
 
-    // Navigate between tabs using Mobile Bottom Navigation
-    await bottomNav.getByRole('button', { name: 'Spend' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Spend$/i })).toBeVisible();
+        // Navigate between tabs using Mobile Bottom Navigation
+        await bottomNav.getByRole("button", { name: "Spend" }).click();
+        await expect(
+            page.getByRole("heading", { level: 1, name: /^Spend$/i }),
+        ).toBeVisible();
 
-    await bottomNav.getByRole('button', { name: 'Accounts' }).click();
-    await expect(page).toHaveURL(/\/accounts/);
-    await expect(page.getByRole('heading', { level: 1, name: /^Accounts$/i })).toBeVisible();
+        await bottomNav.getByRole("button", { name: "Accounts" }).click();
+        await expect(page).toHaveURL(/\/accounts/);
+        await expect(
+            page.getByRole("heading", { level: 1, name: /^Accounts$/i }),
+        ).toBeVisible();
 
-    await bottomNav.getByRole('button', { name: 'Plan' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Plan$/i })).toBeVisible();
+        await bottomNav.getByRole("button", { name: "Plan" }).click();
+        await expect(
+            page.getByRole("heading", { level: 1, name: /^Plan$/i }),
+        ).toBeVisible();
 
-    await bottomNav.getByRole('button', { name: 'Dashboard' }).click();
-    await expect(page).toHaveURL(/\/(dashboard)?$/);
-    await expect(page.getByRole('heading', { level: 1, name: /^Home$/i })).toBeVisible();
-  });
+        await bottomNav.getByRole("button", { name: "Dashboard" }).click();
+        await expect(page).toHaveURL(/\/(dashboard)?$/);
+        await expect(
+            page.getByRole("heading", { level: 1, name: /^Home$/i }),
+        ).toBeVisible();
+    });
 });

@@ -15,7 +15,10 @@ export function getStoredLastSplit(): boolean | undefined {
 
 export function storeLastSplit(isShared: boolean): void {
     try {
-        window.localStorage.setItem(LAST_SPLIT_STORAGE_KEY, isShared ? "shared" : "personal");
+        window.localStorage.setItem(
+            LAST_SPLIT_STORAGE_KEY,
+            isShared ? "shared" : "personal",
+        );
     } catch {
         // Ignore localStorage errors
     }

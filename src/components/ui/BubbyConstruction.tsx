@@ -160,8 +160,22 @@ export const BubbyConstruction: React.FC<BubbyConstructionProps> = ({
             />
 
             {/* Blush */}
-            <ellipse cx="176" cy="296" rx="22" ry="12" fill="#f7a8c9" opacity="0.9" />
-            <ellipse cx="344" cy="296" rx="22" ry="12" fill="#f7a8c9" opacity="0.9" />
+            <ellipse
+                cx="176"
+                cy="296"
+                rx="22"
+                ry="12"
+                fill="#f7a8c9"
+                opacity="0.9"
+            />
+            <ellipse
+                cx="344"
+                cy="296"
+                rx="22"
+                ry="12"
+                fill="#f7a8c9"
+                opacity="0.9"
+            />
 
             {/* Beak */}
             <path

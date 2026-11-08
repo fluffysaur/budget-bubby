@@ -227,7 +227,9 @@ export function AddEditCreditCardModal({
             >
                 <ModalHeader
                     title={isEditing ? "Edit Credit Card" : "Add Credit Card"}
-                    icon={<CreditCard className="h-4.5 w-4.5" strokeWidth={2.5} />}
+                    icon={
+                        <CreditCard className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    }
                     iconBgColor="bg-(--pastel-butter-light)"
                     onClose={onClose}
                 />
@@ -361,9 +363,7 @@ export function AddEditCreditCardModal({
                                     min={1}
                                     max={31}
                                     value={dueDay}
-                                    onChange={(e) =>
-                                        setDueDay(e.target.value)
-                                    }
+                                    onChange={(e) => setDueDay(e.target.value)}
                                     className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                                 <span className="text-xs text-(--text-muted)">

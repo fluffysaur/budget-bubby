@@ -83,32 +83,38 @@ describe("Next due date", () => {
         const ref = new Date(2026, 10, 4); // 4 Nov 2026
         const next = getNextDueDate({ frequency: "monthly", due_day: 15 }, ref);
         expect(next).toEqual(new Date(2026, 10, 15));
-        expect(getDaysUntilDue({ frequency: "monthly", due_day: 15 }, ref)).toBe(11);
+        expect(
+            getDaysUntilDue({ frequency: "monthly", due_day: 15 }, ref),
+        ).toBe(11);
     });
 
     it("monthly: due today counts as 0 days", () => {
         const ref = new Date(2026, 10, 4, 18, 30);
-        expect(getDaysUntilDue({ frequency: "monthly", due_day: 4 }, ref)).toBe(0);
+        expect(getDaysUntilDue({ frequency: "monthly", due_day: 4 }, ref)).toBe(
+            0,
+        );
     });
 
     it("monthly: rolls to next month and clamps day 31", () => {
         const ref = new Date(2026, 10, 30); // 30 Nov -> 31 clamps to 30 Nov (today)
-        expect(getNextDueDate({ frequency: "monthly", due_day: 31 }, ref)).toEqual(
-            new Date(2026, 10, 30),
-        );
+        expect(
+            getNextDueDate({ frequency: "monthly", due_day: 31 }, ref),
+        ).toEqual(new Date(2026, 10, 30));
         const ref2 = new Date(2027, 0, 31); // 31 Jan: due today
-        expect(getDaysUntilDue({ frequency: "monthly", due_day: 31 }, ref2)).toBe(0);
+        expect(
+            getDaysUntilDue({ frequency: "monthly", due_day: 31 }, ref2),
+        ).toBe(0);
         const ref3 = new Date(2028, 1, 1); // 1 Feb 2028, due 31 -> 29 Feb 2028
-        expect(getNextDueDate({ frequency: "monthly", due_day: 31 }, ref3)).toEqual(
-            new Date(2028, 1, 29),
-        );
+        expect(
+            getNextDueDate({ frequency: "monthly", due_day: 31 }, ref3),
+        ).toEqual(new Date(2028, 1, 29));
     });
 
     it("monthly: December wraps to January next year", () => {
         const ref = new Date(2026, 11, 20);
-        expect(getNextDueDate({ frequency: "monthly", due_day: 5 }, ref)).toEqual(
-            new Date(2027, 0, 5),
-        );
+        expect(
+            getNextDueDate({ frequency: "monthly", due_day: 5 }, ref),
+        ).toEqual(new Date(2027, 0, 5));
     });
 
     it("annual: uses payment month and due day, wrapping to next year", () => {
@@ -183,11 +189,33 @@ describe("Recurring item types", () => {
 
     it("bill and other items do not reduce take-home pay", () => {
         const items = [
-            makeItem({ type: "insurance", frequency: "annually", amount: 1200, monthly_amortized_amount: 100 }),
-            makeItem({ type: "tax", frequency: "annually", amount: 2400, monthly_amortized_amount: 200 }),
-            makeItem({ type: "bill", amount: 80, monthly_amortized_amount: 80 }),
-            makeItem({ type: "other", amount: 30, monthly_amortized_amount: 30 }),
-            makeItem({ type: "subscription", amount: 15, monthly_amortized_amount: 15 }),
+            makeItem({
+                type: "insurance",
+                frequency: "annually",
+                amount: 1200,
+                monthly_amortized_amount: 100,
+            }),
+            makeItem({
+                type: "tax",
+                frequency: "annually",
+                amount: 2400,
+                monthly_amortized_amount: 200,
+            }),
+            makeItem({
+                type: "bill",
+                amount: 80,
+                monthly_amortized_amount: 80,
+            }),
+            makeItem({
+                type: "other",
+                amount: 30,
+                monthly_amortized_amount: 30,
+            }),
+            makeItem({
+                type: "subscription",
+                amount: 15,
+                monthly_amortized_amount: 15,
+            }),
         ];
         expect(calculateMemberRecurringDeductions(items, YJ)).toEqual({
             taxesMonthly: 200,
@@ -198,10 +226,18 @@ describe("Recurring item types", () => {
 
 describe("Recurring monthly amount & active range", () => {
     it("monthly items count in full, annual items amortized", () => {
-        expect(getRecurringMonthlyAmount(makeItem({ amount: 25, monthly_amortized_amount: 25 }))).toBe(25);
         expect(
             getRecurringMonthlyAmount(
-                makeItem({ frequency: "annually", amount: 1200, monthly_amortized_amount: 100 }),
+                makeItem({ amount: 25, monthly_amortized_amount: 25 }),
+            ),
+        ).toBe(25);
+        expect(
+            getRecurringMonthlyAmount(
+                makeItem({
+                    frequency: "annually",
+                    amount: 1200,
+                    monthly_amortized_amount: 100,
+                }),
             ),
         ).toBe(100);
         expect(
@@ -216,12 +252,17 @@ describe("Recurring monthly amount & active range", () => {
     });
 
     it("respects start_date and end_date at month granularity", () => {
-        const item = makeItem({ start_date: "2026-03-15", end_date: "2026-08-02" });
+        const item = makeItem({
+            start_date: "2026-03-15",
+            end_date: "2026-08-02",
+        });
         expect(isRecurringItemActiveInMonth(item, "2026-02")).toBe(false);
         expect(isRecurringItemActiveInMonth(item, "2026-03")).toBe(true);
         expect(isRecurringItemActiveInMonth(item, "2026-08")).toBe(true);
         expect(isRecurringItemActiveInMonth(item, "2026-09")).toBe(false);
-        expect(isRecurringItemActiveInMonth(makeItem({}), "1999-01")).toBe(true);
+        expect(isRecurringItemActiveInMonth(makeItem({}), "1999-01")).toBe(
+            true,
+        );
     });
 });
 
@@ -230,9 +271,27 @@ describe("calculateRecurringCategorySpend", () => {
     const UTILITIES = "cat-utilities";
 
     const items: RecurringItem[] = [
-        makeItem({ id: "netflix", type: "subscription", amount: 20, monthly_amortized_amount: 20, category_id: LIFESTYLE }),
-        makeItem({ id: "gym", type: "bill", amount: 120, monthly_amortized_amount: 120, category_id: LIFESTYLE }),
-        makeItem({ id: "power", type: "bill", amount: 90, monthly_amortized_amount: 90, category_id: UTILITIES }),
+        makeItem({
+            id: "netflix",
+            type: "subscription",
+            amount: 20,
+            monthly_amortized_amount: 20,
+            category_id: LIFESTYLE,
+        }),
+        makeItem({
+            id: "gym",
+            type: "bill",
+            amount: 120,
+            monthly_amortized_amount: 120,
+            category_id: LIFESTYLE,
+        }),
+        makeItem({
+            id: "power",
+            type: "bill",
+            amount: 90,
+            monthly_amortized_amount: 90,
+            category_id: UTILITIES,
+        }),
         makeItem({
             id: "cloud",
             type: "other",
@@ -242,30 +301,77 @@ describe("calculateRecurringCategorySpend", () => {
             monthly_amortized_amount: 10,
             category_id: UTILITIES,
         }),
-        makeItem({ id: "misc", type: "other", amount: 5, monthly_amortized_amount: 5, category_id: null }),
-        makeItem({ id: "ins", type: "insurance", amount: 1200, frequency: "annually", monthly_amortized_amount: 100, category_id: LIFESTYLE }),
-        makeItem({ id: "rachel-sub", owner_id: RC, amount: 15, monthly_amortized_amount: 15, category_id: LIFESTYLE }),
-        makeItem({ id: "joint-bill", owner_id: "joint", type: "bill", amount: 40, monthly_amortized_amount: 40, category_id: UTILITIES }),
-        makeItem({ id: "future", amount: 50, monthly_amortized_amount: 50, start_date: "2026-12-01", category_id: LIFESTYLE }),
-        makeItem({ id: "ended", amount: 60, monthly_amortized_amount: 60, end_date: "2026-10-31", category_id: LIFESTYLE }),
+        makeItem({
+            id: "misc",
+            type: "other",
+            amount: 5,
+            monthly_amortized_amount: 5,
+            category_id: null,
+        }),
+        makeItem({
+            id: "ins",
+            type: "insurance",
+            amount: 1200,
+            frequency: "annually",
+            monthly_amortized_amount: 100,
+            category_id: LIFESTYLE,
+        }),
+        makeItem({
+            id: "rachel-sub",
+            owner_id: RC,
+            amount: 15,
+            monthly_amortized_amount: 15,
+            category_id: LIFESTYLE,
+        }),
+        makeItem({
+            id: "joint-bill",
+            owner_id: "joint",
+            type: "bill",
+            amount: 40,
+            monthly_amortized_amount: 40,
+            category_id: UTILITIES,
+        }),
+        makeItem({
+            id: "future",
+            amount: 50,
+            monthly_amortized_amount: 50,
+            start_date: "2026-12-01",
+            category_id: LIFESTYLE,
+        }),
+        makeItem({
+            id: "ended",
+            amount: 60,
+            monthly_amortized_amount: 60,
+            end_date: "2026-10-31",
+            category_id: LIFESTYLE,
+        }),
     ];
 
     it("sums monthly items in full (and 50% for joint items per member) and annual items amortized per category", () => {
-        const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        const res = calculateRecurringCategorySpend(items, "2026-11", {
+            ownerId: YJ,
+        });
         expect(res.byCategory[LIFESTYLE].total).toBe(140); // netflix + gym
         expect(res.byCategory[UTILITIES].total).toBe(120); // power 90 + cloud 10 + joint 20 (50% of 40)
-        expect(res.byCategory[LIFESTYLE].items.map((i) => i.id)).toEqual(["netflix", "gym"]);
+        expect(res.byCategory[LIFESTYLE].items.map((i) => i.id)).toEqual([
+            "netflix",
+            "gym",
+        ]);
     });
 
     it("puts items with no category under uncategorized and counts them in total", () => {
-        const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        const res = calculateRecurringCategorySpend(items, "2026-11", {
+            ownerId: YJ,
+        });
         expect(res.uncategorized.total).toBe(5);
         expect(res.uncategorized.items.map((i) => i.id)).toEqual(["misc"]);
         expect(res.total).toBe(265);
     });
 
     it("excludes insurance/tax and items outside their active range", () => {
-        const res = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
+        const res = calculateRecurringCategorySpend(items, "2026-11", {
+            ownerId: YJ,
+        });
         const ids = [
             ...Object.values(res.byCategory).flatMap((b) => b.items),
             ...res.uncategorized.items,
@@ -275,10 +381,18 @@ describe("calculateRecurringCategorySpend", () => {
         expect(ids).not.toContain("ended");
         expect(ids).not.toContain("rachel-sub");
 
-        const dec = calculateRecurringCategorySpend(items, "2026-12", { ownerId: YJ });
-        expect(dec.byCategory[LIFESTYLE].items.map((i) => i.id)).toContain("future");
-        const oct = calculateRecurringCategorySpend(items, "2026-10", { ownerId: YJ });
-        expect(oct.byCategory[LIFESTYLE].items.map((i) => i.id)).toContain("ended");
+        const dec = calculateRecurringCategorySpend(items, "2026-12", {
+            ownerId: YJ,
+        });
+        expect(dec.byCategory[LIFESTYLE].items.map((i) => i.id)).toContain(
+            "future",
+        );
+        const oct = calculateRecurringCategorySpend(items, "2026-10", {
+            ownerId: YJ,
+        });
+        expect(oct.byCategory[LIFESTYLE].items.map((i) => i.id)).toContain(
+            "ended",
+        );
     });
 
     it("treats categories outside the budget as uncategorized", () => {
@@ -296,14 +410,34 @@ describe("calculateRecurringCategorySpend", () => {
         expect(householdRes.byCategory[LIFESTYLE].total).toBe(155);
         expect(householdRes.byCategory[UTILITIES].total).toBe(140); // power 90 + cloud 10 + joint 40 (1x)
 
-        const yjRes = calculateRecurringCategorySpend(items, "2026-11", { ownerId: YJ });
-        const rcRes = calculateRecurringCategorySpend(items, "2026-11", { ownerId: RC });
-        expect(getRecurringMonthlyShare(items.find((i) => i.id === "joint-bill")!, YJ)).toBe(20);
-        expect(getRecurringMonthlyShare(items.find((i) => i.id === "joint-bill")!, RC)).toBe(20);
-        expect(getRecurringMonthlyShare(items.find((i) => i.id === "joint-bill")!, "household")).toBe(40);
-        expect(yjRes.byCategory[UTILITIES].total + rcRes.byCategory[UTILITIES].total).toBe(
-            householdRes.byCategory[UTILITIES].total,
-        );
+        const yjRes = calculateRecurringCategorySpend(items, "2026-11", {
+            ownerId: YJ,
+        });
+        const rcRes = calculateRecurringCategorySpend(items, "2026-11", {
+            ownerId: RC,
+        });
+        expect(
+            getRecurringMonthlyShare(
+                items.find((i) => i.id === "joint-bill")!,
+                YJ,
+            ),
+        ).toBe(20);
+        expect(
+            getRecurringMonthlyShare(
+                items.find((i) => i.id === "joint-bill")!,
+                RC,
+            ),
+        ).toBe(20);
+        expect(
+            getRecurringMonthlyShare(
+                items.find((i) => i.id === "joint-bill")!,
+                "household",
+            ),
+        ).toBe(40);
+        expect(
+            yjRes.byCategory[UTILITIES].total +
+                rcRes.byCategory[UTILITIES].total,
+        ).toBe(householdRes.byCategory[UTILITIES].total);
     });
 });
 
@@ -353,28 +487,46 @@ describe("calculateMemberRecurringDeductions with month filter and joint items (
         ];
 
         // In 2026-10: ended-ins (ended 2026-06) and future-tax (starts 2026-12) are excluded
-        const yjOct = calculateMemberRecurringDeductions(deductionItems, YJ, "2026-10");
+        const yjOct = calculateMemberRecurringDeductions(
+            deductionItems,
+            YJ,
+            "2026-10",
+        );
         expect(yjOct).toEqual({
             insuranceMonthly: 100,
             taxesMonthly: 30, // 50% of joint-tax (60)
         });
 
-        const rcOct = calculateMemberRecurringDeductions(deductionItems, RC, "2026-10");
+        const rcOct = calculateMemberRecurringDeductions(
+            deductionItems,
+            RC,
+            "2026-10",
+        );
         expect(rcOct).toEqual({
             insuranceMonthly: 0,
             taxesMonthly: 30, // 50% of joint-tax (60)
         });
 
         // Combined household counts joint-tax once (60)
-        const hhOct = calculateMemberRecurringDeductions(deductionItems, "household", "2026-10");
+        const hhOct = calculateMemberRecurringDeductions(
+            deductionItems,
+            "household",
+            "2026-10",
+        );
         expect(hhOct).toEqual({
             insuranceMonthly: 100,
             taxesMonthly: 60,
         });
-        expect(yjOct.taxesMonthly + rcOct.taxesMonthly).toBe(hhOct.taxesMonthly);
+        expect(yjOct.taxesMonthly + rcOct.taxesMonthly).toBe(
+            hhOct.taxesMonthly,
+        );
 
         // In 2026-05: ended-ins is still active
-        const yjMay = calculateMemberRecurringDeductions(deductionItems, YJ, "2026-05");
+        const yjMay = calculateMemberRecurringDeductions(
+            deductionItems,
+            YJ,
+            "2026-05",
+        );
         expect(yjMay.insuranceMonthly).toBe(150);
     });
 });
@@ -411,7 +563,9 @@ describe("findDefaultRecurringCategoryId", () => {
                 { id: "b", name: "My LifeStyle" },
             ]),
         ).toBe("b");
-        expect(findDefaultRecurringCategoryId([{ id: "a", name: "Food" }])).toBeNull();
+        expect(
+            findDefaultRecurringCategoryId([{ id: "a", name: "Food" }]),
+        ).toBeNull();
         expect(findDefaultRecurringCategoryId([])).toBeNull();
     });
 });

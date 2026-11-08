@@ -5,12 +5,17 @@ import { TooltipPopover } from "../src/components/ui/TooltipPopover";
 describe("TooltipPopover Component", () => {
     it("renders trigger button and opens popover on click", () => {
         render(
-            <TooltipPopover title="Shared Info" ariaLabel="Shared spending info">
+            <TooltipPopover
+                title="Shared Info"
+                ariaLabel="Shared spending info"
+            >
                 This explains how shared spending works.
             </TooltipPopover>,
         );
 
-        const triggerButton = screen.getByRole("button", { name: "Shared spending info" });
+        const triggerButton = screen.getByRole("button", {
+            name: "Shared spending info",
+        });
         expect(triggerButton).toBeInTheDocument();
         expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 
@@ -22,10 +27,14 @@ describe("TooltipPopover Component", () => {
         expect(tooltip).toBeInTheDocument();
         expect(tooltip).toHaveClass("z-9999");
         expect(screen.getByText("Shared Info")).toBeInTheDocument();
-        expect(screen.getByText("This explains how shared spending works.")).toBeInTheDocument();
+        expect(
+            screen.getByText("This explains how shared spending works."),
+        ).toBeInTheDocument();
 
         // Click close button inside tooltip
-        const closeButton = screen.getByRole("button", { name: "Close tooltip" });
+        const closeButton = screen.getByRole("button", {
+            name: "Close tooltip",
+        });
         fireEvent.click(closeButton);
         expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     });
@@ -33,7 +42,9 @@ describe("TooltipPopover Component", () => {
     it("closes popover when clicking outside", () => {
         render(
             <div>
-                <button type="button" data-testid="outside-button">Outside</button>
+                <button type="button" data-testid="outside-button">
+                    Outside
+                </button>
                 <TooltipPopover title="Test Title" ariaLabel="Info">
                     Details content
                 </TooltipPopover>
@@ -74,7 +85,8 @@ describe("TooltipPopover Component", () => {
                     </button>
                 )}
             >
-                Locked categories keep their exact amount when you click Auto-Balance.
+                Locked categories keep their exact amount when you click
+                Auto-Balance.
             </TooltipPopover>,
         );
 
@@ -86,4 +98,3 @@ describe("TooltipPopover Component", () => {
         expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     });
 });
-

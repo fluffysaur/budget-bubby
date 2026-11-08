@@ -41,7 +41,10 @@ export function BonusGoalPicker({
     onPreset,
 }: BonusGoalPickerProps) {
     const assigned = round2(
-        goals.reduce((s, g) => s + (selectedIds.has(g.id) ? amounts[g.id] || 0 : 0), 0),
+        goals.reduce(
+            (s, g) => s + (selectedIds.has(g.id) ? amounts[g.id] || 0 : 0),
+            0,
+        ),
     );
     const remaining = round2(goalShare - assigned);
 
@@ -53,7 +56,9 @@ export function BonusGoalPicker({
                         key={p.mode}
                         type="button"
                         size="sm"
-                        variant={activePreset === p.mode ? "secondary" : "outline"}
+                        variant={
+                            activePreset === p.mode ? "secondary" : "outline"
+                        }
                         aria-pressed={activePreset === p.mode}
                         onClick={() => onPreset(p.mode)}
                         disabled={selectedIds.size === 0}
@@ -67,7 +72,10 @@ export function BonusGoalPicker({
                 {goals.map((goal) => {
                     const checked = selectedIds.has(goal.id);
                     return (
-                        <div key={goal.id} className="flex items-center gap-2 py-2">
+                        <div
+                            key={goal.id}
+                            className="flex items-center gap-2 py-2"
+                        >
                             <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2">
                                 <input
                                     type="checkbox"
@@ -84,8 +92,13 @@ export function BonusGoalPicker({
                                         <TruncatedText text={goal.title} />
                                     </div>
                                     <div className="font-mono-num text-xs text-(--text-muted)">
-                                        <CurrencyText amount={goal.saved_so_far} /> /{" "}
-                                        <CurrencyText amount={goal.target_amount} />
+                                        <CurrencyText
+                                            amount={goal.saved_so_far}
+                                        />{" "}
+                                        /{" "}
+                                        <CurrencyText
+                                            amount={goal.target_amount}
+                                        />
                                     </div>
                                 </div>
                             </label>
@@ -98,10 +111,13 @@ export function BonusGoalPicker({
                                     disabled={!checked}
                                     value={
                                         checked
-                                            ? (amountInputs[goal.id] ?? String(amounts[goal.id] ?? 0))
+                                            ? (amountInputs[goal.id] ??
+                                              String(amounts[goal.id] ?? 0))
                                             : ""
                                     }
-                                    onChange={(e) => onAmountChange(goal.id, e.target.value)}
+                                    onChange={(e) =>
+                                        onAmountChange(goal.id, e.target.value)
+                                    }
                                 />
                             </div>
                         </div>
@@ -110,7 +126,9 @@ export function BonusGoalPicker({
             </div>
 
             {remaining < -0.005 ? (
-                <Alert variant="danger">Over by <CurrencyText amount={Math.abs(remaining)} /></Alert>
+                <Alert variant="danger">
+                    Over by <CurrencyText amount={Math.abs(remaining)} />
+                </Alert>
             ) : remaining > 0.005 ? (
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
                     <CurrencyText amount={remaining} /> unassigned

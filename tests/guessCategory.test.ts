@@ -15,7 +15,11 @@ const cat = (id: string, name: string): Category => ({
     is_system: false,
     group: "spendable",
 });
-const categories = [cat("food", "Food"), cat("transport", "Transport"), cat("life", "Lifestyle")];
+const categories = [
+    cat("food", "Food"),
+    cat("transport", "Transport"),
+    cat("life", "Lifestyle"),
+];
 
 const exp = (over: Partial<Expense>): Expense => ({
     id: Math.random().toString(36),
@@ -44,18 +48,29 @@ const rule = (over: Partial<MerchantRule>): MerchantRule => ({
 });
 
 describe("guessInboxCategory", () => {
-    const base = { merchant: "Grab Food", merchantKey: "grab food", categories };
+    const base = {
+        merchant: "Grab Food",
+        merchantKey: "grab food",
+        categories,
+    };
 
     it("prefers a merchant rule", () => {
         expect(
-            guessInboxCategory({ ...base, rules: [rule({})], recentExpenses: [] }),
+            guessInboxCategory({
+                ...base,
+                rules: [rule({})],
+                recentExpenses: [],
+            }),
         ).toEqual({ categoryId: "life", confidence: "rule", isShared: true });
     });
 
     it("ignores rules for unknown categories and ignore rules", () => {
         const g = guessInboxCategory({
             ...base,
-            rules: [rule({ category_id: "gone" }), rule({ id: "r2", action: "ignore", category_id: null })],
+            rules: [
+                rule({ category_id: "gone" }),
+                rule({ id: "r2", action: "ignore", category_id: null }),
+            ],
             recentExpenses: [],
         });
         expect(g.confidence).toBe("keyword");
@@ -67,17 +82,26 @@ describe("guessInboxCategory", () => {
             exp({ item: "Grab Food", category_id: "food" }),
         ];
         expect(
-            guessInboxCategory({ ...base, rules: [], recentExpenses: history }).confidence,
+            guessInboxCategory({ ...base, rules: [], recentExpenses: history })
+                .confidence,
         ).toBe("history");
         expect(
-            guessInboxCategory({ ...base, rules: [], recentExpenses: history.slice(0, 1) }).confidence,
+            guessInboxCategory({
+                ...base,
+                rules: [],
+                recentExpenses: history.slice(0, 1),
+            }).confidence,
         ).toBe("keyword");
     });
 
     it("falls back to keywords, then none", () => {
         expect(
             guessInboxCategory({ ...base, rules: [], recentExpenses: [] }),
-        ).toEqual({ categoryId: "transport", confidence: "keyword", isShared: null });
+        ).toEqual({
+            categoryId: "transport",
+            confidence: "keyword",
+            isShared: null,
+        });
         expect(
             guessInboxCategory({
                 merchant: "Zzz Pte Ltd",
@@ -100,7 +124,9 @@ describe("findLikelyDuplicate", () => {
 
     it("matches same payer and amount within a day", () => {
         const match = exp({ amount: 12.5, date: "2026-11-04" });
-        expect(findLikelyDuplicate(item, [exp({ amount: 3 }), match])).toBe(match);
+        expect(findLikelyDuplicate(item, [exp({ amount: 3 }), match])).toBe(
+            match,
+        );
     });
 
     it("skips other payers and far dates", () => {
@@ -114,7 +140,11 @@ describe("findLikelyDuplicate", () => {
 
     it("matches foreign items on the original amount", () => {
         const foreign = { ...item, amount: 4.99, currency: "USD" };
-        const match = exp({ amount: 6.6, original_amount: 4.99, original_currency: "USD" });
+        const match = exp({
+            amount: 6.6,
+            original_amount: 4.99,
+            original_currency: "USD",
+        });
         expect(findLikelyDuplicate(foreign, [match])).toBe(match);
         expect(
             findLikelyDuplicate(foreign, [exp({ amount: 4.99 })]),
@@ -129,10 +159,24 @@ describe("topCategoriesForMember", () => {
             exp({ category_id: "food" }),
             exp({ category_id: "transport" }),
         ];
-        const top = topCategoriesForMember(expenses, categories, "m1", "life", 5, "2026-11-06");
+        const top = topCategoriesForMember(
+            expenses,
+            categories,
+            "m1",
+            "life",
+            5,
+            "2026-11-06",
+        );
         expect(top.map((c) => c.id)).toEqual(["life", "food", "transport"]);
         expect(
-            topCategoriesForMember(expenses, categories, "m1", null, 2, "2026-11-06").map((c) => c.id),
+            topCategoriesForMember(
+                expenses,
+                categories,
+                "m1",
+                null,
+                2,
+                "2026-11-06",
+            ).map((c) => c.id),
         ).toEqual(["food", "transport"]);
     });
 });

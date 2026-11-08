@@ -5,7 +5,13 @@
 
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { useState } from "react";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import {
+    act,
+    fireEvent,
+    render,
+    renderHook,
+    screen,
+} from "@testing-library/react";
 import { msUntilNextMonth } from "../src/lib/dateUtils";
 import {
     useCurrentMonth,
@@ -24,7 +30,9 @@ afterEach(() => {
 describe("msUntilNextMonth", () => {
     it("returns ms until the next Singapore month boundary", () => {
         expect(msUntilNextMonth(LAST_MINUTE_OF_OCT_SGT)).toBe(60_000);
-        expect(msUntilNextMonth(START_OF_NOV_SGT)).toBe(30 * 24 * 60 * 60 * 1000);
+        expect(msUntilNextMonth(START_OF_NOV_SGT)).toBe(
+            30 * 24 * 60 * 60 * 1000,
+        );
     });
 
     it("rolls over the year in December", () => {

@@ -1,30 +1,40 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { MonthEndSweepBanner } from '../src/components/budget/MonthEndSweepBanner';
-import { withText } from './helpers/textContent';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { MonthEndSweepBanner } from "../src/components/budget/MonthEndSweepBanner";
+import { withText } from "./helpers/textContent";
 
-describe('MonthEndSweepBanner', () => {
-    it('renders shortened title with amount and month, plus actionable subtitle', () => {
+describe("MonthEndSweepBanner", () => {
+    it("renders shortened title with amount and month, plus actionable subtitle", () => {
         render(
             <MonthEndSweepBanner
                 month="2026-09"
                 surplusAmount={3654.05}
                 onSweepClick={vi.fn()}
                 onBankSurplusClick={vi.fn()}
-            />
+            />,
         );
 
         // Title: "$3,654.05 unspent from September 2026"
-        expect(screen.getByText(withText(/3,654\.05 unspent from September 2026/i))).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                withText(/3,654\.05 unspent from September 2026/i),
+            ),
+        ).toBeInTheDocument();
         // Subtitle: "Sweep into savings goals or bank for cushion."
-        expect(screen.getByText(/Sweep into savings goals or bank for cushion\./i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/Sweep into savings goals or bank for cushion\./i),
+        ).toBeInTheDocument();
 
         // 2 Action Buttons
-        expect(screen.getByRole('button', { name: /sweep to goals/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /bank surplus/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /sweep to goals/i }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /bank surplus/i }),
+        ).toBeInTheDocument();
     });
 
-    it('triggers onSweepClick when clicking Sweep to Goals button', () => {
+    it("triggers onSweepClick when clicking Sweep to Goals button", () => {
         const handleSweepClick = vi.fn();
         render(
             <MonthEndSweepBanner
@@ -32,14 +42,16 @@ describe('MonthEndSweepBanner', () => {
                 surplusAmount={350}
                 onSweepClick={handleSweepClick}
                 onBankSurplusClick={vi.fn()}
-            />
+            />,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: /sweep to goals/i }));
+        fireEvent.click(
+            screen.getByRole("button", { name: /sweep to goals/i }),
+        );
         expect(handleSweepClick).toHaveBeenCalledTimes(1);
     });
 
-    it('triggers onBankSurplusClick when clicking Bank Surplus button', () => {
+    it("triggers onBankSurplusClick when clicking Bank Surplus button", () => {
         const handleBankSurplus = vi.fn();
         render(
             <MonthEndSweepBanner
@@ -47,10 +59,10 @@ describe('MonthEndSweepBanner', () => {
                 surplusAmount={350}
                 onSweepClick={vi.fn()}
                 onBankSurplusClick={handleBankSurplus}
-            />
+            />,
         );
 
-        fireEvent.click(screen.getByRole('button', { name: /bank surplus/i }));
+        fireEvent.click(screen.getByRole("button", { name: /bank surplus/i }));
         expect(handleBankSurplus).toHaveBeenCalledTimes(1);
     });
 });

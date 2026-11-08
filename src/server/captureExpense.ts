@@ -18,7 +18,10 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseCapturedAmount, MAX_RAW_AMOUNT_LENGTH } from "../lib/capture/parseAmount";
+import {
+    parseCapturedAmount,
+    MAX_RAW_AMOUNT_LENGTH,
+} from "../lib/capture/parseAmount";
 import { cleanMerchant, normalizeMerchant } from "../lib/capture/merchant";
 import { readBearerToken, sha256Hex } from "../lib/capture/token";
 import { shiftIsoDate, toSgtDateTime } from "../lib/capture/sgTime";
@@ -70,11 +73,17 @@ export interface CaptureDeps {
     findRule(
         householdId: string,
         merchantKey: string,
-    ): Promise<{ action: "categorise" | "ignore"; category_id: string | null } | null>;
+    ): Promise<{
+        action: "categorise" | "ignore";
+        category_id: string | null;
+    } | null>;
     findLikelyDuplicate(query: DuplicateQuery): Promise<string | null>;
     /** Insert-or-ignore on (member_id, idempotency_key). Null on conflict. */
     insertItem(row: InboxInsertRow): Promise<{ id: string } | null>;
-    findByIdempotencyKey(memberId: string, key: string): Promise<{ id: string } | null>;
+    findByIdempotencyKey(
+        memberId: string,
+        key: string,
+    ): Promise<{ id: string } | null>;
     countPending(householdId: string): Promise<number>;
     touchToken(tokenId: string, nowIso: string): Promise<void>;
     now(): Date;
@@ -92,19 +101,29 @@ export interface CaptureResponse {
     body: Record<string, unknown>;
 }
 
-const reply = (status: number, body: Record<string, unknown>): CaptureResponse => ({ status, body });
+const reply = (
+    status: number,
+    body: Record<string, unknown>,
+): CaptureResponse => ({ status, body });
 const UNAUTHORIZED = () => reply(401, { error: "unauthorized" });
 
 function pickString(value: unknown, max: number): string | null {
     if (typeof value !== "string") return null;
-    // eslint-disable-next-line no-control-regex
-    const cleaned = value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+    const cleaned = value
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\u0000-\u001f\u007f]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     return cleaned ? cleaned.slice(0, max) : null;
 }
 
 function normalizeSource(value: unknown): string {
     if (typeof value !== "string") return "api";
-    const s = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").slice(0, 24);
+    const s = value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, "-")
+        .slice(0, 24);
     return /^[a-z0-9_-]{1,24}$/.test(s) ? s : "api";
 }
 
@@ -114,7 +133,11 @@ export function resolveCapturedAt(raw: unknown, now: Date): Date {
     const t = new Date(raw);
     const ms = t.getTime();
     if (Number.isNaN(ms)) return now;
-    if (ms < now.getTime() - PAST_WINDOW_MS || ms > now.getTime() + FUTURE_WINDOW_MS) return now;
+    if (
+        ms < now.getTime() - PAST_WINDOW_MS ||
+        ms > now.getTime() + FUTURE_WINDOW_MS
+    )
+        return now;
     return t;
 }
 
@@ -126,16 +149,25 @@ export async function buildIdempotencyKey(
     capturedAt: Date,
 ): Promise<string> {
     const bucket = Math.floor(capturedAt.getTime() / IDEMPOTENCY_WINDOW_MS);
-    return sha256Hex(`${memberId}|${amount.toFixed(2)}|${currency}|${merchantKey}|${bucket}`);
+    return sha256Hex(
+        `${memberId}|${amount.toFixed(2)}|${currency}|${merchantKey}|${bucket}`,
+    );
 }
 
-export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Promise<CaptureResponse> {
-    if (req.method !== "POST") return reply(405, { error: "method_not_allowed" });
+export async function handleCapture(
+    deps: CaptureDeps,
+    req: CaptureRequest,
+): Promise<CaptureResponse> {
+    if (req.method !== "POST")
+        return reply(405, { error: "method_not_allowed" });
 
     const token = readBearerToken(req.authorization);
     if (!token) return UNAUTHORIZED();
 
-    if ((req.contentLength ?? 0) > MAX_BODY_BYTES || new TextEncoder().encode(req.bodyText).length > MAX_BODY_BYTES) {
+    if (
+        (req.contentLength ?? 0) > MAX_BODY_BYTES ||
+        new TextEncoder().encode(req.bodyText).length > MAX_BODY_BYTES
+    ) {
         return reply(413, { error: "payload_too_large" });
     }
 
@@ -162,7 +194,11 @@ export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Pro
         let body: Record<string, unknown>;
         try {
             const parsed = JSON.parse(req.bodyText);
-            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            if (
+                !parsed ||
+                typeof parsed !== "object" ||
+                Array.isArray(parsed)
+            ) {
                 return reply(400, { error: "invalid_json" });
             }
             body = parsed as Record<string, unknown>;
@@ -170,9 +206,13 @@ export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Pro
             return reply(400, { error: "invalid_json" });
         }
 
-        const amount = parseCapturedAmount(body.amount, typeof body.currency === "string" ? body.currency : null);
+        const amount = parseCapturedAmount(
+            body.amount,
+            typeof body.currency === "string" ? body.currency : null,
+        );
         if (!amount.ok) {
-            if (amount.reason === "ignored") return reply(200, { status: "ignored" });
+            if (amount.reason === "ignored")
+                return reply(200, { status: "ignored" });
             return reply(400, { error: "invalid_amount" });
         }
 
@@ -183,7 +223,10 @@ export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Pro
         const rule = await deps.findRule(tokenRow.household_id, merchantKey);
         if (rule?.action === "ignore") return reply(200, { status: "ignored" });
 
-        const capturedAt = resolveCapturedAt(body.occurred_at ?? body.timestamp, now);
+        const capturedAt = resolveCapturedAt(
+            body.occurred_at ?? body.timestamp,
+            now,
+        );
         const idempotencyKey = await buildIdempotencyKey(
             tokenRow.member_id,
             amount.amount,
@@ -192,7 +235,9 @@ export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Pro
             capturedAt,
         );
 
-        const sgtDate = toSgtDateTime(capturedAt)?.date ?? capturedAt.toISOString().slice(0, 10);
+        const sgtDate =
+            toSgtDateTime(capturedAt)?.date ??
+            capturedAt.toISOString().slice(0, 10);
         const duplicateOf = await deps.findLikelyDuplicate({
             memberId: tokenRow.member_id,
             amount: amount.amount,
@@ -202,7 +247,9 @@ export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Pro
         });
 
         const rawAmount =
-            typeof body.amount === "string" ? body.amount.slice(0, MAX_RAW_AMOUNT_LENGTH) : null;
+            typeof body.amount === "string"
+                ? body.amount.slice(0, MAX_RAW_AMOUNT_LENGTH)
+                : null;
 
         const inserted = await deps.insertItem({
             household_id: tokenRow.household_id,
@@ -217,23 +264,34 @@ export async function handleCapture(deps: CaptureDeps, req: CaptureRequest): Pro
             card_name: pickString(body.card, MAX_CARD_LENGTH),
             captured_at: capturedAt.toISOString(),
             idempotency_key: idempotencyKey,
-            suggested_category_id: rule?.action === "categorise" ? rule.category_id : null,
+            suggested_category_id:
+                rule?.action === "categorise" ? rule.category_id : null,
             likely_duplicate_of: duplicateOf,
         });
 
         await deps.touchToken(tokenRow.id, now.toISOString());
 
         if (!inserted) {
-            const existing = await deps.findByIdempotencyKey(tokenRow.member_id, idempotencyKey);
-            return reply(200, { status: "duplicate", id: existing?.id ?? null });
+            const existing = await deps.findByIdempotencyKey(
+                tokenRow.member_id,
+                idempotencyKey,
+            );
+            return reply(200, {
+                status: "duplicate",
+                id: existing?.id ?? null,
+            });
         }
 
         const inboxCount = await deps.countPending(tokenRow.household_id);
         return reply(201, { status: "captured", id: inserted.id, inboxCount });
     } catch (err) {
-        if (isMissingRelationError(err)) return reply(503, { error: "not_ready" });
+        if (isMissingRelationError(err))
+            return reply(503, { error: "not_ready" });
         const code = (err as { code?: unknown })?.code;
-        console.error("capture-expense failed", typeof code === "string" ? code : "unknown");
+        console.error(
+            "capture-expense failed",
+            typeof code === "string" ? code : "unknown",
+        );
         return reply(500, { error: "server_error" });
     }
 }
@@ -271,9 +329,20 @@ export function createSupabaseCaptureDeps(client: SupabaseClient): CaptureDeps {
                 .eq("merchant_key", merchantKey)
                 .maybeSingle();
             raise(error);
-            return (data as { action: "categorise" | "ignore"; category_id: string | null } | null) ?? null;
+            return (
+                (data as {
+                    action: "categorise" | "ignore";
+                    category_id: string | null;
+                } | null) ?? null
+            );
         },
-        async findLikelyDuplicate({ memberId, amount, currency, dateFrom, dateTo }) {
+        async findLikelyDuplicate({
+            memberId,
+            amount,
+            currency,
+            dateFrom,
+            dateTo,
+        }) {
             let query = client
                 .from("expenses")
                 .select("id")
@@ -283,7 +352,9 @@ export function createSupabaseCaptureDeps(client: SupabaseClient): CaptureDeps {
             query =
                 currency === "SGD"
                     ? query.eq("amount", amount)
-                    : query.eq("original_amount", amount).eq("original_currency", currency);
+                    : query
+                          .eq("original_amount", amount)
+                          .eq("original_currency", currency);
             const { data, error } = await query.limit(1);
             raise(error);
             return (data?.[0]?.id as string | undefined) ?? null;
@@ -291,7 +362,10 @@ export function createSupabaseCaptureDeps(client: SupabaseClient): CaptureDeps {
         async insertItem(row) {
             const { data, error } = await client
                 .from("inbox_items")
-                .upsert(row, { onConflict: "member_id,idempotency_key", ignoreDuplicates: true })
+                .upsert(row, {
+                    onConflict: "member_id,idempotency_key",
+                    ignoreDuplicates: true,
+                })
                 .select("id");
             raise(error);
             const id = data?.[0]?.id as string | undefined;

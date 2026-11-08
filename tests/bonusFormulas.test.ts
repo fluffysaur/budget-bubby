@@ -110,7 +110,12 @@ describe("distributeGoalShare", () => {
     const goals = [
         goal({ id: "a", target_amount: 1000, saved_so_far: 0 }),
         goal({ id: "b", target_amount: 1000, saved_so_far: 700 }),
-        goal({ id: "done", status: "achieved", target_amount: 500, saved_so_far: 500 }),
+        goal({
+            id: "done",
+            status: "achieved",
+            target_amount: 500,
+            saved_so_far: 500,
+        }),
     ];
 
     it("splits evenly with the cent remainder on the last goal", () => {
@@ -154,37 +159,66 @@ describe("distributeGoalShare", () => {
 
 describe("summarizeBonusesForMonth", () => {
     const events = [
-        event({ id: "1", recipient_id: "yj", received_on: "2026-03-01", gross: 1000, cpf: 200, net: 800 }),
-        event({ id: "2", recipient_id: "yj", received_on: "2026-03-20", gross: 500, cpf: 100, net: 400 }),
-        event({ id: "3", recipient_id: "rc", received_on: "2026-03-05", gross: 2000, cpf: 400, net: 1600 }),
+        event({
+            id: "1",
+            recipient_id: "yj",
+            received_on: "2026-03-01",
+            gross: 1000,
+            cpf: 200,
+            net: 800,
+        }),
+        event({
+            id: "2",
+            recipient_id: "yj",
+            received_on: "2026-03-20",
+            gross: 500,
+            cpf: 100,
+            net: 400,
+        }),
+        event({
+            id: "3",
+            recipient_id: "rc",
+            received_on: "2026-03-05",
+            gross: 2000,
+            cpf: 400,
+            net: 1600,
+        }),
     ];
 
     it("uses events and ignores the legacy value", () => {
-        expect(summarizeBonusesForMonth(events, "2026-03", "yj", 9999)).toEqual({
-            gross: 1500,
-            cpf: 300,
-            net: 1200,
-            count: 2,
-            source: "events",
-        });
+        expect(summarizeBonusesForMonth(events, "2026-03", "yj", 9999)).toEqual(
+            {
+                gross: 1500,
+                cpf: 300,
+                net: 1200,
+                count: 2,
+                source: "events",
+            },
+        );
     });
 
     it("sums the household", () => {
-        expect(summarizeBonusesForMonth(events, "2026-03", "household").gross).toBe(3500);
+        expect(
+            summarizeBonusesForMonth(events, "2026-03", "household").gross,
+        ).toBe(3500);
     });
 
     it("falls back to the legacy column", () => {
-        expect(summarizeBonusesForMonth(events, "2026-04", "yj", 1500)).toEqual({
-            gross: 1500,
-            cpf: 0,
-            net: 1500,
-            count: 0,
-            source: "legacy",
-        });
+        expect(summarizeBonusesForMonth(events, "2026-04", "yj", 1500)).toEqual(
+            {
+                gross: 1500,
+                cpf: 0,
+                net: 1500,
+                count: 0,
+                source: "legacy",
+            },
+        );
     });
 
     it("reports none", () => {
-        expect(summarizeBonusesForMonth([], "2026-04", "yj", 0).source).toBe("none");
+        expect(summarizeBonusesForMonth([], "2026-04", "yj", 0).source).toBe(
+            "none",
+        );
     });
 });
 
@@ -192,9 +226,24 @@ describe("summarizeBonusesYtd", () => {
     it("totals per member and household for the year", () => {
         const ytd = summarizeBonusesYtd(
             [
-                event({ id: "1", recipient_id: "yj", received_on: "2026-01-10" }),
-                event({ id: "2", recipient_id: "rc", received_on: "2026-06-10", gross: 2000, cpf: 400, net: 1600 }),
-                event({ id: "3", recipient_id: "yj", received_on: "2025-12-10" }),
+                event({
+                    id: "1",
+                    recipient_id: "yj",
+                    received_on: "2026-01-10",
+                }),
+                event({
+                    id: "2",
+                    recipient_id: "rc",
+                    received_on: "2026-06-10",
+                    gross: 2000,
+                    cpf: 400,
+                    net: 1600,
+                }),
+                event({
+                    id: "3",
+                    recipient_id: "yj",
+                    received_on: "2025-12-10",
+                }),
             ],
             2026,
             [
@@ -202,9 +251,24 @@ describe("summarizeBonusesYtd", () => {
                 { id: "rc", display_name: "Rachel" },
             ],
         );
-        expect(ytd.members[0]).toMatchObject({ memberId: "yj", gross: 1000, net: 800, count: 1 });
-        expect(ytd.members[1]).toMatchObject({ memberId: "rc", gross: 2000, net: 1600, count: 1 });
-        expect(ytd.household).toEqual({ gross: 3000, cpf: 600, net: 2400, count: 2 });
+        expect(ytd.members[0]).toMatchObject({
+            memberId: "yj",
+            gross: 1000,
+            net: 800,
+            count: 1,
+        });
+        expect(ytd.members[1]).toMatchObject({
+            memberId: "rc",
+            gross: 2000,
+            net: 1600,
+            count: 1,
+        });
+        expect(ytd.household).toEqual({
+            gross: 3000,
+            cpf: 600,
+            net: 2400,
+            count: 2,
+        });
     });
 });
 

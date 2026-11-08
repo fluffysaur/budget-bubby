@@ -1,13 +1,23 @@
 /** Turns an inbox item into the expense it confirms as. Pure. */
 
-import { SUPPORTED_CURRENCIES, buildExpenseFxFields } from "../currencyConverter";
+import {
+    SUPPORTED_CURRENCIES,
+    buildExpenseFxFields,
+} from "../currencyConverter";
 import { toSgtDateTime } from "./sgTime";
-import type { CreateExpenseInput, Expense, InboxItem } from "../../types/finance";
+import type {
+    CreateExpenseInput,
+    Expense,
+    InboxItem,
+} from "../../types/finance";
 import type { ExpenseFormInitialValues } from "../../components/expenses/ExpenseFormModal";
 
 /** SGD, or a currency with a cached/default rate. Others go to the full form. */
 export function canQuickConfirm(item: Pick<InboxItem, "currency">): boolean {
-    return item.currency === "SGD" || SUPPORTED_CURRENCIES.some((c) => c.code === item.currency);
+    return (
+        item.currency === "SGD" ||
+        SUPPORTED_CURRENCIES.some((c) => c.code === item.currency)
+    );
 }
 
 export function buildInboxExpenseInput(
@@ -41,7 +51,10 @@ export function inboxItemFormValues(
         date: sgt?.date,
         time: sgt?.time,
         ...(foreign
-            ? { original_currency: item.currency, original_amount: Number(item.amount) }
+            ? {
+                  original_currency: item.currency,
+                  original_amount: Number(item.amount),
+              }
             : { amount: Number(item.amount) }),
         ...(choice.categoryId ? { category_id: choice.categoryId } : {}),
         ...(choice.isShared !== null ? { is_shared: choice.isShared } : {}),
@@ -75,9 +88,14 @@ export function inboxExpenseEventDetail(
     };
 }
 
-export function dispatchInboxExpenseAdded(expenseId: string, input: CreateExpenseInput): void {
+export function dispatchInboxExpenseAdded(
+    expenseId: string,
+    input: CreateExpenseInput,
+): void {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
-        new CustomEvent("expenseAdded", { detail: inboxExpenseEventDetail(expenseId, input) }),
+        new CustomEvent("expenseAdded", {
+            detail: inboxExpenseEventDetail(expenseId, input),
+        }),
     );
 }

@@ -22,7 +22,8 @@ describe("PullToRefresh Component", () => {
             </PullToRefresh>,
         );
 
-        const scrollContainer = container.querySelector("main") || container.firstChild;
+        const scrollContainer =
+            container.querySelector("main") || container.firstChild;
         expect(scrollContainer).toBeInTheDocument();
 
         // Simulate touch start at top
@@ -54,7 +55,8 @@ describe("PullToRefresh Component", () => {
             </PullToRefresh>,
         );
 
-        const scrollContainer = container.querySelector("main") || container.firstChild;
+        const scrollContainer =
+            container.querySelector("main") || container.firstChild;
 
         fireEvent.touchStart(scrollContainer!, {
             touches: [{ clientY: 100 }],
@@ -81,7 +83,8 @@ describe("PullToRefresh Component", () => {
             </PullToRefresh>,
         );
 
-        const scrollContainer = container.querySelector("main") || container.firstChild;
+        const scrollContainer =
+            container.querySelector("main") || container.firstChild;
         expect(scrollContainer).toHaveClass("overscroll-y-contain");
     });
 
@@ -93,7 +96,8 @@ describe("PullToRefresh Component", () => {
             </PullToRefresh>,
         );
 
-        const scrollContainer = container.querySelector("main") || container.firstChild;
+        const scrollContainer =
+            container.querySelector("main") || container.firstChild;
 
         // Touch start
         fireEvent.touchStart(scrollContainer!, {
@@ -106,8 +110,12 @@ describe("PullToRefresh Component", () => {
         });
 
         // Should not show indicator
-        expect(screen.queryByText("Pull down to refresh")).not.toBeInTheDocument();
-        expect(screen.queryByText("Release to refresh")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("Pull down to refresh"),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText("Release to refresh"),
+        ).not.toBeInTheDocument();
 
         await act(async () => {
             fireEvent.touchEnd(scrollContainer!);
@@ -124,7 +132,8 @@ describe("PullToRefresh Component", () => {
             </PullToRefresh>,
         );
 
-        const scrollContainer = container.querySelector("main") || container.firstChild;
+        const scrollContainer =
+            container.querySelector("main") || container.firstChild;
 
         fireEvent.touchStart(scrollContainer!, {
             touches: [{ clientX: 50, clientY: 100 }],

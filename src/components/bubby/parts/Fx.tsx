@@ -9,7 +9,16 @@ const STAR = "M 0 -22 L 6 -6 L 22 0 L 6 6 L 0 22 L -6 6 L -22 0 L -6 -6 Z";
 const HEART = "M 0 8 C -14 -10 -34 4 0 30 C 34 4 14 -10 0 8 Z";
 
 export function GlowRing() {
-    return <circle className="bubby-glow" cx="256" cy="310" r="200" fill="var(--pastel-butter, #ffe999)" opacity="0.55" />;
+    return (
+        <circle
+            className="bubby-glow"
+            cx="256"
+            cy="310"
+            r="200"
+            fill="var(--pastel-butter, #ffe999)"
+            opacity="0.55"
+        />
+    );
 }
 
 export function Hearts() {
@@ -69,7 +78,14 @@ export function Dust() {
 export function Rumble() {
     const wave = "M 0 0 q 8 -10 16 0 q 8 10 16 0 q 8 -10 16 0";
     return (
-        <g data-overlay="rumble" fill="none" stroke={INK} strokeWidth="6" strokeLinecap="round" opacity="0.7">
+        <g
+            data-overlay="rumble"
+            fill="none"
+            stroke={INK}
+            strokeWidth="6"
+            strokeLinecap="round"
+            opacity="0.7"
+        >
             <path d={wave} transform="translate(184 404) rotate(-12)" />
             <path d={wave} transform="translate(282 412) rotate(10)" />
         </g>
@@ -82,7 +98,14 @@ export function Tears() {
     return (
         <g data-overlay="tears">
             {[-63, 63].map((x) => (
-                <path key={x} d={drop} transform={`translate(${x} 4)`} fill={TEAR} stroke={INK} strokeWidth="4" />
+                <path
+                    key={x}
+                    d={drop}
+                    transform={`translate(${x} 4)`}
+                    fill={TEAR}
+                    stroke={INK}
+                    strokeWidth="4"
+                />
             ))}
         </g>
     );
@@ -92,9 +115,29 @@ export function Tears() {
 export function MissYouSign({ compact }: { compact: boolean }) {
     return (
         <g data-overlay="sign">
-            <path d="M 404 456 L 404 352" stroke={INK} strokeWidth="9" strokeLinecap="round" />
-            <rect x="336" y="288" width="138" height="70" rx="12" fill={SIGN} stroke={INK} strokeWidth="7" />
-            <path d={HEART} transform="translate(360 312) scale(0.6)" fill={PINK} stroke={INK} strokeWidth="5" />
+            <path
+                d="M 404 456 L 404 352"
+                stroke={INK}
+                strokeWidth="9"
+                strokeLinecap="round"
+            />
+            <rect
+                x="336"
+                y="288"
+                width="138"
+                height="70"
+                rx="12"
+                fill={SIGN}
+                stroke={INK}
+                strokeWidth="7"
+            />
+            <path
+                d={HEART}
+                transform="translate(360 312) scale(0.6)"
+                fill={PINK}
+                stroke={INK}
+                strokeWidth="5"
+            />
             {!compact && (
                 <text
                     x="420"

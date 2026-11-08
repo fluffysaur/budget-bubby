@@ -224,7 +224,9 @@ export function AddRecurringModal({
             onClose();
         } catch (err: unknown) {
             setErrorMessage(
-                err instanceof Error ? err.message : "Failed to save recurring item",
+                err instanceof Error
+                    ? err.message
+                    : "Failed to save recurring item",
             );
         } finally {
             setIsSubmitting(false);
@@ -241,11 +243,7 @@ export function AddRecurringModal({
             >
                 <ModalHeader
                     id="modal-headline"
-                    title={
-                        isEditing
-                            ? "Edit Recurring"
-                            : "Add Recurring"
-                    }
+                    title={isEditing ? "Edit Recurring" : "Add Recurring"}
                     subtitle={
                         isEditing
                             ? "Update amount or due date"
@@ -288,9 +286,7 @@ export function AddRecurringModal({
                                 label="Type"
                                 value={type}
                                 onChange={(e) =>
-                                    setType(
-                                        e.target.value as RecurringItemType,
-                                    )
+                                    setType(e.target.value as RecurringItemType)
                                 }
                                 className="bg-(--bg-canvas)"
                             >
@@ -381,12 +377,8 @@ export function AddRecurringModal({
                                 }
                                 className="bg-(--bg-canvas)"
                             >
-                                <option value="annually">
-                                    Yearly
-                                </option>
-                                <option value="monthly">
-                                    Monthly
-                                </option>
+                                <option value="annually">Yearly</option>
+                                <option value="monthly">Monthly</option>
                             </Select>
                         </div>
                     </div>

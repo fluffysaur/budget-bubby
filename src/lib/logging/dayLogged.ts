@@ -6,8 +6,14 @@
 
 import type { DailyCheckin } from "../../types/finance";
 
-export function isDayLogged(checkins: readonly DailyCheckin[], memberId: string, date: string): boolean {
-    return checkins.some((c) => c.member_id === memberId && c.checkin_date === date);
+export function isDayLogged(
+    checkins: readonly DailyCheckin[],
+    memberId: string,
+    date: string,
+): boolean {
+    return checkins.some(
+        (c) => c.member_id === memberId && c.checkin_date === date,
+    );
 }
 
 /** Distinct logged dates for a member, optionally from `since` (inclusive). */
@@ -31,5 +37,8 @@ export function isCoupleDayLogged(
     memberIds: readonly string[],
     date: string,
 ): boolean {
-    return memberIds.length > 0 && memberIds.every((id) => isDayLogged(checkins, id, date));
+    return (
+        memberIds.length > 0 &&
+        memberIds.every((id) => isDayLogged(checkins, id, date))
+    );
 }

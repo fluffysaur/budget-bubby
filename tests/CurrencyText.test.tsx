@@ -12,16 +12,21 @@ describe("CurrencyText money scale", () => {
         expect(el.className).not.toMatch(/text-\(--text-ink\)/);
     });
 
-    it.each(["hero", "lg", "md", "sm"] as const)("applies the %s size classes", (size) => {
-        render(<CurrencyText amount={10} size={size} />);
-        const el = screen.getByText("S$10.00");
-        for (const cls of MONEY_SIZE_CLASSES[size].split(" ")) {
-            expect(el.className).toContain(cls);
-        }
-    });
+    it.each(["hero", "lg", "md", "sm"] as const)(
+        "applies the %s size classes",
+        (size) => {
+            render(<CurrencyText amount={10} size={size} />);
+            const el = screen.getByText("S$10.00");
+            for (const cls of MONEY_SIZE_CLASSES[size].split(" ")) {
+                expect(el.className).toContain(cls);
+            }
+        },
+    );
 
     it("shows a pre-formatted value when given", () => {
         render(<CurrencyText formatted="+S$100" tone="positive" />);
-        expect(screen.getByText("+S$100").className).toContain("text-emerald-700");
+        expect(screen.getByText("+S$100").className).toContain(
+            "text-emerald-700",
+        );
     });
 });

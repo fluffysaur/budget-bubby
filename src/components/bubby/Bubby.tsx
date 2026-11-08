@@ -8,12 +8,24 @@
 
 import { useId } from "react";
 import { FACE_ANCHOR, INK } from "../../lib/bubby/anchors";
-import { MOOD_FACE, type EyeShape, type BeakShape } from "../../lib/bubby/moods";
+import {
+    MOOD_FACE,
+    type EyeShape,
+    type BeakShape,
+} from "../../lib/bubby/moods";
 import type { BubbyBody, BubbyMood } from "../../lib/bubby/body";
 import type { BubbyReaction } from "../../lib/appEvents";
 import { BodyShape } from "./parts/BodyShape";
 import { Beak, Cheeks, Eyes } from "./parts/Face";
-import { Dust, GlowRing, Hearts, MissYouSign, Rumble, Sparkles, Tears } from "./parts/Fx";
+import {
+    Dust,
+    GlowRing,
+    Hearts,
+    MissYouSign,
+    Rumble,
+    Sparkles,
+    Tears,
+} from "./parts/Fx";
 
 export type BubbySize = "xs" | "sm" | "md" | "lg";
 
@@ -36,7 +48,8 @@ export interface BubbyProps {
 
 function blinkDelayFor(id: string): string {
     let hash = 0;
-    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+    for (let i = 0; i < id.length; i++)
+        hash = (hash * 31 + id.charCodeAt(i)) | 0;
     // Spread blinks over ±1s around the 5s loop
     return `${(Math.abs(hash) % 20) / 10 - 1}s`;
 }
@@ -72,13 +85,26 @@ export function Bubby({
             data-mood={mood}
             data-reaction={reaction ?? undefined}
             data-blink={eyes === "dot" ? "" : undefined}
-            {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": "Bubby" })}
+            {...(decorative
+                ? { "aria-hidden": true }
+                : { role: "img", "aria-label": "Bubby" })}
         >
             <g data-layer="ground">
-                <ellipse cx="256" cy="476" rx="140" ry="14" fill={INK} opacity="0.12" />
+                <ellipse
+                    cx="256"
+                    cy="476"
+                    rx="140"
+                    ry="14"
+                    fill={INK}
+                    opacity="0.12"
+                />
             </g>
 
-            {!compact && <g data-layer="fx-back">{reaction === "celebrate" && <GlowRing />}</g>}
+            {!compact && (
+                <g data-layer="fx-back">
+                    {reaction === "celebrate" && <GlowRing />}
+                </g>
+            )}
 
             <g data-layer="body" className="bubby-body">
                 <BodyShape body={body} part="body" />

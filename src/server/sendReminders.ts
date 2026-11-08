@@ -15,7 +15,10 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseFinanceServiceImpl } from "../services/supabaseFinanceService";
-import { computeRemindersFrom, type ReminderDataSource } from "../lib/reminders/engine";
+import {
+    computeRemindersFrom,
+    type ReminderDataSource,
+} from "../lib/reminders/engine";
 import { isWithinQuietHours, type AppReminder } from "../lib/reminders/rules";
 import {
     buildPushMessages,
@@ -39,8 +42,7 @@ export interface SendPushResult {
 }
 
 export interface SendRemindersDeps {
-    service: ReminderDataSource &
-        Pick<FinanceService, "claimNotificationSend">;
+    service: ReminderDataSource & Pick<FinanceService, "claimNotificationSend">;
     listHouseholdIds(): Promise<string[]>;
     listMembers(): Promise<{ id: string; display_name?: string }[]>;
     listSubscriptions(memberId: string): Promise<PushTarget[]>;
@@ -69,7 +71,9 @@ export interface SendRemindersResult {
 
 /** Date whose local fields hold Singapore wall-clock time. */
 export function toSingaporeWallClock(date: Date): Date {
-    return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Singapore" }));
+    return new Date(
+        date.toLocaleString("en-US", { timeZone: "Asia/Singapore" }),
+    );
 }
 
 async function claimAll(
@@ -93,7 +97,12 @@ async function runForMember(
     memberId: string,
     sgNow: Date,
 ): Promise<MemberRunResult> {
-    const result: MemberRunResult = { memberId, keys: [], pushes: 0, removedDevices: 0 };
+    const result: MemberRunResult = {
+        memberId,
+        keys: [],
+        pushes: 0,
+        removedDevices: 0,
+    };
 
     const prefs = await deps.service.getNotificationPreferences(memberId);
     if (!prefs.push_enabled) return { ...result, skipped: "push_off" };
@@ -102,7 +111,13 @@ async function runForMember(
     if (targets.length === 0) return { ...result, skipped: "no_devices" };
 
     const minutes = sgNow.getHours() * 60 + sgNow.getMinutes();
-    if (isWithinQuietHours(minutes, prefs.quiet_hours_start, prefs.quiet_hours_end)) {
+    if (
+        isWithinQuietHours(
+            minutes,
+            prefs.quiet_hours_start,
+            prefs.quiet_hours_end,
+        )
+    ) {
         return { ...result, skipped: "quiet_hours" };
     }
 
@@ -181,12 +196,16 @@ export function createSupabaseSendDeps(
     client: SupabaseClient,
     options: Pick<SendRemindersDeps, "sendPush" | "now" | "dryRun">,
 ): SendRemindersDeps {
-    const service = new SupabaseFinanceServiceImpl(client, { localFallback: false });
+    const service = new SupabaseFinanceServiceImpl(client, {
+        localFallback: false,
+    });
     return {
         service,
         ...options,
         async listHouseholdIds() {
-            const { data, error } = await client.from("households").select("id");
+            const { data, error } = await client
+                .from("households")
+                .select("id");
             if (error) throw error;
             return (data || []).map((row) => row.id as string);
         },

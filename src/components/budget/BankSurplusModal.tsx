@@ -51,9 +51,12 @@ export function BankSurplusModal({
                         <Shield className="h-5 w-5" strokeWidth={2.5} />
                     </div>
                     <div>
-                        <div className="font-bold text-sm text-(--text-ink)">Reserve Cushion</div>
+                        <div className="font-bold text-sm text-(--text-ink)">
+                            Reserve Cushion
+                        </div>
                         <p className="text-xs text-(--text-muted) leading-relaxed mt-0.5">
-                            Bank <CurrencyText amount={surplusAmount} /> to cushion future overages.
+                            Bank <CurrencyText amount={surplusAmount} /> to
+                            cushion future overages.
                         </p>
                     </div>
                 </div>
@@ -76,7 +79,9 @@ export function BankSurplusModal({
                     <Button
                         variant="primary"
                         onClick={handleConfirm}
-                        leftIcon={<Shield className="h-4 w-4" strokeWidth={2.5} />}
+                        leftIcon={
+                            <Shield className="h-4 w-4" strokeWidth={2.5} />
+                        }
                     >
                         Bank Surplus
                     </Button>

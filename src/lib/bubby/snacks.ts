@@ -5,7 +5,8 @@
 
 import { daysBetween } from "./dates";
 
-export type SnackId = "fish" | "popsicle" | "cake" | "kaya-toast" | "curry-puff" | "dumpling";
+export type SnackId =
+    "fish" | "popsicle" | "cake" | "kaya-toast" | "curry-puff" | "dumpling";
 
 export const SNACKS: readonly { id: SnackId; label: string }[] = [
     { id: "fish", label: "Fish" },

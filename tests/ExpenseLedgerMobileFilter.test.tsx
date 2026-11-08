@@ -29,13 +29,17 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         expect(searchInput).toHaveValue("Bowl");
 
         // Mobile Filter Toggle button with count badge (Bowl, Category, Shared, Tag = 4)
-        const toggleBtn = screen.getByRole("button", { name: /toggle filters/i });
+        const toggleBtn = screen.getByRole("button", {
+            name: /toggle filters/i,
+        });
         expect(toggleBtn).toBeInTheDocument();
         expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
         expect(screen.getByText("4")).toBeInTheDocument();
 
         // Sort dropdown
-        const sortSelects = screen.getAllByRole("combobox", { name: /sort ledger/i });
+        const sortSelects = screen.getAllByRole("combobox", {
+            name: /sort ledger/i,
+        });
         expect(sortSelects.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -50,7 +54,9 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
             />,
         );
 
-        const toggleBtn = screen.getByRole("button", { name: /toggle filters/i });
+        const toggleBtn = screen.getByRole("button", {
+            name: /toggle filters/i,
+        });
         expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
 
         // Click to expand drawer
@@ -75,7 +81,9 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
             />,
         );
 
-        const dismissBtn = screen.getByRole("button", { name: /dismiss search/i });
+        const dismissBtn = screen.getByRole("button", {
+            name: /dismiss search/i,
+        });
         fireEvent.click(dismissBtn);
 
         expect(onFilterChange).toHaveBeenCalledWith(
@@ -102,11 +110,15 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
 
         // Should display chips
         expect(screen.getByText('"Salad"')).toBeInTheDocument();
-        expect(screen.getAllByText(mockCategories[0].name).length).toBeGreaterThanOrEqual(2);
+        expect(
+            screen.getAllByText(mockCategories[0].name).length,
+        ).toBeGreaterThanOrEqual(2);
         expect(screen.getByText("#travel")).toBeInTheDocument();
 
         // Remove tag chip
-        const removeTagBtn = screen.getByRole("button", { name: /remove filter #travel/i });
+        const removeTagBtn = screen.getByRole("button", {
+            name: /remove filter #travel/i,
+        });
         fireEvent.click(removeTagBtn);
 
         expect(onFilterChange).toHaveBeenCalledWith(
@@ -128,7 +140,9 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
             />,
         );
 
-        const sortSelects = screen.getAllByRole("combobox", { name: /sort ledger/i });
+        const sortSelects = screen.getAllByRole("combobox", {
+            name: /sort ledger/i,
+        });
         fireEvent.change(sortSelects[0], { target: { value: "amount-asc" } });
 
         expect(onSortChange).toHaveBeenCalledWith("amount", "asc");
@@ -150,13 +164,17 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         );
 
         // Search bar inside the card header remains visible
-        expect(screen.getByPlaceholderText(/search merchant/i)).toBeInTheDocument();
+        expect(
+            screen.getByPlaceholderText(/search merchant/i),
+        ).toBeInTheDocument();
 
         // Empty state is rendered inside the card body
         expect(screen.getByText(/no expenses/i)).toBeInTheDocument();
 
         // Reset filters button triggers onResetFilters
-        const clearBtn = screen.getAllByRole("button", { name: /reset filters/i })[1];
+        const clearBtn = screen.getAllByRole("button", {
+            name: /reset filters/i,
+        })[1];
         fireEvent.click(clearBtn);
 
         expect(onResetFilters).toHaveBeenCalledTimes(1);

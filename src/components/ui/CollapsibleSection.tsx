@@ -33,7 +33,11 @@ export function CollapsibleSection({
         if (!badge) return null;
         if (typeof badge === "string" || typeof badge === "number") {
             return (
-                <Badge variant={badgeVariant} size="sm" className="shrink-0 font-bold">
+                <Badge
+                    variant={badgeVariant}
+                    size="sm"
+                    className="shrink-0 font-bold"
+                >
                     {badge}
                 </Badge>
             );
@@ -78,7 +82,9 @@ export function CollapsibleSection({
                     )}
                     <div
                         className={`flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) transition-press group-hover:text-(--text-ink) ${
-                            isOpen ? "bg-(--pastel-lilac) rotate-90 text-(--text-ink)" : ""
+                            isOpen
+                                ? "bg-(--pastel-lilac) rotate-90 text-(--text-ink)"
+                                : ""
                         }`}
                     >
                         <ChevronRight className="h-4 w-4" strokeWidth={2.5} />

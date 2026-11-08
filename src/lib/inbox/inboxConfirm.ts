@@ -9,13 +9,24 @@ import { queryClient } from "../queryClient";
 import { storeLastSplit } from "../lastSplit";
 import { dispatchInboxExpenseAdded } from "../capture/inboxExpense";
 import { emitInboxEvent, type InboxEventMap } from "./inboxEvents";
-import type { CreateExpenseInput, InboxItem, InboxItemsResult } from "../../types/finance";
+import type {
+    CreateExpenseInput,
+    InboxItem,
+    InboxItemsResult,
+} from "../../types/finance";
 
-export const INBOX_ITEMS_QUERY_KEY = ["finance", "inbox", "items", "pending"] as const;
+export const INBOX_ITEMS_QUERY_KEY = [
+    "finance",
+    "inbox",
+    "items",
+    "pending",
+] as const;
 
 /** Pending items left in the cached inbox list. */
 export function cachedPendingCount(): number {
-    const cached = queryClient.getQueryData<InboxItemsResult>(INBOX_ITEMS_QUERY_KEY);
+    const cached = queryClient.getQueryData<InboxItemsResult>(
+        INBOX_ITEMS_QUERY_KEY,
+    );
     return cached?.items.length ?? 0;
 }
 
@@ -34,16 +45,19 @@ export async function afterInboxConfirmed(params: {
 
     const remaining =
         params.remaining ??
-        (queryClient.getQueryData<InboxItemsResult>(INBOX_ITEMS_QUERY_KEY)?.items ?? []).filter(
-            (i) => i.id !== item.id,
-        ).length;
+        (
+            queryClient.getQueryData<InboxItemsResult>(INBOX_ITEMS_QUERY_KEY)
+                ?.items ?? []
+        ).filter((i) => i.id !== item.id).length;
 
     emitInboxEvent("inbox:item-confirmed", {
         itemId: item.id,
         expenseId,
         amountSgd: input.amount,
         categoryId: input.category_id ?? null,
-        usedSuggestion: Boolean(guessedCategoryId) && guessedCategoryId === (input.category_id ?? null),
+        usedSuggestion:
+            Boolean(guessedCategoryId) &&
+            guessedCategoryId === (input.category_id ?? null),
         via,
         remaining,
     });

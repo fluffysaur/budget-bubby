@@ -5,7 +5,14 @@
  * - Switching to an uncached month shows skeletons instead of the previous month's numbers
  */
 
-import { render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    act,
+    within,
+} from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
@@ -16,7 +23,11 @@ import { RecurringPage } from "../src/pages/RecurringPage";
 import { financeService } from "../src/services/financeService";
 import { Skeleton, SkeletonGroup, StatCard } from "../src/components/ui";
 import { getCurrentMonth, addMonths } from "../src/lib/dateUtils";
-import type { MonthlyBudgetDetail, SavingsGoal, RecurringItem } from "../src/types/finance";
+import type {
+    MonthlyBudgetDetail,
+    SavingsGoal,
+    RecurringItem,
+} from "../src/types/finance";
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
@@ -58,7 +69,9 @@ describe("Skeleton primitives", () => {
         );
         const status = screen.getByRole("status");
         expect(status).toHaveAttribute("aria-busy", "true");
-        expect(within(status).getByText("Loading things")).toHaveClass("sr-only");
+        expect(within(status).getByText("Loading things")).toHaveClass(
+            "sr-only",
+        );
     });
 
     it("Skeleton blocks are decorative and only pulse when motion is allowed", () => {
@@ -91,7 +104,9 @@ describe("Page loading skeletons", () => {
     it("BudgetPage shows a skeleton while loading, then the budget figures", async () => {
         const month = getCurrentMonth();
         const pending = deferred<MonthlyBudgetDetail>();
-        vi.spyOn(financeService, "getMonthlyBudget").mockImplementation(() => pending.promise);
+        vi.spyOn(financeService, "getMonthlyBudget").mockImplementation(
+            () => pending.promise,
+        );
 
         render(
             <HouseholdProvider initialPerspective="yijia">
@@ -99,7 +114,10 @@ describe("Page loading skeletons", () => {
             </HouseholdProvider>,
         );
 
-        expect(await screen.findByTestId("budget-skeleton")).toHaveAttribute("role", "status");
+        expect(await screen.findByTestId("budget-skeleton")).toHaveAttribute(
+            "role",
+            "status",
+        );
         expect(screen.queryByText("S$5,876")).not.toBeInTheDocument();
 
         await act(async () => {
@@ -107,7 +125,9 @@ describe("Page loading skeletons", () => {
         });
 
         await waitFor(() => {
-            expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("budget-skeleton"),
+            ).not.toBeInTheDocument();
         });
         expect(screen.getAllByText("S$5,876").length).toBeGreaterThan(0);
     });
@@ -117,8 +137,11 @@ describe("Page loading skeletons", () => {
         const nextMonth = addMonths(month, 1);
         const nextPending = deferred<MonthlyBudgetDetail>();
 
-        vi.spyOn(financeService, "getMonthlyBudget").mockImplementation((m: string) =>
-            m === month ? Promise.resolve(makeBudget(month, 7345)) : nextPending.promise,
+        vi.spyOn(financeService, "getMonthlyBudget").mockImplementation(
+            (m: string) =>
+                m === month
+                    ? Promise.resolve(makeBudget(month, 7345))
+                    : nextPending.promise,
         );
 
         render(
@@ -151,7 +174,9 @@ describe("Page loading skeletons", () => {
 
     it("GoalsPage shows a goals skeleton while loading, then the empty state", async () => {
         const pending = deferred<SavingsGoal[]>();
-        vi.spyOn(financeService, "getGoals").mockImplementation(() => pending.promise);
+        vi.spyOn(financeService, "getGoals").mockImplementation(
+            () => pending.promise,
+        );
 
         render(
             <MemoryRouter>
@@ -161,21 +186,28 @@ describe("Page loading skeletons", () => {
             </MemoryRouter>,
         );
 
-        expect(await screen.findByTestId("goals-skeleton")).toHaveAttribute("role", "status");
+        expect(await screen.findByTestId("goals-skeleton")).toHaveAttribute(
+            "role",
+            "status",
+        );
 
         await act(async () => {
             pending.resolve([]);
         });
 
         await waitFor(() => {
-            expect(screen.queryByTestId("goals-skeleton")).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("goals-skeleton"),
+            ).not.toBeInTheDocument();
         });
         expect(screen.getByText("No Goals")).toBeInTheDocument();
     });
 
     it("RecurringPage shows a skeleton while loading, then the policy table", async () => {
         const pending = deferred<RecurringItem[]>();
-        vi.spyOn(financeService, "getRecurringItems").mockImplementation(() => pending.promise);
+        vi.spyOn(financeService, "getRecurringItems").mockImplementation(
+            () => pending.promise,
+        );
 
         render(
             <HouseholdProvider>
@@ -183,7 +215,10 @@ describe("Page loading skeletons", () => {
             </HouseholdProvider>,
         );
 
-        expect(await screen.findByTestId("recurring-skeleton")).toHaveAttribute("role", "status");
+        expect(await screen.findByTestId("recurring-skeleton")).toHaveAttribute(
+            "role",
+            "status",
+        );
         expect(screen.queryByText(/All Recurring/i)).not.toBeInTheDocument();
 
         await act(async () => {
@@ -191,7 +226,9 @@ describe("Page loading skeletons", () => {
         });
 
         await waitFor(() => {
-            expect(screen.queryByTestId("recurring-skeleton")).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("recurring-skeleton"),
+            ).not.toBeInTheDocument();
         });
         expect(screen.getByText(/All Recurring/i)).toBeInTheDocument();
     });
@@ -199,7 +236,9 @@ describe("Page loading skeletons", () => {
     it("DashboardPage keeps the skeleton until budget data arrives instead of showing S$0 figures", async () => {
         const month = getCurrentMonth();
         const pending = deferred<MonthlyBudgetDetail>();
-        vi.spyOn(financeService, "getMonthlyBudget").mockImplementation(() => pending.promise);
+        vi.spyOn(financeService, "getMonthlyBudget").mockImplementation(
+            () => pending.promise,
+        );
 
         render(
             <HouseholdProvider initialPerspective="yijia">
@@ -209,15 +248,21 @@ describe("Page loading skeletons", () => {
 
         const skeleton = await screen.findByTestId("dashboard-skeleton");
         expect(skeleton).toHaveAttribute("role", "status");
-        expect(screen.queryByRole("region", { name: "Left to Spend" })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("region", { name: "Left to Spend" }),
+        ).not.toBeInTheDocument();
 
         await act(async () => {
             pending.resolve(makeBudget(month, 7345));
         });
 
         await waitFor(() => {
-            expect(screen.queryByTestId("dashboard-skeleton")).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("dashboard-skeleton"),
+            ).not.toBeInTheDocument();
         });
-        expect(screen.getByRole("region", { name: "Left to Spend" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("region", { name: "Left to Spend" }),
+        ).toBeInTheDocument();
     });
 });

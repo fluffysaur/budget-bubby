@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    within,
+} from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -18,7 +24,10 @@ function renderInbox() {
                 <MemoryRouter initialEntries={["/inbox"]}>
                     <Routes>
                         <Route path="/inbox" element={<InboxPage />} />
-                        <Route path="/expenses" element={<div>Expenses Page</div>} />
+                        <Route
+                            path="/expenses"
+                            element={<div>Expenses Page</div>}
+                        />
                     </Routes>
                 </MemoryRouter>
             </HouseholdProvider>
@@ -60,7 +69,9 @@ describe("InboxPage", () => {
         const card = await findCard();
         expect(within(card).getByText("Grab Food")).toBeInTheDocument();
         expect(screen.getByText("3 to sort")).toBeInTheDocument();
-        expect(within(card).getByRole("button", { name: /Transport/ })).toHaveAttribute("aria-pressed", "true");
+        expect(
+            within(card).getByRole("button", { name: /Transport/ }),
+        ).toHaveAttribute("aria-pressed", "true");
     });
 
     it("confirms by button and emits inbox:item-confirmed", async () => {
@@ -69,7 +80,9 @@ describe("InboxPage", () => {
         renderInbox();
         await findCard();
         fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
-        await waitFor(() => expect(screen.getByText("2 to sort")).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByText("2 to sort")).toBeInTheDocument(),
+        );
         await waitFor(() => expect(handler).toHaveBeenCalled());
         expect(handler.mock.calls[0][0]).toMatchObject({
             via: "button",
@@ -79,10 +92,17 @@ describe("InboxPage", () => {
             amountSgd: 18.4,
         });
         const expenses = await mockFinanceService.getExpenses();
-        expect(expenses.find((e) => e.item === "Grab Food")?.category_id).toBe(transport.id);
+        expect(expenses.find((e) => e.item === "Grab Food")?.category_id).toBe(
+            transport.id,
+        );
         // The choice is remembered for next time
         const rules = await mockFinanceService.getMerchantRules();
-        expect(rules).toEqual([expect.objectContaining({ merchant_key: "grab food", category_id: transport.id })]);
+        expect(rules).toEqual([
+            expect.objectContaining({
+                merchant_key: "grab food",
+                category_id: transport.id,
+            }),
+        ]);
         off();
     });
 
@@ -91,9 +111,13 @@ describe("InboxPage", () => {
         const card = await findCard();
         fireEvent.click(within(card).getByRole("button", { name: /^Food/ }));
         fireEvent.keyDown(window, { key: "ArrowRight" });
-        await waitFor(() => expect(screen.getByText("2 to sort")).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByText("2 to sort")).toBeInTheDocument(),
+        );
         const expenses = await mockFinanceService.getExpenses();
-        expect(expenses.find((e) => e.item === "Grab Food")?.category_id).toBe(food.id);
+        expect(expenses.find((e) => e.item === "Grab Food")?.category_id).toBe(
+            food.id,
+        );
     });
 
     it("discards by keyboard and Undo restores", async () => {
@@ -102,21 +126,39 @@ describe("InboxPage", () => {
         renderInbox();
         await findCard();
         fireEvent.keyDown(window, { key: "ArrowLeft" });
-        await waitFor(() => expect(screen.getByText("2 to sort")).toBeInTheDocument());
-        expect(handler).toHaveBeenCalledWith(expect.objectContaining({ reason: "discarded", remaining: 2 }));
+        await waitFor(() =>
+            expect(screen.getByText("2 to sort")).toBeInTheDocument(),
+        );
+        expect(handler).toHaveBeenCalledWith(
+            expect.objectContaining({ reason: "discarded", remaining: 2 }),
+        );
         fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
-        await waitFor(() => expect(screen.getByText("3 to sort")).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByText("3 to sort")).toBeInTheDocument(),
+        );
         off();
     });
 
     it("batch-confirms rule-matched items", async () => {
-        await mockFinanceService.upsertMerchantRule({ merchant_key: "grab food", category_id: transport.id });
-        await mockFinanceService.upsertMerchantRule({ merchant_key: "starbucks", category_id: food.id });
+        await mockFinanceService.upsertMerchantRule({
+            merchant_key: "grab food",
+            category_id: transport.id,
+        });
+        await mockFinanceService.upsertMerchantRule({
+            merchant_key: "starbucks",
+            category_id: food.id,
+        });
         renderInbox();
         await findCard();
-        fireEvent.click(await screen.findByRole("button", { name: "Confirm 2 Matched" }));
-        await waitFor(() => expect(screen.getByText("1 to sort")).toBeInTheDocument());
-        expect(within(await findCard()).getByText("Ntuc Fairprice")).toBeInTheDocument();
+        fireEvent.click(
+            await screen.findByRole("button", { name: "Confirm 2 Matched" }),
+        );
+        await waitFor(() =>
+            expect(screen.getByText("1 to sort")).toBeInTheDocument(),
+        );
+        expect(
+            within(await findCard()).getByText("Ntuc Fairprice"),
+        ).toBeInTheDocument();
     });
 
     it("hints a duplicate and resolves it with Same One", async () => {
@@ -151,17 +193,23 @@ describe("InboxPage", () => {
         mockFinanceService.inbox.setItems([]);
         const { unmount } = renderInbox();
         expect(await screen.findByText("No Captures")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Set Up" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Set Up" }),
+        ).toBeInTheDocument();
         unmount();
         queryClient.clear();
         await mockFinanceService.createCaptureToken("iPhone");
         renderInbox();
         expect(await screen.findByText("All Sorted")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Add Expense" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Add Expense" }),
+        ).toBeInTheDocument();
     });
 
     it("forces Edit for unsupported currencies", async () => {
-        mockFinanceService.inbox.setItems([item({ currency: "XYZ", amount: 50 })]);
+        mockFinanceService.inbox.setItems([
+            item({ currency: "XYZ", amount: 50 }),
+        ]);
         renderInbox();
         await findCard();
         expect(screen.getByText("Check rate")).toBeInTheDocument();
@@ -175,15 +223,28 @@ describe("InboxPage", () => {
         await findCard();
         fireEvent.click(screen.getByRole("button", { name: "Edit" }));
         const dialog = await screen.findByRole("dialog");
-        expect(within(dialog).getByLabelText("Description")).toHaveValue("Grab Food");
-        fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
-        await waitFor(() => expect(handler).toHaveBeenCalledWith(expect.objectContaining({ via: "edit" })));
-        await waitFor(() => expect(screen.getByText("2 to sort")).toBeInTheDocument());
+        expect(within(dialog).getByLabelText("Description")).toHaveValue(
+            "Grab Food",
+        );
+        fireEvent.click(
+            within(dialog).getByRole("button", { name: "Confirm" }),
+        );
+        await waitFor(() =>
+            expect(handler).toHaveBeenCalledWith(
+                expect.objectContaining({ via: "edit" }),
+            ),
+        );
+        await waitFor(() =>
+            expect(screen.getByText("2 to sort")).toBeInTheDocument(),
+        );
         off();
     });
 
     it("redirects away before the migration", async () => {
-        vi.spyOn(financeService, "getInboxItems").mockResolvedValue({ available: false, items: [] });
+        vi.spyOn(financeService, "getInboxItems").mockResolvedValue({
+            available: false,
+            items: [],
+        });
         renderInbox();
         expect(await screen.findByText("Expenses Page")).toBeInTheDocument();
     });

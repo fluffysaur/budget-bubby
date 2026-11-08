@@ -29,13 +29,17 @@ describe("TruncatedText Component", () => {
         });
 
         render(<TruncatedText text="Income Enhanced Incomeshield Preferred" />);
-        const textElement = screen.getByText("Income Enhanced Incomeshield Preferred");
+        const textElement = screen.getByText(
+            "Income Enhanced Incomeshield Preferred",
+        );
         expect(textElement).toBeInTheDocument();
 
         // Click / tap triggers popover
         fireEvent.click(textElement);
         expect(screen.getByRole("tooltip")).toBeInTheDocument();
-        expect(screen.getByRole("tooltip")).toHaveTextContent("Income Enhanced Incomeshield Preferred");
+        expect(screen.getByRole("tooltip")).toHaveTextContent(
+            "Income Enhanced Incomeshield Preferred",
+        );
 
         // Click again closes popover
         fireEvent.click(textElement);
@@ -43,10 +47,18 @@ describe("TruncatedText Component", () => {
 
         // Restore mocks
         if (originalScrollWidth) {
-            Object.defineProperty(HTMLElement.prototype, "scrollWidth", originalScrollWidth);
+            Object.defineProperty(
+                HTMLElement.prototype,
+                "scrollWidth",
+                originalScrollWidth,
+            );
         }
         if (originalClientWidth) {
-            Object.defineProperty(HTMLElement.prototype, "clientWidth", originalClientWidth);
+            Object.defineProperty(
+                HTMLElement.prototype,
+                "clientWidth",
+                originalClientWidth,
+            );
         }
     });
 
@@ -67,7 +79,9 @@ describe("TruncatedText Component", () => {
             </div>,
         );
 
-        const textElement = screen.getByText("Very Long Insurance Name That Truncates");
+        const textElement = screen.getByText(
+            "Very Long Insurance Name That Truncates",
+        );
         fireEvent.click(textElement);
         expect(screen.getByRole("tooltip")).toBeInTheDocument();
 

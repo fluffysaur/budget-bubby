@@ -26,7 +26,12 @@ function formatShortDay(date: string): string {
     return `${day} ${MONTH_NAMES_SHORT[month - 1]}`;
 }
 
-export function BonusRow({ event, recipientName, onEdit, onDelete }: BonusRowProps) {
+export function BonusRow({
+    event,
+    recipientName,
+    onEdit,
+    onDelete,
+}: BonusRowProps) {
     const typeLabel = BONUS_TYPE_LABELS[event.type] ?? "Other";
     const goalTotal = bonusGoalTotal(event);
 
@@ -52,7 +57,9 @@ export function BonusRow({ event, recipientName, onEdit, onDelete }: BonusRowPro
                     <div className="min-w-0 flex-1">
                         <TruncatedText text={event.note || typeLabel} />
                     </div>
-                    <span className="shrink-0">{formatShortDay(event.received_on)}</span>
+                    <span className="shrink-0">
+                        {formatShortDay(event.received_on)}
+                    </span>
                 </div>
                 {goalTotal > 0 && (
                     <Badge variant="mint" size="sm">

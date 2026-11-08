@@ -42,7 +42,10 @@ export interface InboxEventMap {
 
 export type InboxEventType = keyof InboxEventMap;
 
-export function emitInboxEvent<T extends InboxEventType>(type: T, detail: InboxEventMap[T]): void {
+export function emitInboxEvent<T extends InboxEventType>(
+    type: T,
+    detail: InboxEventMap[T],
+): void {
     if (typeof window === "undefined") return;
     try {
         window.dispatchEvent(new CustomEvent(type, { detail }));
@@ -57,7 +60,8 @@ export function onInboxEvent<T extends InboxEventType>(
     handler: (detail: InboxEventMap[T]) => void,
 ): () => void {
     if (typeof window === "undefined") return () => {};
-    const listener = (e: Event) => handler((e as CustomEvent<InboxEventMap[T]>).detail);
+    const listener = (e: Event) =>
+        handler((e as CustomEvent<InboxEventMap[T]>).detail);
     window.addEventListener(type, listener);
     return () => window.removeEventListener(type, listener);
 }
@@ -72,7 +76,10 @@ export class InboxSessionTracker {
 
     /** Call whenever the pending count is known. Returns true when it emitted `inbox:cleared`. */
     update(pendingCount: number, date: string): boolean {
-        if (this.startCount === null || (this.clearedFired && pendingCount > 0)) {
+        if (
+            this.startCount === null ||
+            (this.clearedFired && pendingCount > 0)
+        ) {
             if (pendingCount === 0) return false;
             this.startCount = pendingCount;
             this.startedAt = this.now();
@@ -104,7 +111,11 @@ export function noteInboxCount(pendingCount: number): void {
     } catch {
         // Storage unavailable: treat as first visit
     }
-    if (lastSeen !== null && Number.isFinite(lastSeen) && pendingCount > lastSeen) {
+    if (
+        lastSeen !== null &&
+        Number.isFinite(lastSeen) &&
+        pendingCount > lastSeen
+    ) {
         emitInboxEvent("inbox:items-arrived", {
             newCount: pendingCount - lastSeen,
             pendingCount,

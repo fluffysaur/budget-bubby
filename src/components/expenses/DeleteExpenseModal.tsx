@@ -90,7 +90,10 @@ export function DeleteExpenseModal({
                 <ModalHeader
                     title="Delete Expense?"
                     icon={
-                        <Trash2 className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />
+                        <Trash2
+                            className="h-4.5 w-4.5 text-rose-600"
+                            strokeWidth={2.5}
+                        />
                     }
                     iconBgColor="bg-(--pastel-coral-light)"
                     onClose={onClose}
@@ -118,7 +121,10 @@ export function DeleteExpenseModal({
                             </div>
                             <div className="text-right shrink-0">
                                 <div className="text-(--text-ink)">
-                                    <CurrencyText amount={expense.amount} size="md" />
+                                    <CurrencyText
+                                        amount={expense.amount}
+                                        size="md"
+                                    />
                                 </div>
                                 {hasForeignCurrency && (
                                     <div className="text-[11px] font-mono-num font-semibold text-(--text-muted)">
@@ -162,10 +168,14 @@ export function DeleteExpenseModal({
                                 variant="warning"
                                 title="Goal refunded"
                                 icon={
-                                    <Target className="h-4 w-4 text-amber-700" strokeWidth={2.5} />
+                                    <Target
+                                        className="h-4 w-4 text-amber-700"
+                                        strokeWidth={2.5}
+                                    />
                                 }
                             >
-                                <CurrencyText amount={expense.amount} /> returns to the goal.
+                                <CurrencyText amount={expense.amount} /> returns
+                                to the goal.
                             </Alert>
                         )}
 
@@ -174,7 +184,10 @@ export function DeleteExpenseModal({
                                 variant="info"
                                 title="Settlement updates"
                                 icon={
-                                    <ArrowRightLeft className="h-4 w-4 text-purple-700" strokeWidth={2.5} />
+                                    <ArrowRightLeft
+                                        className="h-4 w-4 text-purple-700"
+                                        strokeWidth={2.5}
+                                    />
                                 }
                             >
                                 Shared total recalculates.
