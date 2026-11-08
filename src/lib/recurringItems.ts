@@ -57,6 +57,14 @@ export const RECURRING_TYPE_LABELS: Record<RecurringItemType, string> = {
     other: "Other",
 };
 
+export const RECURRING_TYPE_SHORT_LABELS: Record<RecurringItemType, string> = {
+    insurance: "Insur.",
+    tax: "Tax",
+    subscription: "Sub",
+    bill: "Bill",
+    other: "Other",
+};
+
 /** Insurance and tax are payroll-style deductions that reduce take-home pay. */
 export function isDeductionType(type: RecurringItemType): boolean {
     return type === "insurance" || type === "tax";

@@ -142,11 +142,13 @@ export function UpcomingBillsWidget({
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <TruncatedText
-                                                    text={recurringItem.name}
-                                                    className="text-sm font-bold text-(--text-ink) font-display"
-                                                />
-                                                <RecurringTypeBadge type={recurringItem.type} />
+                                                <div className="min-w-0 flex-1">
+                                                    <TruncatedText
+                                                        text={recurringItem.name}
+                                                        className="text-sm font-bold text-(--text-ink) font-display"
+                                                    />
+                                                </div>
+                                                <RecurringTypeBadge type={recurringItem.type} compactOnMobile />
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span
