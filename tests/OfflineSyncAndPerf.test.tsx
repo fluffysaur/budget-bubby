@@ -473,6 +473,31 @@ describe("Offline-First Sync Queue & Fast Lazy Loading", () => {
                 expect(getPendingSyncCount()).toBe(0);
             });
         });
+
+        it("maintains stable window event listeners across re-renders in OfflineBanner", () => {
+            const addSpy = vi.spyOn(window, "addEventListener");
+            const removeSpy = vi.spyOn(window, "removeEventListener");
+
+            const { rerender } = render(<OfflineBanner />);
+
+            const relevantAddCalls = () =>
+                addSpy.mock.calls.filter(([event]) =>
+                    ["offlineSyncStatusChanged", "online", "offline"].includes(
+                        event as string,
+                    ),
+                );
+
+            expect(relevantAddCalls().length).toBe(3);
+
+            rerender(<OfflineBanner />);
+            rerender(<OfflineBanner />);
+
+            expect(relevantAddCalls().length).toBe(3);
+            expect(removeSpy).not.toHaveBeenCalled();
+
+            addSpy.mockRestore();
+            removeSpy.mockRestore();
+        });
     });
 
     describe("5. Fast Loading & Lazy Route Code-Splitting", () => {
