@@ -24,9 +24,11 @@ import {
     useCategoriesQuery,
     useRecurringItemsQuery,
     useInvalidateFinance,
+    useAddRecurringItemMutation,
+    useUpdateRecurringItemMutation,
+    useDeleteRecurringItemMutation,
 } from "../hooks/useFinanceQueries";
 import { useSubmitLock } from "../hooks/useSubmitLock";
-import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import {
     findNextRenewal,
@@ -61,6 +63,9 @@ export function RecurringPage({
     } = useHousehold();
     const { invalidateRecurring } = useInvalidateFinance();
     const { isPending: isDeletingRecurring, runWithLock: runDeleteLock } = useSubmitLock();
+    const addRecurringMutation = useAddRecurringItemMutation();
+    const updateRecurringMutation = useUpdateRecurringItemMutation();
+    const deleteRecurringMutation = useDeleteRecurringItemMutation();
 
     // Cached Recurring Items Query
     const {
@@ -155,8 +160,7 @@ export function RecurringPage({
         await runDeleteLock(async () => {
             try {
                 setActionError(null);
-                await financeService.deleteRecurringItem(itemId);
-                invalidateRecurring();
+                await deleteRecurringMutation.mutateAsync(itemId);
             } catch (err: unknown) {
                 console.error("Failed to delete recurring item:", err);
                 setActionError(
@@ -170,11 +174,13 @@ export function RecurringPage({
         payload: CreateRecurringItemInput & { id?: string },
     ) => {
         if (payload.id) {
-            await financeService.updateRecurringItem(payload.id, payload);
+            await updateRecurringMutation.mutateAsync({
+                ...payload,
+                id: payload.id,
+            });
         } else {
-            await financeService.addRecurringItem(payload);
+            await addRecurringMutation.mutateAsync(payload);
         }
-        invalidateRecurring();
     };
 
     return (

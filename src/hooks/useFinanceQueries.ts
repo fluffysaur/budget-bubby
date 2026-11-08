@@ -23,11 +23,15 @@ import type {
     Account,
     AccountSnapshot,
     SavingsGoal,
+    CreateGoalInput,
     RecurringItem,
+    CreateRecurringItemInput,
     Expense,
     CreateExpenseInput,
     MonthlyBudgetDetail,
     Category,
+    CreateCategoryInput,
+    UpdateCategoryInput,
     BaseBudgetProfile,
     BaseProfileAllocation,
     CreditCard,
@@ -569,3 +573,713 @@ export function useDeleteExpenseMutation() {
         queryClient,
     );
 }
+
+/**
+ * Optimistic mutation for adding goals.
+ */
+export function useAddGoalMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateGoals } = useInvalidateFinance();
+
+    return useMutation<
+        SavingsGoal,
+        Error,
+        CreateGoalInput & { id?: string },
+        { previousGoals: SavingsGoal[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (input) => financeService.addGoal(input),
+            onMutate: async (input) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.goals });
+                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals);
+                const optimisticGoal: SavingsGoal = {
+                    id: input.id || generateUuid(),
+                    household_id: input.household_id || "",
+                    title: input.title,
+                    target_amount: input.target_amount,
+                    saved_so_far: input.saved_so_far ?? 0,
+                    target_date: input.target_date,
+                    monthly_contribution: input.monthly_contribution ?? 0,
+                    emoji: input.emoji || "🎯",
+                    status: (input.saved_so_far ?? 0) >= input.target_amount ? "achieved" : "on_track",
+                    created_at: new Date().toISOString(),
+                };
+                queryClient.setQueryData<SavingsGoal[]>(queryKeys.goals, (old) =>
+                    old ? [...old, optimisticGoal] : [optimisticGoal],
+                );
+                return { previousGoals };
+            },
+            onError: (_err, _input, context) => {
+                if (context?.previousGoals) {
+                    queryClient.setQueryData(queryKeys.goals, context.previousGoals);
+                }
+            },
+            onSettled: () => {
+                invalidateGoals();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for updating goals (quick deposits, goal edits, etc.).
+ */
+export function useUpdateGoalMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateGoals } = useInvalidateFinance();
+
+    return useMutation<
+        SavingsGoal,
+        Error,
+        { id: string; updates: Partial<SavingsGoal> },
+        { previousGoals: SavingsGoal[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ id, updates }) => financeService.updateGoal(id, updates),
+            onMutate: async ({ id, updates }) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.goals });
+                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals);
+                queryClient.setQueryData<SavingsGoal[]>(queryKeys.goals, (old) =>
+                    old ? old.map((g) => (g.id === id ? { ...g, ...updates } : g)) : old,
+                );
+                return { previousGoals };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousGoals) {
+                    queryClient.setQueryData(queryKeys.goals, context.previousGoals);
+                }
+            },
+            onSettled: () => {
+                invalidateGoals();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for adding recurring items.
+ */
+export function useAddRecurringItemMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateRecurring } = useInvalidateFinance();
+
+    return useMutation<
+        RecurringItem,
+        Error,
+        CreateRecurringItemInput,
+        { previousRecurring: RecurringItem[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (payload) => financeService.addRecurringItem(payload),
+            onMutate: async (payload) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.recurringItems });
+                const previousRecurring = queryClient.getQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                );
+                const optimisticItem: RecurringItem = {
+                    id: generateUuid(),
+                    household_id: payload.household_id || "",
+                    monthly_amortized_amount:
+                        payload.frequency === "annually"
+                            ? Math.round((payload.amount / 12) * 100) / 100
+                            : payload.amount,
+                    ...payload,
+                };
+                queryClient.setQueryData<RecurringItem[]>(queryKeys.recurringItems, (old) =>
+                    old ? [...old, optimisticItem] : [optimisticItem],
+                );
+                return { previousRecurring };
+            },
+            onError: (_err, _payload, context) => {
+                if (context?.previousRecurring) {
+                    queryClient.setQueryData(
+                        queryKeys.recurringItems,
+                        context.previousRecurring,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateRecurring();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for updating recurring items (active toggle, edits).
+ */
+export function useUpdateRecurringItemMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateRecurring } = useInvalidateFinance();
+
+    return useMutation<
+        RecurringItem,
+        Error,
+        Partial<RecurringItem> & { id: string },
+        { previousRecurring: RecurringItem[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (payload) =>
+                financeService.updateRecurringItem(payload.id, payload),
+            onMutate: async (payload) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.recurringItems });
+                const previousRecurring = queryClient.getQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                );
+                queryClient.setQueryData<RecurringItem[]>(queryKeys.recurringItems, (old) =>
+                    old ? old.map((item) => (item.id === payload.id ? { ...item, ...payload } : item)) : old,
+                );
+                return { previousRecurring };
+            },
+            onError: (_err, _payload, context) => {
+                if (context?.previousRecurring) {
+                    queryClient.setQueryData(
+                        queryKeys.recurringItems,
+                        context.previousRecurring,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateRecurring();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for deleting recurring items.
+ */
+export function useDeleteRecurringItemMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateRecurring } = useInvalidateFinance();
+
+    return useMutation<
+        void,
+        Error,
+        string,
+        { previousRecurring: RecurringItem[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (id) => financeService.deleteRecurringItem(id),
+            onMutate: async (id) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.recurringItems });
+                const previousRecurring = queryClient.getQueryData<RecurringItem[]>(
+                    queryKeys.recurringItems,
+                );
+                queryClient.setQueryData<RecurringItem[]>(queryKeys.recurringItems, (old) =>
+                    old ? old.filter((item) => item.id !== id) : old,
+                );
+                return { previousRecurring };
+            },
+            onError: (_err, _id, context) => {
+                if (context?.previousRecurring) {
+                    queryClient.setQueryData(
+                        queryKeys.recurringItems,
+                        context.previousRecurring,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateRecurring();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for updating a single account's balance across all perspective queries.
+ */
+export function useUpdateAccountBalanceMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateAccounts } = useInvalidateFinance();
+
+    return useMutation<
+        Account,
+        Error,
+        {
+            accountId: string;
+            newBalance: number;
+            notes?: string;
+            snapshotDate?: string;
+        },
+        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ accountId, newBalance, notes, snapshotDate }) =>
+                financeService.updateAccountBalance(
+                    accountId,
+                    newBalance,
+                    notes,
+                    snapshotDate,
+                ),
+            onMutate: async ({ accountId, newBalance }) => {
+                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
+                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                    queryKey: ["finance", "accounts"],
+                });
+                const nowIso = new Date().toISOString();
+                for (const [key] of previousAccountQueries) {
+                    queryClient.setQueryData<Account[]>(key, (old) =>
+                        old
+                            ? old.map((acc) =>
+                                  acc.id === accountId
+                                      ? {
+                                            ...acc,
+                                            balance: newBalance,
+                                            updated_at: nowIso,
+                                        }
+                                      : acc,
+                              )
+                            : old,
+                    );
+                }
+                return { previousAccountQueries };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousAccountQueries) {
+                    for (const [key, oldData] of context.previousAccountQueries) {
+                        queryClient.setQueryData(key, oldData);
+                    }
+                }
+            },
+            onSettled: () => {
+                invalidateAccounts();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for bulk updating account balances.
+ */
+export function useBulkUpdateAccountBalancesMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateAccounts } = useInvalidateFinance();
+
+    return useMutation<
+        Account[],
+        Error,
+        {
+            updates: Array<{
+                accountId?: string;
+                id?: string;
+                balance?: number;
+                newBalance?: number;
+                current_balance?: number;
+                notes?: string | null;
+            }>;
+            snapshotDate?: string;
+        },
+        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ updates, snapshotDate }) =>
+                financeService.bulkUpdateAccountBalances(
+                    updates.map((u) => ({
+                        accountId: u.accountId ?? u.id ?? "",
+                        balance:
+                            u.newBalance ?? u.balance ?? u.current_balance ?? 0,
+                        newBalance:
+                            u.newBalance ?? u.balance ?? u.current_balance ?? 0,
+                        notes: u.notes,
+                    })),
+                    snapshotDate ?? new Date().toISOString().slice(0, 10),
+                ),
+            onMutate: async ({ updates }) => {
+                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
+                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                    queryKey: ["finance", "accounts"],
+                });
+                const balanceMap = new Map(
+                    updates.map((u) => [
+                        u.accountId ?? u.id ?? "",
+                        u.newBalance ?? u.balance ?? u.current_balance ?? 0,
+                    ]),
+                );
+                const nowIso = new Date().toISOString();
+                for (const [key] of previousAccountQueries) {
+                    queryClient.setQueryData<Account[]>(key, (old) =>
+                        old
+                            ? old.map((acc) =>
+                                  balanceMap.has(acc.id)
+                                      ? {
+                                            ...acc,
+                                            balance: balanceMap.get(acc.id)!,
+                                            updated_at: nowIso,
+                                        }
+                                      : acc,
+                              )
+                            : old,
+                    );
+                }
+                return { previousAccountQueries };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousAccountQueries) {
+                    for (const [key, oldData] of context.previousAccountQueries) {
+                        queryClient.setQueryData(key, oldData);
+                    }
+                }
+            },
+            onSettled: () => {
+                invalidateAccounts();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for creating an account.
+ */
+export function useCreateAccountMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateAccounts } = useInvalidateFinance();
+
+    return useMutation<
+        Account,
+        Error,
+        Parameters<typeof financeService.createAccount>[0]
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (input) => financeService.createAccount(input),
+            onSettled: () => {
+                invalidateAccounts();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for updating account metadata (name, type, etc.).
+ */
+export function useUpdateAccountMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateAccounts } = useInvalidateFinance();
+
+    return useMutation<
+        Account,
+        Error,
+        {
+            id: string;
+            updates: Parameters<typeof financeService.updateAccount>[1];
+        },
+        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ id, updates }) => financeService.updateAccount(id, updates),
+            onMutate: async ({ id, updates }) => {
+                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
+                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                    queryKey: ["finance", "accounts"],
+                });
+                for (const [key] of previousAccountQueries) {
+                    queryClient.setQueryData<Account[]>(key, (old) =>
+                        old
+                            ? old.map((acc) =>
+                                  acc.id === id ? { ...acc, ...updates } : acc,
+                              )
+                            : old,
+                    );
+                }
+                return { previousAccountQueries };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousAccountQueries) {
+                    for (const [key, oldData] of context.previousAccountQueries) {
+                        queryClient.setQueryData(key, oldData);
+                    }
+                }
+            },
+            onSettled: () => {
+                invalidateAccounts();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for deleting an account.
+ */
+export function useDeleteAccountMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateAccounts } = useInvalidateFinance();
+
+    return useMutation<
+        void,
+        Error,
+        string,
+        { previousAccountQueries: [readonly unknown[], Account[] | undefined][] }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (id) => financeService.deleteAccount(id),
+            onMutate: async (id) => {
+                await queryClient.cancelQueries({ queryKey: ["finance", "accounts"] });
+                const previousAccountQueries = queryClient.getQueriesData<Account[]>({
+                    queryKey: ["finance", "accounts"],
+                });
+                for (const [key] of previousAccountQueries) {
+                    queryClient.setQueryData<Account[]>(key, (old) =>
+                        old ? old.filter((acc) => acc.id !== id) : old,
+                    );
+                }
+                return { previousAccountQueries };
+            },
+            onError: (_err, _id, context) => {
+                if (context?.previousAccountQueries) {
+                    for (const [key, oldData] of context.previousAccountQueries) {
+                        queryClient.setQueryData(key, oldData);
+                    }
+                }
+            },
+            onSettled: () => {
+                invalidateAccounts();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for adding categories.
+ */
+export function useAddCategoryMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateCategories } = useInvalidateFinance();
+
+    return useMutation<
+        Category,
+        Error,
+        CreateCategoryInput & { id?: string },
+        { previousCategories: Category[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (input) => financeService.addCategory(input),
+            onMutate: async (input) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.categories });
+                const previousCategories = queryClient.getQueryData<Category[]>(
+                    queryKeys.categories,
+                );
+                const optimisticCategory: Category = {
+                    id: input.id || generateUuid(),
+                    household_id: input.household_id || "",
+                    name: input.name,
+                    color: input.color || "#F59E0B",
+                    icon: input.icon || "tag",
+                    group: input.group,
+                    is_system: input.is_system ?? false,
+                };
+                queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
+                    old ? [...old, optimisticCategory] : [optimisticCategory],
+                );
+                return { previousCategories };
+            },
+            onError: (_err, _input, context) => {
+                if (context?.previousCategories) {
+                    queryClient.setQueryData(
+                        queryKeys.categories,
+                        context.previousCategories,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateCategories();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for updating categories.
+ */
+export function useUpdateCategoryMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateCategories } = useInvalidateFinance();
+
+    return useMutation<
+        Category,
+        Error,
+        { id: string; updates: UpdateCategoryInput },
+        { previousCategories: Category[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ id, updates }) => financeService.updateCategory(id, updates),
+            onMutate: async ({ id, updates }) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.categories });
+                const previousCategories = queryClient.getQueryData<Category[]>(
+                    queryKeys.categories,
+                );
+                queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
+                    old ? old.map((c) => (c.id === id ? { ...c, ...updates } : c)) : old,
+                );
+                return { previousCategories };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousCategories) {
+                    queryClient.setQueryData(
+                        queryKeys.categories,
+                        context.previousCategories,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateCategories();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for deleting categories.
+ */
+export function useDeleteCategoryMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateCategories } = useInvalidateFinance();
+
+    return useMutation<
+        void,
+        Error,
+        string,
+        { previousCategories: Category[] | undefined }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (id) => financeService.deleteCategory(id),
+            onMutate: async (id) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.categories });
+                const previousCategories = queryClient.getQueryData<Category[]>(
+                    queryKeys.categories,
+                );
+                queryClient.setQueryData<Category[]>(queryKeys.categories, (old) =>
+                    old ? old.filter((c) => c.id !== id) : old,
+                );
+                return { previousCategories };
+            },
+            onError: (_err, _id, context) => {
+                if (context?.previousCategories) {
+                    queryClient.setQueryData(
+                        queryKeys.categories,
+                        context.previousCategories,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateCategories();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for updating base budget profile and allocations.
+ */
+export function useUpdateBaseProfileMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateBudget } = useInvalidateFinance();
+
+    return useMutation<
+        void,
+        Error,
+        { profile: BaseBudgetProfile; allocations: BaseProfileAllocation[] },
+        {
+            previousProfiles: BaseBudgetProfile[] | undefined;
+            previousAllocations: BaseProfileAllocation[] | undefined;
+            profileId: string;
+        }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ profile, allocations }) =>
+                financeService.updateBaseProfile(profile, allocations),
+            onMutate: async ({ profile, allocations }) => {
+                await queryClient.cancelQueries({ queryKey: queryKeys.baseProfiles });
+                await queryClient.cancelQueries({
+                    queryKey: queryKeys.baseAllocations(profile.id),
+                });
+                const previousProfiles = queryClient.getQueryData<BaseBudgetProfile[]>(
+                    queryKeys.baseProfiles,
+                );
+                const previousAllocations = queryClient.getQueryData<BaseProfileAllocation[]>(
+                    queryKeys.baseAllocations(profile.id),
+                );
+                queryClient.setQueryData<BaseBudgetProfile[]>(queryKeys.baseProfiles, (old) =>
+                    old ? old.map((p) => (p.id === profile.id ? profile : p)) : old,
+                );
+                queryClient.setQueryData<BaseProfileAllocation[]>(
+                    queryKeys.baseAllocations(profile.id),
+                    allocations,
+                );
+                return {
+                    previousProfiles,
+                    previousAllocations,
+                    profileId: profile.id,
+                };
+            },
+            onError: (_err, _vars, context) => {
+                if (context?.previousProfiles) {
+                    queryClient.setQueryData(
+                        queryKeys.baseProfiles,
+                        context.previousProfiles,
+                    );
+                }
+                if (context?.previousAllocations) {
+                    queryClient.setQueryData(
+                        queryKeys.baseAllocations(context.profileId),
+                        context.previousAllocations,
+                    );
+                }
+            },
+            onSettled: () => {
+                invalidateBudget();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Mutation for updating monthly budget details.
+ */
+export function useUpdateMonthlyBudgetMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateBudget } = useInvalidateFinance();
+
+    return useMutation<
+        void,
+        Error,
+        Parameters<typeof financeService.updateMonthlyBudget>[0]
+    >(
+        {
+            networkMode: "always",
+            mutationFn: (budget) => financeService.updateMonthlyBudget(budget),
+            onSettled: () => {
+                invalidateBudget();
+            },
+        },
+        queryClient,
+    );
+}
+

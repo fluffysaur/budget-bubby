@@ -18,12 +18,12 @@ import {
     useCaptureTokensQuery,
     useInboxQuery,
     useMerchantRulesQuery,
+    useConfirmInboxItemMutation,
+    useResolveInboxItemMutation,
 } from "../hooks/useInboxQueries";
-import { financeService } from "../services/financeService";
 import { guessInboxCategory, findLikelyDuplicate, topCategoriesForMember } from "../lib/capture/guessCategory";
 import { buildInboxExpenseInput, canQuickConfirm, inboxItemFormValues } from "../lib/capture/inboxExpense";
 import { inboxItemSgd } from "../services/inbox/inboxSummary";
-import { afterInboxConfirmed } from "../lib/inbox/inboxConfirm";
 import { emitInboxEvent, InboxSessionTracker } from "../lib/inbox/inboxEvents";
 import { getStoredLastSplit } from "../lib/lastSplit";
 import { getTodayDateString } from "../lib/dateUtils";
@@ -69,11 +69,13 @@ interface ItemView {
 export function InboxPage() {
     const queryClient = useQueryClient();
     const { me, members } = useLoggedInMember();
-    const { data, isLoading } = useInboxQuery();
+    const { data, isLoading, refetch } = useInboxQuery();
     const { data: categoriesData } = useCategoriesQuery();
     const { data: expensesData } = useAllExpensesQuery();
     const { data: rulesData } = useMerchantRulesQuery();
     const { data: tokensData } = useCaptureTokensQuery(me?.id);
+    const confirmInboxMutation = useConfirmInboxItemMutation();
+    const resolveInboxMutation = useResolveInboxItemMutation();
 
     const items = data?.items ?? EMPTY_ITEMS;
     const categories = categoriesData ?? EMPTY_CATEGORIES;
@@ -147,27 +149,6 @@ export function InboxPage() {
         [],
     );
 
-    /** Removes an item from the cached list; returns a restore function. */
-    const removeFromCache = useCallback(
-        (id: string) => {
-            const key = inboxQueryKeys.items;
-            const previous = queryClient.getQueryData<InboxItemsResult>(key);
-            queryClient.setQueryData<InboxItemsResult>(key, (old) =>
-                old ? { ...old, items: old.items.filter((i) => i.id !== id) } : old,
-            );
-            return {
-                remaining: (previous?.items.length ?? 1) - 1,
-                restore: () => queryClient.setQueryData(key, previous),
-            };
-        },
-        [queryClient],
-    );
-
-    const refresh = useCallback(
-        () => queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all }),
-        [queryClient],
-    );
-
     const confirmView = useCallback(
         async (view: ItemView, via: Via): Promise<boolean> => {
             if (!view.choice.categoryId || !view.canConfirm) return false;
@@ -176,21 +157,16 @@ export function InboxPage() {
                 categoryId: view.choice.categoryId,
                 isShared: view.choice.isShared,
             });
-            const { remaining, restore } = removeFromCache(view.item.id);
             haptics.lightTap();
             try {
-                const expenseId = await financeService.confirmInboxItem(view.item.id, input);
-                await afterInboxConfirmed({
+                await confirmInboxMutation.mutateAsync({
                     item: view.item,
-                    expenseId,
                     input,
                     via,
                     guessedCategoryId: view.guessId,
-                    remaining,
                 });
                 return true;
             } catch (err) {
-                restore();
                 setError({
                     message: err instanceof Error ? err.message : "Try again.",
                     kind: "confirm",
@@ -198,39 +174,48 @@ export function InboxPage() {
                     via,
                 });
                 return false;
-            } finally {
-                void refresh();
             }
         },
-        [removeFromCache, refresh],
+        [confirmInboxMutation],
     );
 
     const resolveView = useCallback(
         async (view: ItemView, reason: "discarded" | "duplicate") => {
             setError(null);
-            const { remaining, restore } = removeFromCache(view.item.id);
+            const cachedItems =
+                queryClient.getQueryData<InboxItemsResult>(
+                    inboxQueryKeys.items,
+                )?.items ?? [];
+            const remaining = Math.max(0, cachedItems.length - 1);
             haptics.lightTap();
             try {
-                await financeService.resolveInboxItem(view.item.id, reason);
-                emitInboxEvent("inbox:item-discarded", { itemId: view.item.id, reason, remaining });
+                await resolveInboxMutation.mutateAsync({
+                    id: view.item.id,
+                    reason,
+                });
+                emitInboxEvent("inbox:item-discarded", {
+                    itemId: view.item.id,
+                    reason,
+                    remaining,
+                });
                 if (reason === "discarded") {
                     if (undoTimer.current) clearTimeout(undoTimer.current);
                     setUndoItem(view.item);
-                    undoTimer.current = setTimeout(() => setUndoItem(null), UNDO_MS);
+                    undoTimer.current = setTimeout(
+                        () => setUndoItem(null),
+                        UNDO_MS,
+                    );
                 }
             } catch (err) {
-                restore();
                 setError({
                     message: err instanceof Error ? err.message : "Try again.",
                     kind: "resolve",
                     view,
                     reason,
                 });
-            } finally {
-                void refresh();
             }
         },
-        [removeFromCache, refresh],
+        [resolveInboxMutation, queryClient],
     );
 
     const handleRetry = useCallback(() => {
@@ -245,11 +230,14 @@ export function InboxPage() {
         setUndoItem(null);
         if (undoTimer.current) clearTimeout(undoTimer.current);
         try {
-            await financeService.resolveInboxItem(item.id, "pending");
-        } finally {
-            await refresh();
+            await resolveInboxMutation.mutateAsync({
+                id: item.id,
+                reason: "pending",
+            });
+        } catch (err) {
+            console.error("Failed to undo inbox resolution:", err);
         }
-    }, [undoItem, refresh]);
+    }, [undoItem, resolveInboxMutation]);
 
     const handleBatch = useCallback(async () => {
         setBusy(true);
@@ -496,7 +484,7 @@ export function InboxPage() {
                 inboxItemId={editing?.item.id}
                 categories={categories}
                 members={members}
-                onExpenseAdded={() => void refresh()}
+                onExpenseAdded={() => void refetch()}
             />
         </div>
     );

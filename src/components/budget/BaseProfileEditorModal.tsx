@@ -29,6 +29,13 @@ import {
 } from "lucide-react";
 import { financeService, isMockModeActive } from "../../services/financeService";
 import {
+    useAddCategoryMutation,
+    useUpdateCategoryMutation,
+    useDeleteCategoryMutation,
+    useUpdateBaseProfileMutation,
+    useUpdateMonthlyBudgetMutation,
+} from "../../hooks/useFinanceQueries";
+import {
     AnimatedModal,
     ModalHeader,
     ModalBody,
@@ -100,6 +107,12 @@ export function BaseProfileEditorModal({
     onManageRecurring,
     className = "",
 }: BaseProfileEditorModalProps) {
+    const addCategoryMutation = useAddCategoryMutation();
+    const updateCategoryMutation = useUpdateCategoryMutation();
+    const deleteCategoryMutation = useDeleteCategoryMutation();
+    const updateBaseProfileMutation = useUpdateBaseProfileMutation();
+    const updateMonthlyBudgetMutation = useUpdateMonthlyBudgetMutation();
+
     const categories = useMemo(
         () => propCategories ?? (isMockModeActive() ? mockCategories : []),
         [propCategories],
@@ -521,7 +534,7 @@ export function BaseProfileEditorModal({
             setIsCatSaving(true);
             setErrorMessage(null);
             if (catFormMode === "create") {
-                const created = await financeService.addCategory({
+                const created = await addCategoryMutation.mutateAsync({
                     name: catName.trim(),
                     color: catColor,
                     icon: catIcon,
@@ -533,11 +546,14 @@ export function BaseProfileEditorModal({
                     [created.id]: "0",
                 }));
             } else if (catFormMode === "edit" && editingCat) {
-                await financeService.updateCategory(editingCat.id, {
-                    name: catName.trim(),
-                    color: catColor,
-                    icon: catIcon,
-                    group: effectiveCatGroup,
+                await updateCategoryMutation.mutateAsync({
+                    id: editingCat.id,
+                    updates: {
+                        name: catName.trim(),
+                        color: catColor,
+                        icon: catIcon,
+                        group: effectiveCatGroup,
+                    },
                 });
             }
             setCatFormMode(null);
@@ -557,7 +573,7 @@ export function BaseProfileEditorModal({
         try {
             setIsCatSaving(true);
             setErrorMessage(null);
-            await financeService.deleteCategory(catId);
+            await deleteCategoryMutation.mutateAsync(catId);
             setDeletingCatId(null);
             await refreshCategoriesFromService();
         } catch (err: unknown) {
@@ -648,10 +664,10 @@ export function BaseProfileEditorModal({
                     };
                 });
 
-            await financeService.updateBaseProfile(
-                updatedProfile,
-                updatedAllocations,
-            );
+            await updateBaseProfileMutation.mutateAsync({
+                profile: updatedProfile,
+                allocations: updatedAllocations,
+            });
 
             const cpfDeduction = calculateCPFAndNetPay(
                 parsedGross,
@@ -680,7 +696,7 @@ export function BaseProfileEditorModal({
                     (isMockModeActive() ? targetBudgetId.length > 0 : isValidUuid(targetBudgetId));
 
                 if (targetBudgetId && isValidTarget) {
-                    await financeService.updateMonthlyBudget({
+                    await updateMonthlyBudgetMutation.mutateAsync({
                         id: targetBudgetId,
                         gross_salary: parsedGross,
                         cpf_deduction: cpfDeduction,

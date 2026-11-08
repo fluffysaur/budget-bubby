@@ -10,7 +10,7 @@ import { AnimatedModal, ModalHeader, ModalBody, ModalFooter } from "../ui/Animat
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import type { Account, AccountType, HouseholdMember } from "../../types/finance";
-import { financeService } from "../../services/financeService";
+import { useUpdateAccountMutation } from "../../hooks/useFinanceQueries";
 
 export interface EditAccountModalProps {
     isOpen: boolean;
@@ -27,6 +27,7 @@ export function EditAccountModal({
     members,
     onAccountUpdated,
 }: EditAccountModalProps) {
+    const updateAccountMutation = useUpdateAccountMutation();
     const [name, setName] = useState("");
     const [institution, setInstitution] = useState("");
     const [type, setType] = useState<AccountType>("Cash");
@@ -62,13 +63,16 @@ export function EditAccountModal({
             setIsSubmitting(true);
             setError(null);
 
-            const updated = await financeService.updateAccount(account.id, {
-                name: name.trim(),
-                institution: institution.trim() || null,
-                type,
-                owner_id: ownerId || account.owner_id,
-                is_joint: type === "CPF" ? false : isJoint,
-                notes: notes.trim() || null,
+            const updated = await updateAccountMutation.mutateAsync({
+                id: account.id,
+                updates: {
+                    name: name.trim(),
+                    institution: institution.trim() || null,
+                    type,
+                    owner_id: ownerId || account.owner_id,
+                    is_joint: type === "CPF" ? false : isJoint,
+                    notes: notes.trim() || null,
+                },
             });
 
             onAccountUpdated?.(updated);

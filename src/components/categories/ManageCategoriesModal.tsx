@@ -26,6 +26,12 @@ import {
     Sliders,
 } from "lucide-react";
 import { financeService } from "../../services/financeService";
+import {
+    useAddCategoryMutation,
+    useUpdateCategoryMutation,
+    useDeleteCategoryMutation,
+    useUpdateBaseProfileMutation,
+} from "../../hooks/useFinanceQueries";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
@@ -73,6 +79,11 @@ export function ManageCategoriesModal({
     className = "",
 }: ManageCategoriesModalProps) {
     const titleId = useId();
+
+    const addCategoryMutation = useAddCategoryMutation();
+    const updateCategoryMutation = useUpdateCategoryMutation();
+    const deleteCategoryMutation = useDeleteCategoryMutation();
+    const updateBaseProfileMutation = useUpdateBaseProfileMutation();
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -322,7 +333,10 @@ export function ManageCategoriesModal({
                     };
                 },
             );
-            await financeService.updateBaseProfile(activeProf, updatedAllocs);
+            await updateBaseProfileMutation.mutateAsync({
+                profile: activeProf,
+                allocations: updatedAllocs,
+            });
             onCategoriesChanged?.();
         } catch (err: unknown) {
             console.error("Failed to save category allocations:", err);
@@ -405,18 +419,21 @@ export function ManageCategoriesModal({
             setErrorMessage(null);
 
             if (formMode === "create") {
-                await financeService.addCategory({
+                await addCategoryMutation.mutateAsync({
                     name: name.trim(),
                     color,
                     icon,
                     group: effectiveGroup,
                 });
             } else if (formMode === "edit" && editingCategory) {
-                await financeService.updateCategory(editingCategory.id, {
-                    name: name.trim(),
-                    color,
-                    icon,
-                    group: effectiveGroup,
+                await updateCategoryMutation.mutateAsync({
+                    id: editingCategory.id,
+                    updates: {
+                        name: name.trim(),
+                        color,
+                        icon,
+                        group: effectiveGroup,
+                    },
                 });
             }
 
@@ -438,7 +455,7 @@ export function ManageCategoriesModal({
         if (!deletingCategory) return;
         try {
             setIsSubmitting(true);
-            await financeService.deleteCategory(deletingCategory.id);
+            await deleteCategoryMutation.mutateAsync(deletingCategory.id);
             setDeletingCategory(null);
             await loadCategories();
             onCategoriesChanged?.();

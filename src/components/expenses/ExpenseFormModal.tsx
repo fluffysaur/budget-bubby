@@ -59,7 +59,6 @@ import { CurrencyText } from "../ui/CurrencyText";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { guessCategoryId } from "../../lib/categoryGuess";
 import { getStoredLastSplit, storeLastSplit } from "../../lib/lastSplit";
-import { afterInboxConfirmed } from "../../lib/inbox/inboxConfirm";
 import {
     inboxExpenseEventDetail,
     inboxItemFormValues,
@@ -67,6 +66,7 @@ import {
 import { normalizeMerchant } from "../../lib/capture/merchant";
 import { TruncatedText } from "../ui/TruncatedText";
 import { useAddExpenseMutation } from "../../hooks/useFinanceQueries";
+import { useConfirmInboxItemMutation } from "../../hooks/useInboxQueries";
 
 export interface ExpenseFormModalProps {
     isOpen: boolean;
@@ -171,6 +171,7 @@ export function ExpenseFormModal({
 }: ExpenseFormModalProps) {
     const defaultAddMutation = useAddExpenseMutation();
     const addExpenseMutation = propAddMutation ?? defaultAddMutation;
+    const confirmInboxMutation = useConfirmInboxItemMutation();
 
     // Optional so the form also works outside a HouseholdProvider (e.g. edit from a bare list)
     const household = useOptionalHousehold();
@@ -650,22 +651,17 @@ export function ExpenseFormModal({
 
             if (linkedInboxId) {
                 const linked = inboxItems.find((i) => i.id === linkedInboxId);
-                const expenseId = await financeService.confirmInboxItem(
-                    linkedInboxId,
-                    input,
-                );
-                if (tags.length > 0) storeRecentTags(tags);
-                await afterInboxConfirmed({
+                const expenseId = await confirmInboxMutation.mutateAsync({
                     item: {
                         id: linkedInboxId,
                         merchant_key: linked?.merchant_key ?? normalizeMerchant(input.item),
                         suggested_category_id: linked?.suggested_category_id ?? null,
                     },
-                    expenseId,
                     input,
                     via: "edit",
                     guessedCategoryId: linked?.suggested_category_id ?? null,
                 });
+                if (tags.length > 0) storeRecentTags(tags);
                 onExpenseAdded?.(inboxExpenseEventDetail(expenseId, input));
                 onClose();
                 return;

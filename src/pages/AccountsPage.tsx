@@ -32,9 +32,9 @@ import {
     useAccountSnapshotsQuery,
     useCreditCardStatementsQuery,
     useInvalidateFinance,
+    useUpdateAccountBalanceMutation,
 } from "../hooks/useFinanceQueries";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
-import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import {
     calculateCardDebt,
@@ -87,6 +87,7 @@ export function AccountsPage({
         [statementsData, perspective, activeMember?.id],
     );
     const isLoading = accountsLoading && !accountsData;
+    const updateBalanceMutation = useUpdateAccountBalanceMutation();
 
     // Modal States
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
@@ -122,8 +123,7 @@ export function AccountsPage({
         newBalance: number,
     ) => {
         try {
-            await financeService.updateAccountBalance(accountId, newBalance);
-            invalidateAccounts();
+            await updateBalanceMutation.mutateAsync({ accountId, newBalance });
         } catch (err) {
             console.error("Failed to update inline balance:", err);
         }

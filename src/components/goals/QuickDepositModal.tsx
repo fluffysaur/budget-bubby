@@ -19,7 +19,7 @@ import {
 } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
-import { financeService } from "../../services/financeService";
+import { useUpdateGoalMutation } from "../../hooks/useFinanceQueries";
 import { feedback } from "../../lib/delight/feedback";
 import { recordExercise } from "../../lib/bubby/activity";
 import type { SavingsGoal } from "../../types/finance";
@@ -42,6 +42,7 @@ export function QuickDepositModal({
     onDepositSaved,
 }: QuickDepositModalProps) {
     const depositInputRef = useRef<HTMLInputElement>(null);
+    const updateGoalMutation = useUpdateGoalMutation();
 
     const [depositAmount, setDepositAmount] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -87,8 +88,11 @@ export function QuickDepositModal({
 
         try {
             setIsSubmitting(true);
-            const updated = await financeService.updateGoal(goal.id, {
-                saved_so_far: Math.round(newSavedSoFar * 100) / 100,
+            const updated = await updateGoalMutation.mutateAsync({
+                id: goal.id,
+                updates: {
+                    saved_so_far: Math.round(newSavedSoFar * 100) / 100,
+                },
             });
             recordExercise("goal-add");
             const reachedTarget =

@@ -42,6 +42,7 @@ import {
     useInvalidateFinance,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
+    useUpdateGoalMutation,
 } from "../hooks/useFinanceQueries";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
@@ -88,7 +89,7 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
         isMockMode,
     } = useHousehold();
 
-    const { invalidateExpenses, invalidateGoals } = useInvalidateFinance();
+    const { invalidateExpenses } = useInvalidateFinance();
     const addExpenseMutation = useAddExpenseMutation();
     const deleteExpenseMutation = useDeleteExpenseMutation();
     const { isPending: isSettling, runWithLock: runSettleLock } = useSubmitLock();
@@ -182,6 +183,7 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
     );
     const isLoading = expensesLoading && !expensesData;
 
+    const updateGoalMutation = useUpdateGoalMutation();
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
     const [isSettleOpen, setIsSettleOpen] = useState<boolean>(false);
@@ -234,15 +236,17 @@ export function ExpensesPage({ className = "", embedded = false }: ExpensesPageP
             const freshGoal = await financeService.getGoal(alloc.goalId);
             const targetGoal = freshGoal ?? goals.find((g) => g.id === alloc.goalId);
             if (targetGoal) {
-                await financeService.updateGoal(targetGoal.id, {
-                    saved_so_far:
-                        Math.round(
-                            (Number(targetGoal.saved_so_far) + alloc.amount) * 100,
-                        ) / 100,
+                await updateGoalMutation.mutateAsync({
+                    id: targetGoal.id,
+                    updates: {
+                        saved_so_far:
+                            Math.round(
+                                (Number(targetGoal.saved_so_far) + alloc.amount) * 100,
+                            ) / 100,
+                    },
                 });
             }
         }
-        invalidateGoals();
         if (sweepMonth) {
             handleDismissSweep(sweepMonth);
         }
