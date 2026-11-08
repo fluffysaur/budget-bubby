@@ -59,9 +59,53 @@ The fallback opens **Safari**, not the Home Screen app, because iOS keeps their 
 
 Optional manual **Log Spend** Shortcut (for physical card or cash): **Ask for Input** (Number, "Amount"), **Ask for Input** (Text, "Where?"), then the same **Get Contents of URL** using those two inputs.
 
-## 3. Other phones (Android etc.)
+## 3. Android (MacroDroid + Google Wallet)
 
-The endpoint isn't tied to any platform. Any app that can send an HTTP POST with JSON can use a token, for example MacroDroid or Tasker reacting to a Google Wallet or bank-app notification.
+> **Status:** written from the app's behaviour and public docs. Not yet tested on a real phone. Screen names in MacroDroid vary a little by version. Check the notification wording in step 1 before you trust the rest.
+
+Requirements:
+
+- The card is in Google Wallet and tap-to-pay purchase notifications are on (Wallet › Settings › Notifications).
+- [MacroDroid](https://play.google.com/store/apps/details?id=com.arlosoft.macrodroid) is installed and has **Notification access** (it asks on first use).
+- Turn off battery optimisation for MacroDroid, or Android may stop it in the background.
+- Only Google Wallet taps notify. Physical card taps and PayNow don't.
+
+Steps:
+
+1. Make one small tap payment and read the Wallet notification. You expect the **merchant** in the title and the **amount** in the text, like `S$4.50 with Visa •••• 1234`. If your wording differs, adjust steps 4 and 5 to match.
+2. In Budget Bubby, go to Settings › **Auto Capture** › `New Token`. Copy the **token** and the **endpoint** URL. The token is shown only once.
+3. In MacroDroid, tap **Add Macro**. Name it `Budget Bubby capture`.
+4. **Trigger:** Device Events › **Notification Received**.
+    - **Application:** Google Wallet. If nothing fires later, also select Google Play services (older Wallet versions sent alerts from there).
+    - **Text content:** contains a digit (turn on regular expressions and use `\d`). This skips non-payment notifications.
+5. **Action:** Connectivity › **HTTP Request**.
+    - **URL:** the endpoint from step 2. **Method:** `POST`.
+    - **Header:** `Authorization` = `Bearer ` + your token (one space after "Bearer").
+    - **Content type:** `application/json`.
+    - **Body:** use the magic text button (`{}`) to insert the notification fields:
+
+        ```json
+        {"amount":"<notification text>","merchant":"<notification title>","card":"Google Wallet","source":"android"}
+        ```
+
+        Replace `<notification text>` and `<notification title>` with the magic text values for the notification text and title.
+6. **Constraint (optional):** add a Wi-Fi or "Connected to internet" constraint so a failed send isn't silent. Without a connection the purchase isn't captured, so log it by hand.
+7. Save, then pay for something small. It should show up in the Inbox within a few seconds. Discard the test item.
+
+Parsing is handled by the server, so you need no regex on the phone:
+
+- `amount`: the server takes the **first number** in the text and reads the currency from a symbol or ISO code next to it (`S$`, `US$`, `€`, `USD`). A bare `$` is SGD. The `with Visa •••• 1234` tail is ignored.
+- The raw amount text must be **40 characters or fewer**. If a long card name pushes it over, the capture fails with `400`. Fix it by setting a MacroDroid variable from the text with a regex and sending that instead.
+- `merchant` is cleaned by the server: all-caps names are title-cased and `SQ *` style prefixes are dropped in matching.
+- A notification that fires twice for one purchase is safe. The second one comes back as `duplicate`.
+
+If nothing arrives, check in this order: MacroDroid has Notification access, the Application list includes the app that actually posts the alert, the token isn't revoked, and the phone was online.
+
+**Do not share this macro**, because it contains your token. If you shared it by accident, revoke the token in Settings.
+
+## 4. Other apps (Tasker, bank apps, etc.)
+
+The endpoint isn't tied to any platform. Any app that can send an HTTP POST with JSON can use a token, for example Tasker or a bank-app notification.
 
 ```
 POST <endpoint>
@@ -84,4 +128,4 @@ Content-Type: application/json
 | `200 {"status":"duplicate"}` / `{"status":"ignored"}` | Retry of the same purchase, a refund, or an ignored merchant |
 | `400` / `401` / `413` / `429` / `503` | Invalid body, bad or revoked token, body over 4 KB, rate limited (more than 10 a minute or 150 a day), database not ready |
 
-Parsing notification text into these fields is up to the automation app. Budget Bubby doesn't parse notifications yet.
+Budget Bubby doesn't parse free-form notification text. It reads the first number and its currency from `amount`, as described in section 3.

@@ -86,19 +86,16 @@ function IosSetupSteps({ defaultOpen }: { defaultOpen: boolean }) {
 function AndroidSetupSteps({ defaultOpen }: { defaultOpen: boolean }) {
     return (
         <CollapsibleSection title="Android Setup" defaultOpen={defaultOpen}>
-            <p className="text-xs text-(--text-ink)">
-                POST JSON (amount, merchant, and optional currency, card, occurred_at, source) from MacroDroid or Tasker to the capture endpoint with{" "}
-                <code className="font-mono">Authorization: Bearer &lt;token&gt;</code>. Full steps tracked in{" "}
-                <a
-                    href="https://github.com/fluffysaur/budget-bubby/issues/44"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-bold underline"
-                >
-                    issue #44
-                </a>
-                .
-            </p>
+            <ol className="list-decimal space-y-1.5 pl-4 text-xs text-(--text-ink)">
+                <li>Android: install MacroDroid and allow Notification access.</li>
+                <li>Add a macro. Trigger: Notification Received, app Google Wallet.</li>
+                <li>Action: HTTP Request, POST to the URL above, content type JSON.</li>
+                <li>Header Authorization: Bearer, a space, then your token.</li>
+                <li>
+                    Body: amount = notification text, merchant = notification title, source = android.
+                </li>
+                <li>Pay S$1 with Google Wallet to test. It lands in Inbox.</li>
+            </ol>
         </CollapsibleSection>
     );
 }
