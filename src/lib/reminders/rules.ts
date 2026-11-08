@@ -20,6 +20,7 @@ import {
     formatISODate,
     formatMonth,
     formatShortMonth,
+    clampDueDay,
 } from "../dateUtils";
 import { formatSGD } from "../currency";
 import { isSpendableCategory } from "../financialFormulas";
@@ -127,15 +128,27 @@ function isPastCheckinTime(currentHour: number | undefined, checkinTime: string)
     return currentMinutes(currentHour) >= target;
 }
 
-function sgNow(referenceDate?: Date): Date {
-    return referenceDate || getSingaporeDate();
+function sgNow(referenceDate?: Date | string): Date {
+    if (!referenceDate) return getSingaporeDate();
+    if (typeof referenceDate === "string") {
+        const isoString = referenceDate.includes("T")
+            ? referenceDate
+            : `${referenceDate}T12:00:00+08:00`;
+        const parsed = new Date(isoString);
+        if (isNaN(parsed.getTime())) return new Date(referenceDate);
+        const sgTimeString = parsed.toLocaleString("en-US", {
+            timeZone: "Asia/Singapore",
+        });
+        return new Date(sgTimeString);
+    }
+    return referenceDate;
 }
 
-function sgToday(referenceDate?: Date): string {
+function sgToday(referenceDate?: Date | string): string {
     return formatISODate(sgNow(referenceDate));
 }
 
-function sgMonth(referenceDate?: Date): string {
+function sgMonth(referenceDate?: Date | string): string {
     return formatMonth(sgNow(referenceDate));
 }
 
@@ -337,17 +350,23 @@ export function checkCreditCardDueReminders(
 export function checkMissingCreditCardStatements(
     cards: CreditCard[],
     statements: CreditCardStatement[],
-    referenceDate?: Date,
+    referenceDate?: Date | string,
     memberId?: string,
 ): AppReminder[] {
-    const day = sgNow(referenceDate).getDate();
-    const currentMonth = sgMonth(referenceDate);
+    const now = sgNow(referenceDate);
+    const day = now.getDate();
+    const currentMonth = sgMonth(now);
     const reminders: AppReminder[] = [];
 
     for (const card of cards) {
         if (!card.is_active) continue;
         if (memberId && card.owner_id && card.owner_id !== memberId) continue;
-        if (day < card.billing_day) continue;
+        const effectiveBillingDay = clampDueDay(
+            card.billing_day,
+            now.getFullYear(),
+            now.getMonth() + 1,
+        );
+        if (day < effectiveBillingDay) continue;
 
         const hasStatement = statements.some(
             (s) => s.card_id === card.id && s.month === currentMonth,
@@ -358,7 +377,7 @@ export function checkMissingCreditCardStatements(
             id: `reminder-cc-missing-${card.id}-${currentMonth}`,
             type: "credit_card_missing_stmt",
             title: `${card.name} Statement Needed`,
-            message: `Cycle closed on day ${card.billing_day}.`,
+            message: `Cycle closed on day ${effectiveBillingDay}.`,
             severity: "info",
             actionLabel: "Add Statement",
             actionType: "view_cc",
