@@ -163,7 +163,9 @@ describe("PIN Authentication & Access Control", () => {
         // Open again and click Sign Out
         fireEvent.click(lockBtn);
         expect(screen.getByRole("heading", { name: /lock & sign out\?/i })).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
+        });
         expect(screen.queryByRole("heading", { name: /lock & sign out\?/i })).not.toBeInTheDocument();
     });
 

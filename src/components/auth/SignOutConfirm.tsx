@@ -5,7 +5,7 @@ import { ConfirmModal } from "../ui/ConfirmModal";
 export interface SignOutConfirmProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm?: () => void;
+    onConfirm?: () => void | Promise<void>;
 }
 
 export function SignOutConfirm({
@@ -15,13 +15,13 @@ export function SignOutConfirm({
 }: SignOutConfirmProps) {
     const { signOut } = useAuth();
 
-    const handleConfirm = () => {
-        onClose();
+    const handleConfirm = async () => {
         if (onConfirm) {
-            onConfirm();
+            await onConfirm();
         } else {
-            signOut();
+            await signOut();
         }
+        onClose();
     };
 
     return (
@@ -32,7 +32,12 @@ export function SignOutConfirm({
             title="Lock & Sign Out?"
             variant="danger"
             confirmLabel="Sign Out"
-            icon={<LogOut className="h-4.5 w-4.5 text-rose-600" strokeWidth={2.5} />}
+            icon={
+                <LogOut
+                    className="h-4.5 w-4.5 text-rose-600"
+                    strokeWidth={2.5}
+                />
+            }
             maxWidth="max-w-sm"
         >
             <p className="text-sm text-(--text-muted)">

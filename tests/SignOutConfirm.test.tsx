@@ -16,7 +16,9 @@ describe("SignOutConfirm", () => {
             </AuthProvider>,
         );
 
-        expect(screen.queryByRole("heading", { name: /lock & sign out\?/i })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("heading", { name: /lock & sign out\?/i }),
+        ).not.toBeInTheDocument();
     });
 
     it("renders modal with standard copy and icon when isOpen is true", () => {
@@ -26,10 +28,18 @@ describe("SignOutConfirm", () => {
             </AuthProvider>,
         );
 
-        expect(screen.getByRole("heading", { name: /lock & sign out\?/i })).toBeInTheDocument();
-        expect(screen.getByText(/you'll need your pin to unlock\./i)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /^sign out$/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: /lock & sign out\?/i }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(/you'll need your pin to unlock\./i),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /cancel/i }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /^sign out$/i }),
+        ).toBeInTheDocument();
     });
 
     it("calls onClose when Cancel button is clicked", () => {
@@ -70,7 +80,9 @@ describe("SignOutConfirm", () => {
         );
 
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
+            fireEvent.click(
+                screen.getByRole("button", { name: /^sign out$/i }),
+            );
         });
         expect(handleClose).toHaveBeenCalledTimes(1);
         expect(handleConfirm).toHaveBeenCalledTimes(1);
@@ -92,15 +104,54 @@ describe("SignOutConfirm", () => {
             loggedInPartner: null,
         });
 
-        render(
-            <SignOutConfirm isOpen={true} onClose={handleClose} />
-        );
+        render(<SignOutConfirm isOpen={true} onClose={handleClose} />);
 
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: /^sign out$/i }));
+            fireEvent.click(
+                screen.getByRole("button", { name: /^sign out$/i }),
+            );
         });
 
         expect(handleClose).toHaveBeenCalledTimes(1);
         expect(mockSignOut).toHaveBeenCalledTimes(1);
+    });
+
+    it("awaits async onConfirm and does not call onClose if onConfirm rejects", async () => {
+        const handleClose = vi.fn();
+        let rejectPromise!: (reason: Error) => void;
+        const pendingPromise = new Promise<void>((_, reject) => {
+            rejectPromise = reject;
+        });
+        const handleConfirm = vi.fn().mockReturnValue(pendingPromise);
+
+        render(
+            <AuthProvider>
+                <SignOutConfirm
+                    isOpen={true}
+                    onClose={handleClose}
+                    onConfirm={handleConfirm}
+                />
+            </AuthProvider>,
+        );
+
+        await act(async () => {
+            fireEvent.click(
+                screen.getByRole("button", { name: /^sign out$/i }),
+            );
+        });
+
+        // While pending, onClose must not have been called yet
+        expect(handleClose).not.toHaveBeenCalled();
+
+        // Reject the promise
+        await act(async () => {
+            rejectPromise(new Error("Sign out failed on server"));
+        });
+
+        // onClose should not be called on rejection, and the error should be displayed
+        expect(handleClose).not.toHaveBeenCalled();
+        expect(
+            screen.getByText("Sign out failed on server"),
+        ).toBeInTheDocument();
     });
 });
