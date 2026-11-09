@@ -66,7 +66,7 @@ Never roll custom raw containers, ad-hoc dialogs, or handwritten alert boxes whe
 - **Cards & Stats**: Use `<Card variant="..." elevation="tactile" | "sm" | "flat" | "subtle" />` and `<StatCard />`. Use `elevation="sm"` for clean bordered cards with `shadow-cute-sm`. Use the `footer`, `subtitle`, and `badge` props of `StatCard` for pacing/limits rather than building custom cards from scratch.
 - **Buttons**: Always `<Button variant="primary" | "secondary" | "danger" | "butter" | "ghost" | "outline" size="sm" | "md" | "lg" | "icon-sm" | "icon-md" />` with `leftIcon` or `rightIcon`.
 - **Dialogs & Modals**: Always `<AnimatedModal />` with `<ModalHeader />`, `<ModalBody />`, and `<ModalFooter />`.
-- **Badges & Indicators**: Always `<Badge variant="..." />`.
+- **Badges & Indicators**: Always `<Badge variant="..." />`. Static badges/chips are not live regions; never use `role="status"`. Use `<span aria-label={...}>` or `<Badge />`. Short labels must remain clear (e.g. `Insur.`, not cryptic `Ins`).
 - **Inputs & Selects**: Always `<Input />` and `<Select />`.
 - **Currency & Numbers**: Use `<CurrencyText amount={...} />` or `formatSGD(...)`.
 - **Tooltips & Popovers**: Always `<TooltipPopover />` for definitions or contextual calculations.
@@ -139,6 +139,7 @@ Always maintain a direct, functional, and concise editorial style across all UI 
 - **Notification & Alert Copy**:
     - **Notification Settings**: Keep toggle descriptions under 8 words (e.g. `Remind before credit card statement due date`, `Daily 6 PM reminder to log spending`).
     - **Alert Banners**: Metric-focused headline ≤ 6 words paired with a single concise actionable subtitle.
+    - **Clamped Values**: Use clamped values in copy when business rules adjust dates/amounts (e.g. day 30 in short months).
 - **One Figure, One Representation**:
     - Show each figure once.
     - When a bar or ring is shown, pair it with **one** amount, usually what's left.
