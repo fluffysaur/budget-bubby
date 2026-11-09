@@ -64,11 +64,25 @@ const CycleRow = React.memo(function CycleRow({
                     <CreditCardIcon className="h-4 w-4" strokeWidth={2.5} />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <TruncatedText
-                        as="div"
-                        text={cycle.card.name}
-                        className="text-sm font-bold text-(--text-ink) font-display"
-                    />
+                    <div className="flex items-center gap-2 min-w-0">
+                        <TruncatedText
+                            as="div"
+                            text={cycle.card.name}
+                            className="text-sm font-bold text-(--text-ink) font-display min-w-0"
+                        />
+                        {bankConfig && (
+                            <button
+                                type="button"
+                                onClick={() => openBankApp(cycle.card.bank)}
+                                title={`Open ${bankConfig.bankName} app`}
+                                aria-label={`Open ${bankConfig.bankName} app for ${cycle.card.name}`}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-lg border-2 border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-[11px] font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                            >
+                                <ExternalLink className="h-3 w-3" />
+                                <span>Open App</span>
+                            </button>
+                        )}
+                    </div>
                     <span
                         className={`block text-xs font-bold ${
                             overdue
@@ -91,32 +105,16 @@ const CycleRow = React.memo(function CycleRow({
                     )}
                 </div>
             </div>
-            <div className="flex items-center gap-2">
-                {bankConfig && (
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        type="button"
-                        className="min-h-11 shrink-0 px-3 gap-1.5"
-                        title={`Open ${bankConfig.bankName} app`}
-                        aria-label={`Open ${bankConfig.bankName} app for ${cycle.card.name}`}
-                        onClick={() => openBankApp(cycle.card.bank)}
-                    >
-                        <ExternalLink className="h-4 w-4" />
-                        <span className="hidden sm:inline">Open App</span>
-                    </Button>
-                )}
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    type="button"
-                    className="w-full min-h-11 justify-center flex-1"
-                    aria-label={`Mark ${cycle.card.name} paid`}
-                    onClick={() => onMarkPaid(cycle)}
-                >
-                    Mark Paid
-                </Button>
-            </div>
+            <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className="w-full min-h-11 justify-center"
+                aria-label={`Mark ${cycle.card.name} paid`}
+                onClick={() => onMarkPaid(cycle)}
+            >
+                Mark Paid
+            </Button>
         </div>
     );
 });
