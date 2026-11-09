@@ -3,7 +3,7 @@
  * Full Credit Card Statements & Due Date Tracker:
  * - List configured credit cards (name, bank, last4, statement day, due day, limit, color)
  * - Select month (e.g. '2026-10') to see and log monthly statement balances
- * - Statement status: statement amount, due date ('Due in 4 days' or 'Overdue by 2 days'), and 1-tap Paid / Unpaid toggle with timestamp
+ * - Statement status: statement amount, due date ('In 4 days' or 'Overdue 2 days'), and 1-tap Paid / Unpaid toggle with timestamp
  * - Summary cards: Total CC Bill Due this Month, Total Paid, Total Unpaid
  * - Add / Edit Credit Card modal to configure new cards or update billing/due days
  */
@@ -47,6 +47,7 @@ import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
 import {
     getCurrentMonth,
+    formatCountdown,
     getTodayDateString,
     formatDisplayMonth,
     formatDisplayDate,
@@ -109,23 +110,22 @@ export function getRelativeDueLabel(
     const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-        const overdue = Math.abs(diffDays);
         return {
-            label: `Overdue by ${overdue} day${overdue === 1 ? "" : "s"}`,
+            label: formatCountdown(diffDays),
             isOverdue: true,
             isDueToday: false,
             daysDiff: diffDays,
         };
     } else if (diffDays === 0) {
         return {
-            label: "Due today",
+            label: formatCountdown(0),
             isOverdue: false,
             isDueToday: true,
             daysDiff: 0,
         };
     } else {
         return {
-            label: `Due in ${diffDays} day${diffDays === 1 ? "" : "s"}`,
+            label: formatCountdown(diffDays),
             isOverdue: false,
             isDueToday: false,
             daysDiff: diffDays,

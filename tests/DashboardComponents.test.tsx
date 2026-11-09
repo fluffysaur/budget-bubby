@@ -329,7 +329,7 @@ describe("UpcomingBillsWidget", () => {
         // Day 31 clamps to 30 Nov -> 5 days; Dec 10 -> 15 days; Sep -> far away
         expect(screen.getByText("Due in 5 days")).toBeInTheDocument();
         expect(screen.getByText("Due in 15 days")).toBeInTheDocument();
-        expect(screen.getByText("Due in September")).toBeInTheDocument();
+        expect(screen.getByText("September")).toBeInTheDocument();
         expect(screen.getByText("Bill")).toBeInTheDocument();
 
         const names = screen

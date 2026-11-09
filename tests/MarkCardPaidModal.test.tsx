@@ -44,7 +44,9 @@ describe("MarkCardPaidModal", () => {
         );
 
         expect(screen.getByText(/Check statement in DBS/i)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /open app/i })).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /open dbs.* app/i }),
+        ).toBeInTheDocument();
     });
 
     it("allows setting $0 via the '$0 (No Spend)' button and submits", async () => {
@@ -70,7 +72,9 @@ describe("MarkCardPaidModal", () => {
             />,
         );
 
-        const noSpendBtn = screen.getByRole("button", { name: /\$0 \(no spend\)/i });
+        const noSpendBtn = screen.getByRole("button", {
+            name: /\$0 \(no spend\)/i,
+        });
         fireEvent.click(noSpendBtn);
 
         const input = screen.getByLabelText(/amount paid/i) as HTMLInputElement;

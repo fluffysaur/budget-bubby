@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+    formatCountdown,
     getCurrentMonth,
     getTodayDateString,
     formatMonth,
@@ -202,5 +203,15 @@ describe("daysBetweenISO", () => {
     it("handles month and year boundaries", () => {
         expect(daysBetweenISO("2026-12-30", "2027-01-02")).toBe(3);
         expect(daysBetweenISO("2026-02-27", "2026-03-01")).toBe(2);
+    });
+});
+
+describe("formatCountdown", () => {
+    it("formats overdue, today, tomorrow and future days", () => {
+        expect(formatCountdown(-2)).toBe("Overdue 2 days");
+        expect(formatCountdown(-1)).toBe("Overdue 1 day");
+        expect(formatCountdown(0)).toBe("Today");
+        expect(formatCountdown(1)).toBe("Tomorrow");
+        expect(formatCountdown(5)).toBe("In 5 days");
     });
 });

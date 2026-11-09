@@ -58,7 +58,7 @@ describe("CreditCardPaymentsWidget", () => {
         );
         expect(screen.getByText("Daily Card")).toBeInTheDocument();
         expect(screen.getByText("Pending")).toBeInTheDocument();
-        expect(screen.getByText("Due in 16 days")).toBeInTheDocument();
+        expect(screen.getByText("In 16 days")).toBeInTheDocument();
     });
 
     it("shows the logged amount and overdue state", () => {
@@ -70,7 +70,7 @@ describe("CreditCardPaymentsWidget", () => {
                 onPaid={vi.fn()}
             />,
         );
-        expect(screen.getByText("Overdue by 2 days")).toBeInTheDocument();
+        expect(screen.getByText("Overdue 2 days")).toBeInTheDocument();
         expect(screen.queryByText("Pending")).not.toBeInTheDocument();
     });
 
@@ -109,7 +109,7 @@ describe("CreditCardPaymentsWidget", () => {
         );
     });
 
-    it("renders bank app launcher button when card has a recognised bank", () => {
+    it("does not render a bank app launcher button", () => {
         render(
             <CreditCardPaymentsWidget
                 cards={[card({ bank: "DBS" })]}
@@ -120,10 +120,8 @@ describe("CreditCardPaymentsWidget", () => {
         );
 
         expect(
-            screen.getByRole("button", {
-                name: /open dbs \/ posb app for daily card/i,
-            }),
-        ).toBeInTheDocument();
+            screen.queryByRole("button", { name: /open .* app/i }),
+        ).not.toBeInTheDocument();
     });
 
     it("shows Settle Overdue button when 2 or more cards are overdue", () => {

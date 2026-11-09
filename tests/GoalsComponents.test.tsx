@@ -164,7 +164,7 @@ describe("GoalCard Component", () => {
         // Target date rendered
         expect(screen.getByText(/2027/)).toBeInTheDocument();
         // Countdown text
-        expect(screen.getByText(/months left/i)).toBeInTheDocument();
+        expect(screen.getByText(/mos left/i)).toBeInTheDocument();
     });
 
     it("fires onEdit and onQuickDeposit callbacks when action buttons are clicked", () => {

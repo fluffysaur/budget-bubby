@@ -32,7 +32,7 @@ function getDueStatus(p: RecurringItem, days: number | null) {
     const monthName = p.payment_month
         ? MONTH_NAMES[p.payment_month - 1]
         : "Annual";
-    return { text: `Due in ${monthName}`, urgent: false };
+    return { text: monthName, urgent: false };
 }
 
 export interface UpcomingBillRowProps {

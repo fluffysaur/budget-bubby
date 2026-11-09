@@ -7,13 +7,13 @@ describe("CalendarStrip", () => {
         render(<CalendarStrip daysRemaining={5} totalDots={7} />);
         const meter = screen.getByRole("img");
         expect(meter).toBeInTheDocument();
-        expect(meter).toHaveAttribute("title", "Due in 5 days");
+        expect(meter).toHaveAttribute("title", "In 5 days");
     });
 
     it("derives urgent status when daysRemaining <= 3", () => {
         render(<CalendarStrip daysRemaining={2} totalDots={5} />);
         const meter = screen.getByRole("img");
-        expect(meter).toHaveAttribute("title", "Due in 2 days");
+        expect(meter).toHaveAttribute("title", "In 2 days");
         // Target dot has urgent tone
         const targetDot = meter.querySelector(".bg-\\(--tone-over\\)");
         expect(targetDot).toBeInTheDocument();
@@ -22,7 +22,7 @@ describe("CalendarStrip", () => {
     it("derives overdue status when daysRemaining < 0", () => {
         render(<CalendarStrip daysRemaining={-3} totalDots={5} />);
         const meter = screen.getByRole("img");
-        expect(meter).toHaveAttribute("title", "Overdue by 3 days");
+        expect(meter).toHaveAttribute("title", "Overdue 3 days");
         const pulsatingDots = meter.querySelectorAll(".animate-pulse");
         expect(pulsatingDots.length).toBeGreaterThan(0);
     });

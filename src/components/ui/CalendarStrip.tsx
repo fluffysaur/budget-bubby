@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { formatCountdown } from "../../lib/dateUtils";
 
 export type CalendarStripStatus = "ok" | "near" | "urgent" | "overdue" | "paid";
 
@@ -59,11 +60,7 @@ export function CalendarStrip({
     const defaultAriaLabel =
         daysRemaining === null
             ? "Payment countdown"
-            : daysRemaining < 0
-              ? `Overdue by ${Math.abs(daysRemaining)} ${Math.abs(daysRemaining) === 1 ? "day" : "days"}`
-              : daysRemaining === 0
-                ? "Due today"
-                : `Due in ${daysRemaining} ${daysRemaining === 1 ? "day" : "days"}`;
+            : formatCountdown(daysRemaining);
 
     const effectiveAriaLabel = ariaLabel || defaultAriaLabel;
 
