@@ -4,7 +4,7 @@ Read the linked file before working in its area. Rules below are the always-on c
 
 ## Hard rules
 
-- **Never commit, push, or open/update a PR until the user explicitly says so.** Each needs its own approval. Never commit to `main`, never force-push, never merge PRs.
+- **Never commit, push, or open/update a PR until the user explicitly says so.** Each needs its own approval, except within one skill invocation given `--express` (see [docs/agent-workflow.md](docs/agent-workflow.md) §A). Never commit to `main`, never force-push, never merge PRs.
 - Quality gate before proposing a commit: `npm run check` (lint 0 warnings, build, test). Add `npm run test:e2e` when UI flows changed. Never use `--no-verify` or disable tests.
 - Don't install or upgrade dependencies without asking. Never commit `.env*` or build artifacts.
 - The repo is public: no real names, balances or emails in code, issues, PRs or screenshots.

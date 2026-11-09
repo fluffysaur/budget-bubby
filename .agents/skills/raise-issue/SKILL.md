@@ -120,6 +120,8 @@ Present the full draft to the user for review:
 Explicitly ask for confirmation before posting:
 > "Would you like me to create this issue on GitHub?"
 
+**`--express`** (see `docs/agent-workflow.md` §A): skip this question and go straight to Step 5. Still print the draft, and still run the duplicate check and privacy audit. If the duplicate check finds a match, stop and ask as usual.
+
 ---
 
 ## Step 5: Create the Issue
