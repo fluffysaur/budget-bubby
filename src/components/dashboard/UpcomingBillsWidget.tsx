@@ -18,6 +18,7 @@ import {
     getDaysUntilDue,
     getSingaporeDate,
     MONTH_NAMES_FULL as MONTH_NAMES,
+    daysBetweenISO,
 } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
 import { RecurringTypeBadge } from "../recurring/RecurringTypeBadge";
@@ -25,16 +26,6 @@ import type { CreditCardStatement, RecurringItem } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
-
-const MS_PER_DAY = 86_400_000;
-
-function daysBetweenISO(fromISO: string, toISO: string): number {
-    const [fy, fm, fd] = fromISO.split("-").map(Number);
-    const [ty, tm, td] = toISO.split("-").map(Number);
-    return Math.round(
-        (Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / MS_PER_DAY,
-    );
-}
 
 type BillRow =
     | { kind: "recurring"; days: number | null; item: RecurringItem }
@@ -72,7 +63,7 @@ export function UpcomingBillsWidget({
                 days: getDaysUntilDue(p, today),
             }));
         const cardRows: BillRow[] = creditCardStatements
-            .filter((s) => !s.is_paid && s.due_date)
+            .filter((s) => !s.is_paid && s.due_date && s.statement_amount > 0)
             .map((s) => ({
                 kind: "card",
                 stmt: s,
@@ -206,9 +197,11 @@ export function UpcomingBillsWidget({
                                                 <div className="mt-0.5">
                                                     <span
                                                         className={`text-xs font-bold ${
-                                                            overdue || days <= 7
-                                                                ? "text-amber-700 dark:text-amber-400"
-                                                                : "text-(--text-muted)"
+                                                            overdue
+                                                                ? "text-(--accent-coral-ink) dark:text-rose-400"
+                                                                : days <= 7
+                                                                  ? "text-amber-700 dark:text-amber-400"
+                                                                  : "text-(--text-muted)"
                                                         }`}
                                                     >
                                                         {dueText}

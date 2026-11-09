@@ -374,11 +374,46 @@ describe("UpcomingBillsWidget", () => {
 
         expect(screen.queryByText("Paid Card")).not.toBeInTheDocument();
         expect(screen.getByText("Overdue by 2 days")).toBeInTheDocument();
+        expect(screen.getByText("Overdue by 2 days").className).toContain(
+            "text-(--accent-coral-ink)",
+        );
         expect(screen.getByText("Due in 2 days")).toBeInTheDocument();
         const names = screen
             .getAllByText(/Late Card|Sooner Card|Later Card/)
             .map((el) => el.textContent);
         expect(names).toEqual(["Late Card", "Sooner Card", "Later Card"]);
+    });
+
+    it("hides card statements with nothing to pay", () => {
+        render(
+            <UpcomingBillsWidget
+                recurringItems={[]}
+                creditCardStatements={[
+                    {
+                        id: "z",
+                        card_id: "card-z",
+                        household_id: "hh-001",
+                        month: "2026-11",
+                        statement_amount: 0,
+                        due_date: "2026-11-27",
+                        is_paid: false,
+                        card: {
+                            id: "card-z",
+                            household_id: "hh-001",
+                            owner_id: "mem-001",
+                            name: "Zero Card",
+                            bank: "Test Bank",
+                            billing_day: 1,
+                            due_day: 20,
+                            color: "#000000",
+                            is_active: true,
+                        },
+                    },
+                ]}
+                referenceDate={new Date(2026, 10, 25)}
+            />,
+        );
+        expect(screen.queryByText("Zero Card")).not.toBeInTheDocument();
     });
 
     it("renders empty state when no upcoming bills", () => {

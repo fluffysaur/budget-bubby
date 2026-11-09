@@ -394,6 +394,18 @@ export function getDaysUntilDue(
 }
 
 /**
+ * Whole days from one ISO date (YYYY-MM-DD) to another; negative when `toISO`
+ * is earlier. Timezone-safe (UTC midnight arithmetic).
+ */
+export function daysBetweenISO(fromISO: string, toISO: string): number {
+    const [fy, fm, fd] = fromISO.split("-").map(Number);
+    const [ty, tm, td] = toISO.split("-").map(Number);
+    return Math.round(
+        (Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000,
+    );
+}
+
+/**
  * Short label for days until due: "Due today", "Due tomorrow", "Due in 5 days".
  */
 export function formatDueInDays(days: number): string {
