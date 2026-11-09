@@ -34,7 +34,8 @@ export type MilestoneKind =
     | "body-change"
     | "reunion"
     | "goal-complete"
-    | "sweep";
+    | "sweep"
+    | "bill-paid";
 
 export interface MilestoneToastAction {
     label: string;

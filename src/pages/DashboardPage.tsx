@@ -11,29 +11,26 @@
  * and the live Bubby in the header.
  */
 
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { useHousehold } from "../context/HouseholdContext";
-import {
-    Card,
-    PageHeader,
-    TruncatedText,
-    DashboardSkeleton,
-    MeterBar,
-    ProgressRing,
-} from "../components/ui";
+import { PageHeader, DashboardSkeleton } from "../components/ui";
 import {
     useRecurringItemsQuery,
+    useCreditCardStatementsQuery,
     useBudgetDetailQuery,
 } from "../hooks/useFinanceQueries";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { mockMembers } from "../data/mockSeedData";
-import { isSpendableCategory } from "../lib/financialFormulas";
+import {
+    filterStatementsForPerspective,
+    isSpendableCategory,
+} from "../lib/financialFormulas";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { InboxHomeCard } from "../components/inbox/InboxHomeCard";
-import { CurrencyText } from "../components/ui/CurrencyText";
 import { BubbyGreeting } from "../components/bubby/BubbyGreeting";
 import { QuestCard } from "../components/dashboard/QuestCard";
+import { LeftToSpendHero } from "../components/dashboard/LeftToSpendHero";
 import { recapWeekFor } from "../lib/bubby/recap";
 import { readBubbyStore } from "../lib/bubby/storage";
 import { daysInMonthOf, toSgtDateString } from "../lib/bubby/dates";
@@ -74,6 +71,7 @@ export function DashboardPage({
 
     // TanStack Query Cached Data Hooks
     const { data: recurringItemsData } = useRecurringItemsQuery();
+    const { data: statementsData } = useCreditCardStatementsQuery();
     // Combined view shows the household total, same as Budget
     const {
         data: budgetData,
@@ -89,6 +87,15 @@ export function DashboardPage({
     const recurringItems = useMemo(
         () => recurringItemsData || [],
         [recurringItemsData],
+    );
+    const creditCardStatements = useMemo(
+        () =>
+            filterStatementsForPerspective(
+                statementsData ?? [],
+                perspective,
+                activeMember?.id,
+            ),
+        [statementsData, perspective, activeMember?.id],
     );
     const monthlyBudget = budgetData || null;
 
@@ -143,33 +150,47 @@ export function DashboardPage({
         };
     }, [monthlyBudget]);
 
-    const isOverspent = spendableSummary.totalRemaining < 0;
-
     // Weekly recap: decided once per visit (Mon-Wed, until acknowledged)
     const [recapWeek] = useState(() =>
         recapWeekFor(toSgtDateString(), readBubbyStore().recapSeenWeek),
     );
-    const [showAllCategories, setShowAllCategories] = useState(false);
     const weeklyBudget =
         perspective === "household" && spendableSummary.totalAllocated > 0
             ? (spendableSummary.totalAllocated * 7) /
               daysInMonthOf(toSgtDateString())
             : null;
 
-    const displayedCategories = showAllCategories
-        ? spendableSummary.categories
-        : spendableSummary.categories.slice(0, 4);
-    const hasMore = spendableSummary.categories.length > 4;
+    const handleOpenInbox = useCallback(
+        () => onNavigateTab?.("inbox"),
+        [onNavigateTab],
+    );
+    const handleNavigateBudget = useCallback(
+        () => onNavigateTab?.("budget"),
+        [onNavigateTab],
+    );
+    const handleNavigateExpenses = useCallback(
+        () => onNavigateTab?.("expenses"),
+        [onNavigateTab],
+    );
+    const handleNavigateAccounts = useCallback(
+        () => onNavigateTab?.("accounts"),
+        [onNavigateTab],
+    );
+    const handleNavigateRecurring = useCallback(
+        () => onNavigateTab?.("recurring"),
+        [onNavigateTab],
+    );
+
+    const categoriesList = useMemo(
+        () => monthlyBudget?.categories || [],
+        [monthlyBudget?.categories],
+    );
 
     return (
         <div className={`space-y-5 pb-20 md:pb-12 ${className}`}>
             <PageHeader
                 title="Home"
-                badge={
-                    <BubbyGreeting
-                        onOpenInbox={() => onNavigateTab?.("inbox")}
-                    />
-                }
+                badge={<BubbyGreeting onOpenInbox={handleOpenInbox} />}
             />
 
             {isLoading ? (
@@ -183,135 +204,18 @@ export function DashboardPage({
                     }
                 >
                     {/* Left to Spend hero */}
-                    <Card role="region" aria-label="Left to Spend" padding="lg">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                                    Left to Spend
-                                </span>
-                                <div
-                                    data-testid="left-to-spend-amount"
-                                    className={`mt-1 ${
-                                        isOverspent
-                                            ? "text-(--accent-coral-ink) dark:text-rose-400"
-                                            : "text-(--text-ink)"
-                                    }`}
-                                >
-                                    <CurrencyText
-                                        amount={spendableSummary.totalRemaining}
-                                        size="hero"
-                                        animate
-                                    />
-                                </div>
-                                <span className="mt-1 block text-xs font-semibold text-(--text-muted) font-mono-num">
-                                    <CurrencyText
-                                        amount={spendableSummary.totalSpent}
-                                    />{" "}
-                                    of{" "}
-                                    <CurrencyText
-                                        amount={spendableSummary.totalAllocated}
-                                    />{" "}
-                                    spent
-                                </span>
-                            </div>
-                            {onNavigateTab && (
-                                <button
-                                    type="button"
-                                    onClick={() => onNavigateTab("budget")}
-                                    className="shrink-0 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-press cursor-pointer"
-                                >
-                                    Budget
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Overall progress meter */}
-                        <div className="mt-3">
-                            <MeterBar
-                                value={spendableSummary.totalSpent}
-                                max={spendableSummary.totalAllocated}
-                                size="md"
-                                aria-label="Spendable budget progress"
-                            />
-                        </div>
-
-                        {/* Per-category meters */}
-                        {spendableSummary.categories.length > 0 && (
-                            <div className="mt-4">
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                    {displayedCategories.map((cat) => (
-                                        <div
-                                            key={cat.id}
-                                            className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-cute-sm flex items-center gap-2.5"
-                                        >
-                                            <ProgressRing
-                                                value={cat.pct}
-                                                size={36}
-                                                strokeWidth={3.5}
-                                                tone={
-                                                    cat.remaining < 0
-                                                        ? "over"
-                                                        : cat.pct >= 80
-                                                          ? "near"
-                                                          : "ok"
-                                                }
-                                                centerContent={
-                                                    <span
-                                                        className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"
-                                                        style={{
-                                                            backgroundColor:
-                                                                cat.color,
-                                                        }}
-                                                    />
-                                                }
-                                            />
-                                            <div className="min-w-0 flex-1">
-                                                <div className="text-xs font-bold text-(--text-ink) truncate font-display">
-                                                    <TruncatedText
-                                                        text={cat.name}
-                                                    />
-                                                </div>
-                                                <div
-                                                    className={`text-xs font-extrabold font-mono-num ${
-                                                        cat.remaining < 0
-                                                            ? "text-(--accent-coral-ink) dark:text-rose-400"
-                                                            : "text-(--text-ink)"
-                                                    }`}
-                                                >
-                                                    <CurrencyText
-                                                        amount={cat.remaining}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                {hasMore && (
-                                    <div className="mt-2 text-center">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setShowAllCategories(
-                                                    (prev) => !prev,
-                                                )
-                                            }
-                                            className="text-xs font-bold text-(--text-muted) hover:text-(--text-ink) py-1 px-3 rounded-lg hover:bg-(--bg-cream) cursor-pointer transition-colors"
-                                        >
-                                            {showAllCategories
-                                                ? "Show Less"
-                                                : `+${spendableSummary.categories.length - 4} More`}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </Card>
+                    <LeftToSpendHero
+                        summary={spendableSummary}
+                        onNavigateBudget={
+                            onNavigateTab ? handleNavigateBudget : undefined
+                        }
+                    />
 
                     {/* Most urgent category limit alert (rendered below hero) */}
                     <CategoryLimitWarningBanner
                         single
-                        categories={monthlyBudget?.categories || []}
-                        onNavigateCategory={() => onNavigateTab?.("budget")}
+                        categories={categoriesList}
+                        onNavigateCategory={handleNavigateBudget}
                     />
 
                     {/* Unsorted captures (rendered below hero) */}
@@ -326,7 +230,7 @@ export function DashboardPage({
                             <WeeklyRecapCard
                                 week={recapWeek}
                                 weeklyBudget={weeklyBudget}
-                                onSeeSpend={() => onNavigateTab?.("expenses")}
+                                onSeeSpend={handleNavigateExpenses}
                             />
                         </Suspense>
                     )}
@@ -334,7 +238,11 @@ export function DashboardPage({
                     {/* Upcoming bills */}
                     <UpcomingBillsWidget
                         recurringItems={recurringItems}
-                        onViewAll={() => onNavigateTab?.("recurring")}
+                        creditCardStatements={creditCardStatements}
+                        onViewAll={handleNavigateRecurring}
+                        onOpenCard={
+                            onNavigateTab ? handleNavigateAccounts : undefined
+                        }
                     />
                 </div>
             )}

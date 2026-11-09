@@ -67,6 +67,7 @@ export function TooltipPopover({
         open: isOpen,
         onOpenChange: setIsOpen,
         placement,
+        transform: false,
         whileElementsMounted: autoUpdate,
         middleware: [
             offset(8),

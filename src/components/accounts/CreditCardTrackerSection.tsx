@@ -30,6 +30,10 @@ import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
 import { Badge } from "../ui/Badge";
 import { MeterBar } from "../ui/MeterBar";
+import { AvatarDot } from "../ui/AvatarDot";
+import { CalendarStrip } from "../ui/CalendarStrip";
+import { StackedBar } from "../ui/StackedBar";
+import { StatRow } from "../ui/StatRow";
 import {
     AnimatedModal,
     ModalHeader,
@@ -38,6 +42,7 @@ import {
 } from "../ui/AnimatedModal";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { m, AnimatePresence } from "motion/react";
+import { feedback } from "../../lib/delight/feedback";
 import { listItem } from "../../lib/motion";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
@@ -229,6 +234,11 @@ export function CreditCardTrackerSection({
                 notes: stmt.notes,
             };
             await financeService.upsertCreditCardStatement(input);
+            if (nextPaid) {
+                feedback.milestone("bill-paid", {
+                    dedupeKey: `bill-paid:${stmt.card_id}:${stmt.month}`,
+                });
+            }
             invalidateCreditCards();
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
@@ -387,7 +397,29 @@ export function CreditCardTrackerSection({
                         value={formatSGD(totalBillDue)}
                         subtitle={`${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
                         icon={<ReceiptText className="h-4 w-4" />}
-                        iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
+                        tone="lilac"
+                        footer={
+                            totalBillDue > 0 ? (
+                                <StackedBar
+                                    segments={[
+                                        {
+                                            id: "paid",
+                                            label: "Paid",
+                                            value: totalPaid,
+                                            tone: "ok",
+                                        },
+                                        {
+                                            id: "unpaid",
+                                            label: "Unpaid",
+                                            value: totalUnpaid,
+                                            tone: "near",
+                                        },
+                                    ]}
+                                    size="xs"
+                                    ariaLabel={`Paid ${formatSGD(totalPaid)}, Unpaid ${formatSGD(totalUnpaid)}`}
+                                />
+                            ) : undefined
+                        }
                     />
 
                     <StatCard
@@ -395,7 +427,7 @@ export function CreditCardTrackerSection({
                         loading={isLoading}
                         value={formatSGD(totalPaid)}
                         icon={<FileCheck2 className="h-4 w-4" />}
-                        iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                        tone="ok"
                     />
 
                     <StatCard
@@ -404,11 +436,7 @@ export function CreditCardTrackerSection({
                         value={formatSGD(totalUnpaid)}
                         subtitle={totalUnpaid > 0 ? "Pending" : "All paid"}
                         icon={<AlertTriangle className="h-4 w-4" />}
-                        iconBg={
-                            totalUnpaid > 0
-                                ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800"
-                        }
+                        tone={totalUnpaid > 0 ? "near" : "ok"}
                     />
                 </div>
 
@@ -503,16 +531,23 @@ export function CreditCardTrackerSection({
                                                                 {card.bank}
                                                             </span>
                                                             {owner && (
-                                                                <>
-                                                                    <span className="shrink-0">
-                                                                        •
-                                                                    </span>
+                                                                <div className="inline-flex items-center gap-1 min-w-0">
+                                                                    <AvatarDot
+                                                                        name={
+                                                                            owner.display_name
+                                                                        }
+                                                                        avatarUrl={
+                                                                            owner.avatar_url
+                                                                        }
+                                                                        size="xs"
+                                                                        decorative
+                                                                    />
                                                                     <span className="font-semibold truncate whitespace-nowrap min-w-0">
                                                                         {
                                                                             owner.display_name
                                                                         }
                                                                     </span>
-                                                                </>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
@@ -549,22 +584,26 @@ export function CreditCardTrackerSection({
 
                                             {/* Card Configuration Specs as Icon Rows */}
                                             <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
-                                                <div className="flex items-center gap-1.5 font-mono-num font-medium">
-                                                    <ReceiptText className="h-3.5 w-3.5 text-(--text-muted)" />
-                                                    <span>Statement Day</span>
-                                                    <span className="font-bold text-(--text-ink)">
-                                                        {ordinal(
-                                                            card.billing_day,
-                                                        )}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 font-mono-num font-medium">
-                                                    <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-                                                    <span>Due Day</span>
-                                                    <span className="font-bold text-(--text-ink)">
-                                                        {ordinal(card.due_day)}
-                                                    </span>
-                                                </div>
+                                                <StatRow
+                                                    icon={
+                                                        <ReceiptText className="h-3.5 w-3.5" />
+                                                    }
+                                                    label="Statement Day"
+                                                    value={ordinal(
+                                                        card.billing_day,
+                                                    )}
+                                                    showLabel
+                                                />
+                                                <StatRow
+                                                    icon={
+                                                        <Calendar className="h-3.5 w-3.5" />
+                                                    }
+                                                    label="Due Day"
+                                                    value={ordinal(
+                                                        card.due_day,
+                                                    )}
+                                                    showLabel
+                                                />
                                                 <span className="font-mono-num font-medium text-[11px]">
                                                     {card.credit_limit
                                                         ? `Limit ${formatSGD(card.credit_limit, { showCents: false })}`
@@ -592,14 +631,37 @@ export function CreditCardTrackerSection({
 
                                                         {/* Due Date & Status Badge Countdown */}
                                                         <div className="flex items-center justify-between text-xs">
-                                                            <span
-                                                                className="text-[11px] font-mono-num text-(--text-muted)"
-                                                                title={`Due ${formatDisplayDate(stmt.due_date)}`}
-                                                            >
-                                                                {formatDisplayDate(
-                                                                    stmt.due_date,
-                                                                )}
-                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span
+                                                                    className="text-[11px] font-mono-num text-(--text-muted)"
+                                                                    title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                                                >
+                                                                    {formatDisplayDate(
+                                                                        stmt.due_date,
+                                                                    )}
+                                                                </span>
+                                                                <CalendarStrip
+                                                                    daysRemaining={
+                                                                        stmt.is_paid
+                                                                            ? null
+                                                                            : dueStatus?.isOverdue
+                                                                              ? -1
+                                                                              : (dueStatus?.daysDiff ??
+                                                                                null)
+                                                                    }
+                                                                    status={
+                                                                        stmt.is_paid
+                                                                            ? "paid"
+                                                                            : dueStatus?.isOverdue
+                                                                              ? "overdue"
+                                                                              : undefined
+                                                                    }
+                                                                    totalDots={
+                                                                        5
+                                                                    }
+                                                                    size="xs"
+                                                                />
+                                                            </div>
 
                                                             {dueStatus && (
                                                                 <Badge

@@ -117,6 +117,12 @@ const MILESTONE_CUES: Record<MilestoneKind, MilestoneCue> = {
         react: "celebrate",
         big: true,
     },
+    "bill-paid": {
+        haptic: "celebrate",
+        sound: "success",
+        react: "celebrate",
+        big: true,
+    },
 };
 
 export const BIG_CELEBRATION_COOLDOWN_MS = 8000;

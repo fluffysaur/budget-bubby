@@ -5,21 +5,27 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { m } from "motion/react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Bubby } from "../bubby/Bubby";
 import { FedTodayDots } from "../bubby/FedTodayDots";
 import { QuestList } from "../bubby/QuestList";
 import { useBubby } from "../../hooks/useBubby";
+import {
+    isQuestSelectable,
+    useQuestActions,
+} from "../../hooks/useQuestActions";
 import { financeService } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
 import { emitAppEvent } from "../../lib/appEvents";
 import { toSgtDateString } from "../../lib/bubby/dates";
 
 export function QuestCard() {
-    const { body, mood, reaction, me, members, condition, dailyQuests, pet } =
+    const { body, mood, reaction, me, members, condition, dailyQuests } =
         useBubby();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const onSelectQuest = useQuestActions();
     const loggedToday = dailyQuests.find((q) => q.id === "log")?.done ?? false;
 
     const handleNoSpend = async () => {
@@ -51,39 +57,41 @@ export function QuestCard() {
             padding="sm"
             data-testid="quest-card"
         >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-2">
+                <h2 className="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                    Bubby's Tasks
+                </h2>
+                <FedTodayDots
+                    members={members}
+                    fedToday={condition.fedToday}
+                    className="shrink-0"
+                />
+            </div>
+            <div className="mt-1.5 flex items-center gap-3">
                 <button
                     type="button"
-                    aria-label="Pet Bubby"
-                    onClick={pet}
-                    className="flex h-14 w-14 shrink-0 items-end justify-center overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--accent-lilac) pt-0.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                    aria-label="Open Bubby"
+                    onClick={() => emitAppEvent("bubby:open-sheet", {})}
+                    className="flex h-14 w-14 shrink-0 items-end justify-center overflow-hidden rounded-2xl border-2 border-(--border-ink) bg-(--accent-lilac) pt-0.5 cursor-pointer"
                 >
-                    <Bubby
-                        body={body}
-                        mood={mood}
-                        reaction={reaction}
-                        size="sm"
-                        className="h-13 w-13"
-                        decorative
-                    />
-                </button>
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                            Today
-                        </span>
-                        <FedTodayDots
-                            members={members}
-                            fedToday={condition.fedToday}
-                            className="shrink-0"
+                    <m.div whileTap={{ y: -4 }} className="h-13 w-13">
+                        <Bubby
+                            body={body}
+                            mood={mood}
+                            reaction={reaction}
+                            size="sm"
+                            className="h-13 w-13"
+                            decorative
                         />
-                    </div>
-                    <QuestList
-                        quests={dailyQuests}
-                        label="Today's quests"
-                        className="mt-1.5"
-                    />
-                </div>
+                    </m.div>
+                </button>
+                <QuestList
+                    quests={dailyQuests}
+                    label="Today's quests"
+                    onSelect={onSelectQuest}
+                    isSelectable={isQuestSelectable}
+                    className="min-w-0 flex-1"
+                />
             </div>
             {!loggedToday && me && (
                 <div className="mt-2.5 flex justify-end">
@@ -100,7 +108,7 @@ export function QuestCard() {
                         }
                         onClick={handleNoSpend}
                     >
-                        No Spend Today
+                        No Spend
                     </Button>
                 </div>
             )}

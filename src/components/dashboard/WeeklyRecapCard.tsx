@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
+import { WEEKLY_RECAP_ID } from "../../hooks/useQuestActions";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -112,7 +113,13 @@ export function WeeklyRecapCard({
     const change = recap.changePct;
 
     return (
-        <Card role="region" aria-label="Last Week" elevation="sm" padding="md">
+        <Card
+            id={WEEKLY_RECAP_ID}
+            role="region"
+            aria-label="Last Week"
+            elevation="sm"
+            padding="md"
+        >
             <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">

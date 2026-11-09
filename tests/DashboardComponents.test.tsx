@@ -14,7 +14,12 @@ import {
 } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { UpcomingBillsWidget } from "../src/components/dashboard/UpcomingBillsWidget";
+import {
+    UpcomingBillsWidget,
+    UpcomingBillRow,
+} from "../src/components/dashboard/UpcomingBillsWidget";
+import { LeftToSpendHero } from "../src/components/dashboard/LeftToSpendHero";
+import { CategoryMeterCard } from "../src/components/dashboard/CategoryMeterCard";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { financeService } from "../src/services/financeService";
 import type {
@@ -26,6 +31,7 @@ import type {
     RecurringItem,
     SavingsGoal,
     SettlementSummary,
+    CreditCardStatement,
 } from "../src/types/finance";
 
 const sampleMembers: HouseholdMember[] = [
@@ -332,6 +338,124 @@ describe("UpcomingBillsWidget", () => {
         expect(names).toEqual(["SP Utilities", "Dec Renewal", "Far Renewal"]);
     });
 
+    it("lists unpaid card statements by due date and hides paid ones", () => {
+        const stmt = (
+            id: string,
+            name: string,
+            due: string,
+            paid: boolean,
+        ): CreditCardStatement => ({
+            id,
+            card_id: `card-${id}`,
+            household_id: "hh-001",
+            month: "2026-11",
+            statement_amount: 250,
+            due_date: due,
+            is_paid: paid,
+            card: {
+                id: `card-${id}`,
+                household_id: "hh-001",
+                owner_id: "mem-001",
+                name,
+                bank: "Test Bank",
+                billing_day: 1,
+                due_day: 20,
+                color: "#000000",
+                is_active: true,
+            },
+        });
+        render(
+            <UpcomingBillsWidget
+                recurringItems={[]}
+                creditCardStatements={[
+                    stmt("b", "Later Card", "2026-11-30", false),
+                    stmt("a", "Sooner Card", "2026-11-27", false),
+                    stmt("c", "Paid Card", "2026-11-26", true),
+                    stmt("d", "Late Card", "2026-11-23", false),
+                ]}
+                referenceDate={new Date(2026, 10, 25)}
+            />,
+        );
+
+        expect(screen.queryByText("Paid Card")).not.toBeInTheDocument();
+        expect(screen.getByText("Overdue by 2 days")).toBeInTheDocument();
+        expect(screen.getByText("Overdue by 2 days").className).toContain(
+            "text-(--accent-coral-ink)",
+        );
+        expect(screen.getByText("Due in 2 days")).toBeInTheDocument();
+        const names = screen
+            .getAllByText(/Late Card|Sooner Card|Later Card/)
+            .map((el) => el.textContent);
+        expect(names).toEqual(["Late Card", "Sooner Card", "Later Card"]);
+    });
+
+    it("makes card rows tappable when onOpenCard is given", () => {
+        const onOpenCard = vi.fn();
+        render(
+            <UpcomingBillsWidget
+                recurringItems={[]}
+                onOpenCard={onOpenCard}
+                creditCardStatements={[
+                    {
+                        id: "t",
+                        card_id: "card-t",
+                        household_id: "hh-001",
+                        month: "2026-11",
+                        statement_amount: 100,
+                        due_date: "2026-11-27",
+                        is_paid: false,
+                        card: {
+                            id: "card-t",
+                            household_id: "hh-001",
+                            owner_id: "mem-001",
+                            name: "Tap Card",
+                            bank: "Test Bank",
+                            billing_day: 1,
+                            due_day: 20,
+                            color: "#000000",
+                            is_active: true,
+                        },
+                    },
+                ]}
+                referenceDate={new Date(2026, 10, 25)}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /Tap Card/ }));
+        expect(onOpenCard).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides card statements with nothing to pay", () => {
+        render(
+            <UpcomingBillsWidget
+                recurringItems={[]}
+                creditCardStatements={[
+                    {
+                        id: "z",
+                        card_id: "card-z",
+                        household_id: "hh-001",
+                        month: "2026-11",
+                        statement_amount: 0,
+                        due_date: "2026-11-27",
+                        is_paid: false,
+                        card: {
+                            id: "card-z",
+                            household_id: "hh-001",
+                            owner_id: "mem-001",
+                            name: "Zero Card",
+                            bank: "Test Bank",
+                            billing_day: 1,
+                            due_day: 20,
+                            color: "#000000",
+                            is_active: true,
+                        },
+                    },
+                ]}
+                referenceDate={new Date(2026, 10, 25)}
+            />,
+        );
+        expect(screen.queryByText("Zero Card")).not.toBeInTheDocument();
+    });
+
     it("renders empty state when no upcoming bills", () => {
         render(<UpcomingBillsWidget recurringItems={[]} />);
         expect(screen.getByText(/nothing due/i)).toBeInTheDocument();
@@ -404,6 +528,9 @@ describe("DashboardPage", () => {
         );
         vi.spyOn(financeService, "getMonthlyBudget").mockResolvedValue(
             sampleMonthlyBudget,
+        );
+        vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue(
+            [],
         );
     });
 
@@ -501,6 +628,131 @@ describe("DashboardPage", () => {
         await waitFor(() => {
             fireEvent.click(screen.getByRole("button", { name: "Budget" }));
             expect(onNavigateTab).toHaveBeenCalledWith("budget");
+        });
+    });
+
+    describe("LeftToSpendHero & CategoryMeterCard", () => {
+        const mockSummary = {
+            totalAllocated: 1000,
+            totalSpent: 400,
+            totalRemaining: 600,
+            totalPct: 40,
+            categories: [
+                {
+                    id: "cat-1",
+                    name: "Groceries",
+                    color: "#10b981",
+                    spent: 100,
+                    allocated: 200,
+                    remaining: 100,
+                    pct: 50,
+                },
+                {
+                    id: "cat-2",
+                    name: "Dining Out",
+                    color: "#f59e0b",
+                    spent: 120,
+                    allocated: 150,
+                    remaining: 30,
+                    pct: 80,
+                },
+                {
+                    id: "cat-3",
+                    name: "Transport",
+                    color: "#3b82f6",
+                    spent: 50,
+                    allocated: 100,
+                    remaining: 50,
+                    pct: 50,
+                },
+                {
+                    id: "cat-4",
+                    name: "Entertainment",
+                    color: "#ec4899",
+                    spent: 80,
+                    allocated: 100,
+                    remaining: 20,
+                    pct: 80,
+                },
+                {
+                    id: "cat-5",
+                    name: "Shopping",
+                    color: "#8b5cf6",
+                    spent: 50,
+                    allocated: 50,
+                    remaining: 0,
+                    pct: 100,
+                },
+            ],
+        };
+
+        it("renders summary amounts and expands categories when +N More is clicked", () => {
+            const onBudget = vi.fn();
+            render(
+                <LeftToSpendHero
+                    summary={mockSummary}
+                    onNavigateBudget={onBudget}
+                />,
+            );
+
+            expect(screen.getByText("Left to Spend")).toBeInTheDocument();
+            expect(
+                screen.getByTestId("left-to-spend-amount"),
+            ).toHaveTextContent("S$600.00");
+            expect(screen.getByText("Groceries")).toBeInTheDocument();
+            expect(screen.getByText("Entertainment")).toBeInTheDocument();
+            expect(screen.queryByText("Shopping")).not.toBeInTheDocument();
+
+            const expandBtn = screen.getByRole("button", { name: "+1 More" });
+            fireEvent.click(expandBtn);
+
+            expect(screen.getByText("Shopping")).toBeInTheDocument();
+            expect(
+                screen.getByRole("button", { name: "Show Less" }),
+            ).toBeInTheDocument();
+
+            fireEvent.click(screen.getByRole("button", { name: "Show Less" }));
+            expect(screen.queryByText("Shopping")).not.toBeInTheDocument();
+
+            fireEvent.click(screen.getByRole("button", { name: "Budget" }));
+            expect(onBudget).toHaveBeenCalledTimes(1);
+        });
+
+        it("handles overspent state properly", () => {
+            const overspentSummary = {
+                ...mockSummary,
+                totalRemaining: -50,
+            };
+            render(<LeftToSpendHero summary={overspentSummary} />);
+            expect(screen.getByTestId("left-to-spend-amount")).toHaveClass(
+                "text-(--accent-coral-ink)",
+            );
+        });
+
+        it("renders CategoryMeterCard with correct tone and content", () => {
+            render(
+                <CategoryMeterCard
+                    name="Coffee"
+                    color="#f59e0b"
+                    remaining={-15}
+                    pct={120}
+                />,
+            );
+            expect(screen.getByText("Coffee")).toBeInTheDocument();
+            expect(screen.getByText("-S$15.00")).toBeInTheDocument();
+        });
+    });
+
+    describe("UpcomingBillRow", () => {
+        it("renders recurring item details and amortized annual rate", () => {
+            render(<UpcomingBillRow item={sampleItems[0]} days={5} />);
+            expect(
+                screen.getByText("Manulife - Lifeready 25 Plus"),
+            ).toBeInTheDocument();
+            expect(screen.getByText("Due in 5 days")).toBeInTheDocument();
+            expect(screen.getByText("S$3,200.00")).toBeInTheDocument();
+            expect(screen.getByText("S$266.67")).toBeInTheDocument();
+            expect(screen.getByText(/~.*\/mo/)).toBeInTheDocument();
         });
     });
 });
