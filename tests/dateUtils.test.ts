@@ -7,6 +7,7 @@ import {
     formatDisplayMonth,
     formatDisplayDate,
     addMonths,
+    daysBetweenISO,
     monthsBetween,
     formatTime12h,
     extractTimeFromISO,
@@ -188,5 +189,18 @@ describe("dateUtils", () => {
                 );
             });
         });
+    });
+});
+
+describe("daysBetweenISO", () => {
+    it("counts whole days, signed", () => {
+        expect(daysBetweenISO("2026-11-25", "2026-11-27")).toBe(2);
+        expect(daysBetweenISO("2026-11-25", "2026-11-23")).toBe(-2);
+        expect(daysBetweenISO("2026-11-25", "2026-11-25")).toBe(0);
+    });
+
+    it("handles month and year boundaries", () => {
+        expect(daysBetweenISO("2026-12-30", "2027-01-02")).toBe(3);
+        expect(daysBetweenISO("2026-02-27", "2026-03-01")).toBe(2);
     });
 });
