@@ -11,6 +11,10 @@ import { snackLabel } from "../../lib/bubby/snacks";
 import { Bubby } from "./Bubby";
 import { FedTodayDots } from "./FedTodayDots";
 import { QuestList } from "./QuestList";
+import {
+    isQuestSelectable,
+    useQuestActions,
+} from "../../hooks/useQuestActions";
 import { SnackArt } from "./SnackArt";
 
 export interface BubbySheetProps {
@@ -56,6 +60,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
         snacks,
         pet,
     } = useBubby();
+    const onSelectQuest = useQuestActions(onClose);
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
@@ -117,6 +122,8 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                         <QuestList
                             quests={dailyQuests}
                             label="Today's quests"
+                            onSelect={onSelectQuest}
+                            isSelectable={isQuestSelectable}
                             className="mt-1.5"
                         />
                     </div>
@@ -127,6 +134,8 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                         <QuestList
                             quests={weeklyQuests}
                             label="This week's quests"
+                            onSelect={onSelectQuest}
+                            isSelectable={isQuestSelectable}
                             className="mt-1.5"
                         />
                     </div>
