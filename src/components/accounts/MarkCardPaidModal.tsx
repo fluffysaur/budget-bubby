@@ -5,7 +5,7 @@
  */
 
 import { useState, type FormEvent } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ExternalLink } from "lucide-react";
 import {
     AnimatedModal,
     ModalHeader,
@@ -18,6 +18,7 @@ import { Alert } from "../ui/Alert";
 import { financeService } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
 import { formatDisplayDate } from "../../lib/dateUtils";
+import { getBankDeepLink, openBankApp } from "../../lib/bankDeepLinks";
 import type { CardCycle } from "../../lib/creditCardCycles";
 
 export interface MarkCardPaidModalProps {
@@ -66,6 +67,13 @@ function MarkCardPaidForm({
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
+    const bankConfig = getBankDeepLink(cycle.card.bank);
+
+    const handleQuickZero = () => {
+        setAmount("0");
+        setError(null);
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         const parsed = parseFloat(amount);
@@ -76,12 +84,14 @@ function MarkCardPaidForm({
         setError(null);
         setSaving(true);
         try {
+            const isZero = parsed === 0;
+            const defaultNotes = isZero ? "No spend" : null;
             await financeService.upsertCreditCardStatement({
                 card_id: cycle.card.id,
                 month: cycle.month,
                 statement_amount: Math.round(parsed * 100) / 100,
                 due_date: cycle.dueDate,
-                notes: cycle.statement?.notes ?? null,
+                notes: cycle.statement?.notes ?? defaultNotes,
                 is_paid: true,
                 paid_at: new Date().toISOString(),
             });
@@ -113,20 +123,58 @@ function MarkCardPaidForm({
             />
             <ModalBody className="p-5 space-y-4">
                 {error && <Alert variant="danger">{error}</Alert>}
-                <Input
-                    id="paid-amount"
-                    label="Amount Paid"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    min="0"
-                    mono
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="e.g. 842.50"
-                    required
-                    autoFocus
-                />
+
+                {bankConfig && (
+                    <div className="flex items-center justify-between gap-3 p-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
+                        <div className="min-w-0 flex-1">
+                            <span className="block text-xs font-bold text-(--text-ink)">
+                                Check statement in {bankConfig.bankName}
+                            </span>
+                            <span className="block text-[11px] font-medium text-(--text-muted) truncate">
+                                Open mobile app or portal
+                            </span>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => openBankApp(cycle.card.bank)}
+                            className="shrink-0 text-xs gap-1.5"
+                        >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            <span>Open App</span>
+                        </Button>
+                    </div>
+                )}
+
+                <div className="space-y-2">
+                    <Input
+                        id="paid-amount"
+                        label="Amount Paid"
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        mono
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="e.g. 842.50"
+                        required
+                        autoFocus
+                    />
+                    <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-bold text-(--text-muted)">
+                            Card had no activity?
+                        </span>
+                        <button
+                            type="button"
+                            onClick={handleQuickZero}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border-2 border-(--border-ink) bg-(--pastel-lilac) hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 text-(--text-ink) shadow-cute-sm transition-press cursor-pointer"
+                        >
+                            $0 (No Spend)
+                        </button>
+                    </div>
+                </div>
             </ModalBody>
             <ModalFooter className="justify-end gap-2">
                 <Button variant="secondary" type="button" onClick={onClose}>
