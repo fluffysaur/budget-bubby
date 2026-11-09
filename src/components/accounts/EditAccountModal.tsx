@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Pencil, AlertCircle, Check } from "lucide-react";
+import { Pencil, AlertCircle, Check, Trash2 } from "lucide-react";
 import {
     AnimatedModal,
     ModalHeader,
@@ -27,6 +27,8 @@ export interface EditAccountModalProps {
     account: Account | null;
     members: HouseholdMember[];
     onAccountUpdated?: (updatedAccount: Account) => void;
+    /** Called when the user chooses Delete; the parent owns the confirmation. */
+    onDelete?: (account: Account) => void;
 }
 
 export function EditAccountModal({
@@ -35,6 +37,7 @@ export function EditAccountModal({
     account,
     members,
     onAccountUpdated,
+    onDelete,
 }: EditAccountModalProps) {
     const updateAccountMutation = useUpdateAccountMutation();
     const [name, setName] = useState("");
@@ -235,6 +238,18 @@ export function EditAccountModal({
                 </ModalBody>
 
                 <ModalFooter>
+                    {onDelete && account && (
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            className="mr-auto"
+                            onClick={() => onDelete(account)}
+                            disabled={isSubmitting}
+                            leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                        >
+                            Delete
+                        </Button>
+                    )}
                     <Button
                         variant="ghost"
                         onClick={onClose}

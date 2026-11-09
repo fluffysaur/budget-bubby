@@ -34,15 +34,10 @@ describe("App Integration & Routing", () => {
     it("renders header, sidebar, and default Dashboard page", async () => {
         render(<App initialEntries={["/"]} />);
 
-        // Header perspective buttons and badges
-        const perspectiveNav = screen.getByRole("navigation", {
-            name: /Perspective Switcher/i,
-        });
+        // Header perspective dropdown defaults to Combined
         expect(
-            within(perspectiveNav).getByRole("button", {
-                name: /Combined Household/i,
-            }),
-        ).toBeInTheDocument();
+            screen.getByRole("button", { name: /Select Financial Perspective/i }),
+        ).toHaveTextContent("Combined");
 
         // Desktop sidebar navigation
         const sidebarNav = screen.getByRole("navigation", { name: "Sidebar" });
@@ -169,28 +164,24 @@ describe("App Integration & Routing", () => {
         unmountRecurring();
     });
 
-    it("switches financial perspective when header pills are clicked", async () => {
+    it("switches financial perspective from the header dropdown", async () => {
         render(<App initialEntries={["/"]} />);
 
-        const perspectiveNav = screen.getByRole("navigation", {
-            name: /Perspective Switcher/i,
+        const trigger = screen.getByRole("button", {
+            name: /Select Financial Perspective/i,
         });
-        const yijiaBtn = within(perspectiveNav).getByRole("button", {
-            name: /Yi Jia/i,
-        });
-        fireEvent.click(yijiaBtn);
+        fireEvent.click(trigger);
+        fireEvent.click(screen.getByRole("option", { name: /Yi Jia/i }));
 
         await waitFor(() => {
-            expect(yijiaBtn).toHaveAttribute("aria-pressed", "true");
+            expect(trigger).toHaveTextContent("Yi Jia");
         });
 
-        const householdBtn = within(perspectiveNav).getByRole("button", {
-            name: /Combined/i,
-        });
-        fireEvent.click(householdBtn);
+        fireEvent.click(trigger);
+        fireEvent.click(screen.getByRole("option", { name: /Combined/i }));
 
         await waitFor(() => {
-            expect(householdBtn).toHaveAttribute("aria-pressed", "true");
+            expect(trigger).toHaveTextContent("Combined");
         });
     });
 

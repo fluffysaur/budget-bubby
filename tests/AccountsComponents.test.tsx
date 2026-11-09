@@ -602,6 +602,23 @@ describe("AccountsPage", () => {
         });
     });
 
+    describe("EditAccountModal delete action", () => {
+        it("hands the account to onDelete from the footer Delete button", () => {
+            const onDelete = vi.fn();
+            render(
+                <EditAccountModal
+                    isOpen={true}
+                    account={sampleAccounts[0]}
+                    onClose={vi.fn()}
+                    onDelete={onDelete}
+                    members={[]}
+                />,
+            );
+            fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+            expect(onDelete).toHaveBeenCalledWith(sampleAccounts[0]);
+        });
+    });
+
     describe("DeleteAccountModal", () => {
         it("warns about snapshot deletion and deletes account on confirmation", async () => {
             const onAccountDeleted = vi.fn();

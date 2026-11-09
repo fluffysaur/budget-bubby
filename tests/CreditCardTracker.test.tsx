@@ -470,6 +470,36 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(hsbc?.credit_limit).toBe(8000);
         });
 
+        it("offers Delete only when editing a card and hands the card to onDelete", async () => {
+            const onDelete = vi.fn();
+            const cards = await financeService.getCreditCards();
+            const card = cards[0];
+
+            const { rerender } = render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={testMembers}
+                    onDelete={onDelete}
+                />,
+            );
+            expect(
+                screen.queryByRole("button", { name: "Delete" }),
+            ).not.toBeInTheDocument();
+
+            rerender(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    card={card}
+                    members={testMembers}
+                    onDelete={onDelete}
+                />,
+            );
+            fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+            expect(onDelete).toHaveBeenCalledWith(card);
+        });
+
         it("allows clearing and retyping billing day and due day (Issue #79)", async () => {
             const onCardSaved = vi.fn();
             const onClose = vi.fn();

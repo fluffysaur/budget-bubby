@@ -464,7 +464,7 @@ export function GoalsPage({
                 <div
                     id="goals-tabpanel"
                     role="tabpanel"
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    className="grid grid-cols-1 xl:grid-cols-2 gap-6"
                 >
                     <AnimatePresence initial={false}>
                         {displayedGoals.map((goal) => (

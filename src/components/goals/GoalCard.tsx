@@ -186,11 +186,11 @@ export function GoalCard({
                         <span className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                             Total Saved
                         </span>
-                        <div className="font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
+                        <div className="flex flex-wrap items-baseline gap-x-1.5 font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
                             <span title={formatSGD(totalSaved)}>
                                 <CurrencyText amount={totalSaved} />
                             </span>
-                            <span className="text-xs font-bold text-(--text-muted) ml-1.5">
+                            <span className="text-xs font-bold text-(--text-muted)">
                                 of <CurrencyText amount={targetAmount} />
                             </span>
                         </div>
@@ -394,7 +394,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onSpendFromGoal?.(goal)}
                     aria-label={`+ Spend from ${goal.title}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
+                    className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) px-3 py-2 text-xs font-black shadow-cute-sm hover:bg-(--text-ink) hover:text-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
                 >
                     <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
                     <span>Spend</span>
@@ -405,7 +405,7 @@ export function GoalCard({
                     type="button"
                     onClick={() => onQuickDeposit?.(goal)}
                     aria-label={`Deposit to ${goal.title}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
+                    className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
                 >
                     <Coins
                         className="h-3.5 w-3.5 text-emerald-800 shrink-0"
