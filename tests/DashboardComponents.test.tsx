@@ -20,6 +20,7 @@ import {
 } from "../src/components/dashboard/UpcomingBillsWidget";
 import { LeftToSpendHero } from "../src/components/dashboard/LeftToSpendHero";
 import { CategoryMeterCard } from "../src/components/dashboard/CategoryMeterCard";
+import { DashboardSkeleton } from "../src/components/ui/PageSkeletons";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { financeService } from "../src/services/financeService";
 import type {
@@ -608,6 +609,22 @@ describe("DashboardPage", () => {
             expect(screen.getByTestId("left-to-spend-amount")).toHaveClass(
                 "text-(--accent-coral-ink)",
             );
+        });
+
+        it("keeps two meter columns on tablet and goes four-up only at lg", () => {
+            render(<LeftToSpendHero summary={mockSummary} />);
+            const grid = screen.getByText("Groceries").closest(".grid");
+            expect(grid).toHaveClass("grid-cols-2", "lg:grid-cols-4");
+            expect(grid).not.toHaveClass("sm:grid-cols-4");
+        });
+
+        it("matches the hero breakpoint in the dashboard skeleton", () => {
+            render(<DashboardSkeleton />);
+            const grid = screen
+                .getByTestId("dashboard-skeleton")
+                .querySelector(".grid-cols-2");
+            expect(grid).toHaveClass("lg:grid-cols-4");
+            expect(grid).not.toHaveClass("sm:grid-cols-4");
         });
 
         it("renders CategoryMeterCard with correct tone and content", () => {

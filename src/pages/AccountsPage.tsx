@@ -252,10 +252,6 @@ export function AccountsPage({
                                         setAccountToEdit(acc);
                                         setIsEditModalOpen(true);
                                     }}
-                                    onDeleteAccount={(acc) => {
-                                        setAccountToDelete(acc);
-                                        setIsDeleteModalOpen(true);
-                                    }}
                                     onAddAccount={() => setIsAddModalOpen(true)}
                                 />
                             </>
@@ -298,6 +294,12 @@ export function AccountsPage({
                 members={members}
                 onAccountUpdated={async () => {
                     invalidateAccounts();
+                }}
+                onDelete={(acc) => {
+                    setIsEditModalOpen(false);
+                    setAccountToEdit(null);
+                    setAccountToDelete(acc);
+                    setIsDeleteModalOpen(true);
                 }}
             />
 

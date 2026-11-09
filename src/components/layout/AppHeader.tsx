@@ -1,7 +1,7 @@
 /**
  * Responsive Application Header
  * Features:
- * - Unified dropdown perspective switcher (mobile & desktop): Combined + dynamic household members
+ * - Unified dropdown perspective switcher (all viewports): Combined + dynamic household members
  * - Aligned horizontal spacing (px-4 sm:px-6)
  * - Connection status: Demo Mock vs Live Supabase
  * - Theme toggle: Light / Dark mode
@@ -209,10 +209,10 @@ export function AppHeader({
             className={`sticky top-0 z-40 w-full border-b-2 border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
         >
             <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
-                {/* Left: Perspective Switcher (Mobile Dropdown & Desktop Pills) */}
+                {/* Left: Perspective Switcher (dropdown at every viewport) */}
                 <div className="flex items-center">
-                    {/* Mobile Perspective Dropdown */}
-                    <div className="relative sm:hidden" ref={dropdownRef}>
+                    {/* Perspective Dropdown */}
+                    <div className="relative" ref={dropdownRef}>
                         <button
                             type="button"
                             onClick={() => setIsDropdownOpen((prev) => !prev)}
@@ -273,7 +273,7 @@ export function AppHeader({
                                     })}
 
                                     {/* Mobile Settings & Utilities section */}
-                                    <div className="mt-2 pt-2 border-t-2 border-(--border-subtle) space-y-1">
+                                    <div className="mt-2 pt-2 border-t-2 border-(--border-subtle) space-y-1 lg:hidden">
                                         <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
                                             Settings &amp; Tools
                                         </div>
@@ -388,43 +388,6 @@ export function AppHeader({
                             )}
                         </AnimatePresence>
                     </div>
-
-                    {/* Desktop Perspective Switcher Pills */}
-                    <nav
-                        aria-label="Perspective Switcher"
-                        className="hidden sm:flex items-center rounded-2xl bg-(--bg-cream) border-2 border-(--border-subtle) p-1"
-                    >
-                        {perspectiveOptions.map((opt) => {
-                            const isSelected = perspective === opt.key;
-                            return (
-                                <button
-                                    key={opt.key}
-                                    type="button"
-                                    onClick={() =>
-                                        handleSelectPerspective(opt.key)
-                                    }
-                                    aria-pressed={isSelected}
-                                    aria-label={
-                                        opt.label === "Combined"
-                                            ? "Combined Household"
-                                            : opt.label
-                                    }
-                                    className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-press sm:text-xs cursor-pointer ${
-                                        isSelected
-                                            ? opt.activeBg
-                                            : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-card)/60"
-                                    }`}
-                                >
-                                    <span>{opt.label}</span>
-                                    {opt.label === "Combined" && (
-                                        <span className="sr-only">
-                                            Household
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </nav>
                 </div>
 
                 {/* Right: Badges, Quick Add & Desktop Settings */}

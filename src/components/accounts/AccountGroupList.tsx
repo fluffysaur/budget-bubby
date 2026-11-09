@@ -23,7 +23,6 @@ import {
     X,
     LayoutGrid,
     List,
-    Trash2,
     Settings,
     Plus,
 } from "lucide-react";
@@ -43,7 +42,6 @@ export interface AccountGroupListProps {
         newBalance: number,
     ) => Promise<void>;
     onEditAccount?: (account: Account) => void;
-    onDeleteAccount?: (account: Account) => void;
     onAddAccount?: () => void;
     className?: string;
 }
@@ -95,7 +93,6 @@ export function AccountGroupList({
     onUpdateBalance,
     onQuickSaveBalance,
     onEditAccount,
-    onDeleteAccount,
     onAddAccount,
     className = "",
 }: AccountGroupListProps) {
@@ -348,9 +345,6 @@ export function AccountGroupList({
                                                     onEditAccount={
                                                         onEditAccount
                                                     }
-                                                    onDeleteAccount={
-                                                        onDeleteAccount
-                                                    }
                                                 />
                                             </m.div>
                                         ))}
@@ -500,10 +494,7 @@ export function AccountGroupList({
                                                                     className="inline-flex items-center gap-1 rounded-lg border border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-[11px] font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
                                                                 >
                                                                     <Pencil className="h-3 w-3" />
-                                                                    <span className="hidden sm:inline">
-                                                                        Update
-                                                                        Balance
-                                                                    </span>
+                                                                    <span>Update</span>
                                                                 </button>
                                                                 {onEditAccount && (
                                                                     <button
@@ -518,21 +509,6 @@ export function AccountGroupList({
                                                                         className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
                                                                     >
                                                                         <Settings className="h-3 w-3" />
-                                                                    </button>
-                                                                )}
-                                                                {onDeleteAccount && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            onDeleteAccount(
-                                                                                account,
-                                                                            )
-                                                                        }
-                                                                        aria-label={`Delete ${account.name}`}
-                                                                        title="Delete account"
-                                                                        className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-coral-light) hover:text-rose-600 cursor-pointer transition-colors"
-                                                                    >
-                                                                        <Trash2 className="h-3 w-3" />
                                                                     </button>
                                                                 )}
                                                             </>

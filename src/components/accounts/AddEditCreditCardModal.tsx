@@ -17,6 +17,7 @@ import {
     Calendar,
     DollarSign,
     Palette,
+    Trash2,
     User,
 } from "lucide-react";
 import {
@@ -42,6 +43,8 @@ export interface AddEditCreditCardModalProps {
     members: HouseholdMember[];
     defaultOwnerId?: string;
     onCardSaved?: () => void;
+    /** Called when the user chooses Delete; the parent owns the confirmation. */
+    onDelete?: (card: CreditCardType) => void;
 }
 
 const PRESET_COLORS = [
@@ -74,6 +77,7 @@ export function AddEditCreditCardModal({
     members,
     defaultOwnerId,
     onCardSaved,
+    onDelete,
 }: AddEditCreditCardModalProps) {
     const isEditing = Boolean(card);
 
@@ -451,6 +455,18 @@ export function AddEditCreditCardModal({
                 </ModalBody>
 
                 <ModalFooter>
+                    {isEditing && card && onDelete && (
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            className="mr-auto"
+                            onClick={() => onDelete(card)}
+                            disabled={isSubmitting}
+                            leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                        >
+                            Delete
+                        </Button>
+                    )}
                     <Button
                         variant="ghost"
                         onClick={onClose}

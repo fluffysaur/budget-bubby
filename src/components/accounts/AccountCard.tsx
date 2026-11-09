@@ -14,7 +14,6 @@ import {
     Layers,
     Pencil,
     Clock,
-    Trash2,
     Settings,
 } from "lucide-react";
 import type { Account, AccountType } from "../../types/finance";
@@ -27,7 +26,6 @@ export interface AccountCardProps {
     account: Account;
     onUpdateBalance?: (account: Account) => void;
     onEditAccount?: (account: Account) => void;
-    onDeleteAccount?: (account: Account) => void;
     className?: string;
 }
 
@@ -65,7 +63,6 @@ export function AccountCard({
     account,
     onUpdateBalance,
     onEditAccount,
-    onDeleteAccount,
     className = "",
 }: AccountCardProps) {
     const typeStyle = getTypeBadgeStyles(account.type);
@@ -117,7 +114,7 @@ export function AccountCard({
                         </div>
                     </div>
 
-                    {/* Quick Edit & Delete Actions */}
+                    {/* Quick Edit Action */}
                     <div className="flex items-center gap-1 shrink-0">
                         {onEditAccount && (
                             <button
@@ -128,17 +125,6 @@ export function AccountCard({
                                 className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                             >
                                 <Settings className="h-3.5 w-3.5" />
-                            </button>
-                        )}
-                        {onDeleteAccount && (
-                            <button
-                                type="button"
-                                onClick={() => onDeleteAccount(account)}
-                                aria-label={`Delete ${account.name}`}
-                                title="Delete"
-                                className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         )}
                     </div>
@@ -182,7 +168,7 @@ export function AccountCard({
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-(--text-ink) bg-(--pastel-lilac-light) border border-(--border-ink) shadow-cute-sm hover:bg-(--pastel-lilac) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
                 >
                     <Pencil className="h-3 w-3" strokeWidth={2.5} />
-                    <span>Update Balance</span>
+                    <span>Update</span>
                 </button>
             </div>
         </div>

@@ -88,7 +88,7 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
             {/* Per-category meters */}
             {summary.categories.length > 0 && (
                 <div className="mt-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                         {displayedCategories.map((cat) => (
                             <CategoryMeterCard
                                 key={cat.id}

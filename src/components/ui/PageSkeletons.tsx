@@ -40,7 +40,7 @@ export function DashboardSkeleton({ className = "" }: PageSkeletonProps) {
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="mt-3 h-9 w-48" />
                 <Skeleton className="mt-3 h-2.5 w-full rounded-full" />
-                <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="mt-3.5 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
                     {Array.from({ length: 4 }, (_, i) => (
                         <SkeletonTile key={i} />
                     ))}

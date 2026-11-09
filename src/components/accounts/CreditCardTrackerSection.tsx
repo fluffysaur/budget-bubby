@@ -16,7 +16,6 @@ import {
     CheckCircle2,
     AlertTriangle,
     Pencil,
-    Trash2,
     ChevronLeft,
     ChevronRight,
     ReceiptText,
@@ -472,7 +471,7 @@ export function CreditCardTrackerSection({
                     </div>
                 ) : (
                     <div
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                        className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4"
                         data-testid="credit-card-list"
                     >
                         <AnimatePresence initial={false}>
@@ -586,18 +585,6 @@ export function CreditCardTrackerSection({
                                                         className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Delete ${card.name}`}
-                                                        onClick={() =>
-                                                            setCardToDelete(
-                                                                card,
-                                                            )
-                                                        }
-                                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-rose-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
                                             </div>
@@ -822,7 +809,7 @@ export function CreditCardTrackerSection({
                                                         className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
                                                     >
                                                         <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
-                                                        <span>Mark Paid</span>
+                                                        <span>Paid</span>
                                                     </button>
                                                     <button
                                                         type="button"
@@ -855,6 +842,10 @@ export function CreditCardTrackerSection({
                 members={members}
                 defaultOwnerId={activeMemberId}
                 onCardSaved={invalidateCreditCards}
+                onDelete={(card) => {
+                    setIsAddEditCardOpen(false);
+                    setCardToDelete(card);
+                }}
             />
 
             {/* Log / Edit Statement Modal */}
