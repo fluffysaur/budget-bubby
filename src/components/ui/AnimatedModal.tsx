@@ -11,6 +11,7 @@ import React, {
 import { createPortal } from "react-dom";
 import { X, AlertCircle } from "lucide-react";
 import { Button } from "./Button";
+import { ScrollArea } from "./ScrollArea";
 import {
     checkContainerDirty,
     findScrollableAncestor,
@@ -755,16 +756,20 @@ export function ModalHeader({
 export interface ModalBodyProps {
     children: React.ReactNode;
     className?: string;
+    /** Opt in to soft fade masks at the top/bottom edges while content overflows. */
+    scrollFade?: boolean;
 }
 
-export function ModalBody({ children, className = "" }: ModalBodyProps) {
-    return (
-        <div
-            className={`flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 ${className}`}
-        >
-            {children}
-        </div>
-    );
+export function ModalBody({
+    children,
+    className = "",
+    scrollFade = false,
+}: ModalBodyProps) {
+    const classes = `flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 ${className}`;
+    if (scrollFade) {
+        return <ScrollArea className={classes}>{children}</ScrollArea>;
+    }
+    return <div className={classes}>{children}</div>;
 }
 
 export interface ModalFooterProps {

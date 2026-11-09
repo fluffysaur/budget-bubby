@@ -39,6 +39,7 @@ import {
 import { syncPushSubscription } from "../../lib/pushSubscription";
 import { Button } from "../ui/Button";
 import { TruncatedText } from "../ui/TruncatedText";
+import { ScrollArea } from "../ui/ScrollArea";
 import { financeService } from "../../services/financeService";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
@@ -607,9 +608,9 @@ export function NotificationCenterPopover({
                         </div>
 
                         {/* Reminders List */}
-                        <div className="mt-3 max-h-80 overflow-y-auto space-y-2.5 pr-0.5">
+                        <ScrollArea className="mt-3 max-h-80 space-y-2.5 pr-0.5">
                             {renderRemindersList()}
-                        </div>
+                        </ScrollArea>
                     </m.div>
                 )}
             </AnimatePresence>
@@ -665,9 +666,9 @@ export function NotificationCenterPopover({
                                 </div>
 
                                 {/* Mobile Body Content */}
-                                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-12">
+                                <ScrollArea className="flex-1 px-4 py-4 space-y-3 pb-12">
                                     {renderRemindersList()}
-                                </div>
+                                </ScrollArea>
                             </m.div>
                         )}
                     </AnimatePresence>,
