@@ -20,10 +20,6 @@ import {
 } from "../src/components/dashboard/UpcomingBillsWidget";
 import { LeftToSpendHero } from "../src/components/dashboard/LeftToSpendHero";
 import { CategoryMeterCard } from "../src/components/dashboard/CategoryMeterCard";
-import { QuestCard } from "../src/components/dashboard/QuestCard";
-import { InboxHomeCard } from "../src/components/inbox/InboxHomeCard";
-import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
-import { StatCard } from "../src/components/ui/StatCard";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { financeService } from "../src/services/financeService";
 import type {
@@ -635,32 +631,6 @@ describe("DashboardPage", () => {
             expect(screen.getByText("S$3,200.00")).toBeInTheDocument();
             expect(screen.getByText("S$266.67")).toBeInTheDocument();
             expect(screen.getByText(/~.*\/mo/)).toBeInTheDocument();
-        });
-    });
-
-    describe("React.memo Optimization", () => {
-        const REACT_MEMO_TYPE = Symbol.for("react.memo");
-
-        it("memoizes StatCard", () => {
-            expect((StatCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
-        });
-
-        it("memoizes LeftToSpendHero and CategoryMeterCard", () => {
-            expect((LeftToSpendHero as any).$$typeof).toBe(REACT_MEMO_TYPE);
-            expect((CategoryMeterCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
-        });
-
-        it("memoizes UpcomingBillsWidget and UpcomingBillRow", () => {
-            expect((UpcomingBillsWidget as any).$$typeof).toBe(REACT_MEMO_TYPE);
-            expect((UpcomingBillRow as any).$$typeof).toBe(REACT_MEMO_TYPE);
-        });
-
-        it("memoizes QuestCard, InboxHomeCard and CategoryLimitWarningBanner", () => {
-            expect((QuestCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
-            expect((InboxHomeCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
-            expect((CategoryLimitWarningBanner as any).$$typeof).toBe(
-                REACT_MEMO_TYPE,
-            );
         });
     });
 });

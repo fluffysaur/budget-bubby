@@ -21,7 +21,7 @@ export interface StatCardProps {
     loading?: boolean;
 }
 
-export const StatCard = React.memo(function StatCard({
+export function StatCard({
     title,
     value,
     subtitle,
@@ -106,7 +106,6 @@ export const StatCard = React.memo(function StatCard({
             )}
         </Card>
     );
-});
-StatCard.displayName = "StatCard";
+}
 
 export default StatCard;
