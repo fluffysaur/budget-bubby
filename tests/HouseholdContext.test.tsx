@@ -15,6 +15,7 @@ import {
 } from "../src/context/HouseholdContext";
 import { AppHeader } from "../src/components/layout/AppHeader";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
+import { SettingsProvider } from "../src/context/SettingsContext";
 import { MobileBottomNav } from "../src/components/layout/MobileBottomNav";
 
 function TestConsumer() {
@@ -208,7 +209,9 @@ describe("Layout Components", () => {
                 render(
                     <MemoryRouter>
                         <HouseholdProvider>
-                            <AppHeader />
+                            <SettingsProvider>
+                                <AppHeader />
+                            </SettingsProvider>
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
@@ -264,7 +267,11 @@ describe("Layout Components", () => {
                 render(
                     <MemoryRouter>
                         <HouseholdProvider>
-                            <AppHeader onOpenQuickAdd={handleOpenQuickAdd} />
+                            <SettingsProvider>
+                                <AppHeader
+                                    onOpenQuickAdd={handleOpenQuickAdd}
+                                />
+                            </SettingsProvider>
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
@@ -292,7 +299,9 @@ describe("Layout Components", () => {
                 render(
                     <MemoryRouter>
                         <HouseholdProvider>
-                            <AppHeader />
+                            <SettingsProvider>
+                                <AppHeader />
+                            </SettingsProvider>
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
@@ -330,16 +339,16 @@ describe("Layout Components", () => {
             const onSelectTab = vi.fn((tab: string) => {
                 selectedTab = tab;
             });
-            const openSettingsSpy = vi.fn();
-            window.addEventListener("openSettings", openSettingsSpy);
 
             await act(async () => {
                 render(
                     <HouseholdProvider>
-                        <DesktopSidebar
-                            activeTab={selectedTab}
-                            onSelectTab={onSelectTab}
-                        />
+                        <SettingsProvider>
+                            <DesktopSidebar
+                                activeTab={selectedTab}
+                                onSelectTab={onSelectTab}
+                            />
+                        </SettingsProvider>
                     </HouseholdProvider>,
                 );
             });
@@ -361,9 +370,13 @@ describe("Layout Components", () => {
                 name: /^settings$/i,
             });
             expect(settingsBtn).toBeInTheDocument();
-            fireEvent.click(settingsBtn);
-            expect(openSettingsSpy).toHaveBeenCalled();
-            window.removeEventListener("openSettings", openSettingsSpy);
+            await act(async () => {
+                fireEvent.click(settingsBtn);
+            });
+            // Settings modal opens via context, with no header mounted
+            expect(
+                await screen.findByRole("heading", { name: "Settings" }),
+            ).toBeInTheDocument();
 
             const refreshBtn = screen.getByRole("button", {
                 name: /^refresh$/i,

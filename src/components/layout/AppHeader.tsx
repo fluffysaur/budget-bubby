@@ -28,7 +28,7 @@ import { mockMembers } from "../../data/mockSeedData";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
-import { NotificationSettingsModal } from "./NotificationSettingsModal";
+import { useSettings } from "../../context/SettingsContext";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
@@ -106,14 +106,7 @@ export function AppHeader({
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-    // Other screens (e.g. the Inbox empty state) can open Settings
-    useEffect(() => {
-        const open = () => setIsSettingsOpen(true);
-        window.addEventListener("openSettings", open);
-        return () => window.removeEventListener("openSettings", open);
-    }, []);
+    const { openSettings } = useSettings();
     const [isRefreshing, setIsRefreshing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -282,7 +275,7 @@ export function AppHeader({
                                             data-testid="mobile-settings-btn"
                                             onClick={() => {
                                                 setIsDropdownOpen(false);
-                                                setIsSettingsOpen(true);
+                                                openSettings();
                                             }}
                                             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                                         >
@@ -443,12 +436,6 @@ export function AppHeader({
             <IOSInstallModal
                 isOpen={showIOSModal}
                 onClose={() => setShowIOSModal(false)}
-            />
-
-            {/* Notification & App Settings Modal */}
-            <NotificationSettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
             />
         </header>
     );

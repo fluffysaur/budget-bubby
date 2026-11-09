@@ -12,6 +12,7 @@ import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, Inbox, Pencil, Trash2 } from "lucide-react";
 import { useLoggedInMember } from "../hooks/useLoggedInMember";
+import { useSettings } from "../context/SettingsContext";
 import {
     useAllExpensesQuery,
     useCategoriesQuery,
@@ -96,6 +97,7 @@ interface ItemView {
 
 export function InboxPage() {
     const queryClient = useQueryClient();
+    const { openSettings } = useSettings();
     const { me, members } = useLoggedInMember();
     const { data, isLoading, refetch } = useInboxQuery();
     const { data: categoriesData } = useCategoriesQuery();
@@ -556,11 +558,7 @@ export function InboxPage() {
                             <Button
                                 type="button"
                                 variant="primary"
-                                onClick={() =>
-                                    window.dispatchEvent(
-                                        new Event("openSettings"),
-                                    )
-                                }
+                                onClick={openSettings}
                             >
                                 Set Up
                             </Button>
