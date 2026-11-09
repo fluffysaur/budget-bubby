@@ -12,6 +12,13 @@ describe("MeterBar", () => {
         expect(bar).toHaveAttribute("aria-valuemax", "100");
     });
 
+    it("uses the dedicated meter track token for the unfilled track", () => {
+        render(<MeterBar value={50} max={100} />);
+        expect(screen.getByRole("progressbar")).toHaveClass(
+            "bg-(--meter-track)",
+        );
+    });
+
     it("automatically derives spend tone from percentage", () => {
         const { rerender } = render(<MeterBar value={50} max={100} />);
         let fill = screen.getByRole("progressbar").firstElementChild;

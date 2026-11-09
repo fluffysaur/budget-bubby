@@ -47,7 +47,7 @@ export const MeterBar: React.FC<MeterBarProps> = ({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label={ariaLabel ?? "Spending progress"}
-            className={`relative w-full rounded-full bg-(--bg-canvas) border border-(--border-ink)/30 overflow-hidden ${SIZE_CLASSES[size]} ${className}`}
+            className={`relative w-full rounded-full bg-(--meter-track) border border-(--border-ink)/30 overflow-hidden ${SIZE_CLASSES[size]} ${className}`}
         >
             <div
                 className={`h-full rounded-full progress-fill ${TONE_FILL_CLASSES[computedTone]}`}
