@@ -183,7 +183,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
         it("celebrates when a statement is marked paid, not when un-paid", async () => {
             const milestone = vi
                 .spyOn(feedback, "milestone")
-                .mockImplementation(() => undefined);
+                .mockReturnValue("milestone");
 
             render(
                 <CreditCardTrackerSection
