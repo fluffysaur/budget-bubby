@@ -37,6 +37,7 @@ import { DeleteExpenseModal } from "./DeleteExpenseModal";
 import { TruncatedText } from "../ui/TruncatedText";
 import { ExpenseRowsSkeleton } from "../ui/PageSkeletons";
 import { Select } from "../ui/Select";
+import { AvatarDot } from "../ui/AvatarDot";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
 import { Button } from "../ui/Button";
@@ -601,10 +602,17 @@ export function ExpenseListTable({
                                                     {/* Payer Avatar / Name */}
                                                     <td className="order-5 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap mr-1.5 sm:mr-0">
                                                         <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-(--text-ink)">
-                                                            <span className="text-xs">
-                                                                {payer?.avatar_url ||
-                                                                    "👤"}
-                                                            </span>
+                                                            <AvatarDot
+                                                                name={
+                                                                    payer?.display_name ||
+                                                                    "Unknown"
+                                                                }
+                                                                avatarUrl={
+                                                                    payer?.avatar_url
+                                                                }
+                                                                size="xs"
+                                                                decorative
+                                                            />
                                                             <span className="text-[10px] sm:text-xs">
                                                                 {payer?.display_name ||
                                                                     "Unknown"}

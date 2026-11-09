@@ -25,3 +25,7 @@ export * from "./MeterBar";
 export * from "./ProgressRing";
 export * from "./Sparkline";
 export * from "./DeltaBadge";
+export * from "./AvatarDot";
+export * from "./CalendarStrip";
+export * from "./StackedBar";
+export * from "./StatRow";

@@ -1,25 +1,49 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES } from "../../lib/moneyStyles";
 import { TooltipPopover } from "./TooltipPopover";
 import { Card, type CardVariant } from "./Card";
 import { SkeletonLine, SkeletonStatValue } from "./Skeleton";
 
+export type StatCardTone =
+    | "default"
+    | "ok"
+    | "near"
+    | "over"
+    | "lilac"
+    | "mint"
+    | "butter"
+    | "coral";
+
 export interface StatCardProps {
-    title: React.ReactNode;
-    value: React.ReactNode;
-    subtitle?: React.ReactNode;
-    tooltip?: React.ReactNode;
+    title: ReactNode;
+    value: ReactNode;
+    subtitle?: ReactNode;
+    tooltip?: ReactNode;
     tooltipTitle?: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
     iconBg?: string;
-    badge?: React.ReactNode;
-    footer?: React.ReactNode;
+    badge?: ReactNode;
+    footer?: ReactNode;
     variant?: CardVariant;
     className?: string;
     onClick?: () => void;
     /** Renders skeleton placeholders for value/subtitle/footer while data loads. */
     loading?: boolean;
+    /** Semantic pastel tone for the card icon background. */
+    tone?: StatCardTone;
 }
+
+const TONE_ICON_BG: Record<StatCardTone, string> = {
+    default:
+        "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
+    lilac: "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
+    mint: "bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-(--pastel-mint)",
+    ok: "bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-(--pastel-mint)",
+    butter: "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
+    near: "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
+    coral: "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
+    over: "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
+};
 
 export function StatCard({
     title,
@@ -28,15 +52,20 @@ export function StatCard({
     tooltip,
     tooltipTitle,
     icon,
-    iconBg = "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
+    iconBg,
     badge,
     footer,
     variant = "white",
     className = "",
     onClick,
     loading = false,
+    tone,
 }: StatCardProps) {
     const Component = onClick ? "button" : "div";
+
+    const effectiveIconBg = tone
+        ? (TONE_ICON_BG[tone] ?? TONE_ICON_BG.default)
+        : (iconBg ?? TONE_ICON_BG.default);
 
     return (
         <Card
@@ -72,13 +101,13 @@ export function StatCard({
                             </TooltipPopover>
                         )}
                     </div>
-                    {icon && (
+                    {icon ? (
                         <div
-                            className={`p-1.5 sm:p-2 rounded-xl border-2 border-(--border-ink) shadow-cute-sm shrink-0 ${iconBg}`}
+                            className={`p-1.5 sm:p-2 rounded-xl border-2 border-(--border-ink) shadow-cute-sm shrink-0 ${effectiveIconBg}`}
                         >
                             {icon}
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between gap-1 sm:gap-2 flex-wrap min-w-0">
