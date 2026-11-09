@@ -10,6 +10,7 @@ import {
     checkInboxReminder,
     checkBalanceUpdateReminder,
     checkCreditCardDueReminders,
+    checkPendingCreditCardDueReminders,
     checkMissingCreditCardStatements,
     checkPartnerSharedSpendReminders,
     checkSettlementReminder,
@@ -195,6 +196,13 @@ export async function computeRemindersFrom(
     if (prefs.cc_payment_due) {
         candidates.push(
             ...checkCreditCardDueReminders(
+                statements,
+                todayStr,
+                ccDueDays,
+                memberId,
+            ),
+            ...checkPendingCreditCardDueReminders(
+                cards,
                 statements,
                 todayStr,
                 ccDueDays,

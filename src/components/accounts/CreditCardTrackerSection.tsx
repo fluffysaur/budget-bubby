@@ -62,6 +62,8 @@ import {
     useInvalidateFinance,
 } from "../../hooks/useFinanceQueries";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
+import { MarkCardPaidModal } from "./MarkCardPaidModal";
+import { getCardCycle, type CardCycle } from "../../lib/creditCardCycles";
 import type {
     CreditCard,
     CreditCardStatement,
@@ -170,6 +172,9 @@ export function CreditCardTrackerSection({
     const [stmtNotesInput, setStmtNotesInput] = useState<string>("");
     const [stmtError, setStmtError] = useState<string | null>(null);
     const [isSavingStmt, setIsSavingStmt] = useState<boolean>(false);
+
+    // Mark Paid modal (cycles with no logged statement)
+    const [cycleToPay, setCycleToPay] = useState<CardCycle | null>(null);
 
     // Delete card confirmation
     const [cardToDelete, setCardToDelete] = useState<CreditCard | null>(null);
@@ -483,6 +488,21 @@ export function CreditCardTrackerSection({
                                           stmt.paid_at,
                                       )
                                     : null;
+                                // No logged statement: show dates computed from card config
+                                const pendingCycle = stmt
+                                    ? null
+                                    : getCardCycle(
+                                          card,
+                                          selectedMonth,
+                                          null,
+                                          getTodayDateString(),
+                                      );
+                                const pendingStatus = pendingCycle
+                                    ? getRelativeDueLabel(
+                                          pendingCycle.dueDate,
+                                          false,
+                                      )
+                                    : null;
 
                                 return (
                                     <m.div
@@ -709,8 +729,38 @@ export function CreditCardTrackerSection({
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <div className="py-2 text-center text-xs text-(--text-muted)">
-                                                        No statement
+                                                    <div
+                                                        className="flex items-center justify-between gap-2 py-1"
+                                                        data-testid={`credit-card-pending-${card.id}`}
+                                                    >
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="text-xs font-bold text-(--text-muted)">
+                                                                Pending
+                                                            </div>
+                                                            <div className="text-[11px] text-(--text-muted)">
+                                                                Statement{" "}
+                                                                {formatDisplayDate(
+                                                                    pendingCycle!
+                                                                        .statementDate,
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <Badge
+                                                            variant={
+                                                                pendingStatus!
+                                                                    .isOverdue
+                                                                    ? "over"
+                                                                    : "due"
+                                                            }
+                                                            size="sm"
+                                                            className="shrink-0"
+                                                            title={`Due ${formatDisplayDate(pendingCycle!.dueDate)}`}
+                                                        >
+                                                            {
+                                                                pendingStatus!
+                                                                    .label
+                                                            }
+                                                        </Badge>
                                                     </div>
                                                 )}
                                             </div>
@@ -760,19 +810,33 @@ export function CreditCardTrackerSection({
                                                     </button>
                                                 </>
                                             ) : (
-                                                <button
-                                                    type="button"
-                                                    aria-label={`Log statement for ${card.name}`}
-                                                    onClick={() =>
-                                                        handleOpenLogStatement(
-                                                            card,
-                                                        )
-                                                    }
-                                                    className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer"
-                                                >
-                                                    <Plus className="h-3.5 w-3.5 stroke-3" />
-                                                    <span>Log</span>
-                                                </button>
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Mark ${card.name} statement as Paid`}
+                                                        onClick={() =>
+                                                            setCycleToPay(
+                                                                pendingCycle,
+                                                            )
+                                                        }
+                                                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
+                                                    >
+                                                        <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
+                                                        <span>Mark Paid</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Log statement for ${card.name}`}
+                                                        onClick={() =>
+                                                            handleOpenLogStatement(
+                                                                card,
+                                                            )
+                                                        }
+                                                        className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
+                                                    >
+                                                        Edit Statement
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </m.div>
@@ -909,6 +973,12 @@ export function CreditCardTrackerSection({
                     </ModalFooter>
                 </form>
             </AnimatedModal>
+
+            <MarkCardPaidModal
+                cycle={cycleToPay}
+                onClose={() => setCycleToPay(null)}
+                onPaid={invalidateCreditCards}
+            />
 
             {/* Delete Card Confirmation Modal */}
             {cardToDelete && (

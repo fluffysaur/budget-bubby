@@ -192,10 +192,10 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         expect(reminders[0]).toMatchObject({
             id: "reminder-cc-missing-cc-test-1-2026-10",
             type: "credit_card_missing_stmt",
-            title: "DBS Altitude Statement Needed",
+            title: "DBS Altitude Statement Ready",
             message: "Cycle closed on day 15.",
             severity: "info",
-            actionLabel: "Add Statement",
+            actionLabel: "View Bill",
             actionType: "view_cc",
         });
     });
@@ -309,7 +309,7 @@ describe("credit card missing-statement & statement-date reminders (Issue #81)",
         expect(missingOnStmtDate).toHaveLength(1);
         expect(missingOnStmtDate[0].type).toBe("credit_card_missing_stmt");
         expect(missingOnStmtDate[0].title).toBe(
-            "DBS Altitude Statement Needed",
+            "DBS Altitude Statement Ready",
         );
 
         // Phase 2: User logs statement for Oct (due 2026-11-05)
