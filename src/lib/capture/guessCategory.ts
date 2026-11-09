@@ -6,7 +6,7 @@
  */
 
 import { guessCategoryId } from "../categoryGuess";
-import { isSpendableCategory } from "../financialFormulas";
+import { isLoggableCategory, isSpendableCategory } from "../financialFormulas";
 import { normalizeMerchant } from "./merchant";
 import { shiftIsoDate, toSgtDateTime } from "./sgTime";
 import type {
@@ -43,7 +43,9 @@ export function guessInboxCategory({
     recentExpenses,
     categories,
 }: GuessInput): InboxCategoryGuess {
-    const known = new Set(categories.map((c) => c.id));
+    const known = new Set(
+        categories.filter((c) => isLoggableCategory(c)).map((c) => c.id),
+    );
 
     const rule = rules.find(
         (r) => r.merchant_key === merchantKey && r.action === "categorise",
@@ -126,7 +128,9 @@ export function topCategoriesForMember(
         if (memberId && e.payer_id !== memberId) continue;
         counts.set(e.category_id, (counts.get(e.category_id) ?? 0) + 1);
     }
-    const spendable = categories.filter((c) => isSpendableCategory(c));
+    const spendable = categories.filter(
+        (c) => isSpendableCategory(c) && isLoggableCategory(c),
+    );
     const ranked = [...spendable].sort(
         (a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0),
     );

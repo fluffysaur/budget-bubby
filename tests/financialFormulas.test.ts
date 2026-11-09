@@ -7,6 +7,11 @@ import {
     calculateGoalPacing,
     calculateSpendablePacing,
     detectUnspentMonthEndSurplus,
+    isBufferCategory,
+    isSavingsCategory,
+    isLoggableCategory,
+    computeBufferRemainder,
+    computeSavingsBreakdown,
 } from "../src/lib/financialFormulas";
 import type { Expense, Category } from "../src/types/finance";
 
@@ -749,5 +754,63 @@ describe("financialFormulas", () => {
             expect(result.surplusAmount).toBe(675);
             expect(result.lastMonth).toBe("2026-09");
         });
+    });
+});
+
+describe("buffer and savings helpers", () => {
+    const cat = (name: string, group?: "spendable" | "allocation") => ({
+        id: name,
+        household_id: "hh",
+        name,
+        color: "#000",
+        icon: "tag",
+        is_system: false,
+        group,
+    });
+
+    it("recognises Buffer and Savings by name", () => {
+        expect(isBufferCategory(cat("Buffer"))).toBe(true);
+        expect(isBufferCategory("  buffer ")).toBe(true);
+        expect(isBufferCategory(cat("Food"))).toBe(false);
+        expect(isSavingsCategory(cat("Savings"))).toBe(true);
+        expect(isSavingsCategory("Emergency Savings")).toBe(true);
+        expect(isSavingsCategory(cat("Investments"))).toBe(false);
+        expect(isSavingsCategory(null)).toBe(false);
+    });
+
+    it("excludes only Savings from loggable categories", () => {
+        expect(isLoggableCategory(cat("Savings", "allocation"))).toBe(false);
+        expect(isLoggableCategory(cat("Buffer", "spendable"))).toBe(true);
+        expect(isLoggableCategory(cat("Tithing", "allocation"))).toBe(true);
+    });
+
+    it("computes the buffer remainder, clamped at zero", () => {
+        expect(computeBufferRemainder([40, 30, 10])).toBe(20);
+        expect(computeBufferRemainder([])).toBe(100);
+        expect(computeBufferRemainder([70, 40])).toBe(0);
+        expect(computeBufferRemainder([33.3333, 33.3333])).toBeCloseTo(
+            33.3334,
+            4,
+        );
+    });
+
+    it("splits savings into base, excess and total", () => {
+        expect(
+            computeSavingsBreakdown({
+                baseSavings: 500,
+                spendableAllocated: 2000,
+                spendableSpent: 1500,
+            }),
+        ).toEqual({ base: 500, excess: 500, total: 1000 });
+    });
+
+    it("lets excess go negative when spending exceeds the spendable cap", () => {
+        expect(
+            computeSavingsBreakdown({
+                baseSavings: 500,
+                spendableAllocated: 2000,
+                spendableSpent: 2300,
+            }),
+        ).toEqual({ base: 500, excess: -300, total: 200 });
     });
 });

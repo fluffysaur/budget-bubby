@@ -1,7 +1,10 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { TruncatedText } from "../../ui/TruncatedText";
-import { isSpendableCategory } from "../../../lib/financialFormulas";
+import {
+    isLoggableCategory,
+    isSpendableCategory,
+} from "../../../lib/financialFormulas";
 import type { BulkAction, BulkRow } from "../../../lib/bulkAddRows";
 import type { Category, SavingsGoal } from "../../../types/finance";
 
@@ -23,13 +26,18 @@ interface CategoryChipProps {
 export const CategoryChip = memo(function CategoryChip({
     row,
     index,
-    categories,
+    categories: allCategories,
     goals,
     dispatch,
     hasError,
     disabled,
     className = "",
 }: CategoryChipProps) {
+    // Savings is a target, not a spending bucket: never offer it for logging.
+    const categories = useMemo(
+        () => allCategories.filter((c) => isLoggableCategory(c)),
+        [allCategories],
+    );
     const [open, setOpen] = useState(false);
     const [showAll, setShowAll] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);

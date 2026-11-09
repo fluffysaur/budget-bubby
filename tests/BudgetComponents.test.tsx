@@ -498,18 +498,46 @@ describe("BaseProfileEditorModal", () => {
             />,
         );
 
-        // Find the food percentage input and change it from 15% to 50% so sum becomes 135%
+        // Buffer absorbs the remainder, so only over-allocating the other
+        // categories past 100% can make the total invalid.
         const foodInput = screen.getByLabelText(/food/i);
-        fireEvent.change(foodInput, { target: { value: "50" } });
+        fireEvent.change(foodInput, { target: { value: "100" } });
 
-        // Should indicate invalid total percentage (e.g. 135%)
-        expect(screen.getByText(/135%/)).toBeInTheDocument();
+        expect(screen.queryByText(/total:\s*100%/i)).not.toBeInTheDocument();
 
         const saveBtn = screen.getByRole("button", {
             name: /save profile|save budget|save changes|^save$/i,
         });
         // Should be disabled or error indicated
         expect(saveBtn).toBeDisabled();
+    });
+
+    it("treats Buffer as the dynamic remainder when other allocations change", () => {
+        render(
+            <BaseProfileEditorModal
+                isOpen={true}
+                onClose={vi.fn()}
+                profile={profile}
+                allocations={allocations}
+                categories={mockCategories}
+            />,
+        );
+
+        const bufferInput = screen.getByLabelText(
+            /buffer/i,
+        ) as HTMLInputElement;
+        const before = parseFloat(bufferInput.value);
+        expect(bufferInput).toBeDisabled();
+
+        // Raise Food by 5 points: Buffer gives up exactly 5 and the total holds
+        const foodInput = screen.getByLabelText(/food/i) as HTMLInputElement;
+        const foodBefore = parseFloat(foodInput.value);
+        fireEvent.change(foodInput, {
+            target: { value: String(foodBefore + 5) },
+        });
+
+        expect(parseFloat(bufferInput.value)).toBeCloseTo(before - 5, 1);
+        expect(screen.getByText(/total:\s*100%/i)).toBeInTheDocument();
     });
 
     it("updates base profile and allocations when form is valid and submitted", async () => {

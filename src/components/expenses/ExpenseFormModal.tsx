@@ -36,7 +36,10 @@ import {
     formatDisplayDate,
     getCurrentSingaporeTime,
 } from "../../lib/dateUtils";
-import { isSpendableCategory } from "../../lib/financialFormulas";
+import {
+    isLoggableCategory,
+    isSpendableCategory,
+} from "../../lib/financialFormulas";
 import { mockCategories, mockMembers } from "../../data/mockSeedData";
 import {
     SUPPORTED_CURRENCIES,
@@ -214,13 +217,18 @@ export function ExpenseFormModal({
         [propCategories, isMockMode],
     );
 
-    const spendableCategories = useMemo(
-        () => categories.filter((c) => isSpendableCategory(c)),
+    // Savings is a target, not a spending bucket: it can't be logged against.
+    const loggableCategories = useMemo(
+        () => categories.filter((c) => isLoggableCategory(c)),
         [categories],
     );
+    const spendableCategories = useMemo(
+        () => loggableCategories.filter((c) => isSpendableCategory(c)),
+        [loggableCategories],
+    );
     const allocationCategories = useMemo(
-        () => categories.filter((c) => !isSpendableCategory(c)),
-        [categories],
+        () => loggableCategories.filter((c) => !isSpendableCategory(c)),
+        [loggableCategories],
     );
 
     // Split default: explicit prop, else the last split used, else Shared in Combined / Personal otherwise
@@ -238,7 +246,7 @@ export function ExpenseFormModal({
     // Item & Category State
     const [item, setItem] = useState<string>("");
     const [categoryId, setCategoryId] = useState<string>(
-        spendableCategories[0]?.id || categories[0]?.id || "",
+        spendableCategories[0]?.id || loggableCategories[0]?.id || "",
     );
     const [categoryManuallySelected, setCategoryManuallySelected] =
         useState<boolean>(false);
@@ -338,7 +346,10 @@ export function ExpenseFormModal({
             }
             if (values.item) {
                 setItem(values.item);
-                const guessed = guessCategoryId(values.item, categories);
+                const guessed = guessCategoryId(
+                    values.item,
+                    loggableCategories,
+                );
                 if (guessed) setCategoryId(guessed);
             }
             if (values.category_id) {
@@ -351,7 +362,7 @@ export function ExpenseFormModal({
             if (values.time) setTime(values.time);
             if (values.remarks) setRemarks(values.remarks);
         },
-        [categories],
+        [loggableCategories],
     );
 
     // Reset form and sync recent tags on open
@@ -405,7 +416,7 @@ export function ExpenseFormModal({
             setCustomExchangeRate(undefined);
             setItem("");
             setCategoryId(
-                spendableCategories[0]?.id || categories[0]?.id || "",
+                spendableCategories[0]?.id || loggableCategories[0]?.id || "",
             );
             setCategoryManuallySelected(false);
             setShowMoreCategories(false);
@@ -465,16 +476,16 @@ export function ExpenseFormModal({
     );
 
     const visibleCategories = showMoreCategories
-        ? categories
+        ? loggableCategories
         : spendableCategories.length > 0
           ? spendableCategories
-          : categories;
+          : loggableCategories;
 
     // Auto-detect category from description text if user hasn't explicitly chosen one
     const handleItemTextChange = (text: string) => {
         setItem(text);
         if (!categoryManuallySelected) {
-            const guessed = guessCategoryId(text, categories);
+            const guessed = guessCategoryId(text, loggableCategories);
             if (guessed) setCategoryId(guessed);
         }
     };

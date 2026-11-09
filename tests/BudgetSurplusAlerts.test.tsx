@@ -498,9 +498,10 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         fireEvent.click(screen.getByRole("button", { name: "Close tooltip" }));
 
         // Verify category lock toggle buttons exist
+        // (Buffer is the derived remainder, so it has no lock toggle)
         const lockButtons = screen.getAllByTitle(/lock /i);
         expect(lockButtons.length).toBeGreaterThanOrEqual(
-            mockCategories.length,
+            mockCategories.length - 1,
         );
     }, 45000);
 

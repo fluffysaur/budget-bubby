@@ -57,6 +57,8 @@ import {
     dollarToPercentage,
     parseAllocationInput,
     isSpendableCategory,
+    isBufferCategory,
+    computeBufferRemainder,
     autoBalanceAllocations,
 } from "../../lib/financialFormulas";
 import { isValidUuid } from "../../lib/uuid";
@@ -166,7 +168,8 @@ export function BaseProfileEditorModal({
     ]);
 
     // Category percentages mapped by categoryId: string (e.g. "15", "6.9633", "")
-    const [categoryPercentages, setCategoryPercentages] = useState<
+    // Raw inputs; Buffer is derived below, so its entry here is ignored.
+    const [percentageInputs, setCategoryPercentages] = useState<
         Record<string, string>
     >({});
     // Explicit dollar amounts when set via $ (e.g. "300") so they stay fixed across disposable pool updates
@@ -181,6 +184,21 @@ export function BaseProfileEditorModal({
     const [lockedCategories, setLockedCategories] = useState<
         Record<string, boolean>
     >({});
+    // Buffer is the dynamic remainder: 100% minus every other allocation.
+    const bufferCategoryId = useMemo(
+        () => localCategories.find((c) => isBufferCategory(c))?.id ?? null,
+        [localCategories],
+    );
+    const categoryPercentages = useMemo(() => {
+        if (!bufferCategoryId) return percentageInputs;
+        const others = localCategories
+            .filter((c) => c.id !== bufferCategoryId)
+            .map((c) => parseFloat(percentageInputs[c.id] || "0") || 0);
+        return {
+            ...percentageInputs,
+            [bufferCategoryId]: String(computeBufferRemainder(others)),
+        };
+    }, [bufferCategoryId, localCategories, percentageInputs]);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -296,7 +314,10 @@ export function BaseProfileEditorModal({
         const result = autoBalanceAllocations<string>(
             localCategories.map((c) => c.id),
             categoryPercentages,
-            lockedCategories,
+            // Buffer is derived, so hold it fixed while the rest rebalance.
+            bufferCategoryId
+                ? { ...lockedCategories, [bufferCategoryId]: true }
+                : lockedCategories,
             true,
         );
 
@@ -352,6 +373,7 @@ export function BaseProfileEditorModal({
 
     // Handle editing directly in S$/mo box
     const handleDollarChange = (categoryId: string, rawDollarVal: string) => {
+        if (categoryId === bufferCategoryId) return;
         setCategoryDollarOverrides((prev) => ({
             ...prev,
             [categoryId]: rawDollarVal,
@@ -384,6 +406,7 @@ export function BaseProfileEditorModal({
         rawVal: string,
         isFocused = false,
     ) => {
+        if (categoryId === bufferCategoryId) return;
         const parsed = parseAllocationInput(rawVal, currentDisposablePool);
 
         if (parsed.isDollar) {
@@ -1111,9 +1134,11 @@ export function BaseProfileEditorModal({
                                             rawVal === ""
                                                 ? 0
                                                 : parseFloat(rawVal) || 0;
-                                        const isLocked = Boolean(
-                                            lockedCategories[cat.id],
-                                        );
+                                        const isBuffer =
+                                            cat.id === bufferCategoryId;
+                                        const isLocked =
+                                            !isBuffer &&
+                                            Boolean(lockedCategories[cat.id]);
                                         const dollarEquivalent =
                                             Math.round(
                                                 currentDisposablePool *
@@ -1131,36 +1156,38 @@ export function BaseProfileEditorModal({
                                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                         {/* Category Lock Toggle */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                toggleCategoryLock(
-                                                                    cat.id,
-                                                                )
-                                                            }
-                                                            title={
-                                                                isLocked
-                                                                    ? `Unlock ${cat.name}`
-                                                                    : `Lock ${cat.name}`
-                                                            }
-                                                            aria-label={
-                                                                isLocked
-                                                                    ? "Unlock category"
-                                                                    : "Lock category"
-                                                            }
-                                                            data-testid={`lock-${cat.id}`}
-                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-press cursor-pointer shrink-0 ${
-                                                                isLocked
-                                                                    ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
-                                                                    : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"
-                                                            }`}
-                                                        >
-                                                            {isLocked ? (
-                                                                <Lock className="h-3.5 w-3.5" />
-                                                            ) : (
-                                                                <Unlock className="h-3.5 w-3.5" />
-                                                            )}
-                                                        </button>
+                                                        {!isBuffer && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    toggleCategoryLock(
+                                                                        cat.id,
+                                                                    )
+                                                                }
+                                                                title={
+                                                                    isLocked
+                                                                        ? `Unlock ${cat.name}`
+                                                                        : `Lock ${cat.name}`
+                                                                }
+                                                                aria-label={
+                                                                    isLocked
+                                                                        ? "Unlock category"
+                                                                        : "Lock category"
+                                                                }
+                                                                data-testid={`lock-${cat.id}`}
+                                                                className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-press cursor-pointer shrink-0 ${
+                                                                    isLocked
+                                                                        ? "bg-(--pastel-butter) text-(--text-ink) shadow-cute-sm"
+                                                                        : "bg-(--bg-cream) text-(--text-muted) hover:text-(--text-ink)"
+                                                                }`}
+                                                            >
+                                                                {isLocked ? (
+                                                                    <Lock className="h-3.5 w-3.5" />
+                                                                ) : (
+                                                                    <Unlock className="h-3.5 w-3.5" />
+                                                                )}
+                                                            </button>
+                                                        )}
 
                                                         <span
                                                             className="h-2.5 w-2.5 rounded-full shrink-0 border border-(--border-ink)"
@@ -1175,6 +1202,11 @@ export function BaseProfileEditorModal({
                                                         >
                                                             {cat.name}
                                                         </label>
+                                                        {isBuffer && (
+                                                            <span className="text-[10px] font-bold text-(--text-ink) bg-(--bg-cream) px-2 py-0.5 rounded-full border border-(--border-ink) shrink-0">
+                                                                Remainder
+                                                            </span>
+                                                        )}
                                                         {isLocked && (
                                                             <TooltipPopover
                                                                 title="Category Lock"
@@ -1299,6 +1331,9 @@ export function BaseProfileEditorModal({
                                                                     )
                                                                 }
                                                                 aria-label="Monthly dollar amount"
+                                                                disabled={
+                                                                    isBuffer
+                                                                }
                                                                 title={`Monthly dollar amount for ${cat.name}`}
                                                                 className="w-16 text-right text-base sm:text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
                                                             />
@@ -1311,6 +1346,9 @@ export function BaseProfileEditorModal({
                                                         <div className="relative w-20">
                                                             <input
                                                                 id={`cat-alloc-${cat.id}`}
+                                                                disabled={
+                                                                    isBuffer
+                                                                }
                                                                 type="text"
                                                                 inputMode="decimal"
                                                                 placeholder="0"
@@ -1392,6 +1430,7 @@ export function BaseProfileEditorModal({
                                                         max="100"
                                                         step="0.1"
                                                         aria-label="Allocation slider"
+                                                        disabled={isBuffer}
                                                         data-testid={`slider-${cat.id}`}
                                                         value={currentPct}
                                                         onValueChange={(v) =>
