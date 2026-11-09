@@ -349,6 +349,11 @@ export function DashboardPage({
                         recurringItems={recurringItems}
                         creditCardStatements={creditCardStatements}
                         onViewAll={() => onNavigateTab?.("recurring")}
+                        onOpenCard={
+                            onNavigateTab
+                                ? () => onNavigateTab("accounts")
+                                : undefined
+                        }
                     />
                 </div>
             )}

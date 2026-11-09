@@ -384,6 +384,41 @@ describe("UpcomingBillsWidget", () => {
         expect(names).toEqual(["Late Card", "Sooner Card", "Later Card"]);
     });
 
+    it("makes card rows tappable when onOpenCard is given", () => {
+        const onOpenCard = vi.fn();
+        render(
+            <UpcomingBillsWidget
+                recurringItems={[]}
+                onOpenCard={onOpenCard}
+                creditCardStatements={[
+                    {
+                        id: "t",
+                        card_id: "card-t",
+                        household_id: "hh-001",
+                        month: "2026-11",
+                        statement_amount: 100,
+                        due_date: "2026-11-27",
+                        is_paid: false,
+                        card: {
+                            id: "card-t",
+                            household_id: "hh-001",
+                            owner_id: "mem-001",
+                            name: "Tap Card",
+                            bank: "Test Bank",
+                            billing_day: 1,
+                            due_day: 20,
+                            color: "#000000",
+                            is_active: true,
+                        },
+                    },
+                ]}
+                referenceDate={new Date(2026, 10, 25)}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /Tap Card/ }));
+        expect(onOpenCard).toHaveBeenCalledTimes(1);
+    });
+
     it("hides card statements with nothing to pay", () => {
         render(
             <UpcomingBillsWidget

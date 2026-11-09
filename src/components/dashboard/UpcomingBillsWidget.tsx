@@ -36,6 +36,8 @@ export interface UpcomingBillsWidgetProps {
     /** Credit card statements; unpaid ones are listed by due date. */
     creditCardStatements?: CreditCardStatement[];
     onViewAll?: () => void;
+    /** Called when a credit card row is tapped (e.g. open Accounts). */
+    onOpenCard?: () => void;
     onAdd?: () => void;
     className?: string;
     /** Overrides "today" (Singapore time) for due-date calculations. */
@@ -46,6 +48,7 @@ export function UpcomingBillsWidget({
     recurringItems = [],
     creditCardStatements = [],
     onViewAll,
+    onOpenCard,
     onAdd,
     className = "",
     referenceDate,
@@ -162,11 +165,10 @@ export function UpcomingBillsWidget({
                                 const dueText = overdue
                                     ? `Overdue by ${-days} day${days === -1 ? "" : "s"}`
                                     : formatDueInDays(days);
-                                return (
-                                    <div
-                                        key={`cc-${stmt.id}`}
-                                        className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)"
-                                    >
+                                const rowClass =
+                                    "flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)";
+                                const content = (
+                                    <>
                                         <div className="flex items-center gap-3 min-w-0 flex-1">
                                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
                                                 <CreditCard
@@ -215,6 +217,23 @@ export function UpcomingBillsWidget({
                                                 size="md"
                                             />
                                         </div>
+                                    </>
+                                );
+                                return onOpenCard ? (
+                                    <button
+                                        key={`cc-${stmt.id}`}
+                                        type="button"
+                                        onClick={onOpenCard}
+                                        className={`${rowClass} w-full text-left cursor-pointer`}
+                                    >
+                                        {content}
+                                    </button>
+                                ) : (
+                                    <div
+                                        key={`cc-${stmt.id}`}
+                                        className={rowClass}
+                                    >
+                                        {content}
                                     </div>
                                 );
                             }
