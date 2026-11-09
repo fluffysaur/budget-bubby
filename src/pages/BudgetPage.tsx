@@ -37,7 +37,10 @@ import { formatSGD } from "../lib/currency";
 import { getCurrentMonth } from "../lib/dateUtils";
 import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
 import { isValidUuid } from "../lib/uuid";
-import { isSpendableCategory } from "../lib/financialFormulas";
+import {
+    isSavingsCategory,
+    isSpendableCategory,
+} from "../lib/financialFormulas";
 import {
     mockBaseProfiles,
     mockBaseAllocations,
@@ -49,6 +52,7 @@ import { CategoriesHeader } from "../components/budget/CategoriesHeader";
 import { CategoryProgressList } from "../components/budget/CategoryProgressList";
 import { BaseProfileEditorModal } from "../components/budget/BaseProfileEditorModal";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
+import { SavingsBreakdownCard } from "../components/budget/SavingsBreakdownCard";
 import { CumulativeSurplusCard } from "../components/budget/CumulativeSurplusCard";
 import { UncategorizedRecurringRow } from "../components/budget/UncategorizedRecurringRow";
 import type { BaseBudgetProfile } from "../types/finance";
@@ -238,6 +242,10 @@ export function BudgetPage({
         0,
     );
     const spendableRemaining = spendableAllocated - spendableSpent;
+    const savingsCats = allocationCats.filter((c) =>
+        isSavingsCategory(c.category),
+    );
+    const baseSavings = savingsCats.reduce((s, c) => s + c.allocated_amount, 0);
 
     return (
         <div
@@ -425,6 +433,14 @@ export function BudgetPage({
                             }
                             perspective={perspective}
                         />
+
+                        {savingsCats.length > 0 && (
+                            <SavingsBreakdownCard
+                                baseSavings={baseSavings}
+                                spendableAllocated={spendableAllocated}
+                                spendableSpent={spendableSpent}
+                            />
+                        )}
 
                         {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
                         {allocationCats.length > 0 && (

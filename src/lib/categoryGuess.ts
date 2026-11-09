@@ -1,4 +1,5 @@
 import type { Category } from "../types/finance";
+import { isLoggableCategory } from "./financialFormulas";
 
 export interface CategoryKeywordRule {
     keywords: string[];
@@ -123,5 +124,8 @@ export function guessCategoryId(
     text: string,
     categories: readonly Category[],
 ): string | undefined {
-    return guessCategory(text, categories)?.id;
+    return guessCategory(
+        text,
+        categories.filter((c) => isLoggableCategory(c)),
+    )?.id;
 }

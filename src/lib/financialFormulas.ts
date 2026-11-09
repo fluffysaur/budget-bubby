@@ -271,6 +271,60 @@ export function isSpendableCategory(
     return !ALLOCATION_NAME_HINTS.some((hint) => clean.includes(hint));
 }
 
+/** Name of a category or a bare name string; empty for null/UUID-only input. */
+function categoryNameOf(categoryOrName?: Category | string | null): string {
+    if (!categoryOrName) return "";
+    const name =
+        typeof categoryOrName === "object"
+            ? categoryOrName.name
+            : categoryOrName;
+    if (!name || looksLikeUuid(name)) return "";
+    return name.toLowerCase().trim();
+}
+
+/** Buffer is the dynamic remainder cushion; recognised by name, no migration needed. */
+export function isBufferCategory(
+    categoryOrName?: Category | string | null,
+): boolean {
+    return categoryNameOf(categoryOrName) === "buffer";
+}
+
+/** Savings is the budgeted savings target; recognised by name, no migration needed. */
+export function isSavingsCategory(
+    categoryOrName?: Category | string | null,
+): boolean {
+    return categoryNameOf(categoryOrName).includes("saving");
+}
+
+/** Categories an expense may be logged against: everything except Savings. */
+export function isLoggableCategory(
+    categoryOrName?: Category | string | null,
+): boolean {
+    return !isSavingsCategory(categoryOrName);
+}
+
+/** Buffer percentage = 100 - sum(other allocations), never below zero. */
+export function computeBufferRemainder(otherPercentages: number[]): number {
+    const sum = otherPercentages.reduce((acc, n) => acc + (n || 0), 0);
+    return Math.max(0, Math.round((100 - sum) * 10000) / 10000);
+}
+
+/**
+ * Savings = the budgeted base plus whatever spendable (incl. Buffer) money
+ * was left unspent. Excess is negative when spending beats the cap.
+ */
+export function computeSavingsBreakdown(input: {
+    baseSavings: number;
+    spendableAllocated: number;
+    spendableSpent: number;
+}): { base: number; excess: number; total: number } {
+    const base = Math.round(input.baseSavings * 100) / 100;
+    const excess =
+        Math.round((input.spendableAllocated - input.spendableSpent) * 100) /
+        100;
+    return { base, excess, total: Math.round((base + excess) * 100) / 100 };
+}
+
 /**
  * 8. Computes a member's effective share of an expense based on perspective and 50/50 split.
  * - In 'household' perspective: returns full expense amount.
