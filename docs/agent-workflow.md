@@ -10,6 +10,16 @@ Loaded on demand from [AGENTS.md](../AGENTS.md). Read before committing, branchi
 - Each commit, push, and PR needs its own approval. Approval for one does not carry over to the next.
 - History-altering or destructive git commands (`stash`, `reset`, `rebase`, `clean`, branch/worktree deletion) also need explicit approval.
 
+#### `--express` (standing approval for one invocation)
+
+Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, `raise-issue --express`), or starting a message with "express", is the user's explicit approval for the steps that skill names. It removes the "may I?" prompts only.
+
+- **Scope:** that one invocation (one issue, one branch). Later commits or pushes (e.g. after review comments) ask again unless `--express` is passed again.
+- **Still enforced:** the quality gate (C), the branching rules (B: no `main`, no force-push, never merge, no `--no-verify`), the public-repo privacy audit, approval for destructive git commands, and the `needs-db` confirmation. Any failure stops the run and is reported.
+- **Audit trail:** end with the PR/issue URL, a checks summary and a list of what was done unprompted (commit message, branch pushed, screenshots).
+- **Pickup:** the issue is confirmed once (naming an issue number counts as confirmation); the run then branches, implements, runs `npm run check`, commits, pushes, pushes PR screenshots to `chore/pr-screenshots` if UI changed, and opens the PR. It stops at the open PR.
+- **Raise:** skips the "create this issue?" gate. The draft is still printed, the duplicate check and privacy audit still run, and a duplicate match stops and asks.
+
 ### B. Branching
 
 - **Never commit or push directly to `main`.** Never force-push.

@@ -74,6 +74,8 @@ Present the candidate issue to the user:
 Ask for confirmation before altering git state:
 > "Would you like me to pick up **#<number>: <title>** on branch `<prefix>/<slug>`?"
 
+**`--express`** (see `docs/agent-workflow.md` §A): if an explicit issue number was passed, that counts as confirmation, so skip this question. Otherwise ask it once for the proposed issue. `needs-db` confirmation is still required.
+
 ---
 
 ## Step 3: Workspace & Branch Setup
@@ -119,6 +121,19 @@ Conclude the pickup phase by summarizing the work and proposing next steps:
 2. Pinpoint the files and lines identified in `Where`.
 3. Propose a reproduction test or TDD strategy.
 4. Present an implementation plan outline and wait for user guidance before modifying code.
+
+---
+
+## Step 6: Express Finish (only with `--express`)
+
+Without `--express`, stop after Step 5. With it, skip the wait in Step 5 and run through to an open PR, for this invocation only:
+
+1. Implement the issue (TDD where practical), keeping the diff minimal.
+2. Run `npm run check` (plus `npm run test:e2e` if UI flows changed). On any failure, stop and report; never use `--no-verify` or disable tests.
+3. Commit with a conventional message, then push the branch. Never touch `main`; never force-push.
+4. If the UI changed, capture before/after screenshots and push them to `chore/pr-screenshots` per agent-workflow §G (no personal data).
+5. Open the PR with `gh pr create`: what changed, why, how verified, `Closes #<number>`.
+6. Stop. Never merge. Report the PR URL, a checks summary, and an audit trail of what was done unprompted (commit message, branch pushed, screenshots).
 
 ---
 
