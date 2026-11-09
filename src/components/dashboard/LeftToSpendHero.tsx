@@ -56,6 +56,7 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
                         <CurrencyText
                             amount={summary.totalRemaining}
                             size="hero"
+                            animate
                         />
                     </div>
                     <span className="mt-1 block text-xs font-semibold text-(--text-muted) font-mono-num">

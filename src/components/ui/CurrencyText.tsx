@@ -1,5 +1,6 @@
 import React from "react";
 import { formatSGD } from "../../lib/currency";
+import { useTweenedNumber } from "../../hooks/useTweenedNumber";
 import {
     MONEY_BASE_CLASSES,
     MONEY_SIZE_CLASSES,
@@ -8,7 +9,11 @@ import {
 
 export type CurrencySize = MoneySize;
 export type CurrencyTone =
-    "inherit" | "default" | "positive" | "negative" | "muted";
+    | "inherit"
+    | "default"
+    | "positive"
+    | "negative"
+    | "muted";
 
 export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     amount?: number;
@@ -17,6 +22,8 @@ export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement>
     size?: CurrencySize;
     /** Defaults to inheriting the surrounding text colour. */
     tone?: CurrencyTone;
+    /** Whether to smoothly count up or down when amount changes. */
+    animate?: boolean;
 }
 
 const toneMap: Record<CurrencyTone, string> = {
@@ -33,10 +40,16 @@ export function CurrencyText({
     formatted,
     size = "inline",
     tone = "inherit",
+    animate = false,
     className = "",
     ...props
 }: CurrencyTextProps) {
-    const displayValue = formatted ?? formatSGD(amount ?? 0);
+    const tweenedAmount = useTweenedNumber(amount ?? 0, {
+        disabled: !animate || formatted !== undefined,
+    });
+    const finalAmount =
+        animate && formatted === undefined ? tweenedAmount : amount;
+    const displayValue = formatted ?? formatSGD(finalAmount ?? 0);
     const classes = [
         MONEY_BASE_CLASSES,
         MONEY_SIZE_CLASSES[size],
