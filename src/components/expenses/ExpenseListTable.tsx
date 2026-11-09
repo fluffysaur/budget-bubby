@@ -611,6 +611,7 @@ export function ExpenseListTable({
                                                                     payer?.avatar_url
                                                                 }
                                                                 size="xs"
+                                                                decorative
                                                             />
                                                             <span className="text-[10px] sm:text-xs">
                                                                 {payer?.display_name ||

@@ -24,7 +24,9 @@ describe("StatCard Visual Variants", () => {
                 sparkline={{ data: [10, 20, 15, 30, 25], tone: "ok" }}
             />,
         );
-        expect(screen.getByRole("img", { name: "Sparkline trend" })).toBeInTheDocument();
+        expect(
+            screen.getByRole("img", { name: "Sparkline trend" }),
+        ).toBeInTheDocument();
     });
 
     it("applies semantic pastel token when tone prop is passed", () => {
@@ -42,11 +44,7 @@ describe("StatCard Visual Variants", () => {
 
     it("applies compact styling when compact is true", () => {
         const { container } = render(
-            <StatCard
-                title="Spent"
-                value="S$240"
-                compact
-            />,
+            <StatCard title="Spent" value="S$240" compact />,
         );
         const inner = container.querySelector(".p-2\\.5");
         expect(inner).toBeInTheDocument();

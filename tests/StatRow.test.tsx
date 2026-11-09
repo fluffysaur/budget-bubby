@@ -14,8 +14,12 @@ describe("StatRow", () => {
         );
         expect(screen.getByTestId("icon")).toBeInTheDocument();
         expect(screen.getByText("28th")).toBeInTheDocument();
-        const container = screen.getByLabelText("Due Day: 28th");
-        expect(container).toHaveAttribute("title", "Due Day");
+        // Label is exposed to assistive tech even when visually hidden
+        expect(screen.getByText("Due Day")).toHaveClass("sr-only");
+        expect(screen.getByText("28th").parentElement).toHaveAttribute(
+            "title",
+            "Due Day",
+        );
     });
 
     it("displays visible text label when showLabel is true", () => {

@@ -39,11 +39,6 @@ export function StatRow({
     className = "",
 }: StatRowProps) {
     const toneCls = TONE_CLASSES[tone] ?? TONE_CLASSES.default;
-    const valueString =
-        typeof value === "string" || typeof value === "number"
-            ? String(value)
-            : "";
-    const accessibleLabel = valueString ? `${label}: ${valueString}` : label;
     const tooltipText = typeof tooltip === "string" ? tooltip : label;
 
     const textSizeCls = size === "md" ? "text-sm" : "text-xs";
@@ -52,7 +47,6 @@ export function StatRow({
     return (
         <div
             title={tooltipText}
-            aria-label={accessibleLabel}
             className={`inline-flex items-center gap-1.5 font-mono-num ${textSizeCls} text-(--text-muted) ${className}`}
         >
             <span
@@ -62,11 +56,15 @@ export function StatRow({
                 {icon}
             </span>
 
-            {showLabel && (
-                <span className="text-[11px] font-medium text-(--text-muted) truncate">
-                    {label}
-                </span>
-            )}
+            <span
+                className={
+                    showLabel
+                        ? "text-[11px] font-medium text-(--text-muted) truncate"
+                        : "sr-only"
+                }
+            >
+                {label}
+            </span>
 
             <span className={`font-bold ${toneCls} truncate`}>{value}</span>
         </div>

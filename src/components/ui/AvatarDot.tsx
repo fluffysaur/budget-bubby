@@ -24,6 +24,8 @@ export interface AvatarDotProps {
     ariaLabel?: string;
     /** Optional tooltip title. Defaults to name. */
     title?: string;
+    /** Hide from assistive tech when the name is already visible next to it. */
+    decorative?: boolean;
     className?: string;
 }
 
@@ -40,7 +42,8 @@ const TONE_CLASSES: Record<AvatarDotTone, string> = {
     butter: "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
     coral: "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
     pink: "bg-(--pastel-pink-light) text-pink-800 dark:bg-pink-950/40 dark:text-(--pastel-pink)",
-    neutral: "bg-(--bg-cream) text-(--text-ink) dark:bg-neutral-800 dark:text-(--text-ink)",
+    neutral:
+        "bg-(--bg-cream) text-(--text-ink) dark:bg-neutral-800 dark:text-(--text-ink)",
 };
 
 export function AvatarDot({
@@ -51,6 +54,7 @@ export function AvatarDot({
     border = true,
     ariaLabel,
     title,
+    decorative = false,
     className = "",
 }: AvatarDotProps) {
     const label = ariaLabel || name || "Avatar";
@@ -84,9 +88,10 @@ export function AvatarDot({
 
     return (
         <span
-            role="img"
-            aria-label={label}
-            title={tooltipTitle}
+            role={decorative ? undefined : "img"}
+            aria-label={decorative ? undefined : label}
+            aria-hidden={decorative ? true : undefined}
+            title={decorative ? undefined : tooltipTitle}
             className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold overflow-hidden transition-transform select-none ${sizeCls} ${toneCls} ${borderCls} ${className}`}
         >
             {content}

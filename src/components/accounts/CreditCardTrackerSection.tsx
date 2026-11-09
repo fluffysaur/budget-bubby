@@ -534,6 +534,7 @@ export function CreditCardTrackerSection({
                                                                             owner.avatar_url
                                                                         }
                                                                         size="xs"
+                                                                        decorative
                                                                     />
                                                                     <span className="font-semibold truncate whitespace-nowrap min-w-0">
                                                                         {
@@ -592,7 +593,9 @@ export function CreditCardTrackerSection({
                                                         <Calendar className="h-3.5 w-3.5" />
                                                     }
                                                     label="Due Day"
-                                                    value={ordinal(card.due_day)}
+                                                    value={ordinal(
+                                                        card.due_day,
+                                                    )}
                                                     showLabel
                                                 />
                                                 <span className="font-mono-num font-medium text-[11px]">
@@ -637,8 +640,8 @@ export function CreditCardTrackerSection({
                                                                             ? null
                                                                             : dueStatus?.isOverdue
                                                                               ? -1
-                                                                              : dueStatus?.daysDiff ??
-                                                                                null
+                                                                              : (dueStatus?.daysDiff ??
+                                                                                null)
                                                                     }
                                                                     status={
                                                                         stmt.is_paid
@@ -647,7 +650,9 @@ export function CreditCardTrackerSection({
                                                                               ? "overdue"
                                                                               : undefined
                                                                     }
-                                                                    totalDots={5}
+                                                                    totalDots={
+                                                                        5
+                                                                    }
                                                                     size="xs"
                                                                 />
                                                             </div>

@@ -75,7 +75,7 @@ export function StackedBar({
 }: StackedBarProps) {
     const positiveSegments = segments.filter((s) => s.value > 0);
     const sumValues = positiveSegments.reduce((acc, s) => acc + s.value, 0);
-    const effectiveTotal = (total && total > 0) ? total : sumValues;
+    const effectiveTotal = total && total > 0 ? total : sumValues;
     const heightCls = BAR_SIZE_CLASSES[size] ?? BAR_SIZE_CLASSES.sm;
 
     const defaultAriaLabel =
@@ -85,19 +85,22 @@ export function StackedBar({
     return (
         <div className={`w-full ${className}`}>
             <div
-                role="progressbar"
+                role="img"
                 aria-label={defaultAriaLabel}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={effectiveTotal > 0 ? 100 : 0}
                 className={`flex w-full overflow-hidden rounded-full border border-(--border-ink) bg-(--meter-track) select-none ${heightCls}`}
             >
                 {positiveSegments.map((seg, idx) => {
-                    const pct = effectiveTotal > 0 ? (seg.value / effectiveTotal) * 100 : 0;
+                    const pct =
+                        effectiveTotal > 0
+                            ? (seg.value / effectiveTotal) * 100
+                            : 0;
                     if (pct <= 0) return null;
 
-                    const toneKey = seg.tone ?? FALLBACK_TONES[idx % FALLBACK_TONES.length];
-                    const bgClass = seg.color || (TONE_CLASSES[toneKey] ?? TONE_CLASSES.lilac);
+                    const toneKey =
+                        seg.tone ?? FALLBACK_TONES[idx % FALLBACK_TONES.length];
+                    const bgClass =
+                        seg.color ||
+                        (TONE_CLASSES[toneKey] ?? TONE_CLASSES.lilac);
                     const tooltipText =
                         seg.tooltip ||
                         `${seg.label}: ${seg.value.toLocaleString()} (${Math.round(pct)}%)`;
@@ -107,8 +110,7 @@ export function StackedBar({
                             key={seg.id || `${seg.label}-${idx}`}
                             style={{ width: `${pct}%` }}
                             title={tooltipText}
-                            aria-label={tooltipText}
-                            className={`h-full border-r border-(--border-ink)/30 last:border-r-0 transition-all ${bgClass}`}
+                            className={`h-full border-r border-(--border-ink)/30 last:border-r-0 ${bgClass}`}
                         />
                     );
                 })}
@@ -117,9 +119,16 @@ export function StackedBar({
             {showLegend && positiveSegments.length > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                     {positiveSegments.map((seg, idx) => {
-                        const pct = effectiveTotal > 0 ? (seg.value / effectiveTotal) * 100 : 0;
-                        const toneKey = seg.tone ?? FALLBACK_TONES[idx % FALLBACK_TONES.length];
-                        const bgClass = seg.color || (TONE_CLASSES[toneKey] ?? TONE_CLASSES.lilac);
+                        const pct =
+                            effectiveTotal > 0
+                                ? (seg.value / effectiveTotal) * 100
+                                : 0;
+                        const toneKey =
+                            seg.tone ??
+                            FALLBACK_TONES[idx % FALLBACK_TONES.length];
+                        const bgClass =
+                            seg.color ||
+                            (TONE_CLASSES[toneKey] ?? TONE_CLASSES.lilac);
 
                         return (
                             <div

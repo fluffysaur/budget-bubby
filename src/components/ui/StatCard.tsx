@@ -57,20 +57,13 @@ export interface StatCardProps {
 const TONE_ICON_BG: Record<StatCardTone, string> = {
     default:
         "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
-    lilac:
-        "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
-    mint:
-        "bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-(--pastel-mint)",
-    ok:
-        "bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-(--pastel-mint)",
-    butter:
-        "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
-    near:
-        "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
-    coral:
-        "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
-    over:
-        "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
+    lilac: "bg-(--pastel-lilac-light) text-purple-700 dark:bg-purple-950/40 dark:text-(--pastel-lilac)",
+    mint: "bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-(--pastel-mint)",
+    ok: "bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-(--pastel-mint)",
+    butter: "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
+    near: "bg-(--pastel-butter-light) text-amber-800 dark:bg-amber-950/40 dark:text-(--pastel-butter)",
+    coral: "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
+    over: "bg-(--pastel-coral-light) text-rose-800 dark:bg-rose-950/40 dark:text-(--pastel-coral)",
 };
 
 export function StatCard({
@@ -95,12 +88,10 @@ export function StatCard({
     const Component = onClick ? "button" : "div";
 
     const effectiveIconBg = tone
-        ? TONE_ICON_BG[tone] ?? TONE_ICON_BG.default
-        : iconBg ?? TONE_ICON_BG.default;
+        ? (TONE_ICON_BG[tone] ?? TONE_ICON_BG.default)
+        : (iconBg ?? TONE_ICON_BG.default);
 
-    const paddingClasses = compact
-        ? "p-2.5 sm:p-3.5"
-        : "p-3 sm:p-5";
+    const paddingClasses = compact ? "p-2.5 sm:p-3.5" : "p-3 sm:p-5";
 
     const valueSizeClass = compact
         ? MONEY_SIZE_CLASSES.md

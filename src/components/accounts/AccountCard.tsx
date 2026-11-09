@@ -105,6 +105,7 @@ export function AccountCard({
                                             avatarUrl="👥"
                                             size="xs"
                                             border={false}
+                                            decorative
                                         />
                                         <span>Joint</span>
                                     </span>

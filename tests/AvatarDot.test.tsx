@@ -3,6 +3,15 @@ import { describe, it, expect } from "vitest";
 import { AvatarDot, AvatarDotGroup } from "../src/components/ui/AvatarDot";
 
 describe("AvatarDot", () => {
+    it("is hidden from assistive tech when decorative", () => {
+        const { container } = render(<AvatarDot name="Rachel" decorative />);
+        expect(screen.queryByRole("img")).not.toBeInTheDocument();
+        expect(container.firstElementChild).toHaveAttribute(
+            "aria-hidden",
+            "true",
+        );
+    });
+
     it("renders emoji avatar with accessible label", () => {
         render(
             <AvatarDot
@@ -58,10 +67,14 @@ describe("AvatarDot", () => {
 
     it("applies tone classes correctly", () => {
         const { rerender } = render(<AvatarDot name="A" tone="mint" />);
-        expect(screen.getByRole("img").className).toContain("pastel-mint-light");
+        expect(screen.getByRole("img").className).toContain(
+            "pastel-mint-light",
+        );
 
         rerender(<AvatarDot name="A" tone="coral" />);
-        expect(screen.getByRole("img").className).toContain("pastel-coral-light");
+        expect(screen.getByRole("img").className).toContain(
+            "pastel-coral-light",
+        );
     });
 });
 
@@ -74,11 +87,7 @@ describe("AvatarDotGroup", () => {
 
     it("renders group of avatars up to max count", () => {
         render(
-            <AvatarDotGroup
-                members={members}
-                max={2}
-                label="Shared 50/50"
-            />,
+            <AvatarDotGroup members={members} max={2} label="Shared 50/50" />,
         );
 
         expect(screen.getByText("👩")).toBeInTheDocument();

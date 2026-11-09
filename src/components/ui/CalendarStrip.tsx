@@ -1,11 +1,6 @@
 import type { ReactNode } from "react";
 
-export type CalendarStripStatus =
-    | "ok"
-    | "near"
-    | "urgent"
-    | "overdue"
-    | "paid";
+export type CalendarStripStatus = "ok" | "near" | "urgent" | "overdue" | "paid";
 
 export interface CalendarStripProps {
     /**
@@ -113,24 +108,25 @@ export function CalendarStrip({
 
     return (
         <div
-            role="meter"
-            aria-label={effectiveAriaLabel}
-            aria-valuenow={daysRemaining ?? undefined}
-            aria-valuemin={0}
-            aria-valuemax={totalDots}
-            title={effectiveAriaLabel}
             className={`inline-flex items-center gap-1.5 select-none ${className}`}
         >
-            <div className="flex items-center gap-1">
+            <div
+                role="img"
+                aria-label={effectiveAriaLabel}
+                title={effectiveAriaLabel}
+                className="flex items-center gap-1"
+            >
                 {Array.from({ length: totalDots }).map((_, i) => {
                     const isActive = i < activeDotsCount;
-                    const isTarget = i === activeDotsCount - 1 || (status === "urgent" && i === totalDots - 1);
+                    const isTarget =
+                        i === activeDotsCount - 1 ||
+                        (status === "urgent" && i === totalDots - 1);
 
                     return (
                         <span
                             key={i}
                             aria-hidden="true"
-                            className={`rounded-full border transition-all ${dotSize} ${
+                            className={`rounded-full border ${dotSize} ${
                                 isActive
                                     ? getActiveDotClasses(isTarget)
                                     : "bg-(--meter-track)/40 border-transparent dark:bg-neutral-800"
