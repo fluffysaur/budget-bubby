@@ -1,6 +1,6 @@
 /**
  * QuestCard: compact Home card with today's quests, who fed Bubby today,
- * and a one-tap "Check In" (no-spend) log (food for Bubby).
+ * and a one-tap "No Spend" log (food for Bubby).
  */
 
 import { useState } from "react";
@@ -104,7 +104,7 @@ export function QuestCard() {
                         }
                         onClick={handleNoSpend}
                     >
-                        Check In
+                        No Spend
                     </Button>
                 </div>
             )}

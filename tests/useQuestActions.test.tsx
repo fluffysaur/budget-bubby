@@ -11,7 +11,7 @@ vi.mock("../src/hooks/useBubby", () => ({
     useBubby: () => ({ pet }),
 }));
 
-const quest = (id: string, done = false): Quest => ({
+const quest = (id: Quest["id"], done = false): Quest => ({
     id,
     label: id,
     reward: "food",
@@ -57,7 +57,7 @@ describe("useQuestActions", () => {
         expect(onDone).not.toHaveBeenCalled();
     });
 
-    it.each([
+    it.each<[Quest["id"], string]>([
         ["inbox", "/inbox"],
         ["balances", "/accounts"],
     ])("navigates for the %s quest", (id, path) => {

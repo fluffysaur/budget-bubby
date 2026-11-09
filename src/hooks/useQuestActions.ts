@@ -3,16 +3,16 @@
  * Router-safe: outside a router, navigation quests are no-ops.
  */
 
-import { useCallback, useContext } from "react";
-import { UNSAFE_NavigationContext } from "react-router-dom";
+import { useCallback } from "react";
 import { useBubby } from "./useBubby";
+import { useOptionalNavigate } from "./useOptionalNavigate";
 import type { Quest } from "../lib/bubby/quests";
 
 export const WEEKLY_RECAP_ID = "weekly-recap";
 
 export function useQuestActions(onDone?: () => void) {
     const { pet } = useBubby();
-    const navigator = useContext(UNSAFE_NavigationContext)?.navigator;
+    const navigate = useOptionalNavigate();
 
     return useCallback(
         (quest: Quest) => {
@@ -25,23 +25,23 @@ export function useQuestActions(onDone?: () => void) {
                     pet();
                     return;
                 case "inbox":
-                    navigator?.push("/inbox");
+                    navigate?.("/inbox");
                     break;
                 case "balances":
-                    navigator?.push("/accounts");
+                    navigate?.("/accounts");
                     break;
                 case "recap": {
                     const el = document.getElementById(WEEKLY_RECAP_ID);
                     if (el) {
                         el.scrollIntoView({ behavior: "smooth" });
                     } else {
-                        navigator?.push("/");
+                        navigate?.("/");
                     }
                     break;
                 }
             }
             onDone?.();
         },
-        [pet, navigator, onDone],
+        [pet, navigate, onDone],
     );
 }
