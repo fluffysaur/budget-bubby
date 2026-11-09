@@ -38,6 +38,7 @@ import {
 } from "../ui/AnimatedModal";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { m, AnimatePresence } from "motion/react";
+import { feedback } from "../../lib/delight/feedback";
 import { listItem } from "../../lib/motion";
 import { financeService } from "../../services/financeService";
 import { formatSGD } from "../../lib/currency";
@@ -230,6 +231,11 @@ export function CreditCardTrackerSection({
             };
             await financeService.upsertCreditCardStatement(input);
             invalidateCreditCards();
+            if (nextPaid) {
+                feedback.milestone("bill-paid", {
+                    dedupeKey: `bill-paid:${stmt.card_id}:${stmt.month}`,
+                });
+            }
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
             setToggleError(
