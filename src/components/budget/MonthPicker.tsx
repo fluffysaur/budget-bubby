@@ -77,6 +77,7 @@ export function MonthPicker({
         open: isOpen,
         onOpenChange: setIsOpen,
         placement: "bottom-start",
+        transform: false,
         whileElementsMounted: autoUpdate,
         middleware: [
             offset(8),
