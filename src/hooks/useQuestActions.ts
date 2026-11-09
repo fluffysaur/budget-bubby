@@ -44,6 +44,15 @@ export function useQuestActions(onDone?: () => void) {
                 case "balances":
                     navigate?.("/accounts");
                     break;
+                case "goal":
+                    navigate?.("/goals");
+                    break;
+                case "cards":
+                    navigate?.("/accounts");
+                    break;
+                case "sweep":
+                    navigate?.("/expenses");
+                    break;
                 case "recap": {
                     const el = document.getElementById(WEEKLY_RECAP_ID);
                     if (el) {

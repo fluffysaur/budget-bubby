@@ -27,7 +27,11 @@ import { readBubbyStore, writeBubbyStore } from "../src/lib/bubby/storage";
 import { resetFeedbackState } from "../src/lib/delight/feedback";
 import { resetActivityCheckinState } from "../src/lib/bubby/activity";
 import { emitAppEvent, onAppEvent } from "../src/lib/appEvents";
-import type { DailyCheckin, Expense } from "../src/types/finance";
+import type {
+    CreditCardStatement,
+    DailyCheckin,
+    Expense,
+} from "../src/types/finance";
 
 const [YJ, RACHEL] = mockMembers;
 const TODAY = toSgtDateString();
@@ -60,10 +64,23 @@ function expense(payer_id: string, date: string, n: number): Expense {
 function mockData({
     checkins = [] as DailyCheckin[],
     expenses = [] as Expense[],
+    statements = [] as CreditCardStatement[],
 } = {}) {
     vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue(checkins);
     vi.spyOn(financeService, "getExpenses").mockResolvedValue(expenses);
     vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue([]);
+    vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue(
+        statements,
+    );
+    vi.spyOn(financeService, "getGoals").mockResolvedValue([]);
+    vi.spyOn(financeService, "getCategories").mockResolvedValue([]);
+    vi.spyOn(financeService, "getBaseProfiles").mockResolvedValue([]);
+    vi.spyOn(financeService, "getBaseAllocations").mockResolvedValue([]);
+    vi.spyOn(financeService, "getMonthlyBudget").mockResolvedValue({
+        budget: { household_id: "hh", is_locked: false },
+        categories: [],
+        uncategorizedRecurringItems: [],
+    } as never);
     vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue(
         {} as DailyCheckin,
     );
@@ -189,6 +206,35 @@ describe("DelightHost", () => {
         expect(readBubbyStore().snacks).toEqual([
             expect.objectContaining({ week: mondayOf(TODAY) }),
         ]);
+    });
+
+    it("celebrates the monthly treat once, with no snack", async () => {
+        writeBubbyStore({
+            lastBody: "regular",
+            lastMood: "normal",
+            exercise: { "month-end": [TODAY] },
+        });
+        mockData({
+            statements: [
+                {
+                    id: "s1",
+                    card_id: "c1",
+                    household_id: "hh",
+                    month: TODAY.slice(0, 7),
+                    statement_amount: 50,
+                    due_date: TODAY,
+                    is_paid: true,
+                },
+            ],
+        });
+        await renderHost();
+        expect(
+            await screen.findByText("Monthly treat! 🎉"),
+        ).toBeInTheDocument();
+        expect(readBubbyStore().celebrated).toContain(
+            `monthly-treat:${TODAY.slice(0, 7)}`,
+        );
+        expect(readBubbyStore().snacks ?? []).toEqual([]);
     });
 
     it("cheers once when both partners have fed Bubby today", async () => {

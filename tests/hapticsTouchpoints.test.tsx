@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { haptics } from "../src/lib/haptics";
 import { PullToRefresh } from "../src/components/ui/PullToRefresh";
-import { QuestCard } from "../src/components/dashboard/QuestCard";
+import { BubbySheet } from "../src/components/bubby/BubbySheet";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
 import { SurplusSweepModal } from "../src/components/budget/SurplusSweepModal";
 import { QuickDepositModal } from "../src/components/goals/QuickDepositModal";
@@ -53,6 +53,10 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue(
             [],
         );
+        vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue(
+            [],
+        );
+        vi.spyOn(financeService, "getGoals").mockResolvedValue([]);
         vi.spyOn(financeService, "recordDailyCheckin").mockResolvedValue({
             id: "chk-1",
             household_id: "hh-1",
@@ -64,7 +68,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
 
         render(
             <HouseholdProvider>
-                <QuestCard />
+                <BubbySheet isOpen onClose={vi.fn()} />
             </HouseholdProvider>,
         );
 

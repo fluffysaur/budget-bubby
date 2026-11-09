@@ -4,6 +4,7 @@
  * text and are disabled.
  */
 
+import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import type { Quest } from "../../lib/bubby/quests";
 
@@ -13,6 +14,8 @@ export interface QuestListProps {
     onSelect?: (quest: Quest) => void;
     /** Pending quests this returns false for are shown but not tappable. */
     isSelectable?: (quest: Quest) => boolean;
+    /** Optional extra content under a quest row (e.g. a shortcut button). */
+    renderExtra?: (quest: Quest) => ReactNode;
     className?: string;
 }
 
@@ -21,6 +24,7 @@ export function QuestList({
     label,
     onSelect,
     isSelectable,
+    renderExtra,
     className = "",
 }: QuestListProps) {
     return (
@@ -66,6 +70,7 @@ export function QuestList({
                         </span>
                         {q.done && <span className="sr-only">Done</span>}
                     </button>
+                    {renderExtra?.(q)}
                 </li>
             ))}
         </ul>

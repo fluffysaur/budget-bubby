@@ -10,6 +10,7 @@ import { useBubby } from "../../hooks/useBubby";
 import { snackLabel } from "../../lib/bubby/snacks";
 import { Bubby } from "./Bubby";
 import { FedTodayDots } from "./FedTodayDots";
+import { NoSpendButton } from "./NoSpendButton";
 import { QuestList } from "./QuestList";
 import {
     isQuestSelectable,
@@ -57,6 +58,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
         members,
         dailyQuests,
         weeklyQuests,
+        monthlyQuests,
         snacks,
         pet,
     } = useBubby();
@@ -103,7 +105,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                                 <div>🍤 Log spend, pet Bubby</div>
                                 <div>
                                     💪 Sort inbox, update balances, add to
-                                    goals, sweep, read recap
+                                    goals, sweep, pay card bills, read recap
                                 </div>
                             </div>
                         </TooltipPopover>
@@ -124,6 +126,13 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                             label="Today's quests"
                             onSelect={onSelectQuest}
                             isSelectable={isQuestSelectable}
+                            renderExtra={(q) =>
+                                q.id === "log" && !q.done ? (
+                                    <div className="pb-1.5 pl-7">
+                                        <NoSpendButton />
+                                    </div>
+                                ) : null
+                            }
                             className="mt-1.5"
                         />
                     </div>
@@ -139,6 +148,20 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                             className="mt-1.5"
                         />
                     </div>
+                    {monthlyQuests.length > 0 && (
+                        <div>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                                This Month
+                            </h3>
+                            <QuestList
+                                quests={monthlyQuests}
+                                label="This month's quests"
+                                onSelect={onSelectQuest}
+                                isSelectable={isQuestSelectable}
+                                className="mt-1.5"
+                            />
+                        </div>
+                    )}
                 </section>
 
                 <section aria-label="Snacks">

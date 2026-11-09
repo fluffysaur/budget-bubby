@@ -60,11 +60,14 @@ export function DelightHost() {
     const bubby = useBubby();
     const {
         isReady,
+        weeklyQuestsReady,
+        monthlyQuestsReady,
         body,
         mood,
         condition,
         dailyQuests,
         weeklyQuests,
+        monthlyQuests,
         today,
         me,
         members,
@@ -125,7 +128,7 @@ export function DelightHost() {
     // Weekly quests (household): a snack treat for the collection
     const weeklyDone = allDone(weeklyQuests);
     useEffect(() => {
-        if (!isReady || !weeklyDone) return;
+        if (!isReady || !weeklyQuestsReady || !weeklyDone) return;
         const week = mondayOf(today);
         const snack = snackForWeek(week);
         const result = feedback.milestone("weekly-treat", {
@@ -138,7 +141,20 @@ export function DelightHost() {
             addSnack({ id: snack, week });
             emitAppEvent("bubby:store-changed", {});
         }
-    }, [isReady, weeklyDone, today]);
+    }, [isReady, weeklyQuestsReady, weeklyDone, today]);
+
+    // Monthly quests (household): a one-off celebration, no collectible
+    const monthlyDone = allDone(monthlyQuests);
+    useEffect(() => {
+        if (!isReady || !monthlyQuestsReady || !monthlyDone) return;
+        const month = today.slice(0, 7);
+        feedback.milestone("monthly-treat", {
+            dedupeKey: `monthly-treat:${month}`,
+            title: "Monthly treat! 🎉",
+            subtitle: "This month's quests done",
+            primary: { label: "See Bubby", event: "bubby:open-sheet" },
+        });
+    }, [isReady, monthlyQuestsReady, monthlyDone, today]);
 
     // Both partners fed Bubby today: a small cheer, once a day
     const bothFed =
