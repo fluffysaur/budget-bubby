@@ -790,7 +790,7 @@ describe("Notifications Engine", () => {
             );
             expect(r2).toHaveLength(1);
             expect(r2[0].type).toBe("credit_card_missing_stmt");
-            expect(r2[0].title).toBe("OCBC 365 Statement Needed");
+            expect(r2[0].title).toBe("OCBC 365 Statement Ready");
             expect(r2[0].message).toBe("Cycle closed on day 25.");
         });
 

@@ -24,6 +24,7 @@ import {
 } from "../dateUtils";
 import { formatSGD } from "../currency";
 import { isSpendableCategory } from "../financialFormulas";
+import { getUnpaidCardCycles } from "../creditCardCycles";
 import { collectFeedEvents } from "../bubby/sources";
 import { deriveCondition, type BubbyMood } from "../bubby/body";
 import type {
@@ -368,7 +369,59 @@ export function checkCreditCardDueReminders(
 }
 
 /**
- * 4. Cards whose billing day has passed this month with no statement logged.
+ * 3b. Computed card cycles with no logged statement. Same stages as
+ * checkCreditCardDueReminders, but driven by card config so nothing needs
+ * to be pre-logged.
+ */
+export function checkPendingCreditCardDueReminders(
+    cards: CreditCard[],
+    statements: CreditCardStatement[],
+    todayStr?: string,
+    dueDaysBefore: number | number[] = 5,
+    memberId?: string,
+): AppReminder[] {
+    const today = todayStr || sgToday();
+    const offsets = Array.isArray(dueDaysBefore)
+        ? dueDaysBefore
+        : [dueDaysBefore];
+    const reminders: AppReminder[] = [];
+
+    for (const cycle of getUnpaidCardCycles(
+        cards,
+        statements,
+        today,
+        memberId,
+    )) {
+        if (cycle.status !== "pending") continue;
+        const days = cycle.daysUntilDue;
+        if (days < -1) continue;
+        const stage = getDueStage(days, offsets);
+        if (!stage) continue;
+
+        reminders.push({
+            id: `reminder-cc-due-${cycle.card.id}-${cycle.month}-${stage}`,
+            type: "credit_card_due",
+            title: ccDueTitle(cycle.card.name, days),
+            message: "Statement pending",
+            severity: days <= 2 ? "alert" : "warning",
+            actionLabel: "Mark Paid",
+            actionType: "view_cc",
+            data: {
+                cardId: cycle.card.id,
+                month: cycle.month,
+                dueDate: cycle.dueDate,
+                daysUntilDue: days,
+            },
+            createdAt: new Date().toISOString(),
+        });
+    }
+
+    return reminders;
+}
+
+/**
+ * 4. "Statement Ready": cards whose billing day has passed this month with no
+ * statement logged yet. The bill can be marked paid without logging it first.
  */
 export function checkMissingCreditCardStatements(
     cards: CreditCard[],
@@ -399,10 +452,10 @@ export function checkMissingCreditCardStatements(
         reminders.push({
             id: `reminder-cc-missing-${card.id}-${currentMonth}`,
             type: "credit_card_missing_stmt",
-            title: `${card.name} Statement Needed`,
+            title: `${card.name} Statement Ready`,
             message: `Cycle closed on day ${effectiveBillingDay}.`,
             severity: "info",
-            actionLabel: "Add Statement",
+            actionLabel: "View Bill",
             actionType: "view_cc",
             data: { cardId: card.id, month: currentMonth },
             createdAt: new Date().toISOString(),

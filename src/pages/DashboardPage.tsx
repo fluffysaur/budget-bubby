@@ -17,6 +17,8 @@ import { PageHeader, DashboardSkeleton } from "../components/ui";
 import {
     useRecurringItemsQuery,
     useCreditCardStatementsQuery,
+    useCreditCardsQuery,
+    useInvalidateFinance,
     useBudgetDetailQuery,
 } from "../hooks/useFinanceQueries";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
@@ -26,6 +28,7 @@ import {
     isSpendableCategory,
 } from "../lib/financialFormulas";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
+import { CreditCardPaymentsWidget } from "../components/dashboard/CreditCardPaymentsWidget";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { InboxHomeCard } from "../components/inbox/InboxHomeCard";
 import { BubbyGreeting } from "../components/bubby/BubbyGreeting";
@@ -72,6 +75,8 @@ export function DashboardPage({
     // TanStack Query Cached Data Hooks
     const { data: recurringItemsData } = useRecurringItemsQuery();
     const { data: statementsData } = useCreditCardStatementsQuery();
+    const { data: cardsData } = useCreditCardsQuery();
+    const { invalidateCreditCards } = useInvalidateFinance();
     // Combined view shows the household total, same as Budget
     const {
         data: budgetData,
@@ -97,6 +102,9 @@ export function DashboardPage({
             ),
         [statementsData, perspective, activeMember?.id],
     );
+    const creditCards = useMemo(() => cardsData ?? [], [cardsData]);
+    const cardMemberId =
+        perspective === "household" ? undefined : activeMember?.id;
     const monthlyBudget = budgetData || null;
 
     const isLoading = budgetLoading && !budgetData;
@@ -235,14 +243,21 @@ export function DashboardPage({
                         </Suspense>
                     )}
 
+                    {/* Credit card bills (hidden when nothing is unpaid) */}
+                    <CreditCardPaymentsWidget
+                        cards={creditCards}
+                        statements={creditCardStatements}
+                        memberId={cardMemberId}
+                        onViewAll={
+                            onNavigateTab ? handleNavigateAccounts : undefined
+                        }
+                        onPaid={invalidateCreditCards}
+                    />
+
                     {/* Upcoming bills */}
                     <UpcomingBillsWidget
                         recurringItems={recurringItems}
-                        creditCardStatements={creditCardStatements}
                         onViewAll={handleNavigateRecurring}
-                        onOpenCard={
-                            onNavigateTab ? handleNavigateAccounts : undefined
-                        }
                     />
                 </div>
             )}
