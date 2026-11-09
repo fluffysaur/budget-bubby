@@ -415,6 +415,20 @@ export function formatDueInDays(days: number): string {
 }
 
 /**
+ * Compact countdown copy for badges: "Overdue 2 days", "Today", "Tomorrow",
+ * "In 5 days". Reminder titles keep using `formatDueInDays`.
+ */
+export function formatCountdown(days: number): string {
+    if (days < 0) {
+        const n = -days;
+        return `Overdue ${n} ${n === 1 ? "day" : "days"}`;
+    }
+    if (days === 0) return "Today";
+    if (days === 1) return "Tomorrow";
+    return `In ${days} days`;
+}
+
+/**
  * Formats an integer with its English ordinal suffix (e.g. 1 -> "1st", 2 -> "2nd",
  * 3 -> "3rd", 4 -> "4th", 11 -> "11th", 12 -> "12th", 13 -> "13th", 21 -> "21st",
  * 22 -> "22nd", 23 -> "23rd", 31 -> "31st").

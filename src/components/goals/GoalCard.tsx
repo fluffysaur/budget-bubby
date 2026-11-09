@@ -153,8 +153,8 @@ export function GoalCard({
                                     {isAchieved
                                         ? "Target reached"
                                         : pacing.monthsRemaining === 1
-                                          ? "1 month left"
-                                          : `${pacing.monthsRemaining} months left`}
+                                          ? "1 mo left"
+                                          : `${pacing.monthsRemaining} mos left`}
                                 </span>
                             </div>
                         </div>

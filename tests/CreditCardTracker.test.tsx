@@ -50,18 +50,18 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(result.isOverdue).toBe(false);
         });
 
-        it("returns Due in X days when due date is in the future", () => {
+        it("returns In X days when due date is in the future", () => {
             // Future date relative to today
             const futureDate = "2099-12-31";
             const result = getRelativeDueLabel(futureDate, false);
-            expect(result.label).toMatch(/Due in \d+ days/i);
+            expect(result.label).toMatch(/In \d+ days/i);
             expect(result.isOverdue).toBe(false);
         });
 
-        it("returns Overdue by X days when due date is in the past", () => {
+        it("returns Overdue X days when due date is in the past", () => {
             const pastDate = "2020-01-01";
             const result = getRelativeDueLabel(pastDate, false);
-            expect(result.label).toMatch(/Overdue by \d+ days/i);
+            expect(result.label).toMatch(/Overdue \d+ days/i);
             expect(result.isOverdue).toBe(true);
         });
     });

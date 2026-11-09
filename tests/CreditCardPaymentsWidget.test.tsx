@@ -58,7 +58,7 @@ describe("CreditCardPaymentsWidget", () => {
         );
         expect(screen.getByText("Daily Card")).toBeInTheDocument();
         expect(screen.getByText("Pending")).toBeInTheDocument();
-        expect(screen.getByText("Due in 16 days")).toBeInTheDocument();
+        expect(screen.getByText("In 16 days")).toBeInTheDocument();
     });
 
     it("shows the logged amount and overdue state", () => {
@@ -70,7 +70,7 @@ describe("CreditCardPaymentsWidget", () => {
                 onPaid={vi.fn()}
             />,
         );
-        expect(screen.getByText("Overdue by 2 days")).toBeInTheDocument();
+        expect(screen.getByText("Overdue 2 days")).toBeInTheDocument();
         expect(screen.queryByText("Pending")).not.toBeInTheDocument();
     });
 

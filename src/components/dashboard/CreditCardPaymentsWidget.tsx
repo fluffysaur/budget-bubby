@@ -7,7 +7,7 @@
 import React, { useMemo, useState } from "react";
 import { CreditCard as CreditCardIcon, ChevronRight, ExternalLink } from "lucide-react";
 import {
-    formatDueInDays,
+    formatCountdown,
     formatISODate,
     getSingaporeDate,
 } from "../../lib/dateUtils";
@@ -37,8 +37,7 @@ export interface CreditCardPaymentsWidgetProps {
 }
 
 function dueLabel(days: number): string {
-    if (days < 0) return `Overdue by ${-days} day${days === -1 ? "" : "s"}`;
-    return formatDueInDays(days);
+    return formatCountdown(days);
 }
 
 const CycleRow = React.memo(function CycleRow({
