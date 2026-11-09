@@ -108,4 +108,45 @@ describe("CreditCardPaymentsWidget", () => {
             }),
         );
     });
+
+    it("renders bank app launcher button when card has a recognised bank", () => {
+        render(
+            <CreditCardPaymentsWidget
+                cards={[card({ bank: "DBS" })]}
+                statements={[]}
+                today="2026-11-12"
+                onPaid={vi.fn()}
+            />,
+        );
+
+        expect(
+            screen.getByRole("button", {
+                name: /open dbs \/ posb app for daily card/i,
+            }),
+        ).toBeInTheDocument();
+    });
+
+    it("shows Settle Overdue button when 2 or more cards are overdue", () => {
+        const c1 = card({ id: "c1", name: "Card 1", bank: "DBS" });
+        const c2 = card({ id: "c2", name: "Card 2", bank: "OCBC" });
+        const s1 = stmt({ card_id: "c1", due_date: "2026-11-10" });
+        const s2 = stmt({ id: "s2", card_id: "c2", due_date: "2026-11-10" });
+
+        render(
+            <CreditCardPaymentsWidget
+                cards={[c1, c2]}
+                statements={[s1, s2]}
+                today="2026-11-12"
+                onPaid={vi.fn()}
+            />,
+        );
+
+        const bulkBtn = screen.getByRole("button", {
+            name: /settle overdue \(2\)/i,
+        });
+        expect(bulkBtn).toBeInTheDocument();
+
+        fireEvent.click(bulkBtn);
+        expect(screen.getByText("Settle Overdue Bills")).toBeInTheDocument();
+    });
 });

@@ -5,7 +5,7 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { CreditCard as CreditCardIcon, ChevronRight } from "lucide-react";
+import { CreditCard as CreditCardIcon, ChevronRight, ExternalLink } from "lucide-react";
 import {
     formatDueInDays,
     formatISODate,
@@ -15,10 +15,12 @@ import {
     getUnpaidCardCycles,
     type CardCycle,
 } from "../../lib/creditCardCycles";
+import { getBankDeepLink, openBankApp } from "../../lib/bankDeepLinks";
 import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
 import { MarkCardPaidModal } from "../accounts/MarkCardPaidModal";
+import { BulkSettleOverdueModal } from "./BulkSettleOverdueModal";
 import type { CreditCard, CreditCardStatement } from "../../types/finance";
 
 export interface CreditCardPaymentsWidgetProps {
@@ -47,6 +49,8 @@ const CycleRow = React.memo(function CycleRow({
     onMarkPaid: (cycle: CardCycle) => void;
 }) {
     const overdue = cycle.daysUntilDue < 0;
+    const bankConfig = getBankDeepLink(cycle.card.bank);
+
     return (
         <div
             data-testid={`cc-cycle-${cycle.key}`}
@@ -87,16 +91,32 @@ const CycleRow = React.memo(function CycleRow({
                     )}
                 </div>
             </div>
-            <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                className="w-full min-h-11 justify-center"
-                aria-label={`Mark ${cycle.card.name} paid`}
-                onClick={() => onMarkPaid(cycle)}
-            >
-                Mark Paid
-            </Button>
+            <div className="flex items-center gap-2">
+                {bankConfig && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        className="min-h-11 shrink-0 px-3 gap-1.5"
+                        title={`Open ${bankConfig.bankName} app`}
+                        aria-label={`Open ${bankConfig.bankName} app for ${cycle.card.name}`}
+                        onClick={() => openBankApp(cycle.card.bank)}
+                    >
+                        <ExternalLink className="h-4 w-4" />
+                        <span className="hidden sm:inline">Open App</span>
+                    </Button>
+                )}
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    className="w-full min-h-11 justify-center flex-1"
+                    aria-label={`Mark ${cycle.card.name} paid`}
+                    onClick={() => onMarkPaid(cycle)}
+                >
+                    Mark Paid
+                </Button>
+            </div>
         </div>
     );
 });
@@ -112,6 +132,7 @@ export const CreditCardPaymentsWidget = React.memo(
         today,
     }: CreditCardPaymentsWidgetProps) {
         const [payingCycle, setPayingCycle] = useState<CardCycle | null>(null);
+        const [isBulkSettleOpen, setIsBulkSettleOpen] = useState(false);
 
         const cycles = useMemo(
             () =>
@@ -122,6 +143,11 @@ export const CreditCardPaymentsWidget = React.memo(
                     memberId,
                 ),
             [cards, statements, today, memberId],
+        );
+
+        const overdueCycles = useMemo(
+            () => cycles.filter((c) => c.daysUntilDue < 0),
+            [cycles],
         );
 
         if (cycles.length === 0) return null;
@@ -144,19 +170,32 @@ export const CreditCardPaymentsWidget = React.memo(
                             Card Payments
                         </h3>
                     </div>
-                    {onViewAll && (
-                        <button
-                            type="button"
-                            onClick={onViewAll}
-                            className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                        >
-                            <span>View All</span>
-                            <ChevronRight
-                                className="h-3.5 w-3.5"
-                                strokeWidth={2.5}
-                            />
-                        </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {overdueCycles.length >= 2 && (
+                            <button
+                                type="button"
+                                onClick={() => setIsBulkSettleOpen(true)}
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                            >
+                                <span>
+                                    Settle Overdue ({overdueCycles.length})
+                                </span>
+                            </button>
+                        )}
+                        {onViewAll && (
+                            <button
+                                type="button"
+                                onClick={onViewAll}
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                            >
+                                <span>View All</span>
+                                <ChevronRight
+                                    className="h-3.5 w-3.5"
+                                    strokeWidth={2.5}
+                                />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="mt-4 space-y-2.5">
@@ -172,6 +211,13 @@ export const CreditCardPaymentsWidget = React.memo(
                 <MarkCardPaidModal
                     cycle={payingCycle}
                     onClose={() => setPayingCycle(null)}
+                    onPaid={onPaid}
+                />
+
+                <BulkSettleOverdueModal
+                    cycles={overdueCycles}
+                    isOpen={isBulkSettleOpen}
+                    onClose={() => setIsBulkSettleOpen(false)}
                     onPaid={onPaid}
                 />
             </div>

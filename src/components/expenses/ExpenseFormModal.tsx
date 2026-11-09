@@ -464,6 +464,7 @@ export function ExpenseFormModal({
         perspective,
         categories,
         spendableCategories,
+        loggableCategories,
         members,
     ]);
 
