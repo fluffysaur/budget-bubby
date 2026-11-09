@@ -30,9 +30,12 @@ export function useTweenedNumber(
         disabled = false,
     } = options;
 
+    // useReducedMotion() caches the media query; the direct check also honours
+    // matchMedia changes/mocks, so both are consulted.
     const motionReduced = useReducedMotion();
     const isReduced = Boolean(motionReduced || prefersReducedMotion());
-    const shouldSkipAnimation = disabled || isReduced || !Number.isFinite(value);
+    const shouldSkipAnimation =
+        disabled || isReduced || !Number.isFinite(value);
 
     const [current, setCurrent] = useState(value);
     const targetRef = useRef(value);

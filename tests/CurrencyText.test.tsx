@@ -8,7 +8,6 @@ describe("CurrencyText money scale", () => {
         render(<CurrencyText amount={1234.5} />);
         const el = screen.getByText("S$1,234.50");
         expect(el.className).toContain("font-mono-num");
-        expect(el.className).toContain("tabular-nums");
         expect(el.className).toContain(MONEY_SIZE_CLASSES.inline);
         expect(el.className).not.toMatch(/text-\(--text-ink\)/);
     });
@@ -18,7 +17,6 @@ describe("CurrencyText money scale", () => {
         (size) => {
             render(<CurrencyText amount={10} size={size} />);
             const el = screen.getByText("S$10.00");
-            expect(el.className).toContain("tabular-nums");
             for (const cls of MONEY_SIZE_CLASSES[size].split(" ")) {
                 expect(el.className).toContain(cls);
             }
@@ -30,7 +28,6 @@ describe("CurrencyText money scale", () => {
         expect(screen.getByText("+S$100").className).toContain(
             "text-emerald-700",
         );
-        expect(screen.getByText("+S$100").className).toContain("tabular-nums");
     });
 });
 

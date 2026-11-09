@@ -9,10 +9,13 @@ import {
 
 export type CurrencySize = MoneySize;
 export type CurrencyTone =
-    "inherit" | "default" | "positive" | "negative" | "muted";
+    | "inherit"
+    | "default"
+    | "positive"
+    | "negative"
+    | "muted";
 
-export interface CurrencyTextProps
-    extends React.HTMLAttributes<HTMLSpanElement> {
+export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     amount?: number;
     /** Pre-formatted value, e.g. formatSGD(x, { showCents: false }) */
     formatted?: string;
@@ -49,7 +52,6 @@ export function CurrencyText({
     const displayValue = formatted ?? formatSGD(finalAmount ?? 0);
     const classes = [
         MONEY_BASE_CLASSES,
-        "tabular-nums",
         MONEY_SIZE_CLASSES[size],
         toneMap[tone],
         className,
