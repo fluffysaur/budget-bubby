@@ -200,6 +200,7 @@ export function DashboardPage({
                                     <CurrencyText
                                         amount={spendableSummary.totalRemaining}
                                         size="hero"
+                                        animate
                                     />
                                 </div>
                                 <span className="mt-1 block text-xs font-semibold text-(--text-muted) font-mono-num">
