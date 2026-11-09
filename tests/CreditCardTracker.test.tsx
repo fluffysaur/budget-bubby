@@ -12,6 +12,7 @@ import { AddEditCreditCardModal } from "../src/components/accounts/AddEditCredit
 import { financeService } from "../src/services/financeService";
 import { mockFinanceService } from "../src/services/mockFinanceService";
 import { formatSGD } from "../src/lib/currency";
+import { feedback } from "../src/lib/delight/feedback";
 import type { HouseholdMember } from "../src/types/finance";
 
 const testMembers: HouseholdMember[] = [
@@ -177,6 +178,56 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             await waitFor(() => {
                 expect(screen.getByText(formatSGD(1462.5))).toBeInTheDocument();
             });
+        });
+
+        it("celebrates when a statement is marked paid, not when un-paid", async () => {
+            const milestone = vi
+                .spyOn(feedback, "milestone")
+                .mockImplementation(() => undefined);
+
+            render(
+                <CreditCardTrackerSection
+                    members={testMembers}
+                    perspective="household"
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText("DBS Altitude Visa"),
+                ).toBeInTheDocument();
+            });
+
+            fireEvent.click(
+                screen.getByRole("button", {
+                    name: /Mark DBS Altitude Visa statement as Paid/i,
+                }),
+            );
+
+            await waitFor(() => {
+                expect(milestone).toHaveBeenCalledTimes(1);
+            });
+            expect(milestone).toHaveBeenCalledWith(
+                "bill-paid",
+                expect.objectContaining({
+                    dedupeKey: expect.stringMatching(/^bill-paid:/),
+                }),
+            );
+
+            fireEvent.click(
+                await screen.findByRole("button", {
+                    name: /Mark DBS Altitude Visa statement as Unpaid/i,
+                }),
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByRole("button", {
+                        name: /Mark DBS Altitude Visa statement as Paid/i,
+                    }),
+                ).toBeInTheDocument();
+            });
+            expect(milestone).toHaveBeenCalledTimes(1);
         });
 
         it("rolls back toggle and displays an alert when toggling paid status fails", async () => {

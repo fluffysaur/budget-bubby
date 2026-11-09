@@ -230,12 +230,12 @@ export function CreditCardTrackerSection({
                 notes: stmt.notes,
             };
             await financeService.upsertCreditCardStatement(input);
-            invalidateCreditCards();
             if (nextPaid) {
                 feedback.milestone("bill-paid", {
                     dedupeKey: `bill-paid:${stmt.card_id}:${stmt.month}`,
                 });
             }
+            invalidateCreditCards();
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
             setToggleError(
