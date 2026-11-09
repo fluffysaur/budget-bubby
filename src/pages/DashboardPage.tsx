@@ -16,11 +16,15 @@ import { useHousehold } from "../context/HouseholdContext";
 import { PageHeader, DashboardSkeleton } from "../components/ui";
 import {
     useRecurringItemsQuery,
+    useCreditCardStatementsQuery,
     useBudgetDetailQuery,
 } from "../hooks/useFinanceQueries";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { mockMembers } from "../data/mockSeedData";
-import { isSpendableCategory } from "../lib/financialFormulas";
+import {
+    filterStatementsForPerspective,
+    isSpendableCategory,
+} from "../lib/financialFormulas";
 import { UpcomingBillsWidget } from "../components/dashboard/UpcomingBillsWidget";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { InboxHomeCard } from "../components/inbox/InboxHomeCard";
@@ -67,6 +71,7 @@ export function DashboardPage({
 
     // TanStack Query Cached Data Hooks
     const { data: recurringItemsData } = useRecurringItemsQuery();
+    const { data: statementsData } = useCreditCardStatementsQuery();
     // Combined view shows the household total, same as Budget
     const {
         data: budgetData,
@@ -82,6 +87,15 @@ export function DashboardPage({
     const recurringItems = useMemo(
         () => recurringItemsData || [],
         [recurringItemsData],
+    );
+    const creditCardStatements = useMemo(
+        () =>
+            filterStatementsForPerspective(
+                statementsData ?? [],
+                perspective,
+                activeMember?.id,
+            ),
+        [statementsData, perspective, activeMember?.id],
     );
     const monthlyBudget = budgetData || null;
 
@@ -158,6 +172,10 @@ export function DashboardPage({
         () => onNavigateTab?.("expenses"),
         [onNavigateTab],
     );
+    const handleNavigateAccounts = useCallback(
+        () => onNavigateTab?.("accounts"),
+        [onNavigateTab],
+    );
     const handleNavigateRecurring = useCallback(
         () => onNavigateTab?.("recurring"),
         [onNavigateTab],
@@ -220,7 +238,11 @@ export function DashboardPage({
                     {/* Upcoming bills */}
                     <UpcomingBillsWidget
                         recurringItems={recurringItems}
+                        creditCardStatements={creditCardStatements}
                         onViewAll={handleNavigateRecurring}
+                        onOpenCard={
+                            onNavigateTab ? handleNavigateAccounts : undefined
+                        }
                     />
                 </div>
             )}
