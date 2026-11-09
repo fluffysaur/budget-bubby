@@ -61,6 +61,7 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import { RangeSlider } from "../ui/RangeSlider";
 import { Alert } from "../ui/Alert";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { TooltipPopover } from "../ui/TooltipPopover";
@@ -1300,17 +1301,14 @@ export function ExpenseFormModal({
                                                 )
                                             </span>
                                         </div>
-                                        <input
+                                        <RangeSlider
                                             id="expense-split-ratio"
-                                            type="range"
                                             min="0"
                                             max="1"
                                             step="0.05"
                                             value={splitRatio}
-                                            onChange={(e) =>
-                                                setSplitRatio(
-                                                    parseFloat(e.target.value),
-                                                )
+                                            onValueChange={(v) =>
+                                                setSplitRatio(parseFloat(v))
                                             }
                                             className="w-full cursor-pointer accent-(--pastel-lilac)"
                                         />

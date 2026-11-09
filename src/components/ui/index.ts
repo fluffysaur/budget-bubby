@@ -29,3 +29,4 @@ export * from "./AvatarDot";
 export * from "./CalendarStrip";
 export * from "./StackedBar";
 export * from "./StatRow";
+export * from "./RangeSlider";

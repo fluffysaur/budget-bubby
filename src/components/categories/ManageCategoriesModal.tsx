@@ -34,6 +34,7 @@ import {
 } from "../../hooks/useFinanceQueries";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import { RangeSlider } from "../ui/RangeSlider";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { Input } from "../ui/Input";
 import { CategoryModeToggle } from "./CategoryModeToggle";
@@ -737,18 +738,17 @@ export function ManageCategoriesModal({
                                             </div>
 
                                             <div className="pt-0.5">
-                                                <input
-                                                    type="range"
+                                                <RangeSlider
                                                     min="0"
                                                     max="100"
                                                     step="1"
                                                     aria-label={`Allocation slider`}
                                                     data-testid={`manage-slider-${cat.id}`}
                                                     value={currentPct}
-                                                    onChange={(e) =>
+                                                    onValueChange={(v) =>
                                                         handlePercentageChange(
                                                             cat.id,
-                                                            e.target.value,
+                                                            v,
                                                         )
                                                     }
                                                     className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
