@@ -32,16 +32,6 @@ describe("StackedBar", () => {
         expect(segments[2]).toHaveStyle({ width: "20%" });
     });
 
-    it("renders legend with percentages when showLegend is true", () => {
-        render(<StackedBar segments={sampleSegments} showLegend />);
-        expect(screen.getByText("Needs")).toBeInTheDocument();
-        expect(screen.getByText("50%")).toBeInTheDocument();
-        expect(screen.getByText("Wants")).toBeInTheDocument();
-        expect(screen.getByText("30%")).toBeInTheDocument();
-        expect(screen.getByText("Savings")).toBeInTheDocument();
-        expect(screen.getByText("20%")).toBeInTheDocument();
-    });
-
     it("handles zero total gracefully without crashing", () => {
         const emptySegments: StackedBarSegment[] = [
             { id: "a", label: "A", value: 0 },

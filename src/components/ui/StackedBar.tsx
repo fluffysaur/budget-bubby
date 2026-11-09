@@ -29,8 +29,6 @@ export interface StackedBarProps {
     total?: number;
     /** Bar height: "xs" (6px), "sm" (10px), "md" (16px), "lg" (24px). Defaults to "sm". */
     size?: "xs" | "sm" | "md" | "lg";
-    /** Whether to render a legend with swatches and percentages below the bar. */
-    showLegend?: boolean;
     /** Optional accessible label. */
     ariaLabel?: string;
     className?: string;
@@ -69,7 +67,6 @@ export function StackedBar({
     segments,
     total,
     size = "sm",
-    showLegend = false,
     ariaLabel,
     className = "",
 }: StackedBarProps) {
@@ -115,41 +112,6 @@ export function StackedBar({
                     );
                 })}
             </div>
-
-            {showLegend && positiveSegments.length > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                    {positiveSegments.map((seg, idx) => {
-                        const pct =
-                            effectiveTotal > 0
-                                ? (seg.value / effectiveTotal) * 100
-                                : 0;
-                        const toneKey =
-                            seg.tone ??
-                            FALLBACK_TONES[idx % FALLBACK_TONES.length];
-                        const bgClass =
-                            seg.color ||
-                            (TONE_CLASSES[toneKey] ?? TONE_CLASSES.lilac);
-
-                        return (
-                            <div
-                                key={seg.id || `${seg.label}-${idx}`}
-                                className="inline-flex items-center gap-1.5 min-w-0"
-                            >
-                                <span
-                                    className={`h-2.5 w-2.5 shrink-0 rounded-full border border-(--border-ink) ${bgClass}`}
-                                    aria-hidden="true"
-                                />
-                                <span className="font-semibold text-(--text-ink) truncate">
-                                    {seg.label}
-                                </span>
-                                <span className="font-mono-num text-[11px] font-bold text-(--text-muted)">
-                                    {Math.round(pct)}%
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
         </div>
     );
 }
