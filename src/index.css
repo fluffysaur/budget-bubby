@@ -131,6 +131,7 @@
 
     --border-ink: #222222;
     --border-subtle: #d8d0c7;
+    --meter-track: #b8ada1;
 
     --accent-lilac: #dfc2ff;
     --accent-lilac-subtle: #f3e8ff;
@@ -204,6 +205,7 @@
 
     --border-ink: #4a433f;
     --border-subtle: #38322e;
+    --meter-track: var(--bg-canvas);
 
     --accent-lilac: #c49bff;
     --accent-lilac-subtle: #3d2657;
