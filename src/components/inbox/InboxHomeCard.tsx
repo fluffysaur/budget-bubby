@@ -3,6 +3,7 @@
  * when the household Inbox has pending items.
  */
 
+import React from "react";
 import { Inbox } from "lucide-react";
 import { useInRouterContext, useNavigate } from "react-router-dom";
 import { m, AnimatePresence } from "motion/react";
@@ -63,8 +64,9 @@ function InboxHomeCardInner() {
     );
 }
 
-export function InboxHomeCard() {
+export const InboxHomeCard = React.memo(function InboxHomeCard() {
     return useInRouterContext() ? <InboxHomeCardInner /> : null;
-}
+});
+InboxHomeCard.displayName = "InboxHomeCard";
 
 export default InboxHomeCard;

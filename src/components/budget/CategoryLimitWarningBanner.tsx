@@ -11,7 +11,7 @@
  * - If it pushes across 100%, triggers playBudgetExceededSound() and shows an immediate alert toast.
  */
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
     AlertCircle,
     AlertTriangle,
@@ -53,12 +53,13 @@ interface ToastAlert {
     message: string;
 }
 
-export function CategoryLimitWarningBanner({
-    categories = [],
-    className = "",
-    onNavigateCategory,
-    single = false,
-}: CategoryLimitWarningBannerProps) {
+export const CategoryLimitWarningBanner = React.memo(
+    function CategoryLimitWarningBanner({
+        categories = [],
+        className = "",
+        onNavigateCategory,
+        single = false,
+    }: CategoryLimitWarningBannerProps) {
     const { me, members } = useLoggedInMember();
     const activeMemberId = me?.id || members?.[0]?.id || "mem-00000000-0011";
 
@@ -514,6 +515,7 @@ export function CategoryLimitWarningBanner({
             </AnimatePresence>
         </>
     );
-}
+});
+CategoryLimitWarningBanner.displayName = "CategoryLimitWarningBanner";
 
 export default CategoryLimitWarningBanner;

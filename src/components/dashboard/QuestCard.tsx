@@ -3,7 +3,7 @@
  * and a one-tap "No Spend" log (food for Bubby).
  */
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -16,7 +16,7 @@ import { feedback } from "../../lib/delight/feedback";
 import { emitAppEvent } from "../../lib/appEvents";
 import { toSgtDateString } from "../../lib/bubby/dates";
 
-export function QuestCard() {
+export const QuestCard = React.memo(function QuestCard() {
     const { body, mood, reaction, me, members, condition, dailyQuests, pet } =
         useBubby();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +106,7 @@ export function QuestCard() {
             )}
         </Card>
     );
-}
+});
+QuestCard.displayName = "QuestCard";
 
 export default QuestCard;

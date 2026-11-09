@@ -14,7 +14,16 @@ import {
 } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { UpcomingBillsWidget } from "../src/components/dashboard/UpcomingBillsWidget";
+import {
+    UpcomingBillsWidget,
+    UpcomingBillRow,
+} from "../src/components/dashboard/UpcomingBillsWidget";
+import { LeftToSpendHero } from "../src/components/dashboard/LeftToSpendHero";
+import { CategoryMeterCard } from "../src/components/dashboard/CategoryMeterCard";
+import { QuestCard } from "../src/components/dashboard/QuestCard";
+import { InboxHomeCard } from "../src/components/inbox/InboxHomeCard";
+import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
+import { StatCard } from "../src/components/ui/StatCard";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { financeService } from "../src/services/financeService";
 import type {
@@ -501,6 +510,162 @@ describe("DashboardPage", () => {
         await waitFor(() => {
             fireEvent.click(screen.getByRole("button", { name: "Budget" }));
             expect(onNavigateTab).toHaveBeenCalledWith("budget");
+        });
+    });
+
+    describe("LeftToSpendHero & CategoryMeterCard", () => {
+        const mockSummary = {
+            totalAllocated: 1000,
+            totalSpent: 400,
+            totalRemaining: 600,
+            totalPct: 40,
+            categories: [
+                {
+                    id: "cat-1",
+                    name: "Groceries",
+                    color: "#10b981",
+                    spent: 100,
+                    allocated: 200,
+                    remaining: 100,
+                    pct: 50,
+                },
+                {
+                    id: "cat-2",
+                    name: "Dining Out",
+                    color: "#f59e0b",
+                    spent: 120,
+                    allocated: 150,
+                    remaining: 30,
+                    pct: 80,
+                },
+                {
+                    id: "cat-3",
+                    name: "Transport",
+                    color: "#3b82f6",
+                    spent: 50,
+                    allocated: 100,
+                    remaining: 50,
+                    pct: 50,
+                },
+                {
+                    id: "cat-4",
+                    name: "Entertainment",
+                    color: "#ec4899",
+                    spent: 80,
+                    allocated: 100,
+                    remaining: 20,
+                    pct: 80,
+                },
+                {
+                    id: "cat-5",
+                    name: "Shopping",
+                    color: "#8b5cf6",
+                    spent: 50,
+                    allocated: 50,
+                    remaining: 0,
+                    pct: 100,
+                },
+            ],
+        };
+
+        it("renders summary amounts and expands categories when +N More is clicked", () => {
+            const onBudget = vi.fn();
+            render(
+                <LeftToSpendHero
+                    summary={mockSummary}
+                    onNavigateBudget={onBudget}
+                />,
+            );
+
+            expect(screen.getByText("Left to Spend")).toBeInTheDocument();
+            expect(screen.getByTestId("left-to-spend-amount")).toHaveTextContent(
+                "S$600.00",
+            );
+            expect(screen.getByText("Groceries")).toBeInTheDocument();
+            expect(screen.getByText("Entertainment")).toBeInTheDocument();
+            expect(screen.queryByText("Shopping")).not.toBeInTheDocument();
+
+            const expandBtn = screen.getByRole("button", { name: "+1 More" });
+            fireEvent.click(expandBtn);
+
+            expect(screen.getByText("Shopping")).toBeInTheDocument();
+            expect(
+                screen.getByRole("button", { name: "Show Less" }),
+            ).toBeInTheDocument();
+
+            fireEvent.click(screen.getByRole("button", { name: "Show Less" }));
+            expect(screen.queryByText("Shopping")).not.toBeInTheDocument();
+
+            fireEvent.click(screen.getByRole("button", { name: "Budget" }));
+            expect(onBudget).toHaveBeenCalledTimes(1);
+        });
+
+        it("handles overspent state properly", () => {
+            const overspentSummary = {
+                ...mockSummary,
+                totalRemaining: -50,
+            };
+            render(<LeftToSpendHero summary={overspentSummary} />);
+            expect(screen.getByTestId("left-to-spend-amount")).toHaveClass(
+                "text-(--accent-coral-ink)",
+            );
+        });
+
+        it("renders CategoryMeterCard with correct tone and content", () => {
+            render(
+                <CategoryMeterCard
+                    name="Coffee"
+                    color="#f59e0b"
+                    remaining={-15}
+                    pct={120}
+                />,
+            );
+            expect(screen.getByText("Coffee")).toBeInTheDocument();
+            expect(screen.getByText("-S$15.00")).toBeInTheDocument();
+        });
+    });
+
+    describe("UpcomingBillRow", () => {
+        it("renders recurring item details and amortized annual rate", () => {
+            render(
+                <UpcomingBillRow
+                    item={sampleItems[0]}
+                    days={5}
+                />,
+            );
+            expect(
+                screen.getByText("Manulife - Lifeready 25 Plus"),
+            ).toBeInTheDocument();
+            expect(screen.getByText("Due in 5 days")).toBeInTheDocument();
+            expect(screen.getByText("S$3,200.00")).toBeInTheDocument();
+            expect(screen.getByText("S$266.67")).toBeInTheDocument();
+            expect(screen.getByText(/~.*\/mo/)).toBeInTheDocument();
+        });
+    });
+
+    describe("React.memo Optimization", () => {
+        const REACT_MEMO_TYPE = Symbol.for("react.memo");
+
+        it("memoizes StatCard", () => {
+            expect((StatCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
+        });
+
+        it("memoizes LeftToSpendHero and CategoryMeterCard", () => {
+            expect((LeftToSpendHero as any).$$typeof).toBe(REACT_MEMO_TYPE);
+            expect((CategoryMeterCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
+        });
+
+        it("memoizes UpcomingBillsWidget and UpcomingBillRow", () => {
+            expect((UpcomingBillsWidget as any).$$typeof).toBe(REACT_MEMO_TYPE);
+            expect((UpcomingBillRow as any).$$typeof).toBe(REACT_MEMO_TYPE);
+        });
+
+        it("memoizes QuestCard, InboxHomeCard and CategoryLimitWarningBanner", () => {
+            expect((QuestCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
+            expect((InboxHomeCard as any).$$typeof).toBe(REACT_MEMO_TYPE);
+            expect((CategoryLimitWarningBanner as any).$$typeof).toBe(
+                REACT_MEMO_TYPE,
+            );
         });
     });
 });
