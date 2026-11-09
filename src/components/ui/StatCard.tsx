@@ -3,8 +3,6 @@ import { MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES } from "../../lib/moneyStyles";
 import { TooltipPopover } from "./TooltipPopover";
 import { Card, type CardVariant } from "./Card";
 import { SkeletonLine, SkeletonStatValue } from "./Skeleton";
-import { ProgressRing } from "./ProgressRing";
-import { Sparkline } from "./Sparkline";
 
 export type StatCardTone =
     | "default"
@@ -15,19 +13,6 @@ export type StatCardTone =
     | "mint"
     | "butter"
     | "coral";
-
-export interface StatCardRingProps {
-    value: number;
-    size?: number;
-    tone?: "ok" | "near" | "over";
-}
-
-export interface StatCardSparklineProps {
-    data: number[];
-    tone?: "ok" | "near" | "over" | "neutral";
-    width?: number;
-    height?: number;
-}
 
 export interface StatCardProps {
     title: ReactNode;
@@ -44,14 +29,8 @@ export interface StatCardProps {
     onClick?: () => void;
     /** Renders skeleton placeholders for value/subtitle/footer while data loads. */
     loading?: boolean;
-    /** Renders compact padding and tighter typography for dense phone grids. */
-    compact?: boolean;
     /** Semantic pastel tone for the card icon background. */
     tone?: StatCardTone;
-    /** Embedded ProgressRing visual variant. */
-    ring?: StatCardRingProps;
-    /** Embedded Sparkline visual variant. */
-    sparkline?: StatCardSparklineProps;
 }
 
 const TONE_ICON_BG: Record<StatCardTone, string> = {
@@ -80,22 +59,13 @@ export function StatCard({
     className = "",
     onClick,
     loading = false,
-    compact = false,
     tone,
-    ring,
-    sparkline,
 }: StatCardProps) {
     const Component = onClick ? "button" : "div";
 
     const effectiveIconBg = tone
         ? (TONE_ICON_BG[tone] ?? TONE_ICON_BG.default)
         : (iconBg ?? TONE_ICON_BG.default);
-
-    const paddingClasses = compact ? "p-2.5 sm:p-3.5" : "p-3 sm:p-5";
-
-    const valueSizeClass = compact
-        ? MONEY_SIZE_CLASSES.md
-        : MONEY_SIZE_CLASSES.lg;
 
     return (
         <Card
@@ -108,7 +78,7 @@ export function StatCard({
             <Component
                 type={onClick ? "button" : undefined}
                 onClick={onClick}
-                className={`w-full ${paddingClasses} text-left block ${onClick ? "cursor-pointer" : ""}`}
+                className={`w-full p-3 sm:p-5 text-left block ${onClick ? "cursor-pointer" : ""}`}
             >
                 <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                     <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
@@ -131,15 +101,7 @@ export function StatCard({
                             </TooltipPopover>
                         )}
                     </div>
-                    {ring && !loading ? (
-                        <div className="shrink-0">
-                            <ProgressRing
-                                value={ring.value}
-                                size={ring.size ?? (compact ? 28 : 36)}
-                                tone={ring.tone}
-                            />
-                        </div>
-                    ) : icon ? (
+                    {icon ? (
                         <div
                             className={`p-1.5 sm:p-2 rounded-xl border-2 border-(--border-ink) shadow-cute-sm shrink-0 ${effectiveIconBg}`}
                         >
@@ -150,7 +112,7 @@ export function StatCard({
 
                 <div className="mt-1.5 sm:mt-2.5 flex items-baseline justify-between gap-1 sm:gap-2 flex-wrap min-w-0">
                     <div
-                        className={`min-w-0 max-w-full ${MONEY_BASE_CLASSES} ${valueSizeClass} text-(--text-ink)`}
+                        className={`min-w-0 max-w-full ${MONEY_BASE_CLASSES} ${MONEY_SIZE_CLASSES.lg} text-(--text-ink)`}
                     >
                         {loading ? <SkeletonStatValue /> : value}
                     </div>
@@ -158,17 +120,6 @@ export function StatCard({
                         <div className="shrink-0">{badge}</div>
                     )}
                 </div>
-
-                {sparkline && !loading && (
-                    <div className="mt-2 flex items-center justify-end">
-                        <Sparkline
-                            data={sparkline.data}
-                            tone={sparkline.tone}
-                            width={sparkline.width ?? (compact ? 56 : 72)}
-                            height={sparkline.height ?? (compact ? 20 : 24)}
-                        />
-                    </div>
-                )}
 
                 {subtitle && (
                     <div className="mt-1 text-[11px] sm:text-xs font-medium text-(--text-muted) truncate sm:line-clamp-2">

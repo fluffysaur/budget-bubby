@@ -9,6 +9,7 @@
 import {
     Wallet,
     TrendingUp,
+    Users,
     Landmark,
     Layers,
     Pencil,
@@ -102,7 +103,9 @@ export function AccountCard({
                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[10px] font-bold bg-(--pastel-pink-light) text-(--text-ink) border border-(--border-ink)">
                                         <AvatarDot
                                             name="Joint"
-                                            avatarUrl="👥"
+                                            icon={
+                                                <Users className="h-2.5 w-2.5" />
+                                            }
                                             size="xs"
                                             border={false}
                                             decorative

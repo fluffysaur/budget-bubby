@@ -12,8 +12,10 @@ export type AvatarDotTone =
 export interface AvatarDotProps {
     /** Display name or label of the person/group. */
     name?: string;
-    /** Emoji string (e.g. "👩", "👨", "👥") or an image URL. */
+    /** Emoji string (e.g. "👩", "👨") or an image URL. */
     avatarUrl?: string | null;
+    /** Icon shown instead of avatar/initial, e.g. for a joint account. */
+    icon?: ReactNode;
     /** Dot size: xs (16px), sm (20px), md (28px), lg (36px). Defaults to "sm". */
     size?: AvatarDotSize;
     /** Pastel accent tone. Defaults to "lilac". */
@@ -49,6 +51,7 @@ const TONE_CLASSES: Record<AvatarDotTone, string> = {
 export function AvatarDot({
     name,
     avatarUrl,
+    icon,
     size = "sm",
     tone = "lilac",
     border = true,
@@ -69,7 +72,11 @@ export function AvatarDot({
             avatarUrl.startsWith("https://") ||
             avatarUrl.startsWith("/"));
 
-    const content = isImageUrl ? (
+    const content = icon ? (
+        <span className="inline-flex items-center justify-center leading-none">
+            {icon}
+        </span>
+    ) : isImageUrl ? (
         <img
             src={avatarUrl}
             alt=""
@@ -96,80 +103,6 @@ export function AvatarDot({
         >
             {content}
         </span>
-    );
-}
-
-export interface AvatarDotItem {
-    id?: string;
-    name: string;
-    avatarUrl?: string | null;
-    tone?: AvatarDotTone;
-}
-
-export interface AvatarDotGroupProps {
-    /** List of members to display. */
-    members: AvatarDotItem[];
-    /** Size of each dot. Defaults to "sm". */
-    size?: AvatarDotSize;
-    /** Maximum number of avatars before showing overflow badge "+N". Defaults to 2. */
-    max?: number;
-    /** Optional label displayed next to the group. */
-    label?: ReactNode;
-    /** Optional accessible label. */
-    ariaLabel?: string;
-    className?: string;
-}
-
-export function AvatarDotGroup({
-    members,
-    size = "sm",
-    max = 2,
-    label,
-    ariaLabel,
-    className = "",
-}: AvatarDotGroupProps) {
-    const visibleMembers = members.slice(0, max);
-    const overflowCount = members.length - max;
-    const sizeCls = SIZE_CLASSES[size] ?? SIZE_CLASSES.sm;
-
-    const groupAriaLabel =
-        ariaLabel ||
-        (members.length > 0
-            ? members.map((m) => m.name).join(", ")
-            : "Member avatars");
-
-    return (
-        <div
-            role="group"
-            aria-label={groupAriaLabel}
-            className={`inline-flex items-center gap-1.5 ${className}`}
-        >
-            <div className="flex items-center -space-x-1 sm:-space-x-1.5">
-                {visibleMembers.map((m, idx) => (
-                    <AvatarDot
-                        key={m.id || `${m.name}-${idx}`}
-                        name={m.name}
-                        avatarUrl={m.avatarUrl}
-                        size={size}
-                        tone={m.tone}
-                        className="relative z-10 hover:z-20 ring-1 ring-(--bg-card)"
-                    />
-                ))}
-                {overflowCount > 0 && (
-                    <span
-                        className={`relative z-0 inline-flex shrink-0 items-center justify-center rounded-full font-black bg-(--bg-cream) text-(--text-muted) border border-(--border-ink) sm:border-2 ring-1 ring-(--bg-card) select-none ${sizeCls}`}
-                        title={`${overflowCount} more`}
-                    >
-                        +{overflowCount}
-                    </span>
-                )}
-            </div>
-            {label && (
-                <span className="text-xs font-semibold text-(--text-ink) truncate">
-                    {label}
-                </span>
-            )}
-        </div>
     );
 }
 

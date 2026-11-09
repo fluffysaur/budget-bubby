@@ -1,8 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import { AvatarDot, AvatarDotGroup } from "../src/components/ui/AvatarDot";
+import { AvatarDot } from "../src/components/ui/AvatarDot";
 
 describe("AvatarDot", () => {
+    it("renders a custom icon instead of the initial", () => {
+        render(
+            <AvatarDot name="Joint" icon={<svg data-testid="joint-icon" />} />,
+        );
+        expect(screen.getByTestId("joint-icon")).toBeInTheDocument();
+        expect(
+            screen.getByRole("img", { name: "Joint" }),
+        ).not.toHaveTextContent("J");
+    });
+
     it("is hidden from assistive tech when decorative", () => {
         const { container } = render(<AvatarDot name="Rachel" decorative />);
         expect(screen.queryByRole("img")).not.toBeInTheDocument();
@@ -75,30 +85,5 @@ describe("AvatarDot", () => {
         expect(screen.getByRole("img").className).toContain(
             "pastel-coral-light",
         );
-    });
-});
-
-describe("AvatarDotGroup", () => {
-    const members = [
-        { id: "1", name: "Rachel", avatarUrl: "👩" },
-        { id: "2", name: "Yi Jia", avatarUrl: "👨" },
-        { id: "3", name: "Guest", avatarUrl: "👤" },
-    ];
-
-    it("renders group of avatars up to max count", () => {
-        render(
-            <AvatarDotGroup members={members} max={2} label="Shared 50/50" />,
-        );
-
-        expect(screen.getByText("👩")).toBeInTheDocument();
-        expect(screen.getByText("👨")).toBeInTheDocument();
-        expect(screen.getByText("+1")).toBeInTheDocument();
-        expect(screen.getByText("Shared 50/50")).toBeInTheDocument();
-    });
-
-    it("renders accessible group aria-label", () => {
-        render(<AvatarDotGroup members={members.slice(0, 2)} />);
-        const group = screen.getByRole("group", { name: "Rachel, Yi Jia" });
-        expect(group).toBeInTheDocument();
     });
 });
