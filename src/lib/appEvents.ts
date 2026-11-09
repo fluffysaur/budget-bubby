@@ -31,6 +31,7 @@ export type MilestoneKind =
     | "inbox-zero"
     | "full-belly"
     | "weekly-treat"
+    | "monthly-treat"
     | "body-change"
     | "reunion"
     | "goal-complete"

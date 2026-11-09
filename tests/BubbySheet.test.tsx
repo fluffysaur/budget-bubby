@@ -28,6 +28,39 @@ describe("BubbySheet", () => {
         vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue(
             [],
         );
+        vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue(
+            [],
+        );
+        vi.spyOn(financeService, "getGoals").mockResolvedValue([]);
+    });
+
+    it("hides the monthly section until a monthly quest applies", async () => {
+        await renderSheet();
+        expect(
+            screen.queryByRole("list", { name: "This month's quests" }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("list", { name: "This week's quests" }),
+        ).toBeInTheDocument();
+    });
+
+    it("lists the monthly quests once a card statement is due", async () => {
+        vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue([
+            {
+                id: "s1",
+                card_id: "c1",
+                household_id: "hh",
+                month: toSgtDateString().slice(0, 7),
+                statement_amount: 80,
+                due_date: toSgtDateString(),
+                is_paid: false,
+            },
+        ]);
+        await renderSheet();
+        const list = await screen.findByRole("list", {
+            name: "This month's quests",
+        });
+        expect(within(list).getByText("Pay card bills")).toBeInTheDocument();
     });
 
     it("shows meters without numbers, quests and an empty snack shelf", async () => {

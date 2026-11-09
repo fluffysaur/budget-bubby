@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { allDone, dailyQuests, weeklyQuests } from "../src/lib/bubby/quests";
+import {
+    allDone,
+    dailyQuests,
+    monthlyQuests,
+    weeklyQuests,
+} from "../src/lib/bubby/quests";
 import { snackForWeek, SNACKS } from "../src/lib/bubby/snacks";
-import type { DailyCheckin } from "../src/types/finance";
+import type { CreditCardStatement, DailyCheckin } from "../src/types/finance";
 
 const ME = "mem-a";
 const TODAY = "2026-11-06"; // Friday; week starts 2026-11-02
@@ -95,6 +100,143 @@ describe("weekly quests", () => {
             },
         });
         expect(lastWeek.every((q) => !q.done)).toBe(true);
+    });
+});
+
+describe("weekly goal quest", () => {
+    const base = { today: TODAY, snapshots: [], store: {} };
+
+    it("is hidden without an active goal", () => {
+        const ids = weeklyQuests(base).map((q) => q.id);
+        expect(ids).not.toContain("goal");
+    });
+
+    it("shows with an active goal and completes on a goal-add this week", () => {
+        const pending = weeklyQuests({ ...base, hasActiveGoal: true });
+        expect(pending.find((q) => q.id === "goal")).toMatchObject({
+            reward: "exercise",
+            done: false,
+        });
+        const done = weeklyQuests({
+            ...base,
+            hasActiveGoal: true,
+            store: { exercise: { "goal-add": ["2026-11-04"] } },
+        });
+        expect(done.find((q) => q.id === "goal")?.done).toBe(true);
+        const lastWeek = weeklyQuests({
+            ...base,
+            hasActiveGoal: true,
+            store: { exercise: { "goal-add": ["2026-11-01"] } },
+        });
+        expect(lastWeek.find((q) => q.id === "goal")?.done).toBe(false);
+    });
+
+    it("keeps the weekly set completable when there is no goal", () => {
+        const quests = weeklyQuests({
+            ...base,
+            snapshots: [
+                {
+                    id: "s",
+                    account_id: "a",
+                    household_id: "hh",
+                    balance: 1,
+                    snapshot_date: "2026-11-03",
+                },
+            ],
+            store: { exercise: { "recap-read": ["2026-11-03"] } },
+        });
+        expect(allDone(quests)).toBe(true);
+    });
+});
+
+function stmt(
+    id: string,
+    due_date: string,
+    is_paid: boolean,
+): CreditCardStatement {
+    return {
+        id,
+        card_id: id,
+        household_id: "hh",
+        month: due_date.slice(0, 7),
+        statement_amount: 100,
+        due_date,
+        is_paid,
+    };
+}
+
+describe("monthly quests", () => {
+    const base = {
+        today: TODAY,
+        statements: [] as CreditCardStatement[],
+        surplusPending: false,
+        store: {},
+    };
+
+    it("are empty when nothing is due and there is no surplus", () => {
+        expect(monthlyQuests(base)).toEqual([]);
+        expect(allDone(monthlyQuests(base))).toBe(false);
+    });
+
+    it("pay-cards needs every statement due this month paid", () => {
+        const some = monthlyQuests({
+            ...base,
+            statements: [
+                stmt("a", "2026-11-20", true),
+                stmt("b", "2026-11-25", false),
+            ],
+        });
+        expect(some).toEqual([
+            expect.objectContaining({
+                id: "cards",
+                reward: "exercise",
+                done: false,
+            }),
+        ]);
+        const all = monthlyQuests({
+            ...base,
+            statements: [
+                stmt("a", "2026-11-20", true),
+                stmt("b", "2026-11-25", true),
+            ],
+        });
+        expect(all[0].done).toBe(true);
+    });
+
+    it("counts statements by due date, ignoring other months", () => {
+        const quests = monthlyQuests({
+            ...base,
+            statements: [
+                stmt("old", "2026-10-28", false),
+                stmt("next", "2026-12-03", false),
+                stmt("now", "2026-11-12", true),
+            ],
+        });
+        expect(quests.find((q) => q.id === "cards")?.done).toBe(true);
+    });
+
+    it("sweep shows with surplus or a sweep this month, done on month-end", () => {
+        const pending = monthlyQuests({ ...base, surplusPending: true });
+        expect(pending.map((q) => [q.id, q.done])).toEqual([["sweep", false]]);
+        const done = monthlyQuests({
+            ...base,
+            store: { exercise: { "month-end": ["2026-11-02"] } },
+        });
+        expect(done.map((q) => [q.id, q.done])).toEqual([["sweep", true]]);
+        const lastMonth = monthlyQuests({
+            ...base,
+            store: { exercise: { "month-end": ["2026-10-30"] } },
+        });
+        expect(lastMonth).toEqual([]);
+    });
+
+    it("are all done only when every shown quest is done", () => {
+        const quests = monthlyQuests({
+            ...base,
+            statements: [stmt("a", "2026-11-20", true)],
+            store: { exercise: { "month-end": ["2026-11-03"] } },
+        });
+        expect(allDone(quests)).toBe(true);
     });
 });
 

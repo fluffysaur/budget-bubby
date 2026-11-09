@@ -63,6 +63,9 @@ describe("useQuestActions", () => {
     it.each<[Quest["id"], string]>([
         ["inbox", "/inbox"],
         ["balances", "/accounts"],
+        ["goal", "/goals"],
+        ["cards", "/accounts"],
+        ["sweep", "/expenses"],
     ])("navigates for the %s quest", (id, path) => {
         const onDone = vi.fn();
         const { result } = renderActions(onDone);

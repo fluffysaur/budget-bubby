@@ -93,6 +93,14 @@ const MILESTONE_CUES: Record<MilestoneKind, MilestoneCue> = {
         react: "munch",
         big: false,
     },
+    // Not big: it lands right after a sweep or bill-paid, which are, and the
+    // big-celebration cooldown would swallow it
+    "monthly-treat": {
+        haptic: "goalMilestone",
+        sound: "success",
+        react: "munch",
+        big: false,
+    },
     "body-change": {
         haptic: "celebrate",
         sound: "success",
