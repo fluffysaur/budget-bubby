@@ -5,7 +5,7 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { CreditCard as CreditCardIcon, ChevronRight, ExternalLink } from "lucide-react";
+import { CreditCard as CreditCardIcon, ChevronRight } from "lucide-react";
 import {
     formatCountdown,
     formatISODate,
@@ -15,7 +15,6 @@ import {
     getUnpaidCardCycles,
     type CardCycle,
 } from "../../lib/creditCardCycles";
-import { getBankDeepLink, openBankApp } from "../../lib/bankDeepLinks";
 import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
@@ -48,7 +47,6 @@ const CycleRow = React.memo(function CycleRow({
     onMarkPaid: (cycle: CardCycle) => void;
 }) {
     const overdue = cycle.daysUntilDue < 0;
-    const bankConfig = getBankDeepLink(cycle.card.bank);
 
     return (
         <div
@@ -69,18 +67,6 @@ const CycleRow = React.memo(function CycleRow({
                             text={cycle.card.name}
                             className="text-sm font-bold text-(--text-ink) font-display min-w-0"
                         />
-                        {bankConfig && (
-                            <button
-                                type="button"
-                                onClick={() => openBankApp(cycle.card.bank)}
-                                title={`Open ${bankConfig.bankName} app`}
-                                aria-label={`Open ${bankConfig.bankName} app for ${cycle.card.name}`}
-                                className="inline-flex shrink-0 items-center gap-1 rounded-lg border-2 border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-[11px] font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
-                            >
-                                <ExternalLink className="h-3 w-3" />
-                                <span>Open App</span>
-                            </button>
-                        )}
                     </div>
                     <span
                         className={`block text-xs font-bold ${

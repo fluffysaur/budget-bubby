@@ -109,7 +109,7 @@ describe("CreditCardPaymentsWidget", () => {
         );
     });
 
-    it("renders bank app launcher button when card has a recognised bank", () => {
+    it("does not render a bank app launcher button", () => {
         render(
             <CreditCardPaymentsWidget
                 cards={[card({ bank: "DBS" })]}
@@ -120,10 +120,8 @@ describe("CreditCardPaymentsWidget", () => {
         );
 
         expect(
-            screen.getByRole("button", {
-                name: /open dbs \/ posb app for daily card/i,
-            }),
-        ).toBeInTheDocument();
+            screen.queryByRole("button", { name: /open .* app/i }),
+        ).not.toBeInTheDocument();
     });
 
     it("shows Settle Overdue button when 2 or more cards are overdue", () => {

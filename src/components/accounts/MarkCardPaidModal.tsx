@@ -125,26 +125,25 @@ function MarkCardPaidForm({
                 {error && <Alert variant="danger">{error}</Alert>}
 
                 {bankConfig && (
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
-                        <div className="min-w-0 flex-1">
+                    <button
+                        type="button"
+                        onClick={() => openBankApp(cycle.card.bank)}
+                        aria-label={`Open ${bankConfig.bankName} app`}
+                        className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 text-left shadow-cute-sm transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                    >
+                        <span className="min-w-0 flex-1">
                             <span className="block text-xs font-bold text-(--text-ink)">
                                 Check statement in {bankConfig.bankName}
                             </span>
-                            <span className="block text-[11px] font-medium text-(--text-muted) truncate">
+                            <span className="block truncate text-[11px] font-medium text-(--text-muted)">
                                 Open mobile app or portal
                             </span>
-                        </div>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => openBankApp(cycle.card.bank)}
-                            className="shrink-0 text-xs gap-1.5"
-                        >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            <span>Open App</span>
-                        </Button>
-                    </div>
+                        </span>
+                        <ExternalLink
+                            className="h-4 w-4 shrink-0 text-(--text-ink)"
+                            strokeWidth={2.5}
+                        />
+                    </button>
                 )}
 
                 <div className="space-y-2">
