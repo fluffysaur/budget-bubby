@@ -54,10 +54,7 @@ export const UpcomingBillRow = React.memo(function UpcomingBillRow({
                                 className="text-sm font-bold text-(--text-ink) font-display"
                             />
                         </div>
-                        <RecurringTypeBadge
-                            type={item.type}
-                            compactOnMobile
-                        />
+                        <RecurringTypeBadge type={item.type} compactOnMobile />
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                         <span
@@ -83,9 +80,7 @@ export const UpcomingBillRow = React.memo(function UpcomingBillRow({
                 {item.frequency === "annually" && (
                     <div className="text-[10px] font-mono-num text-(--text-muted)">
                         ~
-                        <CurrencyText
-                            amount={item.monthly_amortized_amount}
-                        />
+                        <CurrencyText amount={item.monthly_amortized_amount} />
                         /mo
                     </div>
                 )}

@@ -21,13 +21,7 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
                 value={pct}
                 size={36}
                 strokeWidth={3.5}
-                tone={
-                    remaining < 0
-                        ? "over"
-                        : pct >= 80
-                          ? "near"
-                          : "ok"
-                }
+                tone={remaining < 0 ? "over" : pct >= 80 ? "near" : "ok"}
                 centerContent={
                     <span
                         className="h-2 w-2 rounded-full border border-(--border-ink) shrink-0"

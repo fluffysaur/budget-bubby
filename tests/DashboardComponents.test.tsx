@@ -578,9 +578,9 @@ describe("DashboardPage", () => {
             );
 
             expect(screen.getByText("Left to Spend")).toBeInTheDocument();
-            expect(screen.getByTestId("left-to-spend-amount")).toHaveTextContent(
-                "S$600.00",
-            );
+            expect(
+                screen.getByTestId("left-to-spend-amount"),
+            ).toHaveTextContent("S$600.00");
             expect(screen.getByText("Groceries")).toBeInTheDocument();
             expect(screen.getByText("Entertainment")).toBeInTheDocument();
             expect(screen.queryByText("Shopping")).not.toBeInTheDocument();
@@ -627,12 +627,7 @@ describe("DashboardPage", () => {
 
     describe("UpcomingBillRow", () => {
         it("renders recurring item details and amortized annual rate", () => {
-            render(
-                <UpcomingBillRow
-                    item={sampleItems[0]}
-                    days={5}
-                />,
-            );
+            render(<UpcomingBillRow item={sampleItems[0]} days={5} />);
             expect(
                 screen.getByText("Manulife - Lifeready 25 Plus"),
             ).toBeInTheDocument();
