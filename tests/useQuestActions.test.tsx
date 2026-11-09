@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import { useQuestActions } from "../src/hooks/useQuestActions";
+import {
+    isQuestSelectable,
+    useQuestActions,
+} from "../src/hooks/useQuestActions";
 import type { Quest } from "../src/lib/bubby/quests";
 
 const pet = vi.fn();
@@ -93,5 +96,20 @@ describe("useQuestActions", () => {
 
         expect(pet).not.toHaveBeenCalled();
         expect(onDone).not.toHaveBeenCalled();
+    });
+
+    it("recap quest is only selectable while the recap card is due", () => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        try {
+            // Wednesday: recap card still shown
+            vi.setSystemTime(new Date("2026-11-11T04:00:00.000Z"));
+            expect(isQuestSelectable(quest("recap"))).toBe(true);
+            // Thursday: recap card gone
+            vi.setSystemTime(new Date("2026-11-12T04:00:00.000Z"));
+            expect(isQuestSelectable(quest("recap"))).toBe(false);
+            expect(isQuestSelectable(quest("inbox"))).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

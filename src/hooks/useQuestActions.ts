@@ -7,8 +7,22 @@ import { useCallback } from "react";
 import { useBubby } from "./useBubby";
 import { useOptionalNavigate } from "./useOptionalNavigate";
 import type { Quest } from "../lib/bubby/quests";
+import { recapWeekFor } from "../lib/bubby/recap";
+import { readBubbyStore } from "../lib/bubby/storage";
+import { toSgtDateString } from "../lib/bubby/dates";
 
 export const WEEKLY_RECAP_ID = "weekly-recap";
+
+/**
+ * Whether a pending quest can be acted on right now. The recap quest needs the
+ * "Last Week" card, which is only shown Mon-Wed until acknowledged.
+ */
+export function isQuestSelectable(quest: Quest): boolean {
+    if (quest.id !== "recap") return true;
+    return (
+        recapWeekFor(toSgtDateString(), readBubbyStore().recapSeenWeek) !== null
+    );
+}
 
 export function useQuestActions(onDone?: () => void) {
     const { pet } = useBubby();

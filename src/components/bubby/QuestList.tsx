@@ -11,6 +11,8 @@ export interface QuestListProps {
     quests: Quest[];
     label: string;
     onSelect?: (quest: Quest) => void;
+    /** Pending quests this returns false for are shown but not tappable. */
+    isSelectable?: (quest: Quest) => boolean;
     className?: string;
 }
 
@@ -18,6 +20,7 @@ export function QuestList({
     quests,
     label,
     onSelect,
+    isSelectable,
     className = "",
 }: QuestListProps) {
     return (
@@ -26,7 +29,11 @@ export function QuestList({
                 <li key={q.id} data-done={q.done ? "true" : "false"}>
                     <button
                         type="button"
-                        disabled={q.done || !onSelect}
+                        disabled={
+                            q.done ||
+                            !onSelect ||
+                            (isSelectable ? !isSelectable(q) : false)
+                        }
                         onClick={() => onSelect?.(q)}
                         className={`flex min-h-11 w-full items-center gap-2.5 rounded-xl px-1 text-left text-sm font-bold ${
                             q.done

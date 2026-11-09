@@ -25,4 +25,21 @@ describe("QuestList", () => {
         );
         expect(onSelect).toHaveBeenCalledWith(quests[1]);
     });
+
+    it("disables pending quests that are not selectable right now", () => {
+        const onSelect = vi.fn();
+        render(
+            <QuestList
+                quests={quests}
+                label="Quests"
+                onSelect={onSelect}
+                isSelectable={(q) => q.id !== "inbox"}
+            />,
+        );
+
+        const inbox = screen.getByRole("button", { name: /Clear your inbox/ });
+        expect(inbox).toBeDisabled();
+        fireEvent.click(inbox);
+        expect(onSelect).not.toHaveBeenCalled();
+    });
 });

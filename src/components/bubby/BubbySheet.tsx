@@ -11,7 +11,10 @@ import { snackLabel } from "../../lib/bubby/snacks";
 import { Bubby } from "./Bubby";
 import { FedTodayDots } from "./FedTodayDots";
 import { QuestList } from "./QuestList";
-import { useQuestActions } from "../../hooks/useQuestActions";
+import {
+    isQuestSelectable,
+    useQuestActions,
+} from "../../hooks/useQuestActions";
 import { SnackArt } from "./SnackArt";
 
 export interface BubbySheetProps {
@@ -120,6 +123,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                             quests={dailyQuests}
                             label="Today's quests"
                             onSelect={onSelectQuest}
+                            isSelectable={isQuestSelectable}
                             className="mt-1.5"
                         />
                     </div>
@@ -131,6 +135,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                             quests={weeklyQuests}
                             label="This week's quests"
                             onSelect={onSelectQuest}
+                            isSelectable={isQuestSelectable}
                             className="mt-1.5"
                         />
                     </div>

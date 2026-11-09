@@ -12,7 +12,10 @@ import { Bubby } from "../bubby/Bubby";
 import { FedTodayDots } from "../bubby/FedTodayDots";
 import { QuestList } from "../bubby/QuestList";
 import { useBubby } from "../../hooks/useBubby";
-import { useQuestActions } from "../../hooks/useQuestActions";
+import {
+    isQuestSelectable,
+    useQuestActions,
+} from "../../hooks/useQuestActions";
 import { financeService } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
 import { emitAppEvent } from "../../lib/appEvents";
@@ -86,6 +89,7 @@ export function QuestCard() {
                     quests={dailyQuests}
                     label="Today's quests"
                     onSelect={onSelectQuest}
+                    isSelectable={isQuestSelectable}
                     className="min-w-0 flex-1"
                 />
             </div>
