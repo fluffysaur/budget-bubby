@@ -23,6 +23,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.claude/
+.worktrees/
 
 # Environment & Private Data
 .env*
