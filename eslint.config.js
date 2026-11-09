@@ -7,6 +7,7 @@ export default tseslint.config(
     {
         ignores: [
             "dist",
+            ".claude",
             ".worktrees",
             "supabase/functions/_shared/dist",
             "node_modules",
