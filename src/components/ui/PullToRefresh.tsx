@@ -21,6 +21,26 @@ export interface PullToRefreshProps {
 
 const DEFAULT_THRESHOLD = 64;
 const MAX_PULL_DISTANCE = 110;
+/** Movement (px) before the gesture direction is decided. */
+const DIRECTION_LOCK_DISTANCE = 8;
+/** Vertical travel must exceed horizontal travel by this factor (~56°+). */
+const VERTICAL_DOMINANCE = 1.5;
+
+/** True if the element or an ancestor below `root` scrolls horizontally. */
+function isInHorizontalScroller(
+    target: EventTarget | null,
+    root: HTMLElement,
+): boolean {
+    let el = target instanceof HTMLElement ? target : null;
+    while (el && el !== root) {
+        if (el.scrollWidth > el.clientWidth) {
+            const overflowX = getComputedStyle(el).overflowX;
+            if (overflowX === "auto" || overflowX === "scroll") return true;
+        }
+        el = el.parentElement;
+    }
+    return false;
+}
 
 export function PullToRefresh({
     onRefresh,
@@ -65,10 +85,19 @@ export function PullToRefresh({
         const container = containerRef.current;
         if (!container) return;
 
-        const handleStart = (clientX?: number, clientY?: number) => {
+        const handleStart = (
+            clientX: number | undefined,
+            clientY: number | undefined,
+            target: EventTarget | null,
+        ) => {
             if (disabledRef.current || isRefreshingRef.current) return;
             // Only initiate pull-to-refresh when container is at the very top
-            if (container.scrollTop <= 0 && clientY !== undefined) {
+            // and the touch did not begin inside a horizontal scroller
+            if (
+                container.scrollTop <= 0 &&
+                clientY !== undefined &&
+                !isInHorizontalScroller(target, container)
+            ) {
                 touchStartY.current = clientY;
                 touchStartX.current = clientX ?? 0;
                 isReadyRef.current = true;
@@ -97,13 +126,17 @@ export function PullToRefresh({
             const diffY = clientY - touchStartY.current;
             const diffX = currentX - (touchStartX.current ?? 0);
 
-            // Disambiguate horizontal swipes (carousels, tabs) from vertical pull
-            if (
-                !isPullingRef.current &&
-                Math.abs(diffX) > Math.abs(diffY) * 0.8
-            ) {
-                isReadyRef.current = false;
-                return;
+            // Decide the gesture direction once, after a small dead zone, and
+            // lock it. Only a clearly vertical downward drag may start a pull;
+            // horizontal and diagonal swipes (carousels, tabs) never do.
+            if (!isPullingRef.current) {
+                const absX = Math.abs(diffX);
+                const absY = Math.abs(diffY);
+                if (Math.max(absX, absY) < DIRECTION_LOCK_DISTANCE) return;
+                if (diffY <= 0 || absY < absX * VERTICAL_DOMINANCE) {
+                    isReadyRef.current = false;
+                    return;
+                }
             }
 
             if (diffY > 0 && container.scrollTop <= 0) {
@@ -180,7 +213,7 @@ export function PullToRefresh({
 
         const onTouchStart = (e: TouchEvent) => {
             if (!e.touches || e.touches.length === 0) return;
-            handleStart(e.touches[0].clientX, e.touches[0].clientY);
+            handleStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
         };
 
         const onTouchMove = (e: TouchEvent) => {
