@@ -4,7 +4,7 @@
  * bills and other) plus unpaid credit card statements, sorted by due date.
  */
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
     CalendarClock,
     ChevronRight,
@@ -31,6 +31,148 @@ type BillRow =
     | { kind: "recurring"; days: number | null; item: RecurringItem }
     | { kind: "card"; days: number; stmt: CreditCardStatement };
 
+function getDueStatus(p: RecurringItem, days: number | null) {
+    if (days !== null && days <= 31) {
+        return { text: formatDueInDays(days), urgent: days <= 7 };
+    }
+    const monthName = p.payment_month
+        ? MONTH_NAMES[p.payment_month - 1]
+        : "Annual";
+    return { text: `Due in ${monthName}`, urgent: false };
+}
+
+export interface UpcomingBillRowProps {
+    item: RecurringItem;
+    days: number | null;
+}
+
+export const UpcomingBillRow = React.memo(function UpcomingBillRow({
+    item,
+    days,
+}: UpcomingBillRowProps) {
+    const due = getDueStatus(item, days);
+
+    return (
+        <div className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
+                    <Bell className="h-4 w-4" strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
+                            <TruncatedText
+                                text={item.name}
+                                className="text-sm font-bold text-(--text-ink) font-display"
+                            />
+                        </div>
+                        <RecurringTypeBadge type={item.type} compactOnMobile />
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <span
+                            className={`text-xs font-bold ${
+                                due.urgent
+                                    ? "text-amber-700 dark:text-amber-400"
+                                    : "text-(--text-muted)"
+                            }`}
+                        >
+                            {due.text}
+                        </span>
+                        <span className="text-[11px] font-medium text-(--text-muted) capitalize">
+                            • {item.frequency}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="text-right shrink-0">
+                <div className="text-(--text-ink)">
+                    <CurrencyText amount={item.amount} size="md" />
+                </div>
+                {item.frequency === "annually" && (
+                    <div className="text-[10px] font-mono-num text-(--text-muted)">
+                        ~
+                        <CurrencyText amount={item.monthly_amortized_amount} />
+                        /mo
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+});
+UpcomingBillRow.displayName = "UpcomingBillRow";
+
+export interface UpcomingCardRowProps {
+    stmt: CreditCardStatement;
+    days: number;
+    /** When given, the row is a button (e.g. opens Accounts). */
+    onOpen?: () => void;
+}
+
+export const UpcomingCardRow = React.memo(function UpcomingCardRow({
+    stmt,
+    days,
+    onOpen,
+}: UpcomingCardRowProps) {
+    const overdue = days < 0;
+    const dueText = overdue
+        ? `Overdue by ${-days} day${days === -1 ? "" : "s"}`
+        : formatDueInDays(days);
+    const rowClass =
+        "flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)";
+    const content = (
+        <>
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
+                    <CreditCard className="h-4 w-4" strokeWidth={2.5} />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
+                            <TruncatedText
+                                text={stmt.card?.name ?? "Credit Card"}
+                                className="text-sm font-bold text-(--text-ink) font-display"
+                            />
+                        </div>
+                        <Badge variant="lilac" size="sm" className="shrink-0">
+                            Card
+                        </Badge>
+                    </div>
+                    <div className="mt-0.5">
+                        <span
+                            className={`text-xs font-bold ${
+                                overdue
+                                    ? "text-(--accent-coral-ink) dark:text-rose-400"
+                                    : days <= 7
+                                      ? "text-amber-700 dark:text-amber-400"
+                                      : "text-(--text-muted)"
+                            }`}
+                        >
+                            {dueText}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div className="text-right shrink-0 text-(--text-ink)">
+                <CurrencyText amount={stmt.statement_amount} size="md" />
+            </div>
+        </>
+    );
+
+    return onOpen ? (
+        <button
+            type="button"
+            onClick={onOpen}
+            className={`${rowClass} w-full text-left cursor-pointer`}
+        >
+            {content}
+        </button>
+    ) : (
+        <div className={rowClass}>{content}</div>
+    );
+});
+UpcomingCardRow.displayName = "UpcomingCardRow";
+
 export interface UpcomingBillsWidgetProps {
     recurringItems?: RecurringItem[];
     /** Credit card statements; unpaid ones are listed by due date. */
@@ -44,7 +186,7 @@ export interface UpcomingBillsWidgetProps {
     referenceDate?: Date;
 }
 
-export function UpcomingBillsWidget({
+export const UpcomingBillsWidget = React.memo(function UpcomingBillsWidget({
     recurringItems = [],
     creditCardStatements = [],
     onViewAll,
@@ -80,16 +222,6 @@ export function UpcomingBillsWidget({
     }, [recurringItems, creditCardStatements, referenceDate]);
 
     const displayItems = sortedItems.slice(0, 3);
-
-    const getDueStatus = (p: RecurringItem, days: number | null) => {
-        if (days !== null && days <= 31) {
-            return { text: formatDueInDays(days), urgent: days <= 7 };
-        }
-        const monthName = p.payment_month
-            ? MONTH_NAMES[p.payment_month - 1]
-            : "Annual";
-        return { text: `Due in ${monthName}`, urgent: false };
-    };
 
     return (
         <div
@@ -158,161 +290,28 @@ export function UpcomingBillsWidget({
                     </div>
                 ) : (
                     <div className="space-y-2.5">
-                        {displayItems.map((row) => {
-                            if (row.kind === "card") {
-                                const { stmt, days } = row;
-                                const overdue = days < 0;
-                                const dueText = overdue
-                                    ? `Overdue by ${-days} day${days === -1 ? "" : "s"}`
-                                    : formatDueInDays(days);
-                                const rowClass =
-                                    "flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)";
-                                const content = (
-                                    <>
-                                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
-                                                <CreditCard
-                                                    className="h-4 w-4"
-                                                    strokeWidth={2.5}
-                                                />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="min-w-0 flex-1">
-                                                        <TruncatedText
-                                                            text={
-                                                                stmt.card
-                                                                    ?.name ??
-                                                                "Credit Card"
-                                                            }
-                                                            className="text-sm font-bold text-(--text-ink) font-display"
-                                                        />
-                                                    </div>
-                                                    <Badge
-                                                        variant="lilac"
-                                                        size="sm"
-                                                        className="shrink-0"
-                                                    >
-                                                        Card
-                                                    </Badge>
-                                                </div>
-                                                <div className="mt-0.5">
-                                                    <span
-                                                        className={`text-xs font-bold ${
-                                                            overdue
-                                                                ? "text-(--accent-coral-ink) dark:text-rose-400"
-                                                                : days <= 7
-                                                                  ? "text-amber-700 dark:text-amber-400"
-                                                                  : "text-(--text-muted)"
-                                                        }`}
-                                                    >
-                                                        {dueText}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right shrink-0 text-(--text-ink)">
-                                            <CurrencyText
-                                                amount={stmt.statement_amount}
-                                                size="md"
-                                            />
-                                        </div>
-                                    </>
-                                );
-                                return onOpenCard ? (
-                                    <button
-                                        key={`cc-${stmt.id}`}
-                                        type="button"
-                                        onClick={onOpenCard}
-                                        className={`${rowClass} w-full text-left cursor-pointer`}
-                                    >
-                                        {content}
-                                    </button>
-                                ) : (
-                                    <div
-                                        key={`cc-${stmt.id}`}
-                                        className={rowClass}
-                                    >
-                                        {content}
-                                    </div>
-                                );
-                            }
-
-                            const { item: recurringItem, days } = row;
-                            const due = getDueStatus(recurringItem, days);
-
-                            return (
-                                <div
-                                    key={recurringItem.id}
-                                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) p-3 sm:p-3.5 shadow-cute-sm transition-colors hover:bg-(--bg-card)"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--bg-card) border-2 border-(--border-ink) text-(--text-ink) shadow-cute-sm shrink-0">
-                                            <Bell
-                                                className="h-4 w-4"
-                                                strokeWidth={2.5}
-                                            />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <div className="min-w-0 flex-1">
-                                                    <TruncatedText
-                                                        text={
-                                                            recurringItem.name
-                                                        }
-                                                        className="text-sm font-bold text-(--text-ink) font-display"
-                                                    />
-                                                </div>
-                                                <RecurringTypeBadge
-                                                    type={recurringItem.type}
-                                                    compactOnMobile
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span
-                                                    className={`text-xs font-bold ${
-                                                        due.urgent
-                                                            ? "text-amber-700 dark:text-amber-400"
-                                                            : "text-(--text-muted)"
-                                                    }`}
-                                                >
-                                                    {due.text}
-                                                </span>
-                                                <span className="text-[11px] font-medium text-(--text-muted) capitalize">
-                                                    • {recurringItem.frequency}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="text-right shrink-0">
-                                        <div className="text-(--text-ink)">
-                                            <CurrencyText
-                                                amount={recurringItem.amount}
-                                                size="md"
-                                            />
-                                        </div>
-                                        {recurringItem.frequency ===
-                                            "annually" && (
-                                            <div className="text-[10px] font-mono-num text-(--text-muted)">
-                                                ~
-                                                <CurrencyText
-                                                    amount={
-                                                        recurringItem.monthly_amortized_amount
-                                                    }
-                                                />
-                                                /mo
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {displayItems.map((row) =>
+                            row.kind === "card" ? (
+                                <UpcomingCardRow
+                                    key={`cc-${row.stmt.id}`}
+                                    stmt={row.stmt}
+                                    days={row.days}
+                                    onOpen={onOpenCard}
+                                />
+                            ) : (
+                                <UpcomingBillRow
+                                    key={row.item.id}
+                                    item={row.item}
+                                    days={row.days}
+                                />
+                            ),
+                        )}
                     </div>
                 )}
             </div>
         </div>
     );
-}
+});
+UpcomingBillsWidget.displayName = "UpcomingBillsWidget";
 
 export default UpcomingBillsWidget;
