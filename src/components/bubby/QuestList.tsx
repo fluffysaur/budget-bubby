@@ -1,5 +1,7 @@
 /**
- * A short quest checklist. Rewards show as 🍤 food or 💪 exercise.
+ * A short quest checklist. Pending quests show an empty box and are tappable
+ * when `onSelect` is given; finished ones show a green check, strikethrough
+ * text and are disabled.
  */
 
 import { Check } from "lucide-react";
@@ -8,37 +10,55 @@ import type { Quest } from "../../lib/bubby/quests";
 export interface QuestListProps {
     quests: Quest[];
     label: string;
+    onSelect?: (quest: Quest) => void;
     className?: string;
 }
 
-export function QuestList({ quests, label, className = "" }: QuestListProps) {
+export function QuestList({
+    quests,
+    label,
+    onSelect,
+    className = "",
+}: QuestListProps) {
     return (
-        <ul
-            aria-label={label}
-            className={`flex flex-wrap gap-1.5 ${className}`}
-        >
+        <ul aria-label={label} className={`flex flex-col ${className}`}>
             {quests.map((q) => (
-                <li
-                    key={q.id}
-                    data-done={q.done ? "true" : "false"}
-                    className={`inline-flex items-center gap-1 rounded-full border-2 px-2 py-0.5 text-[11px] font-bold ${
-                        q.done
-                            ? "border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink)"
-                            : "border-(--border-subtle) bg-(--bg-cream) text-(--text-muted)"
-                    }`}
-                >
-                    {q.done ? (
-                        <Check
-                            className="h-3 w-3 shrink-0"
-                            strokeWidth={3}
-                            aria-label="Done"
-                        />
-                    ) : (
-                        <span aria-hidden="true">
+                <li key={q.id} data-done={q.done ? "true" : "false"}>
+                    <button
+                        type="button"
+                        disabled={q.done || !onSelect}
+                        onClick={() => onSelect?.(q)}
+                        className={`flex min-h-11 w-full items-center gap-2.5 rounded-xl px-1 text-left text-sm font-bold ${
+                            q.done
+                                ? "text-(--text-muted)"
+                                : "cursor-pointer text-(--text-ink) active:translate-x-0.5 active:translate-y-0.5"
+                        }`}
+                    >
+                        <span
+                            aria-hidden="true"
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${
+                                q.done
+                                    ? "border-(--border-ink) bg-(--pastel-mint-light)"
+                                    : "border-(--border-subtle) bg-(--bg-cream)"
+                            }`}
+                        >
+                            {q.done && (
+                                <Check
+                                    className="h-3.5 w-3.5 text-(--text-ink)"
+                                    strokeWidth={3}
+                                />
+                            )}
+                        </span>
+                        <span
+                            className={`min-w-0 flex-1 truncate ${q.done ? "line-through" : ""}`}
+                        >
+                            {q.label}
+                        </span>
+                        <span aria-hidden="true" className="shrink-0 text-xs">
                             {q.reward === "food" ? "🍤" : "💪"}
                         </span>
-                    )}
-                    <span>{q.label}</span>
+                        {q.done && <span className="sr-only">Done</span>}
+                    </button>
                 </li>
             ))}
         </ul>

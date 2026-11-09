@@ -57,10 +57,12 @@ describe("BubbySheet", () => {
 
     it("petting ticks the daily quest", async () => {
         await renderSheet();
-        fireEvent.click(screen.getByRole("button", { name: "Pet Bubby" }));
+        const today = screen.getByRole("list", { name: "Today's quests" });
+        fireEvent.click(
+            within(today).getByRole("button", { name: /Pet Bubby/ }),
+        );
 
         expect(readBubbyStore().petDays?.[YJ.id]).toEqual([toSgtDateString()]);
-        const today = screen.getByRole("list", { name: "Today's quests" });
         const pet = within(today).getByText("Pet Bubby").closest("li");
         expect(pet).toHaveAttribute("data-done", "true");
     });
