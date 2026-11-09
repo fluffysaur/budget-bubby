@@ -31,7 +31,8 @@ Loaded on demand from [AGENTS.md](../AGENTS.md). Read before committing, branchi
 
 - Never commit secrets or `.env*` files (only `.env.example` is tracked), or build artifacts (`dist/`, `playwright-report/`, `test-results/`, `*.tsbuildinfo`).
 - Do not install or upgrade dependencies without asking.
-- Do not mix unrelated refactors or reformatting into a feature branch.
+- Do not mix unrelated refactors or reformatting into a feature branch; keep diffs minimal without re-wrapping untouched code.
+- When retiring named runtime caches in `src/sw.ts`, explicitly delete them in the SW `activate` handler (`caches.delete(...)`).
 - Ask before destructive actions: deleting files, dropping data, resetting the DB.
 
 ### F. Supabase Migrations

@@ -43,6 +43,7 @@ Details in [docs/agent-ui-reference.md](docs/agent-ui-reference.md). Read it bef
         - Avoid: `const accounts = accountsData || [];`
         - Prefer: `const accounts = useMemo(() => accountsData || [], [accountsData]);`
         - Or use a top-level immutable constant: `const EMPTY_LIST = []; const accounts = accountsData ?? EMPTY_LIST;`
+- **Test Consumer Purity**: In mock test consumers, record context/props in `useEffect`, never mutating external test variables during render.
 
 
 ## Subagents & model tiering
