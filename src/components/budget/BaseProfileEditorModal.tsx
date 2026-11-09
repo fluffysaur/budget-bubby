@@ -45,6 +45,7 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import { RangeSlider } from "../ui/RangeSlider";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Alert } from "../ui/Alert";
 import { CategoryModeToggle } from "../categories/CategoryModeToggle";
@@ -1386,18 +1387,17 @@ export function BaseProfileEditorModal({
 
                                                 {/* Interactive Range Slider */}
                                                 <div className="pt-0.5">
-                                                    <input
-                                                        type="range"
+                                                    <RangeSlider
                                                         min="0"
                                                         max="100"
                                                         step="0.1"
                                                         aria-label="Allocation slider"
                                                         data-testid={`slider-${cat.id}`}
                                                         value={currentPct}
-                                                        onChange={(e) =>
+                                                        onValueChange={(v) =>
                                                             handlePercentageChange(
                                                                 cat.id,
-                                                                e.target.value,
+                                                                v,
                                                             )
                                                         }
                                                         className="w-full h-1.5 bg-(--bg-cream) border border-(--border-ink) rounded-lg appearance-none cursor-pointer accent-emerald-600"
