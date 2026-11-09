@@ -11,7 +11,6 @@ import {
     TrendingUp,
     Landmark,
     Layers,
-    Users,
     Pencil,
     Clock,
     Trash2,
@@ -21,6 +20,7 @@ import type { Account, AccountType } from "../../types/finance";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
+import { AvatarDot } from "../ui/AvatarDot";
 
 export interface AccountCardProps {
     account: Account;
@@ -99,8 +99,13 @@ export function AccountCard({
                                     {account.type}
                                 </span>
                                 {account.is_joint && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md text-[10px] font-bold bg-(--pastel-pink-light) text-(--text-ink) border border-(--border-ink)">
-                                        <Users className="h-2.5 w-2.5" />
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[10px] font-bold bg-(--pastel-pink-light) text-(--text-ink) border border-(--border-ink)">
+                                        <AvatarDot
+                                            name="Joint"
+                                            avatarUrl="👥"
+                                            size="xs"
+                                            border={false}
+                                        />
                                         <span>Joint</span>
                                     </span>
                                 )}

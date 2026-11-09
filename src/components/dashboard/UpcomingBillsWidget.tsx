@@ -18,6 +18,7 @@ import { RecurringTypeBadge } from "../recurring/RecurringTypeBadge";
 import type { RecurringItem } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
+import { CalendarStrip } from "../ui/CalendarStrip";
 
 export interface UpcomingBillsWidgetProps {
     recurringItems?: RecurringItem[];
@@ -168,6 +169,15 @@ export function UpcomingBillsWidget({
                                                 >
                                                     {due.text}
                                                 </span>
+                                                {days !== null &&
+                                                    days >= 0 &&
+                                                    days <= 31 && (
+                                                        <CalendarStrip
+                                                            daysRemaining={days}
+                                                            totalDots={5}
+                                                            size="xs"
+                                                        />
+                                                    )}
                                                 <span className="text-[11px] font-medium text-(--text-muted) capitalize">
                                                     • {recurringItem.frequency}
                                                 </span>
