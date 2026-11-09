@@ -37,6 +37,7 @@ import {
     useOptionalHousehold,
 } from "./context/HouseholdContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { SettingsProvider } from "./context/SettingsContext";
 import { PinLoginScreen } from "./components/auth/PinLoginScreen";
 import { isSupabaseConfigured } from "./services/supabaseClient";
 import {
@@ -482,11 +483,17 @@ export function AppShell() {
     if (!optionalContext) {
         return (
             <HouseholdProvider defaultPerspective={defaultPerspective}>
-                <AppLayoutInner />
+                <SettingsProvider>
+                    <AppLayoutInner />
+                </SettingsProvider>
             </HouseholdProvider>
         );
     }
-    return <AppLayoutInner />;
+    return (
+        <SettingsProvider>
+            <AppLayoutInner />
+        </SettingsProvider>
+    );
 }
 
 export interface AppProps {

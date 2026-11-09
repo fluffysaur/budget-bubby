@@ -24,6 +24,7 @@ import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { BubbyIcon } from "../ui/BubbyIcon";
+import { useSettings } from "../../context/SettingsContext";
 import { Badge } from "../ui/Badge";
 import { formatBadgeCount } from "../../hooks/useInboxBadge";
 
@@ -104,9 +105,7 @@ export function DesktopSidebar({
         }
     }, [refreshData, isRefreshing]);
 
-    const handleOpenSettings = () => {
-        window.dispatchEvent(new Event("openSettings"));
-    };
+    const { openSettings: handleOpenSettings } = useSettings();
 
     const isItemActive = (itemId: string) => {
         if (itemId === "spend") {
