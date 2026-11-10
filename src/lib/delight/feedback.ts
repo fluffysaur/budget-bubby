@@ -59,7 +59,7 @@ const ROUTINE_CUES: Record<RoutineKind, Cue> = {
     delete: { haptic: "destructive", react: "poof" },
     "no-spend": { haptic: "celebrate", sound: "chaChing", react: "munch" },
     triage: { haptic: "lightTap", sound: "softPop", react: "nod" },
-    pet: { haptic: "lightTap", sound: "softPop", react: "pat" },
+    pet: { haptic: "lightTap", sound: "softPop", react: "reunion" },
     "goal-deposit": {
         haptic: "goalMilestone",
         sound: "softPop",
@@ -174,15 +174,15 @@ function playHaptic(name: HapticName | undefined): void {
     }
 }
 
-function react(kind: BubbyReaction | undefined): void {
+function react(kind: BubbyReaction | undefined, memberId?: string): void {
     if (!kind) return;
-    emitAppEvent("bubby:react", { kind });
+    emitAppEvent("bubby:react", memberId ? { kind, memberId } : { kind });
 }
 
-function runCue(cue: Cue): void {
+function runCue(cue: Cue, memberId?: string): void {
     playHaptic(cue.haptic);
     playSound(cue.sound);
-    react(cue.react);
+    react(cue.react, memberId);
 }
 
 export type MilestoneResult = "milestone" | "degraded" | "duplicate";
@@ -200,8 +200,9 @@ export interface MilestoneOptions {
 
 export const feedback = {
     /** Everyday actions: subtle haptic, small sound, small Bubby reaction. */
-    routine(kind: RoutineKind): void {
-        runCue(ROUTINE_CUES[kind]);
+    /** `memberId` aims Bubby's reaction at that member's penguin only. */
+    routine(kind: RoutineKind, memberId?: string): void {
+        runCue(ROUTINE_CUES[kind], memberId);
     },
 
     /** Real milestones: chime, haptic, Bubby celebrate, optional confetti and toast. */

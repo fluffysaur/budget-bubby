@@ -10,6 +10,11 @@
  * days (e.g. a balance update, a month-end sweep and two recap reads). So a
  * couple who log most days and do the monthly chores reach Buff.
  *
+ * Each partner has their own penguin (`deriveCondition` with a penguinId):
+ * only the events that feed that penguin count, food is capped at 5 a day
+ * per penguin, and nourishment is full at 7 (one log a day). Without a
+ * penguinId the condition is the whole household's (recap, reminders).
+ *
  * Body: low/low Regular (the default), high food only Chubby, high exercise
  * only Lean, both Buff. Meters are rolling windows, so a neglected Bubby
  * drifts back to Regular, and never anything worse.
@@ -25,6 +30,7 @@ import type { FeedEvent } from "./sources";
 export const FOOD_CAP_PER_MEMBER_DAY = 5;
 export const NOURISH_WINDOW_DAYS = 7;
 export const NOURISH_FULL = 14;
+export const NOURISH_FULL_PER_PENGUIN = 7;
 export const FITNESS_WINDOW_DAYS = 30;
 export const FITNESS_FULL = 8;
 export const METER_HIGH = 0.5;
@@ -39,8 +45,18 @@ export interface BubbyCondition {
     mood: BubbyMood;
     /** Days since anyone fed Bubby, or null if nobody ever has. */
     daysSinceFed: number | null;
-    /** Members who fed Bubby today. */
+    /** Members who fed Bubby (this penguin, if one was given) today. */
     fedToday: Set<string>;
+}
+
+/** Events that feed this penguin (undefined penguinIds feeds everyone). */
+export function eventsForPenguin(
+    events: readonly FeedEvent[],
+    penguinId: string,
+): FeedEvent[] {
+    return events.filter(
+        (e) => !e.penguinIds || e.penguinIds.includes(penguinId),
+    );
 }
 
 /** Capped food per (member, day). Events without a member share one bucket. */
@@ -80,28 +96,43 @@ function within(date: string, today: string, windowDays: number): boolean {
 }
 
 export function deriveCondition(
-    events: readonly FeedEvent[],
+    allEvents: readonly FeedEvent[],
     today: string,
+    penguinId?: string,
 ): BubbyCondition {
-    const food = foodByMemberDay(events);
+    const events = penguinId
+        ? eventsForPenguin(allEvents, penguinId)
+        : allEvents;
+    // One penguin's food is capped per day, whoever fed it
+    const food = foodByMemberDay(
+        penguinId ? events.map((e) => ({ ...e, memberId: penguinId })) : events,
+    );
     let foodInWeek = 0;
     let lastFed: string | null = null;
-    const fedToday = new Set<string>();
     for (const [key, count] of food) {
-        const [memberId, date] = key.split("|");
+        const date = key.split("|")[1];
         if (date > today) continue;
         if (within(date, today, NOURISH_WINDOW_DAYS)) foodInWeek += count;
         if (!lastFed || date > lastFed) lastFed = date;
-        if (date === today && memberId !== "household") fedToday.add(memberId);
+    }
+    const fedToday = new Set<string>();
+    for (const e of events) {
+        if (e.kind === "food" && e.date === today && e.memberId) {
+            fedToday.add(e.memberId);
+        }
     }
 
-    const exerciseInMonth = events.filter(
-        (e) =>
-            e.kind === "exercise" && within(e.date, today, FITNESS_WINDOW_DAYS),
-    ).length;
+    // Exercise counts once per source and period
+    const exercise = new Set<string>();
+    for (const e of events) {
+        if (e.kind !== "exercise") continue;
+        if (!within(e.date, today, FITNESS_WINDOW_DAYS)) continue;
+        exercise.add(`${e.sourceId}|${e.periodKey ?? e.date}`);
+    }
 
-    const nourishment = Math.min(1, foodInWeek / NOURISH_FULL);
-    const fitness = Math.min(1, exerciseInMonth / FITNESS_FULL);
+    const nourishFull = penguinId ? NOURISH_FULL_PER_PENGUIN : NOURISH_FULL;
+    const nourishment = Math.min(1, foodInWeek / nourishFull);
+    const fitness = Math.min(1, exercise.size / FITNESS_FULL);
     const daysSinceFed = lastFed ? daysBetween(lastFed, today) : null;
 
     return {

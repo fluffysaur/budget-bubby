@@ -20,6 +20,16 @@ import { addLocalExercise, type LocalExerciseKind } from "./storage";
 import type { DailyCheckin } from "../../types/finance";
 
 let lastRecordedKey: string | null = null;
+/** The member using this device, set by DelightHost, for local exercise. */
+let exerciseActorId: string | null = null;
+
+export function setExerciseActor(memberId: string | null | undefined): void {
+    exerciseActorId = memberId ?? null;
+}
+
+export function getExerciseActor(): string | null {
+    return exerciseActorId;
+}
 
 export interface ActivityCheckinResult {
     firstForDate: boolean;
@@ -87,17 +97,19 @@ export function recordActivityCheckin(
 
 /**
  * Exercise 💪 with no table behind it (goal adds, month-end actions, balance
- * updates): recorded on this device for today. Counts once per period.
+ * updates): recorded on this device for today, for the member using it.
+ * Counts once per period.
  */
 export function recordExercise(
     kind: LocalExerciseKind,
     today: string = toSgtDateString(),
 ): void {
-    addLocalExercise(kind, today);
+    addLocalExercise(kind, today, exerciseActorId);
     emitAppEvent("bubby:store-changed", {});
 }
 
 /** Test helper. */
 export function resetActivityCheckinState(): void {
     lastRecordedKey = null;
+    exerciseActorId = null;
 }

@@ -4,7 +4,7 @@
  */
 
 import type { BubbyBody } from "../../../lib/bubby/body";
-import { BEAK, FEATHER, INK } from "../../../lib/bubby/anchors";
+import { BEAK, FEATHER, INK, SCARF_ANCHOR } from "../../../lib/bubby/anchors";
 
 const STROKE = {
     stroke: INK,
@@ -139,6 +139,40 @@ export function BodyShape({ body, part }: BodyShapeProps) {
                     opacity="0.3"
                 />
             )}
+        </g>
+    );
+}
+
+export interface ScarfProps {
+    body: BubbyBody;
+    color: string;
+    /** Thicker lines so the scarf still reads at header size. */
+    compact?: boolean;
+}
+
+/** A partner's scarf: a band round the neck with a short tail. */
+export function Scarf({ body, color, compact = false }: ScarfProps) {
+    const { y, half } = SCARF_ANCHOR[body];
+    const band = `M ${256 - half} ${y} Q 256 ${y + 30} ${256 + half} ${y}`;
+    const width = compact ? 46 : 30;
+    const tail = `M 288 ${y + 14} L 296 ${y + 50} L 324 ${y + 46} L 316 ${y + 8} Z`;
+    return (
+        <g data-layer="scarf" data-scarf={color}>
+            <path
+                d={band}
+                fill="none"
+                stroke={INK}
+                strokeWidth={width + 14}
+                strokeLinecap="round"
+            />
+            <path
+                d={band}
+                fill="none"
+                stroke={color}
+                strokeWidth={width}
+                strokeLinecap="round"
+            />
+            {!compact && <path d={tail} fill={color} {...STROKE} />}
         </g>
     );
 }

@@ -1,5 +1,6 @@
 /**
- * Bubby, the household penguin: one layered inline SVG. Four body shapes
+ * Bubby, a household member's penguin: one layered inline SVG. An optional
+ * scarf colour tells partners' penguins apart. Four body shapes
  * (regular, chubby, lean, buff) with visual mood overlays (rumbly tummy,
  * tears, a little "miss you" sign). Moods are never named in the UI.
  * Motion is CSS only (keyframes keyed off `data-reaction`) and stops under
@@ -15,7 +16,7 @@ import {
 } from "../../lib/bubby/moods";
 import type { BubbyBody, BubbyMood } from "../../lib/bubby/body";
 import type { BubbyReaction } from "../../lib/appEvents";
-import { BodyShape } from "./parts/BodyShape";
+import { BodyShape, Scarf } from "./parts/BodyShape";
 import { Beak, Cheeks, Eyes } from "./parts/Face";
 import {
     Dust,
@@ -27,12 +28,14 @@ import {
     Tears,
 } from "./parts/Fx";
 
-export type BubbySize = "xs" | "sm" | "md" | "lg";
+export type BubbySize = "mini" | "xs" | "sm" | "md" | "pair" | "lg";
 
 const SIZE_CLASS: Record<BubbySize, string> = {
+    mini: "h-6 w-6",
     xs: "h-7 w-7",
     sm: "h-12 w-12",
     md: "h-24 w-24",
+    pair: "h-28 w-28 sm:h-32 sm:w-32",
     lg: "h-40 w-40",
 };
 
@@ -44,6 +47,10 @@ export interface BubbyProps {
     className?: string;
     /** Hide from screen readers (e.g. inside a labelled button). */
     decorative?: boolean;
+    /** Scarf colour for this member's penguin (none when solo). */
+    scarf?: string;
+    /** Accessible name when not decorative. */
+    label?: string;
 }
 
 function blinkDelayFor(id: string): string {
@@ -61,9 +68,11 @@ export function Bubby({
     size = "md",
     className = "",
     decorative = false,
+    scarf,
+    label = "Bubby",
 }: BubbyProps) {
     const instanceId = useId();
-    const compact = size === "xs";
+    const compact = size === "xs" || size === "mini";
     // A reaction (e.g. the reunion after a feed) shows the happy face
     const face = MOOD_FACE[reaction ? "normal" : mood];
 
@@ -87,7 +96,7 @@ export function Bubby({
             data-blink={eyes === "dot" ? "" : undefined}
             {...(decorative
                 ? { "aria-hidden": true }
-                : { role: "img", "aria-label": "Bubby" })}
+                : { role: "img", "aria-label": label })}
         >
             <g data-layer="ground">
                 <ellipse
@@ -109,6 +118,7 @@ export function Bubby({
             <g data-layer="body" className="bubby-body">
                 <BodyShape body={body} part="body" />
                 {face.overlay === "rumble" && <Rumble />}
+                {scarf && <Scarf body={body} color={scarf} compact={compact} />}
                 <g data-layer="flipper-l" className="bubby-flipper-l">
                     <BodyShape body={body} part="flipperL" />
                 </g>

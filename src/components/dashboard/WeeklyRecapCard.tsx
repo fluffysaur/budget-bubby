@@ -58,7 +58,7 @@ export function WeeklyRecapCard({
     onSeeSpend,
 }: WeeklyRecapCardProps) {
     const [dismissed, setDismissed] = useState(false);
-    const { body, members } = useBubby();
+    const { body, members, me } = useBubby();
     const { data: checkinsData } = useHouseholdCheckinsQuery();
     const { data: snapshotsData } = useAccountSnapshotsQuery("household");
     const [monthA, monthB] = recapMonths(week);
@@ -103,7 +103,7 @@ export function WeeklyRecapCard({
     // Reading the recap is exercise 💪 (once a week)
     const acknowledge = () => {
         updateBubbyStore({ recapSeenWeek: week.start });
-        addLocalExercise("recap-read", toSgtDateString());
+        addLocalExercise("recap-read", toSgtDateString(), me?.id);
         emitAppEvent("bubby:store-changed", {});
         setDismissed(true);
     };

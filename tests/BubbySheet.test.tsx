@@ -7,7 +7,7 @@ import { mockMembers } from "../src/data/mockSeedData";
 import { toSgtDateString } from "../src/lib/bubby/dates";
 import { readBubbyStore, writeBubbyStore } from "../src/lib/bubby/storage";
 
-const [YJ] = mockMembers;
+const [YJ, RACHEL] = mockMembers;
 
 async function renderSheet() {
     await act(async () => {
@@ -66,11 +66,17 @@ describe("BubbySheet", () => {
     it("shows meters without numbers, quests and an empty snack shelf", async () => {
         await renderSheet();
 
+        // A meter pair per partner's penguin
         expect(
-            screen.getByRole("img", { name: "Nourishment" }),
+            screen.getByRole("img", { name: "Nourishment, your Bubby" }),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("img", { name: "Fitness" }),
+            screen.getByRole("img", { name: "Fitness, your Bubby" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("img", {
+                name: `Nourishment, ${RACHEL.display_name}'s Bubby`,
+            }),
         ).toBeInTheDocument();
         expect(
             screen.getByRole("list", { name: "Today's quests" }),
@@ -98,6 +104,46 @@ describe("BubbySheet", () => {
         expect(readBubbyStore().petDays?.[YJ.id]).toEqual([toSgtDateString()]);
         const pet = within(today).getByText("Pet Bubby").closest("li");
         expect(pet).toHaveAttribute("data-done", "true");
+    });
+
+    it("shows both penguins side by side, yours first, with scarves", async () => {
+        await renderSheet();
+        const penguins = within(
+            screen.getByRole("list", { name: "Penguins" }),
+        ).getAllByTestId("bubby-penguin");
+        expect(penguins.map((p) => p.dataset.member)).toEqual([
+            YJ.id,
+            RACHEL.id,
+        ]);
+        const scarves = penguins.map((p) =>
+            p.querySelector("[data-layer='scarf']")?.getAttribute("data-scarf"),
+        );
+        expect(scarves[0]).toBeTruthy();
+        expect(scarves[1]).toBeTruthy();
+        expect(scarves[0]).not.toBe(scarves[1]);
+    });
+
+    it("petting a partner's penguin credits their penguin, not the quest owner's", async () => {
+        await renderSheet();
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: `Pet ${RACHEL.display_name}'s Bubby`,
+            }),
+        );
+        const today = toSgtDateString();
+        const store = readBubbyStore();
+        // You did the petting (your daily quest), and their penguin got fed
+        expect(store.petDays?.[YJ.id]).toEqual([today]);
+        expect(store.petTargets?.[`${YJ.id}|${today}`]).toEqual([RACHEL.id]);
+    });
+
+    it("pets both penguins at once", async () => {
+        await renderSheet();
+        fireEvent.click(screen.getByRole("button", { name: "Pet Both" }));
+        const today = toSgtDateString();
+        expect(
+            readBubbyStore().petTargets?.[`${YJ.id}|${today}`]?.sort(),
+        ).toEqual([YJ.id, RACHEL.id].sort());
     });
 
     it("shows earned snacks", async () => {

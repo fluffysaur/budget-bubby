@@ -2,7 +2,8 @@
  * Per-device Bubby state in one localStorage key (`bb_bubby_v2`).
  * Every access is wrapped in try/catch and the app works with an empty key.
  *
- * Only things with no table behind them live here: petting, local exercise
+ * Only things with no table behind them live here: petting (who petted,
+ * and which penguins they tapped), local exercise (and who did it)
  * records (goal adds, month-end actions, recap reads, inbox clears), the
  * snack collection, and "already celebrated" flags. Food comes from data.
  */
@@ -11,7 +12,11 @@ export const BUBBY_STORAGE_KEY = "bb_bubby_v2";
 
 /** Local exercise records: SGT dates the action happened on this device. */
 export type LocalExerciseKind =
-    "inbox-clear" | "balances" | "goal-add" | "month-end" | "recap-read";
+    | "inbox-clear"
+    | "balances"
+    | "goal-add"
+    | "month-end"
+    | "recap-read";
 
 export interface SnackEntry {
     id: string;
@@ -27,10 +32,16 @@ export interface BubbySnapshot {
 export interface BubbyStore {
     /** memberId -> SGT dates this member petted Bubby (on this device). */
     petDays?: Record<string, string[]>;
+    /** `${petterId}|${date}` -> penguins petted (missing: their own). */
+    petTargets?: Record<string, string[]>;
     exercise?: Partial<Record<LocalExerciseKind, string[]>>;
+    /** Who did each local exercise: kind -> date -> memberIds. */
+    exerciseBy?: Partial<Record<LocalExerciseKind, Record<string, string[]>>>;
     snacks?: SnackEntry[];
-    /** Body and mood last shown on this device (for change and reunion moments). */
+    /** Your penguin's body and mood last shown here (change and reunion moments). */
     lastBody?: string;
+    /** memberId -> their penguin's body last shown on this device. */
+    lastBodies?: Record<string, string>;
     lastMood?: string;
     /** Epoch ms of the last app-open greeting. */
     lastGreetingAt?: number;
@@ -96,22 +107,66 @@ export function markCelebrated(key: string): void {
     });
 }
 
-export function addLocalExercise(kind: LocalExerciseKind, date: string): void {
-    updateBubbyStore((prev) => ({
-        exercise: {
-            ...(prev.exercise ?? {}),
-            [kind]: addDay(prev.exercise?.[kind], date),
-        },
-    }));
+/** Keep only entries whose date is still in the retained days. */
+function pruneByDate<T>(
+    map: Record<string, T> | undefined,
+    keep: readonly string[],
+): Record<string, T> {
+    const days = new Set(keep);
+    return Object.fromEntries(
+        Object.entries(map ?? {}).filter(([date]) => days.has(date)),
+    );
+}
+
+export function addLocalExercise(
+    kind: LocalExerciseKind,
+    date: string,
+    memberId?: string | null,
+): void {
+    updateBubbyStore((prev) => {
+        const days = addDay(prev.exercise?.[kind], date);
+        const by = pruneByDate(prev.exerciseBy?.[kind], days);
+        if (memberId) {
+            by[date] = Array.from(new Set([...(by[date] ?? []), memberId]));
+        }
+        return {
+            exercise: { ...(prev.exercise ?? {}), [kind]: days },
+            exerciseBy: { ...(prev.exerciseBy ?? {}), [kind]: by },
+        };
+    });
+}
+
+/** `petterId` petted these penguins today: pet credit for each, once a day. */
+export function addPet(
+    petterId: string,
+    penguinIds: readonly string[],
+    date: string,
+): void {
+    updateBubbyStore((prev) => {
+        const days = addDay(prev.petDays?.[petterId], date);
+        const key = `${petterId}|${date}`;
+        // Drop targets for days that aged out of each petter's list
+        const targets = Object.fromEntries(
+            Object.entries(prev.petTargets ?? {}).filter(([k]) => {
+                const [who, day] = k.split("|");
+                const kept = who === petterId ? days : prev.petDays?.[who];
+                return (kept ?? []).includes(day);
+            }),
+        );
+        // A day with no targets recorded was a pet of their own penguin
+        const had =
+            targets[key] ??
+            ((prev.petDays?.[petterId] ?? []).includes(date) ? [petterId] : []);
+        targets[key] = Array.from(new Set([...had, ...penguinIds]));
+        return {
+            petDays: { ...(prev.petDays ?? {}), [petterId]: days },
+            petTargets: targets,
+        };
+    });
 }
 
 export function addPetDay(memberId: string, date: string): void {
-    updateBubbyStore((prev) => ({
-        petDays: {
-            ...(prev.petDays ?? {}),
-            [memberId]: addDay(prev.petDays?.[memberId], date),
-        },
-    }));
+    addPet(memberId, [memberId], date);
 }
 
 export function addSnack(entry: SnackEntry): void {

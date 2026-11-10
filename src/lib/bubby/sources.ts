@@ -8,15 +8,21 @@
  * expense source. Food is derived from rows that still exist, so deleting
  * and re-logging an expense can't farm food.
  *
- * Exercise 💪 (household, once per natural period): clearing the inbox (a
- * day), updating balances (a day), adding to a goal (a day), logging a bonus
- * (a day), month-end sweep or bank (a month), reading the weekly recap (a
- * week).
+ * Exercise 💪 (once per natural period): clearing the inbox (a day),
+ * updating balances (a day), adding to a goal (a day), logging a bonus (a
+ * day), month-end sweep or bank (a month), reading the weekly recap (a week).
+ *
+ * Whose penguin it feeds (`penguinIds`, undefined = every penguin): personal
+ * expenses, check-ins and pets feed that member's penguin; shared expenses,
+ * joint account updates, month-end and bonuses feed everyone. Local exercise
+ * feeds the member who did it on this device (older records with no member
+ * feed everyone).
  *
  * To add a source, append to FEED_SOURCES.
  */
 
 import type {
+    Account,
     AccountSnapshot,
     DailyCheckin,
     Expense,
@@ -31,8 +37,12 @@ export interface FeedEvent {
     sourceId: string;
     kind: FeedKind;
     date: string;
-    /** Food is per member; exercise is household-wide. */
+    /** Who did it (food only). Undefined: the household. */
     memberId?: string;
+    /** Penguins this feeds. Undefined: every penguin. */
+    penguinIds?: readonly string[];
+    /** Exercise only: the natural period it counts once in. */
+    periodKey?: string;
 }
 
 /** Bonus entries (feat/bonus-log). Empty on branches without that table. */
@@ -46,6 +56,8 @@ export interface FeedContext {
     snapshots: readonly AccountSnapshot[];
     bonusEvents: readonly BonusEventLike[];
     store: BubbyStore;
+    /** Owners of snapshot accounts. Unknown accounts feed every penguin. */
+    accounts?: readonly Account[];
 }
 
 export interface FeedSource {
@@ -65,21 +77,56 @@ export function loggedDateOf(e: Expense): string {
     return e.date;
 }
 
-function localDays(store: BubbyStore, kind: LocalExerciseKind): string[] {
-    return store.exercise?.[kind] ?? [];
+interface ExerciseDay {
+    date: string;
+    penguinIds?: readonly string[];
 }
+
+/** Local exercise days, each with the members who did it (if recorded). */
+function localDays(store: BubbyStore, kind: LocalExerciseKind): ExerciseDay[] {
+    const by = store.exerciseBy?.[kind];
+    return (store.exercise?.[kind] ?? []).map((date) => {
+        const ids = by?.[date];
+        return ids && ids.length > 0 ? { date, penguinIds: ids } : { date };
+    });
+}
+
+const shared = (dates: readonly string[]): ExerciseDay[] =>
+    dates.map((date) => ({ date }));
 
 const exercise = (
     id: string,
     period: FeedPeriod,
-    dates: (ctx: FeedContext) => string[],
+    days: (ctx: FeedContext) => ExerciseDay[],
 ): FeedSource => ({
     id,
     kind: "exercise",
     period,
     collect: (ctx) =>
-        dates(ctx).map((date) => ({ sourceId: id, kind: "exercise", date })),
+        days(ctx).map(({ date, penguinIds }) => ({
+            sourceId: id,
+            kind: "exercise",
+            date,
+            ...(penguinIds ? { penguinIds } : {}),
+            periodKey: periodKey(period, date),
+        })),
 });
+
+/** Joint or unknown accounts feed everyone; personal ones feed the owner. */
+function snapshotDays(ctx: FeedContext): ExerciseDay[] {
+    const owners = new Map(
+        (ctx.accounts ?? []).map((a) => [
+            a.id,
+            a.is_joint ? undefined : a.owner_id,
+        ]),
+    );
+    return ctx.snapshots.map((s) => {
+        const owner = owners.get(s.account_id);
+        return owner
+            ? { date: s.snapshot_date, penguinIds: [owner] }
+            : { date: s.snapshot_date };
+    });
+}
 
 export const FEED_SOURCES: readonly FeedSource[] = [
     {
@@ -91,6 +138,7 @@ export const FEED_SOURCES: readonly FeedSource[] = [
                 kind: "food",
                 date: loggedDateOf(e),
                 memberId: e.payer_id,
+                ...(e.is_shared ? {} : { penguinIds: [e.payer_id] }),
             })),
     },
     {
@@ -104,6 +152,7 @@ export const FEED_SOURCES: readonly FeedSource[] = [
                     kind: "food",
                     date: c.checkin_date,
                     memberId: c.member_id,
+                    penguinIds: [c.member_id],
                 })),
     },
     {
@@ -125,35 +174,43 @@ export const FEED_SOURCES: readonly FeedSource[] = [
                     kind: "food",
                     date: c.checkin_date,
                     memberId: c.member_id,
+                    penguinIds: [c.member_id],
                 }));
         },
     },
     {
         id: "pet",
         kind: "food",
+        // memberId petted; the pet feeds the penguin(s) they tapped
         collect: ({ store }) =>
             Object.entries(store.petDays ?? {}).flatMap(([memberId, days]) =>
-                days.map((date) => ({
-                    sourceId: "pet",
-                    kind: "food" as const,
-                    date,
-                    memberId,
-                })),
+                days.flatMap((date) =>
+                    (
+                        store.petTargets?.[`${memberId}|${date}`] ?? [memberId]
+                    ).map((penguinId) => ({
+                        sourceId: "pet",
+                        kind: "food" as const,
+                        date,
+                        memberId,
+                        penguinIds: [penguinId],
+                    })),
+                ),
             ),
     },
     exercise("inbox-clear", "day", ({ store }) =>
         localDays(store, "inbox-clear"),
     ),
-    exercise("balances", "day", ({ store, snapshots }) => [
-        ...localDays(store, "balances"),
-        ...snapshots.map((s) => s.snapshot_date),
+    exercise("balances", "day", (ctx) => [
+        ...localDays(ctx.store, "balances"),
+        ...snapshotDays(ctx),
     ]),
     exercise("goal-add", "day", ({ store }) => localDays(store, "goal-add")),
     exercise("bonus", "day", ({ bonusEvents }) =>
-        bonusEvents.map((b) => b.event_date),
+        shared(bonusEvents.map((b) => b.event_date)),
     ),
+    // A household chore: feeds every penguin, whoever swept
     exercise("month-end", "month", ({ store }) =>
-        localDays(store, "month-end"),
+        shared(store.exercise?.["month-end"] ?? []),
     ),
     exercise("recap-read", "week", ({ store }) =>
         localDays(store, "recap-read"),
@@ -169,7 +226,13 @@ export function periodKey(
     return date;
 }
 
-/** All feed events, with exercise already collapsed to one per period. */
+const penguinKey = (e: FeedEvent) =>
+    e.penguinIds ? [...e.penguinIds].sort().join(",") : "*";
+
+/**
+ * All feed events, with exercise collapsed to one per period for each set
+ * of penguins it feeds.
+ */
 export function collectFeedEvents(
     ctx: FeedContext,
     sources: readonly FeedSource[] = FEED_SOURCES,
@@ -183,7 +246,7 @@ export function collectFeedEvents(
         }
         const seen = new Set<string>();
         for (const e of events) {
-            const key = periodKey(source.period, e.date);
+            const key = `${penguinKey(e)}|${e.periodKey ?? e.date}`;
             if (seen.has(key)) continue;
             seen.add(key);
             out.push(e);

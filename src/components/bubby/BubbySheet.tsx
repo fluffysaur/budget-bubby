@@ -1,12 +1,16 @@
 /**
- * Bubby sheet (lazy): Bubby (tap to pet), two unlabelled meters, who fed
- * Bubby today, today's and this week's quests, and the snack collection.
- * No numbers and no lifetime stats.
+ * Bubby sheet (lazy): a penguin per partner side by side (tap one to pet
+ * it, or pet both), each with a name and two unlabelled meters; then
+ * today's, this week's and this month's quests, and the shared snack
+ * collection. A solo household sees one penguin. No numbers and no
+ * lifetime stats.
  */
 
 import { AnimatedModal, ModalBody, ModalHeader } from "../ui/AnimatedModal";
 import { TooltipPopover } from "../ui/TooltipPopover";
-import { useBubby } from "../../hooks/useBubby";
+import { Button } from "../ui/Button";
+import { TruncatedText } from "../ui/TruncatedText";
+import { useBubby, type BubbyPenguin } from "../../hooks/useBubby";
 import { snackLabel } from "../../lib/bubby/snacks";
 import { Bubby } from "./Bubby";
 import { FedTodayDots } from "./FedTodayDots";
@@ -33,7 +37,11 @@ function Meter({
     label: string;
 }) {
     return (
-        <div className="flex items-center gap-2" role="img" aria-label={label}>
+        <div
+            className="flex min-w-0 items-center gap-2"
+            role="img"
+            aria-label={label}
+        >
             <span aria-hidden="true" className="w-5 text-center text-sm">
                 {icon}
             </span>
@@ -49,6 +57,95 @@ function Meter({
     );
 }
 
+function GrowTips() {
+    return (
+        <TooltipPopover
+            title="How Bubby grows"
+            ariaLabel="How Bubby grows"
+            align="right"
+        >
+            <div className="space-y-1 text-left">
+                <div>🍤 Log spend, pet Bubby</div>
+                <div>
+                    💪 Sort inbox, update balances, add to goals, sweep, pay
+                    card bills, read recap
+                </div>
+                <div>🤝 Shared spend and joint accounts feed everyone</div>
+            </div>
+        </TooltipPopover>
+    );
+}
+
+/** One partner's penguin: tap to pet, name with a fed-today dot, meters. */
+function PenguinCard({
+    penguin,
+    fed,
+    onPet,
+}: {
+    penguin: BubbyPenguin;
+    fed: boolean;
+    onPet: () => void;
+}) {
+    const { member, isMe, condition } = penguin;
+    const name = member.display_name;
+    const whose = isMe ? "your" : `${name}'s`;
+    return (
+        <li
+            className="flex min-w-0 flex-col items-center gap-2"
+            data-testid="bubby-penguin"
+            data-member={member.id}
+            data-body={penguin.body}
+            data-mood={penguin.mood}
+        >
+            <button
+                type="button"
+                aria-label={`Pet ${whose} Bubby`}
+                onClick={onPet}
+                className="min-h-11 rounded-3xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+            >
+                <Bubby
+                    body={penguin.body}
+                    mood={penguin.mood}
+                    reaction={penguin.reaction}
+                    scarf={penguin.scarf}
+                    size="pair"
+                    decorative
+                />
+            </button>
+            <div className="flex w-full min-w-0 items-center justify-center gap-1.5">
+                <span
+                    aria-hidden="true"
+                    data-fed={fed ? "true" : "false"}
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-(--border-ink) text-[9px] font-black leading-none ${
+                        fed
+                            ? "bg-(--pastel-mint) text-(--text-ink)"
+                            : "bg-(--bg-cream) text-(--text-faint) opacity-60"
+                    }`}
+                >
+                    {name.charAt(0).toUpperCase()}
+                </span>
+                <TruncatedText
+                    text={name}
+                    className="min-w-0 text-xs font-black text-(--text-ink)"
+                    aria-label={`${name}${fed ? ", fed Bubby today" : ""}`}
+                />
+            </div>
+            <div className="w-full space-y-1.5">
+                <Meter
+                    value={condition.nourishment}
+                    icon="🍤"
+                    label={`Nourishment, ${whose} Bubby`}
+                />
+                <Meter
+                    value={condition.fitness}
+                    icon="💪"
+                    label={`Fitness, ${whose} Bubby`}
+                />
+            </div>
+        </li>
+    );
+}
+
 export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
     const {
         body,
@@ -60,61 +157,80 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
         weeklyQuests,
         monthlyQuests,
         snacks,
+        penguins,
+        fedToday,
         pet,
     } = useBubby();
+    const paired = penguins.length > 1;
     const onSelectQuest = useQuestActions(onClose);
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
             <ModalHeader title="Bubby" onClose={onClose} />
             <ModalBody className="space-y-5">
-                <div className="flex flex-col items-center gap-3">
-                    <button
-                        type="button"
-                        aria-label="Pet Bubby"
-                        onClick={pet}
-                        className="rounded-3xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
-                    >
-                        <Bubby
-                            body={body}
-                            mood={mood}
-                            reaction={reaction}
-                            size="lg"
-                            decorative
-                        />
-                    </button>
-                    <div className="flex w-full max-w-xs items-center gap-2">
-                        <div className="flex-1 space-y-1.5">
-                            <Meter
-                                value={condition.nourishment}
-                                icon="🍤"
-                                label="Nourishment"
-                            />
-                            <Meter
-                                value={condition.fitness}
-                                icon="💪"
-                                label="Fitness"
-                            />
-                        </div>
-                        <TooltipPopover
-                            title="How Bubby grows"
-                            ariaLabel="How Bubby grows"
-                            align="right"
+                {paired ? (
+                    <div className="flex flex-col items-center gap-3">
+                        <ul
+                            aria-label="Penguins"
+                            className="grid w-full grid-cols-2 gap-3"
                         >
-                            <div className="space-y-1 text-left">
-                                <div>🍤 Log spend, pet Bubby</div>
-                                <div>
-                                    💪 Sort inbox, update balances, add to
-                                    goals, sweep, pay card bills, read recap
-                                </div>
-                            </div>
-                        </TooltipPopover>
+                            {penguins.map((p) => (
+                                <PenguinCard
+                                    key={p.member.id}
+                                    penguin={p}
+                                    fed={fedToday.has(p.member.id)}
+                                    onPet={() => pet([p.member.id])}
+                                />
+                            ))}
+                        </ul>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="min-h-11"
+                                onClick={() =>
+                                    pet(penguins.map((p) => p.member.id))
+                                }
+                            >
+                                {penguins.length === 2 ? "Pet Both" : "Pet All"}
+                            </Button>
+                            <GrowTips />
+                        </div>
                     </div>
-                    <FedTodayDots
-                        members={members}
-                        fedToday={condition.fedToday}
-                    />
-                </div>
+                ) : (
+                    <div className="flex flex-col items-center gap-3">
+                        <button
+                            type="button"
+                            aria-label="Pet Bubby"
+                            onClick={() => pet()}
+                            className="rounded-3xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                        >
+                            <Bubby
+                                body={body}
+                                mood={mood}
+                                reaction={reaction}
+                                size="lg"
+                                decorative
+                            />
+                        </button>
+                        <div className="flex w-full max-w-xs items-center gap-2">
+                            <div className="flex-1 space-y-1.5">
+                                <Meter
+                                    value={condition.nourishment}
+                                    icon="🍤"
+                                    label="Nourishment"
+                                />
+                                <Meter
+                                    value={condition.fitness}
+                                    icon="💪"
+                                    label="Fitness"
+                                />
+                            </div>
+                            <GrowTips />
+                        </div>
+                        <FedTodayDots members={members} fedToday={fedToday} />
+                    </div>
+                )}
 
                 <section aria-label="Quests" className="space-y-3">
                     <div>

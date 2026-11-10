@@ -21,3 +21,24 @@ export const FACE_ANCHOR: Record<BubbyBody, string> = {
     lean: "translate(256 264) scale(0.9)",
     buff: "translate(256 276)",
 };
+
+/** Scarf colours telling partners' penguins apart, by roster order. */
+export const SCARF_COLORS = [
+    "var(--accent-lilac, #dfc2ff)",
+    "var(--accent-butter, #ffe999)",
+    "var(--accent-pink, #fcbffa)",
+    "var(--accent-mint, #bbf7d0)",
+] as const;
+
+export function scarfFor(rosterIndex: number): string {
+    const i = Math.max(0, rosterIndex);
+    return SCARF_COLORS[i % SCARF_COLORS.length];
+}
+
+/** Scarf placement per body: neck line y and half-width. */
+export const SCARF_ANCHOR: Record<BubbyBody, { y: number; half: number }> = {
+    regular: { y: 348, half: 122 },
+    chubby: { y: 362, half: 140 },
+    lean: { y: 334, half: 98 },
+    buff: { y: 350, half: 122 },
+};
