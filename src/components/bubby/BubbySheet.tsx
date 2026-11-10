@@ -1,6 +1,6 @@
 /**
  * Bubby sheet (lazy): a penguin per partner side by side (tap one to pet
- * it, or pet both), each with a name and two unlabelled meters; then
+ * it), each with a name and two unlabelled meters; then
  * today's, this week's and this month's quests, and the shared snack
  * collection. A solo household sees one penguin. Penguins breathe and
  * tilt while the sheet is open, and sleepy ones yawn as it opens. No
@@ -13,7 +13,6 @@ import { yawnTarget } from "../../lib/bubby/moods";
 
 import { AnimatedModal, ModalBody, ModalHeader } from "../ui/AnimatedModal";
 import { TooltipPopover } from "../ui/TooltipPopover";
-import { Button } from "../ui/Button";
 import { TruncatedText } from "../ui/TruncatedText";
 import { useBubby, type BubbyPenguin } from "../../hooks/useBubby";
 import { snackLabel } from "../../lib/bubby/snacks";
@@ -212,19 +211,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                                 />
                             ))}
                         </ul>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="min-h-11"
-                                onClick={() =>
-                                    pet(penguins.map((p) => p.member.id))
-                                }
-                            >
-                                {penguins.length === 2 ? "Pet Both" : "Pet All"}
-                            </Button>
-                            <GrowTips />
-                        </div>
+                        <GrowTips />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-3">
