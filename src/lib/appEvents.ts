@@ -11,7 +11,10 @@
 
 import type { Expense } from "../types/finance";
 
-/** Transient Bubby reactions (≤400ms each). */
+/**
+ * Transient Bubby reactions. Feedback reactions are ≤400ms; the idle and
+ * mascot moments (tilt, waddle, yawn) run about a second.
+ */
 export type BubbyReaction =
     | "cheer"
     | "nod"
@@ -20,7 +23,10 @@ export type BubbyReaction =
     | "munch"
     | "pat"
     | "reunion"
-    | "celebrate";
+    | "celebrate"
+    | "tilt"
+    | "waddle"
+    | "yawn";
 
 export type ExpenseAddedSource = "form" | "bulk" | "inbox" | "fast-log";
 

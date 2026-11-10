@@ -18,6 +18,7 @@ describe("Bubby", () => {
             expect(layers(container)).toEqual([
                 "ground",
                 "fx-back",
+                "idle",
                 "body",
                 "flipper-l",
                 "flipper-r",

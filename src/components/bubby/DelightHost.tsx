@@ -5,6 +5,8 @@
  * - Moments, once per device: a body change per penguin (named for a
  *   partner's), reunion after a feed, full belly (all daily quests), the
  *   weekly snack treat, and a cheer when both partners have fed Bubby today
+ * - Sleepy penguins (night, or unfed) yawn once after the app opens
+ * - Remembers the household's penguins for the loading screen
  * - Hosts milestone confetti, toasts and the lazy Bubby sheet
  */
 
@@ -35,6 +37,7 @@ import {
     updateBubbyStore,
 } from "../../lib/bubby/storage";
 import { allDone } from "../../lib/bubby/quests";
+import { yawnTarget } from "../../lib/bubby/moods";
 import { snackForWeek, snackLabel } from "../../lib/bubby/snacks";
 import { mondayOf, toSgtDateString } from "../../lib/bubby/dates";
 import type { BubbyBody } from "../../lib/bubby/body";
@@ -49,6 +52,8 @@ interface QueuedToast extends MilestoneDetail {
 }
 
 const MAX_QUEUED_TOASTS = 3;
+/** After the greeting's wave (idle callback + 2.5s bubble). */
+const YAWN_AFTER_OPEN_MS = 3200;
 
 const BODY_TITLE: Record<Exclude<BubbyBody, "regular">, string> = {
     buff: "Bubby got buff!",
@@ -77,6 +82,7 @@ export function DelightHost() {
         body,
         mood,
         penguins,
+        sleepy,
         fedToday,
         dailyQuests,
         weeklyQuests,
@@ -99,6 +105,36 @@ export function DelightHost() {
             updateBubbyStore({ snapshot: { body, mood } });
         }
     }, [isReady, body, mood]);
+
+    // The loading screen shows this household next time, before data loads
+    useEffect(() => {
+        if (penguins.length === 0) return;
+        const roster = penguins.map((p) => p.scarf ?? null);
+        const prev = readBubbyStore().roster;
+        if (JSON.stringify(prev) !== JSON.stringify(roster)) {
+            updateBubbyStore({ roster });
+        }
+    }, [penguins]);
+
+    // Sleepy penguins yawn once, after the app-open greeting has played
+    const yawned = useRef(false);
+    const sleepyRef = useRef<{ id: string; sleepy: boolean }[]>([]);
+    useEffect(() => {
+        sleepyRef.current =
+            penguins.length > 0
+                ? penguins.map((p) => ({ id: p.member.id, sleepy: p.sleepy }))
+                : [{ id: "", sleepy }];
+    }, [penguins, sleepy]);
+    useEffect(() => {
+        if (!isReady || yawned.current) return;
+        yawned.current = true;
+        const timer = window.setTimeout(() => {
+            const target = yawnTarget(sleepyRef.current);
+            if (target)
+                emitAppEvent("bubby:react", { kind: "yawn", ...target });
+        }, YAWN_AFTER_OPEN_MS);
+        return () => window.clearTimeout(timer);
+    }, [isReady]);
 
     // Local exercise on this device is credited to the member using it
     const meId = me?.id;

@@ -18,6 +18,7 @@ export function QuestCard() {
         body,
         mood,
         reaction,
+        sleepy,
         members,
         fedToday,
         dailyQuests,
@@ -68,6 +69,8 @@ export function QuestCard() {
                             reaction={reaction}
                             size="sm"
                             className="h-13 w-13"
+                            idle
+                            sleepy={sleepy}
                             decorative
                         />
                     </m.div>

@@ -58,7 +58,7 @@ export function WeeklyRecapCard({
     onSeeSpend,
 }: WeeklyRecapCardProps) {
     const [dismissed, setDismissed] = useState(false);
-    const { body, members, me } = useBubby();
+    const { body, sleepy, members, me } = useBubby();
     const { data: checkinsData } = useHouseholdCheckinsQuery();
     const { data: snapshotsData } = useAccountSnapshotsQuery("household");
     const [monthA, monthB] = recapMonths(week);
@@ -192,6 +192,8 @@ export function WeeklyRecapCard({
                     body={body}
                     size="md"
                     className="h-20 w-20 shrink-0"
+                    idle
+                    sleepy={sleepy}
                     decorative
                 />
             </div>
