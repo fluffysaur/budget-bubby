@@ -58,6 +58,8 @@ import { OfflineBanner } from "./components/pwa/OfflineBanner";
 import { PWAUpdateToast } from "./components/pwa/PWAUpdateToast";
 import { PullToRefresh } from "./components/ui/PullToRefresh";
 import { DelightHost } from "./components/bubby/DelightHost";
+import { BubbyLoadingScreen } from "./components/bubby/BubbyLoadingScreen";
+import { emitAppEvent } from "./lib/appEvents";
 import type { Expense } from "./types/finance";
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -189,6 +191,14 @@ function AppLayoutInner() {
             return "spend";
         return segment;
     }, [location.pathname]);
+
+    // Switching tabs: the header penguins waddle along (not on first load)
+    const lastTab = useRef(activeTab);
+    useEffect(() => {
+        if (lastTab.current === activeTab) return;
+        lastTab.current = activeTab;
+        emitAppEvent("bubby:react", { kind: "waddle" });
+    }, [activeTab]);
 
     const handleSelectTab = useCallback(
         (tabId: string) => {
@@ -461,16 +471,7 @@ export function AppShell() {
 
     // If live Supabase is configured and we are still verifying the session
     if (isSupabaseConfigured() && authLoading) {
-        return (
-            <div className="flex h-dvh w-full items-center justify-center bg-(--bg-canvas) text-(--text-ink)">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="h-9 w-9 animate-spin rounded-full border-3 border-(--pastel-lilac) border-t-transparent" />
-                    <span className="text-xs font-bold text-(--text-muted) tracking-wider uppercase font-mono-num">
-                        Loading Budget Bubby...
-                    </span>
-                </div>
-            </div>
-        );
+        return <BubbyLoadingScreen />;
     }
 
     // If live Supabase is configured and user is not authenticated, show PIN Lock Screen

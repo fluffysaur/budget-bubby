@@ -796,6 +796,114 @@ html.theme-transition *::after {
 .bubby[data-reaction="munch"] .bubby-beak {
     animation: bubbyMunch var(--duration-slow) ease-in-out;
 }
+
+/* Idle Bubby (sheet, dashboard cards): a slow breathing sway */
+.bubby .bubby-idle {
+    transform-box: view-box;
+    transform-origin: 256px 470px;
+}
+.bubby .bubby-face {
+    transform-box: fill-box;
+    transform-origin: 50% 80%;
+}
+@keyframes bubbyBreathe {
+    0%,
+    100% {
+        transform: rotate(0deg) scale(1, 1);
+    }
+    25% {
+        transform: rotate(-1.2deg) scale(1.01, 0.99);
+    }
+    50% {
+        transform: rotate(0deg) scale(0.995, 1.015);
+    }
+    75% {
+        transform: rotate(1.2deg) scale(1.01, 0.99);
+    }
+}
+.bubby[data-idle] .bubby-idle {
+    animation: bubbyBreathe 4.2s ease-in-out infinite;
+}
+
+/* Tilt: a curious head tilt, now and then while idle */
+@keyframes bubbyTiltHead {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    25%,
+    70% {
+        transform: rotate(-14deg);
+    }
+}
+@keyframes bubbyTiltBody {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    25%,
+    70% {
+        transform: rotate(-4deg);
+    }
+}
+.bubby[data-reaction="tilt"] .bubby-body {
+    animation: bubbyTiltBody 1s var(--ease-out-soft);
+}
+.bubby[data-reaction="tilt"] .bubby-face {
+    animation: bubbyTiltHead 1s var(--ease-out-soft);
+}
+
+/* Waddle: side to side with a bounce (tab changes; looped while loading) */
+@keyframes bubbyWaddle {
+    0%,
+    50%,
+    100% {
+        transform: rotate(0deg) translateY(0);
+    }
+    25% {
+        transform: rotate(-8deg) translateY(-14px);
+    }
+    75% {
+        transform: rotate(8deg) translateY(-14px);
+    }
+}
+.bubby[data-reaction="waddle"] .bubby-body {
+    animation: bubbyWaddle 0.9s ease-in-out;
+}
+.bubby[data-loop="waddle"] .bubby-body {
+    animation: bubbyWaddle 0.9s ease-in-out infinite;
+}
+
+/* Yawn: a sleepy stretch, beak wide, flipper up (night or unfed) */
+@keyframes bubbyYawnBeak {
+    0%,
+    100% {
+        transform: scale(1, 1);
+    }
+    30%,
+    70% {
+        transform: scale(1.1, 1.7);
+    }
+}
+@keyframes bubbyYawnBody {
+    0%,
+    100% {
+        transform: scale(1, 1);
+    }
+    30%,
+    70% {
+        transform: scale(0.98, 1.04);
+    }
+}
+.bubby[data-reaction="yawn"] .bubby-beak {
+    animation: bubbyYawnBeak 1.3s ease-in-out;
+}
+.bubby[data-reaction="yawn"] .bubby-body {
+    animation: bubbyYawnBody 1.3s ease-in-out;
+}
+.bubby[data-reaction="yawn"] .bubby-flipper-l {
+    animation: bubbyWave 1.3s ease-in-out;
+}
 .bubby .bubby-dust {
     transform-box: fill-box;
     transform-origin: center;
@@ -878,6 +986,8 @@ html.theme-transition *::after {
     /* Bubby, pips, pills, toasts and confetti change state instantly */
     svg.bubby,
     svg.bubby *,
+    .bubby .bubby-idle,
+    .bubby .bubby-face,
     .bubby .bubby-body,
     .bubby .bubby-flipper-l,
     .bubby .bubby-eyes,

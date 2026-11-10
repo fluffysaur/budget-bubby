@@ -51,6 +51,11 @@ export interface BubbyStore {
     celebrated?: string[];
     /** Last rendered look, for components outside the providers (save toast). */
     snapshot?: BubbySnapshot;
+    /**
+     * Last household seen here, for the loading screen before data loads:
+     * one entry per penguin, its scarf colour or null (solo).
+     */
+    roster?: (string | null)[];
 }
 
 const MAX_CELEBRATED = 80;

@@ -36,7 +36,7 @@ import {
     weeklyQuests,
     type Quest,
 } from "../lib/bubby/quests";
-import { REACTION_MS } from "../lib/bubby/moods";
+import { isSleepy, REACTION_MS } from "../lib/bubby/moods";
 import { scarfFor } from "../lib/bubby/anchors";
 import { addPet, readBubbyStore, type SnackEntry } from "../lib/bubby/storage";
 import {
@@ -175,6 +175,8 @@ export interface BubbyPenguin {
     reaction: BubbyReaction | null;
     /** Scarf colour telling partners apart (none for a solo household). */
     scarf?: string;
+    /** Night, or unfed for 3+ days: yawns while idle. */
+    sleepy: boolean;
 }
 
 export interface UseBubbyResult {
@@ -188,6 +190,8 @@ export interface UseBubbyResult {
     reaction: BubbyReaction | null;
     /** One penguin per member, yours first. Empty before members load. */
     penguins: BubbyPenguin[];
+    /** Your penguin is sleepy (night, or unfed for 3+ days). */
+    sleepy: boolean;
     /** Members who fed any penguin today. */
     fedToday: Set<string>;
     dailyQuests: Quest[];
@@ -285,8 +289,9 @@ export function useBubby(): UseBubbyResult {
                 body: p.condition.body,
                 mood: p.condition.mood,
                 reaction: reactionFor(reactionState, p.member.id),
+                sleepy: isSleepy(minutes, p.condition.daysSinceFed),
             })),
-        [conditions, reactionState],
+        [conditions, reactionState, minutes],
     );
     const condition = conditions.find((p) => p.isMe)?.condition ?? household;
 
@@ -358,6 +363,7 @@ export function useBubby(): UseBubbyResult {
         condition,
         reaction,
         penguins,
+        sleepy: isSleepy(minutes, condition.daysSinceFed),
         fedToday: household.fedToday,
         dailyQuests: daily,
         weeklyQuests: weekly,

@@ -2,9 +2,14 @@
  * Bubby sheet (lazy): a penguin per partner side by side (tap one to pet
  * it, or pet both), each with a name and two unlabelled meters; then
  * today's, this week's and this month's quests, and the shared snack
- * collection. A solo household sees one penguin. No numbers and no
- * lifetime stats.
+ * collection. A solo household sees one penguin. Penguins breathe and
+ * tilt while the sheet is open, and sleepy ones yawn as it opens. No
+ * numbers and no lifetime stats.
  */
+
+import { useEffect, useRef } from "react";
+import { emitAppEvent } from "../../lib/appEvents";
+import { yawnTarget } from "../../lib/bubby/moods";
 
 import { AnimatedModal, ModalBody, ModalHeader } from "../ui/AnimatedModal";
 import { TooltipPopover } from "../ui/TooltipPopover";
@@ -21,6 +26,9 @@ import {
     useQuestActions,
 } from "../../hooks/useQuestActions";
 import { SnackArt } from "./SnackArt";
+
+/** Let the sheet slide in before the yawn. */
+const SHEET_YAWN_DELAY_MS = 350;
 
 export interface BubbySheetProps {
     isOpen: boolean;
@@ -109,6 +117,8 @@ function PenguinCard({
                     reaction={penguin.reaction}
                     scarf={penguin.scarf}
                     size="pair"
+                    idle
+                    sleepy={penguin.sleepy}
                     decorative
                 />
             </button>
@@ -158,10 +168,29 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
         monthlyQuests,
         snacks,
         penguins,
+        sleepy,
         fedToday,
         pet,
     } = useBubby();
     const paired = penguins.length > 1;
+
+    // Sleepy penguins yawn as the sheet opens (not when one wakes mid-sheet)
+    const sleepyRef = useRef<{ id: string; sleepy: boolean }[]>([]);
+    useEffect(() => {
+        sleepyRef.current =
+            penguins.length > 0
+                ? penguins.map((p) => ({ id: p.member.id, sleepy: p.sleepy }))
+                : [{ id: "", sleepy }];
+    }, [penguins, sleepy]);
+    useEffect(() => {
+        if (!isOpen) return;
+        const timer = window.setTimeout(() => {
+            const target = yawnTarget(sleepyRef.current);
+            if (target)
+                emitAppEvent("bubby:react", { kind: "yawn", ...target });
+        }, SHEET_YAWN_DELAY_MS);
+        return () => window.clearTimeout(timer);
+    }, [isOpen]);
     const onSelectQuest = useQuestActions(onClose);
 
     return (
@@ -210,6 +239,8 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                                 mood={mood}
                                 reaction={reaction}
                                 size="lg"
+                                idle
+                                sleepy={sleepy}
                                 decorative
                             />
                         </button>
