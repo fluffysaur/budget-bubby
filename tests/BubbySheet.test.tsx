@@ -137,9 +137,17 @@ describe("BubbySheet", () => {
         expect(store.petTargets?.[`${YJ.id}|${today}`]).toEqual([RACHEL.id]);
     });
 
-    it("pets both penguins at once", async () => {
+    it("has no pet-both button; tapping each penguin pets both", async () => {
         await renderSheet();
-        fireEvent.click(screen.getByRole("button", { name: "Pet Both" }));
+        expect(
+            screen.queryByRole("button", { name: /Pet (Both|All)/ }),
+        ).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Pet your Bubby" }));
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: `Pet ${RACHEL.display_name}'s Bubby`,
+            }),
+        );
         const today = toSgtDateString();
         expect(
             readBubbyStore().petTargets?.[`${YJ.id}|${today}`]?.sort(),
