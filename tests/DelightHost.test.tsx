@@ -156,7 +156,7 @@ describe("DelightHost", () => {
         expect(readBubbyStore().lastMood).toBe("normal");
     });
 
-    it("celebrates a body change with confetti, once", async () => {
+    it("celebrates your penguin's body change with confetti, once", async () => {
         writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
         const expenses = [0, 1, 2, 3].flatMap((d) =>
             [YJ.id, RACHEL.id].map((m, i) =>
@@ -167,13 +167,41 @@ describe("DelightHost", () => {
         await renderHost();
 
         expect(
-            await screen.findByText("Bubby's well fed!"),
+            await screen.findByText("Your Bubby is well fed!"),
         ).toBeInTheDocument();
         expect(screen.getAllByTestId("confetti-burst").length).toBeGreaterThan(
             0,
         );
         fireEvent.click(screen.getByRole("button", { name: "Nice!" }));
         expect(readBubbyStore().lastBody).toBe("chubby");
+        // The partner's penguin was seen for the first time: recorded, no toast
+        expect(readBubbyStore().lastBodies).toEqual({
+            [YJ.id]: "chubby",
+            [RACHEL.id]: "chubby",
+        });
+        expect(
+            screen.queryByText(`${RACHEL.display_name}'s Bubby is well fed!`),
+        ).not.toBeInTheDocument();
+    });
+
+    it("names the partner's penguin when it changes body", async () => {
+        writeBubbyStore({
+            lastMood: "normal",
+            lastBodies: { [YJ.id]: "regular", [RACHEL.id]: "regular" },
+        });
+        // Only the partner logs: only their penguin fills up
+        const expenses = [0, 1, 2, 3].map((d) =>
+            expense(RACHEL.id, addDays(TODAY, -d), d),
+        );
+        mockData({ expenses });
+        await renderHost();
+
+        expect(
+            await screen.findByText(
+                `${RACHEL.display_name}'s Bubby is well fed!`,
+            ),
+        ).toBeInTheDocument();
+        expect(readBubbyStore().lastBodies?.[YJ.id]).toBe("regular");
     });
 
     it("stays quiet on first run and when nothing changed", async () => {

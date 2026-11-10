@@ -19,7 +19,7 @@ export function QuestCard() {
         mood,
         reaction,
         members,
-        condition,
+        fedToday,
         dailyQuests,
         weeklyQuests,
         monthlyQuests,
@@ -50,7 +50,7 @@ export function QuestCard() {
                 </h2>
                 <FedTodayDots
                     members={members}
-                    fedToday={condition.fedToday}
+                    fedToday={fedToday}
                     className="shrink-0"
                 />
             </div>

@@ -51,10 +51,15 @@ test.describe("Bubby", () => {
         await expect(
             sheet.getByRole("heading", { name: "Bubby" }),
         ).toBeVisible();
+        // A penguin each, side by side, each with its own meters
+        await expect(sheet.getByTestId("bubby-penguin")).toHaveCount(2);
         await expect(
-            sheet.getByRole("img", { name: "Nourishment" }),
+            sheet.getByRole("img", { name: "Nourishment, your Bubby" }),
         ).toBeVisible();
-        await expect(sheet.getByRole("img", { name: "Fitness" })).toBeVisible();
+        await expect(
+            sheet.getByRole("img", { name: "Fitness, your Bubby" }),
+        ).toBeVisible();
+        await expect(page.getByTestId("bubby-pair")).toBeVisible();
         const pet = sheet
             .getByRole("list", { name: "Today's quests" })
             .locator("li", { hasText: "Pet Bubby" });

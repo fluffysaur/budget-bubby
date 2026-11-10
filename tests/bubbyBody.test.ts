@@ -6,6 +6,7 @@ import {
     METER_HIGH,
     moodFor,
     NOURISH_FULL,
+    NOURISH_FULL_PER_PENGUIN,
 } from "../src/lib/bubby/body";
 import {
     collectFeedEvents,
@@ -250,5 +251,117 @@ describe("mood", () => {
         expect(
             condition({ expenses: [late] }, "2026-11-05").fedToday.has(A),
         ).toBe(true);
+    });
+});
+
+describe("a bubby each", () => {
+    const snap = (account_id: string, day = TODAY): AccountSnapshot => ({
+        id: `${account_id}-${day}`,
+        account_id,
+        household_id: "hh",
+        balance: 1,
+        snapshot_date: day,
+    });
+    const account = (id: string, owner_id: string, is_joint = false) => ({
+        id,
+        household_id: "hh",
+        owner_id,
+        name: id,
+        type: "Cash" as const,
+        balance: 1,
+        currency: "SGD",
+        is_joint,
+    });
+    const penguin = (
+        id: string,
+        patch: Partial<FeedContext> = {},
+        today = TODAY,
+    ) => deriveCondition(collectFeedEvents(ctx(patch)), today, id);
+
+    it("personal spend feeds only the payer's penguin; shared spend feeds both", () => {
+        const expenses = [
+            exp(A, TODAY, "personal"),
+            { ...exp(B, TODAY, "shared"), is_shared: true, split_ratio: 0.5 },
+        ];
+        expect(penguin(A, { expenses }).nourishment).toBeCloseTo(
+            2 / NOURISH_FULL_PER_PENGUIN,
+        );
+        expect(penguin(B, { expenses }).nourishment).toBeCloseTo(
+            1 / NOURISH_FULL_PER_PENGUIN,
+        );
+    });
+
+    it("caps each penguin at 5 food a day, whoever fed it", () => {
+        const expenses = Array.from({ length: 8 }, (_, i) => ({
+            ...exp(i % 2 ? A : B, TODAY, `s${i}`),
+            is_shared: true,
+        }));
+        expect(penguin(A, { expenses }).nourishment).toBeCloseTo(
+            5 / NOURISH_FULL_PER_PENGUIN,
+        );
+    });
+
+    it("personal balances exercise the owner; joint and unknown accounts exercise both", () => {
+        const accounts = [account("mine", A), account("joint", A, true)];
+        const personal = { snapshots: [snap("mine")], accounts };
+        expect(penguin(A, personal).fitness).toBeCloseTo(1 / FITNESS_FULL);
+        expect(penguin(B, personal).fitness).toBe(0);
+
+        const joint = { snapshots: [snap("joint")], accounts };
+        expect(penguin(B, joint).fitness).toBeCloseTo(1 / FITNESS_FULL);
+        const unknown = { snapshots: [snap("gone")], accounts };
+        expect(penguin(B, unknown).fitness).toBeCloseTo(1 / FITNESS_FULL);
+    });
+
+    it("counts one balance day per penguin, and once for the household", () => {
+        const accounts = [account("a", A), account("b", B)];
+        const c = ctx({ snapshots: [snap("a"), snap("b")], accounts });
+        const events = collectFeedEvents(c);
+        expect(deriveCondition(events, TODAY, A).fitness).toBeCloseTo(
+            1 / FITNESS_FULL,
+        );
+        expect(deriveCondition(events, TODAY).fitness).toBeCloseTo(
+            1 / FITNESS_FULL,
+        );
+    });
+
+    it("local exercise feeds who did it; month-end and old records feed both", () => {
+        const store = {
+            exercise: {
+                "goal-add": [TODAY, addDays(TODAY, -1)],
+                "month-end": [TODAY],
+            },
+            exerciseBy: {
+                "goal-add": { [TODAY]: [A] },
+                "month-end": { [TODAY]: [A] },
+            },
+        };
+        // A: goal-add today + legacy goal-add yesterday + month-end
+        expect(penguin(A, { store }).fitness).toBeCloseTo(3 / FITNESS_FULL);
+        // B: legacy goal-add yesterday + month-end
+        expect(penguin(B, { store }).fitness).toBeCloseTo(2 / FITNESS_FULL);
+    });
+
+    it("a pet feeds the tapped penguin, and counts the petter as fed today", () => {
+        const store = {
+            petDays: { [A]: [TODAY], [B]: [addDays(TODAY, -1)] },
+            petTargets: { [`${A}|${TODAY}`]: [B] },
+        };
+        const b = penguin(B, { store });
+        expect(b.nourishment).toBeCloseTo(2 / NOURISH_FULL_PER_PENGUIN);
+        expect(b.fedToday).toEqual(new Set([A]));
+        expect(penguin(A, { store }).nourishment).toBe(0);
+    });
+
+    it("each penguin has its own mood", () => {
+        const expenses = [exp(A, TODAY), exp(B, addDays(TODAY, -8))];
+        expect(penguin(A, { expenses }).mood).toBe("normal");
+        expect(penguin(B, { expenses }).mood).toBe("missyou");
+        // A shared expense cheers both up
+        const shared = [
+            ...expenses,
+            { ...exp(A, TODAY, "s"), is_shared: true },
+        ];
+        expect(penguin(B, { expenses: shared }).mood).toBe("normal");
     });
 });

@@ -1,6 +1,7 @@
 /**
- * The shared household Bubby: feed events -> body, mood, quests, snacks,
- * and the latest transient reaction.
+ * A Bubby each: feed events -> one penguin per household member (body, mood,
+ * meters, reaction), plus the household's quests, snacks and "fed today".
+ * Your own penguin comes first; its body and mood are the top-level ones.
  *
  * Reads the shared check-ins query (refetched on focus at most once a
  * minute, so the partner's logs show up on resume), this and last month's
@@ -13,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
 import {
     queryKeys,
+    useAccountsQuery,
     useAccountSnapshotsQuery,
     useCreditCardStatementsQuery,
     useExpensesQuery,
@@ -35,11 +37,8 @@ import {
     type Quest,
 } from "../lib/bubby/quests";
 import { REACTION_MS } from "../lib/bubby/moods";
-import {
-    addPetDay,
-    readBubbyStore,
-    type SnackEntry,
-} from "../lib/bubby/storage";
+import { scarfFor } from "../lib/bubby/anchors";
+import { addPet, readBubbyStore, type SnackEntry } from "../lib/bubby/storage";
 import {
     addDays,
     sgtMinutesOfDay,
@@ -50,6 +49,7 @@ import { getInboxPending } from "../lib/delight/inboxState";
 import { feedback } from "../lib/delight/feedback";
 import { DEFAULT_CHECKIN_TIME } from "../lib/reminders/rules";
 import type {
+    Account,
     AccountSnapshot,
     CreditCardStatement,
     DailyCheckin,
@@ -61,6 +61,7 @@ import type {
 const EMPTY_CHECKINS: DailyCheckin[] = [];
 const EMPTY_EXPENSES: Expense[] = [];
 const EMPTY_SNAPSHOTS: AccountSnapshot[] = [];
+const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_STATEMENTS: CreditCardStatement[] = [];
 const EMPTY_GOALS: SavingsGoal[] = [];
 const NO_BONUS_EVENTS: BonusEventLike[] = [];
@@ -117,14 +118,20 @@ export function useSgtClock(): { today: string; minutes: number } {
     return clock;
 }
 
+export interface BubbyReactionState {
+    kind: BubbyReaction;
+    /** The penguin it is for, or every penguin. */
+    memberId?: string;
+}
+
 /** Latest Bubby reaction, cleared after its (≤400ms) animation. */
-export function useBubbyReaction(): BubbyReaction | null {
-    const [reaction, setReaction] = useState<BubbyReaction | null>(null);
+export function useBubbyReaction(): BubbyReactionState | null {
+    const [reaction, setReaction] = useState<BubbyReactionState | null>(null);
 
     useEffect(() => {
         let timer: number | undefined;
-        const off = onAppEvent("bubby:react", ({ kind }) => {
-            setReaction(kind);
+        const off = onAppEvent("bubby:react", ({ kind, memberId }) => {
+            setReaction(memberId ? { kind, memberId } : { kind });
             window.clearTimeout(timer);
             timer = window.setTimeout(
                 () => setReaction(null),
@@ -140,6 +147,14 @@ export function useBubbyReaction(): BubbyReaction | null {
     return reaction;
 }
 
+function reactionFor(
+    state: BubbyReactionState | null,
+    memberId: string | undefined,
+): BubbyReaction | null {
+    if (!state) return null;
+    return !state.memberId || state.memberId === memberId ? state.kind : null;
+}
+
 /** All members' check-ins, shared app-wide. */
 export function useHouseholdCheckinsQuery() {
     return useQuery<DailyCheckin[]>({
@@ -150,14 +165,31 @@ export function useHouseholdCheckinsQuery() {
     });
 }
 
+/** One member's penguin. */
+export interface BubbyPenguin {
+    member: HouseholdMember;
+    isMe: boolean;
+    condition: BubbyCondition;
+    body: BubbyBody;
+    mood: BubbyMood;
+    reaction: BubbyReaction | null;
+    /** Scarf colour telling partners apart (none for a solo household). */
+    scarf?: string;
+}
+
 export interface UseBubbyResult {
     isReady: boolean;
     weeklyQuestsReady: boolean;
     monthlyQuestsReady: boolean;
+    /** Your penguin's look (the household's before members load). */
     body: BubbyBody;
     mood: BubbyMood;
     condition: BubbyCondition;
     reaction: BubbyReaction | null;
+    /** One penguin per member, yours first. Empty before members load. */
+    penguins: BubbyPenguin[];
+    /** Members who fed any penguin today. */
+    fedToday: Set<string>;
     dailyQuests: Quest[];
     weeklyQuests: Quest[];
     monthlyQuests: Quest[];
@@ -170,8 +202,8 @@ export interface UseBubbyResult {
     minutes: number;
     /** The logged-in member's check-in reminder time, in minutes. */
     checkinMinutes: number;
-    /** Pet Bubby: a soft cue every time, food once a day. */
-    pet: () => void;
+    /** Pet penguins (default: yours): hearts every time, food once a day. */
+    pet: (memberIds?: readonly string[]) => void;
 }
 
 export function useBubby(): UseBubbyResult {
@@ -188,6 +220,8 @@ export function useBubby(): UseBubbyResult {
     });
     const { data: snapshotsData, isSuccess: snapshotsReady } =
         useAccountSnapshotsQuery("household");
+    const { data: accountsData, isSuccess: accountsReady } =
+        useAccountsQuery("household");
     const { data: statementsData, isPending: statementsPending } =
         useCreditCardStatementsQuery();
     const { data: goalsData, isPending: goalsPending } = useGoalsQuery();
@@ -203,6 +237,7 @@ export function useBubby(): UseBubbyResult {
 
     const checkins = checkinsData ?? EMPTY_CHECKINS;
     const snapshots = snapshotsData ?? EMPTY_SNAPSHOTS;
+    const accounts = accountsData ?? EMPTY_ACCOUNTS;
     const expenses = useMemo(
         () => [
             ...(thisMonth ?? EMPTY_EXPENSES),
@@ -211,20 +246,49 @@ export function useBubby(): UseBubbyResult {
         [thisMonth, lastMonth],
     );
 
-    const condition = useMemo(
+    const events = useMemo(
         () =>
-            deriveCondition(
-                collectFeedEvents({
-                    checkins,
-                    expenses,
-                    snapshots,
-                    bonusEvents,
-                    store,
-                }),
-                today,
-            ),
-        [checkins, expenses, snapshots, bonusEvents, store, today],
+            collectFeedEvents({
+                checkins,
+                expenses,
+                snapshots,
+                bonusEvents,
+                store,
+                accounts,
+            }),
+        [checkins, expenses, snapshots, bonusEvents, store, accounts],
     );
+    const household = useMemo(
+        () => deriveCondition(events, today),
+        [events, today],
+    );
+    const reactionState = useBubbyReaction();
+    const conditions = useMemo(() => {
+        const ordered = [
+            ...members.filter((m) => m.id === me?.id),
+            ...members.filter((m) => m.id !== me?.id),
+        ];
+        return ordered.map((member) => ({
+            member,
+            isMe: member.id === me?.id,
+            condition: deriveCondition(events, today, member.id),
+            scarf:
+                members.length > 1
+                    ? scarfFor(members.findIndex((m) => m.id === member.id))
+                    : undefined,
+        }));
+    }, [events, today, members, me?.id]);
+    const penguins = useMemo<BubbyPenguin[]>(
+        () =>
+            conditions.map((p) => ({
+                ...p,
+                body: p.condition.body,
+                mood: p.condition.mood,
+                reaction: reactionFor(reactionState, p.member.id),
+            })),
+        [conditions, reactionState],
+    );
+    const condition = conditions.find((p) => p.isMe)?.condition ?? household;
 
     const daily = useMemo(
         () =>
@@ -254,24 +318,36 @@ export function useBubby(): UseBubbyResult {
     );
 
     const checkinMinutes = useMemo(() => readCheckinMinutes(me?.id), [me?.id]);
-    const reaction = useBubbyReaction();
+    const reaction = reactionFor(reactionState, me?.id);
     const partner = useMemo(
         () => members.find((m) => m.id !== me?.id) ?? null,
         [members, me],
     );
 
     const meId = me?.id;
-    const pet = useCallback(() => {
-        feedback.routine("pet");
-        if (!meId) return;
-        addPetDay(meId, toSgtDateString());
-        emitAppEvent("bubby:store-changed", {});
-    }, [meId]);
+    const pet = useCallback(
+        (memberIds?: readonly string[]) => {
+            const targets = memberIds?.length ? memberIds : meId ? [meId] : [];
+            // One penguin gets the hearts; "pet both" cheers everyone
+            feedback.routine(
+                "pet",
+                targets.length === 1 ? targets[0] : undefined,
+            );
+            if (!meId) return;
+            addPet(meId, targets, toSgtDateString());
+            emitAppEvent("bubby:store-changed", {});
+        },
+        [meId],
+    );
 
     return {
         // Every input loaded, so body and mood changes are real
         isReady:
-            isSuccess && thisMonthReady && lastMonthReady && snapshotsReady,
+            isSuccess &&
+            thisMonthReady &&
+            lastMonthReady &&
+            snapshotsReady &&
+            accountsReady,
         // The goal and monthly inputs have loaded (or failed), so those quest
         // sets are complete and a treat for them cannot fire early
         weeklyQuestsReady: !goalsPending,
@@ -281,6 +357,8 @@ export function useBubby(): UseBubbyResult {
         mood: condition.mood,
         condition,
         reaction,
+        penguins,
+        fedToday: household.fedToday,
         dailyQuests: daily,
         weeklyQuests: weekly,
         monthlyQuests: monthly,

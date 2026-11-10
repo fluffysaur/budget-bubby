@@ -23,7 +23,7 @@ describe("reactions", () => {
         const { result } = renderHook(() => useBubbyReaction());
         expect(result.current).toBeNull();
         act(() => emitAppEvent("bubby:react", { kind: "reunion" }));
-        expect(result.current).toBe("reunion");
+        expect(result.current?.kind).toBe("reunion");
         act(() => {
             vi.advanceTimersByTime(400);
         });

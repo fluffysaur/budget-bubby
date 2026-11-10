@@ -1,8 +1,9 @@
 /**
- * Live Bubby in the header, where the streak chip used to be. Shows the
- * household Bubby's body, mood and reactions, with a tiny "fed today" dot
- * per partner. Tapping pets Bubby (food once a day) and opens the sheet.
- * The first log of the day floats a 🍤 pip off the avatar.
+ * Live Bubby in the header, where the streak chip used to be. A couple sees
+ * a snug pair of mini penguins (yours in front), a solo member one penguin,
+ * each with its own body, mood and reactions, plus a tiny "fed today" dot
+ * per partner. Tapping pets your penguin (food once a day) and opens the
+ * sheet. The first log of the day floats a 🍤 pip off the avatar.
  */
 
 import { useEffect, useState } from "react";
@@ -16,7 +17,10 @@ export interface BubbyAvatarButtonProps {
 }
 
 export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
-    const { body, mood, reaction, me, members, condition, pet } = useBubby();
+    const { body, mood, reaction, me, members, penguins, fedToday, pet } =
+        useBubby();
+    // Yours and the first partner's; more members still show a pair
+    const pair = penguins.length > 1 ? penguins.slice(0, 2) : null;
     const [pipKey, setPipKey] = useState(0);
     const meId = me?.id;
 
@@ -50,18 +54,35 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
             className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-transform ${className}`}
         >
             <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm overflow-hidden pt-0.5">
-                <Bubby
-                    body={body}
-                    mood={mood}
-                    reaction={reaction}
-                    size="xs"
-                    className="h-8 w-8 sm:h-9 sm:w-9"
-                    decorative
-                />
+                {pair ? (
+                    <span className="flex items-end" data-testid="bubby-pair">
+                        {pair.map((p, i) => (
+                            <Bubby
+                                key={p.member.id}
+                                body={p.body}
+                                mood={p.mood}
+                                reaction={p.reaction}
+                                scarf={p.scarf}
+                                size="mini"
+                                className={i === 0 ? "relative z-10" : "-ml-2"}
+                                decorative
+                            />
+                        ))}
+                    </span>
+                ) : (
+                    <Bubby
+                        body={body}
+                        mood={mood}
+                        reaction={reaction}
+                        size="xs"
+                        className="h-8 w-8 sm:h-9 sm:w-9"
+                        decorative
+                    />
+                )}
             </span>
             <FedTodayDots
                 members={members}
-                fedToday={condition.fedToday}
+                fedToday={fedToday}
                 size="xs"
                 className="pointer-events-none absolute -bottom-0.5 left-1/2 -translate-x-1/2"
             />

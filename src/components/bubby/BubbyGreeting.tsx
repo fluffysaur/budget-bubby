@@ -2,12 +2,14 @@
  * App-open moment: a short speech bubble next to the Home header.
  * Renders with the page (never before it): after the first data paint,
  * on an idle callback, the header Bubby waves and the bubble shows for
- * 2.5s. At most once per 4h, skipped when a milestone took the slot, and
+ * 2.5s. A couple's two penguins say it together, inside the bubble. At
+ * most once per 4h, skipped when a milestone took the slot, and
  * cancelled by the first tap anywhere so the user's interaction wins.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { useBubby } from "../../hooks/useBubby";
+import { Bubby } from "./Bubby";
 import { emitAppEvent } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
 import { getInboxPending } from "../../lib/delight/inboxState";
@@ -44,8 +46,16 @@ export interface BubbyGreetingProps {
 }
 
 export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
-    const { isReady, mood, condition, me, members, minutes, checkinMinutes } =
-        useBubby();
+    const {
+        isReady,
+        mood,
+        fedToday,
+        me,
+        members,
+        penguins,
+        minutes,
+        checkinMinutes,
+    } = useBubby();
     const [line, setLine] = useState<GreetingLine | null>(null);
     const [leaving, setLeaving] = useState(false);
     const [wake, setWake] = useState(0);
@@ -55,10 +65,9 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
     useEffect(() => {
         inputsRef.current = {
             mood,
-            loggedToday: Boolean(me && condition.fedToday.has(me.id)),
+            loggedToday: Boolean(me && fedToday.has(me.id)),
             bothFedToday:
-                members.length >= 2 &&
-                members.every((m) => condition.fedToday.has(m.id)),
+                members.length >= 2 && members.every((m) => fedToday.has(m.id)),
             minutes,
             checkinMinutes,
         };
@@ -135,7 +144,7 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
                 if (line.action === "inbox" && onOpenInbox) onOpenInbox();
                 else emitAppEvent("bubby:open-sheet", {});
             }}
-            className={`relative ml-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-2.5 py-1 text-xs font-black text-(--text-ink) shadow-cute-sm animate-toast-in transition-opacity duration-150 motion-reduce:transition-none cursor-pointer ${
+            className={`relative ml-1 inline-flex items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-2.5 py-1 text-xs font-black text-(--text-ink) shadow-cute-sm animate-toast-in transition-opacity duration-150 motion-reduce:transition-none cursor-pointer ${
                 leaving ? "opacity-0" : "opacity-100"
             }`}
         >
@@ -143,7 +152,26 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
                 aria-hidden="true"
                 className="absolute -left-1.5 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-b-2 border-l-2 border-(--border-ink) bg-(--bg-card)"
             />
-            {line.text}
+            {penguins.length > 1 && (
+                <span
+                    className="flex shrink-0 items-end"
+                    data-testid="bubby-greeting-pair"
+                >
+                    {penguins.slice(0, 2).map((p, i) => (
+                        <Bubby
+                            key={p.member.id}
+                            body={p.body}
+                            mood={p.mood}
+                            reaction={p.reaction}
+                            scarf={p.scarf}
+                            size="mini"
+                            className={i === 0 ? "relative z-10" : "-ml-2"}
+                            decorative
+                        />
+                    ))}
+                </span>
+            )}
+            <span className="min-w-0">{line.text}</span>
         </button>
     );
 }

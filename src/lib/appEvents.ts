@@ -55,7 +55,8 @@ export interface MilestoneDetail {
 
 export interface AppEventMap {
     expenseAdded: ExpenseAddedDetail;
-    "bubby:react": { kind: BubbyReaction };
+    /** A reaction for one member's penguin, or every penguin if no memberId. */
+    "bubby:react": { kind: BubbyReaction; memberId?: string };
     "bubby:open-sheet": Record<string, never>;
     /** Local Bubby state (petting, exercise, snacks) changed on this device. */
     "bubby:store-changed": Record<string, never>;

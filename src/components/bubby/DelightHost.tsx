@@ -2,9 +2,9 @@
  * DelightHost: mounted once in the app shell.
  * - Checks in the logged-in member for today after every log
  * - Inbox: a soft cue per triage, an inbox-zero celebration once a day
- * - Moments, once per device: body change, reunion after a feed, full belly
- *   (all daily quests), the weekly snack treat, and a cheer when both
- *   partners have fed Bubby today
+ * - Moments, once per device: a body change per penguin (named for a
+ *   partner's), reunion after a feed, full belly (all daily quests), the
+ *   weekly snack treat, and a cheer when both partners have fed Bubby today
  * - Hosts milestone confetti, toasts and the lazy Bubby sheet
  */
 
@@ -18,6 +18,7 @@ import {
 } from "react";
 import { useBubby } from "../../hooks/useBubby";
 import { useActivityCheckins } from "../../hooks/useActivityCheckins";
+import { setExerciseActor } from "../../lib/bubby/activity";
 import {
     emitAppEvent,
     onAppEvent,
@@ -55,6 +56,17 @@ const BODY_TITLE: Record<Exclude<BubbyBody, "regular">, string> = {
     chubby: "Bubby's well fed!",
 };
 
+const PAIR_BODY_TITLE: Record<Exclude<BubbyBody, "regular">, string> = {
+    buff: "Bubby got buff!",
+    lean: "Bubby is looking lean!",
+    chubby: "Bubby is well fed!",
+};
+
+/** "Bubby got buff!" solo; "Your Bubby…" or "Sam's Bubby…" in a pair. */
+function bodyTitle(body: Exclude<BubbyBody, "regular">, whose?: string) {
+    return whose ? `${whose} ${PAIR_BODY_TITLE[body]}` : BODY_TITLE[body];
+}
+
 export function DelightHost() {
     useActivityCheckins();
     const bubby = useBubby();
@@ -64,7 +76,8 @@ export function DelightHost() {
         monthlyQuestsReady,
         body,
         mood,
-        condition,
+        penguins,
+        fedToday,
         dailyQuests,
         weeklyQuests,
         monthlyQuests,
@@ -87,17 +100,58 @@ export function DelightHost() {
         }
     }, [isReady, body, mood]);
 
-    // Body changes (only towards a fuller shape are celebrated) and reunions
+    // Local exercise on this device is credited to the member using it
+    const meId = me?.id;
+    useEffect(() => {
+        setExerciseActor(meId);
+    }, [meId]);
+
+    // Body changes per penguin (only towards a fuller shape are celebrated)
     useEffect(() => {
         if (!isReady) return;
         const store = readBubbyStore();
-        if (store.lastBody && store.lastBody !== body && body !== "regular") {
-            feedback.milestone("body-change", {
-                dedupeKey: `body:${body}:${today}`,
-                title: BODY_TITLE[body],
-                primary: { label: "See Bubby", event: "bubby:open-sheet" },
-            });
+        const looks =
+            penguins.length > 0
+                ? penguins.map((p) => ({
+                      id: p.member.id,
+                      isMe: p.isMe,
+                      body: p.body,
+                      whose:
+                          penguins.length > 1
+                              ? p.isMe
+                                  ? "Your"
+                                  : `${p.member.display_name}'s`
+                              : undefined,
+                  }))
+                : [{ id: "household", isMe: true, body, whose: undefined }];
+        const last = store.lastBodies ?? {};
+        const next: Record<string, string> = { ...last };
+        for (const look of looks) {
+            // The old shared Bubby carries on as yours; a partner's penguin
+            // seen for the first time only records its look
+            const before =
+                last[look.id] ?? (look.isMe ? store.lastBody : undefined);
+            if (before && before !== look.body && look.body !== "regular") {
+                feedback.milestone("body-change", {
+                    dedupeKey: `body:${look.id}:${look.body}:${today}`,
+                    title: bodyTitle(look.body, look.whose),
+                    primary: { label: "See Bubby", event: "bubby:open-sheet" },
+                });
+            }
+            next[look.id] = look.body;
         }
+        if (
+            looks.some((l) => last[l.id] !== l.body) ||
+            store.lastBody !== body
+        ) {
+            updateBubbyStore({ lastBodies: next, lastBody: body });
+        }
+    }, [isReady, penguins, body, today]);
+
+    // Reunion: your penguin is happy again after a feed
+    useEffect(() => {
+        if (!isReady) return;
+        const store = readBubbyStore();
         if (
             store.lastMood &&
             store.lastMood !== "normal" &&
@@ -108,14 +162,11 @@ export function DelightHost() {
                 title: "Welcome back! 🐧",
             });
         }
-        if (store.lastBody !== body || store.lastMood !== mood) {
-            updateBubbyStore({ lastBody: body, lastMood: mood });
-        }
-    }, [isReady, body, mood, today]);
+        if (store.lastMood !== mood) updateBubbyStore({ lastMood: mood });
+    }, [isReady, mood, today]);
 
     // Daily quests (per member): full belly
     const dailyDone = allDone(dailyQuests);
-    const meId = me?.id;
     useEffect(() => {
         if (!isReady || !dailyDone || !meId) return;
         feedback.milestone("full-belly", {
@@ -158,8 +209,7 @@ export function DelightHost() {
 
     // Both partners fed Bubby today: a small cheer, once a day
     const bothFed =
-        members.length >= 2 &&
-        members.every((m) => condition.fedToday.has(m.id));
+        members.length >= 2 && members.every((m) => fedToday.has(m.id));
     useEffect(() => {
         if (!isReady || !bothFed) return;
         const key = `both-fed:${today}`;
@@ -189,7 +239,11 @@ export function DelightHost() {
                 subtitle: `${clearedCount} sorted`,
             });
             if (result !== "duplicate") {
-                addLocalExercise("inbox-clear", date);
+                addLocalExercise(
+                    "inbox-clear",
+                    date,
+                    meIdRef.current === "me" ? null : meIdRef.current,
+                );
                 emitAppEvent("bubby:store-changed", {});
             }
             triaged = 0;
