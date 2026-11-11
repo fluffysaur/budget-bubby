@@ -1,5 +1,6 @@
 import React from "react";
 import { formatSGD } from "../../lib/currency";
+import { usePrivacy, PRIVACY_MASK } from "../../context/PrivacyContext";
 import { useTweenedNumber } from "../../hooks/useTweenedNumber";
 import {
     MONEY_BASE_CLASSES,
@@ -9,11 +10,7 @@ import {
 
 export type CurrencySize = MoneySize;
 export type CurrencyTone =
-    | "inherit"
-    | "default"
-    | "positive"
-    | "negative"
-    | "muted";
+    "inherit" | "default" | "positive" | "negative" | "muted";
 
 export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     amount?: number;
@@ -44,12 +41,15 @@ export function CurrencyText({
     className = "",
     ...props
 }: CurrencyTextProps) {
+    const { isPrivacyMode } = usePrivacy();
     const tweenedAmount = useTweenedNumber(amount ?? 0, {
-        disabled: !animate || formatted !== undefined,
+        disabled: !animate || formatted !== undefined || isPrivacyMode,
     });
     const finalAmount =
         animate && formatted === undefined ? tweenedAmount : amount;
-    const displayValue = formatted ?? formatSGD(finalAmount ?? 0);
+    const displayValue = isPrivacyMode
+        ? PRIVACY_MASK
+        : (formatted ?? formatSGD(finalAmount ?? 0));
     const classes = [
         MONEY_BASE_CLASSES,
         MONEY_SIZE_CLASSES[size],

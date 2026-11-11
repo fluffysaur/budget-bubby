@@ -4,6 +4,7 @@ import { Badge } from "../ui/Badge";
 import { CurrencyText } from "../ui/CurrencyText";
 import { computeSavingsBreakdown } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 interface SavingsBreakdownCardProps {
     /** Budgeted Savings target for the month. */
@@ -26,7 +27,8 @@ export function SavingsBreakdownCard({
         spendableAllocated,
         spendableSpent,
     });
-    const money = (n: number) => formatSGD(n, { showCents: false });
+    const mask = useMoneyMask();
+    const money = (n: number) => mask(formatSGD(n, { showCents: false }));
 
     return (
         <StatCard

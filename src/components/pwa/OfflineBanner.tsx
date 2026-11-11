@@ -30,6 +30,7 @@ import {
 import { formatSGD } from "../../lib/currency";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 function formatMutationLabel(mutation: QueuedMutation): string {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +74,7 @@ function formatMutationLabel(mutation: QueuedMutation): string {
 }
 
 export const OfflineBanner: React.FC = () => {
+    const mask = useMoneyMask();
     const [isOnline, setIsOnline] = useState<boolean>(
         typeof navigator !== "undefined" ? navigator.onLine : true,
     );
@@ -294,7 +296,7 @@ export const OfflineBanner: React.FC = () => {
                         >
                             <div className="min-w-0 flex-1">
                                 <TruncatedText
-                                    text={formatMutationLabel(mutation)}
+                                    text={mask(formatMutationLabel(mutation))}
                                     className="text-sm font-bold text-(--text-ink)"
                                 />
                                 {mutation.lastError && (

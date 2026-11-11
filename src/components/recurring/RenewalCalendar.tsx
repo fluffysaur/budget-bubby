@@ -28,6 +28,7 @@ import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
 import type { RecurringItem, RecurringItemType } from "../../types/finance";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 const TYPE_ICON_COLORS: Record<RecurringItemType, string> = {
     insurance: "text-blue-500",
@@ -49,6 +50,7 @@ export function RenewalCalendar({
     className = "",
     referenceDate,
 }: RenewalCalendarProps) {
+    const mask = useMoneyMask();
     const today = useMemo(
         () => referenceDate ?? getSingaporeDate(),
         [referenceDate],
@@ -170,7 +172,9 @@ export function RenewalCalendar({
                             type="button"
                             onClick={() => setSelectedMonth(m.month)}
                             aria-pressed={isSelected}
-                            aria-label={`${MONTH_NAMES_FULL[m.month - 1]} ${year}, ${formatSGD(m.total)}`}
+                            aria-label={mask(
+                                `${MONTH_NAMES_FULL[m.month - 1]} ${year}, ${formatSGD(m.total)}`,
+                            )}
                             className={`relative overflow-hidden flex flex-col items-center justify-between gap-1.5 min-h-16 px-1 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) transition-press cursor-pointer ${
                                 isSelected
                                     ? "ring-2 ring-(--border-ink) translate-x-0.5 translate-y-0.5"

@@ -31,6 +31,7 @@ import { ProgressRing } from "../ui/ProgressRing";
 import { Badge, type BadgeVariant } from "../ui/Badge";
 import type { SavingsGoal, Expense } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface GoalCardProps {
     goal: SavingsGoal;
@@ -51,6 +52,7 @@ export function GoalCard({
     isHighlighted = false,
     className = "",
 }: GoalCardProps) {
+    const mask = useMoneyMask();
     const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
     const [showExpenses, setShowExpenses] = useState<boolean>(true);
 
@@ -187,7 +189,7 @@ export function GoalCard({
                             Total Saved
                         </span>
                         <div className="flex flex-wrap items-baseline gap-x-1.5 font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
-                            <span title={formatSGD(totalSaved)}>
+                            <span title={mask(formatSGD(totalSaved))}>
                                 <CurrencyText amount={totalSaved} />
                             </span>
                             <span className="text-xs font-bold text-(--text-muted)">
@@ -231,7 +233,7 @@ export function GoalCard({
                                     </span>
                                     <span
                                         className="text-(--text-ink) font-bold mt-0.5 block truncate"
-                                        title={formatSGD(targetAmount)}
+                                        title={mask(formatSGD(targetAmount))}
                                     >
                                         <CurrencyText
                                             amount={targetAmount}
@@ -246,7 +248,7 @@ export function GoalCard({
                                     </span>
                                     <span
                                         className="text-emerald-700 dark:text-emerald-400 font-bold mt-0.5 block truncate"
-                                        title={formatSGD(totalSaved)}
+                                        title={mask(formatSGD(totalSaved))}
                                     >
                                         <CurrencyText
                                             amount={totalSaved}
@@ -261,7 +263,7 @@ export function GoalCard({
                                     </span>
                                     <span
                                         className="text-purple-700 dark:text-purple-300 font-bold mt-0.5 block truncate"
-                                        title={formatSGD(goalSpend)}
+                                        title={mask(formatSGD(goalSpend))}
                                     >
                                         <CurrencyText
                                             amount={goalSpend}
@@ -276,7 +278,7 @@ export function GoalCard({
                                     </span>
                                     <span
                                         className="text-(--text-ink) font-bold mt-0.5 block truncate"
-                                        title={formatSGD(balance)}
+                                        title={mask(formatSGD(balance))}
                                     >
                                         <CurrencyText
                                             amount={balance}
@@ -306,7 +308,9 @@ export function GoalCard({
                                     <span className="font-semibold text-(--text-ink)">
                                         {isAchieved
                                             ? "Target Met"
-                                            : `${formatSGD(pacing.neededPerMonth)}/mo needed`}
+                                            : mask(
+                                                  `${formatSGD(pacing.neededPerMonth)}/mo needed`,
+                                              )}
                                     </span>
                                 </div>
 

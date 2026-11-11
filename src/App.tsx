@@ -38,6 +38,7 @@ import {
 } from "./context/HouseholdContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { SettingsProvider } from "./context/SettingsContext";
+import { PrivacyProvider } from "./context/PrivacyContext";
 import { PinLoginScreen } from "./components/auth/PinLoginScreen";
 import { isSupabaseConfigured } from "./services/supabaseClient";
 import {
@@ -485,14 +486,18 @@ export function AppShell() {
         return (
             <HouseholdProvider defaultPerspective={defaultPerspective}>
                 <SettingsProvider>
-                    <AppLayoutInner />
+                    <PrivacyProvider>
+                        <AppLayoutInner />
+                    </PrivacyProvider>
                 </SettingsProvider>
             </HouseholdProvider>
         );
     }
     return (
         <SettingsProvider>
-            <AppLayoutInner />
+            <PrivacyProvider>
+                <AppLayoutInner />
+            </PrivacyProvider>
         </SettingsProvider>
     );
 }

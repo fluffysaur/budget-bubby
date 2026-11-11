@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { usePrivacy } from "../../context/PrivacyContext";
+import { maskMoneyNode } from "../../lib/maskMoney";
 
 export type StatRowTone = "default" | "muted" | "ok" | "near" | "over";
 
@@ -38,8 +40,12 @@ export function StatRow({
     size = "sm",
     className = "",
 }: StatRowProps) {
+    const { isPrivacyMode } = usePrivacy();
     const toneCls = TONE_CLASSES[tone] ?? TONE_CLASSES.default;
-    const tooltipText = typeof tooltip === "string" ? tooltip : label;
+    const tooltipText =
+        typeof tooltip === "string"
+            ? (maskMoneyNode(tooltip, isPrivacyMode) as string)
+            : label;
 
     const textSizeCls = size === "md" ? "text-sm" : "text-xs";
     const iconSizeCls = size === "md" ? "h-4 w-4" : "h-3.5 w-3.5";
@@ -66,7 +72,9 @@ export function StatRow({
                 {label}
             </span>
 
-            <span className={`font-bold ${toneCls} truncate`}>{value}</span>
+            <span className={`font-bold ${toneCls} truncate`}>
+                {maskMoneyNode(value, isPrivacyMode)}
+            </span>
         </div>
     );
 }

@@ -71,6 +71,7 @@ import type {
     UpsertCreditCardStatementInput,
 } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface CreditCardTrackerSectionProps {
     members: HouseholdMember[];
@@ -139,6 +140,7 @@ export function CreditCardTrackerSection({
     activeMemberId,
     className = "",
 }: CreditCardTrackerSectionProps) {
+    const mask = useMoneyMask();
     const { invalidateCreditCards } = useInvalidateFinance();
 
     const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
@@ -420,7 +422,9 @@ export function CreditCardTrackerSection({
                                         },
                                     ]}
                                     size="xs"
-                                    ariaLabel={`Paid ${formatSGD(totalPaid)}, Unpaid ${formatSGD(totalUnpaid)}`}
+                                    ariaLabel={mask(
+                                        `Paid ${formatSGD(totalPaid)}, Unpaid ${formatSGD(totalUnpaid)}`,
+                                    )}
                                 />
                             ) : undefined
                         }
@@ -613,7 +617,9 @@ export function CreditCardTrackerSection({
                                                 />
                                                 <span className="font-mono-num font-medium text-[11px]">
                                                     {card.credit_limit
-                                                        ? `Limit ${formatSGD(card.credit_limit, { showCents: false })}`
+                                                        ? mask(
+                                                              `Limit ${formatSGD(card.credit_limit, { showCents: false })}`,
+                                                          )
                                                         : "No limit"}
                                                 </span>
                                             </div>

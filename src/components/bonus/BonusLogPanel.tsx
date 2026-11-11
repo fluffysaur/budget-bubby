@@ -49,6 +49,7 @@ import type {
     BonusEvent,
     SavingsGoal,
 } from "../../types/finance";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 const EMPTY_BONUSES: BonusEvent[] = [];
 const EMPTY_GOALS: SavingsGoal[] = [];
@@ -59,6 +60,7 @@ export interface BonusLogPanelProps {
 }
 
 export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
+    const mask = useMoneyMask();
     const { members, activeMember } = useHousehold();
     const { data: bonusData, isLoading } = useBonusEventsQuery();
     const { data: goalsData } = useGoalsQuery();
@@ -306,7 +308,9 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                             <CollapsibleSection
                                 key={group.year}
                                 title={String(group.year)}
-                                subtitle={`${formatSGD(group.totals.net, { showCents: false })} net · ${group.totals.count} ${group.totals.count === 1 ? "bonus" : "bonuses"}`}
+                                subtitle={mask(
+                                    `${formatSGD(group.totals.net, { showCents: false })} net · ${group.totals.count} ${group.totals.count === 1 ? "bonus" : "bonuses"}`,
+                                )}
                                 icon={
                                     <Sparkles className="h-5 w-5 text-purple-700 dark:text-purple-300" />
                                 }

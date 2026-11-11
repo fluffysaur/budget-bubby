@@ -114,3 +114,11 @@ export function parseSGD(value: string): number {
     const result = isNegative ? -parsed : parsed;
     return Math.round(result * 100) / 100;
 }
+
+/** Matches amounts produced by formatSGD / formatSGDCompact, e.g. -S$1,234.50, S$2k. */
+const SGD_AMOUNT_PATTERN = /-?S\$[\d,]+(?:\.\d+)?[kMB]?/g;
+
+/** Replaces every formatted SGD amount in a string with a bullet mask. */
+export function maskSGDText(text: string, mask = "••••"): string {
+    return text.replace(SGD_AMOUNT_PATTERN, mask);
+}

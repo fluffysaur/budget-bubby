@@ -17,6 +17,8 @@ import {
     findScrollableAncestor,
 } from "../../lib/domUtils";
 import { prefersReducedMotion } from "../../lib/motion";
+import { usePrivacy } from "../../context/PrivacyContext";
+import { maskMoneyNode } from "../../lib/maskMoney";
 
 const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -697,6 +699,7 @@ export function ModalHeader({
     actions,
     className = "",
 }: ModalHeaderProps) {
+    const { isPrivacyMode } = usePrivacy();
     const dragContext = useContext(ModalDragContext);
     const handleClose = () => {
         if (dragContext?.onRequestClose) {
@@ -730,7 +733,7 @@ export function ModalHeader({
                     </h2>
                     {subtitle && (
                         <p className="text-xs text-(--text-muted) leading-normal truncate mt-0.5">
-                            {subtitle}
+                            {maskMoneyNode(subtitle, isPrivacyMode)}
                         </p>
                     )}
                 </div>

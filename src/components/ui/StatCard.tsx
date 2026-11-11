@@ -1,18 +1,13 @@
 import type { ReactNode } from "react";
+import { usePrivacy } from "../../context/PrivacyContext";
+import { maskMoneyNode } from "../../lib/maskMoney";
 import { MONEY_BASE_CLASSES, MONEY_SIZE_CLASSES } from "../../lib/moneyStyles";
 import { TooltipPopover } from "./TooltipPopover";
 import { Card, type CardVariant } from "./Card";
 import { SkeletonLine, SkeletonStatValue } from "./Skeleton";
 
 export type StatCardTone =
-    | "default"
-    | "ok"
-    | "near"
-    | "over"
-    | "lilac"
-    | "mint"
-    | "butter"
-    | "coral";
+    "default" | "ok" | "near" | "over" | "lilac" | "mint" | "butter" | "coral";
 
 export interface StatCardProps {
     title: ReactNode;
@@ -62,6 +57,8 @@ export function StatCard({
     tone,
 }: StatCardProps) {
     const Component = onClick ? "button" : "div";
+    const { isPrivacyMode } = usePrivacy();
+    const mask = (node: ReactNode) => maskMoneyNode(node, isPrivacyMode);
 
     const effectiveIconBg = tone
         ? (TONE_ICON_BG[tone] ?? TONE_ICON_BG.default)
@@ -97,7 +94,7 @@ export function StatCard({
                                 ariaLabel={`${typeof title === "string" ? title : "Stat"} info`}
                                 align="left"
                             >
-                                {tooltip}
+                                {mask(tooltip)}
                             </TooltipPopover>
                         )}
                     </div>
@@ -114,7 +111,7 @@ export function StatCard({
                     <div
                         className={`min-w-0 max-w-full ${MONEY_BASE_CLASSES} ${MONEY_SIZE_CLASSES.lg} text-(--text-ink)`}
                     >
-                        {loading ? <SkeletonStatValue /> : value}
+                        {loading ? <SkeletonStatValue /> : mask(value)}
                     </div>
                     {badge && !loading && (
                         <div className="shrink-0">{badge}</div>
@@ -123,14 +120,18 @@ export function StatCard({
 
                 {subtitle && (
                     <div className="mt-1 text-[11px] sm:text-xs font-medium text-(--text-muted) truncate sm:line-clamp-2">
-                        {loading ? <SkeletonLine /> : subtitle}
+                        {loading ? <SkeletonLine /> : mask(subtitle)}
                     </div>
                 )}
             </Component>
 
             {footer && (
                 <div className="border-t-2 border-(--border-ink) bg-(--bg-cream) px-4 py-2 text-xs font-bold text-(--text-muted)">
-                    {loading ? <SkeletonLine className="w-full" /> : footer}
+                    {loading ? (
+                        <SkeletonLine className="w-full" />
+                    ) : (
+                        mask(footer)
+                    )}
                 </div>
             )}
         </Card>

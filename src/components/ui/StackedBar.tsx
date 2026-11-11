@@ -1,3 +1,6 @@
+import { usePrivacy } from "../../context/PrivacyContext";
+import { maskSGDText } from "../../lib/currency";
+
 export type StackedBarTone =
     | "ok"
     | "near"
@@ -70,14 +73,16 @@ export function StackedBar({
     ariaLabel,
     className = "",
 }: StackedBarProps) {
+    const { isPrivacyMode } = usePrivacy();
     const positiveSegments = segments.filter((s) => s.value > 0);
     const sumValues = positiveSegments.reduce((acc, s) => acc + s.value, 0);
     const effectiveTotal = total && total > 0 ? total : sumValues;
     const heightCls = BAR_SIZE_CLASSES[size] ?? BAR_SIZE_CLASSES.sm;
 
-    const defaultAriaLabel =
-        ariaLabel ||
-        `Stacked breakdown: ${positiveSegments.map((s) => `${s.label} (${s.value})`).join(", ")}`;
+    const defaultAriaLabel = isPrivacyMode
+        ? maskSGDText(ariaLabel || "Stacked breakdown")
+        : ariaLabel ||
+          `Stacked breakdown: ${positiveSegments.map((s) => `${s.label} (${s.value})`).join(", ")}`;
 
     return (
         <div className={`w-full ${className}`}>

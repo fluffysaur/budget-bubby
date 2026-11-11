@@ -28,6 +28,7 @@ import { calculateGoalPacing } from "../../lib/financialFormulas";
 import { formatSGD } from "../../lib/currency";
 import { formatISODate } from "../../lib/dateUtils";
 import type { SavingsGoal, CreateGoalInput } from "../../types/finance";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface AddEditGoalModalProps {
     isOpen: boolean;
@@ -56,6 +57,7 @@ export function AddEditGoalModal({
     onGoalSaved,
     householdId,
 }: AddEditGoalModalProps) {
+    const mask = useMoneyMask();
     const titleInputRef = useRef<HTMLInputElement>(null);
     const addGoalMutation = useAddGoalMutation();
     const updateGoalMutation = useUpdateGoalMutation();
@@ -413,7 +415,9 @@ export function AddEditGoalModal({
                                     <span className="font-bold text-(--text-ink) font-mono-num">
                                         {livePacing.status === "achieved"
                                             ? "Complete"
-                                            : `${formatSGD(livePacing.neededPerMonth)}/mo`}
+                                            : mask(
+                                                  `${formatSGD(livePacing.neededPerMonth)}/mo`,
+                                              )}
                                     </span>
                                 </div>
                                 <div>
