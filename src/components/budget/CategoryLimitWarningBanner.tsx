@@ -43,6 +43,7 @@ import type {
 import { CurrencyText } from "../ui/CurrencyText";
 import { m, AnimatePresence } from "motion/react";
 import { collapse, pop } from "../../lib/motion";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface CategoryLimitWarningBannerProps {
     categories?: MonthlyBudgetCategoryDetail[];
@@ -66,6 +67,7 @@ export const CategoryLimitWarningBanner = React.memo(
         onNavigateCategory,
         single = false,
     }: CategoryLimitWarningBannerProps) {
+        const mask = useMoneyMask();
         const { me, members } = useLoggedInMember();
         const activeMemberId =
             me?.id || members?.[0]?.id || "mem-00000000-0011";
@@ -343,7 +345,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                         {toast.title}
                                     </h4>
                                     <p className="text-xs font-bold leading-relaxed">
-                                        {toast.message}
+                                        {mask(toast.message)}
                                     </p>
                                 </div>
                                 <button

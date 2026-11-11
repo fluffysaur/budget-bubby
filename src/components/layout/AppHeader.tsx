@@ -18,6 +18,8 @@ import {
     Download,
     RotateCw,
     Settings,
+    Eye,
+    EyeOff,
 } from "lucide-react";
 import {
     useHousehold,
@@ -29,6 +31,7 @@ import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
 import { useSettings } from "../../context/SettingsContext";
+import { usePrivacy } from "../../context/PrivacyContext";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
@@ -107,6 +110,7 @@ export function AppHeader({
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const { openSettings } = useSettings();
+    const { isPrivacyMode, togglePrivacy } = usePrivacy();
     const [isRefreshing, setIsRefreshing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -417,6 +421,24 @@ export function AppHeader({
                             <span className="xs:hidden">Demo</span>
                         </div>
                     )}
+
+                    {/* Privacy toggle (mask amounts) */}
+                    <button
+                        type="button"
+                        onClick={togglePrivacy}
+                        aria-label={
+                            isPrivacyMode ? "Show amounts" : "Hide amounts"
+                        }
+                        aria-pressed={isPrivacyMode}
+                        title={`${isPrivacyMode ? "Show" : "Hide"} amounts (H)`}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                    >
+                        {isPrivacyMode ? (
+                            <EyeOff className="h-4 w-4" strokeWidth={2.5} />
+                        ) : (
+                            <Eye className="h-4 w-4" strokeWidth={2.5} />
+                        )}
+                    </button>
 
                     {/* Live household Bubby (tap to pet and open the sheet) */}
                     <BubbyAvatarButton />

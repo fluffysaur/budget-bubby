@@ -44,6 +44,7 @@ import type {
     SavingsGoal,
 } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface CumulativeSurplusCardProps {
     selectedMonth?: string;
@@ -68,6 +69,7 @@ export function CumulativeSurplusCard({
     monthlyCap: propMonthlyCap,
     className = "",
 }: CumulativeSurplusCardProps) {
+    const mask = useMoneyMask();
     const [loading, setLoading] = useState<boolean>(!propSummary);
     const [fetchedExpenses, setFetchedExpenses] = useState<Expense[]>([]);
     const [fetchedCategories, setFetchedCategories] = useState<Category[]>([]);
@@ -394,7 +396,9 @@ export function CumulativeSurplusCard({
                                             </span>
                                             {point.goalSpent > 0 && (
                                                 <span
-                                                    title={`Goal-funded spending of ${formatSGD(point.goalSpent)} safely excluded`}
+                                                    title={mask(
+                                                        `Goal-funded spending of ${formatSGD(point.goalSpent)} safely excluded`,
+                                                    )}
                                                     className="text-[9px] px-1 py-0.2 rounded bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) font-bold"
                                                 >
                                                     Goal

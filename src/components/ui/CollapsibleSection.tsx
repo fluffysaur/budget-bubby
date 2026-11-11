@@ -3,6 +3,8 @@ import { ChevronRight } from "lucide-react";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
 import { Badge, BadgeVariant } from "./Badge";
+import { usePrivacy } from "../../context/PrivacyContext";
+import { maskMoneyNode } from "../../lib/maskMoney";
 
 export interface CollapsibleSectionProps {
     title: React.ReactNode;
@@ -27,6 +29,7 @@ export function CollapsibleSection({
     children,
     className = "",
 }: CollapsibleSectionProps) {
+    const { isPrivacyMode } = usePrivacy();
     const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
 
     const renderBadge = () => {
@@ -67,7 +70,7 @@ export function CollapsibleSection({
                         </span>
                         {subtitle && (
                             <p className="text-xs text-(--text-muted) truncate mt-0.5">
-                                {subtitle}
+                                {maskMoneyNode(subtitle, isPrivacyMode)}
                             </p>
                         )}
                     </div>
@@ -77,7 +80,7 @@ export function CollapsibleSection({
                     {renderBadge()}
                     {summaryRight && (
                         <div className="text-xs font-bold text-(--text-muted) hidden sm:block">
-                            {summaryRight}
+                            {maskMoneyNode(summaryRight, isPrivacyMode)}
                         </div>
                     )}
                     <div

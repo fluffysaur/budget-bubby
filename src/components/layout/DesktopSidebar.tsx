@@ -17,6 +17,8 @@ import {
     Moon,
     RotateCw,
     LogOut,
+    Eye,
+    EyeOff,
 } from "lucide-react";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
@@ -25,6 +27,7 @@ import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { BubbyIcon } from "../ui/BubbyIcon";
 import { useSettings } from "../../context/SettingsContext";
+import { usePrivacy } from "../../context/PrivacyContext";
 import { Badge } from "../ui/Badge";
 import { formatBadgeCount } from "../../hooks/useInboxBadge";
 
@@ -106,6 +109,7 @@ export function DesktopSidebar({
     }, [refreshData, isRefreshing]);
 
     const { openSettings: handleOpenSettings } = useSettings();
+    const { isPrivacyMode, togglePrivacy } = usePrivacy();
 
     const isItemActive = (itemId: string) => {
         if (itemId === "spend") {
@@ -202,6 +206,24 @@ export function DesktopSidebar({
                             className="h-4 w-4 text-(--text-ink)"
                             strokeWidth={2.5}
                         />
+                    </button>
+
+                    {/* Privacy Toggle */}
+                    <button
+                        type="button"
+                        onClick={togglePrivacy}
+                        aria-label={
+                            isPrivacyMode ? "Show amounts" : "Hide amounts"
+                        }
+                        aria-pressed={isPrivacyMode}
+                        title={`${isPrivacyMode ? "Show" : "Hide"} amounts (H)`}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
+                    >
+                        {isPrivacyMode ? (
+                            <EyeOff className="h-4 w-4" strokeWidth={2.5} />
+                        ) : (
+                            <Eye className="h-4 w-4" strokeWidth={2.5} />
+                        )}
                     </button>
 
                     {/* Theme Toggle */}

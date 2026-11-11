@@ -10,6 +10,7 @@ import { playChaChingSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
 import { formatSGD } from "../../lib/currency";
 import { CurrencyText } from "../ui/CurrencyText";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface BonusCelebrationData {
     /** Changes for every new celebration so repeat logs re-trigger it. */
@@ -37,6 +38,7 @@ export function BonusCelebration({
     celebration,
     onDone,
 }: BonusCelebrationProps) {
+    const mask = useMoneyMask();
     const celebrationId = celebration?.id;
 
     useEffect(() => {
@@ -56,7 +58,7 @@ export function BonusCelebration({
     const subtitle = celebration.reachedGoalTitle
         ? `🎉 ${celebration.reachedGoalTitle} reached`
         : celebration.goalTotal > 0
-          ? `${formatSGD(celebration.goalTotal)} to goals`
+          ? mask(`${formatSGD(celebration.goalTotal)} to goals`)
           : null;
 
     return (
