@@ -141,6 +141,34 @@ function AndroidSetupSteps({ defaultOpen }: { defaultOpen: boolean }) {
     );
 }
 
+function BankAlertSteps() {
+    return (
+        <CollapsibleSection title="Bank Alerts" defaultOpen={false}>
+            <ol className="list-decimal space-y-1.5 pl-4 text-xs text-(--text-ink)">
+                <li>
+                    Android: catches card taps, PayNow and FAST that Wallet
+                    misses. Turn on bank alerts first.
+                </li>
+                <li>
+                    New macro, same token. Trigger: SMS Received, or
+                    Notification Received for your bank apps.
+                </li>
+                <li>
+                    Action: HTTP Request, POST to the URL above with the same
+                    Authorization header.
+                </li>
+                <li>
+                    Body: raw_text = the message text, source = sms. OTPs and
+                    incoming money are skipped.
+                </li>
+                <li>
+                    Wallet and SMS for one purchase within 2 minutes count once.
+                </li>
+            </ol>
+        </CollapsibleSection>
+    );
+}
+
 function SetupSteps() {
     const platform = detectCapturePlatform();
     return (
@@ -162,6 +190,7 @@ function SetupSteps() {
                     />
                 </>
             )}
+            <BankAlertSteps />
         </div>
     );
 }

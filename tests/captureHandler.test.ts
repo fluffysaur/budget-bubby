@@ -27,6 +27,7 @@ function makeDeps(overrides: Partial<CaptureDeps> = {}) {
         countRecentByToken: vi.fn(async () => 0),
         findRule: vi.fn(async () => null),
         findLikelyDuplicate: vi.fn(async () => null),
+        findRecentCapture: vi.fn(async (): Promise<string | null> => null),
         insertItem: vi.fn(async () => ({ id: "item-1" })),
         findByIdempotencyKey: vi.fn(async () => ({ id: "item-0" })),
         countPending: vi.fn(async () => 3),
@@ -250,6 +251,108 @@ describe("handleCapture", () => {
     });
 });
 
+describe("handleCapture with raw_text", () => {
+    const sms =
+        "Your DBS card ending 1234 was used for SGD12.50 on 05 Nov 11:58 at GRAB*FOOD. If unauthorised, call 1800 111 1111.";
+
+    it("captures amount, merchant, time and bank from the alert", async () => {
+        const deps = makeDeps();
+        const res = await handleCapture(
+            deps,
+            req({ raw_text: sms, source: "sms" }),
+        );
+        expect(res.status).toBe(201);
+        expect(vi.mocked(deps.insertItem).mock.calls[0][0]).toMatchObject({
+            source: "sms",
+            merchant: "Grab*Food",
+            merchant_key: "grab food",
+            amount: 12.5,
+            currency: "SGD",
+            raw_amount: "SGD12.50",
+            card_name: "DBS",
+            captured_at: "2026-11-05T03:58:00.000Z",
+        });
+    });
+
+    it("lets explicit fields win over the parsed text", async () => {
+        const deps = makeDeps();
+        await handleCapture(
+            deps,
+            req({
+                raw_text: sms,
+                merchant: "Grab Food",
+                card: "DBS Altitude",
+                occurred_at: "2026-11-05T03:59:30Z",
+            }),
+        );
+        expect(vi.mocked(deps.insertItem).mock.calls[0][0]).toMatchObject({
+            merchant: "Grab Food",
+            card_name: "DBS Altitude",
+            captured_at: "2026-11-05T03:59:30.000Z",
+        });
+    });
+
+    it("falls back to a bank label when no merchant is named", async () => {
+        const deps = makeDeps();
+        await handleCapture(
+            deps,
+            req({ raw_text: "OCBC: SGD 6.00 was debited from your account." }),
+        );
+        expect(vi.mocked(deps.insertItem).mock.calls[0][0].merchant).toBe(
+            "OCBC alert",
+        );
+    });
+
+    it("ignores OTPs, declined charges and incoming transfers without inserting", async () => {
+        const deps = makeDeps();
+        for (const [text, reason] of [
+            ["Your OTP for SGD 12.50 at GRAB*FOOD is 123456.", "otp"],
+            ["Your card transaction of SGD 8.00 was declined.", "declined"],
+            ["You have received SGD 25.00 via PayNow.", "incoming"],
+        ]) {
+            expect(
+                await handleCapture(
+                    deps,
+                    req({ raw_text: text, amount: "SGD 1.00", merchant: "x" }),
+                ),
+            ).toEqual({ status: 200, body: { status: "ignored", reason } });
+        }
+        expect(deps.insertItem).not.toHaveBeenCalled();
+    });
+
+    it("ignores text that is not a charge", async () => {
+        const res = await handleCapture(
+            makeDeps(),
+            req({ raw_text: "Your statement is ready." }),
+        );
+        expect(res.body).toEqual({ status: "ignored", reason: "not_a_charge" });
+    });
+
+    it("returns duplicate when another source already captured the purchase", async () => {
+        const deps = makeDeps({
+            findRecentCapture: vi.fn(async () => "item-wallet"),
+        });
+        const res = await handleCapture(
+            deps,
+            req({ raw_text: sms, source: "sms" }),
+        );
+        expect(res).toEqual({
+            status: 200,
+            body: { status: "duplicate", id: "item-wallet" },
+        });
+        expect(deps.findRecentCapture).toHaveBeenCalledWith({
+            memberId: "m1",
+            amount: 12.5,
+            currency: "SGD",
+            fromIso: "2026-11-05T03:56:00.000Z",
+            toIso: "2026-11-05T04:00:00.000Z",
+            excludeSource: "sms",
+        });
+        expect(deps.insertItem).not.toHaveBeenCalled();
+        expect(deps.touchToken).toHaveBeenCalled();
+    });
+});
+
 describe("resolveCapturedAt", () => {
     it("falls back to now for missing, bad or out-of-window stamps", () => {
         expect(resolveCapturedAt(undefined, NOW)).toBe(NOW);
@@ -269,6 +372,7 @@ describe("createSupabaseCaptureDeps", () => {
         for (const m of [
             "select",
             "eq",
+            "neq",
             "is",
             "gte",
             "lte",
@@ -297,6 +401,7 @@ describe("createSupabaseCaptureDeps", () => {
                 "countRecentByToken",
                 "findByIdempotencyKey",
                 "findLikelyDuplicate",
+                "findRecentCapture",
                 "findRule",
                 "findToken",
                 "insertItem",
@@ -314,6 +419,14 @@ describe("createSupabaseCaptureDeps", () => {
             currency: "SGD",
             dateFrom: "a",
             dateTo: "b",
+        });
+        await deps.findRecentCapture({
+            memberId: "m",
+            amount: 1,
+            currency: "SGD",
+            fromIso: "a",
+            toIso: "b",
+            excludeSource: "sms",
         });
         await deps.insertItem({} as never);
         await deps.findByIdempotencyKey("m", "k");

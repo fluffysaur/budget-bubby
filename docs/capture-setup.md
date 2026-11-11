@@ -68,7 +68,7 @@ Requirements:
 - The card is in Google Wallet and tap-to-pay purchase notifications are on (Wallet › Settings › Notifications).
 - [MacroDroid](https://play.google.com/store/apps/details?id=com.arlosoft.macrodroid) is installed and has **Notification access** (it asks on first use).
 - Turn off battery optimisation for MacroDroid, or Android may stop it in the background.
-- Only Google Wallet taps notify. Physical card taps and PayNow don't.
+- Only Google Wallet taps notify. For physical card taps, PayNow and FAST, add the bank alert macro in section 3b.
 
 Steps:
 
@@ -85,7 +85,12 @@ Steps:
     - **Body:** use the magic text button (`{}`) to insert the notification fields:
 
         ```json
-        {"amount":"<notification text>","merchant":"<notification title>","card":"Google Wallet","source":"android"}
+        {
+            "amount": "<notification text>",
+            "merchant": "<notification title>",
+            "card": "Google Wallet",
+            "source": "android"
+        }
         ```
 
         Replace `<notification text>` and `<notification title>` with the magic text values for the notification text and title.
@@ -103,6 +108,36 @@ If nothing arrives, check in this order: MacroDroid has Notification access, the
 
 **Do not share this macro**, because it contains your token. If you shared it by accident, revoke the token in Settings.
 
+## 3b. Android (MacroDroid + bank SMS or app alerts)
+
+> **Status:** the server reads the usual alert wording of DBS/POSB, OCBC, UOB, Standard Chartered, Citibank and HSBC, plus generic card SMS. The patterns were written from typical wording, not checked against every bank's live messages. Test with a small payment and check the Inbox item before relying on it.
+
+This catches what Google Wallet misses: physical card taps, online card payments, and PayNow or FAST transfers you send. Turn on transaction alerts in your bank app first (SMS, push, or both).
+
+Steps:
+
+1. Make a small payment and read the alert. It should name an amount with a currency (`SGD 4.50`, `S$4.50`) and usually a merchant or payee after "at" or "to".
+2. In MacroDroid, tap **Add Macro**. Name it `Budget Bubby bank alerts`. Use the same token as your Wallet macro so duplicates are matched.
+3. **Trigger**, either or both:
+    - Phone/SMS › **SMS Received**: from **Any contact**, content **Any**. To narrow it down, pick your banks' sender names (for example `DBS`, `OCBC`).
+    - Device Events › **Notification Received**: select your bank apps (for example digibank, OCBC, UOB TMRW).
+4. **Action:** Connectivity › **HTTP Request**, set up like section 3 (URL, `POST`, `Authorization` header, `application/json`), with this body:
+
+    ```json
+    { "raw_text": "<message text>", "source": "sms" }
+    ```
+
+    Replace `<message text>` with the SMS text magic value, or the notification text for app alerts (use `"source":"bank"` for those).
+
+5. Save, then pay for something small. It should show up in the Inbox with the bank name as the card. Discard the test item.
+
+What the server does with `raw_text`:
+
+- **Ignored** (`200 {"status":"ignored"}`, nothing added): OTPs and verification codes, declined or unsuccessful charges, and incoming money (received, credited, refunds, salary).
+- **Captured:** the first amount with a currency, the merchant or payee after "at"/"to", and the date and time in the message, read as Singapore time. If no merchant is named, the item is called `<Bank> alert` so you can rename it in the Inbox.
+- **Wallet + SMS for one purchase:** if another source (such as your Wallet macro) already sent the same amount and currency within 2 minutes, the second one comes back as `duplicate`. Wallet and bank alerts often give different merchant names, so this check uses only the amount, currency and time.
+- `amount`, `merchant`, `card` and `occurred_at` sent next to `raw_text` win over what's parsed from it.
+
 ## 4. Other apps (Tasker, bank apps, etc.)
 
 The endpoint isn't tied to any platform. Any app that can send an HTTP POST with JSON can use a token, for example Tasker or a bank-app notification.
@@ -118,14 +153,15 @@ Content-Type: application/json
   "merchant": "GRAB*FOOD",          // required
   "card": "DBS Altitude",           // optional
   "occurred_at": "2026-11-05T12:34:56+08:00",  // optional ISO-8601 ("timestamp" also accepted)
-  "source": "android"               // optional label, a-z 0-9 _ -
+  "source": "android",              // optional label, a-z 0-9 _ -
+  "raw_text": "Your DBS card ending 1234 was used for SGD12.50 …"  // optional, up to 1000 chars; see 3b
 }
 ```
 
-| Response | Meaning |
-|---|---|
-| `201 {"status":"captured"}` | Added to the Inbox |
-| `200 {"status":"duplicate"}` / `{"status":"ignored"}` | Retry of the same purchase, a refund, or an ignored merchant |
-| `400` / `401` / `413` / `429` / `503` | Invalid body, bad or revoked token, body over 4 KB, rate limited (more than 10 a minute or 150 a day), database not ready |
+| Response                                              | Meaning                                                                                                                                                                                               |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `201 {"status":"captured"}`                           | Added to the Inbox                                                                                                                                                                                    |
+| `200 {"status":"duplicate"}` / `{"status":"ignored"}` | Retry of the same purchase, the same purchase from another source, a refund, an ignored merchant, or a `raw_text` alert that isn't a charge (`reason`: `otp`, `declined`, `incoming`, `not_a_charge`) |
+| `400` / `401` / `413` / `429` / `503`                 | Invalid body, bad or revoked token, body over 4 KB, rate limited (more than 10 a minute or 150 a day), database not ready                                                                             |
 
-Budget Bubby doesn't parse free-form notification text. It reads the first number and its currency from `amount`, as described in section 3.
+With `amount`, the server reads the first number and its currency, as described in section 3. To send a whole notification or SMS instead, use `raw_text` as described in section 3b. If neither `amount` nor `raw_text` gives an amount, the capture fails with `400`.

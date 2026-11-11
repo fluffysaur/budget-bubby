@@ -10,7 +10,11 @@
  *   Authorization: Bearer bb_cap_<43 chars>
  *   { "amount": "S$12.50" | 12.5, "currency"?: "SGD", "merchant": "GRAB*FOOD",
  *     "card"?: "DBS Altitude", "occurred_at"? | "timestamp"?: ISO-8601,
- *     "source"?: "wallet" | "android" | ... }
+ *     "source"?: "wallet" | "android" | ..., "raw_text"?: "<bank alert or SMS>" }
+ *
+ * `raw_text` lets an automation forward a whole bank notification or SMS.
+ * The server reads the amount, merchant and time from it (explicit fields
+ * win) and ignores OTPs, declined charges and incoming money.
  *
  * The service-role client bypasses RLS, so scope is enforced here: the deps
  * only touch capture_tokens, merchant_rules, inbox_items and one expenses
@@ -26,6 +30,11 @@ import { cleanMerchant, normalizeMerchant } from "../lib/capture/merchant";
 import { readBearerToken, sha256Hex } from "../lib/capture/token";
 import { shiftIsoDate, toSgtDateTime } from "../lib/capture/sgTime";
 import { isMissingRelationError } from "../lib/supabaseErrors";
+import {
+    parseBankAlert,
+    MAX_RAW_TEXT_LENGTH,
+    type BankAlert,
+} from "../lib/capture/bankParsers";
 
 export const MAX_BODY_BYTES = 4096;
 export const RATE_LIMIT_MINUTE = 10;
@@ -66,6 +75,16 @@ export interface DuplicateQuery {
     dateTo: string;
 }
 
+/** Same purchase sent by another source (Wallet and an SMS alert). */
+export interface RecentCaptureQuery {
+    memberId: string;
+    amount: number;
+    currency: string;
+    fromIso: string;
+    toIso: string;
+    excludeSource: string;
+}
+
 /** Everything the handler may touch. Kept small on purpose (see test). */
 export interface CaptureDeps {
     findToken(tokenHash: string): Promise<CaptureTokenRow | null>;
@@ -78,6 +97,8 @@ export interface CaptureDeps {
         category_id: string | null;
     } | null>;
     findLikelyDuplicate(query: DuplicateQuery): Promise<string | null>;
+    /** Inbox item id from a different source within the window, if any. */
+    findRecentCapture(query: RecentCaptureQuery): Promise<string | null>;
     /** Insert-or-ignore on (member_id, idempotency_key). Null on conflict. */
     insertItem(row: InboxInsertRow): Promise<{ id: string } | null>;
     findByIdempotencyKey(
@@ -206,17 +227,39 @@ export async function handleCapture(
             return reply(400, { error: "invalid_json" });
         }
 
-        const amount = parseCapturedAmount(
-            body.amount,
-            typeof body.currency === "string" ? body.currency : null,
-        );
+        let alert: Extract<BankAlert, { kind: "charge" }> | null = null;
+        if (typeof body.raw_text === "string" && body.raw_text.trim()) {
+            const parsedAlert = parseBankAlert(
+                body.raw_text.slice(0, MAX_RAW_TEXT_LENGTH),
+                now,
+            );
+            if (parsedAlert.kind === "ignore") {
+                return reply(200, {
+                    status: "ignored",
+                    reason: parsedAlert.reason,
+                });
+            }
+            alert = parsedAlert;
+        }
+
+        const currencyField =
+            typeof body.currency === "string" ? body.currency : null;
+        const amount =
+            body.amount === undefined && alert
+                ? parseCapturedAmount(alert.rawAmount, currencyField)
+                : parseCapturedAmount(body.amount, currencyField);
         if (!amount.ok) {
             if (amount.reason === "ignored")
                 return reply(200, { status: "ignored" });
             return reply(400, { error: "invalid_amount" });
         }
 
-        const merchant = cleanMerchant(body.merchant);
+        const merchant =
+            cleanMerchant(body.merchant) ??
+            (alert
+                ? (cleanMerchant(alert.merchant ?? "") ??
+                  `${alert.bank ?? "Bank"} alert`)
+                : null);
         if (!merchant) return reply(400, { error: "invalid_merchant" });
         const merchantKey = normalizeMerchant(merchant);
 
@@ -224,9 +267,29 @@ export async function handleCapture(
         if (rule?.action === "ignore") return reply(200, { status: "ignored" });
 
         const capturedAt = resolveCapturedAt(
-            body.occurred_at ?? body.timestamp,
+            body.occurred_at ??
+                body.timestamp ??
+                alert?.occurredAt?.toISOString(),
             now,
         );
+        const source = normalizeSource(body.source);
+
+        const crossSource = await deps.findRecentCapture({
+            memberId: tokenRow.member_id,
+            amount: amount.amount,
+            currency: amount.currency,
+            fromIso: new Date(
+                capturedAt.getTime() - IDEMPOTENCY_WINDOW_MS,
+            ).toISOString(),
+            toIso: new Date(
+                capturedAt.getTime() + IDEMPOTENCY_WINDOW_MS,
+            ).toISOString(),
+            excludeSource: source,
+        });
+        if (crossSource) {
+            await deps.touchToken(tokenRow.id, now.toISOString());
+            return reply(200, { status: "duplicate", id: crossSource });
+        }
         const idempotencyKey = await buildIdempotencyKey(
             tokenRow.member_id,
             amount.amount,
@@ -249,19 +312,21 @@ export async function handleCapture(
         const rawAmount =
             typeof body.amount === "string"
                 ? body.amount.slice(0, MAX_RAW_AMOUNT_LENGTH)
-                : null;
+                : body.amount === undefined && alert
+                  ? alert.rawAmount.slice(0, MAX_RAW_AMOUNT_LENGTH)
+                  : null;
 
         const inserted = await deps.insertItem({
             household_id: tokenRow.household_id,
             member_id: tokenRow.member_id,
             token_id: tokenRow.id,
-            source: normalizeSource(body.source),
+            source,
             merchant,
             merchant_key: merchantKey,
             amount: amount.amount,
             currency: amount.currency,
             raw_amount: rawAmount,
-            card_name: pickString(body.card, MAX_CARD_LENGTH),
+            card_name: pickString(body.card ?? alert?.bank, MAX_CARD_LENGTH),
             captured_at: capturedAt.toISOString(),
             idempotency_key: idempotencyKey,
             suggested_category_id:
@@ -356,6 +421,27 @@ export function createSupabaseCaptureDeps(client: SupabaseClient): CaptureDeps {
                           .eq("original_amount", amount)
                           .eq("original_currency", currency);
             const { data, error } = await query.limit(1);
+            raise(error);
+            return (data?.[0]?.id as string | undefined) ?? null;
+        },
+        async findRecentCapture({
+            memberId,
+            amount,
+            currency,
+            fromIso,
+            toIso,
+            excludeSource,
+        }) {
+            const { data, error } = await client
+                .from("inbox_items")
+                .select("id")
+                .eq("member_id", memberId)
+                .eq("amount", amount)
+                .eq("currency", currency)
+                .neq("source", excludeSource)
+                .gte("captured_at", fromIso)
+                .lte("captured_at", toIso)
+                .limit(1);
             raise(error);
             return (data?.[0]?.id as string | undefined) ?? null;
         },

@@ -125,6 +125,8 @@ describe("AutoCaptureSection", () => {
         expect(buttons[0]).toHaveAttribute("aria-expanded", "true");
         expect(buttons[1]).toHaveTextContent("iPhone Setup");
         expect(buttons[1]).toHaveAttribute("aria-expanded", "false");
+        expect(buttons[2]).toHaveTextContent("Bank Alerts");
+        expect(buttons[2]).toHaveAttribute("aria-expanded", "false");
         expect(
             within(stepsContainer).getByText(/MacroDroid/i),
         ).toBeInTheDocument();
@@ -143,5 +145,6 @@ describe("AutoCaptureSection", () => {
         expect(iosButtons[0]).toHaveAttribute("aria-expanded", "true");
         expect(iosButtons[1]).toHaveTextContent("Android Setup");
         expect(iosButtons[1]).toHaveAttribute("aria-expanded", "false");
+        expect(iosButtons[2]).toHaveTextContent("Bank Alerts");
     });
 });
