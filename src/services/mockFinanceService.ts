@@ -41,6 +41,8 @@ import type {
     NotificationLogRef,
     PushSubscriptionInput,
     BonusEvent,
+    SettleUpRecordInput,
+    SettleUpsResult,
     BonusEventsResult,
     BonusSplitShare,
     SaveBonusEventInput,
@@ -1127,6 +1129,7 @@ class MockFinanceServiceImpl implements FinanceService {
         member1Id: string,
         member2Id: string,
         expenseIds?: string[],
+        record?: SettleUpRecordInput,
     ): Promise<void> {
         if (expenseIds !== undefined && expenseIds.length === 0) {
             return;
@@ -1143,7 +1146,35 @@ class MockFinanceServiceImpl implements FinanceService {
                 exp.settled = true;
             }
         }
+        if (record && expenseIds && record.amount > 0) {
+            const settleUps = (this.state.settleUps ??= []);
+            settleUps.push({
+                id:
+                    typeof crypto !== "undefined" && crypto.randomUUID
+                        ? crypto.randomUUID()
+                        : `settle-${Date.now()}-${settleUps.length}`,
+                household_id: this.state.household.id || "hh-00000000-0001",
+                payer_id: record.payerId,
+                payee_id: record.payeeId,
+                amount: record.amount,
+                settled_on: getTodayDateString(),
+                expense_ids: [...expenseIds],
+                created_at: new Date().toISOString(),
+            });
+        }
         this.persist();
+    }
+
+    public async getSettleUps(): Promise<SettleUpsResult> {
+        // Stable newest-first: later entries win ties on the same day.
+        const settleUps = [...(this.state.settleUps ?? [])]
+            .map((s, i) => ({ s, i }))
+            .sort(
+                (a, b) =>
+                    b.s.settled_on.localeCompare(a.s.settled_on) || b.i - a.i,
+            )
+            .map(({ s }) => s);
+        return { available: true, settleUps: cloneDeep(settleUps) };
     }
 
     public async getGoals(): Promise<SavingsGoal[]> {

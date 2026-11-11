@@ -32,6 +32,7 @@ import {
 } from "../components/ui";
 import {
     useExpensesQuery,
+    useSettleUpsQuery,
     useAllExpensesQuery,
     useRecurringItemsQuery,
     useCategoriesQuery,
@@ -66,19 +67,22 @@ import { BulkAddExpenseModal } from "../components/expenses/BulkAddExpenseModal"
 import { ExpenseListTable } from "../components/expenses/ExpenseListTable";
 import { ExpenseTrendsCard } from "../components/expenses/ExpenseTrendsCard";
 import { SpendTagsOverviewCard } from "../components/expenses/SpendTagsOverviewCard";
+import { SettleUpHistory } from "../components/expenses/SettleUpHistory";
 import { MonthEndSweepBanner } from "../components/budget/MonthEndSweepBanner";
 import {
     SurplusSweepModal,
     type SurplusSweepAllocation,
 } from "../components/budget/SurplusSweepModal";
 import { BankSurplusModal } from "../components/budget/BankSurplusModal";
-import type { ExpenseFilter } from "../types/finance";
+import type { ExpenseFilter, SettleUp } from "../types/finance";
 import { CurrencyText } from "../components/ui/CurrencyText";
 
 export interface ExpensesPageProps {
     className?: string;
     embedded?: boolean;
 }
+
+const EMPTY_SETTLE_UPS: SettleUp[] = [];
 
 export function ExpensesPage({
     className = "",
@@ -191,6 +195,7 @@ export function ExpensesPage({
     const isLoading = expensesLoading && !expensesData;
 
     const updateGoalMutation = useUpdateGoalMutation();
+    const { data: settleUpsData } = useSettleUpsQuery();
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
     const [isSettleOpen, setIsSettleOpen] = useState<boolean>(false);
@@ -346,10 +351,25 @@ export function ExpensesPage({
             if (!m1 || !m2) return;
             const idsToSettle = settleTargetIds ?? settlement.expenseIds;
             if (idsToSettle && idsToSettle.length > 0) {
+                // Net amount and direction of just the expenses being settled
+                const covered = calculateSharedExpenseSettlement(
+                    allExpenses.filter((e) => idsToSettle.includes(e.id)),
+                    m1.id,
+                    m2.id,
+                );
+                const record =
+                    covered.debtorId && covered.creditorId
+                        ? {
+                              payerId: covered.debtorId,
+                              payeeId: covered.creditorId,
+                              amount: covered.netBalance,
+                          }
+                        : undefined;
                 await financeService.settleSharedExpenses(
                     m1.id,
                     m2.id,
                     idsToSettle,
+                    record,
                 );
             } else {
                 await financeService.settleSharedExpenses(m1.id, m2.id);
@@ -806,6 +826,11 @@ export function ExpensesPage({
                         }
                     />
                 </div>
+
+                <SettleUpHistory
+                    settleUps={settleUpsData?.settleUps ?? EMPTY_SETTLE_UPS}
+                    members={members}
+                />
 
                 <ConfirmModal
                     isOpen={isSettleOpen}

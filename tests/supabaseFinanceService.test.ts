@@ -595,6 +595,87 @@ describe("supabaseFinanceService", () => {
         });
     });
 
+    describe("settle-up history (#39)", () => {
+        const partnerId = "00000000-0000-0000-0000-000000000012";
+
+        function mockSettleTables(insertResult: { error: unknown }) {
+            const insertSpy = vi.fn().mockResolvedValue(insertResult);
+            const updateChain: any = {
+                eq: vi.fn(() => updateChain),
+                in: vi.fn(() => updateChain),
+                or: vi.fn().mockResolvedValue({ error: null }),
+            };
+            mockClient.from = vi.fn((table: string) => {
+                if (table === "expenses") {
+                    return { update: vi.fn().mockReturnValue(updateChain) };
+                }
+                if (table === "households") {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            limit: vi.fn().mockReturnValue({
+                                maybeSingle: vi.fn().mockResolvedValue({
+                                    data: { id: validHouseholdId },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === "settle_ups") {
+                    return { insert: insertSpy };
+                }
+                return {};
+            });
+            return insertSpy;
+        }
+
+        it("inserts a settle_ups row with direction, amount and expense ids", async () => {
+            supabaseFinanceService.resetBonusLogAvailability();
+            const insertSpy = mockSettleTables({ error: null });
+            await supabaseFinanceService.settleSharedExpenses(
+                validMemberId,
+                partnerId,
+                ["exp-1", "exp-2"],
+                { payerId: partnerId, payeeId: validMemberId, amount: 20 },
+            );
+            expect(insertSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    household_id: validHouseholdId,
+                    payer_id: partnerId,
+                    payee_id: validMemberId,
+                    amount: 20,
+                    expense_ids: ["exp-1", "exp-2"],
+                }),
+            );
+        });
+
+        it("does not insert a row when no record is supplied", async () => {
+            supabaseFinanceService.resetBonusLogAvailability();
+            const insertSpy = mockSettleTables({ error: null });
+            await supabaseFinanceService.settleSharedExpenses(
+                validMemberId,
+                partnerId,
+                ["exp-1"],
+            );
+            expect(insertSpy).not.toHaveBeenCalled();
+        });
+
+        it("still settles when the settle_ups table is missing", async () => {
+            supabaseFinanceService.resetBonusLogAvailability();
+            mockSettleTables({
+                error: { code: "42P01", message: "relation does not exist" },
+            });
+            await expect(
+                supabaseFinanceService.settleSharedExpenses(
+                    validMemberId,
+                    partnerId,
+                    ["exp-1"],
+                    { payerId: partnerId, payeeId: validMemberId, amount: 5 },
+                ),
+            ).resolves.toBeUndefined();
+        });
+    });
+
     describe("monthly budgets persistence and historical isolation (Issue #33 / H8)", () => {
         const pastMonth = "2025-01";
         const currentOrFutureMonth = "2099-01";

@@ -22,6 +22,7 @@ import type {
     DailyCheckin,
     NotificationPreferences,
     BonusEvent,
+    SettleUp,
     BonusSplitShare,
 } from "../types/finance";
 
@@ -1250,6 +1251,7 @@ export interface MockSeedDataset {
     notificationPreferences?: Record<string, NotificationPreferences>;
     /** Bonus log entries; goal contributions are embedded per event. */
     bonusEvents?: BonusEvent[];
+    settleUps?: SettleUp[];
     /** Per-member default bonus split, keyed by member id. */
     bonusSplitDefaults?: Record<string, BonusSplitShare[]>;
 }

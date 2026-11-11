@@ -38,6 +38,8 @@ import type {
     NotificationLogRef,
     PushSubscriptionInput,
     BonusEvent,
+    SettleUpRecordInput,
+    SettleUpsResult,
     BonusEventsResult,
     BonusSplitShare,
     SaveBonusEventInput,
@@ -98,7 +100,9 @@ export interface FinanceService extends InboxService {
         member1Id: string,
         member2Id: string,
         expenseIds?: string[],
+        record?: SettleUpRecordInput,
     ): Promise<void>;
+    getSettleUps(): Promise<SettleUpsResult>;
     getGoals(): Promise<SavingsGoal[]>;
     getGoal(id: string): Promise<SavingsGoal | null>;
     addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
@@ -382,10 +386,16 @@ export const financeService: FinanceService = {
             invalidateFinanceCache();
         }
     },
-    settleSharedExpenses: async (m1, m2, expenseIds) => {
-        await getActiveService().settleSharedExpenses(m1, m2, expenseIds);
+    settleSharedExpenses: async (m1, m2, expenseIds, record) => {
+        await getActiveService().settleSharedExpenses(
+            m1,
+            m2,
+            expenseIds,
+            record,
+        );
         invalidateFinanceCache();
     },
+    getSettleUps: () => getActiveService().getSettleUps(),
     getGoals: () => getActiveService().getGoals(),
     getGoal: (id) => getActiveService().getGoal(id),
     addGoal: async (goal) => {

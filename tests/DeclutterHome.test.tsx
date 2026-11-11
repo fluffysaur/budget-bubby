@@ -225,8 +225,70 @@ describe("Expenses Settle Up", () => {
                 overview.members[0].id,
                 overview.members[1].id,
                 explicitIds,
+                undefined, // ids match no loaded expense, so no history record
             );
         });
+    });
+
+    it("records the settle-up direction and amount for the expenses being settled", async () => {
+        const real = await financeService.getHouseholdOverview();
+        const [m1, m2] = real.members;
+        const all = await financeService.getExpenses();
+        const unsettled = all.filter(
+            (e) =>
+                e.is_shared &&
+                !e.settled &&
+                (e.payer_id === m1.id || e.payer_id === m2.id),
+        );
+        expect(unsettled.length).toBeGreaterThan(0);
+        const ids = unsettled.map((e) => e.id);
+        const overview: HouseholdOverview = {
+            ...real,
+            settlementSummary: {
+                ...real.settlementSummary,
+                netBalance: 10,
+                debtorId: m2.id,
+                creditorId: m1.id,
+                expenseIds: ids,
+            },
+        };
+        vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue(
+            overview,
+        );
+        const settleSpy = vi
+            .spyOn(financeService, "settleSharedExpenses")
+            .mockResolvedValue();
+        const queryClient = new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+        });
+        render(
+            <QueryClientProvider client={queryClient}>
+                <HouseholdProvider>
+                    <ExpensesPage />
+                </HouseholdProvider>
+            </QueryClientProvider>,
+        );
+
+        fireEvent.click(
+            await screen.findByRole("button", { name: /settle up/i }),
+        );
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", { name: "Settle" }));
+        });
+
+        await waitFor(() => {
+            expect(settleSpy).toHaveBeenCalledWith(
+                m1.id,
+                m2.id,
+                ids,
+                expect.objectContaining({ amount: expect.any(Number) }),
+            );
+        });
+        const record = settleSpy.mock.calls[0][3]!;
+        expect(record.amount).toBeGreaterThan(0);
+        expect([record.payerId, record.payeeId].sort()).toEqual(
+            [m1.id, m2.id].sort(),
+        );
     });
 
     it("hides Settle Up when nothing is owed", async () => {

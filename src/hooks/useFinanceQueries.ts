@@ -38,6 +38,7 @@ import type {
     CreditCardStatement,
     DailyCheckin,
     BonusEventsResult,
+    SettleUpsResult,
     BonusSplitShare,
 } from "../types/finance";
 
@@ -62,6 +63,7 @@ export const queryKeys = {
     dailyCheckins: (memberId?: string) =>
         ["finance", "daily-checkins", memberId ?? "all"] as const,
     bonusEvents: ["finance", "bonus-events"] as const,
+    settleUps: ["finance", "settle-ups"] as const,
     bonusSplitDefault: (memberId?: string) =>
         ["finance", "bonus-split-default", memberId ?? "none"] as const,
 };
@@ -86,6 +88,14 @@ export function useBonusSplitDefaultQuery(memberId?: string) {
         queryKey: queryKeys.bonusSplitDefault(memberId),
         queryFn: () => financeService.getBonusSplitDefault(memberId as string),
         enabled: Boolean(memberId),
+    });
+}
+
+/** Past settle-ups, newest first. `available: false` until the migration is applied. */
+export function useSettleUpsQuery() {
+    return useQuery<SettleUpsResult>({
+        queryKey: queryKeys.settleUps,
+        queryFn: () => financeService.getSettleUps(),
     });
 }
 
@@ -260,6 +270,9 @@ export function useInvalidateFinance() {
     const invalidateExpenses = () => {
         queryClient.invalidateQueries({
             queryKey: ["finance", "expenses"],
+        });
+        queryClient.invalidateQueries({
+            queryKey: queryKeys.settleUps,
         });
         queryClient.invalidateQueries({
             queryKey: ["finance", "all-expenses"],

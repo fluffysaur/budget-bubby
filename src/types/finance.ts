@@ -184,6 +184,31 @@ export interface Expense {
     created_at?: string;
 }
 
+/** A recorded settle-up: who paid whom, how much, when, and which expenses it covered. */
+export interface SettleUp {
+    id: string;
+    household_id: string;
+    payer_id: string;
+    payee_id: string;
+    amount: number;
+    settled_on: string; // 'YYYY-MM-DD'
+    expense_ids: string[];
+    created_at?: string;
+}
+
+/** Direction and amount to record when settling. */
+export interface SettleUpRecordInput {
+    payerId: string;
+    payeeId: string;
+    amount: number;
+}
+
+export interface SettleUpsResult {
+    /** false when the settle_ups table is missing (migration not applied). */
+    available: boolean;
+    settleUps: SettleUp[];
+}
+
 export interface CreateExpenseInput {
     id?: string;
     household_id?: string;
