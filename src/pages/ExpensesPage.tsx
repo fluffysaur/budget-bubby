@@ -353,7 +353,7 @@ export function ExpensesPage({
             if (idsToSettle && idsToSettle.length > 0) {
                 // Net amount and direction of just the expenses being settled
                 const covered = calculateSharedExpenseSettlement(
-                    expenses.filter((e) => idsToSettle.includes(e.id)),
+                    allExpenses.filter((e) => idsToSettle.includes(e.id)),
                     m1.id,
                     m2.id,
                 );
