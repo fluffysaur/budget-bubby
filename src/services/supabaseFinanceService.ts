@@ -41,6 +41,8 @@ import type {
     PushSubscriptionInput,
     UpdateNotificationPreferencesInput,
     BonusEvent,
+    SettleUpRecordInput,
+    SettleUpsResult,
     BonusEventsResult,
     BonusSplitShare,
     SaveBonusEventInput,
@@ -290,10 +292,12 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
      * cache resets on reload, so the log appears once the migration is applied.
      */
     private bonusTableAvailable: boolean | null = null;
+    private settleUpsTableAvailable: boolean | null = null;
 
     /** Test hook: forget what we learned about the bonus log tables. */
     public resetBonusLogAvailability(): void {
         this.bonusTableAvailable = null;
+        this.settleUpsTableAvailable = null;
     }
 
     constructor(
@@ -1717,6 +1721,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         member1Id: string,
         member2Id: string,
         expenseIds?: string[],
+        record?: SettleUpRecordInput,
     ): Promise<void> {
         if (expenseIds !== undefined && expenseIds.length === 0) {
             return;
@@ -1736,6 +1741,75 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             `payer_id.eq.${member1Id},payer_id.eq.${member2Id}`,
         );
         if (error) throw error;
+
+        if (record && expenseIds && record.amount > 0) {
+            await this.recordSettleUp(record, expenseIds);
+        }
+    }
+
+    /**
+     * Best-effort history row. The expenses are already settled, so a missing
+     * table (migration not applied) must not fail the settle-up itself.
+     */
+    private async recordSettleUp(
+        record: SettleUpRecordInput,
+        expenseIds: string[],
+    ): Promise<void> {
+        if (this.settleUpsTableAvailable === false) return;
+        const client = this.getClient();
+        const { error } = await client.from("settle_ups").insert({
+            household_id: await this.getHouseholdId(),
+            payer_id: record.payerId,
+            payee_id: record.payeeId,
+            amount: record.amount,
+            settled_on: getTodayDateString(),
+            expense_ids: expenseIds,
+        });
+        if (error) {
+            if (isMissingRelationError(error)) {
+                this.settleUpsTableAvailable = false;
+                return;
+            }
+            throw error;
+        }
+        this.settleUpsTableAvailable = true;
+    }
+
+    public async getSettleUps(): Promise<SettleUpsResult> {
+        if (this.settleUpsTableAvailable === false)
+            return { available: false, settleUps: [] };
+        const { data, error } = await this.getClient()
+            .from("settle_ups")
+            .select("*")
+            .order("settled_on", { ascending: false })
+            .order("created_at", { ascending: false });
+        if (error) {
+            if (isMissingRelationError(error)) {
+                this.settleUpsTableAvailable = false;
+                return { available: false, settleUps: [] };
+            }
+            throw error;
+        }
+        this.settleUpsTableAvailable = true;
+        return {
+            available: true,
+            settleUps: ((data || []) as Record<string, unknown>[]).map(
+                (row) => ({
+                    id: String(row.id),
+                    household_id: String(row.household_id ?? ""),
+                    payer_id: String(row.payer_id),
+                    payee_id: String(row.payee_id),
+                    amount: Number(row.amount),
+                    settled_on: String(row.settled_on),
+                    expense_ids: Array.isArray(row.expense_ids)
+                        ? (row.expense_ids as string[])
+                        : [],
+                    created_at: row.created_at
+                        ? String(row.created_at)
+                        : undefined,
+                }),
+            ),
+        };
     }
 
     public async getGoals(): Promise<SavingsGoal[]> {

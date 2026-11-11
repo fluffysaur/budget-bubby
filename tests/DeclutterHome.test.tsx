@@ -225,6 +225,7 @@ describe("Expenses Settle Up", () => {
                 overview.members[0].id,
                 overview.members[1].id,
                 explicitIds,
+                undefined, // ids match no loaded expense, so no history record
             );
         });
     });

@@ -222,6 +222,47 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
                 }
             }
         });
+
+        it("records a settle-up with direction, amount, date and expense ids, newest first", async () => {
+            const [m1, m2] = mockMembers;
+            const before = await mockFinanceService.getSettleUps();
+            expect(before.available).toBe(true);
+
+            await mockFinanceService.settleSharedExpenses(
+                m1.id,
+                m2.id,
+                ["e-1"],
+                { payerId: m2.id, payeeId: m1.id, amount: 12.5 },
+            );
+            await mockFinanceService.settleSharedExpenses(
+                m1.id,
+                m2.id,
+                ["e-2", "e-3"],
+                { payerId: m1.id, payeeId: m2.id, amount: 3 },
+            );
+
+            const after = await mockFinanceService.getSettleUps();
+            expect(after.settleUps).toHaveLength(before.settleUps.length + 2);
+            const latest = after.settleUps[0];
+            expect(latest.payer_id).toBe(m1.id);
+            expect(latest.payee_id).toBe(m2.id);
+            expect(latest.amount).toBe(3);
+            expect(latest.expense_ids).toEqual(["e-2", "e-3"]);
+            expect(latest.settled_on).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        });
+
+        it("does not record a settle-up when no record is supplied or nothing is settled", async () => {
+            const [m1, m2] = mockMembers;
+            const before = await mockFinanceService.getSettleUps();
+            await mockFinanceService.settleSharedExpenses(m1.id, m2.id);
+            await mockFinanceService.settleSharedExpenses(m1.id, m2.id, [], {
+                payerId: m1.id,
+                payeeId: m2.id,
+                amount: 5,
+            });
+            const after = await mockFinanceService.getSettleUps();
+            expect(after.settleUps).toHaveLength(before.settleUps.length);
+        });
     });
 
     describe("Monthly Budget & Categories", () => {
