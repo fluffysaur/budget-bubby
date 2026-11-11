@@ -12,6 +12,7 @@ import {
     isLoggableCategory,
     computeBufferRemainder,
     computeSavingsBreakdown,
+    computeBufferAbsorption,
 } from "../src/lib/financialFormulas";
 import type { Expense, Category } from "../src/types/finance";
 
@@ -812,5 +813,233 @@ describe("buffer and savings helpers", () => {
                 spendableSpent: 2300,
             }),
         ).toEqual({ base: 500, excess: -300, total: 200 });
+    });
+
+    describe("computeBufferAbsorption", () => {
+        it("handles empty or no buffer category gracefully", () => {
+            const categories = [
+                {
+                    category_id: "c1",
+                    category: { id: "c1", name: "Food", group: "spendable" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 600,
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.hasBuffer).toBe(false);
+            expect(result.totalOverages).toBe(100);
+            expect(result.totalAbsorbed).toBe(0);
+            expect(result.totalUncovered).toBe(100);
+            expect(result.isDepleted).toBe(false);
+            expect(result.categoryBreakdown["c1"]).toEqual({
+                categoryId: "c1",
+                categoryName: "Food",
+                allocated: 500,
+                actual: 600,
+                overage: 100,
+                absorbed: 0,
+                uncovered: 100,
+                status: "uncovered",
+            });
+        });
+
+        it("fully absorbs single category overspending within buffer capacity", () => {
+            const categories = [
+                {
+                    category_id: "c-food",
+                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 600,
+                },
+                {
+                    category_id: "c-buf",
+                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    allocated_amount: 300,
+                    actualSpent: 50,
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.hasBuffer).toBe(true);
+            expect(result.bufferAllocated).toBe(300);
+            expect(result.bufferDirectSpent).toBe(50);
+            expect(result.bufferAvailableBeforeAbsorption).toBe(250);
+            expect(result.totalOverages).toBe(100);
+            expect(result.totalAbsorbed).toBe(100);
+            expect(result.totalUncovered).toBe(0);
+            expect(result.bufferRemaining).toBe(150);
+            expect(result.isDepleted).toBe(false);
+
+            expect(result.categoryBreakdown["c-food"]).toEqual({
+                categoryId: "c-food",
+                categoryName: "Food",
+                allocated: 500,
+                actual: 600,
+                overage: 100,
+                absorbed: 100,
+                uncovered: 0,
+                status: "covered",
+            });
+            expect(result.cushionBreakdown).toEqual([
+                {
+                    categoryId: "c-food",
+                    categoryName: "Food",
+                    absorbedAmount: 100,
+                },
+            ]);
+        });
+
+        it("fully absorbs multiple category overspendings", () => {
+            const categories = [
+                {
+                    category_id: "c-food",
+                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    allocated_amount: 400,
+                    actualSpent: 480,
+                },
+                {
+                    category_id: "c-transport",
+                    category: { id: "c-transport", name: "Transport", group: "spendable" } as Category,
+                    allocated_amount: 200,
+                    actualSpent: 260,
+                },
+                {
+                    category_id: "c-life",
+                    category: { id: "c-life", name: "Lifestyle", group: "spendable" } as Category,
+                    allocated_amount: 300,
+                    actualSpent: 250,
+                },
+                {
+                    category_id: "c-buf",
+                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 100,
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.totalOverages).toBe(140); // 80 + 60
+            expect(result.totalAbsorbed).toBe(140);
+            expect(result.totalUncovered).toBe(0);
+            expect(result.bufferRemaining).toBe(260); // 500 - 100 - 140
+            expect(result.isDepleted).toBe(false);
+
+            expect(result.categoryBreakdown["c-food"].status).toBe("covered");
+            expect(result.categoryBreakdown["c-food"].absorbed).toBe(80);
+            expect(result.categoryBreakdown["c-transport"].status).toBe("covered");
+            expect(result.categoryBreakdown["c-transport"].absorbed).toBe(60);
+            expect(result.categoryBreakdown["c-life"].status).toBe("normal");
+            expect(result.categoryBreakdown["c-life"].absorbed).toBe(0);
+        });
+
+        it("handles partial depletion when overages exceed buffer capacity", () => {
+            const categories = [
+                {
+                    category_id: "c-food",
+                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 600, // 100 overage (2/3 of 150)
+                },
+                {
+                    category_id: "c-transport",
+                    category: { id: "c-transport", name: "Transport", group: "spendable" } as Category,
+                    allocated_amount: 200,
+                    actualSpent: 250, // 50 overage (1/3 of 150)
+                },
+                {
+                    category_id: "c-buf",
+                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    allocated_amount: 100,
+                    actualSpent: 20, // 80 available
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.totalOverages).toBe(150);
+            expect(result.totalAbsorbed).toBe(80);
+            expect(result.totalUncovered).toBe(70);
+            expect(result.bufferRemaining).toBe(0);
+            expect(result.isDepleted).toBe(true);
+
+            const food = result.categoryBreakdown["c-food"];
+            expect(food.status).toBe("partially_covered");
+            expect(food.absorbed).toBe(53.33);
+            expect(food.uncovered).toBe(46.67);
+
+            const transport = result.categoryBreakdown["c-transport"];
+            expect(transport.status).toBe("partially_covered");
+            expect(transport.absorbed).toBe(26.67);
+            expect(transport.uncovered).toBe(23.33);
+
+            // Cent rounding check
+            expect(food.absorbed + transport.absorbed).toBe(80);
+            expect(food.uncovered + transport.uncovered).toBe(70);
+        });
+
+        it("handles completely depleted buffer (0 available before absorption)", () => {
+            const categories = [
+                {
+                    category_id: "c-food",
+                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 550,
+                },
+                {
+                    category_id: "c-buf",
+                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    allocated_amount: 100,
+                    actualSpent: 100, // 0 available
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.totalAbsorbed).toBe(0);
+            expect(result.totalUncovered).toBe(50);
+            expect(result.bufferRemaining).toBe(0);
+            expect(result.isDepleted).toBe(true);
+            expect(result.categoryBreakdown["c-food"].status).toBe("uncovered");
+            expect(result.categoryBreakdown["c-food"].uncovered).toBe(50);
+        });
+
+        it("handles buffer that was directly overspent", () => {
+            const categories = [
+                {
+                    category_id: "c-food",
+                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 550,
+                },
+                {
+                    category_id: "c-buf",
+                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    allocated_amount: 100,
+                    actualSpent: 120, // -20 remaining directly
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.bufferAvailableBeforeAbsorption).toBe(0);
+            expect(result.bufferRemaining).toBe(-20);
+            expect(result.isDepleted).toBe(true);
+            expect(result.totalAbsorbed).toBe(0);
+            expect(result.categoryBreakdown["c-food"].status).toBe("uncovered");
+        });
+
+        it("ignores allocation/savings categories when calculating overages", () => {
+            const categories = [
+                {
+                    category_id: "c-savings",
+                    category: { id: "c-savings", name: "Emergency Savings", group: "allocation" } as Category,
+                    allocated_amount: 500,
+                    actualSpent: 700, // funded/transferred more, not an overage
+                },
+                {
+                    category_id: "c-buf",
+                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    allocated_amount: 200,
+                    actualSpent: 0,
+                },
+            ];
+            const result = computeBufferAbsorption(categories);
+            expect(result.totalOverages).toBe(0);
+            expect(result.totalAbsorbed).toBe(0);
+            expect(result.bufferRemaining).toBe(200);
+            expect(result.isDepleted).toBe(false);
+        });
     });
 });

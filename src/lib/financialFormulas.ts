@@ -325,6 +325,210 @@ export function computeSavingsBreakdown(input: {
     return { base, excess, total: Math.round((base + excess) * 100) / 100 };
 }
 
+export type CategoryCoverageStatus =
+    | "normal"
+    | "covered"
+    | "partially_covered"
+    | "uncovered";
+
+export interface CategoryOverageItem {
+    categoryId: string;
+    categoryName: string;
+    allocated: number;
+    actual: number;
+    overage: number;
+    absorbed: number;
+    uncovered: number;
+    status: CategoryCoverageStatus;
+}
+
+export interface BufferCushionBreakdownItem {
+    categoryId: string;
+    categoryName: string;
+    absorbedAmount: number;
+}
+
+export interface BufferAbsorptionResult {
+    hasBuffer: boolean;
+    bufferCategoryId?: string;
+    bufferAllocated: number;
+    bufferDirectSpent: number;
+    bufferAvailableBeforeAbsorption: number;
+    totalOverages: number;
+    totalAbsorbed: number;
+    totalUncovered: number;
+    bufferRemaining: number;
+    isDepleted: boolean;
+    categoryBreakdown: Record<string, CategoryOverageItem>;
+    cushionBreakdown: BufferCushionBreakdownItem[];
+}
+
+/**
+ * Dynamically absorbs spendable category overspending into the Buffer category
+ * during monthly budget presentation, without mutating underlying profile allocations.
+ */
+export function computeBufferAbsorption<
+    T extends {
+        category?: Category | null;
+        category_id?: string;
+        allocated_amount?: number;
+        actualSpent?: number;
+    },
+>(categories: T[] = []): BufferAbsorptionResult {
+    const bufferCat = categories.find((c) =>
+        isBufferCategory(c.category ?? c.category_id),
+    );
+
+    const hasBuffer = !!bufferCat;
+    const bufferCategoryId = bufferCat
+        ? bufferCat.category_id || bufferCat.category?.id
+        : undefined;
+    const bufferAllocated = bufferCat
+        ? Math.round((bufferCat.allocated_amount || 0) * 100) / 100
+        : 0;
+    const bufferDirectSpent = bufferCat
+        ? Math.round((bufferCat.actualSpent || 0) * 100) / 100
+        : 0;
+    const bufferAvailableBeforeAbsorption = Math.max(
+        0,
+        Math.round((bufferAllocated - bufferDirectSpent) * 100) / 100,
+    );
+
+    // Filter spendable categories excluding Buffer
+    const nonBufferSpendables = categories.filter(
+        (c) =>
+            c !== bufferCat && isSpendableCategory(c.category ?? c.category_id),
+    );
+
+    const items = nonBufferSpendables.map((c) => {
+        const catId = c.category_id || c.category?.id || "";
+        const catName = c.category?.name || "Category";
+        const allocated = Math.round((c.allocated_amount || 0) * 100) / 100;
+        const actual = Math.round((c.actualSpent || 0) * 100) / 100;
+        const overage = Math.max(0, Math.round((actual - allocated) * 100) / 100);
+        return {
+            categoryId: catId,
+            categoryName: catName,
+            allocated,
+            actual,
+            overage,
+        };
+    });
+
+    const totalOverages =
+        Math.round(items.reduce((sum, item) => sum + item.overage, 0) * 100) /
+        100;
+
+    const totalAbsorbed = Math.min(
+        bufferAvailableBeforeAbsorption,
+        totalOverages,
+    );
+    const totalUncovered =
+        Math.round((totalOverages - totalAbsorbed) * 100) / 100;
+
+    const overspentItems = items.filter((item) => item.overage > 0);
+    const categoryBreakdown: Record<string, CategoryOverageItem> = {};
+    const cushionBreakdown: BufferCushionBreakdownItem[] = [];
+
+    let runningAbsorbed = 0;
+
+    items.forEach((item) => {
+        if (item.overage <= 0) {
+            categoryBreakdown[item.categoryId] = {
+                ...item,
+                absorbed: 0,
+                uncovered: 0,
+                status: "normal",
+            };
+            return;
+        }
+
+        let absorbed = 0;
+        if (totalOverages <= bufferAvailableBeforeAbsorption) {
+            absorbed = item.overage;
+        } else if (bufferAvailableBeforeAbsorption > 0) {
+            const isLastOverspent =
+                overspentItems.length > 0 &&
+                overspentItems[overspentItems.length - 1].categoryId ===
+                    item.categoryId;
+
+            if (isLastOverspent) {
+                absorbed =
+                    Math.round((totalAbsorbed - runningAbsorbed) * 100) / 100;
+            } else {
+                absorbed =
+                    Math.round(
+                        totalAbsorbed *
+                            (item.overage / totalOverages) *
+                            100,
+                    ) / 100;
+                runningAbsorbed += absorbed;
+            }
+        }
+
+        const uncovered =
+            Math.round((item.overage - absorbed) * 100) / 100;
+
+        const status: CategoryCoverageStatus =
+            uncovered <= 0
+                ? "covered"
+                : absorbed > 0
+                  ? "partially_covered"
+                  : "uncovered";
+
+        categoryBreakdown[item.categoryId] = {
+            ...item,
+            absorbed,
+            uncovered,
+            status,
+        };
+
+        if (absorbed > 0) {
+            cushionBreakdown.push({
+                categoryId: item.categoryId,
+                categoryName: item.categoryName,
+                absorbedAmount: absorbed,
+            });
+        }
+    });
+
+    let bufferRemaining = 0;
+    let isDepleted = false;
+
+    if (hasBuffer) {
+        if (bufferDirectSpent > bufferAllocated) {
+            bufferRemaining =
+                Math.round((bufferAllocated - bufferDirectSpent) * 100) / 100;
+            isDepleted = true;
+        } else {
+            bufferRemaining = Math.max(
+                0,
+                Math.round(
+                    (bufferAvailableBeforeAbsorption - totalAbsorbed) * 100,
+                ) / 100,
+            );
+            isDepleted =
+                bufferRemaining === 0 &&
+                (totalAbsorbed > 0 || bufferDirectSpent >= bufferAllocated);
+        }
+    }
+
+    return {
+        hasBuffer,
+        bufferCategoryId,
+        bufferAllocated,
+        bufferDirectSpent,
+        bufferAvailableBeforeAbsorption,
+        totalOverages,
+        totalAbsorbed,
+        totalUncovered,
+        bufferRemaining,
+        isDepleted,
+        categoryBreakdown,
+        cushionBreakdown,
+    };
+}
+
 /**
  * 8. Computes a member's effective share of an expense based on perspective and 50/50 split.
  * - In 'household' perspective: returns full expense amount.
