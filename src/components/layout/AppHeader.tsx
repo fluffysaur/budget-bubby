@@ -292,6 +292,34 @@ export function AppHeader({
 
                                         <button
                                             type="button"
+                                            data-testid="mobile-privacy-btn"
+                                            aria-pressed={isPrivacyMode}
+                                            onClick={() => {
+                                                togglePrivacy();
+                                                setIsDropdownOpen(false);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                        >
+                                            {isPrivacyMode ? (
+                                                <EyeOff
+                                                    className="h-4 w-4 text-(--text-ink) dark:text-(--pastel-lilac)"
+                                                    strokeWidth={2.5}
+                                                />
+                                            ) : (
+                                                <Eye
+                                                    className="h-4 w-4 text-(--text-ink) dark:text-(--pastel-lilac)"
+                                                    strokeWidth={2.5}
+                                                />
+                                            )}
+                                            <span>
+                                                {isPrivacyMode
+                                                    ? "Show Amounts"
+                                                    : "Hide Amounts"}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            type="button"
                                             data-testid="mobile-refresh-btn"
                                             onClick={() => {
                                                 setIsDropdownOpen(false);
@@ -421,24 +449,6 @@ export function AppHeader({
                             <span className="xs:hidden">Demo</span>
                         </div>
                     )}
-
-                    {/* Privacy toggle (mask amounts) */}
-                    <button
-                        type="button"
-                        onClick={togglePrivacy}
-                        aria-label={
-                            isPrivacyMode ? "Show amounts" : "Hide amounts"
-                        }
-                        aria-pressed={isPrivacyMode}
-                        title={`${isPrivacyMode ? "Show" : "Hide"} amounts (H)`}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer"
-                    >
-                        {isPrivacyMode ? (
-                            <EyeOff className="h-4 w-4" strokeWidth={2.5} />
-                        ) : (
-                            <Eye className="h-4 w-4" strokeWidth={2.5} />
-                        )}
-                    </button>
 
                     {/* Live household Bubby (tap to pet and open the sheet) */}
                     <BubbyAvatarButton />
