@@ -30,12 +30,13 @@ Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, 
 ### C. Quality Gate (before proposing a commit or PR)
 
 - `npm run lint` (0 errors, 0 warnings), `npm run build`, and `npm test` must pass. Run `npm run test:e2e` when UI flows changed.
+- If any UI changed (components, pages, layouts, styles, copy, icons, badges, modals, themes, or user-visible flows), capture before/after screenshots on demo data per §G before proposing or opening a PR.
 - Report failures as they are. Never use `--no-verify`, skip hooks, or delete/disable tests to get green.
 
 ### D. Commits & Pull Requests
 
 - Conventional commits: `feat(budget): ...`, `fix(mobile): ...`, `refactor: ...`. Keep commits small and focused.
-- PR descriptions state what changed, why, and how it was verified.
+- PR descriptions state what changed, why, how it was verified, and include a `## Screenshots` before/after table whenever UI changed (per §G). If no UI changed, state `Screenshots: N/A — no UI changes` (or note why browser capture was blocked in the environment).
 
 ### E. Repo Hygiene
 
@@ -55,6 +56,7 @@ Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, 
 
 This repo is **public**, so everything in a screenshot is public too.
 
+- **When required (mandatory):** Every PR that changes any UI — `src/components/`, `src/pages/`, `src/index.css`, layout, spacing, styles, copy, icons, badges, modals, themes, or user-visible flows — must attach before/after screenshots before the PR is opened (or updated). Never silently omit them. If the environment genuinely cannot run a browser, explicitly state the blocker in `## Screenshots` and treat screenshot verification as unverified.
 - **Demo data only.** Capture from the e2e dev server, which forces mock mode (`playwright.config.ts` sets empty Supabase env vars). Never capture from the live DB.
 - **Nothing personal in the PR.** No real names, balances, salaries or emails, in images or in the PR body.
 - **Sizes:**
@@ -62,13 +64,14 @@ This repo is **public**, so everything in a screenshot is public too.
     - Set the theme via the app's theme `localStorage` key in an init script; the app uses a `dark` class, not media queries.
     - Add 1280×800 when desktop layout changed.
 - **Before and after:**
-    - Capture "before" on the base branch and "after" on the PR branch.
+    - Capture "before" on the base branch (`main`) and "after" on the PR branch (use a temporary worktree on `main` if you are already on the PR branch).
     - Text-only PRs may skip dark mode.
 - **Hosting:**
     - Screenshots live on the orphan branch `chore/pr-screenshots`. It is never merged and never deleted.
     - Use a separate worktree: `git worktree add --orphan -b chore/pr-screenshots ../bb-shots` the first time, or `git worktree add ../bb-shots chore/pr-screenshots` after that.
     - Put the images in a folder named after the PR branch, with `/` replaced by `-`, e.g. `fix-offline-queue/after-390-dark-home.png`. Commit, push, then remove the worktree.
     - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
+    - Verify the images are pushed to `origin/chore/pr-screenshots` and filenames match the PR body links before creating the PR.
 - **Not test baselines.** Screenshots are never committed to feature branches or used as visual-regression baselines.
 
 ### H. Backlog (GitHub Issues)
