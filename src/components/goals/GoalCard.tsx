@@ -39,6 +39,10 @@ export interface GoalCardProps {
     onEdit?: (goal: SavingsGoal) => void;
     onQuickDeposit?: (goal: SavingsGoal) => void;
     onSpendFromGoal?: (goal: SavingsGoal) => void;
+    /** Ledger deposits into this goal during the current month. */
+    depositedThisMonth?: number;
+    /** Last month's deposits; null/omitted when the goal is new this month. */
+    depositedLastMonth?: number | null;
     isHighlighted?: boolean;
     className?: string;
 }
@@ -49,6 +53,8 @@ export function GoalCard({
     onEdit,
     onQuickDeposit,
     onSpendFromGoal,
+    depositedThisMonth = 0,
+    depositedLastMonth = null,
     isHighlighted = false,
     className = "",
 }: GoalCardProps) {
@@ -76,10 +82,12 @@ export function GoalCard({
         targetAmount,
         totalSaved,
         goal.target_date,
-        goal.monthly_contribution,
+        depositedThisMonth,
+        undefined,
+        depositedLastMonth,
     );
 
-    const effectiveStatus = goal.status || pacing.status;
+    const effectiveStatus = pacing.status;
     const isAchieved = effectiveStatus === "achieved";
     const isBehind = effectiveStatus === "behind";
 
@@ -99,10 +107,8 @@ export function GoalCard({
         },
     }[effectiveStatus];
 
-    // Shortfall per month if behind
-    const monthlyShortfall = isBehind
-        ? Math.max(0, pacing.neededPerMonth - goal.monthly_contribution)
-        : 0;
+    // Remaining amount to deposit this month (includes any carried shortfall)
+    const monthlyShortfall = pacing.shortfallThisMonth;
 
     return (
         <div
@@ -226,7 +232,7 @@ export function GoalCard({
                     {showBreakdown && (
                         <div className="space-y-3 pt-2">
                             {/* 2x2 Grid */}
-                            <div className="grid grid-cols-2 gap-2 rounded-xl border border-(--border-subtle) bg-(--bg-card) p-2 text-xs">
+                            <div className="grid grid-cols-2 gap-3 rounded-xl border border-(--border-subtle) bg-(--bg-card) p-3 text-xs">
                                 <div>
                                     <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
                                         Target Amount
@@ -292,13 +298,12 @@ export function GoalCard({
                             <div className="space-y-1 text-xs border-t border-(--border-subtle) pt-2">
                                 <div className="flex items-center justify-between">
                                     <span className="text-(--text-muted)">
-                                        Current Monthly:
+                                        Deposited This Month:
                                     </span>
                                     <span className="font-semibold text-(--text-ink)">
                                         <CurrencyText
-                                            amount={goal.monthly_contribution}
+                                            amount={depositedThisMonth}
                                         />
-                                        /mo
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -314,15 +319,23 @@ export function GoalCard({
                                     </span>
                                 </div>
 
-                                {isBehind && monthlyShortfall > 0 && (
-                                    <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
-                                        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                {!isAchieved && monthlyShortfall > 0 && (
+                                    <div
+                                        className={`mt-1.5 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
+                                            isBehind
+                                                ? "bg-amber-50/80 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+                                                : "bg-(--bg-canvas) text-(--text-muted)"
+                                        }`}
+                                    >
+                                        {isBehind && (
+                                            <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                        )}
                                         <span>
                                             +{" "}
                                             <CurrencyText
                                                 amount={monthlyShortfall}
-                                            />
-                                            /mo to stay on track
+                                            />{" "}
+                                            more needed this month
                                         </span>
                                     </div>
                                 )}

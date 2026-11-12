@@ -23,7 +23,10 @@ import {
     clampDueDay,
 } from "../dateUtils";
 import { formatSGD } from "../currency";
-import { isSpendableCategory } from "../financialFormulas";
+import {
+    isSpendableCategory,
+    withDerivedGoalStatus,
+} from "../financialFormulas";
 import { getUnpaidCardCycles } from "../creditCardCycles";
 import { collectFeedEvents } from "../bubby/sources";
 import { deriveCondition, type BubbyMood } from "../bubby/body";
@@ -38,6 +41,7 @@ import type {
     MonthlyBudgetDetail,
     RecurringItem,
     SavingsGoal,
+    GoalDeposit,
     InboxSummary,
 } from "../../types/finance";
 
@@ -679,11 +683,17 @@ export function checkRecurringBillsReminders(
 export function checkGoalPacingReminders(
     goals: SavingsGoal[],
     referenceDate?: Date,
+    deposits?: GoalDeposit[],
 ): AppReminder[] {
     const month = sgMonth(referenceDate);
     const reminders: AppReminder[] = [];
+    // With the ledger, status is derived for the reference month; otherwise
+    // callers pass goals whose status the service already derived.
+    const evaluated = deposits
+        ? withDerivedGoalStatus(goals, deposits, referenceDate)
+        : goals;
 
-    for (const goal of goals) {
+    for (const goal of evaluated) {
         const progress = `${formatSGD(goal.saved_so_far)} of ${formatSGD(goal.target_amount)}`;
         if (goal.status === "behind") {
             reminders.push({

@@ -39,7 +39,6 @@ function makeGoal(
         target_amount: 1000,
         saved_so_far: 500,
         target_date: "2027-12-01",
-        monthly_contribution: 100,
         emoji: "🎯",
         status: "on_track",
         ...overrides,

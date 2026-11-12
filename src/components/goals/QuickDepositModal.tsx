@@ -6,7 +6,7 @@
  * - Quick preset chips (+S$100, +S$250, +S$500, +S$1,000, +S$5,000)
  * - Custom numeric deposit input
  * - Live preview of updated balance and new progress %
- * - Updates goal saved_so_far via financeService.updateGoal
+ * - Updates goal saved_so_far via financeService.depositToGoal
  */
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
@@ -19,7 +19,7 @@ import {
 } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
-import { useUpdateGoalMutation } from "../../hooks/useFinanceQueries";
+import { useDepositGoalMutation } from "../../hooks/useFinanceQueries";
 import { feedback } from "../../lib/delight/feedback";
 import { recordExercise } from "../../lib/bubby/activity";
 import type { SavingsGoal } from "../../types/finance";
@@ -42,7 +42,7 @@ export function QuickDepositModal({
     onDepositSaved,
 }: QuickDepositModalProps) {
     const depositInputRef = useRef<HTMLInputElement>(null);
-    const updateGoalMutation = useUpdateGoalMutation();
+    const depositGoalMutation = useDepositGoalMutation();
 
     const [depositAmount, setDepositAmount] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -88,11 +88,10 @@ export function QuickDepositModal({
 
         try {
             setIsSubmitting(true);
-            const updated = await updateGoalMutation.mutateAsync({
-                id: goal.id,
-                updates: {
-                    saved_so_far: Math.round(newSavedSoFar * 100) / 100,
-                },
+            const updated = await depositGoalMutation.mutateAsync({
+                goalId: goal.id,
+                amount: numericDeposit,
+                source: "quick_deposit",
             });
             recordExercise("goal-add");
             const reachedTarget =

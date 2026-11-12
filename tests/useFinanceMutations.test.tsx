@@ -86,7 +86,6 @@ describe("Issue #38: Domain Save Mutations", () => {
                 target_amount: 5000,
                 saved_so_far: 1200,
                 target_date: "2026-12-31",
-                monthly_contribution: 200,
                 emoji: "✈️",
                 status: "on_track",
                 created_at: "2026-01-01T00:00:00Z",
@@ -159,7 +158,6 @@ describe("Issue #38: Domain Save Mutations", () => {
                     target_amount: 10000,
                     saved_so_far: 0,
                     target_date: "2027-12-31",
-                    monthly_contribution: 500,
                     emoji: "🛡️",
                 });
             });

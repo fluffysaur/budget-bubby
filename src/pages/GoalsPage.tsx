@@ -30,11 +30,13 @@ import {
 } from "../components/ui";
 import {
     useGoalsQuery,
+    useGoalDepositsQuery,
     useExpensesQuery,
     useCategoriesQuery,
     useInvalidateFinance,
 } from "../hooks/useFinanceQueries";
 import { formatSGD } from "../lib/currency";
+import { getGoalMonthDeposits, getGoalPacing } from "../lib/financialFormulas";
 import { GoalCard } from "../components/goals/GoalCard";
 import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
 import { QuickDepositModal } from "../components/goals/QuickDepositModal";
@@ -69,6 +71,7 @@ export function GoalsPage({
         isLoading: goalsLoading,
         error: goalsError,
     } = useGoalsQuery();
+    const { data: depositsData } = useGoalDepositsQuery();
     const { data: expensesData } = useExpensesQuery();
     const { data: categoriesData } = useCategoriesQuery();
 
@@ -76,6 +79,7 @@ export function GoalsPage({
     const targetGoalId = searchParams.get("goalId");
 
     const goals = useMemo(() => goalsData || [], [goalsData]);
+    const deposits = useMemo(() => depositsData || [], [depositsData]);
     const expenses = useMemo(() => expensesData || [], [expensesData]);
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = goalsLoading && !goalsData;
@@ -120,12 +124,25 @@ export function GoalsPage({
         });
     }, [goals, perspective, activeMember]);
 
+    // This/last month ledger deposits per goal (drives pace and Behind status)
+    const goalMonthDeposits = useMemo(() => {
+        const map = new Map<
+            string,
+            { thisMonth: number; lastMonth: number | null }
+        >();
+        for (const g of goals) {
+            map.set(g.id, getGoalMonthDeposits(g, deposits));
+        }
+        return map;
+    }, [goals, deposits]);
+
     // High-Level Summary Metrics
     const {
         totalTarget,
         totalSaved,
         overallProgress,
-        totalMonthlyContributions,
+        totalRequiredPace,
+        totalDepositedThisMonth,
     } = useMemo(() => {
         const target = perspectiveGoals.reduce(
             (sum, g) => sum + (g.target_amount || 0),
@@ -135,10 +152,14 @@ export function GoalsPage({
             (sum, g) => sum + (g.saved_so_far || 0),
             0,
         );
-        const monthly = perspectiveGoals.reduce(
-            (sum, g) => sum + (g.monthly_contribution || 0),
-            0,
-        );
+        let requiredPace = 0;
+        let depositedThisMonth = 0;
+        for (const g of perspectiveGoals) {
+            const pacing = getGoalPacing(g, deposits);
+            if (pacing.status === "achieved") continue;
+            requiredPace += pacing.neededPerMonth;
+            depositedThisMonth += pacing.depositedThisMonth;
+        }
         const progress =
             target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
 
@@ -146,9 +167,10 @@ export function GoalsPage({
             totalTarget: target,
             totalSaved: saved,
             overallProgress: progress,
-            totalMonthlyContributions: monthly,
+            totalRequiredPace: Math.round(requiredPace * 100) / 100,
+            totalDepositedThisMonth: Math.round(depositedThisMonth * 100) / 100,
         };
-    }, [perspectiveGoals]);
+    }, [perspectiveGoals, deposits]);
 
     // Filtered by Active Tab
     const inProgressGoals = useMemo(() => {
@@ -392,7 +414,8 @@ export function GoalsPage({
                 <StatCard
                     title="Monthly Pace"
                     loading={isLoading}
-                    value={`${formatSGD(totalMonthlyContributions)}/mo`}
+                    value={`${formatSGD(totalRequiredPace)}/mo`}
+                    subtitle={`${formatSGD(totalDepositedThisMonth)} deposited`}
                     icon={<Calendar className="h-4 w-4" />}
                     iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
                 />
@@ -473,6 +496,14 @@ export function GoalsPage({
                                     goal={goal}
                                     linkedExpenses={
                                         goalExpensesMap.get(goal.id) || []
+                                    }
+                                    depositedThisMonth={
+                                        goalMonthDeposits.get(goal.id)
+                                            ?.thisMonth ?? 0
+                                    }
+                                    depositedLastMonth={
+                                        goalMonthDeposits.get(goal.id)
+                                            ?.lastMonth ?? null
                                     }
                                     onEdit={handleOpenEditModal}
                                     onQuickDeposit={handleOpenDepositModal}

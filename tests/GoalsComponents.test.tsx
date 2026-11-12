@@ -26,7 +26,6 @@ const sampleAchievedGoal: SavingsGoal = {
     target_amount: 55000.0,
     saved_so_far: 55000.0,
     target_date: "2027-05-01",
-    monthly_contribution: 0.0,
     emoji: "💍",
     status: "achieved",
     created_at: "2026-01-01T00:00:00.000Z",
@@ -40,7 +39,6 @@ const sampleOnTrackGoal: SavingsGoal = {
     target_amount: 190000.0,
     saved_so_far: 100000.0,
     target_date: "2027-07-01",
-    monthly_contribution: 10000.0,
     emoji: "🏠",
     status: "on_track",
     created_at: "2026-01-01T00:00:00.000Z",
@@ -54,7 +52,6 @@ const sampleBehindGoal: SavingsGoal = {
     target_amount: 90000.0,
     saved_so_far: 10000.0,
     target_date: "2027-09-01",
-    monthly_contribution: 1000.0, // Behind: needed is ~6,666/mo
     emoji: "🔨",
     status: "behind",
     created_at: "2026-01-01T00:00:00.000Z",
@@ -141,21 +138,50 @@ describe("GoalCard Component", () => {
         const { rerender } = render(<GoalCard goal={sampleAchievedGoal} />);
         expect(screen.getByText(/Achieved/i)).toBeInTheDocument();
 
-        rerender(<GoalCard goal={sampleOnTrackGoal} />);
+        // Deposits this month cover the required pace
+        rerender(
+            <GoalCard goal={sampleOnTrackGoal} depositedThisMonth={20000} />,
+        );
         expect(screen.getByText(/On Track/i)).toBeInTheDocument();
 
-        rerender(<GoalCard goal={sampleBehindGoal} />);
+        rerender(<GoalCard goal={sampleBehindGoal} depositedLastMonth={0} />);
         expect(screen.getByText(/Behind/i)).toBeInTheDocument();
     });
 
-    it("displays monthly contribution and required monthly pace", () => {
-        render(<GoalCard goal={sampleOnTrackGoal} />);
+    it("shows deposited this month vs required pace in the breakdown", () => {
+        render(
+            <GoalCard goal={sampleOnTrackGoal} depositedThisMonth={20000} />,
+        );
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
-        // Monthly contribution formatted
+        expect(screen.getByText(/Deposited This Month/i)).toBeInTheDocument();
         expect(
-            screen.getAllByText(withText(/S\$10,000\.00\/mo/)).length,
+            screen.getAllByText(withText(/S\$20,000\.00/)).length,
         ).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText(/Required Pace/i)).toBeInTheDocument();
+        expect(screen.queryByText(/more needed this month/i)).toBeNull();
+    });
+
+    it("shows a neutral hint, not Behind, while this month is still open", () => {
+        render(<GoalCard goal={sampleBehindGoal} />);
+        expect(screen.queryByText(/Behind/i)).toBeNull();
+        expect(screen.getByText(/On Track/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
+        expect(screen.getByText(/more needed this month/i)).toBeInTheDocument();
+    });
+
+    it("shows the remaining shortfall this month when behind", () => {
+        render(
+            <GoalCard
+                goal={sampleBehindGoal}
+                depositedThisMonth={1000}
+                depositedLastMonth={0}
+            />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
+
+        expect(screen.getByText(/Behind/i)).toBeInTheDocument();
+        expect(screen.getByText(/more needed this month/i)).toBeInTheDocument();
     });
 
     it("displays target date and remaining months countdown", () => {
@@ -271,9 +297,7 @@ describe("AddEditGoalModal Component", () => {
         fireEvent.change(screen.getByLabelText(/Target Date/i), {
             target: { value: "2028-12-31" },
         });
-        fireEvent.change(screen.getByLabelText(/Monthly/i), {
-            target: { value: "1000" },
-        });
+        expect(screen.queryByLabelText(/Monthly/i)).toBeNull();
 
         // Submit
         fireEvent.click(screen.getByRole("button", { name: /Create/i }));
@@ -285,7 +309,6 @@ describe("AddEditGoalModal Component", () => {
                     title: "Baby Fund",
                     target_amount: 30000,
                     saved_so_far: 5000,
-                    monthly_contribution: 1000,
                 }),
             );
             expect(onGoalSavedMock).toHaveBeenCalledTimes(1);
@@ -392,8 +415,10 @@ describe("GoalsPage Integration", () => {
         // Metric 3: Overall Progress = 165,000 / 335,000 = 49.25% -> 49%
         expect(screen.getByText(/49%/)).toBeInTheDocument();
 
-        // Metric 4: Total Monthly Contributions = 0 + 10,000 + 1,000 = 11,000
-        expect(screen.getByText(/S\$11,000\.00\/mo/)).toBeInTheDocument();
+        // Metric 4: total required pace across active goals, with deposits subtitle
+        expect(screen.getByText("Monthly Pace")).toBeInTheDocument();
+        expect(screen.getByText(/\/mo$/)).toBeInTheDocument();
+        expect(screen.getByText(/deposited$/)).toBeInTheDocument();
     });
 
     it("filters goals using All Goals, In Progress, and Achieved tabs", async () => {
@@ -444,7 +469,6 @@ describe("GoalsPage Integration", () => {
                 target_amount: 8000,
                 saved_so_far: 2000,
                 target_date: "2027-11-01",
-                monthly_contribution: 500,
                 emoji: "✈️",
                 status: "on_track",
             });
@@ -494,7 +518,7 @@ describe("GoalsPage Integration", () => {
 
     it("handles quick deposit action to increment saved_so_far", async () => {
         const updateSpy = vi
-            .spyOn(financeService, "updateGoal")
+            .spyOn(financeService, "depositToGoal")
             .mockResolvedValueOnce({
                 ...sampleOnTrackGoal,
                 saved_so_far: 105000,
@@ -534,9 +558,8 @@ describe("GoalsPage Integration", () => {
         await waitFor(() => {
             expect(updateSpy).toHaveBeenCalledWith(
                 sampleOnTrackGoal.id,
-                expect.objectContaining({
-                    saved_so_far: 105000,
-                }),
+                5000,
+                "quick_deposit",
             );
             expect(getGoalsSpy).toHaveBeenCalledTimes(2);
         });

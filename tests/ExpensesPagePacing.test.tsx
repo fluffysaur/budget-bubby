@@ -78,7 +78,7 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
         });
     });
 
-    it("uses the fresh goal balance from financeService.getGoal when sweeping surplus", async () => {
+    it("records sweep allocations as ledger deposits", async () => {
         const staleGoal = {
             id: "goal-fresh-test",
             household_id: "hh-00000000-0001",
@@ -86,7 +86,6 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
             target_amount: 10000,
             saved_so_far: 1000,
             target_date: "2027-12-31",
-            monthly_contribution: 500,
             emoji: "🛡️",
             status: "on_track" as const,
         };
@@ -96,11 +95,8 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
         };
 
         vi.spyOn(financeService, "getGoals").mockResolvedValue([staleGoal]);
-        const getGoalSpy = vi
-            .spyOn(financeService, "getGoal")
-            .mockResolvedValue(freshGoal);
-        const updateGoalSpy = vi
-            .spyOn(financeService, "updateGoal")
+        const depositSpy = vi
+            .spyOn(financeService, "depositToGoal")
             .mockResolvedValue({ ...freshGoal, saved_so_far: 3450 });
         vi.spyOn(financeService, "getMonthlyBudget").mockResolvedValue({
             budget: {
@@ -143,11 +139,12 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
         fireEvent.click(confirmSweepBtn);
 
         await waitFor(() => {
-            expect(getGoalSpy).toHaveBeenCalledWith("goal-fresh-test");
-            // 2450 fresh goal balance + 1000 combined household surplus (500 * 2 members)
-            expect(updateGoalSpy).toHaveBeenCalledWith("goal-fresh-test", {
-                saved_so_far: 3450,
-            });
+            // 1000 combined household surplus (500 * 2 members), recorded in the ledger
+            expect(depositSpy).toHaveBeenCalledWith(
+                "goal-fresh-test",
+                1000,
+                "sweep",
+            );
         });
     });
 

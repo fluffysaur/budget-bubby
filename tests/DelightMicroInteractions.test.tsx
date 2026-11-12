@@ -14,7 +14,6 @@ const goal: SavingsGoal = {
     title: "Japan Trip",
     target_amount: 1000,
     saved_so_far: 950,
-    monthly_contribution: 100,
     emoji: "✈️",
     status: "on_track",
     target_date: "2026-12-31",
@@ -29,7 +28,7 @@ describe("delight micro-interactions", () => {
     });
 
     it("celebrates reaching a goal as a milestone", async () => {
-        vi.spyOn(financeService, "updateGoal").mockResolvedValue({
+        vi.spyOn(financeService, "depositToGoal").mockResolvedValue({
             ...goal,
             saved_so_far: 1050,
         });

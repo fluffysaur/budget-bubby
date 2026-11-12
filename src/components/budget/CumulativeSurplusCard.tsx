@@ -27,7 +27,7 @@ import {
 } from "../../lib/dateUtils";
 import { calculateCumulativeSurplus } from "../../lib/financialFormulas";
 import { financeService } from "../../services/financeService";
-import { useUpdateGoalMutation } from "../../hooks/useFinanceQueries";
+import { useDepositGoalMutation } from "../../hooks/useFinanceQueries";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Sparkline } from "../ui/Sparkline";
 import { Button } from "../ui/Button";
@@ -76,7 +76,7 @@ export function CumulativeSurplusCard({
     const [fetchedGoals, setFetchedGoals] = useState<SavingsGoal[]>([]);
     const [derivedMonthlyCap, setDerivedMonthlyCap] = useState<number>(1500);
     const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
-    const updateGoalMutation = useUpdateGoalMutation();
+    const depositGoalMutation = useDepositGoalMutation();
 
     const goals = useMemo(
         () => propGoals || fetchedGoals || [],
@@ -237,14 +237,10 @@ export function CumulativeSurplusCard({
         for (const alloc of allocations) {
             const goal = goals.find((g) => g.id === alloc.goalId);
             if (goal) {
-                await updateGoalMutation.mutateAsync({
-                    id: goal.id,
-                    updates: {
-                        saved_so_far:
-                            Math.round(
-                                (goal.saved_so_far + alloc.amount) * 100,
-                            ) / 100,
-                    },
+                await depositGoalMutation.mutateAsync({
+                    goalId: goal.id,
+                    amount: alloc.amount,
+                    source: "sweep",
                 });
             }
         }

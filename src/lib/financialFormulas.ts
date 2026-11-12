@@ -25,6 +25,8 @@ import type {
     CategoryAllocationTarget,
     CategoryAllocation,
     SettlementSummary,
+    GoalDeposit,
+    SavingsGoal,
     GoalPacingResult,
     GoalStatus,
     MonthlySurplusPoint,
@@ -201,46 +203,180 @@ export function calculateSharedExpenseSettlement(
     }
 }
 
+/** 'YYYY-MM' of the calendar month before the reference date. */
+function previousMonthKey(ref: string): string {
+    const year = parseInt(ref.slice(0, 4), 10);
+    const month = parseInt(ref.slice(5, 7), 10);
+    return month === 1
+        ? `${year - 1}-12`
+        : `${year}-${String(month - 1).padStart(2, "0")}`;
+}
+
+const roundCents = (n: number): number => Math.round(n * 100) / 100;
+
 /**
- * 6. Calculates savings goal pacing status and required monthly contribution.
+ * 6. Calculates savings goal pacing for the current month.
  * Formula:
  *   Months Remaining = max(monthsBetween(today, targetDate), 1)
- *   Needed Per Month = max(targetAmount - savedSoFar, 0) / Months Remaining
+ *   Required This Month =
+ *     max(targetAmount - (savedSoFar - depositedThisMonth), 0) / Months Remaining
  * Status:
  *   - 'achieved': savedSoFar >= targetAmount
- *   - 'on_track': monthlyContribution >= neededPerMonth
- *   - 'behind': monthlyContribution < neededPerMonth
+ *   - 'behind': only once a month has closed short. The previous month's
+ *     required pace (same formula, evaluated as of that month) was not met,
+ *     and this month's deposits have not yet covered that shortfall plus
+ *     this month's required pace.
+ *   - 'on_track': otherwise, including mid-month while this month's pace
+ *     is still being met.
+ * `depositedLastMonth` is null/undefined when the goal did not exist last
+ * month, so there is nothing to be behind on yet.
  */
 export function calculateGoalPacing(
     targetAmount: number,
     savedSoFar: number,
     targetDate: string,
-    monthlyContribution: number,
+    depositedThisMonth: number,
     referenceDate?: string | Date,
+    depositedLastMonth?: number | null,
 ): GoalPacingResult {
+    const deposited = Math.max(depositedThisMonth || 0, 0);
     if (savedSoFar >= targetAmount) {
         return {
             status: "achieved",
             monthsRemaining: 0,
             neededPerMonth: 0,
+            depositedThisMonth: deposited,
+            carriedShortfall: 0,
+            shortfallThisMonth: 0,
         };
     }
 
     const ref = referenceDate || getTodayDateString();
-    const rawMonths = monthsBetween(ref, targetDate);
-    const monthsRemaining = Math.max(rawMonths, 1);
-    const remainingNeeded = Math.max(targetAmount - savedSoFar, 0);
-    const neededPerMonth =
-        Math.round((remainingNeeded / monthsRemaining) * 100) / 100;
+    const monthsRemaining = Math.max(monthsBetween(ref, targetDate), 1);
+    const remainingAtMonthStart = Math.max(
+        targetAmount - (savedSoFar - deposited),
+        0,
+    );
+    const neededPerMonth = roundCents(remainingAtMonthStart / monthsRemaining);
 
+    let carriedShortfall = 0;
+    if (depositedLastMonth !== null && depositedLastMonth !== undefined) {
+        const refStr =
+            typeof ref === "string"
+                ? ref
+                : `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+        const prevKey = previousMonthKey(refStr);
+        const lastDeposited = Math.max(depositedLastMonth, 0);
+        const prevMonthsRemaining = Math.max(
+            monthsBetween(prevKey, targetDate),
+            1,
+        );
+        const prevRemainingAtStart = Math.max(
+            targetAmount - (savedSoFar - deposited - lastDeposited),
+            0,
+        );
+        const prevRequired = roundCents(
+            prevRemainingAtStart / prevMonthsRemaining,
+        );
+        carriedShortfall = roundCents(
+            Math.max(prevRequired - lastDeposited, 0),
+        );
+    }
+
+    const shortfallThisMonth = roundCents(
+        Math.max(neededPerMonth + carriedShortfall - deposited, 0),
+    );
     const status: GoalStatus =
-        monthlyContribution >= neededPerMonth ? "on_track" : "behind";
+        carriedShortfall > 0 && shortfallThisMonth > 0 ? "behind" : "on_track";
 
     return {
         status,
         monthsRemaining,
         neededPerMonth,
+        depositedThisMonth: deposited,
+        carriedShortfall,
+        shortfallThisMonth,
     };
+}
+
+/** Sums a goal's ledger deposits dated in the reference date's calendar month. */
+export function sumGoalDepositsForMonth(
+    deposits: GoalDeposit[],
+    goalId: string,
+    referenceDate?: string | Date,
+): number {
+    const ref =
+        typeof referenceDate === "string"
+            ? referenceDate
+            : referenceDate
+              ? `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, "0")}`
+              : getTodayDateString();
+    const month = ref.slice(0, 7);
+    const total = deposits
+        .filter(
+            (d) => d.goal_id === goalId && d.deposited_at.slice(0, 7) === month,
+        )
+        .reduce((sum, d) => sum + Number(d.amount || 0), 0);
+    return roundCents(total);
+}
+
+/**
+ * Deposits for the reference month and the month before. `lastMonth` is null
+ * when the goal was created in the reference month (or later).
+ */
+export function getGoalMonthDeposits(
+    goal: Pick<SavingsGoal, "id" | "created_at">,
+    deposits: GoalDeposit[],
+    referenceDate?: string | Date,
+): { thisMonth: number; lastMonth: number | null } {
+    const ref =
+        typeof referenceDate === "string"
+            ? referenceDate
+            : referenceDate
+              ? `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, "0")}-01`
+              : getTodayDateString();
+    const thisKey = ref.slice(0, 7);
+    const createdKey = goal.created_at?.slice(0, 7);
+    const existedLastMonth = !!createdKey && createdKey < thisKey;
+    return {
+        thisMonth: sumGoalDepositsForMonth(deposits, goal.id, ref),
+        lastMonth: existedLastMonth
+            ? sumGoalDepositsForMonth(deposits, goal.id, previousMonthKey(ref))
+            : null,
+    };
+}
+
+/** Pacing for a goal using its ledger deposits for this and last month. */
+export function getGoalPacing(
+    goal: SavingsGoal,
+    deposits: GoalDeposit[],
+    referenceDate?: string | Date,
+): GoalPacingResult {
+    const { thisMonth, lastMonth } = getGoalMonthDeposits(
+        goal,
+        deposits,
+        referenceDate,
+    );
+    return calculateGoalPacing(
+        goal.target_amount,
+        goal.saved_so_far,
+        goal.target_date,
+        thisMonth,
+        referenceDate,
+        lastMonth,
+    );
+}
+
+/** Returns goals with `status` re-derived from this month's ledger deposits. */
+export function withDerivedGoalStatus(
+    goals: SavingsGoal[],
+    deposits: GoalDeposit[],
+    referenceDate?: string | Date,
+): SavingsGoal[] {
+    return goals.map((goal) => ({
+        ...goal,
+        status: getGoalPacing(goal, deposits, referenceDate).status,
+    }));
 }
 
 const looksLikeUuid = (value: string): boolean => isValidUuid(value);
@@ -326,10 +462,7 @@ export function computeSavingsBreakdown(input: {
 }
 
 export type CategoryCoverageStatus =
-    | "normal"
-    | "covered"
-    | "partially_covered"
-    | "uncovered";
+    "normal" | "covered" | "partially_covered" | "uncovered";
 
 export interface CategoryOverageItem {
     categoryId: string;
@@ -405,7 +538,10 @@ export function computeBufferAbsorption<
         const catName = c.category?.name || "Category";
         const allocated = Math.round((c.allocated_amount || 0) * 100) / 100;
         const actual = Math.round((c.actualSpent || 0) * 100) / 100;
-        const overage = Math.max(0, Math.round((actual - allocated) * 100) / 100);
+        const overage = Math.max(
+            0,
+            Math.round((actual - allocated) * 100) / 100,
+        );
         return {
             categoryId: catId,
             categoryName: catName,
@@ -458,16 +594,13 @@ export function computeBufferAbsorption<
             } else {
                 absorbed =
                     Math.round(
-                        totalAbsorbed *
-                            (item.overage / totalOverages) *
-                            100,
+                        totalAbsorbed * (item.overage / totalOverages) * 100,
                     ) / 100;
                 runningAbsorbed += absorbed;
             }
         }
 
-        const uncovered =
-            Math.round((item.overage - absorbed) * 100) / 100;
+        const uncovered = Math.round((item.overage - absorbed) * 100) / 100;
 
         const status: CategoryCoverageStatus =
             uncovered <= 0

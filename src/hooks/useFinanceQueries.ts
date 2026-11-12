@@ -40,6 +40,8 @@ import type {
     BonusEventsResult,
     SettleUpsResult,
     BonusSplitShare,
+    GoalDeposit,
+    GoalDepositSource,
 } from "../types/finance";
 
 export const queryKeys = {
@@ -47,6 +49,7 @@ export const queryKeys = {
     accounts: (perspective?: Perspective) =>
         ["finance", "accounts", perspective ?? "household"] as const,
     goals: ["finance", "goals"] as const,
+    goalDeposits: ["finance", "goal-deposits"] as const,
     recurringItems: ["finance", "recurringItems"] as const,
     expenses: (filter?: ExpenseFilter) =>
         ["finance", "expenses", filter ?? {}] as const,
@@ -128,6 +131,14 @@ export function useGoalsQuery() {
     return useQuery<SavingsGoal[]>({
         queryKey: queryKeys.goals,
         queryFn: () => financeService.getGoals(),
+    });
+}
+
+/** This month's ledger deposits, used to derive monthly goal pace. */
+export function useGoalDepositsQuery() {
+    return useQuery<GoalDeposit[]>({
+        queryKey: queryKeys.goalDeposits,
+        queryFn: () => financeService.getGoalDeposits(),
     });
 }
 
@@ -320,6 +331,9 @@ export function useInvalidateFinance() {
 
     const invalidateGoals = () => {
         queryClient.invalidateQueries({ queryKey: ["finance", "goals"] });
+        queryClient.invalidateQueries({
+            queryKey: ["finance", "goal-deposits"],
+        });
         queryClient.invalidateQueries({
             queryKey: ["finance", "household-overview"],
         });
@@ -671,7 +685,6 @@ export function useAddGoalMutation() {
                     target_amount: input.target_amount,
                     saved_so_far: input.saved_so_far ?? 0,
                     target_date: input.target_date,
-                    monthly_contribution: input.monthly_contribution ?? 0,
                     emoji: input.emoji || "🎯",
                     status:
                         (input.saved_so_far ?? 0) >= input.target_amount
@@ -743,6 +756,30 @@ export function useUpdateGoalMutation() {
                     );
                 }
             },
+            onSettled: () => {
+                invalidateGoals();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Records a ledger deposit (quick deposit, sweep) and raises the goal balance.
+ */
+export function useDepositGoalMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateGoals } = useInvalidateFinance();
+
+    return useMutation<
+        SavingsGoal,
+        Error,
+        { goalId: string; amount: number; source: GoalDepositSource }
+    >(
+        {
+            networkMode: "always",
+            mutationFn: ({ goalId, amount, source }) =>
+                financeService.depositToGoal(goalId, amount, source),
             onSettled: () => {
                 invalidateGoals();
             },

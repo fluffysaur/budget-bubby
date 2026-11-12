@@ -283,7 +283,6 @@ describe("supabaseFinanceService bonus log", () => {
                     target_amount: 10000,
                     saved_so_far: 0,
                     target_date: "2027-12-31",
-                    monthly_contribution: 0,
                 },
                 error: null,
             },
@@ -306,7 +305,6 @@ describe("supabaseFinanceService bonus log", () => {
                     target_amount: 10000,
                     saved_so_far: 0,
                     target_date: "2027-12-31",
-                    monthly_contribution: 0,
                 },
                 error: null,
             },
@@ -443,6 +441,36 @@ describe("mockFinanceService bonus log", () => {
         expect((await mockFinanceService.getBonusEvents()).events).toHaveLength(
             0,
         );
+    });
+
+    it("mirrors bonus funding into the goal deposit ledger and keeps it in sync", async () => {
+        const input = await baseInput();
+        const goalId = input.goal_contributions[0].goal_id;
+        const created = await mockFinanceService.saveBonusEvent(input);
+
+        let deposits = await mockFinanceService.getGoalDeposits();
+        let bonus = deposits.filter((d) => d.bonus_event_id === created.id);
+        expect(bonus).toHaveLength(1);
+        expect(bonus[0]).toMatchObject({
+            goal_id: goalId,
+            amount: 3200,
+            source: "bonus",
+        });
+
+        await mockFinanceService.saveBonusEvent({
+            ...input,
+            id: created.id,
+            goal_contributions: [{ goal_id: goalId, amount: 1000 }],
+        });
+        deposits = await mockFinanceService.getGoalDeposits();
+        bonus = deposits.filter((d) => d.bonus_event_id === created.id);
+        expect(bonus.map((d) => d.amount)).toEqual([1000]);
+
+        await mockFinanceService.deleteBonusEvent(created.id);
+        deposits = await mockFinanceService.getGoalDeposits();
+        expect(
+            deposits.filter((d) => d.bonus_event_id === created.id),
+        ).toHaveLength(0);
     });
 
     it("clamps the reversal at zero", async () => {

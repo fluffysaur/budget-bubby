@@ -178,7 +178,6 @@ describe("Big-Ticket Goals Sinking Fund & Drawdown", () => {
         target_amount: 55000.0,
         saved_so_far: 50000.0,
         target_date: "2027-05-01",
-        monthly_contribution: 0,
         emoji: "💍",
         status: "achieved",
     };
@@ -299,7 +298,7 @@ describe("Big-Ticket Goals Sinking Fund & Drawdown", () => {
         const goals = await financeService.getGoals();
         const updatedWedding = goals.find((g) => g.id === "goal-00000000-0501");
         expect(updatedWedding).toBeDefined();
-        expect(updatedWedding?.saved_so_far).toBe(50000.0);
+        expect(updatedWedding?.saved_so_far).toBe(55000.0);
     });
 
     it("excludes goal-funded spend from blowing up normal monthly spendable category caps", async () => {
