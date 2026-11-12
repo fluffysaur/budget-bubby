@@ -120,7 +120,9 @@ describe("AutoCaptureSection", () => {
         const stepsContainer = await screen.findByTestId(
             "auto-capture-setup-steps",
         );
-        const buttons = within(stepsContainer).getAllByRole("button");
+        const buttons = within(stepsContainer)
+            .getAllByRole("button")
+            .filter((b) => b.hasAttribute("aria-expanded"));
         expect(buttons[0]).toHaveTextContent("Android Setup");
         expect(buttons[0]).toHaveAttribute("aria-expanded", "true");
         expect(buttons[1]).toHaveTextContent("iPhone Setup");
@@ -140,11 +142,59 @@ describe("AutoCaptureSection", () => {
         );
         renderSection();
         const iosSteps = await screen.findByTestId("auto-capture-setup-steps");
-        const iosButtons = within(iosSteps).getAllByRole("button");
+        const iosButtons = within(iosSteps)
+            .getAllByRole("button")
+            .filter((b) => b.hasAttribute("aria-expanded"));
         expect(iosButtons[0]).toHaveTextContent("iPhone Setup");
         expect(iosButtons[0]).toHaveAttribute("aria-expanded", "true");
         expect(iosButtons[1]).toHaveTextContent("Android Setup");
         expect(iosButtons[1]).toHaveAttribute("aria-expanded", "false");
         expect(iosButtons[2]).toHaveTextContent("Bank Alerts");
+    });
+
+    it("provides copyable valid JSON bodies for Google Wallet, Bank SMS, and Bank Notifications", async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, "clipboard", {
+            configurable: true,
+            value: { writeText },
+        });
+        vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue(
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8)",
+        );
+
+        renderSection();
+        const steps = await screen.findByTestId("auto-capture-setup-steps");
+        const walletCode = within(steps).getByTestId("google-wallet-json");
+        expect(JSON.parse(walletCode.textContent ?? "")).toEqual({
+            amount: "[notification]",
+            merchant: "[not_title]",
+            card: "Google Wallet",
+            source: "android",
+        });
+
+        fireEvent.click(within(steps).getByRole("button", { name: "Bank Alerts" }));
+        const smsCode = await within(steps).findByTestId("bank-sms-json");
+        const notifCode = within(steps).getByTestId("bank-notification-json");
+
+        expect(JSON.parse(smsCode.textContent ?? "")).toEqual({
+            raw_text: "[sms_message]",
+            sender: "[sms_number]",
+            source: "sms",
+        });
+        expect(JSON.parse(notifCode.textContent ?? "")).toEqual({
+            raw_text: "[notification]",
+            title: "[not_title]",
+            app: "[not_app_name]",
+            source: "bank",
+        });
+
+        fireEvent.click(
+            within(steps).getByRole("button", {
+                name: "Copy Notification Received JSON",
+            }),
+        );
+        await waitFor(() =>
+            expect(writeText).toHaveBeenCalledWith(notifCode.textContent),
+        );
     });
 });

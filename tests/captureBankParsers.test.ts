@@ -212,3 +212,89 @@ describe("parseBankAlert: dates", () => {
         expect(res.occurredAt).toBeNull();
     });
 });
+
+describe("parseBankAlert: digital banks and notification context", () => {
+    it.each([
+        {
+            bank: "DBS",
+            text: "digibank: You paid SGD 4.50 to KOPI CORNER.",
+        },
+        {
+            bank: "Trust",
+            text: "Trust Bank: You spent S$9.20 at SAMPLE GROCER.",
+        },
+        {
+            bank: "GXS",
+            text: "GXS: Payment of SGD 15.00 to DEMO SHOP was completed.",
+        },
+        {
+            bank: "MariBank",
+            text: "MariBank: You transferred SGD 20.00 to ALEX DEMO.",
+        },
+        {
+            bank: "YouTrip",
+            text: "YouTrip: You spent USD 14.99 at ONLINE STORE.",
+        },
+        {
+            bank: "Revolut",
+            text: "Revolut: Paid EUR 8.50 at BAKERY SAMPLE.",
+        },
+        {
+            bank: "Wise",
+            text: "Wise: You spent GBP 12.00 at LONDON CAFE.",
+        },
+    ])("detects $bank", ({ bank, text }) => {
+        expect(charge(text).bank).toBe(bank);
+    });
+
+    it("uses title, app, and sender as context without trusting phone numbers", () => {
+        const fromApp = parseBankAlert(
+            "You spent S$6.80 at DEMO BAKERY.",
+            NOW,
+            { title: "Card Transaction", app: "digibank" },
+        );
+        expect(fromApp).toMatchObject({
+            kind: "charge",
+            bank: "DBS",
+            amount: 6.8,
+            merchant: "DEMO BAKERY",
+        });
+
+        const fromTitleSplit = parseBankAlert("at SAMPLE CAFE", NOW, {
+            title: "Paid SGD 5.20",
+            app: "Trust",
+        });
+        expect(fromTitleSplit).toMatchObject({
+            kind: "charge",
+            bank: "Trust",
+            amount: 5.2,
+            merchant: "SAMPLE CAFE",
+        });
+
+        const fromPhoneSender = parseBankAlert(
+            "Card ending 1234: S$3.50 spent at KOPI CORNER.",
+            NOW,
+            { sender: "+6591234567" },
+        );
+        expect(fromPhoneSender).toMatchObject({
+            kind: "charge",
+            bank: null,
+        });
+    });
+
+    it("checks ignore keywords in the notification title", () => {
+        expect(
+            parseBankAlert("123456 for SGD 12.50 at GRAB*FOOD.", NOW, {
+                title: "One-Time Password",
+                app: "digibank",
+            }),
+        ).toEqual({ kind: "ignore", reason: "otp" });
+    });
+
+    it("does not false-match Trust or Wise inside a sentence", () => {
+        const res = charge(
+            "Card ending 1234: SGD 10.00 spent at STREETWISE CAFE. Do not trust unsolicited calls.",
+        );
+        expect(res.bank).toBeNull();
+    });
+});
