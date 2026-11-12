@@ -17,6 +17,12 @@ export const MAX_RAW_TEXT_LENGTH = 1000;
 
 export type IgnoreReason = "otp" | "declined" | "incoming" | "not_a_charge";
 
+export interface BankAlertContext {
+    title?: string | null;
+    sender?: string | null;
+    app?: string | null;
+}
+
 export type BankAlert =
     | {
           kind: "charge";
@@ -44,12 +50,18 @@ const OUTBOUND =
 
 const BANKS: readonly [RegExp, string][] = [
     [/\bposb\b/i, "POSB"],
-    [/\b(?:dbs|paylah)\b/i, "DBS"],
+    [/\b(?:dbs|paylah|digibank)\b/i, "DBS"],
     [/\bocbc\b/i, "OCBC"],
     [/\buob\b/i, "UOB"],
     [/\b(?:scb|standard chartered|stanchart)\b/i, "Standard Chartered"],
     [/\bciti(?:bank)?\b/i, "Citibank"],
     [/\bhsbc\b/i, "HSBC"],
+    [/^trust\b|\btrust\s+(?:bank|card)\b/i, "Trust"],
+    [/\bgxs\b/i, "GXS"],
+    [/\bmaribank\b/i, "MariBank"],
+    [/\byoutrip\b/i, "YouTrip"],
+    [/\brevolut\b/i, "Revolut"],
+    [/^wise\b|\bwise\s+(?:card|account)\b/i, "Wise"],
 ];
 
 const CODES =
@@ -231,14 +243,25 @@ function findDate(text: string, now: Date): Date | null {
     return null;
 }
 
-export function parseBankAlert(raw: string, now: Date): BankAlert {
+export function parseBankAlert(
+    raw: string,
+    now: Date,
+    context?: BankAlertContext,
+): BankAlert {
     const text = normalizeText(raw);
-    if (OTP.test(text)) return { kind: "ignore", reason: "otp" };
-    if (DECLINED.test(text)) return { kind: "ignore", reason: "declined" };
-    if (INCOMING.test(text)) return { kind: "ignore", reason: "incoming" };
-    if (!OUTBOUND.test(text)) return { kind: "ignore", reason: "not_a_charge" };
+    const title = context?.title ? normalizeText(context.title) : "";
+    const app = context?.app ? normalizeText(context.app) : "";
+    const sender = context?.sender ? normalizeText(context.sender) : "";
+    const combined = [title, text].filter(Boolean).join(". ");
 
-    const amountMatch = text.match(AMOUNT);
+    if (OTP.test(combined)) return { kind: "ignore", reason: "otp" };
+    if (DECLINED.test(combined)) return { kind: "ignore", reason: "declined" };
+    if (INCOMING.test(combined)) return { kind: "ignore", reason: "incoming" };
+    if (!OUTBOUND.test(combined)) {
+        return { kind: "ignore", reason: "not_a_charge" };
+    }
+
+    const amountMatch = text.match(AMOUNT) ?? title.match(AMOUNT);
     if (!amountMatch) return { kind: "ignore", reason: "not_a_charge" };
     const rawAmount = amountMatch[0].trim();
     const amount = parseCapturedAmount(rawAmount);
@@ -249,8 +272,12 @@ export function parseBankAlert(raw: string, now: Date): BankAlert {
         amount: amount.amount,
         currency: amount.currency,
         rawAmount,
-        merchant: findMerchant(text),
-        occurredAt: findDate(text, now),
-        bank: detectBank(text),
+        merchant: findMerchant(text) ?? findMerchant(title),
+        occurredAt: findDate(text, now) ?? findDate(title, now),
+        bank:
+            detectBank(text) ??
+            detectBank(title) ??
+            detectBank(app) ??
+            detectBank(sender),
     };
 }

@@ -42,15 +42,27 @@ export interface AutoCaptureSectionProps {
 
 const EMPTY_TOKENS: CaptureToken[] = [];
 
-function CopyRow({
-    label,
-    value,
-    testId,
-}: {
-    label: string;
-    value: string;
-    testId: string;
-}) {
+const GOOGLE_WALLET_BODY = `{
+  "amount": "[notification]",
+  "merchant": "[not_title]",
+  "card": "Google Wallet",
+  "source": "android"
+}`;
+
+const BANK_SMS_BODY = `{
+  "raw_text": "[sms_message]",
+  "sender": "[sms_number]",
+  "source": "sms"
+}`;
+
+const BANK_NOTIFICATION_BODY = `{
+  "raw_text": "[notification]",
+  "title": "[not_title]",
+  "app": "[not_app_name]",
+  "source": "bank"
+}`;
+
+function useCopyText(value: string) {
     const [copied, setCopied] = useState(false);
     const handleCopy = async () => {
         try {
@@ -61,6 +73,19 @@ function CopyRow({
             // Clipboard blocked: the value stays selectable
         }
     };
+    return { copied, handleCopy };
+}
+
+function CopyRow({
+    label,
+    value,
+    testId,
+}: {
+    label: string;
+    value: string;
+    testId: string;
+}) {
+    const { copied, handleCopy } = useCopyText(value);
     return (
         <div>
             <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
@@ -86,6 +111,45 @@ function CopyRow({
                     {copied ? "Copied" : "Copy"}
                 </Button>
             </div>
+        </div>
+    );
+}
+
+function CopyJsonBlock({
+    label,
+    value,
+    testId,
+}: {
+    label: string;
+    value: string;
+    testId: string;
+}) {
+    const { copied, handleCopy } = useCopyText(value);
+    return (
+        <div className="mt-1.5">
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
+                    {label}
+                </span>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={handleCopy}
+                    aria-label={`Copy ${label}`}
+                    leftIcon={
+                        <Copy className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    }
+                >
+                    {copied ? "Copied" : "Copy"}
+                </Button>
+            </div>
+            <pre className="mt-1 overflow-x-auto rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-2 font-mono text-[11px] leading-relaxed text-(--text-ink)">
+                <code data-testid={testId} className="select-all">
+                    {value}
+                </code>
+            </pre>
         </div>
     );
 }
@@ -126,14 +190,17 @@ function AndroidSetupSteps({ defaultOpen }: { defaultOpen: boolean }) {
                     Add a macro. Trigger: Notification Received, app Google
                     Wallet.
                 </li>
-                <li>
-                    Action: HTTP Request, POST to the URL above, content type
-                    JSON.
-                </li>
+                <li>Action: HTTP Request, POST to the URL above.</li>
                 <li>Header Authorization: Bearer, a space, then your token.</li>
                 <li>
-                    Body: amount = notification text, merchant = notification
-                    title, source = android.
+                    Content Body: set Data Type to{" "}
+                    <code className="font-mono">application/json</code> and
+                    paste:
+                    <CopyJsonBlock
+                        label="Google Wallet JSON"
+                        value={GOOGLE_WALLET_BODY}
+                        testId="google-wallet-json"
+                    />
                 </li>
                 <li>Pay S$1 with Google Wallet to test. It lands in Inbox.</li>
             </ol>
@@ -150,19 +217,30 @@ function BankAlertSteps() {
                     misses. Turn on bank alerts first.
                 </li>
                 <li>
-                    New macro, same token. Trigger: SMS Received, or
-                    Notification Received for your bank apps.
+                    Make two macros (or an If/Else on trigger) with the same
+                    URL, Authorization header, and Data Type{" "}
+                    <code className="font-mono">application/json</code>.
                 </li>
                 <li>
-                    Action: HTTP Request, POST to the URL above with the same
-                    Authorization header.
+                    Bank SMS — Trigger: SMS Received (Any contact or bank
+                    senders):
+                    <CopyJsonBlock
+                        label="SMS Received JSON"
+                        value={BANK_SMS_BODY}
+                        testId="bank-sms-json"
+                    />
                 </li>
                 <li>
-                    Body: raw_text = the message text, source = sms. OTPs and
-                    incoming money are skipped.
+                    Bank Apps — Trigger: Notification Received (your bank apps):
+                    <CopyJsonBlock
+                        label="Notification Received JSON"
+                        value={BANK_NOTIFICATION_BODY}
+                        testId="bank-notification-json"
+                    />
                 </li>
                 <li>
-                    Wallet and SMS for one purchase within 2 minutes count once.
+                    OTPs and incoming money are skipped. Wallet and bank alerts
+                    within 2 minutes count once.
                 </li>
             </ol>
         </CollapsibleSection>

@@ -81,19 +81,17 @@ Steps:
 5. **Action:** Connectivity › **HTTP Request**.
     - **URL:** the endpoint from step 2. **Method:** `POST`.
     - **Header:** `Authorization` = `Bearer ` + your token (one space after "Bearer").
-    - **Content type:** `application/json`.
-    - **Body:** use the magic text button (`{}`) to insert the notification fields:
+    - **Content type / Data type:** `application/json`.
+    - **Body:** paste this JSON (or insert `[notification]` and `[not_title]` via MacroDroid's magic text `{}` button):
 
         ```json
         {
-            "amount": "<notification text>",
-            "merchant": "<notification title>",
+            "amount": "[notification]",
+            "merchant": "[not_title]",
             "card": "Google Wallet",
             "source": "android"
         }
         ```
-
-        Replace `<notification text>` and `<notification title>` with the magic text values for the notification text and title.
 6. **Constraint (optional):** add a Wi-Fi or "Connected to internet" constraint so a failed send isn't silent. Without a connection the purchase isn't captured, so log it by hand.
 7. Save, then pay for something small. It should show up in the Inbox within a few seconds. Discard the test item.
 
@@ -110,31 +108,51 @@ If nothing arrives, check in this order: MacroDroid has Notification access, the
 
 ## 3b. Android (MacroDroid + bank SMS or app alerts)
 
-> **Status:** the server reads the usual alert wording of DBS/POSB, OCBC, UOB, Standard Chartered, Citibank and HSBC, plus generic card SMS. The patterns were written from typical wording, not checked against every bank's live messages. Test with a small payment and check the Inbox item before relying on it.
+> **Status:** the server reads the usual alert wording of DBS/POSB (`digibank`, `PayLah!`), OCBC, UOB, Standard Chartered, Citibank, HSBC, Trust, GXS, MariBank, YouTrip, Revolut and Wise, plus generic card SMS. The patterns were written from typical wording, not checked against every bank's live messages. Test with a small payment and check the Inbox item before relying on it.
 
 This catches what Google Wallet misses: physical card taps, online card payments, and PayNow or FAST transfers you send. Turn on transaction alerts in your bank app first (SMS, push, or both).
 
-Steps:
+`SMS Received` and `Notification Received` use different MacroDroid magic text tags and `source` values, so create **two macros** (or branch with an `If` on trigger fired) using the same endpoint URL, `Authorization` header, and Data Type `application/json`:
 
-1. Make a small payment and read the alert. It should name an amount with a currency (`SGD 4.50`, `S$4.50`) and usually a merchant or payee after "at" or "to".
-2. In MacroDroid, tap **Add Macro**. Name it `Budget Bubby bank alerts`. Use the same token as your Wallet macro so duplicates are matched.
-3. **Trigger**, either or both:
-    - Phone/SMS › **SMS Received**: from **Any contact**, content **Any**. To narrow it down, pick your banks' sender names (for example `DBS`, `OCBC`).
-    - Device Events › **Notification Received**: select your bank apps (for example digibank, OCBC, UOB TMRW).
-4. **Action:** Connectivity › **HTTP Request**, set up like section 3 (URL, `POST`, `Authorization` header, `application/json`), with this body:
+### Macro A: Bank SMS
+
+1. Make a small payment and read the SMS. It should name an amount with a currency (`SGD 4.50`, `S$4.50`) and usually a merchant or payee after "at" or "to".
+2. In MacroDroid, tap **Add Macro**. Name it `Budget Bubby bank SMS`. Use the same token as your Wallet macro so duplicates are matched.
+3. **Trigger:** Phone/SMS › **SMS Received** — from **Any contact**, content **Any** (or narrow it down to sender names like `DBS`, `OCBC`).
+4. **Action:** Connectivity › **HTTP Request**, set up like section 3 (URL, `POST`, `Authorization` header, Data Type `application/json`), with this body:
 
     ```json
-    { "raw_text": "<message text>", "source": "sms" }
+    {
+        "raw_text": "[sms_message]",
+        "sender": "[sms_number]",
+        "source": "sms"
+    }
     ```
 
-    Replace `<message text>` with the SMS text magic value, or the notification text for app alerts (use `"source":"bank"` for those).
-
 5. Save, then pay for something small. It should show up in the Inbox with the bank name as the card. Discard the test item.
+
+### Macro B: Bank app notifications
+
+1. In MacroDroid, tap **Add Macro**. Name it `Budget Bubby bank alerts`. Use the same token as your Wallet macro.
+2. **Trigger:** Device Events › **Notification Received** — select your bank apps (for example `digibank`, `OCBC`, `UOB TMRW`, `Trust`, `GXS`, `MariBank`).
+3. **Action:** Connectivity › **HTTP Request**, set up like section 3 (URL, `POST`, `Authorization` header, Data Type `application/json`), with this body:
+
+    ```json
+    {
+        "raw_text": "[notification]",
+        "title": "[not_title]",
+        "app": "[not_app_name]",
+        "source": "bank"
+    }
+    ```
+
+4. Save and test with a small payment. Discard the test item.
 
 What the server does with `raw_text`:
 
 - **Ignored** (`200 {"status":"ignored"}`, nothing added): OTPs and verification codes, declined or unsuccessful charges, and incoming money (received, credited, refunds, salary).
 - **Captured:** the first amount with a currency, the merchant or payee after "at"/"to", and the date and time in the message, read as Singapore time. If no merchant is named, the item is called `<Bank> alert` so you can rename it in the Inbox.
+- **Title, sender, and app fallback:** `title` is also checked for OTP/declined/incoming keywords, amount, and merchant; `title`, `app`, and `sender` are used as fallbacks to identify the bank when `raw_text` doesn't name it (numeric phone senders are ignored). Multi-line SMS/notifications injected into JSON are handled automatically.
 - **Wallet + SMS for one purchase:** if another source (such as your Wallet macro) already sent the same amount and currency within 2 minutes, the second one comes back as `duplicate`. Wallet and bank alerts often give different merchant names, so this check uses only the amount, currency and time.
 - `amount`, `merchant`, `card` and `occurred_at` sent next to `raw_text` win over what's parsed from it.
 
@@ -154,7 +172,10 @@ Content-Type: application/json
   "card": "DBS Altitude",           // optional
   "occurred_at": "2026-11-05T12:34:56+08:00",  // optional ISO-8601 ("timestamp" also accepted)
   "source": "android",              // optional label, a-z 0-9 _ -
-  "raw_text": "Your DBS card ending 1234 was used for SGD12.50 …"  // optional, up to 1000 chars; see 3b
+  "raw_text": "Your DBS card ending 1234 was used for SGD12.50 …", // optional, up to 1000 chars; see 3b
+  "title": "DBS digibank",          // optional notification title used with raw_text
+  "sender": "DBS",                  // optional SMS sender used for bank fallback
+  "app": "digibank"                 // optional notification app name used for bank fallback
 }
 ```
 

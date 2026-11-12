@@ -10,7 +10,9 @@
  *   Authorization: Bearer bb_cap_<43 chars>
  *   { "amount": "S$12.50" | 12.5, "currency"?: "SGD", "merchant": "GRAB*FOOD",
  *     "card"?: "DBS Altitude", "occurred_at"? | "timestamp"?: ISO-8601,
- *     "source"?: "wallet" | "android" | ..., "raw_text"?: "<bank alert or SMS>" }
+ *     "source"?: "wallet" | "android" | ..., "raw_text"?: "<bank alert or SMS>",
+ *     "title"?: "<notification title>", "sender"?: "<SMS sender>",
+ *     "app"?: "<notification app>" }
  *
  * `raw_text` lets an automation forward a whole bank notification or SMS.
  * The server reads the amount, merchant and time from it (explicit fields
@@ -148,6 +150,67 @@ function normalizeSource(value: unknown): string {
     return /^[a-z0-9_-]{1,24}$/.test(s) ? s : "api";
 }
 
+/**
+ * MacroDroid injects `[sms_message]` / `[notification]` straight into a JSON
+ * body, so multi-line alerts introduce raw newlines/tabs inside string
+ * literals. Escape control chars only inside strings on fallback.
+ */
+function escapeRawControlCharsInJsonStrings(raw: string): string {
+    let out = "";
+    let inString = false;
+    let escaped = false;
+    for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (!inString) {
+            if (ch === "\"") inString = true;
+            out += ch;
+            continue;
+        }
+        if (escaped) {
+            out += ch;
+            escaped = false;
+            continue;
+        }
+        if (ch === "\\") {
+            out += ch;
+            escaped = true;
+            continue;
+        }
+        if (ch === "\"") {
+            inString = false;
+            out += ch;
+            continue;
+        }
+        const code = ch.charCodeAt(0);
+        if (code < 0x20 || code === 0x7f) {
+            if (ch === "\n") out += "\\n";
+            else if (ch === "\r") out += "\\r";
+            else if (ch === "\t") out += "\\t";
+            else out += " ";
+            continue;
+        }
+        out += ch;
+    }
+    return out;
+}
+
+function parseCaptureBody(bodyText: string): Record<string, unknown> | null {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(bodyText);
+    } catch {
+        try {
+            parsed = JSON.parse(escapeRawControlCharsInJsonStrings(bodyText));
+        } catch {
+            return null;
+        }
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return null;
+    }
+    return parsed as Record<string, unknown>;
+}
+
 /** The capture time: the sent one if plausible, otherwise now. */
 export function resolveCapturedAt(raw: unknown, now: Date): Date {
     if (typeof raw !== "string" || raw.length > 64) return now;
@@ -212,26 +275,27 @@ export async function handleCapture(
             return reply(429, { error: "rate_limited", retry_after: 3600 });
         }
 
-        let body: Record<string, unknown>;
-        try {
-            const parsed = JSON.parse(req.bodyText);
-            if (
-                !parsed ||
-                typeof parsed !== "object" ||
-                Array.isArray(parsed)
-            ) {
-                return reply(400, { error: "invalid_json" });
-            }
-            body = parsed as Record<string, unknown>;
-        } catch {
-            return reply(400, { error: "invalid_json" });
-        }
+        const body = parseCaptureBody(req.bodyText);
+        if (!body) return reply(400, { error: "invalid_json" });
+
+        const rawAlertText =
+            typeof body.raw_text === "string" ? body.raw_text.trim() : "";
+        const alertTitle =
+            typeof body.title === "string" ? body.title.trim() : "";
+        const alertSender =
+            typeof body.sender === "string" ? body.sender.trim() : "";
+        const alertApp = typeof body.app === "string" ? body.app.trim() : "";
 
         let alert: Extract<BankAlert, { kind: "charge" }> | null = null;
-        if (typeof body.raw_text === "string" && body.raw_text.trim()) {
+        if (rawAlertText || alertTitle) {
             const parsedAlert = parseBankAlert(
-                body.raw_text.slice(0, MAX_RAW_TEXT_LENGTH),
+                rawAlertText.slice(0, MAX_RAW_TEXT_LENGTH),
                 now,
+                {
+                    title: alertTitle.slice(0, MAX_RAW_TEXT_LENGTH),
+                    sender: alertSender.slice(0, MAX_CARD_LENGTH),
+                    app: alertApp.slice(0, MAX_CARD_LENGTH),
+                },
             );
             if (parsedAlert.kind === "ignore") {
                 return reply(200, {

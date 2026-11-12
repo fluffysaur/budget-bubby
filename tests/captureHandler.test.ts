@@ -351,6 +351,24 @@ describe("handleCapture with raw_text", () => {
         expect(deps.insertItem).not.toHaveBeenCalled();
         expect(deps.touchToken).toHaveBeenCalled();
     });
+
+    it("accepts multi-line MacroDroid JSON and uses title/app/sender context", async () => {
+        const deps = makeDeps();
+        const rawJsonWithLiteralNewlines =
+            '{\n  "raw_text": "Amount: SGD 18.00\nTo: CASEY PLACEHOLDER",\n  "title": "Payment Alert",\n  "app": "digibank",\n  "source": "bank"\n}';
+        const res = await handleCapture(
+            deps,
+            req(rawJsonWithLiteralNewlines),
+        );
+        expect(res.status).toBe(201);
+        expect(vi.mocked(deps.insertItem).mock.calls[0][0]).toMatchObject({
+            source: "bank",
+            merchant: "Casey Placeholder",
+            amount: 18,
+            currency: "SGD",
+            card_name: "DBS",
+        });
+    });
 });
 
 describe("resolveCapturedAt", () => {
