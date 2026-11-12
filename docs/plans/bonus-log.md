@@ -41,7 +41,7 @@ Goals:
 | Supabase: synthesized month sets `bonus: 0` | `src/services/supabaseFinanceService.ts:736` |
 | Supabase: **bonus is added into `after_deductions`, so it inflates category caps** | `src/services/supabaseFinanceService.ts:784-797` (caps recomputed `:793-796`) |
 | Mock: same inflation | `src/services/mockFinanceService.ts:495-502`, `:704-713`; synthesized `bonus: 0` at `:584` |
-| No UI writes `bonus` (BaseProfileEditorModal only writes salary/CPF/taxes/insurance) | `src/components/budget/BaseProfileEditorModal.tsx:637-660` |
+| No UI writes `bonus` (BudgetEditorModal only writes salary/CPF/taxes/insurance) | `src/components/budget/BudgetEditorModal.tsx:637-660` |
 | Goals have no contribution ledger. Funding = increment `saved_so_far` via `updateGoal` | `QuickDepositModal.tsx:65,89`; sweep `src/pages/ExpensesPage.tsx:166-178` |
 | `updateGoal` re-derives pacing `status` client-side | `src/services/supabaseFinanceService.ts:1115-1141` |
 | Goal distribution UX to copy (select goals, Split evenly / All to top, $/% modes) | `src/components/budget/SurplusSweepModal.tsx:41-230` |
@@ -524,7 +524,7 @@ Footer: `Button variant="ghost"` "Cancel" and `Button variant="primary"` **"Next
 
 - Summary line: `S$X net to split`.
 - Five bucket rows, each with a label, a `%` `Input` (whole numbers) and a `CurrencyText` amount. Amounts come from `computeBonusSplit`.
-    - Editing one % rebalances the unlocked buckets with `autoBalanceAllocations`. A lock toggle per row follows the BaseProfileEditorModal precedent.
+    - Editing one % rebalances the unlocked buckets with `autoBalanceAllocations`. A lock toggle per row follows the BudgetEditorModal precedent.
     - A ghost "Reset" restores the saved default.
 - **The Goals bucket expands into a goal picker (`BonusGoalPicker.tsx`):**
     - Eligible goals: active (`status !== 'achieved'`, saved < target) and owned by the recipient or joint (`owner_id` null). Recipient's goals are listed first.

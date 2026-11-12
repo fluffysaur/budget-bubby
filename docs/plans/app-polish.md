@@ -248,7 +248,7 @@ Expect merge conflicts between lanes in `ExpensesPage.tsx`, `supabaseFinanceServ
    - `.animate-pop`: fade plus scale.
    - `.transition-press`: transform, box-shadow and colours, over `--duration-instant`.
    - `.progress-fill`: width or `scaleX`, over `--duration-slow`, using `@starting-style` so it fills from 0 on mount.
-4. **Fix the dead animation classes.** Replace every `animate-in`, `fade-in`, `zoom-in-*`, `slide-in-from-*` and `animate-slide-up` usage with `.animate-enter` or `.animate-pop`. The list is in motion audit section 0: CollapsibleSection, Input, Select, Textarea, AppHeader, NotificationCenterPopover, MonthPicker, CategoryLimitWarningBanner, BaseProfileEditorModal, PinLoginScreen and PWAUpdateToast. Confirm none are left with `grep -rn "animate-in\|slide-in-from\|zoom-in-\|animate-slide-up" src`.
+4. **Fix the dead animation classes.** Replace every `animate-in`, `fade-in`, `zoom-in-*`, `slide-in-from-*` and `animate-slide-up` usage with `.animate-enter` or `.animate-pop`. The list is in motion audit section 0: CollapsibleSection, Input, Select, Textarea, AppHeader, NotificationCenterPopover, MonthPicker, CategoryLimitWarningBanner, BudgetEditorModal, PinLoginScreen and PWAUpdateToast. Confirm none are left with `grep -rn "animate-in\|slide-in-from\|zoom-in-\|animate-slide-up" src`.
 5. **`transition-all`.**
    - In `Button`, `Card`, `SegmentedTabs`, `CollapsibleSection`, `MobileBottomNav` and `DesktopSidebar`, replace it with `transition-press` or explicit properties.
    - Replace the remaining long tail where the change is purely mechanical. Leave any uncertain ones and note the count in the PR body.
@@ -337,7 +337,7 @@ Text only, using existing components. Number density and new visuals are #9.
 5. **Confirm modals** (BankSurplus, SurplusSweep, DeleteAccount, DeleteExpense): one sentence each. Drop "This action cannot be undone" when the button already says Delete.
 6. **Developer-facing text.** Alerts that mention migrations, Supabase or tables become user-facing copy (`Couldn't load. Retry?`). Keep technical details in `console.error`.
 7. **"Rose Cap Exceeded"** → `Over` (and fix any other colour words used as copy).
-8. **Gap in the audit.** The audit did not read these modals line by line, so do that now and apply the same rules: `ExpenseFormModal`, `BaseProfileEditorModal`, `ManageCategoriesModal`, `BulkAddExpenseModal`, `ExpenseFilterBar`.
+8. **Gap in the audit.** The audit did not read these modals line by line, so do that now and apply the same rules: `ExpenseFormModal`, `BudgetEditorModal`, `ManageCategoriesModal`, `BulkAddExpenseModal`, `ExpenseFilterBar`.
 9. Update unit and e2e tests that assert on old strings. Change the assertion, never delete the test.
 
 **Screenshots:** The 10 screens in `audits/copy.md` section 0, at 360 wide, light mode. Dark mode is not needed for a text-only PR.

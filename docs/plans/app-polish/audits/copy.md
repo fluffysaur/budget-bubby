@@ -3,7 +3,7 @@
 > Snapshot from 2026-11-07, taken on `feat/delight-bubby` before it merged. Line numbers may drift; search for the quoted code if a line does not match.
 
 
-Scope: src/pages and src/components. Method: string sweep plus close reads of the densest screens. Paths below are relative to src/. Line numbers are as of branch feat/delight-bubby. This is not a line-by-line read of the biggest form modals (ExpenseFormModal, BaseProfileEditorModal, ManageCategoriesModal, BulkAddExpenseModal, ExpenseFilterBar), so findings there are partial.
+Scope: src/pages and src/components. Method: string sweep plus close reads of the densest screens. Paths below are relative to src/. Line numbers are as of branch feat/delight-bubby. This is not a line-by-line read of the biggest form modals (ExpenseFormModal, BudgetEditorModal, ManageCategoriesModal, BulkAddExpenseModal, ExpenseFilterBar), so findings there are partial.
 
 Overall: the pages are mostly clean. Page headers (Home, Spend, Accounts, Plan, Budget, Goals, Recurring, Inbox) and the 2-word empty-state titles on the new pages follow AGENTS.md section 6. The debt sits in older components (credit cards, goals, trends, cumulative surplus, category lists, modals) and in number density on phone screens.
 
@@ -149,10 +149,10 @@ Legend: **R6** = AGENTS.md section 6 rule. Each row: location - current text - p
 | CumulativeSurplusCard.tsx:370-374 | "Recent 6-Month Rollover Breakdown", "Spendable Cap vs Non-Goal Spend" | Two long labels. | `Last 6 Months` plus a `Sparkline`. |
 | components/budget/BonusAllocationCollapsible.tsx:39 | subtitle `Net S$X · Split bonus` | Fine, but "Split bonus" duplicates the collapsible title. | `Net S$X`. |
 | BonusAllocationCollapsible.tsx:52-76 | labels "Gross Bonus (S$)", "Employee CPF (20%)", "After CPF Take-Home Bonus" | Wordy. | `Gross`, `CPF 20%`, `Take-Home`. |
-| components/budget/BaseProfileEditorModal.tsx:762,789,819,861,872 | "Gross Salary (SGD)", "CPF Employee Rate (%)", "Fixed Monthly Deductions", "Monthly Insurance", "From insurance items" | 3-4 word labels. | `Gross`, `CPF Rate`, `Fixed Deductions`, `Insurance`. Remove "From insurance items". |
-| BaseProfileEditorModal.tsx:915,921 | button "Auto-Balance to 100%"; tooltip "Locked categories keep their exact amount when you click Auto-Balance." | Button is 3 words OK. Tooltip is a sentence (OK in tooltip). | Keep. Shorten tooltip: `Locked rows stay put.` |
-| BaseProfileEditorModal.tsx:1048 | "No categories configured yet." | Empty state without title/CTA. | `No Categories` + `Add Category`. |
-| BaseProfileEditorModal.tsx:583,590 | errors "Category allocations must sum to exactly 100% (currently X%)." / "Please enter a valid positive gross salary." | Long error copy; the live total pill (l.1381) already shows the problem. | `Must total 100%` / `Enter a salary`. |
+| components/budget/BudgetEditorModal.tsx:762,789,819,861,872 | "Gross Salary (SGD)", "CPF Employee Rate (%)", "Fixed Monthly Deductions", "Monthly Insurance", "From insurance items" | 3-4 word labels. | `Gross`, `CPF Rate`, `Fixed Deductions`, `Insurance`. Remove "From insurance items". |
+| BudgetEditorModal.tsx:915,921 | button "Auto-Balance to 100%"; tooltip "Locked categories keep their exact amount when you click Auto-Balance." | Button is 3 words OK. Tooltip is a sentence (OK in tooltip). | Keep. Shorten tooltip: `Locked rows stay put.` |
+| BudgetEditorModal.tsx:1048 | "No categories configured yet." | Empty state without title/CTA. | `No Categories` + `Add Category`. |
+| BudgetEditorModal.tsx:583,590 | errors "Category allocations must sum to exactly 100% (currently X%)." / "Please enter a valid positive gross salary." | Long error copy; the live total pill (l.1381) already shows the problem. | `Must total 100%` / `Enter a salary`. |
 | components/categories/ManageCategoriesModal.tsx:533-538 | "Percentage Allocations (Must Sum to 100%)" + "Calculated from estimated disposable pool of S$X/mo" | 7-word label + explanatory sentence. | `Allocations` with a live `Total 100%` pill; move the pool figure to a tooltip. |
 | ManageCategoriesModal.tsx:489 | subtitle "Caps & set-asides" | Good. | None. |
 | ManageCategoriesModal.tsx:926-940 | "No Categories" + "You have no categories configured yet. Add custom categories or restore recommended presets." | Prompt is two sentences. | `Add a category or restore presets.` |
@@ -295,7 +295,7 @@ Legend: **R6** = AGENTS.md section 6 rule. Each row: location - current text - p
 - UpdateBalanceModal.tsx:384 "Update Account Balances" (3, diverges from the `Update Balances` button)
 - EditAccountModal.tsx:88 "Edit Account Details" (3, use `Edit Account`)
 - ManageCategoriesModal.tsx:533 "Percentage Allocations (Must Sum to 100%)" (6)
-- BaseProfileEditorModal.tsx:819 "Fixed Monthly Deductions" (3), :789 "CPF Employee Rate (%)" (3)
+- BudgetEditorModal.tsx:819 "Fixed Monthly Deductions" (3), :789 "CPF Employee Rate (%)" (3)
 - NotificationSettingsModal.tsx:421 "Partner & Shared Spend Alerts" (4), :391 "Missing Credit Card Statement" (4), :381 "Credit Card Payment Due" (4), :461 "Monthly Budget Review" (3)
 - GoalCard.tsx:303 "Linked Goal Expenses (n)" (4)
 - AddEditGoalModal.tsx:224 "Goal Icon / Emoji", :359 "Monthly Contribution (S$)", :343 "Target Date (Optional)"
@@ -322,7 +322,7 @@ Legend: **R6** = AGENTS.md section 6 rule. Each row: location - current text - p
 - ManageCategoriesModal.tsx:926-940 "No Categories": prompt is 2 sentences.
 - BudgetPage.tsx:333 "No Categories": two CTAs (Presets + add).
 - CategoryProgressList.tsx:69: no title.
-- BaseProfileEditorModal.tsx:1048 "No categories configured yet.": no title, no CTA.
+- BudgetEditorModal.tsx:1048 "No categories configured yet.": no title, no CTA.
 - SurplusSweepModal.tsx:304 "No active savings goals found. ... first!": no title, no CTA, exclamation.
 - ExpenseFormModal.tsx:875 "No savings goals found.": no title, no CTA.
 - BubbySheet.tsx:83 snacks: sentence with no title.

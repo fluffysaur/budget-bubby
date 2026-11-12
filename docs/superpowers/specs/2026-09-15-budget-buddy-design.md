@@ -295,7 +295,7 @@ src/
 │   │   ├── BudgetWaterfall.tsx    # Gross -> CPF -> Taxes/Insurance -> Disposable bar
 │   │   ├── CategoryProgressList.tsx # Food, Lifestyle, etc. with progress bars
 │   │   ├── MonthPicker.tsx        # Month navigation (Jan 2026 - Dec 2026)
-│   │   └── BaseProfileEditorModal.tsx # Edit default salary & percentage splits
+│   │   └── BudgetEditorModal.tsx # Edit default salary & percentage splits
 │   ├── expenses/
 │   │   ├── ExpenseListTable.tsx   # Filterable & searchable transaction ledger
 │   │   ├── ExpenseFilterBar.tsx   # Filter by month, category, payer, shared status

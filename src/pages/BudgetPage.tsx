@@ -50,7 +50,7 @@ import { MonthPicker } from "../components/budget/MonthPicker";
 import { BudgetWaterfall } from "../components/budget/BudgetWaterfall";
 import { CategoriesHeader } from "../components/budget/CategoriesHeader";
 import { CategoryProgressList } from "../components/budget/CategoryProgressList";
-import { BaseProfileEditorModal } from "../components/budget/BaseProfileEditorModal";
+import { BudgetEditorModal } from "../components/budget/BudgetEditorModal";
 import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWarningBanner";
 import { SavingsBreakdownCard } from "../components/budget/SavingsBreakdownCard";
 import { CumulativeSurplusCard } from "../components/budget/CumulativeSurplusCard";
@@ -487,7 +487,7 @@ export function BudgetPage({
 
             {/* Unified Budget & Categories Editor Modal */}
             {activeProfile && (
-                <BaseProfileEditorModal
+                <BudgetEditorModal
                     isOpen={isEditorOpen}
                     onClose={() => setIsEditorOpen(false)}
                     profile={activeProfile}
