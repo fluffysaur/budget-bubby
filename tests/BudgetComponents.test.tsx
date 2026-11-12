@@ -3,7 +3,7 @@
  * - MonthPicker
  * - BudgetWaterfall
  * - CategoryProgressList
- * - BaseProfileEditorModal
+ * - BudgetEditorModal
  * - BudgetPage
  */
 
@@ -19,7 +19,7 @@ import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { MonthPicker } from "../src/components/budget/MonthPicker";
 import { BudgetWaterfall } from "../src/components/budget/BudgetWaterfall";
 import { CategoryProgressList } from "../src/components/budget/CategoryProgressList";
-import { BaseProfileEditorModal } from "../src/components/budget/BaseProfileEditorModal";
+import { BudgetEditorModal } from "../src/components/budget/BudgetEditorModal";
 import { BudgetPage } from "../src/pages/BudgetPage";
 import { financeService } from "../src/services/financeService";
 import {
@@ -450,7 +450,7 @@ describe("CategoryProgressList", () => {
     });
 });
 
-describe("BaseProfileEditorModal", () => {
+describe("BudgetEditorModal", () => {
     const profile = mockBaseProfiles[0];
     const allocations = mockBaseAllocations.filter(
         (a) => a.profile_id === profile.id,
@@ -458,7 +458,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("does not render when isOpen is false", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={false}
                 onClose={vi.fn()}
                 profile={profile}
@@ -472,7 +472,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("renders inputs for gross salary, CPF rate, and category percentage allocations", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -489,7 +489,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("validates that category percentages must sum to 100%", async () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -514,7 +514,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("treats Buffer as the dynamic remainder when other allocations change", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -548,7 +548,7 @@ describe("BaseProfileEditorModal", () => {
             .mockResolvedValueOnce();
 
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={onClose}
                 onSaveSuccess={onSaveSuccess}
@@ -582,7 +582,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("preserves form edits and does not reset state when categories or allocations props re-render while open", async () => {
         const { rerender } = render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -597,7 +597,7 @@ describe("BaseProfileEditorModal", () => {
 
         // Rerender with new array references (e.g. from parent re-render or query re-fetch)
         rerender(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={{ ...profile }}
@@ -612,7 +612,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("allows erasing category percentage input to empty string and entering decimals", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -634,7 +634,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("renders sticky total % in footer next to reset button", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -651,7 +651,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("renders mobile-friendly footer with shortened 'Save' button and clean status row", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -676,7 +676,7 @@ describe("BaseProfileEditorModal", () => {
 
     it('converts smart dollar input "$300" in percentage field to percentage and auto-locks category', () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -712,7 +712,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("converts value in editable S$/mo input to percentage and auto-locks category", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -745,7 +745,7 @@ describe("BaseProfileEditorModal", () => {
     it("displays read-only monthly taxes and insurance cards with Manage in Recurring button", () => {
         const onManageRecurring = vi.fn();
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -774,7 +774,7 @@ describe("BaseProfileEditorModal", () => {
 
     it("auto-balances unlocked categories to 100% while keeping dollar-locked category fixed", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -865,7 +865,7 @@ describe("BudgetPage", () => {
         ).not.toBeInTheDocument();
     });
 
-    it("opens BaseProfileEditorModal when clicking edit profile button", async () => {
+    it("opens BudgetEditorModal when clicking edit profile button", async () => {
         await act(async () => {
             render(
                 <HouseholdProvider initialPerspective="yijia">

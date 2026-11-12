@@ -1,5 +1,5 @@
 /**
- * BaseProfileEditorModal Component
+ * BudgetEditorModal Component
  * Unified single-scroll modal for editing a household member's budget & household categories:
  * - Member switcher pills (when household has >1 member)
  * - Gross Salary & CPF Employee Rate (e.g. 20%)
@@ -74,7 +74,7 @@ import type {
 } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
-export interface BaseProfileEditorModalProps {
+export interface BudgetEditorModalProps {
     isOpen: boolean;
     onClose: () => void;
     profile: BaseBudgetProfile;
@@ -94,7 +94,7 @@ export interface BaseProfileEditorModalProps {
     className?: string;
 }
 
-export function BaseProfileEditorModal({
+export function BudgetEditorModal({
     isOpen,
     onClose,
     profile,
@@ -112,7 +112,7 @@ export function BaseProfileEditorModal({
     onSelectMember,
     onManageRecurring,
     className = "",
-}: BaseProfileEditorModalProps) {
+}: BudgetEditorModalProps) {
     const addCategoryMutation = useAddCategoryMutation();
     const updateCategoryMutation = useUpdateCategoryMutation();
     const deleteCategoryMutation = useDeleteCategoryMutation();
@@ -1507,4 +1507,4 @@ export function BaseProfileEditorModal({
     );
 }
 
-export default BaseProfileEditorModal;
+export default BudgetEditorModal;

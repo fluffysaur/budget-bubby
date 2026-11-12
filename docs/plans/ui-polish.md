@@ -103,7 +103,7 @@ iOS Safari zooms when a focused control's computed font-size < 16px. Fix with `t
 | `src/components/categories/ManageCategoriesModal.tsx` | 635, 667, 704, 770 (770 is the name field, uses ad-hoc slate classes) |
 | `src/components/recurring/AddRecurringModal.tsx` | input 267, 351; textarea 460 |
 | `src/components/recurring/RecurringTable.tsx` | 155 |
-| `src/components/budget/BaseProfileEditorModal.tsx` | 757, 781, 939, 1247, 1288, 1363 (+ inline category name input near 945, `text-xs`) |
+| `src/components/budget/BudgetEditorModal.tsx` | 757, 781, 939, 1247, 1288, 1363 (+ inline category name input near 945, `text-xs`) |
 | `src/components/budget/SurplusSweepModal.tsx` | 379 |
 | `src/components/budget/BonusAllocationCollapsible.tsx` | 54 |
 
@@ -167,7 +167,7 @@ Current state: `CategoryGroup = 'spendable' | 'allocation'` exists in types (`sr
 ### 4c. Toggle UI ("Track cap" / "Set aside")
 
 - `src/components/categories/ManageCategoriesModal.tsx:782-832`: replace the two verbose buttons ("Spendable Category" / "Wealth & Fixed Allocation", long descriptions) with `SegmentedTabs` (already used in this modal at `:487`) or two `Button`s: options `Track cap` and `Set aside`; label `Mode`; one short helper under it using TooltipPopover instead of a paragraph (`Track cap: warns near the limit. Set aside: funded, never warns.`). Replace the raw name `<input>` at `:770` with `<Input>` (also helps item 3).
-- `src/components/budget/BaseProfileEditorModal.tsx:947-985`: same labels (`Spendable` / `Wealth / Fixed` -> `Track cap` / `Set aside`); reuse a shared small component `CategoryModeToggle` in `src/components/categories/CategoryModeToggle.tsx` used by both modals so copy/behaviour cannot drift (AGENTS.md section 5C zero redundancy). Both modals already carry `group` state and send it on save (`ManageCategoriesModal :396,403`, `BaseProfileEditorModal :502,514`).
+- `src/components/budget/BudgetEditorModal.tsx:947-985`: same labels (`Spendable` / `Wealth / Fixed` -> `Track cap` / `Set aside`); reuse a shared small component `CategoryModeToggle` in `src/components/categories/CategoryModeToggle.tsx` used by both modals so copy/behaviour cannot drift (AGENTS.md section 5C zero redundancy). Both modals already carry `group` state and send it on save (`ManageCategoriesModal :396,403`, `BudgetEditorModal :502,514`).
 - Default for new categories stays `Track cap`.
 - Existing copy strings elsewhere that say "Spendable"/"Wealth & Fixed" (`ManageCategoriesModal :466` subtitle `Spendable caps & wealth allocations`, `:496` tabs) -> shorten to `Caps & set-asides` only if there is room; low priority.
 

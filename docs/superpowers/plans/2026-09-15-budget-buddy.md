@@ -282,7 +282,7 @@ git commit -m "feat: add quick add expense modal and searchable transaction ledg
 - Create: `src/components/budget/MonthPicker.tsx`
 - Create: `src/components/budget/BudgetWaterfall.tsx`
 - Create: `src/components/budget/CategoryProgressList.tsx`
-- Create: `src/components/budget/BaseProfileEditorModal.tsx`
+- Create: `src/components/budget/BudgetEditorModal.tsx`
 - Create: `src/pages/BudgetPage.tsx`
 - Test: `tests/BudgetComponents.test.tsx`
 
@@ -300,7 +300,7 @@ Test category spend aggregation against month expenses and over-budget warning d
 Run `npx vitest run tests/BudgetComponents.test.tsx` -> Expected: FAIL.
 
 - [ ] **Step 3: Implement budget components & page**
-Build `MonthPicker`, `BudgetWaterfall`, `CategoryProgressList`, and `BaseProfileEditorModal`.
+Build `MonthPicker`, `BudgetWaterfall`, `CategoryProgressList`, and `BudgetEditorModal`.
 
 - [ ] **Step 4: Run test to verify it passes**
 Run `npx vitest run tests/BudgetComponents.test.tsx` -> Expected: PASS.

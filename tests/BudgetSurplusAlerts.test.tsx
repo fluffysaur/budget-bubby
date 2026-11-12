@@ -21,7 +21,7 @@ import * as soundEffects from "../src/lib/soundEffects";
 import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
 import { CumulativeSurplusCard } from "../src/components/budget/CumulativeSurplusCard";
 import { CategoryProgressList } from "../src/components/budget/CategoryProgressList";
-import { BaseProfileEditorModal } from "../src/components/budget/BaseProfileEditorModal";
+import { BudgetEditorModal } from "../src/components/budget/BudgetEditorModal";
 import { ManageCategoriesModal } from "../src/components/categories/ManageCategoriesModal";
 import {
     calculateCumulativeSurplus,
@@ -461,9 +461,9 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         (a) => a.profile_id === profile.id,
     );
 
-    it("renders range sliders, live SGD equivalent, lock toggle and auto-balance button in BaseProfileEditorModal", () => {
+    it("renders range sliders, live SGD equivalent, lock toggle and auto-balance button in BudgetEditorModal", () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}
@@ -507,7 +507,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
 
     it("auto-balances unlocked categories proportionally to exactly 100% while keeping locked categories unchanged", async () => {
         render(
-            <BaseProfileEditorModal
+            <BudgetEditorModal
                 isOpen={true}
                 onClose={vi.fn()}
                 profile={profile}

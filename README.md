@@ -76,7 +76,7 @@
 ### 4. Budget Waterfall, % Sliders & Limit Alerts
 
 - **Visual Budget Waterfall**: Flow from `Gross Salary` $\rightarrow$ `20% CPF Employee Deduction` $\rightarrow$ `Net Take-Home Pay` $\rightarrow$ `Tithing (10%)` $\rightarrow$ `Spendable Allocations` $\rightarrow$ `Unallocated Buffer`.
-- **Interactive % Allocation Sliders**: Dynamic percentage sliders in `ManageCategoriesModal` and `BaseProfileEditorModal` with live dollar conversions, lock toggles, and auto-balancing to 100%.
+- **Interactive % Allocation Sliders**: Dynamic percentage sliders in `ManageCategoriesModal` and `BudgetEditorModal` with live dollar conversions, lock toggles, and auto-balancing to 100%.
 - **Persistent Warning Banner**: `CategoryLimitWarningBanner` permanently surfaced on Dashboard and Budget pages highlighting categories approaching or exceeding their caps.
 - **Multi-Tier Audio/Visual Alerts**: Visual amber toast + warning chime at $\ge 80\%$, red alert toast + exceeded chime at $\ge 100\%$.
 
