@@ -5,6 +5,7 @@
  */
 
 import type {
+    GoalDeposit,
     Household,
     HouseholdMember,
     Account,
@@ -492,9 +493,8 @@ export const mockSavingsGoals: SavingsGoal[] = [
         owner_id: null,
         title: "Wedding",
         target_amount: 55000.0,
-        saved_so_far: 50000.0,
+        saved_so_far: 55000.0,
         target_date: "2027-05-01",
-        monthly_contribution: 0.0,
         emoji: "💍",
         status: "achieved",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -507,7 +507,6 @@ export const mockSavingsGoals: SavingsGoal[] = [
         target_amount: 10000.0,
         saved_so_far: 10000.0,
         target_date: "2027-06-21",
-        monthly_contribution: 500.0,
         emoji: "✈️",
         status: "achieved",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -520,7 +519,6 @@ export const mockSavingsGoals: SavingsGoal[] = [
         target_amount: 190000.0,
         saved_so_far: 100000.0,
         target_date: "2027-07-01",
-        monthly_contribution: 10000.0,
         emoji: "🏠",
         status: "on_track",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -533,7 +531,6 @@ export const mockSavingsGoals: SavingsGoal[] = [
         target_amount: 90000.0,
         saved_so_far: 0.0,
         target_date: "2027-09-01",
-        monthly_contribution: 3000.0,
         emoji: "🔨",
         status: "on_track",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -546,10 +543,36 @@ export const mockSavingsGoals: SavingsGoal[] = [
         target_amount: 30000.0,
         saved_so_far: 0.0,
         target_date: "2029-12-31",
-        monthly_contribution: 600.0,
         emoji: "👶",
         status: "on_track",
         created_at: "2026-01-01T00:00:00.000Z",
+    },
+];
+
+const seedMonthStart = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+})();
+
+/** Deposits made this month: HDB meets its pace, Renovation is part-way. */
+export const mockGoalDeposits: GoalDeposit[] = [
+    {
+        id: "gdep-00000000-0801",
+        household_id: "hh-00000000-0001",
+        goal_id: "goal-00000000-0503",
+        amount: 10000.0,
+        source: "quick_deposit",
+        deposited_at: seedMonthStart,
+        created_at: `${seedMonthStart}T00:00:00.000Z`,
+    },
+    {
+        id: "gdep-00000000-0802",
+        household_id: "hh-00000000-0001",
+        goal_id: "goal-00000000-0504",
+        amount: 1000.0,
+        source: "sweep",
+        deposited_at: seedMonthStart,
+        created_at: `${seedMonthStart}T00:00:00.000Z`,
     },
 ];
 
@@ -1251,6 +1274,7 @@ export interface MockSeedDataset {
     notificationPreferences?: Record<string, NotificationPreferences>;
     /** Bonus log entries; goal contributions are embedded per event. */
     bonusEvents?: BonusEvent[];
+    goalDeposits?: GoalDeposit[];
     settleUps?: SettleUp[];
     /** Per-member default bonus split, keyed by member id. */
     bonusSplitDefaults?: Record<string, BonusSplitShare[]>;
@@ -1295,6 +1319,7 @@ export const mockSeedData: MockSeedDataset = {
     accounts: mockAccounts,
     accountSnapshots: mockAccountSnapshots,
     savingsGoals: mockSavingsGoals,
+    goalDeposits: mockGoalDeposits,
     recurringItems: mockRecurringItems,
     monthlyBudgets: mockMonthlyBudgets,
     monthlyBudgetCategories: mockMonthlyBudgetCategories,

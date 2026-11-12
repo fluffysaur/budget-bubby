@@ -375,7 +375,6 @@ export interface SavingsGoal {
     target_amount: number;
     saved_so_far: number;
     target_date: string; // 'YYYY-MM-DD'
-    monthly_contribution: number;
     emoji: string;
     status: GoalStatus;
     created_at?: string;
@@ -388,8 +387,21 @@ export interface CreateGoalInput {
     target_amount: number;
     saved_so_far?: number;
     target_date: string;
-    monthly_contribution?: number;
     emoji?: string;
+}
+
+export type GoalDepositSource = "quick_deposit" | "sweep" | "bonus";
+
+/** One timestamped deposit into a savings goal; drives monthly pace. */
+export interface GoalDeposit {
+    id: string;
+    household_id: string;
+    goal_id: string;
+    bonus_event_id?: string | null;
+    amount: number;
+    source: GoalDepositSource;
+    deposited_at: string; // 'YYYY-MM-DD'
+    created_at?: string;
 }
 
 export type RecurringItemType =
@@ -462,7 +474,13 @@ export interface SettlementSummary {
 export interface GoalPacingResult {
     status: GoalStatus;
     monthsRemaining: number;
+    /** Required deposit for the current month (0 once achieved). */
     neededPerMonth: number;
+    depositedThisMonth: number;
+    /** Last month's unmet pace, still owed on top of this month's. */
+    carriedShortfall: number;
+    /** Remaining amount to deposit this month (incl. carried shortfall). */
+    shortfallThisMonth: number;
     projectedDate?: string;
 }
 

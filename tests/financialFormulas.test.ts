@@ -5,6 +5,8 @@ import {
     calculateCategoryAllocations,
     calculateSharedExpenseSettlement,
     calculateGoalPacing,
+    sumGoalDepositsForMonth,
+    withDerivedGoalStatus,
     calculateSpendablePacing,
     detectUnspentMonthEndSurplus,
     isBufferCategory,
@@ -14,7 +16,12 @@ import {
     computeSavingsBreakdown,
     computeBufferAbsorption,
 } from "../src/lib/financialFormulas";
-import type { Expense, Category } from "../src/types/finance";
+import type {
+    Expense,
+    Category,
+    GoalDeposit,
+    SavingsGoal,
+} from "../src/types/finance";
 
 describe("financialFormulas", () => {
     describe("calculateCPFAndNetPay", () => {
@@ -280,7 +287,7 @@ describe("financialFormulas", () => {
     describe("calculateGoalPacing", () => {
         const referenceDate = "2026-09-15";
 
-        it('returns "achieved" status when savedSoFar equals or exceeds targetAmount', () => {
+        it('returns "achieved" when savedSoFar reaches targetAmount', () => {
             const result = calculateGoalPacing(
                 10000,
                 10000,
@@ -290,67 +297,166 @@ describe("financialFormulas", () => {
             );
             expect(result.status).toBe("achieved");
             expect(result.neededPerMonth).toBe(0);
+            expect(result.shortfallThisMonth).toBe(0);
 
-            const overachieved = calculateGoalPacing(
+            const over = calculateGoalPacing(
                 10000,
                 12000,
                 "2027-09-15",
-                500,
+                0,
                 referenceDate,
             );
-            expect(overachieved.status).toBe("achieved");
-            expect(overachieved.neededPerMonth).toBe(0);
+            expect(over.status).toBe("achieved");
         });
 
-        it('returns "on_track" when monthly contribution meets or exceeds needed amount', () => {
-            // 12 months remaining, 12000 needed => 1000/mo needed
+        it("stays on track mid-month while this month's pace is still being met", () => {
+            // 12 months left, 12000 to go => 1000 required; nothing deposited yet
             const result = calculateGoalPacing(
                 12000,
                 0,
                 "2027-09-15",
-                1000,
+                0,
                 referenceDate,
+                null,
             );
             expect(result.monthsRemaining).toBe(12);
             expect(result.neededPerMonth).toBe(1000);
+            expect(result.carriedShortfall).toBe(0);
+            expect(result.shortfallThisMonth).toBe(1000);
             expect(result.status).toBe("on_track");
-
-            // Contributing more than needed is also on_track
-            const ahead = calculateGoalPacing(
-                12000,
-                0,
-                "2027-09-15",
-                1500,
-                referenceDate,
-            );
-            expect(ahead.status).toBe("on_track");
         });
 
-        it('returns "behind" when monthly contribution is less than needed amount', () => {
-            // 12 months remaining, 12000 needed => 1000/mo needed. Contributing 500 => behind
+        it("is on track when last month's pace was met", () => {
+            // saved 1000, all deposited last month; last month required 12000/13 = 923.08
             const result = calculateGoalPacing(
                 12000,
-                0,
+                1000,
                 "2027-09-15",
-                500,
+                0,
                 referenceDate,
+                1000,
             );
-            expect(result.monthsRemaining).toBe(12);
-            expect(result.neededPerMonth).toBe(1000);
+            expect(result.carriedShortfall).toBe(0);
+            expect(result.status).toBe("on_track");
+        });
+
+        it("is behind in the new month after last month's pace was missed", () => {
+            // saved 400 (all last month); last month required 12000/13 = 923.08 => short 523.08
+            const result = calculateGoalPacing(
+                12000,
+                400,
+                "2027-09-15",
+                0,
+                referenceDate,
+                400,
+            );
+            expect(result.carriedShortfall).toBe(523.08);
+            // this month: (12000 - 0... month-start saved 400) 11600 / 12 = 966.67
+            expect(result.neededPerMonth).toBe(966.67);
+            expect(result.shortfallThisMonth).toBe(1489.75);
             expect(result.status).toBe("behind");
         });
 
-        it("enforces a minimum of 1 month remaining if target date is in the past or current month", () => {
+        it("clears behind once catch-up deposits cover the carried shortfall plus this month's pace", () => {
+            const partial = calculateGoalPacing(
+                12000,
+                1400,
+                "2027-09-15",
+                1000,
+                referenceDate,
+                400,
+            );
+            expect(partial.status).toBe("behind");
+
+            const caughtUp = calculateGoalPacing(
+                12000,
+                1900,
+                "2027-09-15",
+                1500,
+                referenceDate,
+                400,
+            );
+            expect(caughtUp.shortfallThisMonth).toBe(0);
+            expect(caughtUp.status).toBe("on_track");
+        });
+
+        it("a goal created this month is never behind", () => {
+            const result = calculateGoalPacing(
+                12000,
+                0,
+                "2027-09-15",
+                0,
+                referenceDate,
+                null,
+            );
+            expect(result.status).toBe("on_track");
+        });
+
+        it("enforces a minimum of 1 month remaining", () => {
             const result = calculateGoalPacing(
                 5000,
                 2000,
                 "2026-09-01",
-                1000,
+                0,
                 referenceDate,
+                null,
             );
             expect(result.monthsRemaining).toBe(1);
             expect(result.neededPerMonth).toBe(3000);
-            expect(result.status).toBe("behind");
+            expect(result.status).toBe("on_track");
+        });
+    });
+
+    describe("goal deposit ledger helpers", () => {
+        const dep = (
+            goal_id: string,
+            amount: number,
+            deposited_at: string,
+        ): GoalDeposit => ({
+            id: `${goal_id}-${deposited_at}-${amount}`,
+            household_id: "hh-1",
+            goal_id,
+            amount,
+            source: "quick_deposit",
+            deposited_at,
+        });
+
+        it("sums only the goal's deposits in the reference month", () => {
+            const deposits = [
+                dep("g1", 100, "2026-09-02"),
+                dep("g1", 50.5, "2026-09-30"),
+                dep("g1", 999, "2026-08-31"),
+                dep("g2", 400, "2026-09-10"),
+            ];
+            expect(sumGoalDepositsForMonth(deposits, "g1", "2026-09-15")).toBe(
+                150.5,
+            );
+            expect(sumGoalDepositsForMonth(deposits, "g1", "2026-10-01")).toBe(
+                0,
+            );
+        });
+
+        it("rolls over to behind only once a month closes short", () => {
+            const goal = {
+                id: "g1",
+                household_id: "hh-1",
+                title: "Trip",
+                target_amount: 12000,
+                saved_so_far: 400,
+                target_date: "2027-09-15",
+                emoji: "x",
+                status: "on_track",
+                created_at: "2026-09-01T00:00:00.000Z",
+            } as SavingsGoal;
+            const deposits = [dep("g1", 400, "2026-09-05")];
+            // Mid-September: pace unmet but the month is still open
+            expect(
+                withDerivedGoalStatus([goal], deposits, "2026-09-15")[0].status,
+            ).toBe("on_track");
+            // October: September closed short
+            expect(
+                withDerivedGoalStatus([goal], deposits, "2026-10-01")[0].status,
+            ).toBe("behind");
         });
     });
 
@@ -820,7 +926,11 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c1",
-                    category: { id: "c1", name: "Food", group: "spendable" } as Category,
+                    category: {
+                        id: "c1",
+                        name: "Food",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 600,
                 },
@@ -847,13 +957,21 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c-food",
-                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    category: {
+                        id: "c-food",
+                        name: "Food",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 600,
                 },
                 {
                     category_id: "c-buf",
-                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    category: {
+                        id: "c-buf",
+                        name: "Buffer",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 300,
                     actualSpent: 50,
                 },
@@ -892,25 +1010,41 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c-food",
-                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    category: {
+                        id: "c-food",
+                        name: "Food",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 400,
                     actualSpent: 480,
                 },
                 {
                     category_id: "c-transport",
-                    category: { id: "c-transport", name: "Transport", group: "spendable" } as Category,
+                    category: {
+                        id: "c-transport",
+                        name: "Transport",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 200,
                     actualSpent: 260,
                 },
                 {
                     category_id: "c-life",
-                    category: { id: "c-life", name: "Lifestyle", group: "spendable" } as Category,
+                    category: {
+                        id: "c-life",
+                        name: "Lifestyle",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 300,
                     actualSpent: 250,
                 },
                 {
                     category_id: "c-buf",
-                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    category: {
+                        id: "c-buf",
+                        name: "Buffer",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 100,
                 },
@@ -924,7 +1058,9 @@ describe("buffer and savings helpers", () => {
 
             expect(result.categoryBreakdown["c-food"].status).toBe("covered");
             expect(result.categoryBreakdown["c-food"].absorbed).toBe(80);
-            expect(result.categoryBreakdown["c-transport"].status).toBe("covered");
+            expect(result.categoryBreakdown["c-transport"].status).toBe(
+                "covered",
+            );
             expect(result.categoryBreakdown["c-transport"].absorbed).toBe(60);
             expect(result.categoryBreakdown["c-life"].status).toBe("normal");
             expect(result.categoryBreakdown["c-life"].absorbed).toBe(0);
@@ -934,19 +1070,31 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c-food",
-                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    category: {
+                        id: "c-food",
+                        name: "Food",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 600, // 100 overage (2/3 of 150)
                 },
                 {
                     category_id: "c-transport",
-                    category: { id: "c-transport", name: "Transport", group: "spendable" } as Category,
+                    category: {
+                        id: "c-transport",
+                        name: "Transport",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 200,
                     actualSpent: 250, // 50 overage (1/3 of 150)
                 },
                 {
                     category_id: "c-buf",
-                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    category: {
+                        id: "c-buf",
+                        name: "Buffer",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 100,
                     actualSpent: 20, // 80 available
                 },
@@ -977,13 +1125,21 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c-food",
-                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    category: {
+                        id: "c-food",
+                        name: "Food",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 550,
                 },
                 {
                     category_id: "c-buf",
-                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    category: {
+                        id: "c-buf",
+                        name: "Buffer",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 100,
                     actualSpent: 100, // 0 available
                 },
@@ -1001,13 +1157,21 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c-food",
-                    category: { id: "c-food", name: "Food", group: "spendable" } as Category,
+                    category: {
+                        id: "c-food",
+                        name: "Food",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 550,
                 },
                 {
                     category_id: "c-buf",
-                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    category: {
+                        id: "c-buf",
+                        name: "Buffer",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 100,
                     actualSpent: 120, // -20 remaining directly
                 },
@@ -1024,13 +1188,21 @@ describe("buffer and savings helpers", () => {
             const categories = [
                 {
                     category_id: "c-savings",
-                    category: { id: "c-savings", name: "Emergency Savings", group: "allocation" } as Category,
+                    category: {
+                        id: "c-savings",
+                        name: "Emergency Savings",
+                        group: "allocation",
+                    } as Category,
                     allocated_amount: 500,
                     actualSpent: 700, // funded/transferred more, not an overage
                 },
                 {
                     category_id: "c-buf",
-                    category: { id: "c-buf", name: "Buffer", group: "spendable" } as Category,
+                    category: {
+                        id: "c-buf",
+                        name: "Buffer",
+                        group: "spendable",
+                    } as Category,
                     allocated_amount: 200,
                     actualSpent: 0,
                 },

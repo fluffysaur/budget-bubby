@@ -28,6 +28,8 @@ import type {
     Perspective,
     RecurringItem,
     SavingsGoal,
+    GoalDeposit,
+    GoalDepositSource,
     UpdateExpenseInput,
     CreditCard,
     CreateCreditCardInput,
@@ -55,12 +57,14 @@ import {
     mockCreditCards,
     mockCreditCardStatements,
     mockDailyCheckins,
+    mockGoalDeposits,
     getDefaultNotificationPreferences,
     type MockSeedDataset,
 } from "../data/mockSeedData";
 import {
     calculateSharedExpenseSettlement,
     calculateGoalPacing,
+    withDerivedGoalStatus,
     calculateCPFAndNetPay,
     calculateMemberRecurringDeductions,
     getMemberExpenseShare,
@@ -161,6 +165,9 @@ function loadInitialData(): MockSeedDataset {
     }
     if (!dataset.bonusEvents) {
         dataset.bonusEvents = [];
+    }
+    if (!dataset.goalDeposits) {
+        dataset.goalDeposits = cloneDeep(mockGoalDeposits);
     }
     if (!dataset.bonusSplitDefaults) {
         dataset.bonusSplitDefaults = {};
@@ -1178,22 +1185,59 @@ class MockFinanceServiceImpl implements FinanceService {
     }
 
     public async getGoals(): Promise<SavingsGoal[]> {
-        return cloneDeep(this.state.savingsGoals);
+        return cloneDeep(
+            withDerivedGoalStatus(
+                this.state.savingsGoals,
+                this.state.goalDeposits ?? [],
+            ),
+        );
     }
 
     public async getGoal(id: string): Promise<SavingsGoal | null> {
         const goal = this.state.savingsGoals.find((g) => g.id === id);
-        return goal ? cloneDeep(goal) : null;
+        if (!goal) return null;
+        return cloneDeep(
+            withDerivedGoalStatus([goal], this.state.goalDeposits ?? [])[0],
+        );
+    }
+
+    public async getGoalDeposits(): Promise<GoalDeposit[]> {
+        return cloneDeep(this.state.goalDeposits ?? []);
+    }
+
+    public async depositToGoal(
+        goalId: string,
+        amount: number,
+        source: GoalDepositSource,
+    ): Promise<SavingsGoal> {
+        const goal = this.state.savingsGoals.find((g) => g.id === goalId);
+        if (!goal) {
+            throw new Error(`Savings goal with id "${goalId}" not found`);
+        }
+        const rounded = Math.round(amount * 100) / 100;
+        if (!(rounded > 0)) throw new Error("Deposit must be positive");
+        goal.saved_so_far =
+            Math.round((goal.saved_so_far + rounded) * 100) / 100;
+        (this.state.goalDeposits ??= []).push({
+            id: `gdep-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            household_id: goal.household_id,
+            goal_id: goalId,
+            amount: rounded,
+            source,
+            deposited_at: getTodayDateString(),
+            created_at: new Date().toISOString(),
+        });
+        this.persist();
+        return (await this.getGoal(goalId)) as SavingsGoal;
     }
 
     public async addGoal(input: CreateGoalInput): Promise<SavingsGoal> {
         const savedSoFar = input.saved_so_far ?? 0;
-        const monthlyContribution = input.monthly_contribution ?? 0;
         const pacing = calculateGoalPacing(
             input.target_amount,
             savedSoFar,
             input.target_date,
-            monthlyContribution,
+            0,
         );
 
         const newGoal: SavingsGoal = {
@@ -1204,7 +1248,6 @@ class MockFinanceServiceImpl implements FinanceService {
             target_amount: Math.round(input.target_amount * 100) / 100,
             saved_so_far: Math.round(savedSoFar * 100) / 100,
             target_date: input.target_date,
-            monthly_contribution: Math.round(monthlyContribution * 100) / 100,
             emoji: input.emoji || "🎯",
             status: pacing.status,
             created_at: new Date().toISOString(),
@@ -1226,17 +1269,8 @@ class MockFinanceServiceImpl implements FinanceService {
 
         Object.assign(goal, updates);
 
-        // Recalculate status pacing
-        const pacing = calculateGoalPacing(
-            goal.target_amount,
-            goal.saved_so_far,
-            goal.target_date,
-            goal.monthly_contribution,
-        );
-        goal.status = pacing.status;
-
         this.persist();
-        return cloneDeep(goal);
+        return (await this.getGoal(id)) as SavingsGoal;
     }
 
     public async getRecurringItems(): Promise<RecurringItem[]> {
@@ -1581,13 +1615,34 @@ class MockFinanceServiceImpl implements FinanceService {
                 0,
                 Math.round((goal.saved_so_far + sign * c.amount) * 100) / 100,
             );
-            goal.status = calculateGoalPacing(
-                goal.target_amount,
-                goal.saved_so_far,
-                goal.target_date,
-                goal.monthly_contribution,
-            ).status;
         }
+    }
+
+    /** Replaces a bonus event's ledger deposits so edits and deletes stay in sync. */
+    private syncBonusDeposits(
+        eventId: string,
+        contributions: { goal_id: string; amount: number }[],
+    ): void {
+        const deposits = (this.state.goalDeposits ??= []).filter(
+            (d) => d.bonus_event_id !== eventId,
+        );
+        for (const c of contributions) {
+            const goal = this.state.savingsGoals.find(
+                (g) => g.id === c.goal_id,
+            );
+            if (!goal || !(c.amount > 0)) continue;
+            deposits.push({
+                id: `gdep-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                household_id: goal.household_id,
+                goal_id: c.goal_id,
+                bonus_event_id: eventId,
+                amount: c.amount,
+                source: "bonus",
+                deposited_at: getTodayDateString(),
+                created_at: new Date().toISOString(),
+            });
+        }
+        this.state.goalDeposits = deposits;
     }
 
     public async saveBonusEvent(
@@ -1643,6 +1698,7 @@ class MockFinanceServiceImpl implements FinanceService {
         } else {
             events.push(event);
         }
+        this.syncBonusDeposits(event.id, contributions);
         this.persist();
         return cloneDeep(event);
     }
@@ -1652,6 +1708,7 @@ class MockFinanceServiceImpl implements FinanceService {
         const existing = events.find((e) => e.id === id);
         if (!existing) return;
         this.applyGoalContributions(existing.goal_contributions, -1);
+        this.syncBonusDeposits(id, []);
         this.state.bonusEvents = events.filter((e) => e.id !== id);
         this.persist();
     }

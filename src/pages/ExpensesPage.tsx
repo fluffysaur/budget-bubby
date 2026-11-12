@@ -43,7 +43,7 @@ import {
     useInvalidateFinance,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
-    useUpdateGoalMutation,
+    useDepositGoalMutation,
 } from "../hooks/useFinanceQueries";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
@@ -194,7 +194,7 @@ export function ExpensesPage({
     );
     const isLoading = expensesLoading && !expensesData;
 
-    const updateGoalMutation = useUpdateGoalMutation();
+    const depositGoalMutation = useDepositGoalMutation();
     const { data: settleUpsData } = useSettleUpsQuery();
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
@@ -250,20 +250,12 @@ export function ExpensesPage({
         allocations: SurplusSweepAllocation[],
     ) => {
         for (const alloc of allocations) {
-            const freshGoal = await financeService.getGoal(alloc.goalId);
-            const targetGoal =
-                freshGoal ?? goals.find((g) => g.id === alloc.goalId);
+            const targetGoal = goals.find((g) => g.id === alloc.goalId);
             if (targetGoal) {
-                await updateGoalMutation.mutateAsync({
-                    id: targetGoal.id,
-                    updates: {
-                        saved_so_far:
-                            Math.round(
-                                (Number(targetGoal.saved_so_far) +
-                                    alloc.amount) *
-                                    100,
-                            ) / 100,
-                    },
+                await depositGoalMutation.mutateAsync({
+                    goalId: targetGoal.id,
+                    amount: alloc.amount,
+                    source: "sweep",
                 });
             }
         }

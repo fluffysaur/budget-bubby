@@ -68,7 +68,6 @@ export function AddEditGoalModal({
     const [targetAmount, setTargetAmount] = useState<string>("");
     const [savedSoFar, setSavedSoFar] = useState<string>("0");
     const [targetDate, setTargetDate] = useState<string>("");
-    const [monthlyContribution, setMonthlyContribution] = useState<string>("0");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -83,11 +82,6 @@ export function AddEditGoalModal({
                 setTargetDate(
                     goal.target_date ? goal.target_date.substring(0, 10) : "",
                 );
-                setMonthlyContribution(
-                    goal.monthly_contribution
-                        ? goal.monthly_contribution.toString()
-                        : "0",
-                );
             } else {
                 setEmoji("🎯");
                 setTitle("");
@@ -96,7 +90,6 @@ export function AddEditGoalModal({
                 const oneYearAhead = new Date();
                 oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1);
                 setTargetDate(formatISODate(oneYearAhead));
-                setMonthlyContribution("0");
             }
             setErrorMessage(null);
             setIsSubmitting(false);
@@ -113,16 +106,10 @@ export function AddEditGoalModal({
     // Derived pacing calculations for live feedback
     const numericTarget = parseFloat(targetAmount) || 0;
     const numericSaved = parseFloat(savedSoFar) || 0;
-    const numericMonthly = parseFloat(monthlyContribution) || 0;
 
     const livePacing =
         numericTarget > 0 && targetDate
-            ? calculateGoalPacing(
-                  numericTarget,
-                  numericSaved,
-                  targetDate,
-                  numericMonthly,
-              )
+            ? calculateGoalPacing(numericTarget, numericSaved, targetDate, 0)
             : null;
 
     const handleSubmit = async (e: FormEvent) => {
@@ -150,11 +137,6 @@ export function AddEditGoalModal({
             return;
         }
 
-        if (isNaN(numericMonthly) || numericMonthly < 0) {
-            setErrorMessage("Monthly contribution cannot be negative");
-            return;
-        }
-
         try {
             setIsSubmitting(true);
 
@@ -172,7 +154,6 @@ export function AddEditGoalModal({
                         target_amount: numericTarget,
                         saved_so_far: numericSaved,
                         target_date: normalizedDate,
-                        monthly_contribution: numericMonthly,
                     },
                 });
                 onGoalSaved?.(updated);
@@ -185,7 +166,6 @@ export function AddEditGoalModal({
                     target_amount: numericTarget,
                     saved_so_far: numericSaved,
                     target_date: normalizedDate,
-                    monthly_contribution: numericMonthly,
                 };
                 const created = await addGoalMutation.mutateAsync(input);
                 onGoalSaved?.(created);
@@ -338,8 +318,8 @@ export function AddEditGoalModal({
                         </div>
                     </div>
 
-                    {/* Target Date & Monthly Contribution Row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Target Date */}
+                    <div className="grid grid-cols-1 gap-3">
                         <div>
                             <label
                                 htmlFor="goal-date"
@@ -355,32 +335,6 @@ export function AddEditGoalModal({
                                 className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                             />
                         </div>
-
-                        <div>
-                            <label
-                                htmlFor="goal-monthly"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Monthly
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
-                                    S$
-                                </span>
-                                <input
-                                    id="goal-monthly"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="500"
-                                    value={monthlyContribution}
-                                    onChange={(e) =>
-                                        setMonthlyContribution(e.target.value)
-                                    }
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                        </div>
                     </div>
 
                     {/* Live Pacing Preview */}
@@ -390,21 +344,6 @@ export function AddEditGoalModal({
                                 <span className="flex items-center gap-1.5">
                                     <TrendingUp className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
                                     Pacing Projection
-                                </span>
-                                <span
-                                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold border border-(--border-ink) ${
-                                        livePacing.status === "achieved"
-                                            ? "bg-(--pastel-mint) text-(--text-ink)"
-                                            : livePacing.status === "on_track"
-                                              ? "bg-(--pastel-lilac) text-(--text-ink)"
-                                              : "bg-(--pastel-coral) text-white"
-                                    }`}
-                                >
-                                    {livePacing.status === "achieved"
-                                        ? "Achieved"
-                                        : livePacing.status === "on_track"
-                                          ? "On Track"
-                                          : "Behind"}
                                 </span>
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-2 text-(--text-muted)">

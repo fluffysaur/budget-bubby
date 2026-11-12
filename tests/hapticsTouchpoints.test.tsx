@@ -110,7 +110,6 @@ describe("Haptic Feedback Touchpoints Integration", () => {
                 title: "Japan Trip",
                 target_amount: 5000,
                 saved_so_far: 2000,
-                monthly_contribution: 200,
                 emoji: "✈️",
                 status: "on_track",
                 target_date: "2026-12-31",
@@ -153,13 +152,12 @@ describe("Haptic Feedback Touchpoints Integration", () => {
             title: "Emergency Fund",
             target_amount: 10000,
             saved_so_far: 4000,
-            monthly_contribution: 500,
             emoji: "🛡️",
             status: "on_track",
             target_date: "2026-12-31",
             created_at: new Date().toISOString(),
         };
-        vi.spyOn(financeService, "updateGoal").mockResolvedValue({
+        vi.spyOn(financeService, "depositToGoal").mockResolvedValue({
             ...mockGoal,
             saved_so_far: 4100,
         });

@@ -35,7 +35,6 @@ const goal = (overrides: Partial<SavingsGoal>): SavingsGoal => ({
     target_amount: 1000,
     saved_so_far: 0,
     target_date: "2027-12-31",
-    monthly_contribution: 0,
     emoji: "🎯",
     status: "on_track",
     ...overrides,

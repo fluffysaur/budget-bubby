@@ -374,13 +374,21 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
                 target_amount: 6000.0,
                 saved_so_far: 1500.0,
                 target_date: targetDate,
-                monthly_contribution: 500.0,
                 emoji: "⛩️",
             });
 
             expect(newGoal.id).toBeDefined();
             expect(newGoal.title).toBe("Kyoto Holiday Fund");
+            // New goal: nothing to be behind on yet
             expect(newGoal.status).toBe("on_track");
+
+            const deposited = await mockFinanceService.depositToGoal(
+                newGoal.id,
+                500,
+                "quick_deposit",
+            );
+            expect(deposited.saved_so_far).toBe(2000);
+            expect(deposited.status).toBe("on_track");
 
             // Update goal: mark as achieved by increasing saved_so_far
             const updated = await mockFinanceService.updateGoal(newGoal.id, {
@@ -391,6 +399,38 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
             const goalsAfter = await mockFinanceService.getGoals();
             expect(goalsAfter.length).toBe(initialCount + 1);
+        });
+
+        it("records ledger deposits but not initial or manually edited Saved", async () => {
+            const target = new Date();
+            target.setMonth(target.getMonth() + 12, 1);
+            const goal = await mockFinanceService.addGoal({
+                title: "Ledger Test",
+                target_amount: 6000,
+                saved_so_far: 1000,
+                target_date: target.toISOString().slice(0, 10),
+            });
+            const countFor = async () =>
+                (await mockFinanceService.getGoalDeposits()).filter(
+                    (d) => d.goal_id === goal.id,
+                );
+
+            expect(await countFor()).toHaveLength(0);
+            await mockFinanceService.updateGoal(goal.id, {
+                saved_so_far: 1200,
+            });
+            expect(await countFor()).toHaveLength(0);
+
+            await mockFinanceService.depositToGoal(goal.id, 250.5, "sweep");
+            const rows = await countFor();
+            expect(rows).toHaveLength(1);
+            expect(rows[0]).toMatchObject({ amount: 250.5, source: "sweep" });
+            expect(
+                (await mockFinanceService.getGoal(goal.id))?.saved_so_far,
+            ).toBe(1450.5);
+            await expect(
+                mockFinanceService.depositToGoal(goal.id, 0, "sweep"),
+            ).rejects.toThrow();
         });
     });
 

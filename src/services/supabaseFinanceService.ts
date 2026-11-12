@@ -28,6 +28,8 @@ import type {
     Perspective,
     RecurringItem,
     SavingsGoal,
+    GoalDeposit,
+    GoalDepositSource,
     UpdateExpenseInput,
     CreditCard,
     CreateCreditCardInput,
@@ -53,6 +55,8 @@ import { supabase } from "./supabaseClient";
 import {
     calculateSharedExpenseSettlement,
     calculateGoalPacing,
+    getGoalPacing,
+    withDerivedGoalStatus,
     calculateCPFAndNetPay,
     calculateMemberRecurringDeductions,
     getMemberExpenseShare,
@@ -1812,11 +1816,28 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         };
     }
 
+    /** Ledger deposits from the start of last month (pace carries over); empty before the migration. */
+    public async getGoalDeposits(): Promise<GoalDeposit[]> {
+        const monthStart = `${addMonths(getTodayDateString().slice(0, 7), -1)}-01`;
+        const { data, error } = await this.getClient()
+            .from("goal_deposits")
+            .select("*")
+            .gte("deposited_at", monthStart);
+        if (error) {
+            if (isMissingRelationError(error)) return [];
+            throw error;
+        }
+        return (data || []) as GoalDeposit[];
+    }
+
     public async getGoals(): Promise<SavingsGoal[]> {
         const client = this.getClient();
         const { data, error } = await client.from("savings_goals").select("*");
         if (error) throw error;
-        return (data || []) as SavingsGoal[];
+        return withDerivedGoalStatus(
+            (data || []) as SavingsGoal[],
+            await this.getGoalDeposits(),
+        );
     }
 
     public async getGoal(id: string): Promise<SavingsGoal | null> {
@@ -1827,18 +1848,49 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             .eq("id", id)
             .maybeSingle();
         if (error) throw error;
-        return (data as SavingsGoal | null) ?? null;
+        if (!data) return null;
+        return withDerivedGoalStatus(
+            [data as SavingsGoal],
+            await this.getGoalDeposits(),
+        )[0];
+    }
+
+    /** Atomically raises saved_so_far and records the deposit in the ledger. */
+    public async depositToGoal(
+        goalId: string,
+        amount: number,
+        source: GoalDepositSource,
+    ): Promise<SavingsGoal> {
+        const rounded = Math.round(amount * 100) / 100;
+        if (!(rounded > 0)) throw new Error("Deposit must be positive");
+        const { error } = await this.getClient().rpc("record_goal_deposit", {
+            p_goal_id: goalId,
+            p_amount: rounded,
+            p_source: source,
+            p_deposited_at: getTodayDateString(),
+        });
+        if (error) {
+            if (!isMissingRelationError(error)) throw error;
+            // Pre-migration fallback: balance only, no ledger.
+            const { error: incError } = await this.getClient().rpc(
+                "increment_goal_saved",
+                { p_goal_id: goalId, p_amount: rounded },
+            );
+            if (incError) throw incError;
+        }
+        const goal = await this.getGoal(goalId);
+        if (!goal) throw new Error("Savings goal not found");
+        return goal;
     }
 
     public async addGoal(input: CreateGoalInput): Promise<SavingsGoal> {
         const client = this.getClient();
         const savedSoFar = input.saved_so_far ?? 0;
-        const monthlyContribution = input.monthly_contribution ?? 0;
         const pacing = calculateGoalPacing(
             input.target_amount,
             savedSoFar,
             input.target_date,
-            monthlyContribution,
+            0,
         );
 
         const householdId = isValidUuid(input.household_id)
@@ -1853,7 +1905,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 target_amount: input.target_amount,
                 saved_so_far: savedSoFar,
                 target_date: input.target_date,
-                monthly_contribution: monthlyContribution,
                 emoji: input.emoji || "🎯",
                 status: pacing.status,
             })
@@ -1877,11 +1928,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         if (fetchError) throw fetchError;
 
         const merged = { ...existing, ...updates };
-        const pacing = calculateGoalPacing(
-            merged.target_amount,
-            merged.saved_so_far,
-            merged.target_date,
-            merged.monthly_contribution,
+        const pacing = getGoalPacing(
+            merged as SavingsGoal,
+            await this.getGoalDeposits(),
         );
 
         const savedSoFarBefore = Number(existing.saved_so_far ?? 0);

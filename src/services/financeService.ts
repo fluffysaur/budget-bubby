@@ -26,6 +26,8 @@ import type {
     Perspective,
     RecurringItem,
     SavingsGoal,
+    GoalDeposit,
+    GoalDepositSource,
     CreditCard,
     CreateCreditCardInput,
     CreditCardStatement,
@@ -107,6 +109,12 @@ export interface FinanceService extends InboxService {
     getGoal(id: string): Promise<SavingsGoal | null>;
     addGoal(goal: CreateGoalInput): Promise<SavingsGoal>;
     updateGoal(id: string, updates: Partial<SavingsGoal>): Promise<SavingsGoal>;
+    getGoalDeposits(): Promise<GoalDeposit[]>;
+    depositToGoal(
+        goalId: string,
+        amount: number,
+        source: GoalDepositSource,
+    ): Promise<SavingsGoal>;
     getRecurringItems(): Promise<RecurringItem[]>;
     addRecurringItem(
         recurringItem: CreateRecurringItemInput,
@@ -405,6 +413,16 @@ export const financeService: FinanceService = {
     },
     updateGoal: async (id, updates) => {
         const res = await getActiveService().updateGoal(id, updates);
+        invalidateFinanceCache();
+        return res;
+    },
+    getGoalDeposits: () => getActiveService().getGoalDeposits(),
+    depositToGoal: async (goalId, amount, source) => {
+        const res = await getActiveService().depositToGoal(
+            goalId,
+            amount,
+            source,
+        );
         invalidateFinanceCache();
         return res;
     },

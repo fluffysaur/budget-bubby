@@ -1171,7 +1171,6 @@ describe("Notifications Engine", () => {
                     target_amount: 6000,
                     saved_so_far: 2000,
                     target_date: "2026-12-31",
-                    monthly_contribution: 500,
                     emoji: "✈️",
                     status: "behind",
                 },
@@ -1182,7 +1181,6 @@ describe("Notifications Engine", () => {
                     target_amount: 10000,
                     saved_so_far: 10000,
                     target_date: "2027-01-01",
-                    monthly_contribution: 1000,
                     emoji: "🛡️",
                     status: "achieved",
                 },
@@ -1211,6 +1209,48 @@ describe("Notifications Engine", () => {
             expect(nextMonth.find((g) => g.data?.goalId === "goal-2")?.id).toBe(
                 achieved?.id,
             );
+        });
+
+        it("checkGoalPacingReminders derives status from the ledger and only flags a missed closed month", () => {
+            const goal: SavingsGoal = {
+                id: "goal-1",
+                household_id: "hh-1",
+                title: "Japan Holiday",
+                target_amount: 6000,
+                saved_so_far: 2000,
+                target_date: "2027-10-15",
+                emoji: "✈️",
+                status: "on_track", // stale stored status must be ignored
+                created_at: "2026-10-01T00:00:00.000Z",
+            };
+            const deposits = [
+                {
+                    id: "d-1",
+                    household_id: "hh-1",
+                    goal_id: "goal-1",
+                    amount: 100,
+                    source: "quick_deposit" as const,
+                    deposited_at: "2026-10-03",
+                },
+            ];
+
+            // October is still open (and the goal is new this month): not behind
+            expect(
+                checkGoalPacingReminders(
+                    [goal],
+                    new Date("2026-10-15T12:00:00"),
+                    deposits,
+                ),
+            ).toHaveLength(0);
+
+            // November: October closed with 100 deposited vs ~341.67 required
+            const nextMonth = checkGoalPacingReminders(
+                [goal],
+                new Date("2026-11-02T12:00:00"),
+                deposits,
+            );
+            expect(nextMonth).toHaveLength(1);
+            expect(nextMonth[0].title).toBe("Japan Holiday Behind Pace");
         });
 
         it("checkMonthlyBudgetReviewReminder triggers on days 1-5 when budget is unlocked", () => {
@@ -1972,7 +2012,6 @@ describe("Notifications Engine", () => {
                     target_amount: 3000,
                     saved_so_far: 1000,
                     target_date: "2026-12-31",
-                    monthly_contribution: 500,
                     emoji: "💻",
                     status: "behind",
                 },
@@ -1984,7 +2023,6 @@ describe("Notifications Engine", () => {
                     target_amount: 6000,
                     saved_so_far: 2000,
                     target_date: "2026-12-31",
-                    monthly_contribution: 1000,
                     emoji: "🏖️",
                     status: "behind",
                 },
