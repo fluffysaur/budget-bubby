@@ -97,6 +97,11 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                 ).toBeInTheDocument();
             });
 
+            // Switch to 2026-10 month history to inspect all October statements together
+            fireEvent.click(
+                screen.getByRole("button", { name: "Previous Month" }),
+            );
+
             // Card last 4 and bank details
             const last4Chip = screen.getByText(/4128/);
             expect(last4Chip).toBeInTheDocument();
@@ -156,6 +161,10 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                     screen.getByText("DBS Altitude Visa"),
                 ).toBeInTheDocument();
             });
+
+            fireEvent.click(
+                screen.getByRole("button", { name: "Previous Month" }),
+            );
 
             // DBS Altitude Visa is initially unpaid: find Mark as Paid button
             const dbsMarkPaidBtn = screen.getByRole("button", {
@@ -295,14 +304,15 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                 ).toBeInTheDocument();
             });
 
-            // Navigate to next month
-            const nextMonthBtn = screen.getByRole("button", {
-                name: "Next Month",
+            // Step from Current -> October 2026 -> September 2026 (no seed statements)
+            const prevMonthBtn = screen.getByRole("button", {
+                name: "Previous Month",
             });
-            fireEvent.click(nextMonthBtn);
+            fireEvent.click(prevMonthBtn);
+            fireEvent.click(prevMonthBtn);
 
             await waitFor(() => {
-                expect(screen.getByText(/November 2026/i)).toBeInTheDocument();
+                expect(screen.getByText(/September 2026/i)).toBeInTheDocument();
             });
 
             // Click "Log Statement" for DBS Altitude Visa
@@ -383,6 +393,10 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                     screen.getByText("End-of-Month Card"),
                 ).toBeInTheDocument();
             });
+
+            fireEvent.click(
+                screen.getByRole("button", { name: "Previous Month" }),
+            );
 
             const logStmtBtn = screen.getByRole("button", {
                 name: /Log statement for End-of-Month Card/i,

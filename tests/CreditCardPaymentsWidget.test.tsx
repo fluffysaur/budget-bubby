@@ -35,8 +35,20 @@ describe("CreditCardPaymentsWidget", () => {
         vi.restoreAllMocks();
     });
 
-    it("renders nothing when no cycles are unpaid", () => {
+    it("renders nothing when there are no active cards", () => {
         const { container } = render(
+            <CreditCardPaymentsWidget
+                cards={[card({ is_active: false })]}
+                statements={[]}
+                today="2026-11-12"
+                onPaid={vi.fn()}
+            />,
+        );
+        expect(container).toBeEmptyDOMElement();
+    });
+
+    it("shows Paid for cycle settled state when all active cards are paid", () => {
+        render(
             <CreditCardPaymentsWidget
                 cards={[card()]}
                 statements={[stmt({ is_paid: true })]}
@@ -44,7 +56,9 @@ describe("CreditCardPaymentsWidget", () => {
                 onPaid={vi.fn()}
             />,
         );
-        expect(container).toBeEmptyDOMElement();
+        expect(screen.getByText("Card Payments")).toBeInTheDocument();
+        expect(screen.getByText("Paid for cycle")).toBeInTheDocument();
+        expect(screen.getByText("1 card")).toBeInTheDocument();
     });
 
     it("shows Pending for an unlogged cycle with the computed due date", () => {

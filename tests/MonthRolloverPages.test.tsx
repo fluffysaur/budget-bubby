@@ -157,24 +157,30 @@ describe("ExpensesPage month rollover", () => {
 });
 
 describe("CreditCardTrackerSection month default", () => {
-    it("defaults to the real current month, not a hardcoded 2026 fallback", async () => {
+    it("defaults to Current and steps into the real current month", async () => {
         vi.setSystemTime(new Date("2027-03-15T04:00:00.000Z"));
         render(
             <CreditCardTrackerSection members={[]} perspective="household" />,
         );
+        expect(screen.getByText("Current")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Next Month" })).toBeDisabled();
+
+        fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
         expect(screen.getByText("March 2027")).toBeInTheDocument();
     });
 
-    it("follows the current month across rollover", async () => {
+    it("follows the current month across rollover when returning from history", async () => {
         render(
             <CreditCardTrackerSection members={[]} perspective="household" />,
         );
+        fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
         expect(screen.getByText("October 2026")).toBeInTheDocument();
 
         rollOverToNovember();
+        fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
 
         await waitFor(() => {
-            expect(screen.getByText("November 2026")).toBeInTheDocument();
+            expect(screen.getByText("Current")).toBeInTheDocument();
         });
     });
 
@@ -182,7 +188,9 @@ describe("CreditCardTrackerSection month default", () => {
         render(
             <CreditCardTrackerSection members={[]} perspective="household" />,
         );
-        fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
+        const prev = screen.getByRole("button", { name: "Previous Month" });
+        fireEvent.click(prev);
+        fireEvent.click(prev);
         expect(screen.getByText("September 2026")).toBeInTheDocument();
 
         rollOverToNovember();
