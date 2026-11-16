@@ -229,19 +229,15 @@ export function BudgetPage({
             : typeof window !== "undefined"
               ? window.location.assign("/plan?tab=bonus")
               : undefined;
-    const disposablePool = budgetDetail?.disposablePool || 0;
-    const totalSpent = budgetDetail?.totalSpent || 0;
-    const totalRemaining = budgetDetail?.totalRemaining || 0;
-
-    const spendableAllocated = spendableCats.reduce(
-        (s, c) => s + c.allocated_amount,
-        0,
-    );
-    const spendableSpent = spendableCats.reduce(
-        (s, c) => s + (c.actualSpent || 0),
-        0,
-    );
-    const spendableRemaining = spendableAllocated - spendableSpent;
+    const spendableAllocated =
+        budgetDetail?.spendableAllocated ??
+        spendableCats.reduce((s, c) => s + c.allocated_amount, 0);
+    const spendableSpent =
+        budgetDetail?.spendableSpent ??
+        spendableCats.reduce((s, c) => s + (c.actualSpent || 0), 0);
+    const spendableRemaining =
+        budgetDetail?.spendableRemaining ??
+        spendableAllocated - spendableSpent;
     const savingsCats = allocationCats.filter((c) =>
         isSavingsCategory(c.category),
     );
@@ -326,30 +322,30 @@ export function BudgetPage({
                 }
             >
                 <StatCard
-                    title={totalRemaining < 0 ? "Over" : "Left"}
+                    title={spendableRemaining < 0 ? "Over" : "Left"}
                     loading={isLoading}
                     value={
                         <CurrencyText
-                            formatted={formatSGD(Math.abs(totalRemaining), {
+                            formatted={formatSGD(Math.abs(spendableRemaining), {
                                 showCents: false,
                             })}
                         />
                     }
                     badge={
-                        totalRemaining < 0 ? (
+                        spendableRemaining < 0 ? (
                             <Badge variant="over">Over</Badge>
                         ) : (
                             <Badge variant="ok">On Track</Badge>
                         )
                     }
-                    tooltip={`Take-home pool of ${formatSGD(disposablePool)} minus ${formatSGD(totalSpent)} spent.`}
+                    tooltip={`Spendable budget of ${formatSGD(spendableAllocated)} minus ${formatSGD(spendableSpent)} spent.`}
                     icon={<Wallet className="h-4 w-4" />}
                     iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                     footer={
-                        disposablePool > 0 ? (
+                        spendableAllocated > 0 ? (
                             <MeterBar
-                                value={totalSpent}
-                                max={disposablePool}
+                                value={spendableSpent}
+                                max={spendableAllocated}
                                 size="md"
                                 aria-label="Monthly budget spent"
                             />

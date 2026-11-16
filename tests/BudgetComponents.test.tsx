@@ -979,4 +979,94 @@ describe("BudgetPage", () => {
         const [savedProfile] = updateSpy.mock.calls[0];
         expect(savedProfile.household_id).not.toBe("hh-00000000-0001");
     });
+
+    it("unifies the top Left hero card and CategoriesHeader around spendable totals", async () => {
+        vi.spyOn(supabaseClientModule, "isSupabaseConfigured").mockReturnValue(
+            true,
+        );
+        vi.spyOn(financeService, "getBaseProfiles").mockResolvedValue([]);
+        vi.spyOn(financeService, "getBaseAllocations").mockResolvedValue([]);
+        vi.spyOn(financeService, "getCategories").mockResolvedValue(
+            mockCategories,
+        );
+        // sampleCategories are all spendable:
+        // allocated = 646.25 + 646.25 + 215.42 = 1507.92
+        // spent = 300 + 580 + 260 = 1140
+        // remaining = 367.92
+        // Meanwhile disposablePool = 4308.33, totalRemaining = 3168.33 (includes non-spendable allocations)
+        vi.spyOn(financeService, "getMonthlyBudget").mockResolvedValue({
+            budget: sampleBudget,
+            categories: sampleCategories,
+            disposablePool: 4308.33,
+            totalSpent: 1140,
+            totalRemaining: 3168.33,
+            spendableAllocated: 1507.92,
+            spendableSpent: 1140,
+            spendableRemaining: 367.92,
+        });
+        vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
+            household: {
+                id: "00000000-0000-0000-0000-000000000001",
+                name: "Yi Jia & Rachel",
+                currency: "SGD",
+            },
+            members: [
+                {
+                    id: "00000000-0000-0000-0000-000000000011",
+                    household_id: "00000000-0000-0000-0000-000000000001",
+                    display_name: "Yi Jia",
+                    role: "owner",
+                    avatar_url: "👨",
+                },
+            ],
+            totalAssets: 10000,
+            trueNetWorth: 10000,
+            settlementSummary: {
+                netBalance: 0,
+                settlementText: "All settled up",
+                debtorName: "",
+                creditorName: "",
+                debtorId: "",
+                creditorId: "",
+                member1OwesMember2: 0,
+                member2OwesMember1: 0,
+            },
+            activeGoals: [],
+            upcomingBills: [],
+        });
+
+        await act(async () => {
+            render(
+                <HouseholdProvider initialPerspective="yijia">
+                    <BudgetPage />
+                </HouseholdProvider>,
+            );
+        });
+
+        await waitFor(() => {
+            expect(
+                screen.getByText(
+                    (_content, node) =>
+                        node?.tagName === "SPAN" &&
+                        node?.textContent?.trim() === "S$367.92 left",
+                ),
+            ).toBeInTheDocument();
+        });
+
+        // Hero card must show S$368 (spendable remaining rounded), not S$3,168 (totalRemaining)
+        expect(screen.getByText("S$368")).toBeInTheDocument();
+        expect(screen.queryByText("S$3,168")).not.toBeInTheDocument();
+
+        // Both meters must report the same percentage (1140 / 1507.92 = 76%)
+        const heroBar = screen.getByRole("progressbar", {
+            name: "Monthly budget spent",
+        });
+        const categoriesBar = screen.getByRole("progressbar", {
+            name: "Categories spent",
+        });
+        expect(heroBar).toHaveAttribute(
+            "aria-valuenow",
+            categoriesBar.getAttribute("aria-valuenow"),
+        );
+    });
 });

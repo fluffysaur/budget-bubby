@@ -57,6 +57,9 @@ function makeBudget(month: string, gross: number): MonthlyBudgetDetail {
         disposablePool: gross * 0.8,
         totalSpent: 0,
         totalRemaining: gross * 0.8,
+        spendableAllocated: gross * 0.8,
+        spendableSpent: 0,
+        spendableRemaining: gross * 0.8,
     };
 }
 
