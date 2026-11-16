@@ -63,7 +63,11 @@ import {
 } from "../../hooks/useFinanceQueries";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
 import { MarkCardPaidModal } from "./MarkCardPaidModal";
-import { getCardCycle, type CardCycle } from "../../lib/creditCardCycles";
+import {
+    getCardCycle,
+    getLatestClosedMonth,
+    type CardCycle,
+} from "../../lib/creditCardCycles";
 import type {
     CreditCard,
     CreditCardStatement,
@@ -143,6 +147,7 @@ export function CreditCardTrackerSection({
     const mask = useMoneyMask();
     const { invalidateCreditCards } = useInvalidateFinance();
 
+    const [viewMode, setViewMode] = useState<"active" | "month">("active");
     const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
     useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
@@ -151,7 +156,7 @@ export function CreditCardTrackerSection({
         data: statementsData,
         isLoading: statementsLoading,
         isPlaceholderData: statementsPlaceholder,
-    } = useCreditCardStatementsQuery(selectedMonth);
+    } = useCreditCardStatementsQuery();
 
     const cards = useMemo(() => cardsData || [], [cardsData]);
     const statements = useMemo(() => statementsData || [], [statementsData]);
@@ -166,6 +171,8 @@ export function CreditCardTrackerSection({
     const [isLogStatementOpen, setIsLogStatementOpen] =
         useState<boolean>(false);
     const [statementCard, setStatementCard] = useState<CreditCard | null>(null);
+    const [statementMonth, setStatementMonth] =
+        useState<string>(getCurrentMonth);
     const [existingStatement, setExistingStatement] =
         useState<CreditCardStatement | null>(null);
     const [stmtAmountInput, setStmtAmountInput] = useState<string>("");
@@ -191,23 +198,35 @@ export function CreditCardTrackerSection({
         });
     }, [cards, perspective, activeMemberId]);
 
-    // Map card_id to statement for current month
-    const statementMap = useMemo(() => {
+    // Map `${card_id}:${month}` to statement
+    const statementByKey = useMemo(() => {
         const map = new Map<string, CreditCardStatement>();
         for (const stmt of statements) {
-            map.set(stmt.card_id, stmt);
+            map.set(`${stmt.card_id}:${stmt.month}`, stmt);
         }
         return map;
     }, [statements]);
 
-    // Financial Summaries for the selected month
+    const todayStr = getTodayDateString();
+
+    const cardEntries = useMemo(() => {
+        return filteredCards.map((card) => {
+            const cardMonth =
+                viewMode === "active"
+                    ? getLatestClosedMonth(card, todayStr)
+                    : selectedMonth;
+            const stmt = statementByKey.get(`${card.id}:${cardMonth}`);
+            return { card, cardMonth, stmt };
+        });
+    }, [filteredCards, viewMode, todayStr, selectedMonth, statementByKey]);
+
+    // Financial Summaries for the active/selected view
     const { totalBillDue, totalPaid, totalUnpaid } = useMemo(() => {
         let dueSum = 0;
         let paidSum = 0;
         let unpaidSum = 0;
 
-        for (const card of filteredCards) {
-            const stmt = statementMap.get(card.id);
+        for (const { stmt } of cardEntries) {
             if (stmt) {
                 dueSum += stmt.statement_amount;
                 if (stmt.is_paid) {
@@ -223,7 +242,7 @@ export function CreditCardTrackerSection({
             totalPaid: Math.round(paidSum * 100) / 100,
             totalUnpaid: Math.round(unpaidSum * 100) / 100,
         };
-    }, [filteredCards, statementMap]);
+    }, [cardEntries]);
 
     // 1-Tap Toggle Paid / Unpaid
     const handleTogglePaid = async (stmt: CreditCardStatement) => {
@@ -255,9 +274,10 @@ export function CreditCardTrackerSection({
     };
 
     // Open Log/Edit Statement Modal
-    const handleOpenLogStatement = (card: CreditCard) => {
-        const stmt = statementMap.get(card.id);
+    const handleOpenLogStatement = (card: CreditCard, month: string) => {
+        const stmt = statementByKey.get(`${card.id}:${month}`);
         setStatementCard(card);
+        setStatementMonth(month);
         setExistingStatement(stmt || null);
         if (stmt) {
             setStmtAmountInput(String(stmt.statement_amount));
@@ -267,7 +287,7 @@ export function CreditCardTrackerSection({
             setStmtAmountInput("");
             setStmtDueDateInput(
                 getDefaultStatementDueDate(
-                    selectedMonth,
+                    month,
                     card.due_day || 5,
                     card.billing_day,
                 ),
@@ -298,7 +318,7 @@ export function CreditCardTrackerSection({
             setIsSavingStmt(true);
             await financeService.upsertCreditCardStatement({
                 card_id: statementCard.id,
-                month: selectedMonth,
+                month: statementMonth,
                 statement_amount: Math.round(amount * 100) / 100,
                 due_date: stmtDueDateInput,
                 notes: stmtNotesInput.trim() ? stmtNotesInput.trim() : null,
@@ -337,33 +357,67 @@ export function CreditCardTrackerSection({
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     data-testid="credit-card-header-actions"
                 >
-                    {/* Month Stepper */}
-                    <div className="flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-cute-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                         <button
                             type="button"
-                            aria-label="Previous Month"
+                            aria-pressed={viewMode === "active"}
                             onClick={() => {
                                 setToggleError(null);
-                                setSelectedMonth((m) => addMonths(m, -1));
+                                setViewMode("active");
                             }}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
+                            className={`w-full sm:w-auto min-h-11 sm:min-h-9 px-3 py-1.5 rounded-xl border border-(--border-ink) text-xs font-bold shadow-cute-sm transition-press cursor-pointer shrink-0 ${
+                                viewMode === "active"
+                                    ? "bg-(--pastel-lilac) text-(--text-ink)"
+                                    : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--bg-cream)"
+                            }`}
                         >
-                            <ChevronLeft className="h-4 w-4" />
+                            Active Cycle
                         </button>
-                        <div className="px-2 text-xs font-mono-num font-bold text-(--text-ink) min-w-24 text-center">
-                            {formatDisplayMonth(selectedMonth)}
+
+                        {/* Month Stepper (History) */}
+                        <div
+                            className={`flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) p-1 shadow-cute-sm transition-colors ${
+                                viewMode === "month"
+                                    ? "bg-(--pastel-butter-light)"
+                                    : "bg-(--bg-canvas) opacity-80"
+                            }`}
+                        >
+                            <button
+                                type="button"
+                                aria-label="Previous Month"
+                                onClick={() => {
+                                    setToggleError(null);
+                                    setViewMode("month");
+                                    setSelectedMonth((m) => addMonths(m, -1));
+                                }}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                aria-label="View Month History"
+                                onClick={() => {
+                                    setToggleError(null);
+                                    setViewMode("month");
+                                }}
+                                className="px-2 text-xs font-mono-num font-bold text-(--text-ink) min-w-24 text-center cursor-pointer"
+                            >
+                                {formatDisplayMonth(selectedMonth)}
+                            </button>
+                            <button
+                                type="button"
+                                aria-label="Next Month"
+                                onClick={() => {
+                                    setToggleError(null);
+                                    setViewMode("month");
+                                    setSelectedMonth((m) => addMonths(m, 1));
+                                }}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            aria-label="Next Month"
-                            onClick={() => {
-                                setToggleError(null);
-                                setSelectedMonth((m) => addMonths(m, 1));
-                            }}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </button>
                     </div>
 
                     <Button
@@ -479,8 +533,7 @@ export function CreditCardTrackerSection({
                         data-testid="credit-card-list"
                     >
                         <AnimatePresence initial={false}>
-                            {filteredCards.map((card) => {
-                                const stmt = statementMap.get(card.id);
+                            {cardEntries.map(({ card, cardMonth, stmt }) => {
                                 const owner = members.find(
                                     (m) => m.id === card.owner_id,
                                 );
@@ -496,9 +549,9 @@ export function CreditCardTrackerSection({
                                     ? null
                                     : getCardCycle(
                                           card,
-                                          selectedMonth,
+                                          cardMonth,
                                           null,
-                                          getTodayDateString(),
+                                          todayStr,
                                       );
                                 const pendingStatus = pendingCycle
                                     ? getRelativeDueLabel(
@@ -630,7 +683,10 @@ export function CreditCardTrackerSection({
                                                     <div className="space-y-2.5">
                                                         <div className="flex items-baseline justify-between">
                                                             <span className="text-xs font-bold text-(--text-muted)">
-                                                                Statement
+                                                                {viewMode ===
+                                                                "active"
+                                                                    ? `Cycle · ${formatDisplayMonth(cardMonth)}`
+                                                                    : "Statement"}
                                                             </span>
                                                             <span className="text-(--text-ink) font-display font-black text-lg">
                                                                 <CurrencyText
@@ -728,7 +784,10 @@ export function CreditCardTrackerSection({
                                                     >
                                                         <div className="min-w-0 flex-1">
                                                             <div className="text-xs font-bold text-(--text-muted)">
-                                                                Pending
+                                                                {viewMode ===
+                                                                "active"
+                                                                    ? `Pending · ${formatDisplayMonth(cardMonth)}`
+                                                                    : "Pending"}
                                                             </div>
                                                             <div className="text-[11px] text-(--text-muted)">
                                                                 Statement{" "}
@@ -795,6 +854,7 @@ export function CreditCardTrackerSection({
                                                         onClick={() =>
                                                             handleOpenLogStatement(
                                                                 card,
+                                                                cardMonth,
                                                             )
                                                         }
                                                         className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
@@ -823,6 +883,7 @@ export function CreditCardTrackerSection({
                                                         onClick={() =>
                                                             handleOpenLogStatement(
                                                                 card,
+                                                                cardMonth,
                                                             )
                                                         }
                                                         className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
@@ -870,7 +931,7 @@ export function CreditCardTrackerSection({
                                 ? "Edit Statement"
                                 : "Log Monthly Statement"
                         }
-                        subtitle={`${statementCard?.name || ""} • ${formatDisplayMonth(selectedMonth)}`}
+                        subtitle={`${statementCard?.name || ""} • ${formatDisplayMonth(statementMonth)}`}
                         icon={
                             <ReceiptText
                                 className="h-5 w-5"

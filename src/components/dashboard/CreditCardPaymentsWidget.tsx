@@ -5,7 +5,11 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { CreditCard as CreditCardIcon, ChevronRight } from "lucide-react";
+import {
+    CreditCard as CreditCardIcon,
+    ChevronRight,
+    CheckCircle2,
+} from "lucide-react";
 import {
     formatCountdown,
     formatISODate,
@@ -18,6 +22,7 @@ import {
 import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
 import { MarkCardPaidModal } from "../accounts/MarkCardPaidModal";
 import { BulkSettleOverdueModal } from "./BulkSettleOverdueModal";
 import type { CreditCard, CreditCardStatement } from "../../types/finance";
@@ -117,6 +122,16 @@ export const CreditCardPaymentsWidget = React.memo(
         const [payingCycle, setPayingCycle] = useState<CardCycle | null>(null);
         const [isBulkSettleOpen, setIsBulkSettleOpen] = useState(false);
 
+        const activeCardsCount = useMemo(
+            () =>
+                cards.filter(
+                    (c) =>
+                        c.is_active &&
+                        (!memberId || !c.owner_id || c.owner_id === memberId),
+                ).length,
+            [cards, memberId],
+        );
+
         const cycles = useMemo(
             () =>
                 getUnpaidCardCycles(
@@ -133,7 +148,7 @@ export const CreditCardPaymentsWidget = React.memo(
             [cycles],
         );
 
-        if (cycles.length === 0) return null;
+        if (activeCardsCount === 0) return null;
 
         return (
             <div
@@ -181,15 +196,36 @@ export const CreditCardPaymentsWidget = React.memo(
                     </div>
                 </div>
 
-                <div className="mt-4 space-y-2.5">
-                    {cycles.map((cycle) => (
-                        <CycleRow
-                            key={cycle.key}
-                            cycle={cycle}
-                            onMarkPaid={setPayingCycle}
-                        />
-                    ))}
-                </div>
+                {cycles.length === 0 ? (
+                    <div
+                        data-testid="cc-cycle-settled"
+                        className="mt-4 flex items-center justify-between gap-3 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) px-3.5 py-3 shadow-cute-sm dark:bg-emerald-950/30"
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <CheckCircle2
+                                className="h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-400"
+                                strokeWidth={2.5}
+                            />
+                            <span className="text-sm font-bold text-(--text-ink) font-display">
+                                Paid for cycle
+                            </span>
+                        </div>
+                        <Badge variant="paid" size="sm" className="shrink-0">
+                            {activeCardsCount}{" "}
+                            {activeCardsCount === 1 ? "card" : "cards"}
+                        </Badge>
+                    </div>
+                ) : (
+                    <div className="mt-4 space-y-2.5">
+                        {cycles.map((cycle) => (
+                            <CycleRow
+                                key={cycle.key}
+                                cycle={cycle}
+                                onMarkPaid={setPayingCycle}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 <MarkCardPaidModal
                     cycle={payingCycle}

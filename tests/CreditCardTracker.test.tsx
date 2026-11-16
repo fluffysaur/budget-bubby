@@ -97,6 +97,11 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                 ).toBeInTheDocument();
             });
 
+            // Switch to 2026-10 month history to inspect all October statements together
+            fireEvent.click(
+                screen.getByRole("button", { name: "View Month History" }),
+            );
+
             // Card last 4 and bank details
             const last4Chip = screen.getByText(/4128/);
             expect(last4Chip).toBeInTheDocument();
@@ -156,6 +161,10 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                     screen.getByText("DBS Altitude Visa"),
                 ).toBeInTheDocument();
             });
+
+            fireEvent.click(
+                screen.getByRole("button", { name: "View Month History" }),
+            );
 
             // DBS Altitude Visa is initially unpaid: find Mark as Paid button
             const dbsMarkPaidBtn = screen.getByRole("button", {
@@ -383,6 +392,10 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                     screen.getByText("End-of-Month Card"),
                 ).toBeInTheDocument();
             });
+
+            fireEvent.click(
+                screen.getByRole("button", { name: "View Month History" }),
+            );
 
             const logStmtBtn = screen.getByRole("button", {
                 name: /Log statement for End-of-Month Card/i,
