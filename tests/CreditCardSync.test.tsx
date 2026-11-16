@@ -73,25 +73,34 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
         });
 
         // On 2026-10-15: DBS (billing_day 15) closed 2026-10; UOB (20) & OCBC (28) are on 2026-09
-        expect(screen.getByText("Cycle · October 2026")).toBeInTheDocument();
         expect(
-            screen.getAllByText("Pending · September 2026"),
+            screen.getByTestId("credit-card-period-label"),
+        ).toHaveTextContent("Current");
+        expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
+        expect(
+            screen.getAllByText(/Pending · Sept? 2026/),
         ).toHaveLength(2);
 
-        // Switch to Month History (October 2026) -> all 3 show October statements
+        // Step < into October 2026 month history -> all 3 show October statements
         fireEvent.click(
-            screen.getByRole("button", { name: "View Month History" }),
+            screen.getByRole("button", { name: "Previous Month" }),
         );
         expect(
-            screen.queryByText("Pending · September 2026"),
+            screen.getByTestId("credit-card-period-label"),
+        ).toHaveTextContent("October 2026");
+        expect(
+            screen.queryByText(/Pending · Sept? 2026/),
         ).not.toBeInTheDocument();
         expect(screen.getAllByText("Statement")).toHaveLength(3);
 
-        // Switch back to Active Cycle
-        fireEvent.click(screen.getByRole("button", { name: "Active Cycle" }));
-        expect(screen.getByText("Cycle · October 2026")).toBeInTheDocument();
+        // Step > back to Current
+        fireEvent.click(screen.getByRole("button", { name: "Next Month" }));
         expect(
-            screen.getAllByText("Pending · September 2026"),
+            screen.getByTestId("credit-card-period-label"),
+        ).toHaveTextContent("Current");
+        expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
+        expect(
+            screen.getAllByText(/Pending · Sept? 2026/),
         ).toHaveLength(2);
     });
 
@@ -159,8 +168,8 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
                 screen.getByTestId(`cc-cycle-${cardLate.id}:2026-10`),
             ).toBeInTheDocument();
         });
-        expect(screen.getByText("Cycle · November 2026")).toBeInTheDocument();
-        expect(screen.getByText("Cycle · October 2026")).toBeInTheDocument();
+        expect(screen.getByText("Statement · Nov 2026")).toBeInTheDocument();
+        expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
 
         // 1. Mark Late Cycle Card paid in Credit Cards tab -> disappears from Home widget
         fireEvent.click(

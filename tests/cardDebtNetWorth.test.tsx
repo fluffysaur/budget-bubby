@@ -391,13 +391,15 @@ describe("AccountsPage card debt integration", () => {
         // Mark Yi Jia's DBS statement (S$842.50) paid via the Credit Cards tab
         fireEvent.click(screen.getByRole("tab", { name: /credit cards/i }));
 
-        // Navigate from Nov 2026 back to Oct 2026 where demo statements live
+        // Step from Current -> Nov 2026 -> Oct 2026 where demo statements live
         await waitFor(() => {
             expect(
                 screen.getByRole("button", { name: "Previous Month" }),
             ).toBeInTheDocument();
         });
-        fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
+        const prevBtn = screen.getByRole("button", { name: "Previous Month" });
+        fireEvent.click(prevBtn);
+        fireEvent.click(prevBtn);
 
         const markPaidBtn = await screen.findByRole("button", {
             name: /Mark DBS Altitude Visa statement as Paid/i,

@@ -7,9 +7,13 @@ test.describe("Credit Card Paid Cycle Sync", () => {
         await page.goto("/accounts");
         await page.getByRole("tab", { name: /Credit Cards/ }).click();
 
-        // Default view is Active Cycle
-        const activeBtn = page.getByRole("button", { name: "Active Cycle" });
-        await expect(activeBtn).toHaveAttribute("aria-pressed", "true");
+        // Default view is Current
+        await expect(
+            page.getByTestId("credit-card-period-label"),
+        ).toHaveText("Current");
+        await expect(
+            page.getByRole("button", { name: "Next Month" }),
+        ).toBeDisabled();
 
         // Mark OCBC 365 Dining & Groceries paid in Credit Cards tab
         await page

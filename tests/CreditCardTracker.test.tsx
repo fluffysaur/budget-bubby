@@ -99,7 +99,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
 
             // Switch to 2026-10 month history to inspect all October statements together
             fireEvent.click(
-                screen.getByRole("button", { name: "View Month History" }),
+                screen.getByRole("button", { name: "Previous Month" }),
             );
 
             // Card last 4 and bank details
@@ -163,7 +163,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             });
 
             fireEvent.click(
-                screen.getByRole("button", { name: "View Month History" }),
+                screen.getByRole("button", { name: "Previous Month" }),
             );
 
             // DBS Altitude Visa is initially unpaid: find Mark as Paid button
@@ -304,14 +304,15 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                 ).toBeInTheDocument();
             });
 
-            // Navigate to next month
-            const nextMonthBtn = screen.getByRole("button", {
-                name: "Next Month",
+            // Step from Current -> October 2026 -> September 2026 (no seed statements)
+            const prevMonthBtn = screen.getByRole("button", {
+                name: "Previous Month",
             });
-            fireEvent.click(nextMonthBtn);
+            fireEvent.click(prevMonthBtn);
+            fireEvent.click(prevMonthBtn);
 
             await waitFor(() => {
-                expect(screen.getByText(/November 2026/i)).toBeInTheDocument();
+                expect(screen.getByText(/September 2026/i)).toBeInTheDocument();
             });
 
             // Click "Log Statement" for DBS Altitude Visa
@@ -394,7 +395,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             });
 
             fireEvent.click(
-                screen.getByRole("button", { name: "View Month History" }),
+                screen.getByRole("button", { name: "Previous Month" }),
             );
 
             const logStmtBtn = screen.getByRole("button", {

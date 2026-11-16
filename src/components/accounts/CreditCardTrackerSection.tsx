@@ -50,6 +50,7 @@ import {
     formatCountdown,
     getTodayDateString,
     formatDisplayMonth,
+    formatShortMonth,
     formatDisplayDate,
     addMonths,
     ordinal,
@@ -357,67 +358,50 @@ export function CreditCardTrackerSection({
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     data-testid="credit-card-header-actions"
                 >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+                    {/* Cycle / Month Stepper */}
+                    <div className="flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) bg-(--bg-canvas) p-1 shadow-cute-sm">
                         <button
                             type="button"
-                            aria-pressed={viewMode === "active"}
+                            aria-label="Previous Month"
                             onClick={() => {
                                 setToggleError(null);
-                                setViewMode("active");
-                            }}
-                            className={`w-full sm:w-auto min-h-11 sm:min-h-9 px-3 py-1.5 rounded-xl border border-(--border-ink) text-xs font-bold shadow-cute-sm transition-press cursor-pointer shrink-0 ${
-                                viewMode === "active"
-                                    ? "bg-(--pastel-lilac) text-(--text-ink)"
-                                    : "bg-(--bg-canvas) text-(--text-muted) hover:bg-(--bg-cream)"
-                            }`}
-                        >
-                            Active Cycle
-                        </button>
-
-                        {/* Month Stepper (History) */}
-                        <div
-                            className={`flex w-full sm:w-auto items-center justify-between gap-1 rounded-xl border border-(--border-ink) p-1 shadow-cute-sm transition-colors ${
-                                viewMode === "month"
-                                    ? "bg-(--pastel-butter-light)"
-                                    : "bg-(--bg-canvas) opacity-80"
-                            }`}
-                        >
-                            <button
-                                type="button"
-                                aria-label="Previous Month"
-                                onClick={() => {
-                                    setToggleError(null);
+                                if (viewMode === "active") {
+                                    setSelectedMonth(getCurrentMonth());
                                     setViewMode("month");
+                                } else {
                                     setSelectedMonth((m) => addMonths(m, -1));
-                                }}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="View Month History"
-                                onClick={() => {
-                                    setToggleError(null);
-                                    setViewMode("month");
-                                }}
-                                className="px-2 text-xs font-mono-num font-bold text-(--text-ink) min-w-24 text-center cursor-pointer"
-                            >
-                                {formatDisplayMonth(selectedMonth)}
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="Next Month"
-                                onClick={() => {
-                                    setToggleError(null);
-                                    setViewMode("month");
-                                    setSelectedMonth((m) => addMonths(m, 1));
-                                }}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </button>
+                                }
+                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <div
+                            data-testid="credit-card-period-label"
+                            className="px-2 text-xs font-mono-num font-bold text-(--text-ink) min-w-24 text-center"
+                        >
+                            {viewMode === "active"
+                                ? "Current"
+                                : formatDisplayMonth(selectedMonth)}
                         </div>
+                        <button
+                            type="button"
+                            aria-label="Next Month"
+                            disabled={viewMode === "active"}
+                            onClick={() => {
+                                setToggleError(null);
+                                const currentCal = getCurrentMonth();
+                                const next = addMonths(selectedMonth, 1);
+                                if (next > currentCal) {
+                                    setViewMode("active");
+                                } else {
+                                    setSelectedMonth(next);
+                                }
+                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
                     </div>
 
                     <Button
@@ -685,7 +669,7 @@ export function CreditCardTrackerSection({
                                                             <span className="text-xs font-bold text-(--text-muted)">
                                                                 {viewMode ===
                                                                 "active"
-                                                                    ? `Cycle · ${formatDisplayMonth(cardMonth)}`
+                                                                    ? `Statement · ${formatShortMonth(cardMonth)}`
                                                                     : "Statement"}
                                                             </span>
                                                             <span className="text-(--text-ink) font-display font-black text-lg">
@@ -786,7 +770,7 @@ export function CreditCardTrackerSection({
                                                             <div className="text-xs font-bold text-(--text-muted)">
                                                                 {viewMode ===
                                                                 "active"
-                                                                    ? `Pending · ${formatDisplayMonth(cardMonth)}`
+                                                                    ? `Pending · ${formatShortMonth(cardMonth)}`
                                                                     : "Pending"}
                                                             </div>
                                                             <div className="text-[11px] text-(--text-muted)">
