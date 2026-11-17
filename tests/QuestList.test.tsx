@@ -4,8 +4,20 @@ import { QuestList } from "../src/components/bubby/QuestList";
 import type { Quest } from "../src/lib/bubby/quests";
 
 const quests: Quest[] = [
-    { id: "log", label: "Log today", reward: "food", done: true },
-    { id: "inbox", label: "Clear your inbox", reward: "exercise", done: false },
+    {
+        id: "log",
+        label: "Log today",
+        description: "Add an expense or tap No spend",
+        reward: "food",
+        done: true,
+    },
+    {
+        id: "inbox",
+        label: "Clear inbox",
+        description: "Confirm or dismiss pending items",
+        reward: "exercise",
+        done: false,
+    },
 ];
 
 describe("QuestList", () => {
@@ -20,10 +32,13 @@ describe("QuestList", () => {
         fireEvent.click(done);
         expect(onSelect).not.toHaveBeenCalled();
 
-        fireEvent.click(
-            screen.getByRole("button", { name: /Clear your inbox/ }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: /Clear inbox/ }));
         expect(onSelect).toHaveBeenCalledWith(quests[1]);
+        expect(
+            screen.getByText("Add an expense or tap No spend"),
+        ).toBeInTheDocument();
+        expect(screen.getByText("🍤 Food")).toBeInTheDocument();
+        expect(screen.getByText("💪 Exercise")).toBeInTheDocument();
     });
 
     it("disables pending quests that are not selectable right now", () => {
@@ -37,7 +52,7 @@ describe("QuestList", () => {
             />,
         );
 
-        const inbox = screen.getByRole("button", { name: /Clear your inbox/ });
+        const inbox = screen.getByRole("button", { name: /Clear inbox/ });
         expect(inbox).toBeDisabled();
         fireEvent.click(inbox);
         expect(onSelect).not.toHaveBeenCalled();

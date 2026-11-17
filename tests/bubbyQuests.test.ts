@@ -31,12 +31,11 @@ describe("daily quests", () => {
         inboxPending: 0,
     };
 
-    it("treats an empty inbox as done", () => {
+    it("hides inbox when nothing is pending and not cleared today", () => {
         const quests = dailyQuests(base);
         expect(quests.map((q) => [q.id, q.done])).toEqual([
             ["log", false],
             ["pet", false],
-            ["inbox", true],
         ]);
     });
 
@@ -49,7 +48,7 @@ describe("daily quests", () => {
         expect(allDone(quests)).toBe(true);
     });
 
-    it("need the inbox cleared while items wait", () => {
+    it("need the inbox cleared while items wait and stays shown once cleared today", () => {
         expect(dailyQuests({ ...base, inboxPending: 3 })[2].done).toBe(false);
         expect(
             dailyQuests({
@@ -58,6 +57,13 @@ describe("daily quests", () => {
                 store: { exercise: { "inbox-clear": [TODAY] } },
             })[2].done,
         ).toBe(true);
+        expect(
+            dailyQuests({
+                ...base,
+                inboxPending: 0,
+                store: { exercise: { "inbox-clear": [TODAY] } },
+            })[2],
+        ).toMatchObject({ id: "inbox", done: true });
     });
 
     it("vanish with the day: yesterday's progress doesn't count", () => {
@@ -66,9 +72,7 @@ describe("daily quests", () => {
             checkins: [chk(ME, "2026-11-05")],
             store: { petDays: { [ME]: ["2026-11-05"] } },
         });
-        expect(quests.filter((q) => q.done).map((q) => q.id)).toEqual([
-            "inbox",
-        ]);
+        expect(quests.filter((q) => q.done).map((q) => q.id)).toEqual([]);
     });
 });
 
@@ -100,6 +104,23 @@ describe("weekly quests", () => {
             },
         });
         expect(lastWeek.every((q) => !q.done)).toBe(true);
+    });
+
+    it("shows weekly recap Mon-Wed and hides it Thu-Sun unless already read", () => {
+        // 2026-11-02 is Monday; 2026-11-06 is Friday
+        const mondayIds = weeklyQuests({
+            today: "2026-11-02",
+            snapshots: [],
+            store: {},
+        }).map((q) => q.id);
+        expect(mondayIds).toContain("recap");
+
+        const fridayIds = weeklyQuests({
+            today: TODAY,
+            snapshots: [],
+            store: {},
+        }).map((q) => q.id);
+        expect(fridayIds).not.toContain("recap");
     });
 });
 

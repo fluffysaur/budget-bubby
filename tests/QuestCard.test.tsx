@@ -34,7 +34,7 @@ describe("QuestCard", () => {
         await renderCard();
         expect(
             await screen.findByRole("progressbar", {
-                name: "Today: 1 of 3 done",
+                name: "Today: 0 of 2 done",
             }),
         ).toBeInTheDocument();
         expect(

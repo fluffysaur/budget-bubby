@@ -38,6 +38,7 @@ export type MilestoneKind =
     | "full-belly"
     | "weekly-treat"
     | "monthly-treat"
+    | "quest-done"
     | "body-change"
     | "reunion"
     | "goal-complete"

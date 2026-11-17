@@ -101,6 +101,12 @@ const MILESTONE_CUES: Record<MilestoneKind, MilestoneCue> = {
         react: "munch",
         big: false,
     },
+    "quest-done": {
+        haptic: "success",
+        sound: "softPop",
+        react: "cheer",
+        big: false,
+    },
     "body-change": {
         haptic: "celebrate",
         sound: "success",

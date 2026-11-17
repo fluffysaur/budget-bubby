@@ -324,4 +324,30 @@ describe("DelightHost", () => {
         expect(screen.queryByText("Inbox zero! 🎉")).not.toBeInTheDocument();
         expect(screen.queryByTestId("confetti-burst")).not.toBeInTheDocument();
     });
+
+    it("toasts when an individual quest transitions to done without completing the tier", async () => {
+        writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
+        mockData();
+        await renderHost();
+        await waitFor(() =>
+            expect(financeService.getDailyCheckins).toHaveBeenCalled(),
+        );
+        await act(async () => {});
+        expect(
+            screen.queryByText("Task done: Pet Bubby 🍤"),
+        ).not.toBeInTheDocument();
+
+        await act(async () => {
+            writeBubbyStore({
+                ...readBubbyStore(),
+                petDays: { [YJ.id]: [TODAY] },
+            });
+            emitAppEvent("bubby:store-changed", {});
+        });
+
+        expect(
+            await screen.findByText("Task done: Pet Bubby 🍤"),
+        ).toBeInTheDocument();
+        expect(screen.queryByText("Full belly! 🍤")).not.toBeInTheDocument();
+    });
 });

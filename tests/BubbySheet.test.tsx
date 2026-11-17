@@ -79,6 +79,11 @@ describe("BubbySheet", () => {
             }),
         ).toBeInTheDocument();
         expect(
+            screen.getByText(
+                "Earn 💪 by clearing inbox, updating balances, adding to goals, or month-end.",
+            ),
+        ).toBeInTheDocument();
+        expect(
             screen.getByRole("list", { name: "Today's quests" }),
         ).toBeInTheDocument();
         expect(
