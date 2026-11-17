@@ -251,6 +251,10 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                 )}
 
                 <section aria-label="Quests" className="space-y-3">
+                    <p className="text-xs font-medium text-(--text-muted)">
+                        Earn 💪 by clearing inbox, updating balances, adding to
+                        goals, or month-end.
+                    </p>
                     <div>
                         <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                             Today
@@ -262,7 +266,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                             isSelectable={isQuestSelectable}
                             renderExtra={(q) =>
                                 q.id === "log" && !q.done ? (
-                                    <div className="pb-1.5 pl-7">
+                                    <div className="px-3 pb-2.5 pl-10">
                                         <NoSpendButton />
                                     </div>
                                 ) : null

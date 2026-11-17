@@ -1,10 +1,12 @@
 /**
  * Quests: small, optional, no penalty. Unfinished ones simply vanish.
  *
- * Daily (per member): log today 🍤, pet Bubby 🍤, clear your inbox 💪
- * ("nothing to clear" counts as done). All three: a full-belly moment.
- * Weekly (household): update balances 💪, read the recap 💪, and add to a goal
- * 💪 (only while a goal is active). All shown: a snack treat for the
+ * Daily (per member): log today 🍤, pet Bubby 🍤, and clear your inbox 💪
+ * (shown only when items are pending or cleared today). All shown: a
+ * full-belly moment.
+ * Weekly (household): update balances 💪, read the weekly recap 💪 (shown
+ * Mon-Wed while available or already read this week), and add to a goal 💪
+ * (only while a goal is active). All shown: a snack treat for the
  * collection.
  * Monthly (household): pay the card statements due this month 💪 and sweep
  * last month's surplus 💪. Each shows only when it applies; all shown done:
@@ -19,6 +21,7 @@ import type {
 } from "../../types/finance";
 import type { BubbyStore } from "./storage";
 import { addDays, mondayOf } from "./dates";
+import { recapWeekFor } from "./recap";
 import { loggedDateOf } from "./sources";
 
 export interface Quest {
@@ -32,6 +35,7 @@ export interface Quest {
         | "cards"
         | "sweep";
     label: string;
+    description?: string;
     reward: "food" | "exercise";
     done: boolean;
 }
@@ -65,19 +69,35 @@ export function dailyQuests({
     const petted = Boolean(
         memberId && store.petDays?.[memberId]?.includes(today),
     );
-    const inboxDone =
-        inboxPending === 0 ||
-        Boolean(store.exercise?.["inbox-clear"]?.includes(today));
-    return [
-        { id: "log", label: "Log today", reward: "food", done: logged },
-        { id: "pet", label: "Pet Bubby", reward: "food", done: petted },
+    const clearedToday = Boolean(
+        store.exercise?.["inbox-clear"]?.includes(today),
+    );
+    const quests: Quest[] = [
         {
-            id: "inbox",
-            label: "Clear your inbox",
-            reward: "exercise",
-            done: inboxDone,
+            id: "log",
+            label: "Log today",
+            description: "Add an expense or tap No spend",
+            reward: "food",
+            done: logged,
+        },
+        {
+            id: "pet",
+            label: "Pet Bubby",
+            description: "Tap Bubby above to say hi",
+            reward: "food",
+            done: petted,
         },
     ];
+    if (inboxPending > 0 || clearedToday) {
+        quests.push({
+            id: "inbox",
+            label: "Clear inbox",
+            description: "Confirm or dismiss pending items",
+            reward: "exercise",
+            done: inboxPending === 0 || clearedToday,
+        });
+    }
+    return quests;
 }
 
 export interface WeeklyQuestInputs {
@@ -105,24 +125,30 @@ export function weeklyQuests({
     const recap = (store.exercise?.["recap-read"] ?? []).some((d) =>
         inWeek(d, monday),
     );
+    const recapAvailable = recapWeekFor(today, store.recapSeenWeek) !== null;
     const quests: Quest[] = [
         {
             id: "balances",
             label: "Update balances",
+            description: "Snapshot your account balances",
             reward: "exercise",
             done: balances,
         },
-        {
+    ];
+    if (recapAvailable || recap) {
+        quests.push({
             id: "recap",
-            label: "Read the recap",
+            label: "Read weekly recap",
+            description: "Check Last Week on Home",
             reward: "exercise",
             done: recap,
-        },
-    ];
+        });
+    }
     if (hasActiveGoal) {
         quests.push({
             id: "goal",
             label: "Add to a goal",
+            description: "Contribute to a savings goal",
             reward: "exercise",
             done: (store.exercise?.["goal-add"] ?? []).some((d) =>
                 inWeek(d, monday),
@@ -162,6 +188,7 @@ export function monthlyQuests({
         quests.push({
             id: "cards",
             label: "Pay card bills",
+            description: "Mark due statements paid",
             reward: "exercise",
             done: due.every((s) => s.is_paid),
         });
@@ -172,7 +199,8 @@ export function monthlyQuests({
     if (surplusPending || swept) {
         quests.push({
             id: "sweep",
-            label: "Sweep the surplus",
+            label: "Sweep surplus",
+            description: "Bank or sweep last month's leftover",
             reward: "exercise",
             done: swept,
         });

@@ -201,6 +201,58 @@ export function DelightHost() {
         if (store.lastMood !== mood) updateBubbyStore({ lastMood: mood });
     }, [isReady, mood, today]);
 
+    // Individual quest completion: toast when a task transitions to done,
+    // skipping if its whole tier just finished (the tier milestone handles it)
+    const prevQuestDoneRef = useRef<Map<string, boolean> | null>(null);
+    useEffect(() => {
+        if (!isReady) return;
+        const week = mondayOf(today);
+        const month = today.slice(0, 7);
+        const tiers = [
+            { periodKey: `${today}:${meId ?? "me"}`, quests: dailyQuests, ready: true },
+            { periodKey: week, quests: weeklyQuests, ready: weeklyQuestsReady },
+            { periodKey: month, quests: monthlyQuests, ready: monthlyQuestsReady },
+        ];
+        const next = new Map<string, boolean>();
+        for (const tier of tiers) {
+            if (!tier.ready) continue;
+            for (const q of tier.quests) {
+                const key = `${q.id}:${tier.periodKey}`;
+                next.set(key, q.done);
+            }
+        }
+        const prev = prevQuestDoneRef.current;
+        prevQuestDoneRef.current = next;
+        if (!prev) return;
+
+        for (const tier of tiers) {
+            if (!tier.ready || allDone(tier.quests)) continue;
+            for (const q of tier.quests) {
+                const key = `${q.id}:${tier.periodKey}`;
+                if (q.done && prev.get(key) === false) {
+                    const icon = q.reward === "food" ? "🍤" : "💪";
+                    feedback.milestone("quest-done", {
+                        dedupeKey: `quest:${key}`,
+                        title: `Task done: ${q.label} ${icon}`,
+                        subtitle:
+                            q.reward === "food"
+                                ? "Fed Bubby"
+                                : "Exercised Bubby",
+                    });
+                }
+            }
+        }
+    }, [
+        isReady,
+        weeklyQuestsReady,
+        monthlyQuestsReady,
+        dailyQuests,
+        weeklyQuests,
+        monthlyQuests,
+        today,
+        meId,
+    ]);
+
     // Daily quests (per member): full belly
     const dailyDone = allDone(dailyQuests);
     useEffect(() => {
