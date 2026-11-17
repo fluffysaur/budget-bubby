@@ -44,6 +44,11 @@ const SYMBOLS: readonly [string, string][] = [
 ];
 
 const ISO_CODE = /^[A-Z]{3}$/;
+const ALPHA_ONLY = /^[A-Z]+$/;
+const KNOWN_CURRENCY_CODES = new Set([
+    ...SUPPORTED_CURRENCIES.map((c) => c.code),
+    ...SYMBOLS.map(([, code]) => code),
+]);
 
 /** Normalises an optional ISO code. Returns null when it isn't one. */
 export function normalizeCurrencyCode(code: unknown): string | null {
@@ -54,14 +59,18 @@ export function normalizeCurrencyCode(code: unknown): string | null {
 
 function detectCurrency(nonNumeric: string): string | null {
     const upper = nonNumeric.toUpperCase();
-    // A 3-letter ISO code wins over any symbol ("USD 4.99", "4.99 EUR")
-    const letters = upper.match(/[A-Z]+/g) ?? [];
-    for (const run of letters) {
-        if (run === "RMB") return "CNY";
-        if (ISO_CODE.test(run)) return run;
+    // A known 3-letter ISO code wins over any symbol ("USD 4.99", "4.99 EUR")
+    const words: string[] = upper.match(/[A-Z]+/g) ?? [];
+    for (const word of words) {
+        if (word === "RMB") return "CNY";
+        if (KNOWN_CURRENCY_CODES.has(word)) return word;
     }
     for (const [symbol, code] of SYMBOLS) {
-        if (upper.includes(symbol)) return code;
+        if (ALPHA_ONLY.test(symbol)) {
+            if (words.includes(symbol)) return code;
+        } else if (upper.includes(symbol)) {
+            return code;
+        }
     }
     return null;
 }
@@ -125,7 +134,7 @@ export function parseCapturedAmount(
         const numeric = compact.match(/\d[\d.,']*/);
         if (!numeric) return { ok: false, reason: "invalid" };
 
-        const nonNumeric = compact.replace(numeric[0], " ");
+        const nonNumeric = raw.replace(/\d[\d.,'\s]*/, " ");
         currency = override ?? detectCurrency(nonNumeric) ?? "SGD";
         const negative = /^[-−(]|[-−)]$/.test(
             compact.replace(/[^\d.,'\-−()]/g, ""),

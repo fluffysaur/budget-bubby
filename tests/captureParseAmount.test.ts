@@ -32,6 +32,16 @@ describe("parseCapturedAmount", () => {
         expect(parseCapturedAmount(1200, "JPY")).toEqual(ok(1200, "JPY"));
     });
 
+    it("does not misdetect RM substrings or arbitrary 3-letter words as foreign currencies", () => {
+        expect(parseCapturedAmount("CONFIRM $12.50")).toEqual(ok(12.5, "SGD"));
+        expect(parseCapturedAmount("CONFIRM 12.50")).toEqual(ok(12.5, "SGD"));
+        expect(parseCapturedAmount("FROM S$18.00")).toEqual(ok(18, "SGD"));
+        expect(parseCapturedAmount("FROM $18.00")).toEqual(ok(18, "SGD"));
+        expect(parseCapturedAmount("FOR $10.00")).toEqual(ok(10, "SGD"));
+        expect(parseCapturedAmount("PAY 10.00")).toEqual(ok(10, "SGD"));
+        expect(parseCapturedAmount("PAY RM 8.90")).toEqual(ok(8.9, "MYR"));
+    });
+
     it("ignores refunds and zero amounts", () => {
         expect(parseCapturedAmount("-5.00")).toEqual({
             ok: false,
