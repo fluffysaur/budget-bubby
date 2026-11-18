@@ -22,6 +22,9 @@ export interface PoolBarProps {
     className?: string;
 }
 
+/** `selectedId` value for the Spare segment. */
+export const SPARE_ID = "spare";
+
 /** Layout in percent of the bar's width. */
 const SCALE = 100;
 /** Minimum segment width, in percent. */
@@ -78,16 +81,25 @@ export function PoolBar({
                 />
 
                 {layout.headroom && (
-                    <div
-                        aria-hidden="true"
-                        className="absolute inset-y-0 flex items-center justify-center border-l-2 border-dashed border-(--border-subtle) text-[10px] font-bold uppercase tracking-wider text-(--text-muted)"
+                    <button
+                        type="button"
+                        aria-pressed={selectedId === SPARE_ID}
+                        aria-label="Show spare"
+                        onClick={() =>
+                            onSelect(selectedId === SPARE_ID ? null : SPARE_ID)
+                        }
+                        className={`absolute inset-y-0 flex cursor-pointer items-center justify-center border-l-2 border-dashed border-(--border-subtle) text-[10px] font-bold uppercase tracking-wider text-(--text-muted) ${
+                            selectedId === SPARE_ID
+                                ? "ring-2 ring-inset ring-(--border-ink)"
+                                : ""
+                        }`}
                         style={{
                             left: `${pct(layout.headroom.bottom)}%`,
                             width: `${pct(layout.headroom.height)}%`,
                         }}
                     >
                         {pct(layout.headroom.height) >= 14 && "Spare"}
-                    </div>
+                    </button>
                 )}
 
                 {layout.bands.map((seg, i) => {

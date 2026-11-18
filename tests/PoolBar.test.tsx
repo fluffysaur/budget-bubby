@@ -61,4 +61,17 @@ describe("PoolBar", () => {
             screen.getByText("Pool S$50,000.00 covers 1 of 2 goals today"),
         ).toBeInTheDocument();
     });
+
+    it("shows a tappable Spare segment when the pool exceeds every goal", () => {
+        const onSelect = vi.fn();
+        const rich = projectRoadmap({
+            today: "2026-11-18",
+            pool: { liquid: 200000, investments: 0, asOf: "2026-11-15" },
+            monthlySavings: 2000,
+            goals: [goal("Wedding", 30000, "2027-05-01")],
+        });
+        render(<PoolBar result={rich} selectedId={null} onSelect={onSelect} />);
+        fireEvent.click(screen.getByRole("button", { name: "Show spare" }));
+        expect(onSelect).toHaveBeenCalledWith("spare");
+    });
 });

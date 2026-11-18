@@ -1,11 +1,11 @@
 /**
  * RoadmapCard: "Are we on track?" at the top of Plan -> Goals.
- * Verdict, Pool Jar, a date-ordered timeline (also the jar's band list for
- * screen readers) and trade-offs. Always the household plan.
+ * Verdict, pool bar, a date-ordered timeline (also the bar's legend) and
+ * trade-offs. Always the household plan.
  */
 
 import { useState } from "react";
-import { Plus, Route } from "lucide-react";
+import { Plus, Route, TrendingUp } from "lucide-react";
 import { formatSGD, formatSGDCompact } from "../../lib/currency";
 import {
     daysBetweenISO,
@@ -24,7 +24,7 @@ import {
     TruncatedText,
     type BadgeVariant,
 } from "../ui";
-import { PoolBar } from "./PoolBar";
+import { PoolBar, SPARE_ID } from "./PoolBar";
 
 export interface RoadmapCardProps {
     roadmap: RoadmapState;
@@ -36,10 +36,14 @@ export interface RoadmapCardProps {
 
 const STATUS_BADGE: Record<
     RoadmapGoalResult["status"],
-    { label: string; variant: BadgeVariant }
+    { label: string; variant: BadgeVariant; icon?: React.ReactNode }
 > = {
     funded: { label: "Covered", variant: "ok" },
-    on_track: { label: "On track", variant: "ok" },
+    on_track: {
+        label: "On track",
+        variant: "ok",
+        icon: <TrendingUp className="h-3 w-3 shrink-0" strokeWidth={2.5} />,
+    },
     short: { label: "Short", variant: "over" },
     overdue: { label: "Paid for?", variant: "due" },
 };
@@ -154,7 +158,9 @@ export function RoadmapCard({
                     </p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--text-muted)">
                         <span className="font-mono-num">
-                            Saving{" "}
+                            {baseline.source === "actual"
+                                ? "Saving"
+                                : "Estimated saving"}{" "}
                             <CurrencyText
                                 formatted={formatSGD(result.monthlySavings, {
                                     showCents: false,
@@ -162,11 +168,6 @@ export function RoadmapCard({
                             />
                             /mo
                         </span>
-                        {baseline.source !== "actual" && (
-                            <Badge variant="butter" size="sm">
-                                Estimate
-                            </Badge>
-                        )}
                         <span className="basis-full">
                             {updatedLabel(result.asOf)}
                         </span>
@@ -178,15 +179,39 @@ export function RoadmapCard({
                     align="right"
                     className="shrink-0"
                 >
-                    {mask(
-                        `Pool today: ${formatSGD(result.poolToday)} of non-CPF balances, minus card bills.`,
-                    )}{" "}
-                    {result.haircutApplied &&
-                        "Investments count at 80% for goals within 2 years. "}
-                    {baseline.source === "actual"
-                        ? `Savings: your average over ${baseline.months.length} months, bonuses excluded.`
-                        : "Savings: your budgeted savings until 3 months of history."}{" "}
-                    Goals fill in date order.
+                    <dl className="space-y-1.5 text-xs">
+                        <div>
+                            <dt className="font-bold text-(--text-ink)">
+                                Pool
+                            </dt>
+                            <dd>
+                                {mask(
+                                    formatSGD(result.poolToday, {
+                                        showCents: false,
+                                    }),
+                                )}{" "}
+                                in non-CPF accounts, minus card bills.
+                                {result.haircutApplied &&
+                                    " Investments count at 80% for goals within 2 years."}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-bold text-(--text-ink)">
+                                Saving
+                            </dt>
+                            <dd>
+                                {baseline.source === "actual"
+                                    ? `Your average over ${baseline.months.length} months, without bonuses.`
+                                    : "Your budgeted savings, until you have 3 months of history."}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-bold text-(--text-ink)">
+                                Order
+                            </dt>
+                            <dd>Goals fill by date, earliest first.</dd>
+                        </div>
+                    </dl>
                 </TooltipPopover>
             </div>
 
@@ -202,18 +227,16 @@ export function RoadmapCard({
                         aria-live="polite"
                         className="min-h-5 text-xs font-bold text-(--text-ink)"
                     >
-                        {selected ? (
+                        {selectedId === SPARE_ID ? (
+                            mask(`${formatSGDCompact(spareToday)} spare today`)
+                        ) : selected ? (
                             <>
                                 {selected.goal.emoji}{" "}
                                 {previewText(selected, mask)}
                             </>
                         ) : (
                             <span className="font-medium text-(--text-muted)">
-                                {spareToday > 0
-                                    ? mask(
-                                          `${formatSGDCompact(spareToday)} spare · tap a goal to preview`,
-                                      )
-                                    : "Tap a goal to preview"}
+                                Tap a goal to preview
                             </span>
                         )}
                     </p>
@@ -248,14 +271,24 @@ export function RoadmapCard({
                                     >
                                         {g.goal.emoji}
                                     </span>
-                                    <TruncatedText
-                                        text={g.goal.title}
-                                        className="min-w-0 flex-1 text-xs font-bold text-(--text-ink)"
-                                    />
+                                    <span className="flex min-w-0 flex-1 flex-col">
+                                        <TruncatedText
+                                            text={g.goal.title}
+                                            className="text-xs font-bold text-(--text-ink)"
+                                        />
+                                        <span className="font-mono-num text-[11px] text-(--text-muted)">
+                                            <CurrencyText
+                                                formatted={formatSGDCompact(
+                                                    g.goal.targetAmount,
+                                                )}
+                                            />
+                                        </span>
+                                    </span>
                                     <Badge
                                         variant={badge.variant}
                                         size="sm"
-                                        className="shrink-0"
+                                        icon={badge.icon}
+                                        className="ml-auto shrink-0"
                                     >
                                         {badge.label}
                                     </Badge>

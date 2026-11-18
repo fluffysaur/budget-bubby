@@ -20,6 +20,7 @@ import {
     ChevronUp,
     CheckCircle2,
     RotateCcw,
+    TrendingUp,
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
@@ -161,6 +162,14 @@ export function GoalCard({
                     <Badge
                         variant={statusConfig.variant}
                         size="sm"
+                        icon={
+                            status === "on_track" ? (
+                                <TrendingUp
+                                    className="h-3 w-3 shrink-0"
+                                    strokeWidth={2.5}
+                                />
+                            ) : undefined
+                        }
                         className="shrink-0"
                     >
                         {statusConfig.label}
