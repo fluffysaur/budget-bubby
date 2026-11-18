@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { Plus, Route, TrendingUp } from "lucide-react";
+import { Plus, Route, TrendingUp, TriangleAlert } from "lucide-react";
 import { formatSGD, formatSGDCompact } from "../../lib/currency";
 import {
     daysBetweenISO,
@@ -14,7 +14,11 @@ import {
 } from "../../lib/dateUtils";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
 import type { RoadmapState } from "../../hooks/useRoadmap";
-import type { RoadmapGoalResult, TradeOff } from "../../lib/roadmap";
+import type {
+    RealityCheck,
+    RoadmapGoalResult,
+    TradeOff,
+} from "../../lib/roadmap";
 import {
     Badge,
     Button,
@@ -66,6 +70,52 @@ function previewText(g: RoadmapGoalResult, mask: (t: string) => string) {
         : "Covered ✓";
 }
 
+/** "Balances grew S$X/mo", warning when it is 20%+ off the plan. */
+function RealityLine({ reality }: { reality: RealityCheck }) {
+    const fell = reality.grewPerMonth < 0;
+    const amount = (
+        <CurrencyText
+            formatted={formatSGD(Math.abs(Math.round(reality.grewPerMonth)), {
+                showCents: false,
+            })}
+        />
+    );
+    return (
+        <span
+            data-testid="roadmap-reality"
+            className={`inline-flex basis-full items-center gap-1 font-mono-num ${
+                reality.differs
+                    ? "font-bold text-amber-700 dark:text-amber-400"
+                    : ""
+            }`}
+        >
+            {reality.differs && (
+                <TriangleAlert
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 shrink-0"
+                    strokeWidth={2.5}
+                />
+            )}
+            <span>
+                Balances {fell ? "fell" : "grew"} {amount}/mo
+                {reality.differs && (
+                    <>
+                        {" "}
+                        vs budget{" "}
+                        <CurrencyText
+                            formatted={formatSGD(
+                                Math.round(reality.planPerMonth),
+                                { showCents: false },
+                            )}
+                        />
+                        /mo
+                    </>
+                )}
+            </span>
+        </span>
+    );
+}
+
 export function RoadmapCard({
     roadmap,
     onAddGoal,
@@ -73,7 +123,7 @@ export function RoadmapCard({
     className = "",
 }: RoadmapCardProps) {
     const mask = useMoneyMask();
-    const { result, baseline, tradeOffs } = roadmap;
+    const { result, baseline, tradeOffs, reality } = roadmap;
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [applying, setApplying] = useState<string | null>(null);
 
@@ -168,6 +218,9 @@ export function RoadmapCard({
                             />
                             /mo
                         </span>
+                        {reality.status === "ok" && (
+                            <RealityLine reality={reality} />
+                        )}
                         <span className="basis-full">
                             {updatedLabel(result.asOf)}
                         </span>
@@ -211,6 +264,27 @@ export function RoadmapCard({
                             </dt>
                             <dd>Goals fill by date, earliest first.</dd>
                         </div>
+                        <div>
+                            <dt className="font-bold text-(--text-ink)">
+                                Life events
+                            </dt>
+                            <dd>
+                                Recurring items with a future start or end date
+                                change your saving from that month.
+                            </dd>
+                        </div>
+                        {reality.status === "ok" && (
+                            <div>
+                                <dt className="font-bold text-(--text-ink)">
+                                    Balances grew
+                                </dt>
+                                <dd>
+                                    Your actual growth over{" "}
+                                    {reality.monthsUsed.length} months, leaving
+                                    out months with goal spending or a bonus.
+                                </dd>
+                            </div>
+                        )}
                     </dl>
                 </TooltipPopover>
             </div>

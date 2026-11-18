@@ -4,12 +4,14 @@
  *
  * A deadline check, not a month-by-month simulation. Goals are sorted by date
  * (ties by created_at). At each deadline d:
- *   pool(d) + savings until d >= still-needed of this goal and every earlier one.
+ *   pool(d) + savings until d (+ life events) >= still-needed of this goal
+ *   and every earlier one.
  * The pool counts investments at a discount for goals due inside the haircut
  * window. Future savings are treated as cash.
  */
 
 import { addMonths, monthsBetween } from "../dateUtils";
+import { changesOver } from "./lifeEvents";
 import type {
     RoadmapGoalInput,
     RoadmapGoalResult,
@@ -78,9 +80,13 @@ export function projectRoadmap(
         monthsFromToday <= haircutMonths
             ? pool.investments * (1 - haircutPct)
             : pool.investments;
+    const lifeEvents = input.cashFlowChanges ?? [];
     /** Projected pool `t` months after the last balance update. */
     const availableAt = (t: number) =>
-        pool.liquid + investmentsAt(t - todayOffset) + monthlySavings * t;
+        pool.liquid +
+        investmentsAt(t - todayOffset) +
+        monthlySavings * t +
+        changesOver(lifeEvents, month(asOf), t);
 
     const active = fundingOrder(input.goals.filter((g) => !g.done));
     const done = input.goals.filter((g) => g.done);
@@ -182,5 +188,6 @@ export function projectRoadmap(
         asOf,
         goals,
         done,
+        lifeEvents,
     };
 }

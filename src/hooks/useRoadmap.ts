@@ -19,12 +19,19 @@ import {
 } from "./useFinanceQueries";
 import { getTodayDateString } from "../lib/dateUtils";
 import {
+    baselineCoveredThrough,
     baselineMonths,
     buildRoadmapInput,
+    poolHistory,
+    projectPool,
+    realityCheck,
     computeBaseline,
     projectRoadmap,
     suggestTradeOffs,
     type BaselineResult,
+    type HistoryPoint,
+    type ProjectionPoint,
+    type RealityCheck,
     type RoadmapGoalResult,
     type RoadmapInput,
     type RoadmapResult,
@@ -60,6 +67,12 @@ export interface RoadmapState {
     tradeOffs: TradeOff[];
     /** Engine result per goal id (active goals only). */
     byGoalId: Map<string, RoadmapGoalResult>;
+    /** Monthly pool history, gaps filled by straight lines. */
+    history: HistoryPoint[];
+    /** Pool projection from the last balance update. */
+    projection: ProjectionPoint[];
+    /** Actual pool growth vs the plan's savings. */
+    reality: RealityCheck;
 }
 
 export function useRoadmap(): RoadmapState {
@@ -113,6 +126,8 @@ export function useRoadmap(): RoadmapState {
                 expenses,
                 monthlySavings: baseline.monthlySavings,
                 bonusEvents,
+                recurringItems,
+                coveredThrough: baselineCoveredThrough(baseline, today),
             }),
         [
             today,
@@ -121,8 +136,9 @@ export function useRoadmap(): RoadmapState {
             statements,
             goals,
             expenses,
-            baseline.monthlySavings,
+            baseline,
             bonusEvents,
+            recurringItems,
         ],
     );
 
@@ -133,5 +149,31 @@ export function useRoadmap(): RoadmapState {
         [result],
     );
 
-    return { isLoading, input, result, baseline, tradeOffs, byGoalId };
+    const history = useMemo(
+        () => poolHistory(accounts, snapshots, statements),
+        [accounts, snapshots, statements],
+    );
+    const projection = useMemo(() => projectPool(input), [input]);
+    const reality = useMemo(
+        () =>
+            realityCheck({
+                history,
+                expenses,
+                bonusEvents,
+                planPerMonth: baseline.monthlySavings,
+            }),
+        [history, expenses, bonusEvents, baseline.monthlySavings],
+    );
+
+    return {
+        isLoading,
+        input,
+        result,
+        baseline,
+        tradeOffs,
+        byGoalId,
+        history,
+        projection,
+        reality,
+    };
 }

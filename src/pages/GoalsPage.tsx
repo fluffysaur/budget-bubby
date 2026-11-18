@@ -1,7 +1,8 @@
 /**
  * GoalsPage Component
  * The household Roadmap and its goals:
- * - RoadmapCard: verdict, Pool Jar, timeline and trade-offs (household plan)
+ * - RoadmapCard: verdict, pool bar, timeline and trade-offs (household plan)
+ * - ProjectionCard: net worth history, projection and life events
  * - Filter tabs: All, Active, Done
  * - Responsive grid of GoalCards reading the same Roadmap result
  * - AddEditGoalModal for creating/updating goals; Mark done / Reopen
@@ -32,6 +33,7 @@ import { feedback } from "../lib/delight/feedback";
 import { GoalCard } from "../components/goals/GoalCard";
 import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
 import { RoadmapCard } from "../components/roadmap/RoadmapCard";
+import { ProjectionCard } from "../components/roadmap/ProjectionCard";
 import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import type { SavingsGoal, Expense } from "../types/finance";
 import { m, AnimatePresence } from "motion/react";
@@ -435,6 +437,9 @@ export function GoalsPage({
                     </AnimatePresence>
                 </div>
             )}
+
+            {/* Net worth reality check: history and projection */}
+            {!isLoading && <ProjectionCard roadmap={roadmap} />}
 
             {/* Add / Edit Goal Modal */}
             <AddEditGoalModal

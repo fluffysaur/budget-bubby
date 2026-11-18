@@ -3,7 +3,8 @@
  * Accessible dialog for creating or updating a savings milestone goal.
  * Features:
  * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
- * - Emoji picker preset chips & custom emoji input
+ * - Label-only templates (Wedding, Housing, Child, Education, Travel, Car)
+ *   that set the emoji and title, plus a custom emoji input
  * - Title, Target Amount and Target Date inputs (progress comes from the
  *   household pool on the Roadmap, so there is no "saved so far")
  * - Error alerts and accessible form controls
@@ -35,17 +36,22 @@ export interface AddEditGoalModalProps {
     householdId?: string;
 }
 
-const EMOJI_PRESETS = [
+/**
+ * Templates set a label and emoji only. They never prefill amounts, which
+ * would go stale and could read as financial advice.
+ */
+export const GOAL_TEMPLATES = [
     { emoji: "💍", label: "Wedding" },
-    { emoji: "🏖️", label: "Honeymoon" },
-    { emoji: "🏠", label: "HDB Down Payment" },
-    { emoji: "🔨", label: "Renovation" },
-    { emoji: "🍼", label: "Baby Fund" },
-    { emoji: "✈️", label: "Vacation" },
+    { emoji: "🏠", label: "Housing" },
+    { emoji: "👶", label: "Child" },
+    { emoji: "🎓", label: "Education" },
+    { emoji: "✈️", label: "Travel" },
     { emoji: "🚗", label: "Car" },
-    { emoji: "🛡️", label: "Emergency Fund" },
-    { emoji: "🎯", label: "Other Goal" },
-];
+] as const;
+
+const TEMPLATE_LABELS: ReadonlySet<string> = new Set(
+    GOAL_TEMPLATES.map((t) => t.label),
+);
 
 export function AddEditGoalModal({
     isOpen,
@@ -182,19 +188,33 @@ export function AddEditGoalModal({
                         <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
-                    {/* Emoji Presets & Custom Selector */}
+                    {/* Templates (label and emoji only) & custom emoji */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
-                            Icon
-                        </label>
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                            {EMOJI_PRESETS.map((p) => (
+                        <span className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5">
+                            Template
+                        </span>
+                        <div
+                            role="group"
+                            aria-label="Goal templates"
+                            className="flex flex-wrap gap-1.5 mb-2"
+                        >
+                            {GOAL_TEMPLATES.map((p) => (
                                 <button
                                     key={p.label}
                                     type="button"
                                     aria-label={p.label}
-                                    onClick={() => setEmoji(p.emoji)}
-                                    className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-press cursor-pointer ${
+                                    aria-pressed={emoji === p.emoji}
+                                    onClick={() => {
+                                        setEmoji(p.emoji);
+                                        // Fill the title only if it is empty or another template's label.
+                                        if (
+                                            !title.trim() ||
+                                            TEMPLATE_LABELS.has(title.trim())
+                                        ) {
+                                            setTitle(p.label);
+                                        }
+                                    }}
+                                    className={`inline-flex min-h-9 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-press cursor-pointer ${
                                         emoji === p.emoji
                                             ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
                                             : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) border border-(--border-subtle)"

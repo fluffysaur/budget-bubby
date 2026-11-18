@@ -4,13 +4,16 @@
  */
 
 import { addMonths } from "../dateUtils";
+import { lifeEventsFromRecurring } from "./lifeEvents";
 import { computePool } from "./pool";
+import type { BaselineResult } from "./baseline";
 import type {
     Account,
     AccountSnapshot,
     BonusEvent,
     CreditCardStatement,
     Expense,
+    RecurringItem,
     SavingsGoal,
 } from "../../types/finance";
 import type { RoadmapGoalInput, RoadmapInput, RoadmapPool } from "./types";
@@ -60,6 +63,21 @@ export function typicalAnnualBonus(
     );
 }
 
+/**
+ * The last month the baseline already reflects: the newest averaged month,
+ * or this month for an estimate (budgeted savings ignore recurring spend).
+ */
+export function baselineCoveredThrough(
+    baseline: Pick<BaselineResult, "source" | "months">,
+    today: string,
+): string {
+    const current = today.slice(0, 7);
+    if (baseline.source !== "actual" || baseline.months.length === 0) {
+        return current;
+    }
+    return [...baseline.months].sort().at(-1) ?? current;
+}
+
 export interface BuildRoadmapInputOptions {
     today: string;
     accounts: Account[];
@@ -69,6 +87,10 @@ export interface BuildRoadmapInputOptions {
     expenses: Expense[];
     monthlySavings: number;
     bonusEvents?: BonusEvent[];
+    /** Recurring items, read for life events. */
+    recurringItems?: RecurringItem[];
+    /** Last month the baseline reflects ('YYYY-MM'); defaults to this month. */
+    coveredThrough?: string;
     /** Overrides the live pool (e.g. the pool at an earlier update). */
     pool?: RoadmapPool;
 }
@@ -82,6 +104,8 @@ export function buildRoadmapInput({
     expenses,
     monthlySavings,
     bonusEvents = [],
+    recurringItems = [],
+    coveredThrough,
     pool,
 }: BuildRoadmapInputOptions): RoadmapInput {
     return {
@@ -90,5 +114,9 @@ export function buildRoadmapInput({
         monthlySavings,
         goals: toRoadmapGoals(goals, expenses),
         typicalAnnualBonus: typicalAnnualBonus(bonusEvents, today),
+        cashFlowChanges: lifeEventsFromRecurring(
+            recurringItems,
+            coveredThrough ?? today.slice(0, 7),
+        ),
     };
 }

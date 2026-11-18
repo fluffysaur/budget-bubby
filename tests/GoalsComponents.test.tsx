@@ -12,6 +12,7 @@ import {
     fireEvent,
     waitFor,
     cleanup,
+    within,
 } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -302,22 +303,33 @@ describe("AddEditGoalModal Component", () => {
             screen.getByRole("heading", { name: /New Savings Goal/i }),
         ).toBeInTheDocument();
 
-        // Presets available
-        expect(
-            screen.getByRole("button", { name: /Wedding/i }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("button", { name: /Honeymoon/i }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("button", { name: /HDB Down Payment/i }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("button", { name: /Renovation/i }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("button", { name: /Baby Fund/i }),
-        ).toBeInTheDocument();
+        // Label-only templates
+        const templates = within(
+            screen.getByRole("group", { name: "Goal templates" }),
+        ).getAllByRole("button");
+        expect(templates.map((b) => b.getAttribute("aria-label"))).toEqual([
+            "Wedding",
+            "Housing",
+            "Child",
+            "Education",
+            "Travel",
+            "Car",
+        ]);
+    });
+
+    it("templates replace only an empty or template title", () => {
+        render(<AddEditGoalModal isOpen={true} onClose={() => {}} />);
+        const title = screen.getByLabelText(/Goal Title/i);
+        fireEvent.click(screen.getByRole("button", { name: "Wedding" }));
+        fireEvent.click(screen.getByRole("button", { name: "Travel" }));
+        expect(title).toHaveValue("Travel");
+        fireEvent.change(title, { target: { value: "Japan trip" } });
+        fireEvent.click(screen.getByRole("button", { name: "Car" }));
+        expect(title).toHaveValue("Japan trip");
+        expect(screen.getByRole("button", { name: "Car" })).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
     });
 
     it("validates required fields before submitting", async () => {
@@ -350,8 +362,10 @@ describe("AddEditGoalModal Component", () => {
             />,
         );
 
-        // Select emoji preset
-        fireEvent.click(screen.getByRole("button", { name: /Baby Fund/i }));
+        // A template sets the emoji and title, never an amount
+        fireEvent.click(screen.getByRole("button", { name: "Child" }));
+        expect(screen.getByLabelText(/Goal Title/i)).toHaveValue("Child");
+        expect(screen.getByLabelText(/^Target \*/i)).toHaveValue(null);
 
         // Fill form
         fireEvent.change(screen.getByLabelText(/Goal Title/i), {
@@ -373,6 +387,7 @@ describe("AddEditGoalModal Component", () => {
             expect(addGoalSpy).toHaveBeenCalledTimes(1);
             expect(addGoalSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
+                    emoji: "👶",
                     title: "Baby Fund",
                     target_amount: 30000,
                 }),
