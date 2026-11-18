@@ -38,6 +38,7 @@ import type {
     AccountSnapshot,
     CreditCardStatement,
     Expense,
+    Household,
     InboxSummary,
     NotificationPreferences,
     RecurringItem,
@@ -104,6 +105,7 @@ async function safeGoalStatusChanges(
         goals: SavingsGoal[];
         expenses: Expense[];
         recurringItems: RecurringItem[];
+        household?: Household | null;
     },
 ): Promise<GoalStatusChange[]> {
     if (
@@ -140,6 +142,7 @@ async function safeGoalStatusChanges(
             monthlySavings: baseline.monthlySavings,
             recurringItems: data.recurringItems,
             coveredThrough: baselineCoveredThrough(baseline, data.today),
+            household: data.household,
         });
         return goalStatusChanges(input, accounts, snapshots, data.statements);
     } catch {
@@ -350,6 +353,7 @@ export async function computeRemindersFrom(
             goals,
             expenses,
             recurringItems,
+            household: overview.household,
         });
         candidates.push(...checkGoalPacingReminders(goals, changes));
     }

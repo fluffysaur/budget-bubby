@@ -353,6 +353,8 @@ describe("computeBaseline", () => {
         // 2000 invested + (1000 cap - 800 spent); tithing is not savings.
         expect(b.monthlySavings).toBe(2200);
         expect(b.months).toEqual(months);
+        // Buffer sizing: goal-tagged spend is left out.
+        expect(b.averageMonthlySpend).toBe(800);
     });
 
     it("falls back to budgeted savings with under 3 months", () => {
@@ -366,6 +368,8 @@ describe("computeBaseline", () => {
         expect(b.source).toBe("estimate");
         expect(b.monthlySavings).toBe(2000);
         expect(b.months).toEqual(["2026-11"]);
+        // One logged month beats the budgeted cap.
+        expect(b.averageMonthlySpend).toBe(800);
     });
 
     it("carries a member's latest budget into months they have no row", () => {
@@ -380,6 +384,8 @@ describe("computeBaseline", () => {
         });
         expect(b.source).toBe("estimate");
         expect(b.monthlySavings).toBe(4000);
+        // Nothing logged yet: the budgeted spending cap.
+        expect(b.averageMonthlySpend).toBe(2000);
     });
 
     it("has no baseline without a budget", () => {

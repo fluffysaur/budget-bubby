@@ -29,6 +29,11 @@ import {
     type BadgeVariant,
 } from "../ui";
 import { PoolBar, SPARE_ID } from "./PoolBar";
+import { HaircutSettingsModal } from "./HaircutSettingsModal";
+import {
+    DEFAULT_HAIRCUT_MONTHS,
+    DEFAULT_HAIRCUT_PCT,
+} from "../../lib/roadmap/project";
 
 export interface RoadmapCardProps {
     roadmap: RoadmapState;
@@ -118,6 +123,9 @@ function RealityLine({ reality }: { reality: RealityCheck }) {
     );
 }
 
+const haircutLabel = (share: number) =>
+    `${Math.round(Math.max(0, share) * 1000) / 10}%`;
+
 export function RoadmapCard({
     roadmap,
     onAddGoal,
@@ -128,6 +136,9 @@ export function RoadmapCard({
     const { result, baseline, tradeOffs, reality } = roadmap;
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [applying, setApplying] = useState<string | null>(null);
+    const [haircutOpen, setHaircutOpen] = useState(false);
+    const haircutPct = roadmap.input.haircutPct ?? DEFAULT_HAIRCUT_PCT;
+    const haircutMonths = roadmap.input.haircutMonths ?? DEFAULT_HAIRCUT_MONTHS;
 
     if (result.verdict === "none") {
         return (
@@ -258,77 +269,95 @@ export function RoadmapCard({
                     align="right"
                     className="shrink-0"
                 >
-                    <dl className="space-y-1.5 text-xs">
-                        <div>
-                            <dt className="font-bold text-(--text-ink)">
-                                Pool
-                            </dt>
-                            <dd>
-                                {mask(
-                                    formatSGD(result.poolToday, {
-                                        showCents: false,
-                                    }),
-                                )}{" "}
-                                in non-CPF accounts, minus card bills.
-                                {result.haircutApplied &&
-                                    " Investments count at 80% for goals within 2 years."}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="font-bold text-(--text-ink)">
-                                Saving
-                            </dt>
-                            <dd>
-                                {baseline.source === "actual"
-                                    ? `Your average over ${baseline.months.length} months${roadmap.includeBonuses ? ", with bonuses" : ", without bonuses"}.`
-                                    : `Your budgeted savings${roadmap.includeBonuses ? " plus average bonuses" : ""}, until you have 3 months of history.`}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="font-bold text-(--text-ink)">
-                                Order
-                            </dt>
-                            <dd>Goals fill by date, earliest first.</dd>
-                        </div>
-                        {result.cpfOa && result.cpfOa.used > 0 && (
+                    {(close) => (
+                        <dl className="space-y-1.5 text-xs">
                             <div>
                                 <dt className="font-bold text-(--text-ink)">
-                                    CPF OA
+                                    Pool
                                 </dt>
                                 <dd>
-                                    Goals with &ldquo;Use CPF OA&rdquo; draw
-                                    from your combined OA first, then the pool.
-                                    {result.cpfOa.monthlyGrowth > 0
-                                        ? ` OA grows ${mask(formatSGD(result.cpfOa.monthlyGrowth, { showCents: false }))}/mo.`
-                                        : " Update OA monthly to count its growth."}
+                                    {mask(
+                                        formatSGD(result.poolToday, {
+                                            showCents: false,
+                                        }),
+                                    )}{" "}
+                                    in non-CPF accounts, minus card bills.{" "}
+                                    {haircutPct > 0 && haircutMonths > 0
+                                        ? `Investments count at ${haircutLabel(1 - haircutPct)} for goals within ${haircutMonths} months.`
+                                        : "Investments count at full value."}
                                 </dd>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        close();
+                                        setHaircutOpen(true);
+                                    }}
+                                    className="flex min-h-11 items-center font-bold text-(--text-ink) underline"
+                                >
+                                    Edit haircut
+                                </button>
                             </div>
-                        )}
-                        <div>
-                            <dt className="font-bold text-(--text-ink)">
-                                Life events
-                            </dt>
-                            <dd>
-                                Recurring items with a future start or end date
-                                change your saving from that month.
-                            </dd>
-                        </div>
-                        {reality.status === "ok" && (
                             <div>
                                 <dt className="font-bold text-(--text-ink)">
-                                    Balances grew
+                                    Saving
                                 </dt>
                                 <dd>
-                                    Your actual growth over{" "}
-                                    {reality.monthsUsed.length} months, leaving
-                                    out months with goal spending
-                                    {roadmap.includeBonuses
-                                        ? "."
-                                        : " or a bonus."}
+                                    {baseline.source === "actual"
+                                        ? `Your average over ${baseline.months.length} months${roadmap.includeBonuses ? ", with bonuses" : ", without bonuses"}.`
+                                        : `Your budgeted savings${roadmap.includeBonuses ? " plus average bonuses" : ""}, until you have 3 months of history.`}
                                 </dd>
                             </div>
-                        )}
-                    </dl>
+                            <div>
+                                <dt className="font-bold text-(--text-ink)">
+                                    Order
+                                </dt>
+                                <dd>
+                                    {result.goals.some((g) => g.goal.isBuffer)
+                                        ? "Your buffer fills first, then goals by date."
+                                        : "Goals fill by date, earliest first."}
+                                </dd>
+                            </div>
+                            {result.cpfOa && result.cpfOa.used > 0 && (
+                                <div>
+                                    <dt className="font-bold text-(--text-ink)">
+                                        CPF OA
+                                    </dt>
+                                    <dd>
+                                        Goals with &ldquo;Use CPF OA&rdquo; draw
+                                        from your combined OA first, then the
+                                        pool.
+                                        {result.cpfOa.monthlyGrowth > 0
+                                            ? ` OA grows ${mask(formatSGD(result.cpfOa.monthlyGrowth, { showCents: false }))}/mo.`
+                                            : " Update OA monthly to count its growth."}
+                                    </dd>
+                                </div>
+                            )}
+                            <div>
+                                <dt className="font-bold text-(--text-ink)">
+                                    Life events
+                                </dt>
+                                <dd>
+                                    Recurring items with a future start or end
+                                    date change your saving from that month.
+                                </dd>
+                            </div>
+                            {reality.status === "ok" && (
+                                <div>
+                                    <dt className="font-bold text-(--text-ink)">
+                                        Balances grew
+                                    </dt>
+                                    <dd>
+                                        Your actual growth over{" "}
+                                        {reality.monthsUsed.length} months,
+                                        leaving out months with goal spending
+                                        {roadmap.includeBonuses
+                                            ? "."
+                                            : " or a bonus."}
+                                    </dd>
+                                </div>
+                            )}
+                        </dl>
+                    )}
                 </TooltipPopover>
             </div>
 
@@ -468,6 +497,12 @@ export function RoadmapCard({
                     </ul>
                 </div>
             )}
+            <HaircutSettingsModal
+                isOpen={haircutOpen}
+                onClose={() => setHaircutOpen(false)}
+                haircutPct={haircutPct}
+                haircutMonths={haircutMonths}
+            />
         </section>
     );
 }

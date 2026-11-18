@@ -20,7 +20,8 @@ import { pop } from "../../lib/motion";
 
 export interface TooltipPopoverProps {
     title?: string;
-    children: React.ReactNode;
+    /** Content, or a render function given `close` to dismiss the popover. */
+    children: React.ReactNode | ((close: () => void) => React.ReactNode);
     triggerLabel?: React.ReactNode;
     triggerClassName?: string;
     label?: string;
@@ -161,7 +162,9 @@ export function TooltipPopover({
                                 </button>
                             </div>
                             <div className="text-xs font-medium text-(--text-muted) leading-relaxed">
-                                {children}
+                                {typeof children === "function"
+                                    ? children(() => setIsOpen(false))
+                                    : children}
                             </div>
                         </m.div>
                     )}

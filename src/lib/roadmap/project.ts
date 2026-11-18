@@ -53,10 +53,14 @@ export function applyScenario(
     return { input: { ...input, goals }, monthlySavings };
 }
 
-/** Date order, ties broken by created_at, then id for a stable order. */
+/**
+ * The buffer first, then date order, ties broken by created_at, then id for
+ * a stable order.
+ */
 export function fundingOrder(goals: RoadmapGoalInput[]): RoadmapGoalInput[] {
     return [...goals].sort(
         (a, b) =>
+            Number(Boolean(b.isBuffer)) - Number(Boolean(a.isBuffer)) ||
             a.targetDate.localeCompare(b.targetDate) ||
             (a.createdAt ?? "").localeCompare(b.createdAt ?? "") ||
             a.id.localeCompare(b.id),

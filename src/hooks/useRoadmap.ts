@@ -11,6 +11,7 @@ import {
     useAccountsQuery,
     useAllExpensesQuery,
     useBonusEventsQuery,
+    useHouseholdOverviewQuery,
     useBudgetHistoryQuery,
     useCategoriesQuery,
     useCreditCardStatementsQuery,
@@ -121,6 +122,8 @@ export function useRoadmap(): RoadmapState {
     const recurringQ = useRecurringItemsQuery();
     const historyQ = useBudgetHistoryQuery(months);
     const bonusQ = useBonusEventsQuery();
+    const householdQ = useHouseholdOverviewQuery();
+    const household = householdQ.data?.household ?? null;
 
     const accounts = accountsQ.data ?? EMPTY_ACCOUNTS;
     const snapshots = snapshotsQ.data ?? EMPTY_SNAPSHOTS;
@@ -161,8 +164,10 @@ export function useRoadmap(): RoadmapState {
                 bonusEvents,
                 recurringItems,
                 coveredThrough: baselineCoveredThrough(baseline, today),
+                household,
             }),
         [
+            household,
             today,
             accounts,
             snapshots,

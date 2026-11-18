@@ -5,6 +5,10 @@
  * shared settlements, savings goals, and recurring items.
  */
 
+import {
+    normalizeGoalTags,
+    normalizeHouseholdSettings,
+} from "../lib/roadmap/goalSettings";
 import type {
     Account,
     CreateAccountInput,
@@ -21,7 +25,9 @@ import type {
     CreateRecurringItemInput,
     Expense,
     ExpenseFilter,
+    Household,
     HouseholdOverview,
+    HouseholdSettingsInput,
     MonthlyBudget,
     MonthlyBudgetCategoryDetail,
     MonthlyBudgetDetail,
@@ -241,6 +247,17 @@ class MockFinanceServiceImpl implements FinanceService {
 
     public resetState(): void {
         this.resetData();
+    }
+
+    public async updateHouseholdSettings(
+        settings: HouseholdSettingsInput,
+    ): Promise<Household> {
+        Object.assign(
+            this.state.household,
+            normalizeHouseholdSettings(settings),
+        );
+        this.persist();
+        return cloneDeep(this.state.household);
     }
 
     public async getHouseholdOverview(): Promise<HouseholdOverview> {
@@ -1233,7 +1250,19 @@ class MockFinanceServiceImpl implements FinanceService {
             created_at: new Date().toISOString(),
             use_cpf_oa: input.use_cpf_oa ?? false,
             cpf_oa_cap: input.use_cpf_oa ? roundCpfCap(input.cpf_oa_cap) : null,
+            tags: normalizeGoalTags(input.tags),
+            goal_type: input.goal_type ?? "standard",
+            buffer_months:
+                input.goal_type === "buffer"
+                    ? (input.buffer_months ?? null)
+                    : null,
         };
+        if (
+            newGoal.goal_type === "buffer" &&
+            this.state.savingsGoals.some((g) => g.goal_type === "buffer")
+        ) {
+            throw new Error("This household already has a buffer goal");
+        }
 
         this.state.savingsGoals.push(newGoal);
         this.persist();
@@ -1252,6 +1281,9 @@ class MockFinanceServiceImpl implements FinanceService {
         const { saved_so_far: _savedSoFar, ...rest } = updates;
         if (rest.cpf_oa_cap !== undefined) {
             rest.cpf_oa_cap = roundCpfCap(rest.cpf_oa_cap);
+        }
+        if (rest.tags !== undefined) {
+            rest.tags = normalizeGoalTags(rest.tags);
         }
         Object.assign(goal, rest);
 

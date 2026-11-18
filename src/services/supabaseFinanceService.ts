@@ -3,6 +3,10 @@
  * Directly queries Supabase tables using row-level security and schema mappings.
  */
 
+import {
+    normalizeGoalTags,
+    normalizeHouseholdSettings,
+} from "../lib/roadmap/goalSettings";
 import type {
     Account,
     CreateAccountInput,
@@ -22,6 +26,7 @@ import type {
     Household,
     HouseholdMember,
     HouseholdOverview,
+    HouseholdSettingsInput,
     MonthlyBudget,
     MonthlyBudgetCategory,
     MonthlyBudgetCategoryDetail,
@@ -406,6 +411,21 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         throw new Error(
             `No accessible household found for authenticated user (${currentUserEmail}). Please ensure your user account is linked to a household member profile in the 'household_members' table.`,
         );
+    }
+
+    public async updateHouseholdSettings(
+        settings: HouseholdSettingsInput,
+    ): Promise<Household> {
+        const client = this.getClient();
+        const householdId = await this.getHouseholdId();
+        const { data, error } = await client
+            .from("households")
+            .update(normalizeHouseholdSettings(settings))
+            .eq("id", householdId)
+            .select()
+            .single();
+        if (error) throw error;
+        return data as Household;
     }
 
     public async getHouseholdOverview(): Promise<HouseholdOverview> {
@@ -1893,6 +1913,12 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 cpf_oa_cap: input.use_cpf_oa
                     ? roundCpfCap(input.cpf_oa_cap)
                     : null,
+                tags: normalizeGoalTags(input.tags),
+                goal_type: input.goal_type ?? "standard",
+                buffer_months:
+                    input.goal_type === "buffer"
+                        ? (input.buffer_months ?? null)
+                        : null,
             })
             .select()
             .single();
@@ -1909,6 +1935,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         const { saved_so_far: _savedSoFar, ...finalUpdates } = updates;
         if (finalUpdates.cpf_oa_cap !== undefined) {
             finalUpdates.cpf_oa_cap = roundCpfCap(finalUpdates.cpf_oa_cap);
+        }
+        if (finalUpdates.tags !== undefined) {
+            finalUpdates.tags = normalizeGoalTags(finalUpdates.tags);
         }
         if (Object.keys(finalUpdates).length === 0) {
             const existing = await this.getGoal(id);

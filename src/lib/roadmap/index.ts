@@ -9,3 +9,4 @@ export * from "./alerts";
 export * from "./lifeEvents";
 export * from "./reality";
 export * from "./cpf";
+export * from "./goalSettings";
