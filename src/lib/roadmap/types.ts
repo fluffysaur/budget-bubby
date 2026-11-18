@@ -4,6 +4,8 @@
  * See docs/plans/2026-11-18-roadmap.md.
  */
 
+import type { CashFlowChange } from "./lifeEvents";
+
 /** A goal as the engine sees it. */
 export interface RoadmapGoalInput {
     id: string;
@@ -42,6 +44,8 @@ export interface RoadmapInput {
     haircutMonths?: number;
     /** Net bonuses over the last 12 months, for the "+Bonus" trade-off. */
     typicalAnnualBonus?: number;
+    /** Life events: dated changes to monthly savings. */
+    cashFlowChanges?: CashFlowChange[];
 }
 
 /** One edit to the plan. A scenario is a list of edits. */
@@ -103,4 +107,6 @@ export interface RoadmapResult {
     goals: RoadmapGoalResult[];
     /** Goals marked Done. */
     done: RoadmapGoalInput[];
+    /** Life events the projection applies. */
+    lifeEvents: CashFlowChange[];
 }

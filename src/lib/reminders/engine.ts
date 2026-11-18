@@ -12,6 +12,7 @@ import {
 } from "../dateUtils";
 import {
     baselineMonths,
+    baselineCoveredThrough,
     buildRoadmapInput,
     computeBaseline,
     goalStatusChanges,
@@ -137,6 +138,8 @@ async function safeGoalStatusChanges(
             goals: data.goals,
             expenses: data.expenses,
             monthlySavings: baseline.monthlySavings,
+            recurringItems: data.recurringItems,
+            coveredThrough: baselineCoveredThrough(baseline, data.today),
         });
         return goalStatusChanges(input, accounts, snapshots, data.statements);
     } catch {

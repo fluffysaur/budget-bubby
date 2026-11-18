@@ -692,6 +692,23 @@ export const mockSubscriptionItems: RecurringItem[] = [
         due_day: 28,
         category_id: "cat-00000000-0102", // Lifestyle
     },
+    {
+        // A future cost: a life event on the Roadmap.
+        id: "pol-00000000-0610",
+        household_id: "hh-00000000-0001",
+        owner_id: "mem-00000000-0011",
+        type: "bill",
+        name: "Infant care",
+        amount: 800.0,
+        frequency: "monthly",
+        payment_month: null,
+        start_date: "2028-03-01",
+        end_date: null,
+        notes: "After subsidies",
+        monthly_amortized_amount: 0.0,
+        due_day: 1,
+        category_id: "cat-00000000-0102", // Lifestyle
+    },
 ];
 
 export const mockMonthlyBudgets: MonthlyBudget[] = [
