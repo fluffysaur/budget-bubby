@@ -118,7 +118,11 @@ function spendableSpendFor(
         if (!e.date?.startsWith(month) || e.goal_id) continue;
         if (spendable(e.category_id)) spent += Number(e.amount) || 0;
     }
-    const recurring = calculateRecurringCategorySpend(recurringItems, month);
+    // OA-paid items (a mortgage) come out of CPF, not cash savings.
+    const recurring = calculateRecurringCategorySpend(
+        recurringItems.filter((i) => !i.paid_from_cpf_oa),
+        month,
+    );
     for (const [categoryId, bucket] of Object.entries(recurring.byCategory)) {
         if (spendable(categoryId)) spent += bucket.total;
     }

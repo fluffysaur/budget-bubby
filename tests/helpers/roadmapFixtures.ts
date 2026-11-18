@@ -21,6 +21,7 @@ export function makePlan(
         order: 0,
         stillNeeded: 6000,
         fundedToday: 2000,
+        fromCpfOa: 0,
         progress: 1 / 3,
         monthsLeft: 6,
         claimStart: 0,

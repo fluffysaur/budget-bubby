@@ -25,6 +25,9 @@ export interface HouseholdMember {
 
 export type AccountType = "Cash" | "Investment" | "CPF" | "Other";
 
+/** Which CPF account a CPF-type account is. Null means not yet matched. */
+export type CpfKind = "OA" | "SA" | "MA";
+
 export interface Account {
     id: string;
     household_id: string;
@@ -36,6 +39,8 @@ export interface Account {
     institution?: string | null;
     is_joint: boolean;
     notes?: string | null;
+    /** Set for CPF accounts; null for an unmatched legacy CPF account. */
+    cpf_kind?: CpfKind | null;
     updated_at?: string;
 }
 
@@ -49,6 +54,7 @@ export interface CreateAccountInput {
     institution?: string | null;
     is_joint?: boolean;
     notes?: string | null;
+    cpf_kind?: CpfKind | null;
 }
 
 export interface UpdateAccountInput {
@@ -58,6 +64,7 @@ export interface UpdateAccountInput {
     owner_id?: string;
     is_joint?: boolean;
     notes?: string | null;
+    cpf_kind?: CpfKind | null;
 }
 
 export interface AccountSnapshot {
@@ -385,6 +392,10 @@ export interface SavingsGoal {
     emoji: string;
     /** Only "achieved" (Done) is meaningful; other values read as active. */
     status: GoalStatus;
+    /** Fund this goal from household CPF OA first, then the pool. */
+    use_cpf_oa?: boolean;
+    /** Most OA this goal may use; null means no cap. */
+    cpf_oa_cap?: number | null;
     created_at?: string;
 }
 
@@ -395,6 +406,8 @@ export interface CreateGoalInput {
     target_amount: number;
     target_date: string;
     emoji?: string;
+    use_cpf_oa?: boolean;
+    cpf_oa_cap?: number | null;
 }
 
 export type RecurringItemType =
@@ -416,6 +429,8 @@ export interface RecurringItem {
     monthly_amortized_amount: number;
     due_day?: number | null; // 1 - 31, clamped to short months; required for monthly items
     category_id?: string | null; // budget category for subscription/bill/other spend
+    /** Paid from CPF OA (e.g. a mortgage): reduces OA growth, not cash savings. */
+    paid_from_cpf_oa?: boolean;
 }
 
 export interface CreateRecurringItemInput {
@@ -431,6 +446,7 @@ export interface CreateRecurringItemInput {
     notes?: string | null;
     due_day?: number | null; // 1 - 31
     category_id?: string | null;
+    paid_from_cpf_oa?: boolean;
 }
 
 // ---------------------------------------------------------------------------

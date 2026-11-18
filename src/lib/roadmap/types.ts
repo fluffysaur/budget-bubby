@@ -19,6 +19,21 @@ export interface RoadmapGoalInput {
     spent: number;
     /** Marked Done (`status = "achieved"`); left out of the funding order. */
     done: boolean;
+    /** "Use CPF OA": funded from household OA first, then the pool. */
+    useCpfOa?: boolean;
+    /** Most OA this goal may use; null or undefined means no cap. */
+    cpfOaCap?: number | null;
+}
+
+/** Household CPF OA (all members combined). Never part of the pool. */
+export interface RoadmapCpfOa {
+    balance: number;
+    /** Average monthly OA growth; 0 before 3 OA snapshots. */
+    monthlyGrowth: number;
+    /** 'YYYY-MM-DD' of the last OA update; OA growth starts here. */
+    asOf: string;
+    /** Dated changes to OA growth from items "Paid from CPF OA". */
+    changes: CashFlowChange[];
 }
 
 /** The household pool: non-CPF balances minus unpaid card statements. */
@@ -46,6 +61,8 @@ export interface RoadmapInput {
     typicalAnnualBonus?: number;
     /** Life events: dated changes to monthly savings. */
     cashFlowChanges?: CashFlowChange[];
+    /** Household CPF OA, for goals with "Use CPF OA" on. */
+    cpfOa?: RoadmapCpfOa | null;
 }
 
 /** One edit to the plan. A scenario is a list of edits. */
@@ -62,15 +79,17 @@ export interface RoadmapGoalResult {
     order: number;
     /** target - goal-tagged spend, never below 0. */
     stillNeeded: number;
-    /** How much of `stillNeeded` today's pool already covers. */
+    /** How much of `stillNeeded` today's pool and OA already cover. */
     fundedToday: number;
+    /** Part of `stillNeeded` paid from CPF OA by the deadline (0 without the switch). */
+    fromCpfOa: number;
     /** (spent + fundedToday) / target, 0-1. */
     progress: number;
     /** Whole months from today to the goal's date (0 when due or overdue). */
     monthsLeft: number;
-    /** Cumulative claims below this goal (earlier goals' still-needed). */
+    /** Cumulative pool claims below this goal (earlier goals' cash share). */
     claimStart: number;
-    /** claimStart + stillNeeded: what the pool must reach by the deadline. */
+    /** claimStart + this goal's cash share: what the pool must reach by the deadline. */
     claimEnd: number;
     /** Projected pool at the deadline (haircut applied for near goals). */
     available: number;
@@ -109,4 +128,6 @@ export interface RoadmapResult {
     done: RoadmapGoalInput[];
     /** Life events the projection applies. */
     lifeEvents: CashFlowChange[];
+    /** Household OA and how much the plan draws from it; null with no OA. */
+    cpfOa: (RoadmapCpfOa & { used: number }) | null;
 }

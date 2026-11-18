@@ -453,6 +453,45 @@ describe("AddEditGoalModal Component", () => {
         updateGoalSpy.mockRestore();
     });
 
+    it("saves CPF OA funding with an optional cap", async () => {
+        const updateGoalSpy = vi
+            .spyOn(financeService, "updateGoal")
+            .mockResolvedValue(sampleOnTrackGoal);
+
+        render(
+            <AddEditGoalModal
+                isOpen={true}
+                goal={sampleOnTrackGoal}
+                onClose={() => {}}
+            />,
+        );
+
+        const toggle = screen.getByRole("switch", { name: "Use CPF OA" });
+        expect(toggle).toHaveAttribute("aria-checked", "false");
+        expect(screen.queryByLabelText("Up to")).toBeNull();
+
+        fireEvent.click(toggle);
+        expect(
+            screen.getByRole("link", { name: "Check CPF limits" }),
+        ).toHaveAttribute("rel", "noopener noreferrer");
+        fireEvent.change(screen.getByLabelText("Up to"), {
+            target: { value: "50000.46" },
+        });
+        fireEvent.click(screen.getByRole("button", { name: /Save/i }));
+
+        await waitFor(() => {
+            expect(updateGoalSpy).toHaveBeenCalledWith(
+                sampleOnTrackGoal.id,
+                expect.objectContaining({
+                    use_cpf_oa: true,
+                    cpf_oa_cap: 50000.46,
+                }),
+            );
+        });
+
+        updateGoalSpy.mockRestore();
+    });
+
     it("closes on escape key or cancel button", () => {
         const onCloseMock = vi.fn();
         render(<AddEditGoalModal isOpen={true} onClose={onCloseMock} />);

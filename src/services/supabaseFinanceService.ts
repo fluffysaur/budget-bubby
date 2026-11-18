@@ -276,6 +276,12 @@ async function fetchAllPages<T>(
     return allRows;
 }
 
+function roundCpfCap(cap: number | null | undefined): number | null {
+    return typeof cap === "number" && Number.isFinite(cap) && cap > 0
+        ? Math.round(cap * 100) / 100
+        : null;
+}
+
 export class SupabaseFinanceServiceImpl implements FinanceService {
     private readonly clientOverride?: SupabaseClient;
     private readonly localFallback: boolean;
@@ -557,6 +563,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 institution: input.institution || null,
                 is_joint: input.is_joint || false,
                 notes: input.notes || null,
+                cpf_kind:
+                    input.type === "CPF" ? (input.cpf_kind ?? null) : null,
             })
             .select()
             .single();
@@ -590,6 +598,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         if (updates.owner_id !== undefined) payload.owner_id = updates.owner_id;
         if (updates.is_joint !== undefined) payload.is_joint = updates.is_joint;
         if (updates.notes !== undefined) payload.notes = updates.notes;
+        if (updates.cpf_kind !== undefined) payload.cpf_kind = updates.cpf_kind;
 
         const { data, error } = await client
             .from("accounts")
@@ -1880,6 +1889,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 target_date: input.target_date,
                 emoji: input.emoji || "🎯",
                 status: "on_track",
+                use_cpf_oa: input.use_cpf_oa ?? false,
+                cpf_oa_cap: input.use_cpf_oa
+                    ? roundCpfCap(input.cpf_oa_cap)
+                    : null,
             })
             .select()
             .single();
@@ -1894,6 +1907,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     ): Promise<SavingsGoal> {
         const client = this.getClient();
         const { saved_so_far: _savedSoFar, ...finalUpdates } = updates;
+        if (finalUpdates.cpf_oa_cap !== undefined) {
+            finalUpdates.cpf_oa_cap = roundCpfCap(finalUpdates.cpf_oa_cap);
+        }
         if (Object.keys(finalUpdates).length === 0) {
             const existing = await this.getGoal(id);
             if (!existing) throw new Error("Savings goal not found");
@@ -1951,6 +1967,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 category_id: isSpendType(input.type)
                     ? (input.category_id ?? null)
                     : null,
+                paid_from_cpf_oa:
+                    isSpendType(input.type) && !!input.paid_from_cpf_oa,
             })
             .select()
             .single();
@@ -1969,6 +1987,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         // Insurance/tax reduce take-home pay and never count toward a spend category
         if (updates.type && !isSpendType(updates.type)) {
             finalUpdates.category_id = null;
+            finalUpdates.paid_from_cpf_oa = false;
         }
         if (updates.amount !== undefined || updates.frequency !== undefined) {
             const { data: existing, error: fetchErr } = await client

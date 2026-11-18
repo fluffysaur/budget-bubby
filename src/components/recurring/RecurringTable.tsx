@@ -348,6 +348,17 @@ export function RecurringTable({
                                                                 }
                                                             </p>
                                                         )}
+                                                        {recurringItem.paid_from_cpf_oa && (
+                                                            <div className="mt-1">
+                                                                <Badge
+                                                                    variant="mint"
+                                                                    size="sm"
+                                                                    className="shrink-0"
+                                                                >
+                                                                    CPF OA
+                                                                </Badge>
+                                                            </div>
+                                                        )}
                                                         {(isEnded ||
                                                             (status ===
                                                                 "upcoming" &&

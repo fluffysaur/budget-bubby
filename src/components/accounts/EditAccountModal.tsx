@@ -17,8 +17,10 @@ import { Button } from "../ui/Button";
 import type {
     Account,
     AccountType,
+    CpfKind,
     HouseholdMember,
 } from "../../types/finance";
+import { CPF_KINDS } from "../../lib/cpfAccounts";
 import { useUpdateAccountMutation } from "../../hooks/useFinanceQueries";
 
 export interface EditAccountModalProps {
@@ -46,6 +48,7 @@ export function EditAccountModal({
     const [ownerId, setOwnerId] = useState("");
     const [isJoint, setIsJoint] = useState(false);
     const [notes, setNotes] = useState("");
+    const [cpfKind, setCpfKind] = useState<CpfKind | "">("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -57,12 +60,18 @@ export function EditAccountModal({
             setOwnerId(account.owner_id);
             setIsJoint(account.is_joint);
             setNotes(account.notes || "");
+            setCpfKind(account.cpf_kind ?? "");
             setError(null);
             setIsSubmitting(false);
         }
     }, [isOpen, account]);
 
     if (!isOpen || !account) return null;
+
+    // CPF accounts are fixed: one OA, SA and MA per member. Only an
+    // unmatched legacy account can pick its kind (or be deleted).
+    const isCpf = account.type === "CPF";
+    const isMatchedCpf = isCpf && Boolean(account.cpf_kind);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,10 +89,15 @@ export function EditAccountModal({
                 updates: {
                     name: name.trim(),
                     institution: institution.trim() || null,
-                    type,
-                    owner_id: ownerId || account.owner_id,
-                    is_joint: type === "CPF" ? false : isJoint,
+                    type: isCpf ? "CPF" : type,
+                    owner_id: isMatchedCpf
+                        ? account.owner_id
+                        : ownerId || account.owner_id,
+                    is_joint: isCpf ? false : isJoint,
                     notes: notes.trim() || null,
+                    ...(isCpf && !isMatchedCpf && cpfKind
+                        ? { cpf_kind: cpfKind }
+                        : {}),
                 },
             });
 
@@ -162,20 +176,43 @@ export function EditAccountModal({
                     {/* Category & Owner */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <Select
-                                id="edit-account-type"
-                                label="Type"
-                                value={type}
-                                onChange={(e) =>
-                                    setType(e.target.value as AccountType)
-                                }
-                                className="bg-(--bg-canvas)"
-                            >
-                                <option value="Cash">Cash</option>
-                                <option value="Investment">Investment</option>
-                                <option value="CPF">CPF (OA / SA / MA)</option>
-                                <option value="Other">Other Asset</option>
-                            </Select>
+                            {isCpf ? (
+                                <Select
+                                    id="edit-account-cpf-kind"
+                                    label="CPF account"
+                                    value={cpfKind}
+                                    onChange={(e) =>
+                                        setCpfKind(e.target.value as CpfKind)
+                                    }
+                                    disabled={isMatchedCpf}
+                                    className="bg-(--bg-canvas)"
+                                >
+                                    {!isMatchedCpf && (
+                                        <option value="">Pick one</option>
+                                    )}
+                                    {CPF_KINDS.map((kind) => (
+                                        <option key={kind} value={kind}>
+                                            {kind}
+                                        </option>
+                                    ))}
+                                </Select>
+                            ) : (
+                                <Select
+                                    id="edit-account-type"
+                                    label="Type"
+                                    value={type}
+                                    onChange={(e) =>
+                                        setType(e.target.value as AccountType)
+                                    }
+                                    className="bg-(--bg-canvas)"
+                                >
+                                    <option value="Cash">Cash</option>
+                                    <option value="Investment">
+                                        Investment
+                                    </option>
+                                    <option value="Other">Other Asset</option>
+                                </Select>
+                            )}
                         </div>
 
                         <div>
@@ -184,6 +221,7 @@ export function EditAccountModal({
                                 label="Primary Owner *"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
+                                disabled={isMatchedCpf}
                                 className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
@@ -238,7 +276,7 @@ export function EditAccountModal({
                 </ModalBody>
 
                 <ModalFooter>
-                    {onDelete && account && (
+                    {onDelete && account && !isMatchedCpf && (
                         <Button
                             variant="danger"
                             size="sm"

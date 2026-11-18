@@ -21,6 +21,7 @@ import {
 } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
+import { Switch } from "../ui/Switch";
 import {
     useAddGoalMutation,
     useUpdateGoalMutation,
@@ -69,6 +70,8 @@ export function AddEditGoalModal({
     const [title, setTitle] = useState<string>("");
     const [targetAmount, setTargetAmount] = useState<string>("");
     const [targetDate, setTargetDate] = useState<string>("");
+    const [useCpfOa, setUseCpfOa] = useState<boolean>(false);
+    const [cpfOaCap, setCpfOaCap] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -82,8 +85,14 @@ export function AddEditGoalModal({
                 setTargetDate(
                     goal.target_date ? goal.target_date.substring(0, 10) : "",
                 );
+                setUseCpfOa(!!goal.use_cpf_oa);
+                setCpfOaCap(
+                    goal.cpf_oa_cap != null ? goal.cpf_oa_cap.toString() : "",
+                );
             } else {
                 setEmoji("🎯");
+                setUseCpfOa(false);
+                setCpfOaCap("");
                 setTitle("");
                 setTargetAmount("");
                 const oneYearAhead = new Date();
@@ -131,6 +140,15 @@ export function AddEditGoalModal({
             const normalizedDate =
                 targetDate.length === 7 ? `${targetDate}-01` : targetDate;
 
+            const parsedCap = parseFloat(cpfOaCap);
+            const cpfFields = {
+                use_cpf_oa: useCpfOa,
+                cpf_oa_cap:
+                    useCpfOa && Number.isFinite(parsedCap) && parsedCap > 0
+                        ? Math.round(parsedCap * 100) / 100
+                        : null,
+            };
+
             if (goal) {
                 // Update Mode
                 const updated = await updateGoalMutation.mutateAsync({
@@ -140,6 +158,7 @@ export function AddEditGoalModal({
                         title: title.trim(),
                         target_amount: numericTarget,
                         target_date: normalizedDate,
+                        ...cpfFields,
                     },
                 });
                 onGoalSaved?.(updated);
@@ -151,6 +170,7 @@ export function AddEditGoalModal({
                     title: title.trim(),
                     target_amount: numericTarget,
                     target_date: normalizedDate,
+                    ...cpfFields,
                 };
                 const created = await addGoalMutation.mutateAsync(input);
                 onGoalSaved?.(created);
@@ -305,6 +325,51 @@ export function AddEditGoalModal({
                                 className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <Switch
+                            id="goal-use-cpf-oa"
+                            label="Use CPF OA"
+                            hint="Funds this goal from your CPF OA first."
+                            checked={useCpfOa}
+                            onChange={setUseCpfOa}
+                        />
+                        {useCpfOa && (
+                            <div className="mt-2">
+                                <label
+                                    htmlFor="goal-cpf-cap"
+                                    className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
+                                >
+                                    Up to
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
+                                        S$
+                                    </span>
+                                    <input
+                                        id="goal-cpf-cap"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="No cap"
+                                        value={cpfOaCap}
+                                        onChange={(e) =>
+                                            setCpfOaCap(e.target.value)
+                                        }
+                                        className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                                    />
+                                </div>
+                                <a
+                                    href="https://www.cpf.gov.sg/member/tools-and-services/calculators"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mt-1.5 inline-flex min-h-11 items-center text-xs font-bold text-(--text-muted) underline hover:text-(--text-ink)"
+                                >
+                                    Check CPF limits
+                                </a>
+                            </div>
+                        )}
                     </div>
 
                     <p className="text-xs text-(--text-muted)">

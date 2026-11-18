@@ -37,6 +37,7 @@ import {
     findDefaultRecurringCategoryId,
     isSpendType,
 } from "../../lib/recurringItems";
+import { Switch } from "../ui/Switch";
 import { Alert } from "../ui/Alert";
 
 function useSafeHousehold() {
@@ -110,6 +111,7 @@ export function AddRecurringModal({
     const [notes, setNotes] = useState<string>("");
     // null = not chosen yet, falls back to the household's lifestyle category
     const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [paidFromCpfOa, setPaidFromCpfOa] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -138,6 +140,7 @@ export function AddRecurringModal({
                 );
                 setNotes(initialItem.notes || "");
                 setCategoryId(initialItem.category_id ?? "");
+                setPaidFromCpfOa(!!initialItem.paid_from_cpf_oa);
             } else {
                 setName("");
                 setType("insurance");
@@ -150,6 +153,7 @@ export function AddRecurringModal({
                 setEndDate("");
                 setNotes("");
                 setCategoryId(null);
+                setPaidFromCpfOa(false);
             }
             setErrorMessage(null);
             setIsSubmitting(false);
@@ -214,6 +218,7 @@ export function AddRecurringModal({
                 start_date: startDate || null,
                 end_date: endDate || null,
                 notes: notes.trim() || null,
+                paid_from_cpf_oa: showCategory && paidFromCpfOa,
             };
 
             if (initialItem?.id) {
@@ -448,6 +453,16 @@ export function AddRecurringModal({
                             className="bg-(--bg-canvas)"
                         />
                     </div>
+
+                    {showCategory && (
+                        <Switch
+                            id="recurring-paid-from-cpf-oa"
+                            label="Paid from CPF OA"
+                            hint="Counts against CPF OA growth, not cash savings."
+                            checked={paidFromCpfOa}
+                            onChange={setPaidFromCpfOa}
+                        />
+                    )}
 
                     {/* Notes */}
                     <Textarea
