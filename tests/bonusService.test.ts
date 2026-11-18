@@ -275,28 +275,7 @@ describe("supabaseFinanceService bonus log", () => {
         });
     });
 
-    it("uses the atomic increment RPC when a goal balance changes", async () => {
-        const client = installClient({
-            savings_goals: {
-                data: {
-                    id: GOAL,
-                    target_amount: 10000,
-                    saved_so_far: 0,
-                    target_date: "2027-12-31",
-                },
-                error: null,
-            },
-        });
-
-        await supabaseFinanceService.updateGoal(GOAL, { saved_so_far: 3200 });
-
-        expect(client.rpc).toHaveBeenCalledWith("increment_goal_saved", {
-            p_goal_id: GOAL,
-            p_amount: 3200,
-        });
-    });
-
-    it("saves through the RPC and refreshes goal status", async () => {
+    it("saves through the RPC without refreshing goal status", async () => {
         const client = installClient({
             households: { data: { id: "hh-uuid" }, error: null },
             savings_goals: {
@@ -350,7 +329,7 @@ describe("supabaseFinanceService bonus log", () => {
             }),
             p_contributions: [{ goal_id: GOAL, amount: 3200 }],
         });
-        expect(updateGoal).toHaveBeenCalledWith(GOAL, {});
+        expect(updateGoal).not.toHaveBeenCalled();
         expect(saved.goal_contributions).toEqual([
             { goal_id: GOAL, amount: 3200 },
         ]);
@@ -393,96 +372,41 @@ describe("mockFinanceService bonus log", () => {
         mockFinanceService.resetData();
     });
 
-    const baseInput = async (): Promise<SaveBonusEventInput> => {
-        const goals = await mockFinanceService.getGoals();
-        const open = goals.find(
-            (g) => g.status !== "achieved" && g.saved_so_far < g.target_amount,
-        )!;
-        return {
-            recipient_id: "mem-00000000-0012",
-            type: "performance",
-            received_on: "2026-10-15",
-            gross: 10000,
-            cpf: 2000,
-            split: cloneDefaultSplit(),
-            goal_contributions: [{ goal_id: open.id, amount: 3200 }],
-        };
-    };
+    const baseInput = async (): Promise<SaveBonusEventInput> => ({
+        recipient_id: "mem-00000000-0012",
+        type: "performance",
+        received_on: "2026-10-15",
+        gross: 10000,
+        cpf: 2000,
+        split: cloneDefaultSplit(),
+        goal_contributions: [],
+    });
 
-    it("funds goals on create, applies the delta on edit and reverses on delete", async () => {
+    it("creates, edits and deletes a bonus without touching goals", async () => {
         const input = await baseInput();
-        const goalId = input.goal_contributions[0].goal_id;
-        const before = (await mockFinanceService.getGoals()).find(
-            (g) => g.id === goalId,
-        )!.saved_so_far;
+        const goalsBefore = await mockFinanceService.getGoals();
 
         const created = await mockFinanceService.saveBonusEvent(input);
         expect(created.net).toBe(8000);
-        let goal = (await mockFinanceService.getGoals()).find(
-            (g) => g.id === goalId,
-        )!;
-        expect(goal.saved_so_far).toBeCloseTo(before + 3200, 2);
+        expect(created.goal_contributions).toEqual([]);
 
-        await mockFinanceService.saveBonusEvent({
+        const edited = await mockFinanceService.saveBonusEvent({
             ...input,
             id: created.id,
-            goal_contributions: [{ goal_id: goalId, amount: 1000 }],
+            gross: 12000,
+            cpf: 2400,
         });
-        goal = (await mockFinanceService.getGoals()).find(
-            (g) => g.id === goalId,
-        )!;
-        expect(goal.saved_so_far).toBeCloseTo(before + 1000, 2);
+        expect(edited.net).toBe(9600);
+        expect((await mockFinanceService.getGoals()).length).toBe(
+            goalsBefore.length,
+        );
+        expect(await mockFinanceService.getGoals()).toEqual(goalsBefore);
 
         await mockFinanceService.deleteBonusEvent(created.id);
-        goal = (await mockFinanceService.getGoals()).find(
-            (g) => g.id === goalId,
-        )!;
-        expect(goal.saved_so_far).toBeCloseTo(before, 2);
+        expect(await mockFinanceService.getGoals()).toEqual(goalsBefore);
         expect((await mockFinanceService.getBonusEvents()).events).toHaveLength(
             0,
         );
-    });
-
-    it("mirrors bonus funding into the goal deposit ledger and keeps it in sync", async () => {
-        const input = await baseInput();
-        const goalId = input.goal_contributions[0].goal_id;
-        const created = await mockFinanceService.saveBonusEvent(input);
-
-        let deposits = await mockFinanceService.getGoalDeposits();
-        let bonus = deposits.filter((d) => d.bonus_event_id === created.id);
-        expect(bonus).toHaveLength(1);
-        expect(bonus[0]).toMatchObject({
-            goal_id: goalId,
-            amount: 3200,
-            source: "bonus",
-        });
-
-        await mockFinanceService.saveBonusEvent({
-            ...input,
-            id: created.id,
-            goal_contributions: [{ goal_id: goalId, amount: 1000 }],
-        });
-        deposits = await mockFinanceService.getGoalDeposits();
-        bonus = deposits.filter((d) => d.bonus_event_id === created.id);
-        expect(bonus.map((d) => d.amount)).toEqual([1000]);
-
-        await mockFinanceService.deleteBonusEvent(created.id);
-        deposits = await mockFinanceService.getGoalDeposits();
-        expect(
-            deposits.filter((d) => d.bonus_event_id === created.id),
-        ).toHaveLength(0);
-    });
-
-    it("clamps the reversal at zero", async () => {
-        const input = await baseInput();
-        const goalId = input.goal_contributions[0].goal_id;
-        const created = await mockFinanceService.saveBonusEvent(input);
-        await mockFinanceService.updateGoal(goalId, { saved_so_far: 100 });
-        await mockFinanceService.deleteBonusEvent(created.id);
-        const goal = (await mockFinanceService.getGoals()).find(
-            (g) => g.id === goalId,
-        )!;
-        expect(goal.saved_so_far).toBe(0);
     });
 
     it("counts the bonus as income without raising category caps", async () => {

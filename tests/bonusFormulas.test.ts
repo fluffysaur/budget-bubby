@@ -3,7 +3,6 @@ import {
     computeBonusSplit,
     defaultBonusCpf,
     defaultBonusType,
-    distributeGoalShare,
     DEFAULT_BONUS_SPLIT,
     groupBonusesByYear,
     normalizeBonusSplit,
@@ -11,7 +10,7 @@ import {
     summarizeBonusesYtd,
 } from "../src/lib/bonusFormulas";
 import { isMissingRelationError } from "../src/lib/supabaseErrors";
-import type { BonusEvent, SavingsGoal } from "../src/types/finance";
+import type { BonusEvent } from "../src/types/finance";
 
 const event = (overrides: Partial<BonusEvent>): BonusEvent => ({
     id: overrides.id ?? "b1",
@@ -24,19 +23,6 @@ const event = (overrides: Partial<BonusEvent>): BonusEvent => ({
     net: 800,
     split: [],
     goal_contributions: [],
-    ...overrides,
-});
-
-const goal = (overrides: Partial<SavingsGoal>): SavingsGoal => ({
-    id: overrides.id ?? "g1",
-    household_id: "hh",
-    owner_id: null,
-    title: "Goal",
-    target_amount: 1000,
-    saved_so_far: 0,
-    target_date: "2027-12-31",
-    emoji: "🎯",
-    status: "on_track",
     ...overrides,
 });
 
@@ -102,57 +88,6 @@ describe("normalizeBonusSplit", () => {
 
     it("falls back to the default split for junk", () => {
         expect(normalizeBonusSplit(null)).toEqual(DEFAULT_BONUS_SPLIT);
-    });
-});
-
-describe("distributeGoalShare", () => {
-    const goals = [
-        goal({ id: "a", target_amount: 1000, saved_so_far: 0 }),
-        goal({ id: "b", target_amount: 1000, saved_so_far: 700 }),
-        goal({
-            id: "done",
-            status: "achieved",
-            target_amount: 500,
-            saved_so_far: 500,
-        }),
-    ];
-
-    it("splits evenly with the cent remainder on the last goal", () => {
-        const result = distributeGoalShare(100.01, goals, "even");
-        expect(result).toEqual([
-            { goal_id: "a", amount: 50 },
-            { goal_id: "b", amount: 50.01 },
-        ]);
-    });
-
-    it("weights by gap and excludes achieved goals", () => {
-        const result = distributeGoalShare(1300, goals, "gap");
-        expect(result).toEqual([
-            { goal_id: "a", amount: 1000 },
-            { goal_id: "b", amount: 300 },
-        ]);
-    });
-
-    it("skips zero-gap goals in gap mode", () => {
-        const result = distributeGoalShare(
-            100,
-            [goal({ id: "a" }), goal({ id: "full", saved_so_far: 1000 })],
-            "gap",
-        );
-        expect(result).toEqual([{ goal_id: "a", amount: 100 }]);
-    });
-
-    it("sends everything to one goal in single mode", () => {
-        expect(distributeGoalShare(250, goals, "single", "b")).toEqual([
-            { goal_id: "b", amount: 250 },
-        ]);
-        expect(distributeGoalShare(250, goals, "single")).toEqual([
-            { goal_id: "a", amount: 250 },
-        ]);
-    });
-
-    it("returns nothing when no goal can take money", () => {
-        expect(distributeGoalShare(100, [goals[2]], "even")).toEqual([]);
     });
 });
 

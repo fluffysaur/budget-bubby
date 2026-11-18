@@ -78,26 +78,7 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
         });
     });
 
-    it("records sweep allocations as ledger deposits", async () => {
-        const staleGoal = {
-            id: "goal-fresh-test",
-            household_id: "hh-00000000-0001",
-            title: "Emergency Fund",
-            target_amount: 10000,
-            saved_so_far: 1000,
-            target_date: "2027-12-31",
-            emoji: "🛡️",
-            status: "on_track" as const,
-        };
-        const freshGoal = {
-            ...staleGoal,
-            saved_so_far: 2450,
-        };
-
-        vi.spyOn(financeService, "getGoals").mockResolvedValue([staleGoal]);
-        const depositSpy = vi
-            .spyOn(financeService, "depositToGoal")
-            .mockResolvedValue({ ...freshGoal, saved_so_far: 3450 });
+    it("opens the Bank Surplus modal from the month-end banner", async () => {
         vi.spyOn(financeService, "getMonthlyBudget").mockResolvedValue({
             budget: {
                 id: "mb-last",
@@ -123,29 +104,15 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
 
         renderWithProviders(<ExpensesPage />);
 
-        const sweepBannerBtn = await screen.findByRole("button", {
-            name: /Sweep to Goals/i,
+        const bankBannerBtn = await screen.findByRole("button", {
+            name: /Bank Surplus/i,
         });
-        fireEvent.click(sweepBannerBtn);
+        expect(
+            screen.queryByRole("button", { name: /Sweep to Goals/i }),
+        ).not.toBeInTheDocument();
+        fireEvent.click(bankBannerBtn);
 
-        const allToTopBtn = await screen.findByRole("button", {
-            name: /100% to first goal/i,
-        });
-        fireEvent.click(allToTopBtn);
-
-        const confirmSweepBtn = await screen.findByRole("button", {
-            name: /^Sweep S\$/i,
-        });
-        fireEvent.click(confirmSweepBtn);
-
-        await waitFor(() => {
-            // 1000 combined household surplus (500 * 2 members), recorded in the ledger
-            expect(depositSpy).toHaveBeenCalledWith(
-                "goal-fresh-test",
-                1000,
-                "sweep",
-            );
-        });
+        expect(await screen.findByText(/Reserve S\$/i)).toBeInTheDocument();
     });
 
     it("hides member picker in ExpenseFormModal in Supabase mode until real members load", () => {

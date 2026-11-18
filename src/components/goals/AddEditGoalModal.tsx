@@ -4,14 +4,14 @@
  * Features:
  * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
  * - Emoji picker preset chips & custom emoji input
- * - Title, Target Amount, Saved So Far, Target Date, Monthly Contribution inputs
- * - Live pacing calculator preview (Required pace & status indicator)
+ * - Title, Target Amount and Target Date inputs (progress comes from the
+ *   household pool on the Roadmap, so there is no "saved so far")
  * - Error alerts and accessible form controls
  * - Dual mode: addGoal or updateGoal via financeService
  */
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { Target, TrendingUp } from "lucide-react";
+import { Target } from "lucide-react";
 import {
     AnimatedModal,
     ModalHeader,
@@ -24,11 +24,8 @@ import {
     useAddGoalMutation,
     useUpdateGoalMutation,
 } from "../../hooks/useFinanceQueries";
-import { calculateGoalPacing } from "../../lib/financialFormulas";
-import { formatSGD } from "../../lib/currency";
 import { formatISODate } from "../../lib/dateUtils";
 import type { SavingsGoal, CreateGoalInput } from "../../types/finance";
-import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface AddEditGoalModalProps {
     isOpen: boolean;
@@ -57,7 +54,6 @@ export function AddEditGoalModal({
     onGoalSaved,
     householdId,
 }: AddEditGoalModalProps) {
-    const mask = useMoneyMask();
     const titleInputRef = useRef<HTMLInputElement>(null);
     const addGoalMutation = useAddGoalMutation();
     const updateGoalMutation = useUpdateGoalMutation();
@@ -66,7 +62,6 @@ export function AddEditGoalModal({
     const [emoji, setEmoji] = useState<string>("🎯");
     const [title, setTitle] = useState<string>("");
     const [targetAmount, setTargetAmount] = useState<string>("");
-    const [savedSoFar, setSavedSoFar] = useState<string>("0");
     const [targetDate, setTargetDate] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -78,7 +73,6 @@ export function AddEditGoalModal({
                 setEmoji(goal.emoji || "🎯");
                 setTitle(goal.title);
                 setTargetAmount(goal.target_amount.toString());
-                setSavedSoFar(goal.saved_so_far.toString());
                 setTargetDate(
                     goal.target_date ? goal.target_date.substring(0, 10) : "",
                 );
@@ -86,7 +80,6 @@ export function AddEditGoalModal({
                 setEmoji("🎯");
                 setTitle("");
                 setTargetAmount("");
-                setSavedSoFar("0");
                 const oneYearAhead = new Date();
                 oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1);
                 setTargetDate(formatISODate(oneYearAhead));
@@ -103,14 +96,7 @@ export function AddEditGoalModal({
 
     if (!isOpen) return null;
 
-    // Derived pacing calculations for live feedback
     const numericTarget = parseFloat(targetAmount) || 0;
-    const numericSaved = parseFloat(savedSoFar) || 0;
-
-    const livePacing =
-        numericTarget > 0 && targetDate
-            ? calculateGoalPacing(numericTarget, numericSaved, targetDate, 0)
-            : null;
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -124,11 +110,6 @@ export function AddEditGoalModal({
 
         if (isNaN(numericTarget) || numericTarget <= 0) {
             setErrorMessage("Target must exceed 0");
-            return;
-        }
-
-        if (isNaN(numericSaved) || numericSaved < 0) {
-            setErrorMessage("Saved amount cannot be negative");
             return;
         }
 
@@ -152,7 +133,6 @@ export function AddEditGoalModal({
                         emoji: emoji || "🎯",
                         title: title.trim(),
                         target_amount: numericTarget,
-                        saved_so_far: numericSaved,
                         target_date: normalizedDate,
                     },
                 });
@@ -164,7 +144,6 @@ export function AddEditGoalModal({
                     emoji: emoji || "🎯",
                     title: title.trim(),
                     target_amount: numericTarget,
-                    saved_so_far: numericSaved,
                     target_date: normalizedDate,
                 };
                 const created = await addGoalMutation.mutateAsync(input);
@@ -263,7 +242,7 @@ export function AddEditGoalModal({
                         />
                     </div>
 
-                    {/* Target Amount & Saved So Far Row */}
+                    {/* Target Amount & Target Date Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label
@@ -293,35 +272,6 @@ export function AddEditGoalModal({
 
                         <div>
                             <label
-                                htmlFor="goal-saved"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Saved
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
-                                    S$
-                                </span>
-                                <input
-                                    id="goal-saved"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0"
-                                    value={savedSoFar}
-                                    onChange={(e) =>
-                                        setSavedSoFar(e.target.value)
-                                    }
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Target Date */}
-                    <div className="grid grid-cols-1 gap-3">
-                        <div>
-                            <label
                                 htmlFor="goal-date"
                                 className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
                             >
@@ -337,39 +287,9 @@ export function AddEditGoalModal({
                         </div>
                     </div>
 
-                    {/* Live Pacing Preview */}
-                    {livePacing && (
-                        <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-card) p-3 text-xs shadow-cute-sm">
-                            <div className="flex items-center justify-between font-bold text-(--text-ink)">
-                                <span className="flex items-center gap-1.5">
-                                    <TrendingUp className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-                                    Pacing Projection
-                                </span>
-                            </div>
-                            <div className="mt-2 grid grid-cols-2 gap-2 text-(--text-muted)">
-                                <div>
-                                    <span className="text-[11px] block">
-                                        Required Pace:
-                                    </span>
-                                    <span className="font-bold text-(--text-ink) font-mono-num">
-                                        {livePacing.status === "achieved"
-                                            ? "Complete"
-                                            : mask(
-                                                  `${formatSGD(livePacing.neededPerMonth)}/mo`,
-                                              )}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-[11px] block">
-                                        Time to Target:
-                                    </span>
-                                    <span className="font-bold text-(--text-ink) font-mono-num">
-                                        {livePacing.monthsRemaining} months
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <p className="text-xs text-(--text-muted)">
+                        Filled from your household pool in date order.
+                    </p>
                 </ModalBody>
 
                 <ModalFooter>

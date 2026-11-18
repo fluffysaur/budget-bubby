@@ -137,6 +137,12 @@ export interface MonthlyBudgetCategory {
     allocated_amount: number;
 }
 
+/** One member's stored budget for a month with its category rows (read-only history). */
+export interface MonthlyBudgetHistoryRow {
+    budget: MonthlyBudget;
+    categories: MonthlyBudgetCategory[];
+}
+
 export interface MonthlyBudgetCategoryDetail extends MonthlyBudgetCategory {
     category?: Category;
     actualSpent?: number;
@@ -373,9 +379,11 @@ export interface SavingsGoal {
     owner_id?: string | null;
     title: string;
     target_amount: number;
+    /** @deprecated Legacy deposit total; progress is computed by the Roadmap. */
     saved_so_far: number;
     target_date: string; // 'YYYY-MM-DD'
     emoji: string;
+    /** Only "achieved" (Done) is meaningful; other values read as active. */
     status: GoalStatus;
     created_at?: string;
 }
@@ -385,23 +393,8 @@ export interface CreateGoalInput {
     owner_id?: string | null;
     title: string;
     target_amount: number;
-    saved_so_far?: number;
     target_date: string;
     emoji?: string;
-}
-
-export type GoalDepositSource = "quick_deposit" | "sweep" | "bonus";
-
-/** One timestamped deposit into a savings goal; drives monthly pace. */
-export interface GoalDeposit {
-    id: string;
-    household_id: string;
-    goal_id: string;
-    bonus_event_id?: string | null;
-    amount: number;
-    source: GoalDepositSource;
-    deposited_at: string; // 'YYYY-MM-DD'
-    created_at?: string;
 }
 
 export type RecurringItemType =
@@ -469,19 +462,6 @@ export interface SettlementSummary {
     member1OwesMember2: number;
     member2OwesMember1: number;
     expenseIds?: string[];
-}
-
-export interface GoalPacingResult {
-    status: GoalStatus;
-    monthsRemaining: number;
-    /** Required deposit for the current month (0 once achieved). */
-    neededPerMonth: number;
-    depositedThisMonth: number;
-    /** Last month's unmet pace, still owed on top of this month's. */
-    carriedShortfall: number;
-    /** Remaining amount to deposit this month (incl. carried shortfall). */
-    shortfallThisMonth: number;
-    projectedDate?: string;
 }
 
 export interface HouseholdOverview {

@@ -1,45 +1,37 @@
 /**
  * GoalsPage Component
- * Milestone savings goals and pacing tracker:
- * - 4 Summary metric cards: Total Target, Total Saved, Overall Progress, Monthly Savings Pace
- * - Filter tabs: All Goals, In Progress, Achieved
- * - Responsive grid of GoalCards with status pacing
- * - AddEditGoalModal for creating/updating goals
- * - QuickDepositModal for instant incremental savings
- * - Auto-refresh on data mutation
+ * The household Roadmap and its goals:
+ * - RoadmapCard: verdict, Pool Jar, timeline and trade-offs (household plan)
+ * - Filter tabs: All, Active, Done
+ * - Responsive grid of GoalCards reading the same Roadmap result
+ * - AddEditGoalModal for creating/updating goals; Mark done / Reopen
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-    Target,
-    Plus,
-    PiggyBank,
-    Sparkles,
-    Calendar,
-    AlertCircle,
-} from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
 import {
     PageHeader,
     Button,
-    StatCard,
+    ConfirmModal,
     GoalsSkeleton,
     EmptyStateCard,
     SegmentedTabs,
 } from "../components/ui";
 import {
     useGoalsQuery,
-    useGoalDepositsQuery,
     useExpensesQuery,
     useCategoriesQuery,
     useInvalidateFinance,
+    useUpdateGoalMutation,
 } from "../hooks/useFinanceQueries";
-import { formatSGD } from "../lib/currency";
-import { getGoalMonthDeposits, getGoalPacing } from "../lib/financialFormulas";
+import { useRoadmap } from "../hooks/useRoadmap";
+import { addMonths } from "../lib/dateUtils";
+import { feedback } from "../lib/delight/feedback";
 import { GoalCard } from "../components/goals/GoalCard";
 import { AddEditGoalModal } from "../components/goals/AddEditGoalModal";
-import { QuickDepositModal } from "../components/goals/QuickDepositModal";
+import { RoadmapCard } from "../components/roadmap/RoadmapCard";
 import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import type { SavingsGoal, Expense } from "../types/finance";
 import { m, AnimatePresence } from "motion/react";
@@ -71,7 +63,8 @@ export function GoalsPage({
         isLoading: goalsLoading,
         error: goalsError,
     } = useGoalsQuery();
-    const { data: depositsData } = useGoalDepositsQuery();
+    const roadmap = useRoadmap();
+    const updateGoalMutation = useUpdateGoalMutation();
     const { data: expensesData } = useExpensesQuery();
     const { data: categoriesData } = useCategoriesQuery();
 
@@ -79,7 +72,6 @@ export function GoalsPage({
     const targetGoalId = searchParams.get("goalId");
 
     const goals = useMemo(() => goalsData || [], [goalsData]);
-    const deposits = useMemo(() => depositsData || [], [depositsData]);
     const expenses = useMemo(() => expensesData || [], [expensesData]);
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = goalsLoading && !goalsData;
@@ -98,8 +90,7 @@ export function GoalsPage({
     // Modal states
     const [isAddEditOpen, setIsAddEditOpen] = useState<boolean>(false);
     const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
-    const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
-    const [depositGoal, setDepositGoal] = useState<SavingsGoal | null>(null);
+    const [doneGoal, setDoneGoal] = useState<SavingsGoal | null>(null);
     const [isSpendOpen, setIsSpendOpen] = useState<boolean>(false);
     const [spendGoal, setSpendGoal] = useState<SavingsGoal | null>(null);
 
@@ -124,65 +115,13 @@ export function GoalsPage({
         });
     }, [goals, perspective, activeMember]);
 
-    // This/last month ledger deposits per goal (drives pace and Behind status)
-    const goalMonthDeposits = useMemo(() => {
-        const map = new Map<
-            string,
-            { thisMonth: number; lastMonth: number | null }
-        >();
-        for (const g of goals) {
-            map.set(g.id, getGoalMonthDeposits(g, deposits));
-        }
-        return map;
-    }, [goals, deposits]);
-
-    // High-Level Summary Metrics
-    const {
-        totalTarget,
-        totalSaved,
-        overallProgress,
-        totalRequiredPace,
-        totalDepositedThisMonth,
-    } = useMemo(() => {
-        const target = perspectiveGoals.reduce(
-            (sum, g) => sum + (g.target_amount || 0),
-            0,
-        );
-        const saved = perspectiveGoals.reduce(
-            (sum, g) => sum + (g.saved_so_far || 0),
-            0,
-        );
-        let requiredPace = 0;
-        let depositedThisMonth = 0;
-        for (const g of perspectiveGoals) {
-            const pacing = getGoalPacing(g, deposits);
-            if (pacing.status === "achieved") continue;
-            requiredPace += pacing.neededPerMonth;
-            depositedThisMonth += pacing.depositedThisMonth;
-        }
-        const progress =
-            target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
-
-        return {
-            totalTarget: target,
-            totalSaved: saved,
-            overallProgress: progress,
-            totalRequiredPace: Math.round(requiredPace * 100) / 100,
-            totalDepositedThisMonth: Math.round(depositedThisMonth * 100) / 100,
-        };
-    }, [perspectiveGoals, deposits]);
-
     // Filtered by Active Tab
     const inProgressGoals = useMemo(() => {
-        return perspectiveGoals.filter(
-            (g) => g.saved_so_far < g.target_amount && g.status !== "achieved",
-        );
+        return perspectiveGoals.filter((g) => g.status !== "achieved");
     }, [perspectiveGoals]);
 
     const achievedGoals = useMemo(() => {
-        return perspectiveGoals.filter(
-            (g) => g.saved_so_far >= g.target_amount || g.status === "achieved",
-        );
+        return perspectiveGoals.filter((g) => g.status === "achieved");
     }, [perspectiveGoals]);
 
     const displayedGoals = useMemo(() => {
@@ -217,9 +156,7 @@ export function GoalsPage({
         }
 
         // 2. Filter check: if target goal is hidden by active filter tab, switch to 'all'
-        const isGoalAchieved =
-            targetGoal.saved_so_far >= targetGoal.target_amount ||
-            targetGoal.status === "achieved";
+        const isGoalAchieved = targetGoal.status === "achieved";
         if (
             (activeTab === "in_progress" && isGoalAchieved) ||
             (activeTab === "achieved" && !isGoalAchieved)
@@ -308,9 +245,34 @@ export function GoalsPage({
         setIsAddEditOpen(true);
     };
 
-    const handleOpenDepositModal = (goal: SavingsGoal) => {
-        setDepositGoal(goal);
-        setIsDepositOpen(true);
+    const handleConfirmDone = async () => {
+        if (!doneGoal) return;
+        await updateGoalMutation.mutateAsync({
+            id: doneGoal.id,
+            updates: { status: "achieved" },
+        });
+        feedback.milestone("goal-complete", {
+            dedupeKey: `goal-complete:${doneGoal.id}`,
+            title: "Goal reached! 🎉",
+            subtitle: doneGoal.title,
+        });
+        setDoneGoal(null);
+    };
+
+    const handleReopen = (goal: SavingsGoal) => {
+        updateGoalMutation.mutate({
+            id: goal.id,
+            updates: { status: "on_track" },
+        });
+    };
+
+    const handleApplyDelay = async (goalId: string, months: number) => {
+        const goal = goals.find((g) => g.id === goalId);
+        if (!goal) return;
+        await updateGoalMutation.mutateAsync({
+            id: goalId,
+            updates: { target_date: addMonths(goal.target_date, months) },
+        });
     };
 
     const handleOpenSpendModal = (goal: SavingsGoal) => {
@@ -319,10 +281,6 @@ export function GoalsPage({
     };
 
     const handleGoalSaved = async () => {
-        // Invalidation is handled by the goal mutation hooks
-    };
-
-    const handleDepositSaved = async () => {
         // Invalidation is handled by the goal mutation hooks
     };
 
@@ -378,48 +336,14 @@ export function GoalsPage({
                 </div>
             )}
 
-            {/* 4 Summary Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {/* Card 1: Total Target */}
-                <StatCard
-                    title="Target"
-                    loading={isLoading}
-                    value={formatSGD(totalTarget)}
-                    subtitle={`${perspectiveGoals.length} ${perspectiveGoals.length === 1 ? "goal" : "goals"}`}
-                    icon={<Target className="h-4 w-4" />}
-                    iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+            {/* Household Roadmap */}
+            {!isLoading && (
+                <RoadmapCard
+                    roadmap={roadmap}
+                    onAddGoal={handleOpenCreateModal}
+                    onApplyDelay={handleApplyDelay}
                 />
-
-                {/* Card 2: Total Saved */}
-                <StatCard
-                    title="Saved"
-                    loading={isLoading}
-                    value={formatSGD(totalSaved)}
-                    subtitle={`${formatSGD(Math.max(0, totalTarget - totalSaved))} remaining`}
-                    icon={<PiggyBank className="h-4 w-4" />}
-                    iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
-                />
-
-                {/* Card 3: Overall Progress */}
-                <StatCard
-                    title="Progress"
-                    loading={isLoading}
-                    value={`${overallProgress}%`}
-                    subtitle={`${perspectiveGoals.filter((g) => g.status === "achieved").length} achieved`}
-                    icon={<Sparkles className="h-4 w-4" />}
-                    iconBg="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-                />
-
-                {/* Card 4: Total Monthly Contributions */}
-                <StatCard
-                    title="Monthly Pace"
-                    loading={isLoading}
-                    value={`${formatSGD(totalRequiredPace)}/mo`}
-                    subtitle={`${formatSGD(totalDepositedThisMonth)} deposited`}
-                    icon={<Calendar className="h-4 w-4" />}
-                    iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400"
-                />
-            </div>
+            )}
 
             {/* Filter Tabs */}
             <div className="flex items-center justify-between border-b-2 border-(--border-subtle) pb-3">
@@ -497,16 +421,10 @@ export function GoalsPage({
                                     linkedExpenses={
                                         goalExpensesMap.get(goal.id) || []
                                     }
-                                    depositedThisMonth={
-                                        goalMonthDeposits.get(goal.id)
-                                            ?.thisMonth ?? 0
-                                    }
-                                    depositedLastMonth={
-                                        goalMonthDeposits.get(goal.id)
-                                            ?.lastMonth ?? null
-                                    }
+                                    plan={roadmap.byGoalId.get(goal.id)}
                                     onEdit={handleOpenEditModal}
-                                    onQuickDeposit={handleOpenDepositModal}
+                                    onMarkDone={setDoneGoal}
+                                    onReopen={handleReopen}
                                     onSpendFromGoal={handleOpenSpendModal}
                                     isHighlighted={
                                         highlightedGoalId === goal.id
@@ -527,13 +445,21 @@ export function GoalsPage({
                 householdId={overview?.household.id}
             />
 
-            {/* Quick Deposit Modal */}
-            <QuickDepositModal
-                isOpen={isDepositOpen}
-                onClose={() => setIsDepositOpen(false)}
-                goal={depositGoal}
-                onDepositSaved={handleDepositSaved}
-            />
+            {/* Mark Done confirmation */}
+            <ConfirmModal
+                isOpen={Boolean(doneGoal)}
+                onClose={() => setDoneGoal(null)}
+                onConfirm={handleConfirmDone}
+                title="Mark Done?"
+                variant="primary"
+                confirmLabel="Mark Done"
+            >
+                {doneGoal && (
+                    <p className="text-sm text-(--text-ink)">
+                        {doneGoal.emoji} {doneGoal.title} leaves the plan.
+                    </p>
+                )}
+            </ConfirmModal>
 
             {/* Spend from Goal: the Add Expense form with this goal picked */}
             <ExpenseFormModal

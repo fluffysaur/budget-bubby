@@ -12,13 +12,6 @@ import type {
     HouseholdMember,
 } from "../types/finance";
 
-export {
-    distributeGoalShare,
-    goalGap,
-    isGoalFundable,
-} from "./goalDistribution";
-export type { GoalDistributionMode } from "./goalDistribution";
-
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export interface BonusSplitBucket {

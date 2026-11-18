@@ -4,9 +4,7 @@ import {
     calculateDisposableBudget,
     calculateCategoryAllocations,
     calculateSharedExpenseSettlement,
-    calculateGoalPacing,
-    sumGoalDepositsForMonth,
-    withDerivedGoalStatus,
+    normalizeGoalStatus,
     calculateSpendablePacing,
     detectUnspentMonthEndSurplus,
     isBufferCategory,
@@ -16,12 +14,7 @@ import {
     computeSavingsBreakdown,
     computeBufferAbsorption,
 } from "../src/lib/financialFormulas";
-import type {
-    Expense,
-    Category,
-    GoalDeposit,
-    SavingsGoal,
-} from "../src/types/finance";
+import type { Expense, Category, SavingsGoal } from "../src/types/finance";
 
 describe("financialFormulas", () => {
     describe("calculateCPFAndNetPay", () => {
@@ -284,179 +277,39 @@ describe("financialFormulas", () => {
         });
     });
 
-    describe("calculateGoalPacing", () => {
-        const referenceDate = "2026-09-15";
-
-        it('returns "achieved" when savedSoFar reaches targetAmount', () => {
-            const result = calculateGoalPacing(
-                10000,
-                10000,
-                "2027-09-15",
-                500,
-                referenceDate,
-            );
-            expect(result.status).toBe("achieved");
-            expect(result.neededPerMonth).toBe(0);
-            expect(result.shortfallThisMonth).toBe(0);
-
-            const over = calculateGoalPacing(
-                10000,
-                12000,
-                "2027-09-15",
-                0,
-                referenceDate,
-            );
-            expect(over.status).toBe("achieved");
-        });
-
-        it("stays on track mid-month while this month's pace is still being met", () => {
-            // 12 months left, 12000 to go => 1000 required; nothing deposited yet
-            const result = calculateGoalPacing(
-                12000,
-                0,
-                "2027-09-15",
-                0,
-                referenceDate,
-                null,
-            );
-            expect(result.monthsRemaining).toBe(12);
-            expect(result.neededPerMonth).toBe(1000);
-            expect(result.carriedShortfall).toBe(0);
-            expect(result.shortfallThisMonth).toBe(1000);
-            expect(result.status).toBe("on_track");
-        });
-
-        it("is on track when last month's pace was met", () => {
-            // saved 1000, all deposited last month; last month required 12000/13 = 923.08
-            const result = calculateGoalPacing(
-                12000,
-                1000,
-                "2027-09-15",
-                0,
-                referenceDate,
-                1000,
-            );
-            expect(result.carriedShortfall).toBe(0);
-            expect(result.status).toBe("on_track");
-        });
-
-        it("is behind in the new month after last month's pace was missed", () => {
-            // saved 400 (all last month); last month required 12000/13 = 923.08 => short 523.08
-            const result = calculateGoalPacing(
-                12000,
-                400,
-                "2027-09-15",
-                0,
-                referenceDate,
-                400,
-            );
-            expect(result.carriedShortfall).toBe(523.08);
-            // this month: (12000 - 0... month-start saved 400) 11600 / 12 = 966.67
-            expect(result.neededPerMonth).toBe(966.67);
-            expect(result.shortfallThisMonth).toBe(1489.75);
-            expect(result.status).toBe("behind");
-        });
-
-        it("clears behind once catch-up deposits cover the carried shortfall plus this month's pace", () => {
-            const partial = calculateGoalPacing(
-                12000,
-                1400,
-                "2027-09-15",
-                1000,
-                referenceDate,
-                400,
-            );
-            expect(partial.status).toBe("behind");
-
-            const caughtUp = calculateGoalPacing(
-                12000,
-                1900,
-                "2027-09-15",
-                1500,
-                referenceDate,
-                400,
-            );
-            expect(caughtUp.shortfallThisMonth).toBe(0);
-            expect(caughtUp.status).toBe("on_track");
-        });
-
-        it("a goal created this month is never behind", () => {
-            const result = calculateGoalPacing(
-                12000,
-                0,
-                "2027-09-15",
-                0,
-                referenceDate,
-                null,
-            );
-            expect(result.status).toBe("on_track");
-        });
-
-        it("enforces a minimum of 1 month remaining", () => {
-            const result = calculateGoalPacing(
-                5000,
-                2000,
-                "2026-09-01",
-                0,
-                referenceDate,
-                null,
-            );
-            expect(result.monthsRemaining).toBe(1);
-            expect(result.neededPerMonth).toBe(3000);
-            expect(result.status).toBe("on_track");
-        });
-    });
-
-    describe("goal deposit ledger helpers", () => {
-        const dep = (
-            goal_id: string,
-            amount: number,
-            deposited_at: string,
-        ): GoalDeposit => ({
-            id: `${goal_id}-${deposited_at}-${amount}`,
+    describe("normalizeGoalStatus", () => {
+        const base = {
+            id: "g1",
             household_id: "hh-1",
-            goal_id,
-            amount,
-            source: "quick_deposit",
-            deposited_at,
-        });
+            title: "Trip",
+            target_amount: 1000,
+            saved_so_far: 0,
+            target_date: "2027-09-15",
+            emoji: "x",
+        };
 
-        it("sums only the goal's deposits in the reference month", () => {
-            const deposits = [
-                dep("g1", 100, "2026-09-02"),
-                dep("g1", 50.5, "2026-09-30"),
-                dep("g1", 999, "2026-08-31"),
-                dep("g2", 400, "2026-09-10"),
-            ];
-            expect(sumGoalDepositsForMonth(deposits, "g1", "2026-09-15")).toBe(
-                150.5,
-            );
-            expect(sumGoalDepositsForMonth(deposits, "g1", "2026-10-01")).toBe(
-                0,
-            );
-        });
-
-        it("rolls over to behind only once a month closes short", () => {
-            const goal = {
-                id: "g1",
-                household_id: "hh-1",
-                title: "Trip",
-                target_amount: 12000,
-                saved_so_far: 400,
-                target_date: "2027-09-15",
-                emoji: "x",
-                status: "on_track",
-                created_at: "2026-09-01T00:00:00.000Z",
-            } as SavingsGoal;
-            const deposits = [dep("g1", 400, "2026-09-05")];
-            // Mid-September: pace unmet but the month is still open
+        it("keeps achieved goals achieved", () => {
             expect(
-                withDerivedGoalStatus([goal], deposits, "2026-09-15")[0].status,
+                normalizeGoalStatus({
+                    ...base,
+                    status: "achieved",
+                } as SavingsGoal).status,
+            ).toBe("achieved");
+        });
+
+        it("maps any other stored status to on_track", () => {
+            expect(
+                normalizeGoalStatus({
+                    ...base,
+                    status: "behind",
+                } as SavingsGoal).status,
             ).toBe("on_track");
-            // October: September closed short
             expect(
-                withDerivedGoalStatus([goal], deposits, "2026-10-01")[0].status,
-            ).toBe("behind");
+                normalizeGoalStatus({
+                    ...base,
+                    status: "on_track",
+                } as SavingsGoal).status,
+            ).toBe("on_track");
         });
     });
 

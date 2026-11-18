@@ -4,8 +4,6 @@ import { haptics } from "../src/lib/haptics";
 import { PullToRefresh } from "../src/components/ui/PullToRefresh";
 import { BubbySheet } from "../src/components/bubby/BubbySheet";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
-import { SurplusSweepModal } from "../src/components/budget/SurplusSweepModal";
-import { QuickDepositModal } from "../src/components/goals/QuickDepositModal";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
 import { NotificationSettingsModal } from "../src/components/layout/NotificationSettingsModal";
 import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
@@ -13,7 +11,6 @@ import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { financeService } from "../src/services/financeService";
 import type {
     Expense,
-    SavingsGoal,
     MonthlyBudgetCategoryDetail,
 } from "../src/types/finance";
 
@@ -99,88 +96,6 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         render(<ExpenseSuccessCelebration expense={mockExpense} />);
 
         expect(successSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it("triggers haptics.sweep when unspent surplus is swept to goals", async () => {
-        const sweepSpy = vi.spyOn(haptics, "sweep");
-        const mockGoals: SavingsGoal[] = [
-            {
-                id: "goal-1",
-                household_id: "hh-1",
-                title: "Japan Trip",
-                target_amount: 5000,
-                saved_so_far: 2000,
-                emoji: "✈️",
-                status: "on_track",
-                target_date: "2026-12-31",
-                created_at: new Date().toISOString(),
-            },
-        ];
-        const onSweepComplete = vi.fn().mockResolvedValue(undefined);
-
-        render(
-            <SurplusSweepModal
-                isOpen={true}
-                onClose={vi.fn()}
-                surplusAmount={500}
-                month="2026-10"
-                goals={mockGoals}
-                onSweepComplete={onSweepComplete}
-            />,
-        );
-
-        // Click "Split Evenly" preset to allocate the $500
-        const splitEvenlyBtn = screen.getByRole("button", {
-            name: /split evenly/i,
-        });
-        fireEvent.click(splitEvenlyBtn);
-
-        const sweepSubmitBtn = screen.getByRole("button", { name: /sweep /i });
-        await act(async () => {
-            fireEvent.click(sweepSubmitBtn);
-        });
-
-        expect(onSweepComplete).toHaveBeenCalled();
-        expect(sweepSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it("triggers haptics.goalMilestone when depositing into a savings goal", async () => {
-        const goalMilestoneSpy = vi.spyOn(haptics, "goalMilestone");
-        const mockGoal: SavingsGoal = {
-            id: "goal-1",
-            household_id: "hh-1",
-            title: "Emergency Fund",
-            target_amount: 10000,
-            saved_so_far: 4000,
-            emoji: "🛡️",
-            status: "on_track",
-            target_date: "2026-12-31",
-            created_at: new Date().toISOString(),
-        };
-        vi.spyOn(financeService, "depositToGoal").mockResolvedValue({
-            ...mockGoal,
-            saved_so_far: 4100,
-        });
-
-        render(
-            <QuickDepositModal
-                isOpen={true}
-                onClose={vi.fn()}
-                goal={mockGoal}
-                onDepositSaved={vi.fn()}
-            />,
-        );
-
-        // Tap preset "+S$100"
-        const presetBtn = screen.getByRole("button", { name: /\+S\$100/i });
-        fireEvent.click(presetBtn);
-
-        const submitBtn = screen.getByRole("button", { name: /^deposit$/i });
-        await act(async () => {
-            fireEvent.click(submitBtn);
-        });
-
-        expect(goalMilestoneSpy).toHaveBeenCalledTimes(1);
     });
 
     it("triggers haptics.destructive when confirming expense deletion", async () => {

@@ -23,10 +23,8 @@ import {
     clampDueDay,
 } from "../dateUtils";
 import { formatSGD } from "../currency";
-import {
-    isSpendableCategory,
-    withDerivedGoalStatus,
-} from "../financialFormulas";
+import { isSpendableCategory } from "../financialFormulas";
+import type { GoalStatusChange } from "../roadmap/alerts";
 import { getUnpaidCardCycles } from "../creditCardCycles";
 import { collectFeedEvents } from "../bubby/sources";
 import { deriveCondition, type BubbyMood } from "../bubby/body";
@@ -41,7 +39,6 @@ import type {
     MonthlyBudgetDetail,
     RecurringItem,
     SavingsGoal,
-    GoalDeposit,
     InboxSummary,
 } from "../../types/finance";
 
@@ -677,49 +674,49 @@ export function checkRecurringBillsReminders(
 }
 
 /**
- * 10. Savings goals behind pace (once a month) or achieved (once ever).
- * Shared across the household so both partners see them.
+ * 10. Roadmap goal alerts: a goal turned short or back on track at the latest
+ * balance update (at most one per goal per month), or a goal was marked Done
+ * (once ever). Shared across the household so both partners see them.
  */
 export function checkGoalPacingReminders(
     goals: SavingsGoal[],
-    referenceDate?: Date,
-    deposits?: GoalDeposit[],
+    changes: readonly GoalStatusChange[] = [],
 ): AppReminder[] {
-    const month = sgMonth(referenceDate);
     const reminders: AppReminder[] = [];
-    // With the ledger, status is derived for the reference month; otherwise
-    // callers pass goals whose status the service already derived.
-    const evaluated = deposits
-        ? withDerivedGoalStatus(goals, deposits, referenceDate)
-        : goals;
 
-    for (const goal of evaluated) {
-        const progress = `${formatSGD(goal.saved_so_far)} of ${formatSGD(goal.target_amount)}`;
-        if (goal.status === "behind") {
-            reminders.push({
-                id: `reminder-goal-behind-${goal.id}-${month}`,
-                type: "goal_pacing",
-                title: `${goal.title} Behind Pace`,
-                message: `${progress} saved`,
-                severity: "warning",
-                actionLabel: "View Goal",
-                actionType: "view_goals",
-                data: { goalId: goal.id },
-                createdAt: new Date().toISOString(),
-            });
-        } else if (goal.status === "achieved") {
-            reminders.push({
-                id: `reminder-goal-achieved-${goal.id}`,
-                type: "goal_pacing",
-                title: `Goal Reached: ${goal.title}`,
-                message: `${formatSGD(goal.target_amount)} saved`,
-                severity: "info",
-                actionLabel: "View Goal",
-                actionType: "view_goals",
-                data: { goalId: goal.id },
-                createdAt: new Date().toISOString(),
-            });
-        }
+    for (const change of changes) {
+        const { goal, month } = change;
+        const short = change.to === "short";
+        reminders.push({
+            id: `reminder-goal-status-${goal.goal.id}-${month}`,
+            type: "goal_pacing",
+            title: short
+                ? `${goal.goal.title} Is Short`
+                : `${goal.goal.title} Back on Track`,
+            message: short
+                ? `Short ${formatSGD(Math.ceil(goal.shortPerMonth), { showCents: false })}/mo by ${formatShortMonth(goal.goal.targetDate.slice(0, 7))}`
+                : "Your plan covers it again",
+            severity: short ? "warning" : "info",
+            actionLabel: "View Goal",
+            actionType: "view_goals",
+            data: { goalId: goal.goal.id },
+            createdAt: new Date().toISOString(),
+        });
+    }
+
+    for (const goal of goals) {
+        if (goal.status !== "achieved") continue;
+        reminders.push({
+            id: `reminder-goal-achieved-${goal.id}`,
+            type: "goal_pacing",
+            title: `Goal Reached: ${goal.title}`,
+            message: `${formatSGD(goal.target_amount)} goal done`,
+            severity: "info",
+            actionLabel: "View Goal",
+            actionType: "view_goals",
+            data: { goalId: goal.id },
+            createdAt: new Date().toISOString(),
+        });
     }
 
     return reminders;

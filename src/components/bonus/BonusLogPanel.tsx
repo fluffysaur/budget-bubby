@@ -33,26 +33,19 @@ import { useHousehold } from "../../context/HouseholdContext";
 import {
     useBaseProfilesQuery,
     useBonusEventsQuery,
-    useGoalsQuery,
 } from "../../hooks/useFinanceQueries";
 import {
     BONUS_TYPE_LABELS,
-    bonusGoalTotal,
     groupBonusesByYear,
     summarizeBonusesYtd,
 } from "../../lib/bonusFormulas";
 import { formatSGD } from "../../lib/currency";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { financeService } from "../../services/financeService";
-import type {
-    BaseBudgetProfile,
-    BonusEvent,
-    SavingsGoal,
-} from "../../types/finance";
+import type { BaseBudgetProfile, BonusEvent } from "../../types/finance";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 const EMPTY_BONUSES: BonusEvent[] = [];
-const EMPTY_GOALS: SavingsGoal[] = [];
 const EMPTY_PROFILES: BaseBudgetProfile[] = [];
 
 export interface BonusLogPanelProps {
@@ -63,7 +56,6 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     const mask = useMoneyMask();
     const { members, activeMember } = useHousehold();
     const { data: bonusData, isLoading } = useBonusEventsQuery();
-    const { data: goalsData } = useGoalsQuery();
     const { data: profilesData } = useBaseProfilesQuery();
 
     const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
@@ -75,7 +67,6 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
     const events = bonusData?.events ?? EMPTY_BONUSES;
-    const goals = goalsData ?? EMPTY_GOALS;
     const profiles = profilesData ?? EMPTY_PROFILES;
     const available = bonusData?.available ?? true;
 
@@ -114,8 +105,6 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
         setCelebration({
             id: `${info.event.id}-${Date.now()}`,
             net: info.event.net,
-            goalTotal: info.goalTotal,
-            reachedGoalTitle: info.reachedGoalTitle,
         });
     };
 
@@ -156,7 +145,6 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
         ytd.household.gross > 0
             ? Math.round((ytd.household.cpf / ytd.household.gross) * 100)
             : 0;
-    const deletingGoalTotal = deletingEvent ? bonusGoalTotal(deletingEvent) : 0;
 
     return (
         <div className={`space-y-4 ${className}`}>
@@ -178,7 +166,7 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                 <EmptyStateCard
                     icon={<Sparkles className="h-5 w-5" />}
                     title="No Bonuses"
-                    description="Log a bonus to track it and fund goals."
+                    description="Log a bonus to track it."
                     action={
                         <Button variant="primary" size="sm" onClick={openNew}>
                             Log Bonus
@@ -344,7 +332,6 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                 isOpen={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
                 members={members}
-                goals={goals}
                 baseProfiles={profiles}
                 defaultRecipientId={activeMember?.id ?? members[0]?.id}
                 editingEvent={editingEvent}
@@ -365,14 +352,6 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                         <CurrencyText amount={deletingEvent.gross} />{" "}
                         {BONUS_TYPE_LABELS[deletingEvent.type]} for{" "}
                         {memberName(deletingEvent.recipient_id)}.
-                        {deletingGoalTotal > 0 && (
-                            <>
-                                {" "}
-                                Removes{" "}
-                                <CurrencyText amount={deletingGoalTotal} /> from
-                                goals.
-                            </>
-                        )}
                     </p>
                 )}
             </ConfirmModal>

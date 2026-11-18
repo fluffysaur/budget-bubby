@@ -203,7 +203,7 @@ describe("Page loading skeletons", () => {
                 screen.queryByTestId("goals-skeleton"),
             ).not.toBeInTheDocument();
         });
-        expect(screen.getByText("No Goals")).toBeInTheDocument();
+        expect(screen.getAllByText("No Goals").length).toBeGreaterThan(0);
     });
 
     it("RecurringPage shows a skeleton while loading, then the policy table", async () => {

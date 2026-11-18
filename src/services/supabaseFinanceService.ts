@@ -23,13 +23,13 @@ import type {
     HouseholdMember,
     HouseholdOverview,
     MonthlyBudget,
+    MonthlyBudgetCategory,
     MonthlyBudgetCategoryDetail,
     MonthlyBudgetDetail,
+    MonthlyBudgetHistoryRow,
     Perspective,
     RecurringItem,
     SavingsGoal,
-    GoalDeposit,
-    GoalDepositSource,
     UpdateExpenseInput,
     CreditCard,
     CreateCreditCardInput,
@@ -54,9 +54,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import {
     calculateSharedExpenseSettlement,
-    calculateGoalPacing,
-    getGoalPacing,
-    withDerivedGoalStatus,
+    normalizeGoalStatus,
     calculateCPFAndNetPay,
     calculateMemberRecurringDeductions,
     getMemberExpenseShare,
@@ -1501,6 +1499,38 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         };
     }
 
+    public async getMonthlyBudgetHistory(
+        months: string[],
+    ): Promise<MonthlyBudgetHistoryRow[]> {
+        if (months.length === 0) return [];
+        const client = this.getClient();
+        const { data: budgets, error } = await client
+            .from("monthly_budgets")
+            .select("*")
+            .in("month", months);
+        if (error) throw error;
+        const rows = (budgets || []) as MonthlyBudget[];
+        if (rows.length === 0) return [];
+        const { data: cats, error: catError } = await client
+            .from("monthly_budget_categories")
+            .select("*")
+            .in(
+                "monthly_budget_id",
+                rows.map((b) => b.id),
+            );
+        if (catError) throw catError;
+        const byBudget = new Map<string, MonthlyBudgetCategory[]>();
+        for (const c of (cats || []) as MonthlyBudgetCategory[]) {
+            const list = byBudget.get(c.monthly_budget_id) ?? [];
+            list.push(c);
+            byBudget.set(c.monthly_budget_id, list);
+        }
+        return rows.map((budget) => ({
+            budget,
+            categories: byBudget.get(budget.id) ?? [],
+        }));
+    }
+
     public async updateMonthlyBudget(
         budgetUpdates: Partial<MonthlyBudget> & { id?: string },
     ): Promise<void> {
@@ -1816,28 +1846,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         };
     }
 
-    /** Ledger deposits from the start of last month (pace carries over); empty before the migration. */
-    public async getGoalDeposits(): Promise<GoalDeposit[]> {
-        const monthStart = `${addMonths(getTodayDateString().slice(0, 7), -1)}-01`;
-        const { data, error } = await this.getClient()
-            .from("goal_deposits")
-            .select("*")
-            .gte("deposited_at", monthStart);
-        if (error) {
-            if (isMissingRelationError(error)) return [];
-            throw error;
-        }
-        return (data || []) as GoalDeposit[];
-    }
-
     public async getGoals(): Promise<SavingsGoal[]> {
         const client = this.getClient();
         const { data, error } = await client.from("savings_goals").select("*");
         if (error) throw error;
-        return withDerivedGoalStatus(
-            (data || []) as SavingsGoal[],
-            await this.getGoalDeposits(),
-        );
+        return ((data || []) as SavingsGoal[]).map(normalizeGoalStatus);
     }
 
     public async getGoal(id: string): Promise<SavingsGoal | null> {
@@ -1848,51 +1861,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             .eq("id", id)
             .maybeSingle();
         if (error) throw error;
-        if (!data) return null;
-        return withDerivedGoalStatus(
-            [data as SavingsGoal],
-            await this.getGoalDeposits(),
-        )[0];
-    }
-
-    /** Atomically raises saved_so_far and records the deposit in the ledger. */
-    public async depositToGoal(
-        goalId: string,
-        amount: number,
-        source: GoalDepositSource,
-    ): Promise<SavingsGoal> {
-        const rounded = Math.round(amount * 100) / 100;
-        if (!(rounded > 0)) throw new Error("Deposit must be positive");
-        const { error } = await this.getClient().rpc("record_goal_deposit", {
-            p_goal_id: goalId,
-            p_amount: rounded,
-            p_source: source,
-            p_deposited_at: getTodayDateString(),
-        });
-        if (error) {
-            if (!isMissingRelationError(error)) throw error;
-            // Pre-migration fallback: balance only, no ledger.
-            const { error: incError } = await this.getClient().rpc(
-                "increment_goal_saved",
-                { p_goal_id: goalId, p_amount: rounded },
-            );
-            if (incError) throw incError;
-        }
-        const goal = await this.getGoal(goalId);
-        if (!goal) throw new Error("Savings goal not found");
-        return goal;
+        return data ? normalizeGoalStatus(data as SavingsGoal) : null;
     }
 
     public async addGoal(input: CreateGoalInput): Promise<SavingsGoal> {
         const client = this.getClient();
-        const savedSoFar = input.saved_so_far ?? 0;
-        const pacing = calculateGoalPacing(
-            input.target_amount,
-            savedSoFar,
-            input.target_date,
-            0,
-        );
-
         const householdId = isValidUuid(input.household_id)
             ? input.household_id
             : await this.getHouseholdId();
@@ -1903,75 +1876,37 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 owner_id: input.owner_id || null,
                 title: input.title,
                 target_amount: input.target_amount,
-                saved_so_far: savedSoFar,
+                saved_so_far: 0,
                 target_date: input.target_date,
                 emoji: input.emoji || "🎯",
-                status: pacing.status,
+                status: "on_track",
             })
             .select()
             .single();
         if (error) throw error;
-        return data as SavingsGoal;
+        return normalizeGoalStatus(data as SavingsGoal);
     }
 
+    /** Progress is computed by the Roadmap, so only the given fields change. */
     public async updateGoal(
         id: string,
         updates: Partial<SavingsGoal>,
     ): Promise<SavingsGoal> {
         const client = this.getClient();
-        // Fetch existing goal to recalculate pacing if amounts/dates change
-        const { data: existing, error: fetchError } = await client
+        const { saved_so_far: _savedSoFar, ...finalUpdates } = updates;
+        if (Object.keys(finalUpdates).length === 0) {
+            const existing = await this.getGoal(id);
+            if (!existing) throw new Error("Savings goal not found");
+            return existing;
+        }
+        const { data, error } = await client
             .from("savings_goals")
-            .select("*")
+            .update(finalUpdates)
             .eq("id", id)
+            .select()
             .single();
-        if (fetchError) throw fetchError;
-
-        const merged = { ...existing, ...updates };
-        const pacing = getGoalPacing(
-            merged as SavingsGoal,
-            await this.getGoalDeposits(),
-        );
-
-        const savedSoFarBefore = Number(existing.saved_so_far ?? 0);
-        const savedSoFarRequested =
-            updates.saved_so_far !== undefined
-                ? Number(updates.saved_so_far)
-                : undefined;
-        const hasAtomicSaveDelta =
-            savedSoFarRequested !== undefined &&
-            Number.isFinite(savedSoFarRequested) &&
-            savedSoFarRequested !== savedSoFarBefore;
-
-        const finalUpdates: Record<string, unknown> = { ...updates };
-        if (hasAtomicSaveDelta) {
-            const delta =
-                Math.round((savedSoFarRequested - savedSoFarBefore) * 100) /
-                100;
-            const { error: incrementError } = await client.rpc(
-                "increment_goal_saved",
-                {
-                    p_goal_id: id,
-                    p_amount: delta,
-                },
-            );
-            if (incrementError) throw incrementError;
-            delete finalUpdates.saved_so_far;
-        }
-
-        if (Object.keys(finalUpdates).length > 0 || hasAtomicSaveDelta) {
-            finalUpdates.status = pacing.status;
-            const { data, error } = await client
-                .from("savings_goals")
-                .update(finalUpdates)
-                .eq("id", id)
-                .select()
-                .single();
-            if (error) throw error;
-            return data as SavingsGoal;
-        }
-
-        return existing as SavingsGoal;
+        if (error) throw error;
+        return normalizeGoalStatus(data as SavingsGoal);
     }
 
     public async getRecurringItems(): Promise<RecurringItem[]> {
@@ -2573,36 +2508,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         }
     }
 
-    private async getBonusContributionGoalIds(
-        eventId: string,
-    ): Promise<string[]> {
-        try {
-            const { data } = await this.getClient()
-                .from("bonus_goal_contributions")
-                .select("goal_id")
-                .eq("bonus_event_id", eventId);
-            return ((data || []) as { goal_id: string }[]).map(
-                (r) => r.goal_id,
-            );
-        } catch {
-            return [];
-        }
-    }
-
-    /** Re-derives pacing status for goals whose saved amount an RPC changed. */
-    private async refreshGoalStatuses(goalIds: string[]): Promise<void> {
-        for (const id of new Set(goalIds)) {
-            try {
-                await this.updateGoal(id, {});
-            } catch (err) {
-                console.warn(
-                    "Failed to refresh goal status after bonus change:",
-                    err,
-                );
-            }
-        }
-    }
-
     private throwBonusError(error: unknown): never {
         if (isMissingRelationError(error)) {
             this.bonusTableAvailable = false;
@@ -2616,9 +2521,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     ): Promise<BonusEvent> {
         const client = this.getClient();
         const householdId = await this.getHouseholdId();
-        const previousGoalIds = input.id
-            ? await this.getBonusContributionGoalIds(input.id)
-            : [];
         const createdBy = input.id ? null : await this.getCurrentMemberId();
         const contributions = input.goal_contributions
             .filter((c) => c.amount > 0)
@@ -2647,11 +2549,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         if (error) this.throwBonusError(error);
         this.bonusTableAvailable = true;
 
-        await this.refreshGoalStatuses([
-            ...previousGoalIds,
-            ...contributions.map((c) => c.goal_id),
-        ]);
-
         const row = (Array.isArray(data) ? data[0] : data) as Record<
             string,
             unknown
@@ -2663,12 +2560,10 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
     }
 
     public async deleteBonusEvent(id: string): Promise<void> {
-        const goalIds = await this.getBonusContributionGoalIds(id);
         const { error } = await this.getClient().rpc("delete_bonus_event", {
             p_event_id: id,
         });
         if (error) this.throwBonusError(error);
-        await this.refreshGoalStatuses(goalIds);
     }
 
     public async getBonusSplitDefault(

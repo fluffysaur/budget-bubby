@@ -103,7 +103,12 @@ describe("mockSeedData", () => {
         ]);
 
         const wedding = mockSavingsGoals.find((g) => g.title === "Wedding");
-        expect(wedding?.status).toBe("achieved");
+        expect(wedding?.status).toBe("on_track");
+        expect(wedding?.saved_so_far).toBe(0);
+        expect(wedding?.target_amount).toBe(55000);
+
+        const honeymoon = mockSavingsGoals.find((g) => g.title === "Honeymoon");
+        expect(honeymoon?.status).toBe("achieved");
 
         const hdb = mockSavingsGoals.find(
             (g) => g.title === "HDB Down Payment",

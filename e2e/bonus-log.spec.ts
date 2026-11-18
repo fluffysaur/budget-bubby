@@ -1,19 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// Mock data mode (see playwright.config.ts). Eligible joint goals in the seed:
-// HDB Down Payment (gap 90k), Renovation (gap 90k), Baby Fund (gap 30k).
+// Mock data mode (see playwright.config.ts).
 // A S$10,000 bonus at 20% CPF leaves S$8,000 net; Goals 40% = S$3,200.
-// "By gap" gives Baby Fund the last share: S$457.16.
-const BABY_FUND = "goal-00000000-0505";
-
-/** The "Total Saved" figure on a goal card (the card also shows a balance with the same title). */
-function totalSaved(page: Page, goalId: string) {
-    return page
-        .getByTestId(`goal-card-${goalId}`)
-        .locator("div", { hasText: "Total Saved" })
-        .last()
-        .locator("span[title]");
-}
 
 async function logRachelBonus(page: Page) {
     await page.goto("/plan?tab=bonus");
@@ -34,8 +22,6 @@ async function logRachelBonus(page: Page) {
     await expect(modal.getByTestId("bonus-split-goals")).toContainText(
         "3,200.00",
     );
-    await modal.getByRole("button", { name: "By gap" }).click();
-    await expect(modal.getByText("Fully assigned")).toBeVisible();
 
     const submit = modal.getByRole("button", { name: "Log Bonus" });
     await submit.scrollIntoViewIfNeeded();
@@ -45,9 +31,7 @@ async function logRachelBonus(page: Page) {
 }
 
 test.describe("Bonus Log", () => {
-    test("logs, funds goals, shows outside caps, edits and deletes", async ({
-        page,
-    }) => {
+    test("logs, shows outside caps, edits and deletes", async ({ page }) => {
         await logRachelBonus(page);
 
         // Row under the current year, YTD net includes the bonus
@@ -57,13 +41,6 @@ test.describe("Bonus Log", () => {
             "S$8,000",
         );
 
-        // Goals tab: funded goal increased
-        await page.getByRole("tab", { name: /Goals/i }).click();
-        await expect(totalSaved(page, BABY_FUND)).toHaveAttribute(
-            "title",
-            "S$457.16",
-        );
-
         // Budget: Income Flow shows the bonus outside caps
         await page.goto("/spend?tab=budget");
         const strip = page.getByTestId("waterfall-bonus-strip");
@@ -71,7 +48,7 @@ test.describe("Bonus Log", () => {
         await expect(strip).toContainText("Outside caps");
         await expect(strip).toContainText("S$8,000.00");
 
-        // Edit: change gross, rebalance goals, save
+        // Edit: change gross, save
         await page.goto("/plan?tab=bonus");
         await page.getByRole("button", { name: "Edit bonus" }).click();
         const modal = page.getByRole("dialog");
@@ -80,26 +57,16 @@ test.describe("Bonus Log", () => {
         ).toBeVisible();
         await modal.getByLabel("Gross").fill("5000");
         await modal.getByRole("button", { name: "Next" }).click();
-        await expect(
-            modal.getByText("Amounts don't match Goals share."),
-        ).toBeVisible();
-        await modal.getByRole("button", { name: "Rebalance" }).click();
         await modal.getByRole("button", { name: "Save" }).click();
         await expect(modal).not.toBeVisible();
 
-        // Delete: confirm, then goals are reverted
+        // Delete: confirm,
         await page.getByRole("button", { name: "Delete bonus" }).click();
         const confirm = page.getByRole("dialog");
         await expect(confirm).toContainText("Delete Bonus?");
-        await expect(confirm).toContainText("from goals.");
+        await expect(confirm).not.toContainText("from goals.");
         await confirm.getByRole("button", { name: "Delete" }).click();
         await expect(page.getByText("No Bonuses")).toBeVisible();
-
-        await page.getByRole("tab", { name: /Goals/i }).click();
-        await expect(totalSaved(page, BABY_FUND)).toHaveAttribute(
-            "title",
-            "S$0.00",
-        );
     });
 
     test("has no horizontal scroll on mobile and the modal footer is reachable", async ({

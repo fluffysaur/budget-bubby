@@ -14,7 +14,6 @@ import * as soundEffects from "../src/lib/soundEffects";
 import { cloneDefaultSplit, computeBonusSplit } from "../src/lib/bonusFormulas";
 
 const RACHEL = "mem-00000000-0012";
-const HDB = "goal-00000000-0503";
 
 function renderPanel() {
     return render(
@@ -26,9 +25,7 @@ function renderPanel() {
     );
 }
 
-async function seedBonus(
-    overrides: { received_on?: string; withGoal?: boolean } = {},
-) {
+async function seedBonus(overrides: { received_on?: string } = {}) {
     return mockFinanceService.saveBonusEvent({
         recipient_id: RACHEL,
         type: "performance",
@@ -38,10 +35,7 @@ async function seedBonus(
         cpf: 2000,
         note: "FY26 Performance",
         split: computeBonusSplit(8000, cloneDefaultSplit()),
-        goal_contributions:
-            overrides.withGoal === false
-                ? []
-                : [{ goal_id: HDB, amount: 3200 }],
+        goal_contributions: [],
     });
 }
 
@@ -59,14 +53,14 @@ describe("BonusLogPanel", () => {
         renderPanel();
         expect(await screen.findByText("No Bonuses")).toBeInTheDocument();
         expect(
-            screen.getByText("Log a bonus to track it and fund goals."),
+            screen.getByText("Log a bonus to track it."),
         ).toBeInTheDocument();
         expect(
             screen.getAllByRole("button", { name: "Log Bonus" }).length,
         ).toBe(2);
     });
 
-    it("logs a bonus: auto CPF, split, goal presets, over-assign guard and celebration", async () => {
+    it("logs a bonus: auto CPF, split and celebration", async () => {
         const chime = vi
             .spyOn(soundEffects, "playChaChingSound")
             .mockImplementation(() => {});
@@ -120,40 +114,21 @@ describe("BonusLogPanel", () => {
         expect(Math.round(pctValues.reduce((s, v) => s + v, 0))).toBe(100);
         expect(screen.queryByText(/not 100%/)).not.toBeInTheDocument();
 
-        // Over-assigning blocks Save
-        fireEvent.change(screen.getByLabelText("Amount for HDB Down Payment"), {
-            target: { value: "999999" },
-        });
-        expect(screen.getByText(/Over by/)).toBeInTheDocument();
         const submit = screen
             .getAllByRole("button", { name: "Log Bonus" })
             .at(-1)!;
-        expect(submit).toBeDisabled();
-
-        // By gap fully assigns the Goals share
-        fireEvent.click(screen.getByRole("button", { name: "By gap" }));
-        expect(screen.getByText("Fully assigned")).toBeInTheDocument();
         expect(submit).toBeEnabled();
         fireEvent.click(submit);
 
         expect(
             await screen.findByTestId("bonus-celebration"),
         ).toHaveTextContent("bonus logged");
-        expect(screen.getByTestId("bonus-celebration")).toHaveTextContent(
-            "to goals",
-        );
         expect(chime).toHaveBeenCalled();
         expect(await screen.findByTestId("bonus-row")).toBeInTheDocument();
 
         const { events } = await mockFinanceService.getBonusEvents();
         expect(events).toHaveLength(1);
-        const goalTotal = events[0].goal_contributions.reduce(
-            (s, c) => s + c.amount,
-            0,
-        );
-        expect(Math.round(goalTotal * 100) / 100).toBe(
-            events[0].split.find((s) => s.key === "goals")?.amount,
-        );
+        expect(events[0].goal_contributions).toEqual([]);
     });
 
     it("pre-fills edit and does not celebrate on save", async () => {
@@ -175,13 +150,7 @@ describe("BonusLogPanel", () => {
         );
 
         fireEvent.click(screen.getByRole("button", { name: "Next" }));
-        expect(
-            (
-                screen.getByLabelText(
-                    "Amount for HDB Down Payment",
-                ) as HTMLInputElement
-            ).value,
-        ).toBe("3200");
+        expect(screen.queryByLabelText(/^Amount for /)).not.toBeInTheDocument();
         fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
         await waitFor(() =>
@@ -193,26 +162,7 @@ describe("BonusLogPanel", () => {
         expect(chime).not.toHaveBeenCalled();
     });
 
-    it("warns when goal amounts no longer match after changing gross", async () => {
-        await seedBonus();
-        renderPanel();
-        fireEvent.click(
-            await screen.findByRole("button", { name: "Edit bonus" }),
-        );
-        fireEvent.change(await screen.findByLabelText("Gross"), {
-            target: { value: "5000" },
-        });
-        fireEvent.click(screen.getByRole("button", { name: "Next" }));
-        expect(
-            screen.getByText("Amounts don't match Goals share."),
-        ).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: "Rebalance" }));
-        expect(
-            screen.queryByText("Amounts don't match Goals share."),
-        ).not.toBeInTheDocument();
-    });
-
-    it("confirms delete with the goals copy", async () => {
+    it("confirms delete without goals copy", async () => {
         await seedBonus();
         renderPanel();
         fireEvent.click(
@@ -222,9 +172,7 @@ describe("BonusLogPanel", () => {
         expect(
             screen.getByText(/Performance for Rachel\./),
         ).toBeInTheDocument();
-        expect(screen.getByText(/Removes/)).toHaveTextContent(
-            "Removes S$3,200.00 from goals.",
-        );
+        expect(screen.queryByText(/from goals/)).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: "Delete" }));
         expect(await screen.findByText("No Bonuses")).toBeInTheDocument();
@@ -233,7 +181,7 @@ describe("BonusLogPanel", () => {
     it("groups by year and renders the YTD table", async () => {
         const year = new Date().getFullYear();
         await seedBonus({ received_on: `${year}-03-10` });
-        await seedBonus({ received_on: `${year - 1}-12-15`, withGoal: false });
+        await seedBonus({ received_on: `${year - 1}-12-15` });
         renderPanel();
 
         const table = await screen.findByTestId("bonus-ytd-table");

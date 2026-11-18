@@ -11,6 +11,7 @@
  * and the live Bubby in the header.
  */
 
+import { RoadmapChip } from "../components/roadmap/RoadmapChip";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { useHousehold } from "../context/HouseholdContext";
 import { PageHeader, DashboardSkeleton } from "../components/ui";
@@ -184,6 +185,10 @@ export function DashboardPage({
         () => onNavigateTab?.("accounts"),
         [onNavigateTab],
     );
+    const handleNavigateGoals = useCallback(
+        () => onNavigateTab?.("goals"),
+        [onNavigateTab],
+    );
     const handleNavigateRecurring = useCallback(
         () => onNavigateTab?.("recurring"),
         [onNavigateTab],
@@ -217,6 +222,11 @@ export function DashboardPage({
                         onNavigateBudget={
                             onNavigateTab ? handleNavigateBudget : undefined
                         }
+                    />
+
+                    {/* Household plan verdict */}
+                    <RoadmapChip
+                        onOpen={onNavigateTab ? handleNavigateGoals : undefined}
                     />
 
                     {/* Most urgent category limit alert (rendered below hero) */}

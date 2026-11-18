@@ -92,9 +92,9 @@ describe("Goal Notification Navigation and Scroll", () => {
 
     describe("NotificationCenterPopover - View Goal action", () => {
         it("triggers navigation to /goals?goalId=... and calls onNavigateTab when View Goal is tapped", async () => {
-            // Mock getGoals to return behind goal which generates pacing reminder
+            // An achieved goal generates a "Goal Reached" reminder
             vi.spyOn(financeService, "getGoals").mockResolvedValue([
-                mockGoals[1],
+                mockGoals[0],
             ]);
 
             const onNavigateTab = vi.fn();
@@ -124,7 +124,7 @@ describe("Goal Notification Navigation and Scroll", () => {
             });
 
             expect(onNavigateTab).toHaveBeenCalledWith(
-                "goals?goalId=goal-reno-02",
+                "goals?goalId=goal-wedding-01",
             );
         });
     });
@@ -138,7 +138,9 @@ describe("Goal Notification Navigation and Scroll", () => {
 
             // Wait for goals to render
             await waitFor(() => {
-                expect(screen.getByText("Renovation Fund")).toBeInTheDocument();
+                expect(
+                    screen.getAllByText("Renovation Fund").length,
+                ).toBeGreaterThan(0);
             });
 
             // Target card should have the highlight ring
@@ -218,7 +220,9 @@ describe("Goal Notification Navigation and Scroll", () => {
 
             // Renovation Fund should be displayed because perspective switched to household
             await waitFor(() => {
-                expect(screen.getByText("Renovation Fund")).toBeInTheDocument();
+                expect(
+                    screen.getAllByText("Renovation Fund").length,
+                ).toBeGreaterThan(0);
             });
 
             await waitFor(() => {
@@ -238,7 +242,9 @@ describe("Goal Notification Navigation and Scroll", () => {
 
             // GoalsPage should be rendered inside PlanPage
             await waitFor(() => {
-                expect(screen.getByText("Renovation Fund")).toBeInTheDocument();
+                expect(
+                    screen.getAllByText("Renovation Fund").length,
+                ).toBeGreaterThan(0);
             });
         });
     });

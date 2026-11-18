@@ -1,4 +1,4 @@
-import { PiggyBank, Shield, ArrowRight } from "lucide-react";
+import { PiggyBank, Shield } from "lucide-react";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
 import { Button } from "../ui";
@@ -8,7 +8,6 @@ import { CurrencyText } from "../ui/CurrencyText";
 export interface MonthEndSweepBannerProps {
     month: string;
     surplusAmount: number;
-    onSweepClick: () => void;
     onBankSurplusClick: () => void;
     className?: string;
 }
@@ -16,7 +15,6 @@ export interface MonthEndSweepBannerProps {
 export function MonthEndSweepBanner({
     month,
     surplusAmount,
-    onSweepClick,
     onBankSurplusClick,
     className = "",
 }: MonthEndSweepBannerProps) {
@@ -42,37 +40,20 @@ export function MonthEndSweepBanner({
                                     unspent from {formatDisplayMonth(month)}
                                 </h2>
                                 <p className="text-(--text-muted) text-xs mt-0.5">
-                                    Sweep into savings goals or bank for
-                                    cushion.
+                                    It stays in your pool for goals.
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 self-end sm:self-center shrink-0 flex-wrap sm:flex-nowrap">
                             <Button
-                                variant="secondary"
+                                variant="primary"
                                 size="sm"
                                 onClick={onBankSurplusClick}
                                 aria-label="Bank surplus"
-                                leftIcon={
-                                    <Shield className="h-3.5 w-3.5 text-(--text-muted)" />
-                                }
+                                leftIcon={<Shield className="h-3.5 w-3.5" />}
                             >
                                 Bank Surplus
-                            </Button>
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={onSweepClick}
-                                aria-label="Sweep to goals"
-                                rightIcon={
-                                    <ArrowRight
-                                        className="h-3.5 w-3.5"
-                                        strokeWidth={2.5}
-                                    />
-                                }
-                            >
-                                Sweep to Goals
                             </Button>
                         </div>
                     </div>

@@ -124,35 +124,15 @@ describe("weekly quests", () => {
     });
 });
 
-describe("weekly goal quest", () => {
+describe("weekly quests without a goal quest", () => {
     const base = { today: TODAY, snapshots: [], store: {} };
 
-    it("is hidden without an active goal", () => {
-        const ids = weeklyQuests(base).map((q) => q.id);
+    it("never includes a goal quest", () => {
+        const ids = weeklyQuests(base).map((q) => q.id as string);
         expect(ids).not.toContain("goal");
     });
 
-    it("shows with an active goal and completes on a goal-add this week", () => {
-        const pending = weeklyQuests({ ...base, hasActiveGoal: true });
-        expect(pending.find((q) => q.id === "goal")).toMatchObject({
-            reward: "exercise",
-            done: false,
-        });
-        const done = weeklyQuests({
-            ...base,
-            hasActiveGoal: true,
-            store: { exercise: { "goal-add": ["2026-11-04"] } },
-        });
-        expect(done.find((q) => q.id === "goal")?.done).toBe(true);
-        const lastWeek = weeklyQuests({
-            ...base,
-            hasActiveGoal: true,
-            store: { exercise: { "goal-add": ["2026-11-01"] } },
-        });
-        expect(lastWeek.find((q) => q.id === "goal")?.done).toBe(false);
-    });
-
-    it("keeps the weekly set completable when there is no goal", () => {
+    it("keeps the weekly set completable without a goal quest", () => {
         const quests = weeklyQuests({
             ...base,
             snapshots: [
@@ -244,6 +224,10 @@ describe("monthly quests", () => {
             store: { exercise: { "month-end": ["2026-11-02"] } },
         });
         expect(done.map((q) => [q.id, q.done])).toEqual([["sweep", true]]);
+        expect(done[0]).toMatchObject({
+            label: "Bank surplus",
+            description: "Bank last month's leftover",
+        });
         const lastMonth = monthlyQuests({
             ...base,
             store: { exercise: { "month-end": ["2026-10-30"] } },
