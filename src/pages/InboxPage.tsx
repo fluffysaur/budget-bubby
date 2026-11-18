@@ -1,21 +1,28 @@
 /**
  * Inbox: sort captured purchases one card at a time.
- * Swipe right (or Confirm) saves with the picked category, swipe left (or
+ * Swipe right (or Confirm) saves with the inline form fields, swipe left (or
  * Discard) drops it with Undo. Household-wide: either partner can sort
  * both inboxes. Hidden until the capture inbox migration is applied.
  *
- * Keyboard: ← discard, → / Enter confirm, 1-5 pick chip, e edit, z undo.
+ * Keyboard: ← discard, → / Enter confirm, ↑ / [ prev, ↓ / ] next, 1-5 pick chip, z undo.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Inbox, Pencil, Trash2 } from "lucide-react";
+import {
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Inbox,
+    Trash2,
+} from "lucide-react";
 import { useLoggedInMember } from "../hooks/useLoggedInMember";
 import { useSettings } from "../context/SettingsContext";
 import {
     useAllExpensesQuery,
     useCategoriesQuery,
+    useGoalsQuery,
 } from "../hooks/useFinanceQueries";
 import {
     inboxQueryKeys,
@@ -30,11 +37,13 @@ import {
     findLikelyDuplicate,
     topCategoriesForMember,
 } from "../lib/capture/guessCategory";
+import { toSgtDateTime } from "../lib/capture/sgTime";
+import { SUPPORTED_CURRENCIES } from "../lib/currencyConverter";
 import {
-    buildInboxExpenseInput,
-    canQuickConfirm,
-    inboxItemFormValues,
-} from "../lib/capture/inboxExpense";
+    buildExpenseInputFromDraft,
+    storeRecentTags,
+    type ExpenseFormDraft,
+} from "../lib/expenseFormDraft";
 import { inboxItemSgd } from "../services/inbox/inboxSummary";
 import { emitInboxEvent, InboxSessionTracker } from "../lib/inbox/inboxEvents";
 import { getStoredLastSplit } from "../lib/lastSplit";
@@ -50,31 +59,24 @@ import {
     useSwipeCard,
     type SwipeDirection,
 } from "../components/inbox/useSwipeCard";
-import {
-    ExpenseFormModal,
-    type ExpenseFormInitialValues,
-} from "../components/expenses/ExpenseFormModal";
 import type {
     Category,
     Expense,
     InboxItem,
     InboxItemsResult,
     MerchantRule,
+    SavingsGoal,
 } from "../types/finance";
 
 const EMPTY_ITEMS: InboxItem[] = [];
 const EMPTY_CATEGORIES: Category[] = [];
 const EMPTY_EXPENSES: Expense[] = [];
 const EMPTY_RULES: MerchantRule[] = [];
+const EMPTY_GOALS: SavingsGoal[] = [];
 const UNDO_MS = 5000;
 const COMMIT_ANIMATION_MS = 160;
 
 type Via = "swipe" | "button" | "batch";
-
-interface Choice {
-    categoryId: string | null;
-    isShared: boolean;
-}
 
 type FailedAction =
     | { message: string; kind: "confirm"; view: ItemView; via: Via }
@@ -89,8 +91,9 @@ interface ItemView {
     item: InboxItem;
     guessId: string | null;
     isRuleMatch: boolean;
-    choice: Choice;
+    draft: ExpenseFormDraft;
     duplicate?: Expense;
+    needsRateCheck: boolean;
     canConfirm: boolean;
     amountSgd: number;
 }
@@ -99,10 +102,11 @@ export function InboxPage() {
     const queryClient = useQueryClient();
     const { openSettings } = useSettings();
     const { me, members } = useLoggedInMember();
-    const { data, isLoading, refetch } = useInboxQuery();
+    const { data, isLoading } = useInboxQuery();
     const { data: categoriesData } = useCategoriesQuery();
     const { data: expensesData } = useAllExpensesQuery();
     const { data: rulesData } = useMerchantRulesQuery();
+    const { data: goalsData } = useGoalsQuery();
     const { data: tokensData } = useCaptureTokensQuery(me?.id);
     const confirmInboxMutation = useConfirmInboxItemMutation();
     const resolveInboxMutation = useResolveInboxItemMutation();
@@ -111,17 +115,13 @@ export function InboxPage() {
     const categories = categoriesData ?? EMPTY_CATEGORIES;
     const expenses = expensesData ?? EMPTY_EXPENSES;
     const rules = rulesData ?? EMPTY_RULES;
+    const goals = goalsData ?? EMPTY_GOALS;
     const hasToken = (tokensData?.tokens.length ?? 0) > 0;
 
-    const [overrides, setOverrides] = useState<Record<string, Partial<Choice>>>(
-        {},
-    );
+    const [drafts, setDrafts] = useState<Record<string, ExpenseFormDraft>>({});
+    const [activeIndex, setActiveIndex] = useState(0);
     const [error, setError] = useState<FailedAction | null>(null);
     const [undoItem, setUndoItem] = useState<InboxItem | null>(null);
-    const [editing, setEditing] = useState<{
-        item: InboxItem;
-        values: ExpenseFormInitialValues;
-    } | null>(null);
     const [busy, setBusy] = useState(false);
     const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const tracker = useRef(new InboxSessionTracker());
@@ -140,34 +140,63 @@ export function InboxPage() {
                 });
                 const guessId =
                     guess.categoryId ?? item.suggested_category_id ?? null;
-                const override = overrides[item.id] ?? {};
+                const sgt = toSgtDateTime(item.captured_at);
+                const defaultDraft: ExpenseFormDraft = {
+                    amount: Number(item.amount),
+                    currencyCode: item.currency || "SGD",
+                    customExchangeRate: undefined,
+                    item: item.merchant,
+                    categoryId: guessId ?? "",
+                    categoryManuallySelected: Boolean(guessId),
+                    isGoalSpend: false,
+                    selectedGoalId: "",
+                    payerId: item.member_id,
+                    isShared: guess.isShared ?? lastSplit,
+                    splitRatio: 0.5,
+                    date: sgt?.date ?? item.captured_at.slice(0, 10),
+                    time: sgt?.time ?? "",
+                    remarks: "",
+                    tags: [],
+                };
+                const draft = drafts[item.id] ?? defaultDraft;
                 const duplicateId = item.likely_duplicate_of;
                 const duplicate =
                     (duplicateId &&
                         expenses.find((e) => e.id === duplicateId)) ||
                     findLikelyDuplicate(item, expenses);
+                const hasKnownRate =
+                    draft.currencyCode === "SGD" ||
+                    SUPPORTED_CURRENCIES.some(
+                        (c) => c.code === draft.currencyCode,
+                    ) ||
+                    (draft.customExchangeRate !== undefined &&
+                        draft.customExchangeRate > 0);
+                const hasValidFunding = draft.isGoalSpend
+                    ? Boolean(draft.selectedGoalId)
+                    : Boolean(draft.categoryId);
+                const canConfirm =
+                    hasKnownRate &&
+                    draft.amount > 0 &&
+                    draft.item.trim().length > 0 &&
+                    hasValidFunding;
                 return {
                     item,
                     guessId,
                     isRuleMatch: guess.confidence === "rule",
-                    choice: {
-                        categoryId:
-                            override.categoryId !== undefined
-                                ? override.categoryId
-                                : guessId,
-                        isShared:
-                            override.isShared ?? guess.isShared ?? lastSplit,
-                    },
+                    draft,
                     duplicate: duplicate || undefined,
-                    canConfirm: canQuickConfirm(item),
+                    needsRateCheck: !hasKnownRate,
+                    canConfirm,
                     amountSgd: inboxItemSgd(item),
                 };
             }),
-        [items, rules, expenses, categories, overrides, lastSplit],
+        [items, rules, expenses, categories, drafts, lastSplit],
     );
 
-    const top = views[0];
-    const next = views[1];
+    const clampedIndex =
+        views.length > 0 ? Math.min(activeIndex, views.length - 1) : 0;
+    const top = views[clampedIndex];
+    const hasNextCard = clampedIndex < views.length - 1;
     const matched = useMemo(
         () => views.filter((v) => v.isRuleMatch && v.canConfirm),
         [views],
@@ -180,7 +209,7 @@ export function InboxPage() {
                       expenses,
                       categories,
                       top.item.member_id,
-                      top.choice.categoryId,
+                      top.draft.categoryId || null,
                       5,
                       todayDate,
                   )
@@ -202,12 +231,12 @@ export function InboxPage() {
 
     const confirmView = useCallback(
         async (view: ItemView, via: Via): Promise<boolean> => {
-            if (!view.choice.categoryId || !view.canConfirm) return false;
+            if (!view.canConfirm) return false;
             setError(null);
-            const input = buildInboxExpenseInput(view.item, {
-                categoryId: view.choice.categoryId,
-                isShared: view.choice.isShared,
-            });
+            const input = buildExpenseInputFromDraft(
+                view.draft,
+                view.item.household_id,
+            );
             haptics.lightTap();
             try {
                 await confirmInboxMutation.mutateAsync({
@@ -216,6 +245,9 @@ export function InboxPage() {
                     via,
                     guessedCategoryId: view.guessId,
                 });
+                if (view.draft.tags.length > 0) {
+                    storeRecentTags(view.draft.tags);
+                }
                 return true;
             } catch (err) {
                 setError({
@@ -301,16 +333,19 @@ export function InboxPage() {
         }
     }, [matched, confirmView]);
 
-    const openEdit = useCallback((view: ItemView) => {
-        setEditing({
-            item: view.item,
-            values: inboxItemFormValues(view.item, view.choice),
-        });
-    }, []);
-
-    const setChoice = useCallback((id: string, patch: Partial<Choice>) => {
-        setOverrides((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
-    }, []);
+    const patchDraft = useCallback(
+        (
+            id: string,
+            baseDraft: ExpenseFormDraft,
+            patch: Partial<ExpenseFormDraft>,
+        ) => {
+            setDrafts((prev) => ({
+                ...prev,
+                [id]: { ...(prev[id] ?? baseDraft), ...patch },
+            }));
+        },
+        [],
+    );
 
     const onSwipeCommit = useCallback(
         (direction: SwipeDirection) => {
@@ -325,15 +360,15 @@ export function InboxPage() {
     );
 
     const swipe = useSwipeCard({
-        enabled: Boolean(top) && !editing,
-        canConfirm: Boolean(top?.canConfirm && top.choice.categoryId),
+        enabled: Boolean(top),
+        canConfirm: Boolean(top?.canConfirm),
         onCommit: onSwipeCommit,
     });
 
     // Desktop keyboard
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (editing || e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
             const el = document.activeElement as HTMLElement | null;
             const tag = el?.tagName.toLowerCase();
             if (
@@ -359,29 +394,35 @@ export function InboxPage() {
             ) {
                 e.preventDefault();
                 void confirmView(top, "button");
-            } else if (e.key === "e" || e.key === "E") {
+            } else if (e.key === "ArrowUp" || e.key === "[") {
                 e.preventDefault();
-                openEdit(top);
+                setActiveIndex((i) => Math.max(0, i - 1));
+            } else if (e.key === "ArrowDown" || e.key === "]") {
+                e.preventDefault();
+                setActiveIndex((i) => Math.min(views.length - 1, i + 1));
             } else if (/^[1-5]$/.test(e.key)) {
                 const cat = chipCategories[Number(e.key) - 1];
                 if (cat) {
                     e.preventDefault();
-                    setChoice(top.item.id, { categoryId: cat.id });
+                    patchDraft(top.item.id, top.draft, {
+                        categoryId: cat.id,
+                        categoryManuallySelected: true,
+                        isGoalSpend: false,
+                    });
                 }
             }
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [
-        editing,
         top,
+        views.length,
         undoItem,
         chipCategories,
         handleUndo,
         resolveView,
         confirmView,
-        openEdit,
-        setChoice,
+        patchDraft,
     ]);
 
     if (!isLoading && data && !data.available) {
@@ -430,8 +471,55 @@ export function InboxPage() {
                     <InboxCardSkeleton />
                 ) : top ? (
                     <>
+                        <div className="flex items-center justify-between gap-2">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="min-h-11"
+                                disabled={clampedIndex === 0}
+                                onClick={() =>
+                                    setActiveIndex((i) => Math.max(0, i - 1))
+                                }
+                                leftIcon={
+                                    <ChevronLeft
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
+                            >
+                                Prev
+                            </Button>
+                            <span
+                                data-testid="inbox-position"
+                                className="text-xs font-bold uppercase tracking-wider text-(--text-muted) font-mono-num"
+                            >
+                                {`${clampedIndex + 1} of ${views.length}`}
+                            </span>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="min-h-11"
+                                disabled={clampedIndex >= views.length - 1}
+                                onClick={() =>
+                                    setActiveIndex((i) =>
+                                        Math.min(views.length - 1, i + 1),
+                                    )
+                                }
+                                rightIcon={
+                                    <ChevronRight
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
+                            >
+                                Next
+                            </Button>
+                        </div>
+
                         <div className="relative">
-                            {next && (
+                            {hasNextCard && (
                                 <div
                                     aria-hidden="true"
                                     className="absolute inset-x-0 top-1.5 h-full scale-[0.97] rounded-2xl border-2 border-(--border-ink) bg-(--bg-card)"
@@ -444,18 +532,14 @@ export function InboxPage() {
                                 isPartnerItem={
                                     !me || top.item.member_id !== me.id
                                 }
-                                amountSgd={top.amountSgd}
-                                canConfirm={top.canConfirm}
-                                chipCategories={chipCategories}
+                                needsRateCheck={top.needsRateCheck}
+                                draft={top.draft}
+                                onDraftChange={(patch) =>
+                                    patchDraft(top.item.id, top.draft, patch)
+                                }
                                 allCategories={categories}
-                                selectedCategoryId={top.choice.categoryId}
-                                onSelectCategory={(id) =>
-                                    setChoice(top.item.id, { categoryId: id })
-                                }
-                                isShared={top.choice.isShared}
-                                onShareChange={(shared) =>
-                                    setChoice(top.item.id, { isShared: shared })
-                                }
+                                members={members}
+                                goals={goals}
                                 duplicate={top.duplicate}
                                 onSameOne={() =>
                                     void resolveView(top, "duplicate")
@@ -468,7 +552,7 @@ export function InboxPage() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <Button
                                 type="button"
                                 variant="ghost"
@@ -487,25 +571,9 @@ export function InboxPage() {
                             </Button>
                             <Button
                                 type="button"
-                                variant={top.canConfirm ? "outline" : "primary"}
-                                className="min-h-11"
-                                onClick={() => openEdit(top)}
-                                leftIcon={
-                                    <Pencil
-                                        className="h-4 w-4"
-                                        strokeWidth={2.5}
-                                    />
-                                }
-                            >
-                                Edit
-                            </Button>
-                            <Button
-                                type="button"
                                 variant="primary"
                                 className="min-h-11"
-                                disabled={
-                                    !top.canConfirm || !top.choice.categoryId
-                                }
+                                disabled={!top.canConfirm}
                                 onClick={() => void confirmView(top, "button")}
                                 leftIcon={
                                     <Check
@@ -590,16 +658,6 @@ export function InboxPage() {
                     </Alert>
                 </div>
             )}
-
-            <ExpenseFormModal
-                isOpen={Boolean(editing)}
-                onClose={() => setEditing(null)}
-                initialValues={editing?.values}
-                inboxItemId={editing?.item.id}
-                categories={categories}
-                members={members}
-                onExpenseAdded={() => void refetch()}
-            />
         </div>
     );
 }

@@ -219,28 +219,168 @@ describe("InboxPage", () => {
         expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
     });
 
-    it("Edit opens the form and saving confirms the item", async () => {
-        const handler = vi.fn();
-        const off = onInboxEvent("inbox:item-confirmed", handler);
+    it("edits all fields inline on the card without an Edit modal and saves on Confirm", async () => {
         renderInbox();
-        await findCard();
-        fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-        const dialog = await screen.findByRole("dialog");
-        expect(within(dialog).getByLabelText("Description")).toHaveValue(
-            "Grab Food",
-        );
-        fireEvent.click(
-            within(dialog).getByRole("button", { name: "Confirm" }),
-        );
-        await waitFor(() =>
-            expect(handler).toHaveBeenCalledWith(
-                expect.objectContaining({ via: "edit" }),
-            ),
-        );
+        const card = await findCard();
+        expect(
+            screen.queryByRole("button", { name: "Edit" }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.change(within(card).getByLabelText("Description"), {
+            target: { value: "Grab Dinner" },
+        });
+        fireEvent.change(within(card).getByPlaceholderText("0.00"), {
+            target: { value: "24.50" },
+        });
+        fireEvent.click(within(card).getByRole("button", { name: /^more/i }));
+        fireEvent.change(within(card).getByLabelText("Notes"), {
+            target: { value: "Late night" },
+        });
+        fireEvent.change(within(card).getByLabelText("Tags"), {
+            target: { value: "Supper" },
+        });
+        fireEvent.click(within(card).getByRole("button", { name: "+ Tag" }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
         await waitFor(() =>
             expect(screen.getByText("2 to sort")).toBeInTheDocument(),
         );
-        off();
+        const expenses = await mockFinanceService.getExpenses();
+        expect(
+            expenses.find((e) => e.item === "Grab Dinner"),
+        ).toMatchObject({
+            amount: 24.5,
+            remarks: "Late night",
+            tags: ["#Supper"],
+        });
+    });
+
+    it("navigates between cards with Prev/Next and keyboard while preserving per-card edits", async () => {
+        renderInbox();
+        let card = await findCard();
+        expect(screen.getByTestId("inbox-position")).toHaveTextContent(
+            "1 of 3",
+        );
+        expect(screen.getByRole("button", { name: "Prev" })).toBeDisabled();
+
+        // Edit card 1 description and notes
+        fireEvent.change(within(card).getByLabelText("Description"), {
+            target: { value: "Edited Grab" },
+        });
+
+        // Navigate Next by button
+        fireEvent.click(screen.getByRole("button", { name: "Next" }));
+        expect(screen.getByTestId("inbox-position")).toHaveTextContent(
+            "2 of 3",
+        );
+        card = await findCard();
+        expect(within(card).getByLabelText("Description")).not.toHaveValue(
+            "Edited Grab",
+        );
+
+        // Navigate Next by keyboard (ArrowDown)
+        fireEvent.keyDown(window, { key: "ArrowDown" });
+        expect(screen.getByTestId("inbox-position")).toHaveTextContent(
+            "3 of 3",
+        );
+        expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+
+        // Navigate Prev by keyboard (ArrowUp) then button
+        fireEvent.keyDown(window, { key: "ArrowUp" });
+        expect(screen.getByTestId("inbox-position")).toHaveTextContent(
+            "2 of 3",
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Prev" }));
+        expect(screen.getByTestId("inbox-position")).toHaveTextContent(
+            "1 of 3",
+        );
+
+        // Unsaved edit on card 1 is preserved
+        card = await findCard();
+        expect(within(card).getByLabelText("Description")).toHaveValue(
+            "Edited Grab",
+        );
+    });
+
+    it("ignores swipe gestures inside interactive controls while allowing swipe on card header", async () => {
+        class TestPointerEvent extends MouseEvent {
+            pointerId: number;
+            constructor(type: string, init: PointerEventInit = {}) {
+                super(type, init);
+                this.pointerId = init.pointerId ?? 0;
+            }
+        }
+        vi.stubGlobal("PointerEvent", TestPointerEvent);
+        try {
+            renderInbox();
+            const card = await findCard();
+            const descInput = within(card).getByLabelText("Description");
+
+            // Pointer gesture starting on an input should not translate the card
+            fireEvent.pointerDown(descInput, {
+                button: 0,
+                pointerId: 1,
+                clientX: 100,
+                clientY: 100,
+            });
+            fireEvent.pointerMove(card, {
+                pointerId: 1,
+                clientX: 250,
+                clientY: 100,
+            });
+            fireEvent.pointerUp(card, {
+                pointerId: 1,
+                clientX: 250,
+                clientY: 100,
+            });
+            expect(screen.getByText("3 to sort")).toBeInTheDocument();
+
+            // Pointer gesture starting on a range slider should not translate the card
+            fireEvent.click(within(card).getByRole("button", { name: /^more/i }));
+            fireEvent.click(within(card).getByRole("button", { name: /shared/i }));
+            const slider = within(card).getByLabelText(/partner's share/i);
+            fireEvent.pointerDown(slider, {
+                button: 0,
+                pointerId: 2,
+                clientX: 100,
+                clientY: 100,
+            });
+            fireEvent.pointerMove(card, {
+                pointerId: 2,
+                clientX: 250,
+                clientY: 100,
+            });
+            fireEvent.pointerUp(card, {
+                pointerId: 2,
+                clientX: 250,
+                clientY: 100,
+            });
+            expect(screen.getByText("3 to sort")).toBeInTheDocument();
+
+            // Pointer gesture on non-interactive card area should allow swipe-to-discard
+            const nonInteractive = within(card).getAllByText("Today")[0];
+            fireEvent.pointerDown(nonInteractive, {
+                button: 0,
+                pointerId: 3,
+                clientX: 200,
+                clientY: 40,
+            });
+            fireEvent.pointerMove(card, {
+                pointerId: 3,
+                clientX: 10,
+                clientY: 40,
+            });
+            fireEvent.pointerUp(card, {
+                pointerId: 3,
+                clientX: 10,
+                clientY: 40,
+            });
+            await waitFor(() =>
+                expect(screen.getByText("2 to sort")).toBeInTheDocument(),
+            );
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     it("redirects away before the migration", async () => {

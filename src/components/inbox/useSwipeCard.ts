@@ -87,8 +87,12 @@ export function useSwipeCard({
     const onPointerDown = useCallback(
         (e: React.PointerEvent<HTMLDivElement>) => {
             if (!enabled || e.button !== 0) return;
-            // Let buttons and chips inside the card take their own taps
-            if ((e.target as HTMLElement).closest("button, a, select, input"))
+            // Let interactive controls inside the card take their own gestures
+            if (
+                (e.target as HTMLElement).closest(
+                    'button, a, select, input, textarea, label, [role="slider"], [role="tab"], [data-no-swipe]',
+                )
+            )
                 return;
             const s = state.current;
             s.pointerId = e.pointerId;
