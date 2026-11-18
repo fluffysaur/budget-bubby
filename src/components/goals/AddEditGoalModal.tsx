@@ -75,8 +75,9 @@ const SUGGESTION_EMOJIS: ReadonlySet<string> = new Set(
 
 const LABEL_CLASS =
     "block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5";
-const INPUT_CLASS =
-    "w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)";
+const INPUT_BASE =
+    "rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)";
+const INPUT_CLASS = `w-full ${INPUT_BASE}`;
 const CHIP_CLASS =
     "inline-flex min-h-9 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-press cursor-pointer";
 const CHIP_ON =
@@ -380,7 +381,7 @@ export function AddEditGoalModal({
                                     onChange={(e) =>
                                         snapshotBuffer(Number(e.target.value))
                                     }
-                                    className={`${INPUT_CLASS} text-base sm:text-sm w-20 shrink-0 font-mono-num text-center`}
+                                    className={`${INPUT_BASE} text-base sm:text-sm w-20 shrink-0 font-mono-num text-center`}
                                 />
                                 <span className="min-w-0 flex-1 text-xs text-(--text-muted)">
                                     ×{" "}
