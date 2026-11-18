@@ -5,6 +5,7 @@
 
 import { addMonths } from "../dateUtils";
 import { lifeEventsFromRecurring } from "./lifeEvents";
+import { computeCpfOa } from "./cpf";
 import { computePool } from "./pool";
 import type { BaselineResult } from "./baseline";
 import type {
@@ -47,6 +48,11 @@ export function toRoadmapGoals(
         createdAt: g.created_at,
         spent: spend.get(g.id) ?? 0,
         done: g.status === "achieved",
+        useCpfOa: Boolean(g.use_cpf_oa),
+        cpfOaCap:
+            g.cpf_oa_cap != null && Number.isFinite(Number(g.cpf_oa_cap))
+                ? Number(g.cpf_oa_cap)
+                : null,
     }));
 }
 
@@ -118,5 +124,6 @@ export function buildRoadmapInput({
             recurringItems,
             coveredThrough ?? today.slice(0, 7),
         ),
+        cpfOa: computeCpfOa(accounts, snapshots, recurringItems, today),
     };
 }

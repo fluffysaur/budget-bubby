@@ -8,6 +8,10 @@
  *   and every earlier one.
  * The pool counts investments at a discount for goals due inside the haircut
  * window. Future savings are treated as cash.
+ *
+ * Goals with "Use CPF OA" on draw from household OA first (in date order, up
+ * to their cap, from OA projected to their deadline); only the rest is a
+ * claim on the pool. OA never covers goals without the switch.
  */
 
 import { addMonths, monthsBetween } from "../dateUtils";
@@ -105,8 +109,23 @@ export function projectRoadmap(
             : poolTodayFull,
     );
 
+    const cpfOa = input.cpfOa ?? null;
+    /** Projected household OA in month `ym` ('YYYY-MM'), never below 0. */
+    const oaAt = (ym: string) => {
+        if (!cpfOa) return 0;
+        const t = Math.max(0, monthsBetween(cpfOa.asOf, ym));
+        return Math.max(
+            0,
+            cpfOa.balance +
+                cpfOa.monthlyGrowth * t +
+                changesOver(cpfOa.changes, month(cpfOa.asOf), t),
+        );
+    };
+
     let claimed = 0;
+    let oaClaimed = 0;
     let unfundedPool = Math.max(0, poolToday);
+    let unusedOaToday = cpfOa ? Math.max(0, cpfOa.balance) : 0;
     const goals: RoadmapGoalResult[] = active.map((goal, order) => {
         const stillNeeded = stillNeededFor(goal);
         const overdue = month(goal.targetDate) < month(today);
@@ -114,12 +133,31 @@ export function projectRoadmap(
         const monthsLeft = Math.max(0, monthsBetween(today, deadline));
         const t = Math.max(0, monthsBetween(asOf, deadline));
 
+        const cap =
+            goal.cpfOaCap != null ? Math.max(0, goal.cpfOaCap) : Infinity;
+        const fromCpfOa =
+            cpfOa && goal.useCpfOa
+                ? round2(
+                      Math.min(
+                          stillNeeded,
+                          cap,
+                          Math.max(0, oaAt(month(deadline)) - oaClaimed),
+                      ),
+                  )
+                : 0;
+        oaClaimed += fromCpfOa;
+        const cashNeeded = round2(stillNeeded - fromCpfOa);
+
         const claimStart = round2(claimed);
-        claimed += stillNeeded;
+        claimed += cashNeeded;
         const claimEnd = round2(claimed);
 
-        const fundedToday = round2(Math.min(stillNeeded, unfundedPool));
-        unfundedPool = Math.max(0, unfundedPool - fundedToday);
+        const oaToday = round2(Math.min(fromCpfOa, unusedOaToday));
+        unusedOaToday = Math.max(0, unusedOaToday - oaToday);
+        const cashToday = round2(Math.min(cashNeeded, unfundedPool));
+        unfundedPool = Math.max(0, unfundedPool - cashToday);
+        const fundedToday = round2(oaToday + cashToday);
+        const oaClaimedEnd = oaClaimed;
 
         const available = round2(availableAt(t));
         const margin = round2(available - claimEnd);
@@ -128,8 +166,12 @@ export function projectRoadmap(
 
         let fillMonth: string | null = null;
         for (let m = 0; m <= FILL_SEARCH_MONTHS; m++) {
-            if (availableAt(m) >= claimEnd) {
-                fillMonth = addMonths(month(asOf), m);
+            const at = addMonths(month(asOf), m);
+            if (
+                availableAt(m) >= claimEnd &&
+                (fromCpfOa === 0 || oaAt(at) >= oaClaimedEnd)
+            ) {
+                fillMonth = at;
                 break;
             }
         }
@@ -152,6 +194,7 @@ export function projectRoadmap(
             order,
             stillNeeded,
             fundedToday,
+            fromCpfOa,
             progress,
             monthsLeft,
             claimStart,
@@ -189,5 +232,6 @@ export function projectRoadmap(
         goals,
         done,
         lifeEvents,
+        cpfOa: cpfOa ? { ...cpfOa, used: round2(oaClaimed) } : null,
     };
 }

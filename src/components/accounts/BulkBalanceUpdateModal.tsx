@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { useBulkUpdateAccountBalancesMutation } from "../../hooks/useFinanceQueries";
-import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
+import type {
+    Account,
+    BulkBalanceUpdateItem,
+    CpfKind,
+} from "../../types/finance";
 import {
     AnimatedModal,
     ModalHeader,
@@ -25,6 +29,14 @@ import {
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
 import { recordExercise } from "../../lib/bubby/activity";
+import { cpfKindFor } from "../../lib/cpfAccounts";
+
+/** Typical monthly contribution per CPF account, for the "+ CPF" quick fill. */
+const CPF_AUTO_INCREMENT: Record<CpfKind, number> = {
+    OA: 1200,
+    SA: 400,
+    MA: 350,
+};
 
 export interface BulkBalanceUpdateModalProps {
     isOpen: boolean;
@@ -109,14 +121,11 @@ export function BulkBalanceUpdateModal({
         setBalancesMap((prev) => {
             const next = { ...prev };
             for (const acc of accounts) {
-                if (acc.type === "CPF") {
+                const kind = cpfKindFor(acc);
+                if (kind) {
                     const current =
                         parseFloat(next[acc.id] || String(acc.balance)) || 0;
-                    const increment = acc.name.includes("OA")
-                        ? 1200
-                        : acc.name.includes("SA")
-                          ? 400
-                          : 350;
+                    const increment = CPF_AUTO_INCREMENT[kind];
                     next[acc.id] = (current + increment).toFixed(2);
                 }
             }

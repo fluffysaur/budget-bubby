@@ -220,6 +220,16 @@ export function RoadmapCard({
                             />
                             /mo
                         </span>
+                        {result.cpfOa && result.cpfOa.used > 0 && (
+                            <span className="font-mono-num">
+                                CPF OA{" "}
+                                <CurrencyText
+                                    formatted={formatSGD(result.cpfOa.used, {
+                                        showCents: false,
+                                    })}
+                                />
+                            </span>
+                        )}
                         {(roadmap.hasBonuses || roadmap.includeBonuses) && (
                             <button
                                 type="button"
@@ -280,6 +290,20 @@ export function RoadmapCard({
                             </dt>
                             <dd>Goals fill by date, earliest first.</dd>
                         </div>
+                        {result.cpfOa && result.cpfOa.used > 0 && (
+                            <div>
+                                <dt className="font-bold text-(--text-ink)">
+                                    CPF OA
+                                </dt>
+                                <dd>
+                                    Goals with &ldquo;Use CPF OA&rdquo; draw
+                                    from your combined OA first, then the pool.
+                                    {result.cpfOa.monthlyGrowth > 0
+                                        ? ` OA grows ${mask(formatSGD(result.cpfOa.monthlyGrowth, { showCents: false }))}/mo.`
+                                        : " Update OA monthly to count its growth."}
+                                </dd>
+                            </div>
+                        )}
                         <div>
                             <dt className="font-bold text-(--text-ink)">
                                 Life events

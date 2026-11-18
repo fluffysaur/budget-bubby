@@ -15,7 +15,7 @@
 import { addMonths, monthsBetween } from "../dateUtils";
 import { changesOver } from "./lifeEvents";
 import { balanceUpdateDates, poolAtDate } from "./pool";
-import { fundingOrder, stillNeededFor } from "./project";
+import { fundingOrder, projectRoadmap } from "./project";
 import type {
     Account,
     AccountSnapshot,
@@ -184,10 +184,16 @@ export interface ProjectionPoint {
 
 /**
  * Month-by-month pool from the last balance update to just past the last
- * goal: savings and life events in, each goal's still-needed amount out in
- * its month. Starts with the pool today at full value.
+ * goal: savings and life events in, each goal's cash share (still-needed
+ * minus any CPF OA) out in its month. Starts with the pool today at full value.
  */
 export function projectPool(input: RoadmapInput): ProjectionPoint[] {
+    const cashShare = new Map(
+        projectRoadmap(input).goals.map((g) => [
+            g.goal.id,
+            g.stillNeeded - g.fromCpfOa,
+        ]),
+    );
     const asOfMonth = (input.pool.asOf || input.today).slice(0, 7);
     const todayMonth = input.today.slice(0, 7);
     const goals = fundingOrder(input.goals.filter((g) => !g.done)).filter(
@@ -208,7 +214,7 @@ export function projectPool(input: RoadmapInput): ProjectionPoint[] {
             goalId: g.id,
             emoji: g.emoji,
             title: g.title,
-            amount: stillNeededFor(g),
+            amount: cashShare.get(g.id) ?? 0,
         });
         byMonth.set(m, list);
     }

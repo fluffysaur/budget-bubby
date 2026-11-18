@@ -120,6 +120,14 @@ function loadInitialData(): MockSeedDataset {
     if (!dataset.accountSnapshots || dataset.accountSnapshots.length <= 18) {
         dataset.accountSnapshots = cloneDeep(mockHistoricalAccountSnapshots);
     }
+    // Migrate datasets persisted before `cpf_kind`: match CPF accounts by name,
+    // mirroring the Phase 3 SQL migration. Unmatched ones stay null.
+    for (const acc of dataset.accounts ?? []) {
+        if (acc.type !== "CPF" || acc.cpf_kind) continue;
+        if (/\bOA\b|ordinary/i.test(acc.name)) acc.cpf_kind = "OA";
+        else if (/\bMA\b|medi/i.test(acc.name)) acc.cpf_kind = "MA";
+        else if (/\bSA\b|special/i.test(acc.name)) acc.cpf_kind = "SA";
+    }
     // Migrate datasets persisted before the policies -> recurring items rename
     const legacy = dataset as MockSeedDataset & {
         recurringPolicies?: RecurringItem[];
@@ -168,6 +176,12 @@ function loadInitialData(): MockSeedDataset {
     }
 
     return dataset;
+}
+
+function roundCpfCap(cap: number | null | undefined): number | null {
+    return typeof cap === "number" && Number.isFinite(cap) && cap > 0
+        ? Math.round(cap * 100) / 100
+        : null;
 }
 
 class MockFinanceServiceImpl implements FinanceService {
@@ -313,6 +327,7 @@ class MockFinanceServiceImpl implements FinanceService {
             institution: input.institution || null,
             is_joint: input.is_joint || false,
             notes: input.notes || null,
+            cpf_kind: input.type === "CPF" ? (input.cpf_kind ?? null) : null,
             updated_at: new Date().toISOString(),
         };
 
@@ -348,6 +363,7 @@ class MockFinanceServiceImpl implements FinanceService {
         if (updates.owner_id !== undefined) account.owner_id = updates.owner_id;
         if (updates.is_joint !== undefined) account.is_joint = updates.is_joint;
         if (updates.notes !== undefined) account.notes = updates.notes;
+        if (updates.cpf_kind !== undefined) account.cpf_kind = updates.cpf_kind;
         account.updated_at = new Date().toISOString();
 
         this.persist();
@@ -1215,6 +1231,8 @@ class MockFinanceServiceImpl implements FinanceService {
             emoji: input.emoji || "🎯",
             status: "on_track",
             created_at: new Date().toISOString(),
+            use_cpf_oa: input.use_cpf_oa ?? false,
+            cpf_oa_cap: input.use_cpf_oa ? roundCpfCap(input.cpf_oa_cap) : null,
         };
 
         this.state.savingsGoals.push(newGoal);
@@ -1232,6 +1250,9 @@ class MockFinanceServiceImpl implements FinanceService {
             throw new Error(`Savings goal with id "${id}" not found`);
         }
         const { saved_so_far: _savedSoFar, ...rest } = updates;
+        if (rest.cpf_oa_cap !== undefined) {
+            rest.cpf_oa_cap = roundCpfCap(rest.cpf_oa_cap);
+        }
         Object.assign(goal, rest);
 
         this.persist();
@@ -1267,6 +1288,8 @@ class MockFinanceServiceImpl implements FinanceService {
             category_id: isSpendType(input.type)
                 ? (input.category_id ?? null)
                 : null,
+            paid_from_cpf_oa:
+                isSpendType(input.type) && !!input.paid_from_cpf_oa,
         };
 
         this.state.recurringItems.push(newItem);
@@ -1290,6 +1313,7 @@ class MockFinanceServiceImpl implements FinanceService {
         // Insurance/tax reduce take-home pay and never count toward a spend category
         if (!isSpendType(recurringItem.type)) {
             recurringItem.category_id = null;
+            recurringItem.paid_from_cpf_oa = false;
         }
 
         // Recompute monthly_amortized_amount if amount or frequency changed

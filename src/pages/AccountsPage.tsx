@@ -45,6 +45,10 @@ import { UpdateBalanceModal } from "../components/accounts/UpdateBalanceModal";
 import { AddAccountModal } from "../components/accounts/AddAccountModal";
 import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { DeleteAccountModal } from "../components/accounts/DeleteAccountModal";
+import { Alert } from "../components/ui/Alert";
+import { TruncatedText } from "../components/ui/TruncatedText";
+import { useEnsureCpfAccounts } from "../hooks/useEnsureCpfAccounts";
+import { unmatchedCpfAccounts } from "../lib/cpfAccounts";
 import { NetWorthChart } from "../components/accounts/NetWorthChart";
 import { CreditCardTrackerSection } from "../components/accounts/CreditCardTrackerSection";
 import type { Account } from "../types/finance";
@@ -60,6 +64,7 @@ export function AccountsPage({
 }: AccountsPageProps) {
     const { perspective, activeMember, members } = useHousehold();
     const { invalidateAccounts } = useInvalidateFinance();
+    useEnsureCpfAccounts();
 
     const [activeTab, setActiveTab] = useState<"accounts" | "credit_cards">(
         defaultTab,
@@ -83,6 +88,10 @@ export function AccountsPage({
         [statementsData, perspective, activeMember?.id],
     );
     const isLoading = accountsLoading && !accountsData;
+    const unmatchedCpf = useMemo(
+        () => unmatchedCpfAccounts(accounts),
+        [accounts],
+    );
     const updateBalanceMutation = useUpdateAccountBalanceMutation();
 
     // Modal States
@@ -176,6 +185,39 @@ export function AccountsPage({
                     />
                 ) : (
                     <div className="space-y-5">
+                        {unmatchedCpf.length > 0 && (
+                            <Alert variant="warning" title="Match CPF">
+                                <p>
+                                    Set OA, SA or MA so goals can use your CPF
+                                    OA.
+                                </p>
+                                <ul className="mt-2 flex flex-wrap gap-2">
+                                    {unmatchedCpf.map((acc) => (
+                                        <li key={acc.id} className="min-w-0">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="max-w-full"
+                                                onClick={() => {
+                                                    setAccountToEdit(acc);
+                                                    setIsEditModalOpen(true);
+                                                }}
+                                            >
+                                                <TruncatedText
+                                                    text={`${
+                                                        members.find(
+                                                            (m) =>
+                                                                m.id ===
+                                                                acc.owner_id,
+                                                        )?.display_name ?? ""
+                                                    } ${acc.name}`.trim()}
+                                                />
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </Alert>
+                        )}
                         {/* Action Buttons Row */}
                         <div className="flex items-center justify-end gap-2">
                             <Button

@@ -669,6 +669,47 @@ describe("AddRecurringModal Component", () => {
         );
     });
 
+    it("saves Paid from CPF OA for spend types only", async () => {
+        const onSave = vi.fn();
+        render(
+            <AddRecurringModal
+                isOpen={true}
+                onClose={vi.fn()}
+                onSave={onSave}
+            />,
+        );
+
+        fireEvent.change(screen.getByLabelText(/^Name/i), {
+            target: { value: "Housing loan" },
+        });
+        fireEvent.change(screen.getByLabelText(/^Amount/i), {
+            target: { value: "1200" },
+        });
+        fireEvent.change(screen.getByLabelText(/Frequency/i), {
+            target: { value: "annually" },
+        });
+
+        // Default type is insurance (a deduction), so no switch
+        expect(
+            screen.queryByRole("switch", { name: "Paid from CPF OA" }),
+        ).toBeNull();
+
+        fireEvent.change(screen.getByLabelText(/Type/i), {
+            target: { value: "bill" },
+        });
+        const toggle = screen.getByRole("switch", { name: "Paid from CPF OA" });
+        expect(toggle).toHaveAttribute("aria-checked", "false");
+        fireEvent.click(toggle);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
+        });
+
+        expect(onSave).toHaveBeenCalledWith(
+            expect.objectContaining({ paid_from_cpf_oa: true }),
+        );
+    });
+
     it("requires a due day for monthly items and submits it", async () => {
         const onSave = vi.fn();
         render(

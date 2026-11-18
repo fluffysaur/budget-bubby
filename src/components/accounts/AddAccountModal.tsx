@@ -49,7 +49,6 @@ const POPULAR_PRESETS: SingaporePreset[] = [
     { name: "DBS Multiplier", institution: "DBS", type: "Cash" },
     { name: "OCBC 360", institution: "OCBC", type: "Cash" },
     { name: "UOB One", institution: "UOB", type: "Cash" },
-    { name: "CPF OA", institution: "CPF", type: "CPF" },
     { name: "IBKR", institution: "IBKR", type: "Investment" },
 ];
 
@@ -57,8 +56,6 @@ const ALL_PRESETS: SingaporePreset[] = [
     ...POPULAR_PRESETS,
     { name: "MariBank Savings", institution: "MariBank", type: "Cash" },
     { name: "Trust Bank Savings", institution: "Trust Bank", type: "Cash" },
-    { name: "CPF Special Account (SA)", institution: "CPF", type: "CPF" },
-    { name: "CPF MediSave (MA)", institution: "CPF", type: "CPF" },
     { name: "Endowus Portfolio", institution: "Endowus", type: "Investment" },
     { name: "Syfe Cash+/Equity", institution: "Syfe", type: "Investment" },
 ];
@@ -104,9 +101,6 @@ export function AddAccountModal({
         setName(preset.name);
         setInstitution(preset.institution);
         setType(preset.type);
-        if (preset.type === "CPF") {
-            setIsJoint(false);
-        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -183,8 +177,8 @@ export function AddAccountModal({
                                 <span className="font-bold">
                                     No accounts found yet.
                                 </span>{" "}
-                                Add your bank, CPF, or investment account to
-                                track balances.
+                                Add your bank or investment account to track
+                                balances. CPF OA, SA and MA are added for you.
                             </div>
                         </div>
                     )}
@@ -305,7 +299,6 @@ export function AddAccountModal({
                             >
                                 <option value="Cash">Cash</option>
                                 <option value="Investment">Investment</option>
-                                <option value="CPF">CPF (OA/SA/MA)</option>
                                 <option value="Other">Other Asset</option>
                             </Select>
                         </div>
@@ -363,12 +356,9 @@ export function AddAccountModal({
                                     onChange={(e) =>
                                         setIsJoint(e.target.checked)
                                     }
-                                    disabled={type === "CPF"}
-                                    className="h-4 w-4 rounded-md border-(--border-ink) text-(--text-ink) accent-(--text-ink) cursor-pointer disabled:opacity-40"
+                                    className="h-4 w-4 rounded-md border-(--border-ink) text-(--text-ink) accent-(--text-ink) cursor-pointer"
                                 />
-                                <span
-                                    className={`text-xs font-bold ${type === "CPF" ? "text-(--text-muted)" : "text-(--text-ink)"}`}
-                                >
+                                <span className="text-xs font-bold text-(--text-ink)">
                                     Joint Account
                                 </span>
                             </label>

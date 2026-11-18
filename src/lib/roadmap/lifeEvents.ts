@@ -8,6 +8,8 @@
  *   already reflects it, so the change is dropped and never counted twice.
  * - Only spend items (subscription, bill, other) count, matching the
  *   baseline, which reads the same items as spending.
+ * - Items "Paid from CPF OA" change OA growth instead of cash savings, so
+ *   they are read by `oaEventsFromRecurring`, never here.
  */
 
 import { addMonths, formatMonth, monthsBetween } from "../dateUtils";
@@ -35,6 +37,30 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  * month the baseline already reflects; changes from then on are dropped.
  */
 export function lifeEventsFromRecurring(
+    items: RecurringItem[],
+    coveredThrough: string,
+): CashFlowChange[] {
+    return changesFromItems(
+        items.filter((i) => !i.paid_from_cpf_oa),
+        coveredThrough,
+    );
+}
+
+/**
+ * Dated changes to OA growth from items "Paid from CPF OA". `coveredThrough`
+ * is the last month the OA snapshots already reflect.
+ */
+export function oaEventsFromRecurring(
+    items: RecurringItem[],
+    coveredThrough: string,
+): CashFlowChange[] {
+    return changesFromItems(
+        items.filter((i) => i.paid_from_cpf_oa),
+        coveredThrough,
+    );
+}
+
+function changesFromItems(
     items: RecurringItem[],
     coveredThrough: string,
 ): CashFlowChange[] {

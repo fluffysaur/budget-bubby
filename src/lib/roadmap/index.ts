@@ -8,3 +8,4 @@ export * from "./jarLayout";
 export * from "./alerts";
 export * from "./lifeEvents";
 export * from "./reality";
+export * from "./cpf";
