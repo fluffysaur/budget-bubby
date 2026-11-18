@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import { HelpCircle } from "lucide-react";
 import { emitAppEvent } from "../../lib/appEvents";
 import { yawnTarget } from "../../lib/bubby/moods";
 
@@ -70,14 +71,45 @@ function GrowTips() {
             title="How Bubby grows"
             ariaLabel="How Bubby grows"
             align="right"
+            renderTrigger={(props, isOpen) => (
+                <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    {...props}
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-full border border-(--border-ink) px-2.5 text-xs font-bold text-(--text-ink) hover:bg-(--pastel-lilac-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer ${
+                        isOpen ? "bg-(--pastel-lilac-light)" : "bg-(--bg-cream)"
+                    }`}
+                >
+                    <HelpCircle
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                    />
+                    <span>How it grows</span>
+                </button>
+            )}
         >
-            <div className="space-y-1 text-left">
-                <div>🍤 Log spend, pet Bubby</div>
-                <div>
-                    💪 Sort inbox, update balances, add to goals, sweep, pay
-                    card bills, read recap
+            <div className="space-y-2 text-left">
+                <div className="flex items-start gap-2.5">
+                    <span aria-hidden="true" className="shrink-0">
+                        🍤
+                    </span>
+                    <span>Log spend, pet Bubby</span>
                 </div>
-                <div>🤝 Shared spend and joint accounts feed everyone</div>
+                <div className="flex items-start gap-2.5">
+                    <span aria-hidden="true" className="shrink-0">
+                        💪
+                    </span>
+                    <span>
+                        Sort inbox, update balances, add to goals, sweep, pay
+                        card bills, read recap
+                    </span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                    <span aria-hidden="true" className="shrink-0">
+                        🤝
+                    </span>
+                    <span>Shared spend and joint accounts feed everyone</span>
+                </div>
             </div>
         </TooltipPopover>
     );
@@ -194,7 +226,11 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
-            <ModalHeader title="Bubby" onClose={onClose} />
+            <ModalHeader
+                title="Bubby"
+                onClose={onClose}
+                actions={<GrowTips />}
+            />
             <ModalBody className="space-y-5">
                 {paired ? (
                     <div className="flex flex-col items-center gap-3">
@@ -211,7 +247,6 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                                 />
                             ))}
                         </ul>
-                        <GrowTips />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-3">
@@ -231,30 +266,23 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
                                 decorative
                             />
                         </button>
-                        <div className="flex w-full max-w-xs items-center gap-2">
-                            <div className="flex-1 space-y-1.5">
-                                <Meter
-                                    value={condition.nourishment}
-                                    icon="🍤"
-                                    label="Nourishment"
-                                />
-                                <Meter
-                                    value={condition.fitness}
-                                    icon="💪"
-                                    label="Fitness"
-                                />
-                            </div>
-                            <GrowTips />
+                        <div className="w-full max-w-xs space-y-1.5">
+                            <Meter
+                                value={condition.nourishment}
+                                icon="🍤"
+                                label="Nourishment"
+                            />
+                            <Meter
+                                value={condition.fitness}
+                                icon="💪"
+                                label="Fitness"
+                            />
                         </div>
                         <FedTodayDots members={members} fedToday={fedToday} />
                     </div>
                 )}
 
                 <section aria-label="Quests" className="space-y-3">
-                    <p className="text-xs font-medium text-(--text-muted)">
-                        Earn 💪 by clearing inbox, updating balances, adding to
-                        goals, or month-end.
-                    </p>
                     <div>
                         <h3 className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                             Today

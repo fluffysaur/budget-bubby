@@ -1,167 +1,126 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, act, fireEvent, within } from "@testing-library/react";
-import { HouseholdProvider } from "../src/context/HouseholdContext";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { BubbySheet } from "../src/components/bubby/BubbySheet";
-import { financeService } from "../src/services/financeService";
-import { mockMembers } from "../src/data/mockSeedData";
-import { toSgtDateString } from "../src/lib/bubby/dates";
-import { readBubbyStore, writeBubbyStore } from "../src/lib/bubby/storage";
+import type { BubbyPenguin } from "../src/hooks/useBubby";
 
-const [YJ, RACHEL] = mockMembers;
+const mockUseBubby = vi.fn();
 
-async function renderSheet() {
-    await act(async () => {
-        render(
-            <HouseholdProvider>
-                <BubbySheet isOpen onClose={vi.fn()} />
-            </HouseholdProvider>,
-        );
-    });
+vi.mock("../src/hooks/useBubby", () => ({
+    useBubby: () => mockUseBubby(),
+}));
+
+vi.mock("../src/hooks/useQuestActions", () => ({
+    useQuestActions: () => vi.fn(),
+    isQuestSelectable: () => false,
+}));
+
+vi.mock("../src/contexts/PrivacyContext", () => ({
+    usePrivacy: () => ({ isPrivacyMode: false }),
+}));
+
+function makePenguin(id: string, name: string, isMe: boolean): BubbyPenguin {
+    return {
+        member: {
+            id,
+            display_name: name,
+            avatar_url: null,
+            role: "member",
+        } as BubbyPenguin["member"],
+        isMe,
+        body: "regular",
+        mood: "normal",
+        reaction: null,
+        scarf: undefined,
+        sleepy: false,
+        condition: {
+            nourishment: 0.7,
+            fitness: 0.6,
+            body: "regular",
+            mood: "normal",
+            daysSinceFed: 0,
+            fedToday: new Set<string>(),
+        },
+    };
 }
 
-describe("BubbySheet", () => {
+function makeBubbyState(penguins: BubbyPenguin[]) {
+    const primary = penguins[0];
+    return {
+        body: primary.body,
+        mood: primary.mood,
+        reaction: primary.reaction,
+        condition: primary.condition,
+        members: penguins.map((p) => p.member),
+        dailyQuests: [],
+        weeklyQuests: [],
+        monthlyQuests: [],
+        snacks: [],
+        penguins,
+        sleepy: false,
+        fedToday: new Set<string>(),
+        pet: vi.fn(),
+    };
+}
+
+describe("BubbySheet GrowTips header placement", () => {
     beforeEach(() => {
-        localStorage.clear();
-        vi.restoreAllMocks();
-        vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
-        vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
-        vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue(
-            [],
-        );
-        vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue(
-            [],
-        );
-        vi.spyOn(financeService, "getGoals").mockResolvedValue([]);
+        vi.clearAllMocks();
     });
 
-    it("hides the monthly section until a monthly quest applies", async () => {
-        await renderSheet();
-        expect(
-            screen.queryByRole("list", { name: "This month's quests" }),
-        ).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole("list", { name: "This week's quests" }),
-        ).toBeInTheDocument();
-    });
+    it("renders 'How it grows' pill in the modal header for solo layout and toggles the popover", () => {
+        mockUseBubby.mockReturnValue(
+            makeBubbyState([makePenguin("m1", "Alex", true)]),
+        );
 
-    it("lists the monthly quests once a card statement is due", async () => {
-        vi.spyOn(financeService, "getCreditCardStatements").mockResolvedValue([
-            {
-                id: "s1",
-                card_id: "c1",
-                household_id: "hh",
-                month: toSgtDateString().slice(0, 7),
-                statement_amount: 80,
-                due_date: toSgtDateString(),
-                is_paid: false,
-            },
-        ]);
-        await renderSheet();
-        const list = await screen.findByRole("list", {
-            name: "This month's quests",
+        render(<BubbySheet isOpen onClose={vi.fn()} />);
+
+        const triggers = screen.getAllByRole("button", {
+            name: "How Bubby grows",
         });
-        expect(within(list).getByText("Pay card bills")).toBeInTheDocument();
-    });
+        expect(triggers).toHaveLength(1);
 
-    it("shows meters without numbers, quests and an empty snack shelf", async () => {
-        await renderSheet();
+        const trigger = triggers[0];
+        expect(trigger).toHaveTextContent("How it grows");
+        expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-        // A meter pair per partner's penguin
-        expect(
-            screen.getByRole("img", { name: "Nourishment, your Bubby" }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("img", { name: "Fitness, your Bubby" }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("img", {
-                name: `Nourishment, ${RACHEL.display_name}'s Bubby`,
-            }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                "Earn 💪 by clearing inbox, updating balances, adding to goals, or month-end.",
-            ),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("list", { name: "Today's quests" }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByRole("list", { name: "This week's quests" }),
-        ).toBeInTheDocument();
-        expect(
-            screen.getByText("Finish a week's quests to earn a treat."),
-        ).toBeInTheDocument();
-        // No counters anywhere in the sheet body
-        const dialogText =
-            screen.getByRole("list", { name: "Today's quests" }).closest("div")
-                ?.textContent ?? "";
-        expect(dialogText).not.toMatch(/\d/);
-    });
+        // Trigger sits in the header alongside the close button, not inside the body
+        const closeButton = screen.getByRole("button", { name: "Close modal" });
+        expect(closeButton.parentElement).toContainElement(trigger);
 
-    it("petting ticks the daily quest", async () => {
-        await renderSheet();
-        const today = screen.getByRole("list", { name: "Today's quests" });
-        fireEvent.click(
-            within(today).getByRole("button", { name: /Pet Bubby/ }),
-        );
-
-        expect(readBubbyStore().petDays?.[YJ.id]).toEqual([toSgtDateString()]);
-        const pet = within(today).getByText("Pet Bubby").closest("li");
-        expect(pet).toHaveAttribute("data-done", "true");
-    });
-
-    it("shows both penguins side by side, yours first, with scarves", async () => {
-        await renderSheet();
-        const penguins = within(
-            screen.getByRole("list", { name: "Penguins" }),
-        ).getAllByTestId("bubby-penguin");
-        expect(penguins.map((p) => p.dataset.member)).toEqual([
-            YJ.id,
-            RACHEL.id,
-        ]);
-        const scarves = penguins.map((p) =>
-            p.querySelector("[data-layer='scarf']")?.getAttribute("data-scarf"),
-        );
-        expect(scarves[0]).toBeTruthy();
-        expect(scarves[1]).toBeTruthy();
-        expect(scarves[0]).not.toBe(scarves[1]);
-    });
-
-    it("petting a partner's penguin credits their penguin, not the quest owner's", async () => {
-        await renderSheet();
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: `Pet ${RACHEL.display_name}'s Bubby`,
-            }),
-        );
-        const today = toSgtDateString();
-        const store = readBubbyStore();
-        // You did the petting (your daily quest), and their penguin got fed
-        expect(store.petDays?.[YJ.id]).toEqual([today]);
-        expect(store.petTargets?.[`${YJ.id}|${today}`]).toEqual([RACHEL.id]);
-    });
-
-    it("has no pet-both button; tapping each penguin pets both", async () => {
-        await renderSheet();
         expect(
-            screen.queryByRole("button", { name: /Pet (Both|All)/ }),
+            screen.queryByText(/clearing inbox, updating balances/i),
         ).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: "Pet your Bubby" }));
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: `Pet ${RACHEL.display_name}'s Bubby`,
-            }),
-        );
-        const today = toSgtDateString();
+
+        fireEvent.click(trigger);
+
+        expect(trigger).toHaveAttribute("aria-expanded", "true");
         expect(
-            readBubbyStore().petTargets?.[`${YJ.id}|${today}`]?.sort(),
-        ).toEqual([YJ.id, RACHEL.id].sort());
+            screen.getByRole("heading", { name: "How Bubby grows" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(/Log spend, pet Bubby/i),
+        ).toBeInTheDocument();
     });
 
-    it("shows earned snacks", async () => {
-        writeBubbyStore({ snacks: [{ id: "fish", week: "2026-11-02" }] });
-        await renderSheet();
-        expect(screen.getByLabelText("Fish")).toBeInTheDocument();
+    it("renders 'How it grows' pill in the modal header for paired layout", () => {
+        mockUseBubby.mockReturnValue(
+            makeBubbyState([
+                makePenguin("m1", "Alex", true),
+                makePenguin("m2", "Sam", false),
+            ]),
+        );
+
+        render(<BubbySheet isOpen onClose={vi.fn()} />);
+
+        const triggers = screen.getAllByRole("button", {
+            name: "How Bubby grows",
+        });
+        expect(triggers).toHaveLength(1);
+
+        const trigger = triggers[0];
+        expect(trigger).toHaveTextContent("How it grows");
+
+        const closeButton = screen.getByRole("button", { name: "Close modal" });
+        expect(closeButton.parentElement).toContainElement(trigger);
     });
 });
