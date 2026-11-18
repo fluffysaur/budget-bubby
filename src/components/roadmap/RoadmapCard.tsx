@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { Plus, Route } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
+import { formatSGD, formatSGDCompact } from "../../lib/currency";
 import {
     daysBetweenISO,
     formatShortMonth,
@@ -24,7 +24,7 @@ import {
     TruncatedText,
     type BadgeVariant,
 } from "../ui";
-import { PoolJar } from "./PoolJar";
+import { PoolBar } from "./PoolBar";
 
 export interface RoadmapCardProps {
     roadmap: RoadmapState;
@@ -97,6 +97,8 @@ export function RoadmapCard({
 
     const selected = result.goals.find((g) => g.goal.id === selectedId) ?? null;
     const isShort = result.verdict === "short";
+    const totalClaims = result.goals.at(-1)?.claimEnd ?? 0;
+    const spareToday = Math.max(0, result.poolToday - totalClaims);
     const goalTitle = (id?: string) =>
         result.goals.find((g) => g.goal.id === id)?.goal.title ?? "goal";
 
@@ -188,10 +190,10 @@ export function RoadmapCard({
                 </TooltipPopover>
             </div>
 
-            {/* Jar and timeline */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <PoolJar
+            {/* Pool bar and timeline */}
+            <div className="space-y-3">
+                <div className="space-y-1">
+                    <PoolBar
                         result={result}
                         selectedId={selectedId}
                         onSelect={setSelectedId}
@@ -207,7 +209,11 @@ export function RoadmapCard({
                             </>
                         ) : (
                             <span className="font-medium text-(--text-muted)">
-                                Tap a goal to preview
+                                {spareToday > 0
+                                    ? mask(
+                                          `${formatSGDCompact(spareToday)} spare · tap a goal to preview`,
+                                      )
+                                    : "Tap a goal to preview"}
                             </span>
                         )}
                     </p>

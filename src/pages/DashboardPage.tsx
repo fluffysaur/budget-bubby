@@ -224,11 +224,6 @@ export function DashboardPage({
                         }
                     />
 
-                    {/* Household plan verdict */}
-                    <RoadmapChip
-                        onOpen={onNavigateTab ? handleNavigateGoals : undefined}
-                    />
-
                     {/* Most urgent category limit alert (rendered below hero) */}
                     <CategoryLimitWarningBanner
                         single
@@ -241,6 +236,11 @@ export function DashboardPage({
 
                     {/* Bubby's quests for today */}
                     <QuestCard />
+
+                    {/* Household plan verdict */}
+                    <RoadmapChip
+                        onOpen={onNavigateTab ? handleNavigateGoals : undefined}
+                    />
 
                     {/* Last week's recap (temporary, Mon-Wed) */}
                     {recapWeek && (
