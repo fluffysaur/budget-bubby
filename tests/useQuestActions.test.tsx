@@ -63,7 +63,6 @@ describe("useQuestActions", () => {
     it.each<[Quest["id"], string]>([
         ["inbox", "/inbox"],
         ["balances", "/accounts"],
-        ["goal", "/goals"],
         ["cards", "/accounts"],
         ["sweep", "/expenses"],
     ])("navigates for the %s quest", (id, path) => {

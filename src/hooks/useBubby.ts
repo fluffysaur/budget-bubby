@@ -18,7 +18,6 @@ import {
     useAccountSnapshotsQuery,
     useCreditCardStatementsQuery,
     useExpensesQuery,
-    useGoalsQuery,
 } from "./useFinanceQueries";
 import { useMonthEndSurplus } from "./useMonthEndSurplus";
 import { useLoggedInMember } from "./useLoggedInMember";
@@ -55,7 +54,6 @@ import type {
     DailyCheckin,
     Expense,
     HouseholdMember,
-    SavingsGoal,
 } from "../types/finance";
 
 const EMPTY_CHECKINS: DailyCheckin[] = [];
@@ -63,7 +61,6 @@ const EMPTY_EXPENSES: Expense[] = [];
 const EMPTY_SNAPSHOTS: AccountSnapshot[] = [];
 const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_STATEMENTS: CreditCardStatement[] = [];
-const EMPTY_GOALS: SavingsGoal[] = [];
 const NO_BONUS_EVENTS: BonusEventLike[] = [];
 const DEFAULT_CHECKIN_MINUTES = timeToMinutes(DEFAULT_CHECKIN_TIME) ?? 18 * 60;
 
@@ -228,7 +225,6 @@ export function useBubby(): UseBubbyResult {
         useAccountsQuery("household");
     const { data: statementsData, isPending: statementsPending } =
         useCreditCardStatementsQuery();
-    const { data: goalsData, isPending: goalsPending } = useGoalsQuery();
     const { pending: surplusPending, settled: surplusSettled } =
         useMonthEndSurplus(today.slice(0, 7));
     const bonusEvents = useBonusEventsForBubby();
@@ -308,14 +304,9 @@ export function useBubby(): UseBubbyResult {
         [me?.id, today, checkins, expenses, store],
     );
     const statements = statementsData ?? EMPTY_STATEMENTS;
-    const goals = goalsData ?? EMPTY_GOALS;
-    const hasActiveGoal = useMemo(
-        () => goals.some((g) => g.status !== "achieved"),
-        [goals],
-    );
     const weekly = useMemo(
-        () => weeklyQuests({ today, snapshots, store, hasActiveGoal }),
-        [today, snapshots, store, hasActiveGoal],
+        () => weeklyQuests({ today, snapshots, store }),
+        [today, snapshots, store],
     );
     const monthly = useMemo(
         () => monthlyQuests({ today, statements, surplusPending, store }),
@@ -353,11 +344,10 @@ export function useBubby(): UseBubbyResult {
             lastMonthReady &&
             snapshotsReady &&
             accountsReady,
-        // The goal and monthly inputs have loaded (or failed), so those quest
-        // sets are complete and a treat for them cannot fire early
-        weeklyQuestsReady: !goalsPending,
-        monthlyQuestsReady:
-            !statementsPending && !goalsPending && surplusSettled,
+        // The monthly inputs have loaded (or failed), so that quest set is
+        // complete and a treat for it cannot fire early
+        weeklyQuestsReady: true,
+        monthlyQuestsReady: !statementsPending && surplusSettled,
         body: condition.body,
         mood: condition.mood,
         condition,

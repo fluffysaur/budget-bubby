@@ -5,7 +5,6 @@
  */
 
 import type {
-    GoalDeposit,
     Household,
     HouseholdMember,
     Account,
@@ -493,10 +492,10 @@ export const mockSavingsGoals: SavingsGoal[] = [
         owner_id: null,
         title: "Wedding",
         target_amount: 55000.0,
-        saved_so_far: 55000.0,
+        saved_so_far: 0.0,
         target_date: "2027-05-01",
         emoji: "💍",
-        status: "achieved",
+        status: "on_track",
         created_at: "2026-01-01T00:00:00.000Z",
     },
     {
@@ -528,7 +527,7 @@ export const mockSavingsGoals: SavingsGoal[] = [
         household_id: "hh-00000000-0001",
         owner_id: null,
         title: "Renovation",
-        target_amount: 90000.0,
+        target_amount: 160000.0,
         saved_so_far: 0.0,
         target_date: "2027-09-01",
         emoji: "🔨",
@@ -546,33 +545,6 @@ export const mockSavingsGoals: SavingsGoal[] = [
         emoji: "👶",
         status: "on_track",
         created_at: "2026-01-01T00:00:00.000Z",
-    },
-];
-
-const seedMonthStart = (() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-})();
-
-/** Deposits made this month: HDB meets its pace, Renovation is part-way. */
-export const mockGoalDeposits: GoalDeposit[] = [
-    {
-        id: "gdep-00000000-0801",
-        household_id: "hh-00000000-0001",
-        goal_id: "goal-00000000-0503",
-        amount: 10000.0,
-        source: "quick_deposit",
-        deposited_at: seedMonthStart,
-        created_at: `${seedMonthStart}T00:00:00.000Z`,
-    },
-    {
-        id: "gdep-00000000-0802",
-        household_id: "hh-00000000-0001",
-        goal_id: "goal-00000000-0504",
-        amount: 1000.0,
-        source: "sweep",
-        deposited_at: seedMonthStart,
-        created_at: `${seedMonthStart}T00:00:00.000Z`,
     },
 ];
 
@@ -1274,7 +1246,6 @@ export interface MockSeedDataset {
     notificationPreferences?: Record<string, NotificationPreferences>;
     /** Bonus log entries; goal contributions are embedded per event. */
     bonusEvents?: BonusEvent[];
-    goalDeposits?: GoalDeposit[];
     settleUps?: SettleUp[];
     /** Per-member default bonus split, keyed by member id. */
     bonusSplitDefaults?: Record<string, BonusSplitShare[]>;
@@ -1319,7 +1290,6 @@ export const mockSeedData: MockSeedDataset = {
     accounts: mockAccounts,
     accountSnapshots: mockAccountSnapshots,
     savingsGoals: mockSavingsGoals,
-    goalDeposits: mockGoalDeposits,
     recurringItems: mockRecurringItems,
     monthlyBudgets: mockMonthlyBudgets,
     monthlyBudgetCategories: mockMonthlyBudgetCategories,

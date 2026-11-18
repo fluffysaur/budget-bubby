@@ -45,6 +45,8 @@ import { isSoundEffectsEnabled } from "../src/lib/soundEffects";
 import * as pushSubscriptionModule from "../src/lib/pushSubscription";
 import { getTodayDateString, getCurrentMonth } from "../src/lib/dateUtils";
 import { mockFinanceService } from "../src/services/mockFinanceService";
+import type { GoalStatusChange } from "../src/lib/roadmap/alerts";
+import { makePlan } from "./helpers/roadmapFixtures";
 import type {
     AccountSnapshot,
     CreditCardStatement,
@@ -1162,95 +1164,85 @@ describe("Notifications Engine", () => {
             expect(r[0].title).toBe("Year End Shield Renews in 25 Days");
         });
 
-        it("checkGoalPacingReminders alerts when savings goals are behind target or achieved", () => {
+        it("checkGoalPacingReminders emits status-change and achieved reminders", () => {
             const goals: SavingsGoal[] = [
                 {
                     id: "goal-1",
                     household_id: "hh-1",
                     title: "Japan Holiday",
                     target_amount: 6000,
-                    saved_so_far: 2000,
+                    saved_so_far: 0,
                     target_date: "2026-12-31",
                     emoji: "✈️",
-                    status: "behind",
+                    status: "on_track",
                 },
                 {
                     id: "goal-2",
                     household_id: "hh-1",
                     title: "Emergency Fund",
                     target_amount: 10000,
-                    saved_so_far: 10000,
+                    saved_so_far: 0,
                     target_date: "2027-01-01",
                     emoji: "🛡️",
                     status: "achieved",
                 },
             ];
+            const changes: GoalStatusChange[] = [
+                {
+                    goal: makePlan({ shortPerMonth: 250, status: "short" }),
+                    from: "on_track",
+                    to: "short",
+                    month: "2026-10",
+                },
+                {
+                    goal: makePlan({}, { id: "goal-3", title: "Wedding" }),
+                    from: "short",
+                    to: "on_track",
+                    month: "2026-10",
+                },
+            ];
 
-            const r = checkGoalPacingReminders(
-                goals,
-                new Date("2026-10-15T12:00:00"),
-            );
-            expect(r).toHaveLength(2);
-            const behind = r.find((g) => g.data?.goalId === "goal-1");
+            const r = checkGoalPacingReminders(goals, changes);
+            expect(r).toHaveLength(3);
+
+            const short = r.find((g) => g.data?.goalId === "goal-1");
+            expect(short).toMatchObject({
+                id: "reminder-goal-status-goal-1-2026-10",
+                type: "goal_pacing",
+                title: "Japan Holiday Is Short",
+                message: "Short S$250/mo by Dec 2026",
+                severity: "warning",
+            });
+
+            const back = r.find((g) => g.data?.goalId === "goal-3");
+            expect(back).toMatchObject({
+                id: "reminder-goal-status-goal-3-2026-10",
+                title: "Wedding Back on Track",
+                message: "Your plan covers it again",
+                severity: "info",
+            });
+
             const achieved = r.find((g) => g.data?.goalId === "goal-2");
-            expect(behind?.title).toBe("Japan Holiday Behind Pace");
-            expect(behind?.message).toBe("S$2,000.00 of S$6,000.00 saved");
-            expect(achieved?.title).toBe("Goal Reached: Emergency Fund");
-
-            // Behind: new key each month. Achieved: one key forever.
-            const nextMonth = checkGoalPacingReminders(
-                goals,
-                new Date("2026-11-02T12:00:00"),
-            );
-            expect(behind?.id).toBe("reminder-goal-behind-goal-1-2026-10");
-            expect(nextMonth.find((g) => g.data?.goalId === "goal-1")?.id).toBe(
-                "reminder-goal-behind-goal-1-2026-11",
-            );
-            expect(nextMonth.find((g) => g.data?.goalId === "goal-2")?.id).toBe(
-                achieved?.id,
-            );
+            expect(achieved).toMatchObject({
+                id: "reminder-goal-achieved-goal-2",
+                title: "Goal Reached: Emergency Fund",
+                message: "S$10,000.00 goal done",
+            });
         });
 
-        it("checkGoalPacingReminders derives status from the ledger and only flags a missed closed month", () => {
-            const goal: SavingsGoal = {
+        it("checkGoalPacingReminders no longer flags goals as behind pace", () => {
+            const goal = {
                 id: "goal-1",
                 household_id: "hh-1",
                 title: "Japan Holiday",
                 target_amount: 6000,
                 saved_so_far: 2000,
-                target_date: "2027-10-15",
+                target_date: "2026-12-31",
                 emoji: "✈️",
-                status: "on_track", // stale stored status must be ignored
-                created_at: "2026-10-01T00:00:00.000Z",
-            };
-            const deposits = [
-                {
-                    id: "d-1",
-                    household_id: "hh-1",
-                    goal_id: "goal-1",
-                    amount: 100,
-                    source: "quick_deposit" as const,
-                    deposited_at: "2026-10-03",
-                },
-            ];
-
-            // October is still open (and the goal is new this month): not behind
-            expect(
-                checkGoalPacingReminders(
-                    [goal],
-                    new Date("2026-10-15T12:00:00"),
-                    deposits,
-                ),
-            ).toHaveLength(0);
-
-            // November: October closed with 100 deposited vs ~341.67 required
-            const nextMonth = checkGoalPacingReminders(
-                [goal],
-                new Date("2026-11-02T12:00:00"),
-                deposits,
-            );
-            expect(nextMonth).toHaveLength(1);
-            expect(nextMonth[0].title).toBe("Japan Holiday Behind Pace");
+                status: "on_track",
+            } as SavingsGoal;
+            expect(checkGoalPacingReminders([goal])).toHaveLength(0);
+            expect(checkGoalPacingReminders([goal], [])).toHaveLength(0);
         });
 
         it("checkMonthlyBudgetReviewReminder triggers on days 1-5 when budget is unlocked", () => {
@@ -2002,7 +1994,7 @@ describe("Notifications Engine", () => {
             expect(alertsMem2[0].title).toContain("Rachel Health Insurance");
         });
 
-        it("surfaces goal pacing reminders across household goals to keep both partners aligned", () => {
+        it("surfaces goal reminders across household goals to keep both partners aligned", () => {
             const goals: SavingsGoal[] = [
                 {
                     id: "goal-mem1",
@@ -2010,10 +2002,10 @@ describe("Notifications Engine", () => {
                     owner_id: "mem-1",
                     title: "Yi Jia Tech Upgrade",
                     target_amount: 3000,
-                    saved_so_far: 1000,
+                    saved_so_far: 0,
                     target_date: "2026-12-31",
                     emoji: "💻",
-                    status: "behind",
+                    status: "achieved",
                 },
                 {
                     id: "goal-joint",
@@ -2021,10 +2013,10 @@ describe("Notifications Engine", () => {
                     owner_id: null,
                     title: "Couple Vacation",
                     target_amount: 6000,
-                    saved_so_far: 2000,
+                    saved_so_far: 0,
                     target_date: "2026-12-31",
                     emoji: "🏖️",
-                    status: "behind",
+                    status: "achieved",
                 },
             ];
 

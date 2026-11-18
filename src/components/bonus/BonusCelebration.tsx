@@ -8,16 +8,12 @@ import { useEffect } from "react";
 import { Sparkles, X } from "lucide-react";
 import { playChaChingSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
-import { formatSGD } from "../../lib/currency";
 import { CurrencyText } from "../ui/CurrencyText";
-import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface BonusCelebrationData {
     /** Changes for every new celebration so repeat logs re-trigger it. */
     id: string;
     net: number;
-    goalTotal: number;
-    reachedGoalTitle?: string | null;
 }
 
 export interface BonusCelebrationProps {
@@ -38,7 +34,6 @@ export function BonusCelebration({
     celebration,
     onDone,
 }: BonusCelebrationProps) {
-    const mask = useMoneyMask();
     const celebrationId = celebration?.id;
 
     useEffect(() => {
@@ -54,12 +49,6 @@ export function BonusCelebration({
     }, [celebrationId, onDone]);
 
     if (!celebration) return null;
-
-    const subtitle = celebration.reachedGoalTitle
-        ? `🎉 ${celebration.reachedGoalTitle} reached`
-        : celebration.goalTotal > 0
-          ? mask(`${formatSGD(celebration.goalTotal)} to goals`)
-          : null;
 
     return (
         <div
@@ -90,11 +79,6 @@ export function BonusCelebration({
                     <p className="text-xs sm:text-sm font-extrabold">
                         <CurrencyText amount={celebration.net} /> bonus logged
                     </p>
-                    {subtitle && (
-                        <p className="truncate text-xs font-bold text-(--text-muted)">
-                            {subtitle}
-                        </p>
-                    )}
                 </div>
 
                 <button

@@ -4,11 +4,10 @@
  * Daily (per member): log today 🍤, pet Bubby 🍤, and clear your inbox 💪
  * (shown only when items are pending or cleared today). All shown: a
  * full-belly moment.
- * Weekly (household): update balances 💪, read the weekly recap 💪 (shown
- * Mon-Wed while available or already read this week), and add to a goal 💪
- * (only while a goal is active). All shown: a snack treat for the
- * collection.
- * Monthly (household): pay the card statements due this month 💪 and sweep
+ * Weekly (household): update balances 💪 and read the weekly recap 💪 (shown
+ * Mon-Wed while available or already read this week). All shown: a snack
+ * treat for the collection.
+ * Monthly (household): pay the card statements due this month 💪 and bank
  * last month's surplus 💪. Each shows only when it applies; all shown done:
  * a monthly treat moment.
  */
@@ -25,15 +24,7 @@ import { recapWeekFor } from "./recap";
 import { loggedDateOf } from "./sources";
 
 export interface Quest {
-    id:
-        | "log"
-        | "pet"
-        | "inbox"
-        | "balances"
-        | "recap"
-        | "goal"
-        | "cards"
-        | "sweep";
+    id: "log" | "pet" | "inbox" | "balances" | "recap" | "cards" | "sweep";
     label: string;
     description?: string;
     reward: "food" | "exercise";
@@ -104,8 +95,6 @@ export interface WeeklyQuestInputs {
     today: string;
     snapshots: readonly AccountSnapshot[];
     store: BubbyStore;
-    /** The goal quest only shows while the household has an active goal. */
-    hasActiveGoal?: boolean;
 }
 
 function inWeek(date: string, monday: string): boolean {
@@ -116,7 +105,6 @@ export function weeklyQuests({
     today,
     snapshots,
     store,
-    hasActiveGoal = false,
 }: WeeklyQuestInputs): Quest[] {
     const monday = mondayOf(today);
     const balances =
@@ -144,24 +132,13 @@ export function weeklyQuests({
             done: recap,
         });
     }
-    if (hasActiveGoal) {
-        quests.push({
-            id: "goal",
-            label: "Add to a goal",
-            description: "Contribute to a savings goal",
-            reward: "exercise",
-            done: (store.exercise?.["goal-add"] ?? []).some((d) =>
-                inWeek(d, monday),
-            ),
-        });
-    }
     return quests;
 }
 
 export interface MonthlyQuestInputs {
     today: string;
     statements: readonly CreditCardStatement[];
-    /** Last month left unspent surplus that has not been swept or banked. */
+    /** Last month left unspent surplus that has not been banked. */
     surplusPending: boolean;
     store: BubbyStore;
 }
@@ -199,8 +176,8 @@ export function monthlyQuests({
     if (surplusPending || swept) {
         quests.push({
             id: "sweep",
-            label: "Sweep surplus",
-            description: "Bank or sweep last month's leftover",
+            label: "Bank surplus",
+            description: "Bank last month's leftover",
             reward: "exercise",
             done: swept,
         });

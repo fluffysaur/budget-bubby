@@ -360,77 +360,42 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             );
         });
 
-        it("adds and updates savings goals with automatic status pacing", async () => {
+        it("adds goals as on_track with nothing saved and updates without recomputing status", async () => {
             const goalsBefore = await mockFinanceService.getGoals();
             const initialCount = goalsBefore.length;
-
-            // Target 12 months out: S$4,500 left at S$500/mo needs 9, so it stays on track whatever today is.
-            const target = new Date();
-            target.setMonth(target.getMonth() + 12, 1);
-            const targetDate = target.toISOString().slice(0, 10);
 
             const newGoal = await mockFinanceService.addGoal({
                 title: "Kyoto Holiday Fund",
                 target_amount: 6000.0,
-                saved_so_far: 1500.0,
-                target_date: targetDate,
+                target_date: "2028-01-01",
                 emoji: "⛩️",
             });
 
             expect(newGoal.id).toBeDefined();
             expect(newGoal.title).toBe("Kyoto Holiday Fund");
-            // New goal: nothing to be behind on yet
+            expect(newGoal.saved_so_far).toBe(0);
             expect(newGoal.status).toBe("on_track");
 
-            const deposited = await mockFinanceService.depositToGoal(
-                newGoal.id,
-                500,
-                "quick_deposit",
-            );
-            expect(deposited.saved_so_far).toBe(2000);
-            expect(deposited.status).toBe("on_track");
-
-            // Update goal: mark as achieved by increasing saved_so_far
-            const updated = await mockFinanceService.updateGoal(newGoal.id, {
+            // saved_so_far edits are ignored and status is only changed when given
+            const renamed = await mockFinanceService.updateGoal(newGoal.id, {
+                title: "Kyoto Trip",
                 saved_so_far: 6000.0,
+            } as never);
+            expect(renamed.title).toBe("Kyoto Trip");
+            expect(renamed.saved_so_far).toBe(0);
+            expect(renamed.status).toBe("on_track");
+
+            const done = await mockFinanceService.updateGoal(newGoal.id, {
+                status: "achieved",
             });
-            expect(updated.saved_so_far).toBe(6000.0);
-            expect(updated.status).toBe("achieved");
+            expect(done.status).toBe("achieved");
+            const reopened = await mockFinanceService.updateGoal(newGoal.id, {
+                status: "on_track",
+            });
+            expect(reopened.status).toBe("on_track");
 
             const goalsAfter = await mockFinanceService.getGoals();
             expect(goalsAfter.length).toBe(initialCount + 1);
-        });
-
-        it("records ledger deposits but not initial or manually edited Saved", async () => {
-            const target = new Date();
-            target.setMonth(target.getMonth() + 12, 1);
-            const goal = await mockFinanceService.addGoal({
-                title: "Ledger Test",
-                target_amount: 6000,
-                saved_so_far: 1000,
-                target_date: target.toISOString().slice(0, 10),
-            });
-            const countFor = async () =>
-                (await mockFinanceService.getGoalDeposits()).filter(
-                    (d) => d.goal_id === goal.id,
-                );
-
-            expect(await countFor()).toHaveLength(0);
-            await mockFinanceService.updateGoal(goal.id, {
-                saved_so_far: 1200,
-            });
-            expect(await countFor()).toHaveLength(0);
-
-            await mockFinanceService.depositToGoal(goal.id, 250.5, "sweep");
-            const rows = await countFor();
-            expect(rows).toHaveLength(1);
-            expect(rows[0]).toMatchObject({ amount: 250.5, source: "sweep" });
-            expect(
-                (await mockFinanceService.getGoal(goal.id))?.saved_so_far,
-            ).toBe(1450.5);
-            await expect(
-                mockFinanceService.depositToGoal(goal.id, 0, "sweep"),
-            ).rejects.toThrow();
         });
     });
 

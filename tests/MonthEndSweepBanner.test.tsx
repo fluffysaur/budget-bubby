@@ -9,7 +9,6 @@ describe("MonthEndSweepBanner", () => {
             <MonthEndSweepBanner
                 month="2026-09"
                 surplusAmount={3654.05}
-                onSweepClick={vi.fn()}
                 onBankSurplusClick={vi.fn()}
             />,
         );
@@ -20,35 +19,17 @@ describe("MonthEndSweepBanner", () => {
                 withText(/3,654\.05 unspent from September 2026/i),
             ),
         ).toBeInTheDocument();
-        // Subtitle: "Sweep into savings goals or bank for cushion."
         expect(
-            screen.getByText(/Sweep into savings goals or bank for cushion\./i),
+            screen.getByText(/It stays in your pool for goals\./i),
         ).toBeInTheDocument();
 
-        // 2 Action Buttons
+        // Single action button
         expect(
-            screen.getByRole("button", { name: /sweep to goals/i }),
-        ).toBeInTheDocument();
+            screen.queryByRole("button", { name: /sweep to goals/i }),
+        ).not.toBeInTheDocument();
         expect(
             screen.getByRole("button", { name: /bank surplus/i }),
         ).toBeInTheDocument();
-    });
-
-    it("triggers onSweepClick when clicking Sweep to Goals button", () => {
-        const handleSweepClick = vi.fn();
-        render(
-            <MonthEndSweepBanner
-                month="2026-09"
-                surplusAmount={350}
-                onSweepClick={handleSweepClick}
-                onBankSurplusClick={vi.fn()}
-            />,
-        );
-
-        fireEvent.click(
-            screen.getByRole("button", { name: /sweep to goals/i }),
-        );
-        expect(handleSweepClick).toHaveBeenCalledTimes(1);
     });
 
     it("triggers onBankSurplusClick when clicking Bank Surplus button", () => {
@@ -57,7 +38,6 @@ describe("MonthEndSweepBanner", () => {
             <MonthEndSweepBanner
                 month="2026-09"
                 surplusAmount={350}
-                onSweepClick={vi.fn()}
                 onBankSurplusClick={handleBankSurplus}
             />,
         );

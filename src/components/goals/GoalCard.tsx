@@ -1,60 +1,79 @@
 /**
  * GoalCard Component
- * Milestone savings goal card displaying:
- * - Emoji icon badge & goal title
- * - ProgressRing displaying saved / target percentage and amounts
- * - Status Badge (Achieved, On Track, Behind)
- * - Target date and remaining months countdown
- * - Tap / Collapsible Breakdown for 2x2 grid (Target, Saved, Spend, Balance) and Monthly Pacing
- * - '+ Spend from Goal' button opens Add Expense with this goal picked
- * - List of linked expenses funded by this goal
- * - Quick Deposit and Edit actions
+ * One goal on the household Roadmap:
+ * - Emoji, title, date and months left
+ * - Status from the Roadmap (Covered, On track, Short, Paid for?, Done)
+ * - ProgressRing of how much the pool covers today, paired with what's left
+ * - Collapsible breakdown (target, goal spend, covered today, pace)
+ * - Linked goal-tagged spends
+ * - Spend, Mark done / Reopen and Edit actions
  */
 
 import { useState } from "react";
 import {
     Calendar,
     Pencil,
-    Coins,
     Clock,
     Plus,
     Receipt,
     ChevronDown,
     ChevronUp,
-    AlertCircle,
+    CheckCircle2,
+    RotateCcw,
+    TrendingUp,
 } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
-import { calculateGoalPacing } from "../../lib/financialFormulas";
-import { formatDisplayMonth, formatDisplayDate } from "../../lib/dateUtils";
+import {
+    formatDisplayMonth,
+    formatDisplayDate,
+    formatShortMonth,
+} from "../../lib/dateUtils";
+import type { RoadmapGoalResult } from "../../lib/roadmap";
 import { TruncatedText } from "../ui/TruncatedText";
 import { ProgressRing } from "../ui/ProgressRing";
 import { Badge, type BadgeVariant } from "../ui/Badge";
+import { Alert } from "../ui/Alert";
+import { Button } from "../ui/Button";
 import type { SavingsGoal, Expense } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface GoalCardProps {
     goal: SavingsGoal;
+    /** This goal on the Roadmap; absent once the goal is Done. */
+    plan?: RoadmapGoalResult;
     linkedExpenses?: Expense[];
     onEdit?: (goal: SavingsGoal) => void;
-    onQuickDeposit?: (goal: SavingsGoal) => void;
     onSpendFromGoal?: (goal: SavingsGoal) => void;
-    /** Ledger deposits into this goal during the current month. */
-    depositedThisMonth?: number;
-    /** Last month's deposits; null/omitted when the goal is new this month. */
-    depositedLastMonth?: number | null;
+    onMarkDone?: (goal: SavingsGoal) => void;
+    onReopen?: (goal: SavingsGoal) => void;
     isHighlighted?: boolean;
     className?: string;
 }
 
+type CardStatus = RoadmapGoalResult["status"] | "done";
+
+const STATUS_CONFIG: Record<
+    CardStatus,
+    { label: string; variant: BadgeVariant }
+> = {
+    done: { label: "Done", variant: "paid" },
+    funded: { label: "Covered", variant: "ok" },
+    on_track: { label: "On Track", variant: "ok" },
+    short: { label: "Short", variant: "over" },
+    overdue: { label: "Paid for?", variant: "due" },
+};
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 export function GoalCard({
     goal,
+    plan,
     linkedExpenses = [],
     onEdit,
-    onQuickDeposit,
     onSpendFromGoal,
-    depositedThisMonth = 0,
-    depositedLastMonth = null,
+    onMarkDone,
+    onReopen,
     isHighlighted = false,
     className = "",
 }: GoalCardProps) {
@@ -62,53 +81,23 @@ export function GoalCard({
     const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
     const [showExpenses, setShowExpenses] = useState<boolean>(true);
 
-    // Big-Ticket Goal Financial Highlights
+    const isDone = goal.status === "achieved" || !plan;
+    const status: CardStatus = isDone ? "done" : plan.status;
+    const statusConfig = STATUS_CONFIG[status];
+
     const targetAmount = Math.max(0, goal.target_amount);
-    const totalSaved = Math.max(0, goal.saved_so_far);
-    const goalSpend =
-        Math.round(linkedExpenses.reduce((sum, e) => sum + e.amount, 0) * 100) /
-        100;
-    const balance = Math.max(
-        0,
-        Math.round((totalSaved - goalSpend) * 100) / 100,
+    const goalSpend = round2(
+        linkedExpenses.reduce((sum, e) => sum + e.amount, 0),
     );
-
-    const progressPercent =
-        targetAmount > 0
-            ? Math.min(100, Math.round((totalSaved / targetAmount) * 100))
-            : 0;
-
-    const pacing = calculateGoalPacing(
-        targetAmount,
-        totalSaved,
-        goal.target_date,
-        depositedThisMonth,
-        undefined,
-        depositedLastMonth,
-    );
-
-    const effectiveStatus = pacing.status;
-    const isAchieved = effectiveStatus === "achieved";
-    const isBehind = effectiveStatus === "behind";
-
-    // Status configuration
-    const statusConfig = {
-        achieved: {
-            label: "Achieved",
-            variant: "ok" as BadgeVariant,
-        },
-        on_track: {
-            label: "On Track",
-            variant: "ok" as BadgeVariant,
-        },
-        behind: {
-            label: "Behind",
-            variant: "near" as BadgeVariant,
-        },
-    }[effectiveStatus];
-
-    // Remaining amount to deposit this month (includes any carried shortfall)
-    const monthlyShortfall = pacing.shortfallThisMonth;
+    const coveredToday = plan?.fundedToday ?? 0;
+    const leftToFill = plan
+        ? round2(Math.max(0, plan.stillNeeded - coveredToday))
+        : 0;
+    const progressPercent = isDone
+        ? 100
+        : Math.round((plan?.progress ?? 0) * 100);
+    const isShort = status === "short";
+    const monthsLeft = plan?.monthsLeft ?? 0;
 
     return (
         <div
@@ -158,11 +147,13 @@ export function GoalCard({
                                     strokeWidth={2.5}
                                 />
                                 <span className="truncate">
-                                    {isAchieved
-                                        ? "Target reached"
-                                        : pacing.monthsRemaining === 1
-                                          ? "1 mo left"
-                                          : `${pacing.monthsRemaining} mos left`}
+                                    {isDone
+                                        ? "Done"
+                                        : status === "overdue"
+                                          ? "Date passed"
+                                          : monthsLeft === 1
+                                            ? "1 mo left"
+                                            : `${monthsLeft} mos left`}
                                 </span>
                             </div>
                         </div>
@@ -171,6 +162,14 @@ export function GoalCard({
                     <Badge
                         variant={statusConfig.variant}
                         size="sm"
+                        icon={
+                            status === "on_track" ? (
+                                <TrendingUp
+                                    className="h-3 w-3 shrink-0"
+                                    strokeWidth={2.5}
+                                />
+                            ) : undefined
+                        }
                         className="shrink-0"
                     >
                         {statusConfig.label}
@@ -183,7 +182,7 @@ export function GoalCard({
                         value={progressPercent}
                         size={56}
                         strokeWidth={5}
-                        tone={isAchieved ? "ok" : isBehind ? "near" : "ok"}
+                        tone={isShort ? "over" : "ok"}
                         centerContent={
                             <span className="text-xs font-black font-mono-num text-(--text-ink)">
                                 {progressPercent}%
@@ -192,18 +191,46 @@ export function GoalCard({
                     />
                     <div className="min-w-0 flex-1">
                         <span className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                            Total Saved
+                            {isDone ? "Target" : "Left to Fill"}
                         </span>
                         <div className="flex flex-wrap items-baseline gap-x-1.5 font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
-                            <span title={mask(formatSGD(totalSaved))}>
-                                <CurrencyText amount={totalSaved} />
+                            <span
+                                title={mask(
+                                    formatSGD(
+                                        isDone ? targetAmount : leftToFill,
+                                    ),
+                                )}
+                            >
+                                <CurrencyText
+                                    amount={isDone ? targetAmount : leftToFill}
+                                />
                             </span>
-                            <span className="text-xs font-bold text-(--text-muted)">
-                                of <CurrencyText amount={targetAmount} />
-                            </span>
+                            {!isDone && (
+                                <span className="text-xs font-bold text-(--text-muted)">
+                                    of <CurrencyText amount={targetAmount} />
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
+
+                {status === "overdue" && onMarkDone && (
+                    <Alert
+                        variant="warning"
+                        className="mt-3"
+                        action={
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onMarkDone(goal)}
+                            >
+                                Mark Done
+                            </Button>
+                        }
+                    >
+                        Paid for? Mark it done.
+                    </Alert>
+                )}
 
                 {/* Collapsible Breakdown: 2x2 grid and pacing */}
                 <div className="mt-3 border-t border-(--border-subtle) pt-2">
@@ -250,14 +277,14 @@ export function GoalCard({
 
                                 <div>
                                     <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                                        Total Saved
+                                        Covered Today
                                     </span>
                                     <span
                                         className="text-emerald-700 dark:text-emerald-400 font-bold mt-0.5 block truncate"
-                                        title={mask(formatSGD(totalSaved))}
+                                        title={mask(formatSGD(coveredToday))}
                                     >
                                         <CurrencyText
-                                            amount={totalSaved}
+                                            amount={coveredToday}
                                             size="md"
                                         />
                                     </span>
@@ -280,65 +307,26 @@ export function GoalCard({
 
                                 <div>
                                     <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
-                                        Balance
+                                        Pace
                                     </span>
                                     <span
-                                        className="text-(--text-ink) font-bold mt-0.5 block truncate"
-                                        title={mask(formatSGD(balance))}
-                                    >
-                                        <CurrencyText
-                                            amount={balance}
-                                            size="md"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Monthly Pacing Details */}
-                            <div className="space-y-1 text-xs border-t border-(--border-subtle) pt-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-(--text-muted)">
-                                        Deposited This Month:
-                                    </span>
-                                    <span className="font-semibold text-(--text-ink)">
-                                        <CurrencyText
-                                            amount={depositedThisMonth}
-                                        />
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-(--text-muted)">
-                                        Required Pace:
-                                    </span>
-                                    <span className="font-semibold text-(--text-ink)">
-                                        {isAchieved
-                                            ? "Target Met"
-                                            : mask(
-                                                  `${formatSGD(pacing.neededPerMonth)}/mo needed`,
-                                              )}
-                                    </span>
-                                </div>
-
-                                {!isAchieved && monthlyShortfall > 0 && (
-                                    <div
-                                        className={`mt-1.5 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
-                                            isBehind
-                                                ? "bg-amber-50/80 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
-                                                : "bg-(--bg-canvas) text-(--text-muted)"
+                                        className={`font-bold mt-0.5 block truncate ${
+                                            isShort
+                                                ? "text-rose-600 dark:text-rose-400"
+                                                : "text-(--text-ink)"
                                         }`}
                                     >
-                                        {isBehind && (
-                                            <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                                        )}
-                                        <span>
-                                            +{" "}
-                                            <CurrencyText
-                                                amount={monthlyShortfall}
-                                            />{" "}
-                                            more needed this month
-                                        </span>
-                                    </div>
-                                )}
+                                        {isDone
+                                            ? "Done"
+                                            : isShort
+                                              ? mask(
+                                                    `Short ${formatSGD(Math.ceil(plan?.shortPerMonth ?? 0), { showCents: false })}/mo`,
+                                                )
+                                              : plan?.fillMonth
+                                                ? `Fills ${formatShortMonth(plan.fillMonth)}`
+                                                : "Covered"}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -417,19 +405,34 @@ export function GoalCard({
                     <span>Spend</span>
                 </button>
 
-                {/* Deposit Button */}
-                <button
-                    type="button"
-                    onClick={() => onQuickDeposit?.(goal)}
-                    aria-label={`Deposit to ${goal.title}`}
-                    className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
-                >
-                    <Coins
-                        className="h-3.5 w-3.5 text-emerald-800 shrink-0"
-                        strokeWidth={2.5}
-                    />
-                    <span>Deposit</span>
-                </button>
+                {/* Done / Reopen Button */}
+                {isDone ? (
+                    <button
+                        type="button"
+                        onClick={() => onReopen?.(goal)}
+                        aria-label={`Reopen ${goal.title}`}
+                        className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
+                    >
+                        <RotateCcw
+                            className="h-3.5 w-3.5 shrink-0"
+                            strokeWidth={2.5}
+                        />
+                        <span>Reopen</span>
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => onMarkDone?.(goal)}
+                        aria-label={`Mark ${goal.title} done`}
+                        className="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink) px-3 py-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-mint) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer whitespace-nowrap"
+                    >
+                        <CheckCircle2
+                            className="h-3.5 w-3.5 text-emerald-800 shrink-0"
+                            strokeWidth={2.5}
+                        />
+                        <span>Done</span>
+                    </button>
+                )}
 
                 {/* Edit Button (Icon-only) */}
                 <button

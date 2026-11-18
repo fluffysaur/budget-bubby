@@ -44,9 +44,6 @@ export function useQuestActions(onDone?: () => void) {
                 case "balances":
                     navigate?.("/accounts");
                     break;
-                case "goal":
-                    navigate?.("/goals");
-                    break;
                 case "cards":
                     navigate?.("/accounts");
                     break;

@@ -4,7 +4,19 @@
  * the server-side send-reminders bundle can use it too.
  */
 
-import { getCurrentMonth, formatISODate, formatMonth } from "../dateUtils";
+import {
+    getCurrentMonth,
+    formatISODate,
+    formatMonth,
+    getTodayDateString,
+} from "../dateUtils";
+import {
+    baselineMonths,
+    buildRoadmapInput,
+    computeBaseline,
+    goalStatusChanges,
+    type GoalStatusChange,
+} from "../roadmap";
 import {
     checkBubbyReminder,
     checkInboxReminder,
@@ -22,8 +34,13 @@ import {
     type AppReminder,
 } from "./rules";
 import type {
+    AccountSnapshot,
+    CreditCardStatement,
+    Expense,
     InboxSummary,
     NotificationPreferences,
+    RecurringItem,
+    SavingsGoal,
 } from "../../types/finance";
 import type { FinanceService } from "../../services/financeService";
 
@@ -42,7 +59,15 @@ export type ReminderDataSource = Pick<
     | "getDailyCheckins"
     | "getMonthlyBudget"
 > &
-    Partial<Pick<FinanceService, "getInboxSummary">>;
+    Partial<
+        Pick<
+            FinanceService,
+            | "getInboxSummary"
+            | "getAccounts"
+            | "getCategories"
+            | "getMonthlyBudgetHistory"
+        >
+    >;
 
 const NO_INBOX: InboxSummary = {
     available: false,
@@ -61,6 +86,61 @@ async function safeInboxSummary(
         return await source.getInboxSummary(memberId);
     } catch {
         return NO_INBOX;
+    }
+}
+
+/**
+ * Roadmap goals whose status changed at the latest balance update. Needs the
+ * household's accounts, categories and budget history; without them (or on
+ * any error) there are no status alerts.
+ */
+async function safeGoalStatusChanges(
+    source: ReminderDataSource,
+    data: {
+        today: string;
+        snapshots: AccountSnapshot[];
+        statements: CreditCardStatement[];
+        goals: SavingsGoal[];
+        expenses: Expense[];
+        recurringItems: RecurringItem[];
+    },
+): Promise<GoalStatusChange[]> {
+    if (
+        !source.getAccounts ||
+        !source.getCategories ||
+        !source.getMonthlyBudgetHistory
+    ) {
+        return [];
+    }
+    try {
+        const [accounts, categories, rows, householdSnapshots] =
+            await Promise.all([
+                source.getAccounts("household"),
+                source.getCategories(),
+                source.getMonthlyBudgetHistory(baselineMonths(data.today)),
+                source.getAllAccountSnapshots("household"),
+            ]);
+        const baseline = computeBaseline({
+            today: data.today,
+            rows,
+            categories,
+            expenses: data.expenses,
+            recurringItems: data.recurringItems,
+        });
+        const snapshots =
+            householdSnapshots.length > 0 ? householdSnapshots : data.snapshots;
+        const input = buildRoadmapInput({
+            today: data.today,
+            accounts,
+            snapshots,
+            statements: data.statements,
+            goals: data.goals,
+            expenses: data.expenses,
+            monthlySavings: baseline.monthlySavings,
+        });
+        return goalStatusChanges(input, accounts, snapshots, data.statements);
+    } catch {
+        return [];
     }
 }
 
@@ -260,7 +340,15 @@ export async function computeRemindersFrom(
     }
 
     if (prefs.goal_pacing_alerts) {
-        candidates.push(...checkGoalPacingReminders(goals, referenceDate));
+        const changes = await safeGoalStatusChanges(source, {
+            today: todayStr ?? getTodayDateString(),
+            snapshots,
+            statements,
+            goals,
+            expenses,
+            recurringItems,
+        });
+        candidates.push(...checkGoalPacingReminders(goals, changes));
     }
 
     if (prefs.monthly_budget_review) {

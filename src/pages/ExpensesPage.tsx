@@ -43,7 +43,6 @@ import {
     useInvalidateFinance,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
-    useDepositGoalMutation,
 } from "../hooks/useFinanceQueries";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
@@ -69,10 +68,6 @@ import { ExpenseTrendsCard } from "../components/expenses/ExpenseTrendsCard";
 import { SpendTagsOverviewCard } from "../components/expenses/SpendTagsOverviewCard";
 import { SettleUpHistory } from "../components/expenses/SettleUpHistory";
 import { MonthEndSweepBanner } from "../components/budget/MonthEndSweepBanner";
-import {
-    SurplusSweepModal,
-    type SurplusSweepAllocation,
-} from "../components/budget/SurplusSweepModal";
 import { BankSurplusModal } from "../components/budget/BankSurplusModal";
 import type { ExpenseFilter, SettleUp } from "../types/finance";
 import { CurrencyText } from "../components/ui/CurrencyText";
@@ -194,7 +189,6 @@ export function ExpensesPage({
     );
     const isLoading = expensesLoading && !expensesData;
 
-    const depositGoalMutation = useDepositGoalMutation();
     const { data: settleUpsData } = useSettleUpsQuery();
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isBulkAddOpen, setIsBulkAddOpen] = useState<boolean>(false);
@@ -203,8 +197,7 @@ export function ExpensesPage({
         string[] | undefined
     >(undefined);
 
-    // Month-end Sweep Modal State
-    const [isSweepModalOpen, setIsSweepModalOpen] = useState<boolean>(false);
+    // Month-end surplus state
     const [sweepMonth, setSweepMonth] = useState<string>("");
     const [sweepAmount, setSweepAmount] = useState<number>(0);
     const [isBankSurplusModalOpen, setIsBankSurplusModalOpen] =
@@ -218,12 +211,6 @@ export function ExpensesPage({
             return null;
         }
     });
-
-    const handleOpenSweep = (month: string, amount: number) => {
-        setSweepMonth(month);
-        setSweepAmount(amount);
-        setIsSweepModalOpen(true);
-    };
 
     const handleOpenBankSurplus = (month: string, amount: number) => {
         setSweepMonth(month);
@@ -241,24 +228,6 @@ export function ExpensesPage({
     };
 
     const handleConfirmBankSurplus = () => {
-        if (sweepMonth) {
-            handleDismissSweep(sweepMonth);
-        }
-    };
-
-    const handleSweepComplete = async (
-        allocations: SurplusSweepAllocation[],
-    ) => {
-        for (const alloc of allocations) {
-            const targetGoal = goals.find((g) => g.id === alloc.goalId);
-            if (targetGoal) {
-                await depositGoalMutation.mutateAsync({
-                    goalId: targetGoal.id,
-                    amount: alloc.amount,
-                    source: "sweep",
-                });
-            }
-        }
         if (sweepMonth) {
             handleDismissSweep(sweepMonth);
         }
@@ -625,12 +594,6 @@ export function ExpensesPage({
                 <MonthEndSweepBanner
                     month={unspentSurplusInfo.lastMonth}
                     surplusAmount={unspentSurplusInfo.surplusAmount}
-                    onSweepClick={() =>
-                        handleOpenSweep(
-                            unspentSurplusInfo.lastMonth,
-                            unspentSurplusInfo.surplusAmount,
-                        )
-                    }
                     onBankSurplusClick={() =>
                         handleOpenBankSurplus(
                             unspentSurplusInfo.lastMonth,
@@ -725,7 +688,7 @@ export function ExpensesPage({
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                handleOpenSweep(
+                                                handleOpenBankSurplus(
                                                     filter.month ||
                                                         unspentSurplusInfo.lastMonth,
                                                     spendablePacing.spendableRemaining,
@@ -734,7 +697,7 @@ export function ExpensesPage({
                                             className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 inline-flex items-center gap-1 cursor-pointer pt-0.5"
                                         >
                                             <span>
-                                                Sweep{" "}
+                                                Bank{" "}
                                                 <CurrencyText
                                                     amount={
                                                         spendablePacing.spendableRemaining
@@ -933,16 +896,6 @@ export function ExpensesPage({
                 categories={categories}
                 members={members}
                 goals={goals}
-            />
-
-            {/* Month-End Surplus Sweep to Goals Modal */}
-            <SurplusSweepModal
-                isOpen={isSweepModalOpen}
-                onClose={() => setIsSweepModalOpen(false)}
-                surplusAmount={sweepAmount}
-                month={sweepMonth}
-                goals={goals}
-                onSweepComplete={handleSweepComplete}
             />
 
             {/* Bank as Surplus Confirmation Modal */}

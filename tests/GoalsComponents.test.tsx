@@ -6,7 +6,13 @@
  * - GoalsPage
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    cleanup,
+} from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
@@ -16,7 +22,21 @@ import { GoalsPage } from "../src/pages/GoalsPage";
 import { financeService } from "../src/services/financeService";
 import { formatSGD } from "../src/lib/currency";
 import type { SavingsGoal } from "../src/types/finance";
-import { withText } from "./helpers/textContent";
+import { makePlan } from "./helpers/roadmapFixtures";
+
+const WEDDING_CARD = "goal-card-goal-wedding-01";
+const HDB_CARD = "goal-card-goal-hdb-02";
+const RENO_CARD = "goal-card-goal-reno-03";
+
+function renderGoalsPage() {
+    return render(
+        <MemoryRouter>
+            <HouseholdProvider>
+                <GoalsPage />
+            </HouseholdProvider>
+        </MemoryRouter>,
+    );
+}
 
 const sampleAchievedGoal: SavingsGoal = {
     id: "goal-wedding-01",
@@ -53,29 +73,54 @@ const sampleBehindGoal: SavingsGoal = {
     saved_so_far: 10000.0,
     target_date: "2027-09-01",
     emoji: "🔨",
-    status: "behind",
+    status: "on_track",
     created_at: "2026-01-01T00:00:00.000Z",
 };
 
 describe("GoalCard Component", () => {
-    it("renders emoji, title, target amount, total saved, and balance", () => {
-        render(<GoalCard goal={sampleOnTrackGoal} />);
-        fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
+    const hdbPlan = makePlan(
+        {
+            stillNeeded: 190000,
+            fundedToday: 100000,
+            progress: 100000 / 190000,
+            monthsLeft: 8,
+            fillMonth: "2027-05",
+        },
+        { id: sampleOnTrackGoal.id, title: "HDB Down Payment" },
+    );
+    const renoPlan = makePlan(
+        {
+            status: "short",
+            stillNeeded: 90000,
+            fundedToday: 10000,
+            progress: 10000 / 90000,
+            shortPerMonth: 919.2,
+            monthsLeft: 10,
+        },
+        { id: sampleBehindGoal.id, title: "Renovation Fund" },
+    );
 
-        // Emoji & Title
+    it("renders emoji, title, Left to Fill and the breakdown amounts", () => {
+        render(<GoalCard goal={sampleOnTrackGoal} plan={hdbPlan} />);
+
         expect(screen.getByText("🏠")).toBeInTheDocument();
         expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
 
-        // Target amount
-        expect(
-            screen.getAllByText(formatSGD(190000.0)).length,
-        ).toBeGreaterThanOrEqual(1);
-        // Total Saved & Balance (when goal spend is 0, balance = total saved)
-        const matchingAmounts = screen.getAllByText(formatSGD(100000.0));
-        expect(matchingAmounts.length).toBeGreaterThanOrEqual(2);
+        // Left to Fill = stillNeeded - fundedToday, "of <target>"
+        expect(screen.getByText("Left to Fill")).toBeInTheDocument();
+        expect(screen.getByText(formatSGD(90000))).toBeInTheDocument();
+        expect(screen.getByText(/^of/)).toHaveTextContent(formatSGD(190000.0));
+
+        fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
+        expect(screen.getByText("Target Amount")).toBeInTheDocument();
+        expect(screen.getByText("Covered Today")).toBeInTheDocument();
+        expect(screen.getByText(formatSGD(100000))).toBeInTheDocument();
+        expect(screen.getByText("Goal Spend")).toBeInTheDocument();
+        expect(screen.getByText("Pace")).toBeInTheDocument();
+        expect(screen.getByText("Fills May 2027")).toBeInTheDocument();
     });
 
-    it("calculates balance as total saved minus goal spend without deducting milestone progress", () => {
+    it("shows goal spend in the breakdown without changing Left to Fill", () => {
         const mockExpense = {
             id: "exp-goal-1",
             household_id: "hh-1",
@@ -93,129 +138,153 @@ describe("GoalCard Component", () => {
         render(
             <GoalCard
                 goal={sampleOnTrackGoal}
+                plan={hdbPlan}
                 linkedExpenses={[mockExpense]}
             />,
         );
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
-        // Target amount: 190,000
-        expect(
-            screen.getAllByText(formatSGD(190000.0)).length,
-        ).toBeGreaterThanOrEqual(1);
-        // Total saved remains 100,000
-        expect(
-            screen.getAllByText(formatSGD(100000.0)).length,
-        ).toBeGreaterThanOrEqual(1);
-        // Goal spend: 15,000 (appears in highlight card and linked expenses list)
+        // Goal spend: 15,000 (appears in the breakdown and linked expenses list)
         expect(screen.getAllByText(formatSGD(15000.0)).length).toBeGreaterThan(
             0,
         );
-        // Balance: 100,000 - 15,000 = 85,000
-        expect(screen.getByText(formatSGD(85000.0))).toBeInTheDocument();
-        // Milestone progress remains 100,000 / 190,000 = 53%
-        expect(screen.getByText("53%")).toBeInTheDocument();
+        expect(screen.getByText(formatSGD(90000))).toBeInTheDocument();
     });
 
-    it("renders accessible progress bar with calculated percentage", () => {
-        render(<GoalCard goal={sampleOnTrackGoal} />);
+    it("renders accessible progress bar with the plan's percentage", () => {
+        render(<GoalCard goal={sampleOnTrackGoal} plan={hdbPlan} />);
 
         // 100,000 / 190,000 = 52.6% -> 53%
         const progressBar = screen.getByRole("progressbar");
-        expect(progressBar).toBeInTheDocument();
         expect(progressBar).toHaveAttribute("aria-valuenow", "53");
         expect(screen.getByText("53%")).toBeInTheDocument();
     });
 
-    it("renders 100% progress for achieved goal", () => {
+    it("renders 100% progress and Target for a done goal", () => {
         render(<GoalCard goal={sampleAchievedGoal} />);
 
         const progressBar = screen.getByRole("progressbar");
         expect(progressBar).toHaveAttribute("aria-valuenow", "100");
         expect(screen.getByText("100%")).toBeInTheDocument();
+        expect(screen.getByText("Target")).toBeInTheDocument();
+        expect(screen.queryByText("Left to Fill")).not.toBeInTheDocument();
     });
 
-    it("renders status badges correctly: Achieved, On Track, Behind", () => {
+    it("renders status badges from the plan: Done, Covered, On Track, Short, Paid for?", () => {
         const { rerender } = render(<GoalCard goal={sampleAchievedGoal} />);
-        expect(screen.getByText(/Achieved/i)).toBeInTheDocument();
+        expect(screen.getAllByText("Done").length).toBeGreaterThanOrEqual(1);
 
-        // Deposits this month cover the required pace
         rerender(
-            <GoalCard goal={sampleOnTrackGoal} depositedThisMonth={20000} />,
+            <GoalCard
+                goal={sampleOnTrackGoal}
+                plan={makePlan({ status: "funded" })}
+            />,
         );
-        expect(screen.getByText(/On Track/i)).toBeInTheDocument();
+        expect(screen.getByText("Covered")).toBeInTheDocument();
 
-        rerender(<GoalCard goal={sampleBehindGoal} depositedLastMonth={0} />);
-        expect(screen.getByText(/Behind/i)).toBeInTheDocument();
+        rerender(<GoalCard goal={sampleOnTrackGoal} plan={hdbPlan} />);
+        expect(screen.getByText("On Track")).toBeInTheDocument();
+
+        rerender(<GoalCard goal={sampleBehindGoal} plan={renoPlan} />);
+        expect(screen.getByText("Short")).toBeInTheDocument();
+
+        rerender(
+            <GoalCard
+                goal={sampleBehindGoal}
+                plan={makePlan({ status: "overdue", monthsLeft: 0 })}
+            />,
+        );
+        expect(screen.getByText("Paid for?")).toBeInTheDocument();
     });
 
-    it("shows deposited this month vs required pace in the breakdown", () => {
-        render(
-            <GoalCard goal={sampleOnTrackGoal} depositedThisMonth={20000} />,
-        );
+    it("shows the rounded-up monthly shortfall in the Pace cell when short", () => {
+        render(<GoalCard goal={sampleBehindGoal} plan={renoPlan} />);
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
-        expect(screen.getByText(/Deposited This Month/i)).toBeInTheDocument();
-        expect(
-            screen.getAllByText(withText(/S\$20,000\.00/)).length,
-        ).toBeGreaterThanOrEqual(1);
-        expect(screen.getByText(/Required Pace/i)).toBeInTheDocument();
-        expect(screen.queryByText(/more needed this month/i)).toBeNull();
+        expect(screen.getByText("Short S$920/mo")).toBeInTheDocument();
     });
 
-    it("shows a neutral hint, not Behind, while this month is still open", () => {
-        render(<GoalCard goal={sampleBehindGoal} />);
-        expect(screen.queryByText(/Behind/i)).toBeNull();
-        expect(screen.getByText(/On Track/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
-        expect(screen.getByText(/more needed this month/i)).toBeInTheDocument();
-    });
-
-    it("shows the remaining shortfall this month when behind", () => {
+    it("prompts to mark an overdue goal done", () => {
+        const onMarkDone = vi.fn();
         render(
             <GoalCard
                 goal={sampleBehindGoal}
-                depositedThisMonth={1000}
-                depositedLastMonth={0}
+                plan={makePlan({ status: "overdue", monthsLeft: 0 })}
+                onMarkDone={onMarkDone}
             />,
         );
-        fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
-        expect(screen.getByText(/Behind/i)).toBeInTheDocument();
-        expect(screen.getByText(/more needed this month/i)).toBeInTheDocument();
+        expect(screen.getByText(/Paid for\? Mark it done\./)).toBeVisible();
+        expect(screen.getByText("Date passed")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Mark Done" }));
+        expect(onMarkDone).toHaveBeenCalledWith(sampleBehindGoal);
     });
 
     it("displays target date and remaining months countdown", () => {
-        render(<GoalCard goal={sampleOnTrackGoal} />);
+        render(<GoalCard goal={sampleOnTrackGoal} plan={hdbPlan} />);
 
-        // Target date rendered
         expect(screen.getByText(/2027/)).toBeInTheDocument();
-        // Countdown text
-        expect(screen.getByText(/mos left/i)).toBeInTheDocument();
+        expect(screen.getByText("8 mos left")).toBeInTheDocument();
+
+        cleanup();
+        render(
+            <GoalCard
+                goal={sampleOnTrackGoal}
+                plan={makePlan({ monthsLeft: 1 })}
+            />,
+        );
+        expect(screen.getByText("1 mo left")).toBeInTheDocument();
     });
 
-    it("fires onEdit and onQuickDeposit callbacks when action buttons are clicked", () => {
-        const onEditMock = vi.fn();
-        const onQuickDepositMock = vi.fn();
+    it("fires onEdit, onSpendFromGoal and onMarkDone callbacks", () => {
+        const onEdit = vi.fn();
+        const onSpend = vi.fn();
+        const onMarkDone = vi.fn();
 
         render(
             <GoalCard
                 goal={sampleOnTrackGoal}
-                onEdit={onEditMock}
-                onQuickDeposit={onQuickDepositMock}
+                plan={hdbPlan}
+                onEdit={onEdit}
+                onSpendFromGoal={onSpend}
+                onMarkDone={onMarkDone}
             />,
         );
 
-        const editBtn = screen.getByRole("button", {
-            name: /edit hdb down payment/i,
-        });
-        fireEvent.click(editBtn);
-        expect(onEditMock).toHaveBeenCalledTimes(1);
-        expect(onEditMock).toHaveBeenCalledWith(sampleOnTrackGoal);
+        fireEvent.click(
+            screen.getByRole("button", { name: /edit hdb down payment/i }),
+        );
+        expect(onEdit).toHaveBeenCalledWith(sampleOnTrackGoal);
 
-        const depositBtn = screen.getByRole("button", { name: /deposit/i });
-        fireEvent.click(depositBtn);
-        expect(onQuickDepositMock).toHaveBeenCalledTimes(1);
-        expect(onQuickDepositMock).toHaveBeenCalledWith(sampleOnTrackGoal);
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "+ Spend from HDB Down Payment",
+            }),
+        );
+        expect(onSpend).toHaveBeenCalledWith(sampleOnTrackGoal);
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "Mark HDB Down Payment done",
+            }),
+        );
+        expect(onMarkDone).toHaveBeenCalledWith(sampleOnTrackGoal);
+        expect(
+            screen.queryByRole("button", { name: /deposit/i }),
+        ).not.toBeInTheDocument();
+    });
+
+    it("offers Reopen instead of Done for a done goal", () => {
+        const onReopen = vi.fn();
+        render(<GoalCard goal={sampleAchievedGoal} onReopen={onReopen} />);
+
+        expect(
+            screen.queryByRole("button", { name: /Mark Wedding Fund done/ }),
+        ).not.toBeInTheDocument();
+        fireEvent.click(
+            screen.getByRole("button", { name: "Reopen Wedding Fund" }),
+        );
+        expect(onReopen).toHaveBeenCalledWith(sampleAchievedGoal);
     });
 });
 
@@ -291,9 +360,7 @@ describe("AddEditGoalModal Component", () => {
         fireEvent.change(screen.getByLabelText(/^Target \*/i), {
             target: { value: "30000" },
         });
-        fireEvent.change(screen.getByLabelText(/Saved/i), {
-            target: { value: "5000" },
-        });
+        expect(screen.queryByLabelText(/Saved/i)).toBeNull();
         fireEvent.change(screen.getByLabelText(/Target Date/i), {
             target: { value: "2028-12-31" },
         });
@@ -308,8 +375,10 @@ describe("AddEditGoalModal Component", () => {
                 expect.objectContaining({
                     title: "Baby Fund",
                     target_amount: 30000,
-                    saved_so_far: 5000,
                 }),
+            );
+            expect(addGoalSpy.mock.calls[0][0]).not.toHaveProperty(
+                "saved_so_far",
             );
             expect(onGoalSavedMock).toHaveBeenCalledTimes(1);
             expect(onCloseMock).toHaveBeenCalledTimes(1);
@@ -392,70 +461,48 @@ describe("GoalsPage Integration", () => {
         vi.spyOn(financeService, "getGoals").mockResolvedValue(mockGoals);
     });
 
-    it("loads goals and renders 4 summary metric cards", async () => {
-        render(
-            <MemoryRouter>
-                <HouseholdProvider>
-                    <GoalsPage />
-                </HouseholdProvider>
-            </MemoryRouter>,
-        );
+    it("loads goals and renders the roadmap card instead of summary stat cards", async () => {
+        renderGoalsPage();
 
-        // Wait for data load
         await waitFor(() => {
-            expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
+            expect(screen.getByTestId("roadmap-card")).toBeInTheDocument();
         });
-
-        // Metric 1: Total Target = 55,000 + 190,000 + 90,000 = 335,000
-        expect(screen.getByText(formatSGD(335000))).toBeInTheDocument();
-
-        // Metric 2: Total Saved = 55,000 + 100,000 + 10,000 = 165,000
-        expect(screen.getByText(formatSGD(165000))).toBeInTheDocument();
-
-        // Metric 3: Overall Progress = 165,000 / 335,000 = 49.25% -> 49%
-        expect(screen.getByText(/49%/)).toBeInTheDocument();
-
-        // Metric 4: total required pace across active goals, with deposits subtitle
-        expect(screen.getByText("Monthly Pace")).toBeInTheDocument();
-        expect(screen.getByText(/\/mo$/)).toBeInTheDocument();
-        expect(screen.getByText(/deposited$/)).toBeInTheDocument();
+        expect(screen.getByTestId("roadmap-verdict")).toBeInTheDocument();
+        expect(
+            screen.getByTestId(`goal-card-${sampleOnTrackGoal.id}`),
+        ).toBeInTheDocument();
+        expect(screen.queryByText("Monthly Pace")).not.toBeInTheDocument();
+        expect(screen.queryByText("Total Saved")).not.toBeInTheDocument();
     });
 
-    it("filters goals using All Goals, In Progress, and Achieved tabs", async () => {
-        render(
-            <MemoryRouter>
-                <HouseholdProvider>
-                    <GoalsPage />
-                </HouseholdProvider>
-            </MemoryRouter>,
-        );
+    it("filters goals using All, Active and Done tabs", async () => {
+        renderGoalsPage();
 
         await waitFor(() => {
-            expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
+            expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
         });
 
         // All 3 goals visible
-        expect(screen.getByText("Wedding Fund")).toBeInTheDocument();
-        expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
-        expect(screen.getByText("Renovation Fund")).toBeInTheDocument();
+        expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
+        expect(screen.getByTestId(RENO_CARD)).toBeInTheDocument();
 
         // Click "Active" tab
         const inProgressTab = screen.getByRole("tab", { name: /Active/i });
         fireEvent.click(inProgressTab);
 
         // Wedding (achieved) should be hidden; HDB and Reno visible
-        expect(screen.queryByText("Wedding Fund")).not.toBeInTheDocument();
-        expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
-        expect(screen.getByText("Renovation Fund")).toBeInTheDocument();
+        expect(screen.queryByTestId(WEDDING_CARD)).not.toBeInTheDocument();
+        expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
+        expect(screen.getByTestId(RENO_CARD)).toBeInTheDocument();
 
         // Click "Done" tab
         const achievedTab = screen.getByRole("tab", { name: /Done/i });
         fireEvent.click(achievedTab);
 
         // Wedding visible; HDB and Reno hidden
-        expect(screen.getByText("Wedding Fund")).toBeInTheDocument();
-        expect(screen.queryByText("HDB Down Payment")).not.toBeInTheDocument();
-        expect(screen.queryByText("Renovation Fund")).not.toBeInTheDocument();
+        expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
+        expect(screen.queryByTestId(HDB_CARD)).not.toBeInTheDocument();
+        expect(screen.queryByTestId(RENO_CARD)).not.toBeInTheDocument();
     });
 
     it('opens AddEditGoalModal when "+ New Goal" button is clicked and refreshes upon creation', async () => {
@@ -467,7 +514,7 @@ describe("GoalsPage Integration", () => {
                 owner_id: null,
                 title: "Japan Trip",
                 target_amount: 8000,
-                saved_so_far: 2000,
+                saved_so_far: 0,
                 target_date: "2027-11-01",
                 emoji: "✈️",
                 status: "on_track",
@@ -484,7 +531,7 @@ describe("GoalsPage Integration", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
+            expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
         });
 
         // Click "+ New Goal"
@@ -516,55 +563,56 @@ describe("GoalsPage Integration", () => {
         addSpy.mockRestore();
     });
 
-    it("handles quick deposit action to increment saved_so_far", async () => {
+    it("marks a goal done after confirmation", async () => {
         const updateSpy = vi
-            .spyOn(financeService, "depositToGoal")
+            .spyOn(financeService, "updateGoal")
             .mockResolvedValueOnce({
                 ...sampleOnTrackGoal,
-                saved_so_far: 105000,
+                status: "achieved",
             });
-        const getGoalsSpy = vi.spyOn(financeService, "getGoals");
+        renderGoalsPage();
 
-        render(
-            <MemoryRouter>
-                <HouseholdProvider>
-                    <GoalsPage />
-                </HouseholdProvider>
-            </MemoryRouter>,
+        await waitFor(() => {
+            expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
+        });
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "Mark HDB Down Payment done",
+            }),
+        );
+
+        expect(await screen.findByText("Mark Done?")).toBeInTheDocument();
+        expect(updateSpy).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole("button", { name: "Mark Done" }));
+
+        await waitFor(() => {
+            expect(updateSpy).toHaveBeenCalledWith(sampleOnTrackGoal.id, {
+                status: "achieved",
+            });
+        });
+    });
+
+    it("reopens a done goal as on_track", async () => {
+        const updateSpy = vi
+            .spyOn(financeService, "updateGoal")
+            .mockResolvedValueOnce({
+                ...sampleAchievedGoal,
+                status: "on_track",
+            });
+        renderGoalsPage();
+
+        await waitFor(() => {
+            expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
+        });
+        fireEvent.click(
+            screen.getByRole("button", { name: "Reopen Wedding Fund" }),
         );
 
         await waitFor(() => {
-            expect(screen.getByText("HDB Down Payment")).toBeInTheDocument();
+            expect(updateSpy).toHaveBeenCalledWith(sampleAchievedGoal.id, {
+                status: "on_track",
+            });
         });
-
-        // Find the quick deposit button for HDB Down Payment
-        const depositBtn = screen.getByRole("button", {
-            name: /deposit to hdb down payment/i,
-        });
-        fireEvent.click(depositBtn);
-
-        // Quick Deposit dialog opens
-        expect(
-            screen.getByRole("heading", { name: /Quick Deposit/i }),
-        ).toBeInTheDocument();
-
-        // Enter deposit amount
-        const amountInput = screen.getByLabelText(/Amount/i);
-        fireEvent.change(amountInput, { target: { value: "5000" } });
-
-        // Confirm deposit
-        fireEvent.click(screen.getByRole("button", { name: /^Deposit$/i }));
-
-        await waitFor(() => {
-            expect(updateSpy).toHaveBeenCalledWith(
-                sampleOnTrackGoal.id,
-                5000,
-                "quick_deposit",
-            );
-            expect(getGoalsSpy).toHaveBeenCalledTimes(2);
-        });
-
-        updateSpy.mockRestore();
     });
 
     it("renders empty state when no goals exist", async () => {
@@ -579,11 +627,11 @@ describe("GoalsPage Integration", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText(/No Goals/i)).toBeInTheDocument();
+            expect(screen.getAllByText(/No Goals/i).length).toBeGreaterThan(0);
         });
 
         expect(
-            screen.getByRole("button", { name: /Add Goal/i }),
-        ).toBeInTheDocument();
+            screen.getAllByRole("button", { name: /Add Goal/i }).length,
+        ).toBeGreaterThan(0);
     });
 });

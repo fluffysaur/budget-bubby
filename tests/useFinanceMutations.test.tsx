@@ -156,7 +156,6 @@ describe("Issue #38: Domain Save Mutations", () => {
                 result.current.mutate({
                     title: "Emergency Fund",
                     target_amount: 10000,
-                    saved_so_far: 0,
                     target_date: "2027-12-31",
                     emoji: "🛡️",
                 });
