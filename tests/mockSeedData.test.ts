@@ -91,8 +91,8 @@ describe("mockSeedData", () => {
         expect(mockAccountSnapshots).toHaveLength(mockAccounts.length);
     });
 
-    it("contains 5 shared goals with correct status", () => {
-        expect(mockSavingsGoals).toHaveLength(5);
+    it("contains 6 shared goals with correct status", () => {
+        expect(mockSavingsGoals).toHaveLength(6);
         const goalTitles = mockSavingsGoals.map((g) => g.title);
         expect(goalTitles).toEqual([
             "Wedding",
@@ -100,7 +100,11 @@ describe("mockSeedData", () => {
             "HDB Down Payment",
             "Renovation",
             "Baby Fund",
+            "Buffer",
         ]);
+        expect(
+            mockSavingsGoals.filter((g) => g.goal_type === "buffer"),
+        ).toHaveLength(1);
 
         const wedding = mockSavingsGoals.find((g) => g.title === "Wedding");
         expect(wedding?.status).toBe("on_track");

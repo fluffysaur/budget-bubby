@@ -7,6 +7,7 @@ import { addMonths } from "../dateUtils";
 import { lifeEventsFromRecurring } from "./lifeEvents";
 import { computeCpfOa } from "./cpf";
 import { computePool } from "./pool";
+import { haircutFromHousehold, isBufferGoal } from "./goalSettings";
 import type { BaselineResult } from "./baseline";
 import type {
     Account,
@@ -14,6 +15,7 @@ import type {
     BonusEvent,
     CreditCardStatement,
     Expense,
+    Household,
     RecurringItem,
     SavingsGoal,
 } from "../../types/finance";
@@ -53,6 +55,7 @@ export function toRoadmapGoals(
             g.cpf_oa_cap != null && Number.isFinite(Number(g.cpf_oa_cap))
                 ? Number(g.cpf_oa_cap)
                 : null,
+        isBuffer: isBufferGoal(g),
     }));
 }
 
@@ -99,6 +102,11 @@ export interface BuildRoadmapInputOptions {
     coveredThrough?: string;
     /** Overrides the live pool (e.g. the pool at an earlier update). */
     pool?: RoadmapPool;
+    /** Household haircut settings; defaults (20%, 24 months) when missing. */
+    household?: Pick<
+        Household,
+        "investment_haircut_pct" | "investment_haircut_months"
+    > | null;
 }
 
 export function buildRoadmapInput({
@@ -113,8 +121,10 @@ export function buildRoadmapInput({
     recurringItems = [],
     coveredThrough,
     pool,
+    household,
 }: BuildRoadmapInputOptions): RoadmapInput {
     return {
+        ...haircutFromHousehold(household),
         today,
         pool: pool ?? computePool(accounts, snapshots, statements, today),
         monthlySavings,

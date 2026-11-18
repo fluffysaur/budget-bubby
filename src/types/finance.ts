@@ -9,8 +9,18 @@ export interface Household {
     id: string;
     name: string;
     currency: string;
+    /** Investment discount (0-100) for goals due inside the haircut window. Default 20. */
+    investment_haircut_pct?: number;
+    /** Goals due within this many months get the haircut. Default 24. */
+    investment_haircut_months?: number;
     created_at?: string;
 }
+
+/** Household-level Roadmap settings that can be edited. */
+export type HouseholdSettingsInput = Pick<
+    Household,
+    "investment_haircut_pct" | "investment_haircut_months"
+>;
 
 export interface HouseholdMember {
     id: string;
@@ -396,8 +406,16 @@ export interface SavingsGoal {
     use_cpf_oa?: boolean;
     /** Most OA this goal may use; null means no cap. */
     cpf_oa_cap?: number | null;
+    /** Free-form labels; they set the default emoji only and carry no rules. */
+    tags?: string[];
+    /** "buffer" is the household emergency buffer: one per household, funded first. */
+    goal_type?: GoalType;
+    /** Buffer only: target = this many months (1-24) of average spending. */
+    buffer_months?: number | null;
     created_at?: string;
 }
+
+export type GoalType = "standard" | "buffer";
 
 export interface CreateGoalInput {
     household_id?: string;
@@ -408,6 +426,9 @@ export interface CreateGoalInput {
     emoji?: string;
     use_cpf_oa?: boolean;
     cpf_oa_cap?: number | null;
+    tags?: string[];
+    goal_type?: GoalType;
+    buffer_months?: number | null;
 }
 
 export type RecurringItemType =

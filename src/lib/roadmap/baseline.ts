@@ -41,7 +41,13 @@ export interface BaselineResult {
     source: BaselineSource;
     /** Months averaged (actual) or the budget month used (estimate). */
     months: string[];
-    perMonth: Array<{ month: string; savings: number }>;
+    perMonth: Array<{ month: string; savings: number; spent: number }>;
+    /**
+     * Average household spendable spend a month (logged months in the
+     * window), or the budgeted spending cap before any are logged. Sizes
+     * the buffer goal.
+     */
+    averageMonthlySpend: number;
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -180,8 +186,15 @@ export function computeBaseline({
             return {
                 month: m,
                 savings: round2(savings + spendableCap - spent),
+                spent: round2(spent),
             };
         });
+    const loggedSpend =
+        perMonth.length > 0
+            ? round2(
+                  perMonth.reduce((s, p) => s + p.spent, 0) / perMonth.length,
+              )
+            : null;
 
     if (perMonth.length >= BASELINE_MIN_MONTHS) {
         const total = perMonth.reduce((s, p) => s + p.savings, 0);
@@ -190,6 +203,7 @@ export function computeBaseline({
             source: "actual",
             months: perMonth.map((p) => p.month),
             perMonth,
+            averageMonthlySpend: loggedSpend ?? 0,
         };
     }
 
@@ -198,9 +212,15 @@ export function computeBaseline({
         .sort()
         .pop();
     if (!budgetMonth) {
-        return { monthlySavings: 0, source: "none", months: [], perMonth };
+        return {
+            monthlySavings: 0,
+            source: "none",
+            months: [],
+            perMonth,
+            averageMonthlySpend: loggedSpend ?? 0,
+        };
     }
-    const { savings } = budgetedFor(
+    const { savings, spendableCap } = budgetedFor(
         memberRowsFor(rows, budgetMonth),
         categoryById,
     );
@@ -209,5 +229,6 @@ export function computeBaseline({
         source: "estimate",
         months: [budgetMonth],
         perMonth,
+        averageMonthlySpend: loggedSpend ?? round2(spendableCap),
     };
 }

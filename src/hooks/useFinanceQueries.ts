@@ -17,6 +17,8 @@ import { isOnline } from "../services/offlineSyncQueue";
 import { combineMonthlyBudgets } from "../lib/combineMonthlyBudgets";
 import { generateUuid } from "../lib/uuid";
 import type {
+    Household,
+    HouseholdSettingsInput,
     Perspective,
     ExpenseFilter,
     HouseholdOverview,
@@ -713,6 +715,19 @@ export function useAddGoalMutation() {
 /**
  * Optimistic mutation for updating goals (quick deposits, goal edits, etc.).
  */
+/** Saves household Roadmap settings (investment haircut %, window). */
+export function useUpdateHouseholdSettingsMutation() {
+    const queryClient = useSafeQueryClient();
+    return useMutation<Household, Error, HouseholdSettingsInput>({
+        mutationFn: (settings) =>
+            financeService.updateHouseholdSettings(settings),
+        onSuccess: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.householdOverview,
+            }),
+    });
+}
+
 export function useUpdateGoalMutation() {
     const queryClient = useSafeQueryClient();
     const { invalidateGoals } = useInvalidateFinance();

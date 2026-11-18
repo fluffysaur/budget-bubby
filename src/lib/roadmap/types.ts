@@ -23,6 +23,8 @@ export interface RoadmapGoalInput {
     useCpfOa?: boolean;
     /** Most OA this goal may use; null or undefined means no cap. */
     cpfOaCap?: number | null;
+    /** The household buffer: always first in the funding order. */
+    isBuffer?: boolean;
 }
 
 /** Household CPF OA (all members combined). Never part of the pool. */

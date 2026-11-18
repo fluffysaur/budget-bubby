@@ -303,9 +303,9 @@ describe("AddEditGoalModal Component", () => {
             screen.getByRole("heading", { name: /New Savings Goal/i }),
         ).toBeInTheDocument();
 
-        // Label-only templates
+        // Suggested tags (label and emoji only)
         const templates = within(
-            screen.getByRole("group", { name: "Goal templates" }),
+            screen.getByRole("group", { name: "Suggested tags" }),
         ).getAllByRole("button");
         expect(templates.map((b) => b.getAttribute("aria-label"))).toEqual([
             "Wedding",
@@ -330,6 +330,107 @@ describe("AddEditGoalModal Component", () => {
             "aria-pressed",
             "true",
         );
+    });
+
+    it("adds free-form tags and removes them", async () => {
+        const addGoalSpy = vi
+            .spyOn(financeService, "addGoal")
+            .mockResolvedValueOnce({ ...sampleOnTrackGoal, id: "g-tags" });
+        render(<AddEditGoalModal isOpen={true} onClose={() => {}} />);
+
+        const tagInput = screen.getByLabelText("Add tag");
+        fireEvent.change(tagInput, { target: { value: "BTO flat" } });
+        fireEvent.keyDown(tagInput, { key: "Enter" });
+        fireEvent.change(tagInput, { target: { value: "bto FLAT" } });
+        fireEvent.keyDown(tagInput, { key: "Enter" });
+        fireEvent.change(tagInput, { target: { value: "Reno" } });
+        fireEvent.keyDown(tagInput, { key: "Enter" });
+        fireEvent.click(screen.getByRole("button", { name: "Remove Reno" }));
+        fireEvent.click(screen.getByRole("button", { name: "Housing" }));
+
+        fireEvent.change(screen.getByLabelText(/^Target \*/i), {
+            target: { value: "50000" },
+        });
+        fireEvent.click(screen.getByRole("button", { name: /Create/i }));
+
+        await waitFor(() =>
+            expect(addGoalSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: "Housing",
+                    emoji: "🏠",
+                    tags: ["BTO flat", "Housing"],
+                }),
+            ),
+        );
+        addGoalSpy.mockRestore();
+    });
+
+    it("creates a buffer sized from average spending", async () => {
+        const addGoalSpy = vi
+            .spyOn(financeService, "addGoal")
+            .mockResolvedValueOnce({ ...sampleOnTrackGoal, id: "g-buf" });
+        render(
+            <AddEditGoalModal
+                isOpen={true}
+                onClose={() => {}}
+                averageMonthlySpend={2500}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole("radio", { name: /Buffer/ }));
+        expect(screen.getByLabelText(/Goal Title/i)).toHaveValue("Buffer");
+        expect(screen.getByLabelText(/^Target \*/i)).toHaveValue(15000);
+        expect(screen.queryByLabelText("Add tag")).toBeNull();
+        expect(screen.queryByText("Use CPF OA")).toBeNull();
+
+        fireEvent.change(screen.getByLabelText(/Months of spending/i), {
+            target: { value: "3" },
+        });
+        expect(screen.getByLabelText(/^Target \*/i)).toHaveValue(7500);
+        fireEvent.click(screen.getByRole("button", { name: /Create/i }));
+
+        await waitFor(() =>
+            expect(addGoalSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    goal_type: "buffer",
+                    buffer_months: 3,
+                    target_amount: 7500,
+                    tags: [],
+                    use_cpf_oa: false,
+                }),
+            ),
+        );
+        addGoalSpy.mockRestore();
+    });
+
+    it("hides the buffer type once the household has one", () => {
+        render(
+            <AddEditGoalModal isOpen={true} onClose={() => {}} hasBufferGoal />,
+        );
+        expect(
+            screen.queryByRole("radiogroup", { name: "Goal type" }),
+        ).toBeNull();
+    });
+
+    it("refreshes a buffer target from today's average", () => {
+        render(
+            <AddEditGoalModal
+                isOpen={true}
+                onClose={() => {}}
+                averageMonthlySpend={3000}
+                goal={{
+                    ...sampleOnTrackGoal,
+                    title: "Buffer",
+                    goal_type: "buffer",
+                    buffer_months: 4,
+                    target_amount: 8000,
+                }}
+            />,
+        );
+        const target = screen.getByLabelText(/^Target \*/i);
+        expect(target).toHaveValue(8000);
+        fireEvent.click(screen.getByRole("button", { name: /Refresh target/ }));
+        expect(target).toHaveValue(12000);
     });
 
     it("validates required fields before submitting", async () => {
@@ -390,6 +491,8 @@ describe("AddEditGoalModal Component", () => {
                     emoji: "👶",
                     title: "Baby Fund",
                     target_amount: 30000,
+                    tags: ["Child"],
+                    goal_type: "standard",
                 }),
             );
             expect(addGoalSpy.mock.calls[0][0]).not.toHaveProperty(

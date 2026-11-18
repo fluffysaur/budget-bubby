@@ -20,7 +20,9 @@ import type {
     CreateRecurringItemInput,
     Expense,
     ExpenseFilter,
+    Household,
     HouseholdOverview,
+    HouseholdSettingsInput,
     MonthlyBudget,
     MonthlyBudgetDetail,
     MonthlyBudgetHistoryRow,
@@ -56,6 +58,9 @@ import { isDayLogged } from "../lib/logging/dayLogged";
 
 export interface FinanceService extends InboxService {
     getHouseholdOverview(): Promise<HouseholdOverview>;
+    updateHouseholdSettings(
+        settings: HouseholdSettingsInput,
+    ): Promise<Household>;
     getAccounts(perspective: Perspective): Promise<Account[]>;
     createAccount(input: CreateAccountInput): Promise<Account>;
     updateAccount(id: string, updates: UpdateAccountInput): Promise<Account>;
@@ -258,6 +263,11 @@ function invalidateFinanceCache() {
 
 export const financeService: FinanceService = {
     getHouseholdOverview: () => getActiveService().getHouseholdOverview(),
+    updateHouseholdSettings: async (settings) => {
+        const res = await getActiveService().updateHouseholdSettings(settings);
+        invalidateFinanceCache();
+        return res;
+    },
     getAccounts: (perspective) => getActiveService().getAccounts(perspective),
     createAccount: async (input) => {
         const res = await getActiveService().createAccount(input);

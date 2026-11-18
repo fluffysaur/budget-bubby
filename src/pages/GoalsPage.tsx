@@ -448,6 +448,10 @@ export function GoalsPage({
                 goal={editingGoal}
                 onGoalSaved={handleGoalSaved}
                 householdId={overview?.household.id}
+                averageMonthlySpend={roadmap.baseline.averageMonthlySpend}
+                hasBufferGoal={goals.some(
+                    (g) => g.goal_type === "buffer" && g.id !== editingGoal?.id,
+                )}
             />
 
             {/* Mark Done confirmation */}

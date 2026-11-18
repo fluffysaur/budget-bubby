@@ -156,6 +156,31 @@ export function GoalCard({
                                             : `${monthsLeft} mos left`}
                                 </span>
                             </div>
+                            {(goal.goal_type === "buffer" ||
+                                (goal.tags?.length ?? 0) > 0) && (
+                                <div
+                                    className="mt-1.5 flex flex-wrap gap-1 min-w-0"
+                                    aria-label="Goal tags"
+                                >
+                                    {goal.goal_type === "buffer" && (
+                                        <Badge variant="mint" size="sm">
+                                            {goal.buffer_months
+                                                ? `Buffer · ${goal.buffer_months} mo`
+                                                : "Buffer"}
+                                        </Badge>
+                                    )}
+                                    {goal.tags?.map((tag) => (
+                                        <Badge
+                                            key={tag}
+                                            variant="lilac"
+                                            size="sm"
+                                            className="max-w-32"
+                                        >
+                                            <TruncatedText text={tag} />
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -53,6 +53,7 @@ function state(history: HistoryPoint[]): RoadmapState {
             source: "actual",
             months: [],
             perMonth: [],
+            averageMonthlySpend: 0,
         },
         tradeOffs: [],
         byGoalId: new Map(),
