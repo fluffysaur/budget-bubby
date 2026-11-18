@@ -5,7 +5,7 @@
  * chip) reads this one result.
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     useAccountSnapshotsQuery,
     useAccountsQuery,
@@ -59,6 +59,17 @@ const EMPTY_RECURRING: RecurringItem[] = [];
 const EMPTY_ROWS: MonthlyBudgetHistoryRow[] = [];
 const EMPTY_BONUSES: BonusEvent[] = [];
 
+const INCLUDE_BONUSES_STORAGE_KEY = "budget_bubby_roadmap_include_bonuses_v1";
+
+function getStoredIncludeBonuses(): boolean {
+    if (typeof window === "undefined" || !window.localStorage) return false;
+    try {
+        return window.localStorage.getItem(INCLUDE_BONUSES_STORAGE_KEY) === "1";
+    } catch {
+        return false;
+    }
+}
+
 export interface RoadmapState {
     isLoading: boolean;
     input: RoadmapInput;
@@ -73,9 +84,31 @@ export interface RoadmapState {
     projection: ProjectionPoint[];
     /** Actual pool growth vs the plan's savings. */
     reality: RealityCheck;
+    /** Whether average bonuses over the last 12 months are included in the plan. */
+    includeBonuses: boolean;
+    /** Whether there are bonuses in the last 12 months to toggle. */
+    hasBonuses: boolean;
+    toggleIncludeBonuses: () => void;
 }
 
 export function useRoadmap(): RoadmapState {
+    const [includeBonuses, setIncludeBonuses] = useState<boolean>(
+        getStoredIncludeBonuses,
+    );
+    const toggleIncludeBonuses = useCallback(() => {
+        setIncludeBonuses((prev) => {
+            const next = !prev;
+            try {
+                window.localStorage.setItem(
+                    INCLUDE_BONUSES_STORAGE_KEY,
+                    next ? "1" : "0",
+                );
+            } catch {
+                // Ignore storage errors
+            }
+            return next;
+        });
+    }, []);
     const today = getTodayDateString();
     const months = useMemo(() => baselineMonths(today), [today]);
 
@@ -115,7 +148,7 @@ export function useRoadmap(): RoadmapState {
         [today, rows, categories, expenses, recurringItems],
     );
 
-    const input = useMemo(
+    const baseInput = useMemo(
         () =>
             buildRoadmapInput({
                 today,
@@ -142,6 +175,18 @@ export function useRoadmap(): RoadmapState {
         ],
     );
 
+    const hasBonuses = (baseInput.typicalAnnualBonus ?? 0) > 0;
+    const input = useMemo(() => {
+        if (!includeBonuses || !hasBonuses) return baseInput;
+        return {
+            ...baseInput,
+            monthlySavings:
+                baseInput.monthlySavings +
+                Math.max(0, baseInput.typicalAnnualBonus ?? 0) / 12,
+            typicalAnnualBonus: 0,
+        };
+    }, [baseInput, includeBonuses, hasBonuses]);
+
     const result = useMemo(() => projectRoadmap(input), [input]);
     const tradeOffs = useMemo(() => suggestTradeOffs(input), [input]);
     const byGoalId = useMemo(
@@ -159,10 +204,10 @@ export function useRoadmap(): RoadmapState {
             realityCheck({
                 history,
                 expenses,
-                bonusEvents,
-                planPerMonth: baseline.monthlySavings,
+                bonusEvents: includeBonuses ? EMPTY_BONUSES : bonusEvents,
+                planPerMonth: input.monthlySavings,
             }),
-        [history, expenses, bonusEvents, baseline.monthlySavings],
+        [history, expenses, bonusEvents, includeBonuses, input.monthlySavings],
     );
 
     return {
@@ -175,5 +220,8 @@ export function useRoadmap(): RoadmapState {
         history,
         projection,
         reality,
+        includeBonuses,
+        hasBonuses,
+        toggleIncludeBonuses,
     };
 }

@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { Plus, Route, TrendingUp, TriangleAlert } from "lucide-react";
+import { Info, Plus, Route, TrendingUp, TriangleAlert } from "lucide-react";
 import { formatSGD, formatSGDCompact } from "../../lib/currency";
 import {
     daysBetweenISO,
@@ -70,9 +70,15 @@ function previewText(g: RoadmapGoalResult, mask: (t: string) => string) {
         : "Covered ✓";
 }
 
-/** "Balances grew S$X/mo", warning when it is 20%+ off the plan. */
+/** "Balances grew S$X/mo", colored + signed % when 20%+ off the plan. */
 function RealityLine({ reality }: { reality: RealityCheck }) {
     const fell = reality.grewPerMonth < 0;
+    const isBelow = reality.differs && reality.direction === "below";
+    const isAbove = reality.differs && reality.direction === "above";
+    const deltaLabel =
+        reality.differs && reality.deltaPct !== 0
+            ? ` (${reality.deltaPct > 0 ? `+${reality.deltaPct}` : reality.deltaPct}%)`
+            : "";
     const amount = (
         <CurrencyText
             formatted={formatSGD(Math.abs(Math.round(reality.grewPerMonth)), {
@@ -84,33 +90,29 @@ function RealityLine({ reality }: { reality: RealityCheck }) {
         <span
             data-testid="roadmap-reality"
             className={`inline-flex basis-full items-center gap-1 font-mono-num ${
-                reality.differs
+                isBelow
                     ? "font-bold text-amber-700 dark:text-amber-400"
-                    : ""
+                    : isAbove
+                      ? "font-bold text-emerald-700 dark:text-emerald-400"
+                      : ""
             }`}
         >
-            {reality.differs && (
+            {isBelow && (
                 <TriangleAlert
                     aria-hidden="true"
                     className="h-3.5 w-3.5 shrink-0"
                     strokeWidth={2.5}
                 />
             )}
+            {isAbove && (
+                <Info
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 shrink-0"
+                    strokeWidth={2.5}
+                />
+            )}
             <span>
-                Balances {fell ? "fell" : "grew"} {amount}/mo
-                {reality.differs && (
-                    <>
-                        {" "}
-                        vs budget{" "}
-                        <CurrencyText
-                            formatted={formatSGD(
-                                Math.round(reality.planPerMonth),
-                                { showCents: false },
-                            )}
-                        />
-                        /mo
-                    </>
-                )}
+                Balances {fell ? "fell" : "grew"} {amount}/mo{deltaLabel}
             </span>
         </span>
     );
@@ -218,6 +220,20 @@ export function RoadmapCard({
                             />
                             /mo
                         </span>
+                        {(roadmap.hasBonuses || roadmap.includeBonuses) && (
+                            <button
+                                type="button"
+                                aria-pressed={roadmap.includeBonuses}
+                                onClick={roadmap.toggleIncludeBonuses}
+                                className={`inline-flex min-h-7 cursor-pointer items-center rounded-lg border px-2 py-0.5 text-[11px] font-bold transition-colors ${
+                                    roadmap.includeBonuses
+                                        ? "border-(--border-ink) bg-(--pastel-mint-light) text-(--text-ink)"
+                                        : "border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
+                                }`}
+                            >
+                                Include bonuses
+                            </button>
+                        )}
                         {reality.status === "ok" && (
                             <RealityLine reality={reality} />
                         )}
@@ -254,8 +270,8 @@ export function RoadmapCard({
                             </dt>
                             <dd>
                                 {baseline.source === "actual"
-                                    ? `Your average over ${baseline.months.length} months, without bonuses.`
-                                    : "Your budgeted savings, until you have 3 months of history."}
+                                    ? `Your average over ${baseline.months.length} months${roadmap.includeBonuses ? ", with bonuses" : ", without bonuses"}.`
+                                    : `Your budgeted savings${roadmap.includeBonuses ? " plus average bonuses" : ""}, until you have 3 months of history.`}
                             </dd>
                         </div>
                         <div>
@@ -281,7 +297,10 @@ export function RoadmapCard({
                                 <dd>
                                     Your actual growth over{" "}
                                     {reality.monthsUsed.length} months, leaving
-                                    out months with goal spending or a bonus.
+                                    out months with goal spending
+                                    {roadmap.includeBonuses
+                                        ? "."
+                                        : " or a bonus."}
                                 </dd>
                             </div>
                         )}

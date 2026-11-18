@@ -283,19 +283,38 @@ describe("realityCheck", () => {
     });
 
     it("warns when growth is more than 20% off the plan", () => {
-        const r = realityCheck({
+        const below = realityCheck({
             history,
             expenses: [expense("2026-09-10", 5000, "wedding")],
             planPerMonth: 3000,
         });
-        expect(r.differs).toBe(true);
+        expect(below).toMatchObject({
+            differs: true,
+            direction: "below",
+            deltaPct: -33,
+        });
+
+        const above = realityCheck({
+            history,
+            expenses: [expense("2026-09-10", 5000, "wedding")],
+            planPerMonth: 1000,
+        });
+        expect(above).toMatchObject({
+            differs: true,
+            direction: "above",
+            deltaPct: 100,
+        });
+
         expect(
             realityCheck({
                 history,
                 expenses: [expense("2026-09-10", 5000, "wedding")],
                 planPerMonth: 2400,
-            }).differs,
-        ).toBe(false);
+            }),
+        ).toMatchObject({
+            differs: false,
+            direction: "match",
+        });
     });
 });
 

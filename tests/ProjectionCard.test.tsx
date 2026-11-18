@@ -59,6 +59,9 @@ function state(history: HistoryPoint[]): RoadmapState {
         history,
         projection: projectPool(input),
         reality: realityCheck({ history, expenses: [], planPerMonth: 2000 }),
+        includeBonuses: false,
+        hasBonuses: false,
+        toggleIncludeBonuses: () => {},
     };
 }
 

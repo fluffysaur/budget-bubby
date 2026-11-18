@@ -78,6 +78,7 @@ export function poolHistory(
 }
 
 export type RealityStatus = "locked" | "no_months" | "ok";
+export type RealityDirection = "above" | "below" | "match";
 
 export interface RealityCheck {
     status: RealityStatus;
@@ -91,6 +92,10 @@ export interface RealityCheck {
     monthsUsed: string[];
     /** Growth differs from the plan by more than ~20%. */
     differs: boolean;
+    /** Direction when `differs` is true; "match" otherwise. */
+    direction: RealityDirection;
+    /** Percentage difference vs plan (rounded integer, e.g. 25 or -33). */
+    deltaPct: number;
 }
 
 export interface RealityCheckInput {
@@ -113,6 +118,8 @@ export function realityCheck({
         planPerMonth: round2(planPerMonth),
         monthsUsed: [] as string[],
         differs: false,
+        direction: "match" as RealityDirection,
+        deltaPct: 0,
     };
     if (updateMonths < REALITY_MIN_MONTHS) return { ...base, status: "locked" };
 
@@ -134,14 +141,29 @@ export function realityCheck({
     const grewPerMonth = round2(
         deltas.reduce((s, d) => s + d.delta, 0) / deltas.length,
     );
+    const differs =
+        Math.abs(grewPerMonth - planPerMonth) >
+        REALITY_WARN_RATIO * Math.abs(planPerMonth);
+    const direction: RealityDirection = !differs
+        ? "match"
+        : grewPerMonth > planPerMonth
+          ? "above"
+          : "below";
+    const deltaPct =
+        Math.abs(planPerMonth) > 0
+            ? Math.round(
+                  ((grewPerMonth - planPerMonth) / Math.abs(planPerMonth)) *
+                      100,
+              )
+            : 0;
     return {
         ...base,
         status: "ok",
         grewPerMonth,
         monthsUsed: deltas.map((d) => d.month),
-        differs:
-            Math.abs(grewPerMonth - planPerMonth) >
-            REALITY_WARN_RATIO * Math.abs(planPerMonth),
+        differs,
+        direction,
+        deltaPct,
     };
 }
 
