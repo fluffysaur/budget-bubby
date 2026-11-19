@@ -3,9 +3,30 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
+import { execSync } from "child_process";
+import pkg from "./package.json";
+
+function resolveGitSha(): string {
+    const vercelSha = process.env.VERCEL_GIT_COMMIT_SHA;
+    if (vercelSha) {
+        return vercelSha.slice(0, 7);
+    }
+    try {
+        return execSync("git rev-parse --short HEAD", {
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+        }).trim();
+    } catch {
+        return "dev";
+    }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
+    define: {
+        __APP_VERSION__: JSON.stringify(pkg.version),
+        __GIT_SHA__: JSON.stringify(resolveGitSha()),
+    },
     plugins: [
         react(),
         tailwindcss(),

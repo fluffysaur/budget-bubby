@@ -1441,6 +1441,9 @@ describe("Notifications Engine", () => {
             expect(
                 await screen.findByRole("heading", { name: "Settings" }),
             ).toBeInTheDocument();
+            expect(screen.getByTestId("app-version-label")).toHaveTextContent(
+                /^v\d+\.\d+\.\d+ \(test\)$/,
+            );
             expect(screen.getByText("Push Notifications")).toBeInTheDocument();
             expect(
                 screen.getByRole("heading", { name: "Sound Effects" }),
