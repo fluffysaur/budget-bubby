@@ -2,13 +2,13 @@ import { test, expect } from "@playwright/test";
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test.describe("Onboarding guide", () => {
-    test("shows on first launch, can be reopened from BubbySheet, and grants a snack on checklist completion", async ({
+test.describe("Onboarding guide & Bubby egg hatching", () => {
+    test("shows Welcome Guide on first launch, then lets user hatch Bubby via Starter Quests to unlock regular quests and Fish snack", async ({
         page,
     }) => {
         await page.goto("/");
 
-        // First launch shows Welcome Guide modal
+        // 1. First launch opens the 4-step Welcome Guide modal
         const dialog = page.getByRole("dialog");
         await expect(
             dialog.getByRole("heading", { name: "Welcome Guide" }),
@@ -17,7 +17,6 @@ test.describe("Onboarding guide", () => {
             dialog.getByRole("heading", { name: "Budget" }),
         ).toBeVisible();
 
-        // Step through Spend & Inbox, Plan, Meet Bubby, and Starter Tasks
         await dialog.getByRole("button", { name: /Next/i }).click();
         await expect(
             dialog.getByRole("heading", { name: "Spend & Inbox" }),
@@ -33,59 +32,72 @@ test.describe("Onboarding guide", () => {
             dialog.getByRole("heading", { name: "Meet Bubby" }),
         ).toBeVisible();
 
-        await dialog.getByRole("button", { name: /Next/i }).click();
-        const checklist = dialog.getByRole("list", {
-            name: "Onboarding checklist",
-        });
-        await expect(checklist).toBeVisible();
+        // Clicking "Let's Start!" closes the guide and opens BubbySheet with Starter Quests
+        await dialog.getByRole("button", { name: "Let's Start!" }).click();
+        const bubbySheet = page.getByRole("dialog");
+        await expect(
+            bubbySheet.getByRole("heading", { name: "Bubby" }),
+        ).toBeVisible();
+        await expect(
+            bubbySheet.getByRole("list", { name: "Starter quests" }),
+        ).toBeVisible();
+        await expect(
+            bubbySheet.getByRole("list", { name: "Today's quests" }),
+        ).not.toBeVisible();
 
-        // Dismiss and verify reload does not re-open automatically
-        await dialog.getByRole("button", { name: "Done" }).click();
-        await expect(dialog).not.toBeVisible();
-
+        // Reload does not re-open Welcome Guide automatically
         await page.reload();
         await expect(
             page.getByRole("dialog", { name: /Welcome Guide/i }),
         ).not.toBeVisible();
 
-        // Reopen on demand via BubbySheet -> Guide
-        await page.getByTestId("bubby-avatar").click();
-        const bubbySheet = page.getByRole("dialog");
-        await expect(
-            bubbySheet.getByRole("heading", { name: "Bubby" }),
-        ).toBeVisible();
-        await bubbySheet.getByRole("button", { name: "Guide" }).click();
+        // 2. Header shows unhatched Bubby egg
+        const avatar = page.getByTestId("bubby-avatar");
+        await expect(avatar).toHaveAttribute("data-hatched", "false");
 
+        // 3. Reopen Welcome Guide on demand via BubbySheet -> Guide
+        await avatar.click();
+        const reopenedSheet = page.getByRole("dialog");
+        await reopenedSheet.getByRole("button", { name: "Guide" }).click();
         const guide = page.getByRole("dialog");
         await expect(
             guide.getByRole("heading", { name: "Welcome Guide" }),
         ).toBeVisible();
+        await guide.getByRole("button", { name: /Next/i }).click();
+        await guide.getByRole("button", { name: /Next/i }).click();
+        await guide.getByRole("button", { name: /Next/i }).click();
+        await guide.getByRole("button", { name: "Let's Start!" }).click();
 
-        // Jump to Starter Tasks (Bubby task is already auto-completed by opening BubbySheet)
-        await guide.getByRole("button", { name: /5\. Tasks/i }).click();
-        const checkboxes = guide
-            .getByRole("list", { name: "Onboarding checklist" })
-            .getByRole("checkbox");
-        const count = await checkboxes.count();
-        for (let i = 0; i < count; i++) {
-            const cb = checkboxes.nth(i);
-            if ((await cb.getAttribute("aria-checked")) !== "true") {
-                await cb.click();
-            }
-        }
+        // 4. Hatch Bubby via the fullscreen 3-tap interactive hatch stage
+        const eggSheet = page.getByRole("dialog");
+        const hatchBtn = eggSheet.getByTestId("hatch-bubby-btn");
+        await expect(hatchBtn).toBeVisible();
+        await hatchBtn.click();
+
+        const hatchStage = page.getByTestId("hatch-stage");
+        const eggTarget = hatchStage.getByTestId("hatch-egg-target");
+        await expect(eggTarget).toBeVisible();
+        await eggTarget.click();
+        await eggTarget.click();
+        await eggTarget.click();
 
         await expect(
-            guide.getByTestId("onboarding-reward-banner"),
+            hatchStage.getByRole("heading", { name: "Bubby Hatched!" }),
         ).toBeVisible();
-        await guide.getByRole("button", { name: "Done" }).click();
+        await hatchStage.getByTestId("meet-bubby-btn").click();
 
-        // Snack appears in BubbySheet's Snacks section
-        await page.getByTestId("bubby-avatar").click();
+        // 5. Regular quests unlock, Fish snack is awarded, and partner remains an egg
         const sheetAfter = page.getByRole("dialog");
+        await expect(sheetAfter.getByTestId("bubby-penguin")).toHaveCount(1);
+        await expect(sheetAfter.getByTestId("bubby-egg-card")).toHaveCount(1);
         await expect(
-            sheetAfter.getByRole("region", { name: "Snacks" }).getByRole("listitem", {
-                name: "Fish",
-            }),
+            sheetAfter.getByRole("list", { name: "Today's quests" }),
         ).toBeVisible();
+        await expect(
+            sheetAfter
+                .getByRole("region", { name: "Snacks" })
+                .getByRole("listitem", { name: "Fish" }),
+        ).toBeVisible();
+        await expect(avatar).toHaveAttribute("data-hatched", "true");
     });
 });

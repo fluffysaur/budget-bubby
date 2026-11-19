@@ -124,3 +124,129 @@ describe("BubbySheet GrowTips header placement", () => {
         expect(closeButton.parentElement).toContainElement(trigger);
     });
 });
+
+describe("BubbySheet unhatched egg & Starter Quests", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("shows unhatched egg and Starter Quests instead of daily/weekly quests", () => {
+        mockUseBubby.mockReturnValue({
+            ...makeBubbyState([makePenguin("m1", "Alex", true)]),
+            hatched: false,
+            onboardingQuests: [
+                {
+                    id: "budget",
+                    label: "Set up Budget",
+                    description: "Set take-home flow and category caps",
+                    done: true,
+                },
+                {
+                    id: "account",
+                    label: "Add an Account",
+                    description: "Track a bank account or balance",
+                    done: false,
+                },
+                {
+                    id: "expense",
+                    label: "Log First Expense",
+                    description: "Add a spend item or check in",
+                    done: false,
+                },
+                {
+                    id: "plan",
+                    label: "Explore Plan",
+                    description: "Check goals, bills, and card statements",
+                    done: false,
+                },
+            ],
+            hatch: vi.fn(),
+        });
+
+        render(<BubbySheet isOpen onClose={vi.fn()} />);
+
+        expect(screen.getByTestId("bubby-egg")).toHaveAttribute(
+            "data-stage",
+            "1",
+        );
+        expect(
+            screen.getByRole("list", { name: "Starter quests" }),
+        ).toBeInTheDocument();
+        expect(screen.getByText("1/4")).toBeInTheDocument();
+        expect(screen.queryByTestId("hatch-bubby-btn")).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("list", { name: "Today's quests" }),
+        ).not.toBeInTheDocument();
+    });
+
+    it("opens interactive tap-to-crack HatchStage and calls hatch on the 3rd tap", () => {
+        const hatch = vi.fn();
+        mockUseBubby.mockReturnValue({
+            ...makeBubbyState([
+                { ...makePenguin("m1", "Alex", true), hatched: false },
+                { ...makePenguin("m2", "Sam", false), hatched: false },
+            ]),
+            hatched: false,
+            onboardingQuests: [
+                {
+                    id: "budget",
+                    label: "Set up Budget",
+                    description: "Set your take-home flow and category caps",
+                    done: true,
+                },
+                {
+                    id: "account",
+                    label: "Add an Account",
+                    description: "Track your bank account or balance",
+                    done: true,
+                },
+                {
+                    id: "expense",
+                    label: "Log First Expense",
+                    description: "Add a spend item or check in",
+                    done: true,
+                },
+                {
+                    id: "plan",
+                    label: "Explore Plan",
+                    description: "Check goals, bills, and card statements",
+                    done: true,
+                },
+            ],
+            hatch,
+        });
+
+        render(<BubbySheet isOpen onClose={vi.fn()} />);
+
+        expect(screen.getAllByTestId("bubby-egg-card")).toHaveLength(2);
+        fireEvent.click(screen.getByTestId("hatch-bubby-btn"));
+
+        // Tap-to-crack spotlight appears; 3 taps crack it open
+        const eggTarget = screen.getByTestId("hatch-egg-target");
+        fireEvent.click(eggTarget);
+        expect(hatch).not.toHaveBeenCalled();
+        fireEvent.click(eggTarget);
+        expect(hatch).not.toHaveBeenCalled();
+        fireEvent.click(eggTarget);
+        expect(hatch).toHaveBeenCalledTimes(1);
+        expect(
+            screen.getByRole("heading", { name: "Bubby Hatched!" }),
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("meet-bubby-btn")).toBeInTheDocument();
+    });
+
+    it("renders my hatched penguin alongside my partner's unhatched egg", () => {
+        mockUseBubby.mockReturnValue({
+            ...makeBubbyState([
+                { ...makePenguin("m1", "Alex", true), hatched: true },
+                { ...makePenguin("m2", "Sam", false), hatched: false },
+            ]),
+            hatched: true,
+        });
+
+        render(<BubbySheet isOpen onClose={vi.fn()} />);
+
+        expect(screen.getAllByTestId("bubby-penguin")).toHaveLength(1);
+        expect(screen.getAllByTestId("bubby-egg-card")).toHaveLength(1);
+    });
+});

@@ -304,6 +304,10 @@ describe("Header Bubby", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
         localStorage.clear();
+        localStorage.setItem(
+            "bb_onboarding_v1",
+            JSON.stringify({ seen: true, hatched: true }),
+        );
         vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);
         vi.spyOn(financeService, "getAllAccountSnapshots").mockResolvedValue(
             [],
@@ -340,6 +344,7 @@ describe("Header Bubby", () => {
             ).toHaveAttribute("data-fed", "true"),
         );
         expect(button.textContent ?? "").not.toMatch(/\d/);
+        expect(screen.queryByTestId("bubby-pair")).not.toBeInTheDocument();
 
         const opened = vi.fn();
         const off = onAppEvent("bubby:open-sheet", opened);

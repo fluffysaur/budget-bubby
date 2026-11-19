@@ -61,6 +61,7 @@ export interface FinanceService extends InboxService {
     updateHouseholdSettings(
         settings: HouseholdSettingsInput,
     ): Promise<Household>;
+    hatchMemberBubby(memberId: string): Promise<string>;
     getAccounts(perspective: Perspective): Promise<Account[]>;
     createAccount(input: CreateAccountInput): Promise<Account>;
     updateAccount(id: string, updates: UpdateAccountInput): Promise<Account>;
@@ -267,6 +268,11 @@ export const financeService: FinanceService = {
         const res = await getActiveService().updateHouseholdSettings(settings);
         invalidateFinanceCache();
         return res;
+    },
+    hatchMemberBubby: async (memberId) => {
+        const ts = await getActiveService().hatchMemberBubby(memberId);
+        invalidateFinanceCache();
+        return ts;
     },
     getAccounts: (perspective) => getActiveService().getAccounts(perspective),
     createAccount: async (input) => {

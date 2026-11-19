@@ -30,6 +30,7 @@ export interface HouseholdMember {
     email?: string | null;
     role: "owner" | "member";
     avatar_url?: string | null;
+    bubby_hatched_at?: string | null;
     created_at?: string;
 }
 

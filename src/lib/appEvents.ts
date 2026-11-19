@@ -67,6 +67,8 @@ export interface AppEventMap {
     "bubby:open-sheet": Record<string, never>;
     /** Open the onboarding guide modal on demand. */
     "onboarding:open": Record<string, never>;
+    /** Local onboarding state (guide seen, starter tasks, egg hatch) changed. */
+    "onboarding:changed": Record<string, never>;
     /** Local Bubby state (petting, exercise, snacks) changed on this device. */
     "bubby:store-changed": Record<string, never>;
     "delight:milestone": MilestoneDetail;

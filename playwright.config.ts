@@ -21,7 +21,10 @@ export default defineConfig({
                     localStorage: [
                         {
                             name: "bb_onboarding_v1",
-                            value: JSON.stringify({ seen: true }),
+                            value: JSON.stringify({
+                                seen: true,
+                                hatched: true,
+                            }),
                         },
                     ],
                 },

@@ -62,10 +62,13 @@ import { DelightHost } from "./components/bubby/DelightHost";
 import { BubbyLoadingScreen } from "./components/bubby/BubbyLoadingScreen";
 import { emitAppEvent, onAppEvent } from "./lib/appEvents";
 import {
+    applyOnboardingDebugReset,
     completeOnboardingTask,
     isFirstLaunch,
+    isMemberBubbyHatched,
     markOnboardingSeen,
 } from "./lib/onboarding";
+import { useLoggedInMember } from "./hooks/useLoggedInMember";
 import type { Expense } from "./types/finance";
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -115,6 +118,7 @@ function AppLayoutInner() {
     const navigate = useNavigate();
     const navType = useNavigationType();
     const { refreshData, members } = useHousehold();
+    const { me } = useLoggedInMember();
     const scrollPositions = useRef<Map<string, number>>(new Map());
 
     // Track main scroller position
@@ -299,9 +303,10 @@ function AppLayoutInner() {
     }, []);
 
     // First-launch and on-demand onboarding guide
-    const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() =>
-        isFirstLaunch(),
-    );
+    const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+        applyOnboardingDebugReset();
+        return isFirstLaunch();
+    });
     const handleCloseOnboarding = useCallback(() => {
         markOnboardingSeen();
         setIsOnboardingOpen(false);
@@ -311,7 +316,8 @@ function AppLayoutInner() {
         [],
     );
 
-    // Auto-complete onboarding checklist items as user explores core flows
+    // Auto-complete visit-based starter quests per member as user explores Budget / Plan
+    const meId = me?.id;
     useEffect(() => {
         const path = location.pathname;
         const params = new URLSearchParams(location.search);
@@ -319,17 +325,13 @@ function AppLayoutInner() {
             path === "/budget" ||
             (path === "/spend" && params.get("tab") === "budget")
         ) {
-            completeOnboardingTask("budget");
-        } else if (
-            ["/spend", "/expenses", "/inbox", "/fast-log"].includes(path)
-        ) {
-            completeOnboardingTask("spend");
+            completeOnboardingTask("budget", meId);
         } else if (
             ["/plan", "/goals", "/loans", "/recurring"].includes(path)
         ) {
-            completeOnboardingTask("plan");
+            completeOnboardingTask("plan", meId);
         }
-    }, [location.pathname, location.search]);
+    }, [location.pathname, location.search, meId]);
 
     return (
         <div className="flex h-dvh bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
@@ -502,7 +504,7 @@ function AppLayoutInner() {
                 <OnboardingModal
                     isOpen={isOnboardingOpen}
                     onClose={handleCloseOnboarding}
-                    onNavigateTab={handleSelectTab}
+                    hatched={isMemberBubbyHatched(me?.id, me?.bubby_hatched_at)}
                 />
             </Suspense>
 

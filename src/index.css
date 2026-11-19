@@ -919,6 +919,115 @@ html.theme-transition *::after {
     animation: bubbyBlink 5s linear infinite;
 }
 
+/* Unhatched Bubby egg: gentle wobble when tapped or ready to hatch */
+.bubby-egg .bubby-egg-shell {
+    transform-box: view-box;
+    transform-origin: 256px 440px;
+}
+@keyframes eggWobble {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    20% {
+        transform: rotate(-7deg);
+    }
+    45% {
+        transform: rotate(7deg);
+    }
+    70% {
+        transform: rotate(-4deg);
+    }
+    85% {
+        transform: rotate(3deg);
+    }
+}
+.bubby-egg[data-wobble="true"] .bubby-egg-shell {
+    animation: eggWobble 0.9s var(--ease-out-soft) infinite;
+}
+
+/* Interactive tap-to-crack hatch spotlight animations (transform/opacity only) */
+@keyframes eggTapShake {
+    0%,
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+    20% {
+        transform: rotate(-12deg) scale(1.06, 0.95);
+    }
+    45% {
+        transform: rotate(12deg) scale(0.96, 1.05);
+    }
+    70% {
+        transform: rotate(-7deg) scale(1.02, 0.98);
+    }
+}
+.animate-egg-tap {
+    animation: eggTapShake 0.42s var(--ease-spring);
+}
+
+@keyframes shellSplitTop {
+    0% {
+        transform: translateY(0) rotate(0deg) scale(1);
+        opacity: 0.95;
+    }
+    55% {
+        transform: translateY(-48px) rotate(-18deg) scale(0.92);
+        opacity: 0.25;
+    }
+    100% {
+        transform: translateY(-76px) rotate(-24deg) scale(0.84);
+        opacity: 0;
+    }
+}
+@keyframes shellSplitBottom {
+    0% {
+        transform: translateY(0) rotate(0deg) scale(1);
+        opacity: 0.95;
+    }
+    55% {
+        transform: translateY(30px) rotate(12deg) scale(0.92);
+        opacity: 0.25;
+    }
+    100% {
+        transform: translateY(50px) rotate(18deg) scale(0.84);
+        opacity: 0;
+    }
+}
+.animate-shell-top {
+    transform-box: view-box;
+    transform-origin: 256px 240px;
+    animation: shellSplitTop 0.34s var(--ease-out-soft) forwards;
+}
+.animate-shell-bottom {
+    transform-box: view-box;
+    transform-origin: 256px 360px;
+    animation: shellSplitBottom 0.34s var(--ease-out-soft) forwards;
+}
+
+@keyframes bubbyHatchPop {
+    0% {
+        transform: scale(0.45) translateY(28px);
+        opacity: 0;
+    }
+    55% {
+        transform: scale(1.08) translateY(-10px);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(0.97) translateY(2px);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+.animate-bubby-hatch-pop {
+    opacity: 0;
+    animation: bubbyHatchPop 0.55s var(--ease-spring) 0.1s forwards;
+}
+
 /* "+1 🐾" pip that floats off the header Bubby on the first log of the day */
 .animate-pip-float {
     animation: coinFloat var(--duration-slow) var(--ease-out-soft) forwards;
@@ -986,6 +1095,13 @@ html.theme-transition *::after {
     /* Bubby, pips, pills, toasts and confetti change state instantly */
     svg.bubby,
     svg.bubby *,
+    svg.bubby-egg,
+    svg.bubby-egg *,
+    .bubby-egg .bubby-egg-shell,
+    .animate-egg-tap,
+    .animate-shell-top,
+    .animate-shell-bottom,
+    .animate-bubby-hatch-pop,
     .bubby .bubby-idle,
     .bubby .bubby-face,
     .bubby .bubby-body,
@@ -1017,8 +1133,13 @@ html.theme-transition *::after {
     }
     .animate-confetti-left,
     .animate-confetti-right,
-    .animate-coin-float {
+    .animate-coin-float,
+    .animate-shell-top,
+    .animate-shell-bottom {
         opacity: 0;
+    }
+    .animate-bubby-hatch-pop {
+        opacity: 1;
     }
 
     /* Modals and sheets appear and disappear without sliding or scaling */

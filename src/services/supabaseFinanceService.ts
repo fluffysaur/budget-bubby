@@ -2662,6 +2662,28 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         if (error) this.throwBonusError(error);
     }
 
+    public async hatchMemberBubby(memberId: string): Promise<string> {
+        const now = new Date().toISOString();
+        try {
+            const { error } = await this.getClient()
+                .from("household_members")
+                .update({ bubby_hatched_at: now })
+                .eq("id", memberId);
+            if (error) {
+                console.warn(
+                    "Failed to persist bubby_hatched_at to Supabase:",
+                    error,
+                );
+            }
+        } catch (err) {
+            console.warn(
+                "Failed to persist bubby_hatched_at to Supabase:",
+                err,
+            );
+        }
+        return now;
+    }
+
     private async upsertNotificationLog(
         memberId: string,
         refs: NotificationLogRef[],

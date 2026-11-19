@@ -275,3 +275,130 @@ export function playSuccessSound(): void {
         console.debug("Success chime skipped:", err);
     }
 }
+
+/**
+ * Play a crisp eggshell crack sound using short bandpass-filtered noise snaps
+ * and a subtle hollow shell knock. Higher intensity adds extra crack snaps.
+ */
+export function playEggCrack(intensity: 1 | 2 | 3 = 1): void {
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+        if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+        }
+
+        const now = ctx.currentTime;
+        const snapOffsets =
+            intensity === 1
+                ? [0]
+                : intensity === 2
+                  ? [0, 0.045]
+                  : [0, 0.035, 0.075];
+
+        snapOffsets.forEach((offset, idx) => {
+            const start = now + offset;
+            const dur = 0.035;
+            const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * dur));
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                // Sharp front-loaded decay for a dry shell snap
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2.2);
+            }
+
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = ctx.createBiquadFilter();
+            filter.type = "bandpass";
+            filter.frequency.setValueAtTime(2600 + idx * 550, start);
+            filter.Q.setValueAtTime(1.8, start);
+
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.32 + intensity * 0.06, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            noise.start(start);
+            noise.stop(start + dur);
+        });
+
+        // Subtle hollow shell "tok"
+        const tok = ctx.createOscillator();
+        const tokGain = ctx.createGain();
+        tok.type = "triangle";
+        tok.frequency.setValueAtTime(520 + intensity * 70, now);
+        tok.frequency.exponentialRampToValueAtTime(240, now + 0.04);
+        tokGain.gain.setValueAtTime(0.14, now);
+        tokGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+        tok.connect(tokGain);
+        tokGain.connect(ctx.destination);
+        tok.start(now);
+        tok.stop(now + 0.05);
+    } catch (err) {
+        console.debug("Egg crack skipped:", err);
+    }
+}
+
+/**
+ * Play a cute, joyful celebration fanfare when Bubby hatches from its egg:
+ * bright ascending C5-E5-G5-A5-C6 chime with a warm sparkly final chord.
+ */
+export function playHatchFanfare(): void {
+    if (!isSoundEffectsEnabled()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+        if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+        }
+
+        const now = ctx.currentTime + 0.09;
+        const melody = [
+            { freq: 523.25, t: 0.0, dur: 0.14, gain: 0.16 }, // C5
+            { freq: 659.25, t: 0.09, dur: 0.14, gain: 0.17 }, // E5
+            { freq: 783.99, t: 0.18, dur: 0.14, gain: 0.18 }, // G5
+            { freq: 880.0, t: 0.27, dur: 0.15, gain: 0.18 }, // A5
+            { freq: 1046.5, t: 0.37, dur: 0.48, gain: 0.22 }, // C6 (hero note)
+        ];
+
+        melody.forEach((n, i) => {
+            const start = now + n.t;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = i === melody.length - 1 ? "triangle" : "sine";
+            osc.frequency.setValueAtTime(n.freq, start);
+            g.gain.setValueAtTime(0.0001, start);
+            g.gain.linearRampToValueAtTime(n.gain, start + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.001, start + n.dur);
+            osc.connect(g);
+            g.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + n.dur + 0.02);
+        });
+
+        // Soft sparkly chord shimmer on the final C6
+        [1318.51, 1567.98].forEach((freq) => {
+            const start = now + 0.39;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, start);
+            g.gain.setValueAtTime(0.0001, start);
+            g.gain.linearRampToValueAtTime(0.09, start + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+            osc.connect(g);
+            g.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.48);
+        });
+    } catch (err) {
+        console.debug("Hatch fanfare skipped:", err);
+    }
+}

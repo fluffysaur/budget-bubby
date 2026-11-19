@@ -39,6 +39,15 @@ import { isSleepy, REACTION_MS } from "../lib/bubby/moods";
 import { scarfFor } from "../lib/bubby/anchors";
 import { addPet, readBubbyStore, type SnackEntry } from "../lib/bubby/storage";
 import {
+    getOnboardingTasks,
+    hatchBubby,
+    isMemberBubbyHatched,
+    isOnboardingDebugMode,
+    isOnboardingDebugReady,
+    readOnboardingStore,
+    type OnboardingTask,
+} from "../lib/onboarding";
+import {
     addDays,
     sgtMinutesOfDay,
     timeToMinutes,
@@ -50,6 +59,7 @@ import { DEFAULT_CHECKIN_TIME } from "../lib/reminders/rules";
 import type {
     Account,
     AccountSnapshot,
+    BaseBudgetProfile,
     CreditCardStatement,
     DailyCheckin,
     Expense,
@@ -61,6 +71,8 @@ const EMPTY_EXPENSES: Expense[] = [];
 const EMPTY_SNAPSHOTS: AccountSnapshot[] = [];
 const EMPTY_ACCOUNTS: Account[] = [];
 const EMPTY_STATEMENTS: CreditCardStatement[] = [];
+const EMPTY_BASE_PROFILES: BaseBudgetProfile[] = [];
+const EMPTY_LIST: readonly unknown[] = [];
 const NO_BONUS_EVENTS: BonusEventLike[] = [];
 const DEFAULT_CHECKIN_MINUTES = timeToMinutes(DEFAULT_CHECKIN_TIME) ?? 18 * 60;
 
@@ -174,6 +186,8 @@ export interface BubbyPenguin {
     scarf?: string;
     /** Night, or unfed for 3+ days: yawns while idle. */
     sleepy: boolean;
+    /** Whether this partner's Bubby has hatched from its egg. */
+    hatched?: boolean;
 }
 
 export interface UseBubbyResult {
@@ -205,12 +219,24 @@ export interface UseBubbyResult {
     checkinMinutes: number;
     /** Pet penguins (default: yours): hearts every time, food once a day. */
     pet: (memberIds?: readonly string[]) => void;
+    /** Whether Bubby has hatched from the onboarding egg (unlocks regular quests). */
+    hatched: boolean;
+    /** Starter setup quests required to hatch Bubby. */
+    onboardingQuests: OnboardingTask[];
+    /** Hatch Bubby once starter quests are complete. */
+    hatch: () => void;
 }
 
 export function useBubby(): UseBubbyResult {
     const { me, members } = useLoggedInMember();
     const { today, minutes } = useSgtClock();
     const [store, setStore] = useState(readBubbyStore);
+    const [onboardingStore, setOnboardingStore] = useState(readOnboardingStore);
+    const hatched = isMemberBubbyHatched(
+        me?.id,
+        me?.bubby_hatched_at,
+        onboardingStore,
+    );
 
     const { data: checkinsData, isSuccess } = useHouseholdCheckinsQuery();
     const { data: thisMonth, isSuccess: thisMonthReady } = useExpensesQuery({
@@ -225,6 +251,22 @@ export function useBubby(): UseBubbyResult {
         useAccountsQuery("household");
     const { data: statementsData, isPending: statementsPending } =
         useCreditCardStatementsQuery();
+    // Only fetch extra starter-quest signals while the logged-in user's egg is unhatched
+    const { data: baseProfilesData } = useQuery({
+        queryKey: queryKeys.baseProfiles,
+        queryFn: () => financeService.getBaseProfiles(),
+        enabled: !hatched,
+    });
+    const { data: goalsData } = useQuery({
+        queryKey: queryKeys.goals,
+        queryFn: () => financeService.getGoals(),
+        enabled: !hatched,
+    });
+    const { data: recurringData } = useQuery({
+        queryKey: queryKeys.recurringItems,
+        queryFn: () => financeService.getRecurringItems(),
+        enabled: !hatched,
+    });
     const { pending: surplusPending, settled: surplusSettled } =
         useMonthEndSurplus(today.slice(0, 7));
     const bonusEvents = useBonusEventsForBubby();
@@ -232,6 +274,13 @@ export function useBubby(): UseBubbyResult {
     useEffect(
         () =>
             onAppEvent("bubby:store-changed", () => setStore(readBubbyStore())),
+        [],
+    );
+    useEffect(
+        () =>
+            onAppEvent("onboarding:changed", () =>
+                setOnboardingStore(readOnboardingStore()),
+            ),
         [],
     );
 
@@ -286,8 +335,13 @@ export function useBubby(): UseBubbyResult {
                 mood: p.condition.mood,
                 reaction: reactionFor(reactionState, p.member.id),
                 sleepy: isSleepy(minutes, p.condition.daysSinceFed),
+                hatched: isMemberBubbyHatched(
+                    p.member.id,
+                    p.member.bubby_hatched_at,
+                    onboardingStore,
+                ),
             })),
-        [conditions, reactionState, minutes],
+        [conditions, reactionState, minutes, onboardingStore],
     );
     const condition = conditions.find((p) => p.isMe)?.condition ?? household;
 
@@ -336,6 +390,59 @@ export function useBubby(): UseBubbyResult {
         [meId],
     );
 
+    const baseProfiles = baseProfilesData ?? EMPTY_BASE_PROFILES;
+    const goals = goalsData ?? EMPTY_LIST;
+    const recurringItems = recurringData ?? EMPTY_LIST;
+    const onboardingQuests = useMemo(() => {
+        if (isOnboardingDebugMode()) {
+            const ready = isOnboardingDebugReady();
+            return getOnboardingTasks(
+                onboardingStore,
+                {
+                    hasBudget: ready,
+                    hasAccount: ready,
+                    hasExpense: ready,
+                    hasPlan: ready,
+                },
+                meId,
+            );
+        }
+        return getOnboardingTasks(
+            onboardingStore,
+            {
+                hasBudget: meId
+                    ? baseProfiles.some((p) => p.owner_id === meId)
+                    : baseProfiles.length > 0,
+                hasAccount: meId
+                    ? accounts.some((a) => a.owner_id === meId || a.is_joint)
+                    : accounts.length > 0,
+                hasExpense: meId
+                    ? expenses.some((e) => e.payer_id === meId) ||
+                      checkins.some((c) => c.member_id === meId)
+                    : expenses.length > 0 || checkins.length > 0,
+                hasPlan: goals.length > 0 || recurringItems.length > 0,
+            },
+            meId,
+        );
+    }, [
+        onboardingStore,
+        meId,
+        baseProfiles,
+        accounts,
+        expenses,
+        checkins,
+        goals.length,
+        recurringItems.length,
+    ]);
+    const hatch = useCallback(() => {
+        hatchBubby(meId);
+        if (meId && !isOnboardingDebugMode()) {
+            void financeService.hatchMemberBubby(meId).catch(() => {
+                // Local optimistic cache already updated
+            });
+        }
+    }, [meId]);
+
     return {
         // Every input loaded, so body and mood changes are real
         isReady:
@@ -366,5 +473,8 @@ export function useBubby(): UseBubbyResult {
         minutes,
         checkinMinutes,
         pet,
+        hatched,
+        onboardingQuests,
+        hatch,
     };
 }

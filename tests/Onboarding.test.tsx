@@ -1,64 +1,77 @@
-import {
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-    within,
-} from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { OnboardingModal } from "../src/components/onboarding/OnboardingModal";
 import {
     completeOnboardingTask,
+    getOnboardingTasks,
+    hatchBubby,
+    isBubbyHatched,
     isFirstLaunch,
+    isMemberBubbyHatched,
+    isOnboardingRewarded,
     markOnboardingSeen,
     ONBOARDING_SNACK,
-    toggleOnboardingTask,
+    readOnboardingStore,
 } from "../src/lib/onboarding";
 import { readBubbyStore } from "../src/lib/bubby/storage";
 import { onAppEvent } from "../src/lib/appEvents";
-import { OnboardingModal } from "../src/components/onboarding/OnboardingModal";
-import { BubbySheet } from "../src/components/bubby/BubbySheet";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { PrivacyProvider } from "../src/context/PrivacyContext";
-import { App } from "../src/App";
 
-function renderWithProviders(ui: React.ReactElement) {
-    const qc = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-    });
-    return render(
-        <QueryClientProvider client={qc}>
-            <HouseholdProvider>
-                <PrivacyProvider>{ui}</PrivacyProvider>
-            </HouseholdProvider>
-        </QueryClientProvider>,
-    );
-}
-
-describe("Onboarding state & snack reward", () => {
+describe("onboarding store & egg hatch logic", () => {
     beforeEach(() => {
         localStorage.clear();
     });
 
-    it("tracks first-launch state and grants a Bubby snack once all tasks are complete", () => {
+    it("starts as first launch, unhatched, with 4 incomplete starter quests", () => {
         expect(isFirstLaunch()).toBe(true);
+        expect(isBubbyHatched()).toBe(false);
+        expect(isOnboardingRewarded()).toBe(false);
+        const tasks = getOnboardingTasks();
+        expect(tasks).toHaveLength(4);
+        expect(tasks.every((t) => !t.done)).toBe(true);
+    });
+
+    it("persists seen state on markOnboardingSeen", () => {
         markOnboardingSeen();
         expect(isFirstLaunch()).toBe(false);
+    });
 
-        expect(completeOnboardingTask("budget").rewardedNow).toBe(false);
-        expect(completeOnboardingTask("spend").rewardedNow).toBe(false);
-        expect(completeOnboardingTask("plan").rewardedNow).toBe(false);
-        expect(readBubbyStore().snacks ?? []).toHaveLength(0);
+    it("combines persisted task visits with real data signals", () => {
+        completeOnboardingTask("plan");
+        const tasks = getOnboardingTasks(readOnboardingStore(), {
+            hasBudget: true,
+            hasAccount: true,
+            hasExpense: false,
+            hasPlan: false,
+        });
+        expect(tasks.find((t) => t.id === "budget")?.done).toBe(true);
+        expect(tasks.find((t) => t.id === "account")?.done).toBe(true);
+        expect(tasks.find((t) => t.id === "expense")?.done).toBe(false);
+        expect(tasks.find((t) => t.id === "plan")?.done).toBe(true);
+    });
 
-        const last = completeOnboardingTask("bubby");
-        expect(last.rewardedNow).toBe(true);
-        expect(last.tasks.every((t) => t.done)).toBe(true);
-        expect(readBubbyStore().snacks).toEqual([ONBOARDING_SNACK]);
+    it("hatches Bubby per member so a partner must still hatch their own", () => {
+        const first = hatchBubby("member-1");
+        expect(first).toEqual({ hatchedNow: true, rewardedNow: true });
+        expect(isMemberBubbyHatched("member-1")).toBe(true);
+        expect(isMemberBubbyHatched("member-2")).toBe(false);
+        expect(isOnboardingRewarded()).toBe(true);
 
-        // Idempotent: toggling/completing again does not duplicate the snack
-        toggleOnboardingTask("budget");
-        toggleOnboardingTask("budget");
-        expect(readBubbyStore().snacks).toEqual([ONBOARDING_SNACK]);
+        const snacks = readBubbyStore().snacks ?? [];
+        expect(snacks).toContainEqual(ONBOARDING_SNACK);
+
+        // Hatching the same member again is a no-op
+        const repeat = hatchBubby("member-1");
+        expect(repeat).toEqual({ hatchedNow: false, rewardedNow: false });
+
+        // Partner can hatch independently without duplicating the welcome snack
+        const partner = hatchBubby("member-2");
+        expect(partner).toEqual({ hatchedNow: true, rewardedNow: false });
+        expect(isMemberBubbyHatched("member-2")).toBe(true);
+        expect(
+            (readBubbyStore().snacks ?? []).filter(
+                (s) => s.week === ONBOARDING_SNACK.week,
+            ),
+        ).toHaveLength(1);
     });
 });
 
@@ -67,118 +80,65 @@ describe("OnboardingModal", () => {
         localStorage.clear();
     });
 
-    it("steps through Budget, Spend & Inbox, Plan, Bubby, and Starter Tasks", () => {
+    it("walks through all 4 steps via Next/Back with non-clickable step tracker and opens BubbySheet on Let's Start!", () => {
         const onClose = vi.fn();
-        const onNavigateTab = vi.fn();
+        const onOpenSheet = vi.fn();
+        const off = onAppEvent("bubby:open-sheet", onOpenSheet);
 
-        renderWithProviders(
-            <OnboardingModal
-                isOpen={true}
-                onClose={onClose}
-                onNavigateTab={onNavigateTab}
-            />,
-        );
-
-        const dialog = screen.getByRole("dialog");
-        expect(
-            within(dialog).getByRole("heading", { name: "Budget" }),
-        ).toBeInTheDocument();
-
-        fireEvent.click(within(dialog).getByRole("button", { name: /Next/i }));
-        expect(
-            within(dialog).getByRole("heading", { name: "Spend & Inbox" }),
-        ).toBeInTheDocument();
-
-        fireEvent.click(within(dialog).getByRole("button", { name: /Next/i }));
-        expect(
-            within(dialog).getByRole("heading", { name: "Plan" }),
-        ).toBeInTheDocument();
-
-        fireEvent.click(within(dialog).getByRole("button", { name: /Next/i }));
-        expect(
-            within(dialog).getByRole("heading", { name: "Meet Bubby" }),
-        ).toBeInTheDocument();
-
-        fireEvent.click(within(dialog).getByRole("button", { name: /Next/i }));
-        const list = within(dialog).getByRole("list", {
-            name: "Onboarding checklist",
-        });
-        const checkboxes = within(list).getAllByRole("checkbox");
-        expect(checkboxes).toHaveLength(4);
-
-        for (const cb of checkboxes) {
-            fireEvent.click(cb);
-        }
+        render(<OnboardingModal isOpen onClose={onClose} />);
 
         expect(
-            within(dialog).getByTestId("onboarding-reward-banner"),
+            screen.getByRole("heading", { name: "Welcome Guide" }),
         ).toBeInTheDocument();
-        expect(readBubbyStore().snacks).toEqual([ONBOARDING_SNACK]);
-    });
+        expect(
+            screen.getByRole("list", { name: "Onboarding steps" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: "Budget" }),
+        ).toBeInTheDocument();
+        // No per-step jump buttons that would close the modal early
+        expect(
+            screen.queryByRole("button", { name: "Open Budget" }),
+        ).not.toBeInTheDocument();
 
-    it("navigates to Budget and marks the budget task done on CTA click", () => {
-        const onClose = vi.fn();
-        const onNavigateTab = vi.fn();
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+        expect(
+            screen.getByRole("heading", { name: "Spend & Inbox" }),
+        ).toBeInTheDocument();
 
-        renderWithProviders(
-            <OnboardingModal
-                isOpen={true}
-                onClose={onClose}
-                onNavigateTab={onNavigateTab}
-            />,
-        );
+        fireEvent.click(screen.getByRole("button", { name: /Back/i }));
+        expect(
+            screen.getByRole("heading", { name: "Budget" }),
+        ).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole("button", { name: /Open Budget/i }));
-        expect(onNavigateTab).toHaveBeenCalledWith("budget");
-        expect(onClose).toHaveBeenCalled();
-    });
-});
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+        expect(
+            screen.getByRole("heading", { name: "Plan" }),
+        ).toBeInTheDocument();
 
-describe("BubbySheet Guide button", () => {
-    beforeEach(() => {
-        localStorage.clear();
-    });
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+        expect(
+            screen.getByRole("heading", { name: "Meet Bubby" }),
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("bubby-egg")).toBeInTheDocument();
 
-    it("closes BubbySheet and emits onboarding:open when Guide is clicked", () => {
-        const onClose = vi.fn();
-        const onOpen = vi.fn();
-        const off = onAppEvent("onboarding:open", onOpen);
-
-        renderWithProviders(<BubbySheet isOpen={true} onClose={onClose} />);
-        fireEvent.click(screen.getByRole("button", { name: /Guide/i }));
-
-        expect(onClose).toHaveBeenCalled();
-        expect(onOpen).toHaveBeenCalledTimes(1);
+        fireEvent.click(screen.getByRole("button", { name: "Let's Start!" }));
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(onOpenSheet).toHaveBeenCalledTimes(1);
         off();
     });
-});
 
-describe("App first-launch onboarding", () => {
-    beforeEach(() => {
-        localStorage.clear();
-    });
+    it("shows hatched Bubby visual on step 4 when already hatched", () => {
+        render(<OnboardingModal isOpen onClose={vi.fn()} hatched />);
 
-    it("opens Welcome Guide on first launch and remembers dismissal", async () => {
-        const { unmount } = render(<App initialEntries={["/"]} />);
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
+        fireEvent.click(screen.getByRole("button", { name: /Next/i }));
 
-        const dialog = await screen.findByRole("dialog");
+        expect(screen.queryByTestId("bubby-egg")).not.toBeInTheDocument();
         expect(
-            within(dialog).getByRole("heading", { name: /Welcome Guide/i }),
+            screen.getByRole("button", { name: "Let's Start!" }),
         ).toBeInTheDocument();
-
-        fireEvent.click(within(dialog).getByRole("button", { name: /Close/i }));
-        await waitFor(() => {
-            expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-        });
-        expect(isFirstLaunch()).toBe(false);
-        unmount();
-
-        render(<App initialEntries={["/"]} />);
-        await waitFor(() => {
-            expect(
-                screen.getByRole("region", { name: "Left to Spend" }),
-            ).toBeInTheDocument();
-        });
-        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    }, 20000);
+    });
 });
