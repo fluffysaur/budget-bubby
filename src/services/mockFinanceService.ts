@@ -1709,6 +1709,16 @@ class MockFinanceServiceImpl implements FinanceService {
         _subscription: PushSubscriptionInput,
     ): Promise<void> {}
 
+    public async hatchMemberBubby(memberId: string): Promise<string> {
+        const now = new Date().toISOString();
+        const member = this.state.members.find((m) => m.id === memberId);
+        if (member && !member.bubby_hatched_at) {
+            member.bubby_hatched_at = now;
+            this.persist();
+        }
+        return member?.bubby_hatched_at ?? now;
+    }
+
     public async deletePushSubscription(_endpoint: string): Promise<void> {}
 }
 

@@ -29,6 +29,10 @@ vi.mock("recharts", async (importOriginal) => {
 describe("App Integration & Routing", () => {
     beforeEach(() => {
         localStorage.clear();
+        localStorage.setItem(
+            "bb_onboarding_v1",
+            JSON.stringify({ seen: true, hatched: true }),
+        );
     });
 
     it("renders header, sidebar, and default Dashboard page", async () => {

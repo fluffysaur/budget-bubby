@@ -59,7 +59,8 @@ test.describe("Bubby", () => {
         await expect(
             sheet.getByRole("img", { name: "Fitness, your Bubby" }),
         ).toBeVisible();
-        await expect(page.getByTestId("bubby-pair")).toBeVisible();
+        // Header shows only the logged-in user's Bubby (not a pair)
+        await expect(page.getByTestId("bubby-pair")).toHaveCount(0);
         const pet = sheet
             .getByRole("list", { name: "Today's quests" })
             .locator("li", { hasText: "Pet Bubby" });

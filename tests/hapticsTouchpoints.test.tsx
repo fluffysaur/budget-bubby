@@ -44,6 +44,10 @@ describe("Haptic Feedback Touchpoints Integration", () => {
     });
 
     it("triggers haptics.celebrate when the 1-tap No Spend check-in is submitted", async () => {
+        localStorage.setItem(
+            "bb_onboarding_v1",
+            JSON.stringify({ seen: true, hatched: true }),
+        );
         const celebrateSpy = vi.spyOn(haptics, "celebrate");
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([]);
         vi.spyOn(financeService, "getExpenses").mockResolvedValue([]);

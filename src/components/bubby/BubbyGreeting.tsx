@@ -55,6 +55,7 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
         penguins,
         minutes,
         checkinMinutes,
+        hatched = true,
     } = useBubby();
     const [line, setLine] = useState<GreetingLine | null>(null);
     const [leaving, setLeaving] = useState(false);
@@ -84,7 +85,7 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
     }, []);
 
     useEffect(() => {
-        if (!isReady) return;
+        if (!isReady || !hatched) return;
         const last = readBubbyStore().lastGreetingAt ?? 0;
         if (Date.now() - last < GREETING_COOLDOWN_MS) return;
 
@@ -130,7 +131,7 @@ export function BubbyGreeting({ onOpenInbox }: BubbyGreetingProps) {
             window.clearTimeout(hideTimer);
             window.clearTimeout(removeTimer);
         };
-    }, [isReady, wake]);
+    }, [isReady, wake, hatched]);
 
     if (!line) return null;
 
