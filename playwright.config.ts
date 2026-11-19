@@ -13,6 +13,20 @@ export default defineConfig({
     use: {
         baseURL: E2E_URL,
         trace: "on-first-retry",
+        storageState: {
+            cookies: [],
+            origins: [
+                {
+                    origin: E2E_URL,
+                    localStorage: [
+                        {
+                            name: "bb_onboarding_v1",
+                            value: JSON.stringify({ seen: true }),
+                        },
+                    ],
+                },
+            ],
+        },
     },
     projects: [
         {

@@ -8,8 +8,9 @@
  */
 
 import { useEffect, useRef } from "react";
-import { HelpCircle } from "lucide-react";
+import { BookOpen, HelpCircle } from "lucide-react";
 import { emitAppEvent } from "../../lib/appEvents";
+import { completeOnboardingTask } from "../../lib/onboarding";
 import { yawnTarget } from "../../lib/bubby/moods";
 
 import { AnimatedModal, ModalBody, ModalHeader } from "../ui/AnimatedModal";
@@ -215,6 +216,7 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
     }, [penguins, sleepy]);
     useEffect(() => {
         if (!isOpen) return;
+        completeOnboardingTask("bubby");
         const timer = window.setTimeout(() => {
             const target = yawnTarget(sleepyRef.current);
             if (target)
@@ -229,7 +231,25 @@ export function BubbySheet({ isOpen, onClose }: BubbySheetProps) {
             <ModalHeader
                 title="Bubby"
                 onClose={onClose}
-                actions={<GrowTips />}
+                actions={
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                emitAppEvent("onboarding:open", {});
+                            }}
+                            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-(--border-ink) bg-(--bg-cream) px-2.5 text-xs font-bold text-(--text-ink) hover:bg-(--pastel-lilac-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                        >
+                            <BookOpen
+                                className="h-3.5 w-3.5 shrink-0"
+                                aria-hidden="true"
+                            />
+                            <span>Guide</span>
+                        </button>
+                        <GrowTips />
+                    </div>
+                }
             />
             <ModalBody className="space-y-5">
                 {paired ? (

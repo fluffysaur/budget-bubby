@@ -60,7 +60,12 @@ import { PWAUpdateToast } from "./components/pwa/PWAUpdateToast";
 import { PullToRefresh } from "./components/ui/PullToRefresh";
 import { DelightHost } from "./components/bubby/DelightHost";
 import { BubbyLoadingScreen } from "./components/bubby/BubbyLoadingScreen";
-import { emitAppEvent } from "./lib/appEvents";
+import { emitAppEvent, onAppEvent } from "./lib/appEvents";
+import {
+    completeOnboardingTask,
+    isFirstLaunch,
+    markOnboardingSeen,
+} from "./lib/onboarding";
 import type { Expense } from "./types/finance";
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -70,6 +75,9 @@ const AccountsPage = lazy(() => import("./pages/AccountsPage"));
 const PlanPage = lazy(() => import("./pages/PlanPage"));
 const FastLogPage = lazy(() => import("./pages/FastLogPage"));
 const InboxPage = lazy(() => import("./pages/InboxPage"));
+const OnboardingModal = lazy(
+    () => import("./components/onboarding/OnboardingModal"),
+);
 
 /**
  * Minimal Header-Only Skeleton Loader displayed during route transition / lazy bundle resolution
@@ -290,6 +298,39 @@ function AppLayoutInner() {
             window.removeEventListener("openQuickAdd", handleGlobalOpen);
     }, []);
 
+    // First-launch and on-demand onboarding guide
+    const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() =>
+        isFirstLaunch(),
+    );
+    const handleCloseOnboarding = useCallback(() => {
+        markOnboardingSeen();
+        setIsOnboardingOpen(false);
+    }, []);
+    useEffect(
+        () => onAppEvent("onboarding:open", () => setIsOnboardingOpen(true)),
+        [],
+    );
+
+    // Auto-complete onboarding checklist items as user explores core flows
+    useEffect(() => {
+        const path = location.pathname;
+        const params = new URLSearchParams(location.search);
+        if (
+            path === "/budget" ||
+            (path === "/spend" && params.get("tab") === "budget")
+        ) {
+            completeOnboardingTask("budget");
+        } else if (
+            ["/spend", "/expenses", "/inbox", "/fast-log"].includes(path)
+        ) {
+            completeOnboardingTask("spend");
+        } else if (
+            ["/plan", "/goals", "/loans", "/recurring"].includes(path)
+        ) {
+            completeOnboardingTask("plan");
+        }
+    }, [location.pathname, location.search]);
+
     return (
         <div className="flex h-dvh bg-(--bg-canvas) text-(--text-ink) overflow-hidden font-sans">
             {/* Desktop Navigation Sidebar */}
@@ -455,6 +496,15 @@ function AppLayoutInner() {
 
             {/* Bubby reactions, honest check-ins, milestones and the Bubby sheet */}
             <DelightHost />
+
+            {/* First-launch and on-demand onboarding guide */}
+            <Suspense fallback={null}>
+                <OnboardingModal
+                    isOpen={isOnboardingOpen}
+                    onClose={handleCloseOnboarding}
+                    onNavigateTab={handleSelectTab}
+                />
+            </Suspense>
 
             {/* PWA Update & Offline Ready Toast */}
             <PWAUpdateToast />
