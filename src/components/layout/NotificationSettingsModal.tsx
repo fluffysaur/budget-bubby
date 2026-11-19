@@ -39,6 +39,11 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import {
+    APP_VERSION,
+    GIT_SHA,
+    formatAppVersion,
+} from "../../lib/appVersion";
 import { financeService } from "../../services/financeService";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import {
@@ -850,25 +855,33 @@ export function NotificationSettingsModal({
                     )}
                 </ModalBody>
 
-                <ModalFooter className="flex items-center justify-between border-t-2 border-(--border-subtle) p-4">
-                    <button
-                        type="button"
-                        onClick={handleResetDefaults}
-                        data-testid="reset-notification-defaults-btn"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
-                    >
-                        <RotateCcw className="h-3.5 w-3.5" strokeWidth={2.5} />
-                        <span>Reset to Defaults</span>
-                    </button>
+                <ModalFooter className="flex flex-col items-stretch gap-2 border-t-2 border-(--border-subtle) px-4 py-3">
+                    <div className="flex w-full items-center justify-between gap-3">
+                        <button
+                            type="button"
+                            onClick={handleResetDefaults}
+                            data-testid="reset-notification-defaults-btn"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                        >
+                            <RotateCcw className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            <span>Reset to Defaults</span>
+                        </button>
 
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={onClose}
-                        leftIcon={<Check className="h-4 w-4 stroke-3" />}
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={onClose}
+                            leftIcon={<Check className="h-4 w-4 stroke-3" />}
+                        >
+                            Done
+                        </Button>
+                    </div>
+                    <div
+                        data-testid="app-version-label"
+                        className="text-center text-[11px] font-bold font-mono-num text-(--text-faint)"
                     >
-                        Done
-                    </Button>
+                        {formatAppVersion(APP_VERSION, GIT_SHA)}
+                    </div>
                 </ModalFooter>
             </div>
         </AnimatedModal>

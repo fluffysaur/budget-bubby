@@ -97,3 +97,16 @@ Add `bug` or `enhancement` to every backlog issue. Add `needs-db` when the fix n
 - **Clearing:** The PR that fixes an issue says `Closes #<n>` in its body.
 - **Picking up:** Run `gh issue list --label backlog --label P0`, then P1 and so on, and take the highest unblocked issue. Issues labelled `needs-db` wait until the user confirms the SQL has run.
 
+### I. Releases & Versioning
+
+Releases are automated via **Release Please** (`.github/workflows/release-please.yml`, `release-please-config.json`, `.release-please-manifest.json`):
+
+- **Scheme:** SemVer on `0.x.y` while in beta (`bump-minor-pre-major: true`).
+    - `feat:` bumps minor (`0.1.0` → `0.2.0`).
+    - `fix:` / `perf:` bumps patch (`0.1.0` → `0.1.1`).
+    - Breaking changes stay pre-`1.0` until explicitly promoted.
+- **Flow:** Every merge to `main` auto-deploys to Vercel and updates a single open Release PR (`chore(main): release X.Y.Z`) that bumps `package.json`, `package-lock.json`, and `CHANGELOG.md`. Merging that Release PR creates the `vX.Y.Z` git tag and GitHub Release.
+- **Promoting to `1.0.0`:** Include a commit footer `Release-As: 1.0.0` when ready for public launch.
+- **In-app visibility:** The Settings modal footer displays `vX.Y.Z (<short-sha>)` (injected at build time via `vite.config.ts`) to verify PWA updates on devices even between releases.
+- **GitHub repo setting:** Requires `Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests`.
+
