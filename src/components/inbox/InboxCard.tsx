@@ -32,6 +32,7 @@ export interface InboxCardProps {
     draft: ExpenseFormDraft;
     onDraftChange: (patch: Partial<ExpenseFormDraft>) => void;
     allCategories: Category[];
+    initialShowMoreCategories?: boolean;
     members: HouseholdMember[];
     goals: SavingsGoal[];
     duplicate?: Expense;
@@ -51,6 +52,7 @@ export function InboxCard({
     draft,
     onDraftChange,
     allCategories,
+    initialShowMoreCategories = false,
     members,
     goals,
     duplicate,
@@ -171,6 +173,7 @@ export function InboxCard({
                         members={members}
                         goals={goals}
                         idPrefix="inbox-expense"
+                        initialShowMoreCategories={initialShowMoreCategories}
                         resetKey={item.id}
                     />
                 </div>
