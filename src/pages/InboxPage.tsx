@@ -35,8 +35,11 @@ import {
 import {
     guessInboxCategory,
     findLikelyDuplicate,
-    topCategoriesForMember,
 } from "../lib/capture/guessCategory";
+import {
+    isLoggableCategory,
+    isSpendableCategory,
+} from "../lib/financialFormulas";
 import { toSgtDateTime } from "../lib/capture/sgTime";
 import { SUPPORTED_CURRENCIES } from "../lib/currencyConverter";
 import {
@@ -91,6 +94,7 @@ interface ItemView {
     item: InboxItem;
     guessId: string | null;
     isRuleMatch: boolean;
+    initialShowMoreCategories: boolean;
     draft: ExpenseFormDraft;
     duplicate?: Expense;
     needsRateCheck: boolean;
@@ -140,6 +144,12 @@ export function InboxPage() {
                 });
                 const guessId =
                     guess.categoryId ?? item.suggested_category_id ?? null;
+                const guessedCategory = guessId
+                    ? categories.find((c) => c.id === guessId)
+                    : undefined;
+                const initialShowMoreCategories = Boolean(
+                    guessedCategory && !isSpendableCategory(guessedCategory),
+                );
                 const sgt = toSgtDateTime(item.captured_at);
                 const defaultDraft: ExpenseFormDraft = {
                     amount: Number(item.amount),
@@ -183,6 +193,7 @@ export function InboxPage() {
                     item,
                     guessId,
                     isRuleMatch: guess.confidence === "rule",
+                    initialShowMoreCategories,
                     draft,
                     duplicate: duplicate || undefined,
                     needsRateCheck: !hasKnownRate,
@@ -202,20 +213,13 @@ export function InboxPage() {
         [views],
     );
 
-    const chipCategories = useMemo(
-        () =>
-            top
-                ? topCategoriesForMember(
-                      expenses,
-                      categories,
-                      top.item.member_id,
-                      top.draft.categoryId || null,
-                      5,
-                      todayDate,
-                  )
-                : EMPTY_CATEGORIES,
-        [top, expenses, categories, todayDate],
-    );
+    const chipCategories = useMemo(() => {
+        if (!top) return EMPTY_CATEGORIES;
+        const loggable = categories.filter((c) => isLoggableCategory(c));
+        const spendable = loggable.filter((c) => isSpendableCategory(c));
+        if (top.initialShowMoreCategories) return loggable;
+        return spendable.length > 0 ? spendable : loggable;
+    }, [top, categories]);
 
     // Inbox Zero: pending went to 0 during this visit
     useEffect(() => {
@@ -538,6 +542,9 @@ export function InboxPage() {
                                     patchDraft(top.item.id, top.draft, patch)
                                 }
                                 allCategories={categories}
+                                initialShowMoreCategories={
+                                    top.initialShowMoreCategories
+                                }
                                 members={members}
                                 goals={goals}
                                 duplicate={top.duplicate}
