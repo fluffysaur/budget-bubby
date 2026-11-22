@@ -7,7 +7,7 @@ import { SettingsProvider } from "../../../context/SettingsContext";
 import { PrivacyProvider } from "../../../context/PrivacyContext";
 import { AuthProvider } from "../../../context/AuthContext";
 import { BubbyChatDrawer } from "../BubbyChatDrawer";
-import * as geminiClient from "../../../services/ai/geminiClient";
+import * as aiProviders from "../../../services/ai/providers";
 import { financeService } from "../../../services/financeService";
 
 function renderDrawer(isOpen = true, onClose = vi.fn()) {
@@ -44,15 +44,18 @@ describe("BubbyChatDrawer", () => {
         vi.restoreAllMocks();
     });
 
-    it("shows the Add Key empty state when no Gemini API key is configured", () => {
+    it("shows the Add Key empty state with neutral copy when no AI key is configured", () => {
         renderDrawer(true);
-        expect(screen.getByTestId("bubby-no-key-state")).toBeInTheDocument();
+        const noKey = screen.getByTestId("bubby-no-key-state");
+        expect(noKey).toBeInTheDocument();
         expect(screen.getByText("Add Key")).toBeInTheDocument();
+        expect(noKey).not.toHaveTextContent(/gemini/i);
         expect(screen.getByTestId("bubby-setup-key-cta")).toBeInTheDocument();
     });
 
     it("executes read tools automatically and renders action confirmation cards for mutations", async () => {
-        geminiClient.setGeminiApiKey("AIza-test-key");
+        aiProviders.setActiveAiProvider("anthropic");
+        aiProviders.setProviderApiKey("anthropic", "sk-ant-test-key");
 
         vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
             household: { id: "hh-1", name: "Demo Home", currency: "SGD" },
@@ -103,11 +106,12 @@ describe("BubbyChatDrawer", () => {
             });
 
         const streamSpy = vi
-            .spyOn(geminiClient, "streamGeminiTurn")
+            .spyOn(aiProviders, "streamAiTurn")
             .mockResolvedValueOnce({
                 text: "",
-                functionCalls: [
+                toolCalls: [
                     {
+                        id: "tc-1",
                         name: "proposeExpense",
                         args: {
                             item: "Ramen",
@@ -131,6 +135,12 @@ describe("BubbyChatDrawer", () => {
         });
 
         expect(streamSpy).toHaveBeenCalledTimes(1);
+        expect(streamSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                provider: "anthropic",
+                apiKey: "sk-ant-test-key",
+            }),
+        );
         expect(addExpenseSpy).not.toHaveBeenCalled();
 
         fireEvent.click(screen.getByTestId("action-confirm-btn"));
