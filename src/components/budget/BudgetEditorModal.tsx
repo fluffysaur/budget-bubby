@@ -49,6 +49,7 @@ import { RangeSlider } from "../ui/RangeSlider";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Alert } from "../ui/Alert";
 import { CategoryModeToggle } from "../categories/CategoryModeToggle";
+import { feedback } from "../../lib/delight/feedback";
 import { mockCategories } from "../../data/mockSeedData";
 import {
     calculateCPFAndNetPay,
@@ -586,6 +587,7 @@ export function BudgetEditorModal({
             setCatFormMode(null);
             setEditingCat(null);
             await refreshCategoriesFromService();
+            feedback.routine("save");
         } catch (err: unknown) {
             console.error("Failed to save category:", err);
             setErrorMessage(
@@ -603,6 +605,7 @@ export function BudgetEditorModal({
             await deleteCategoryMutation.mutateAsync(catId);
             setDeletingCatId(null);
             await refreshCategoriesFromService();
+            feedback.routine("delete");
         } catch (err: unknown) {
             console.error("Failed to delete category:", err);
             setErrorMessage(
@@ -738,6 +741,7 @@ export function BudgetEditorModal({
                 }
             }
 
+            feedback.routine("save");
             onSaveSuccess?.();
             onClose();
         } catch (err: unknown) {

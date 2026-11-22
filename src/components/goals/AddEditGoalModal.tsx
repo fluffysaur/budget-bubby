@@ -32,6 +32,7 @@ import {
 } from "../../hooks/useFinanceQueries";
 import { formatISODate } from "../../lib/dateUtils";
 import { CurrencyText } from "../ui/CurrencyText";
+import { feedback } from "../../lib/delight/feedback";
 import {
     BUFFER_EMOJI,
     BUFFER_MAX_MONTHS,
@@ -277,6 +278,7 @@ export function AddEditGoalModal({
                         ...cpfFields,
                     },
                 });
+                feedback.routine("save");
                 onGoalSaved?.(updated);
             } else {
                 // Create Mode
@@ -289,6 +291,7 @@ export function AddEditGoalModal({
                     ...cpfFields,
                 };
                 const created = await addGoalMutation.mutateAsync(input);
+                feedback.routine("save");
                 onGoalSaved?.(created);
             }
 

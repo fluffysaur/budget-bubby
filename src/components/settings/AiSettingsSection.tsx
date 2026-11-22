@@ -27,6 +27,7 @@ import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+import { feedback as delightFeedback } from "../../lib/delight/feedback";
 
 function notifyAiConfigChanged() {
     if (typeof window !== "undefined") {
@@ -57,6 +58,7 @@ export function AiSettingsSection() {
         setSavedKey(trimmed);
         setApiKeyDraft(trimmed);
         notifyAiConfigChanged();
+        delightFeedback.routine("save");
         setFeedback({
             variant: trimmed ? "success" : "info",
             message: trimmed
@@ -70,6 +72,7 @@ export function AiSettingsSection() {
         setSavedKey("");
         setApiKeyDraft("");
         notifyAiConfigChanged();
+        delightFeedback.routine("delete");
         setFeedback({
             variant: "info",
             message: "Gemini API key cleared from this device.",

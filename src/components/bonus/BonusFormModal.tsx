@@ -22,6 +22,7 @@ import {
     Select,
     TruncatedText,
 } from "../ui";
+import { feedback } from "../../lib/delight/feedback";
 import {
     BONUS_SPLIT_BUCKETS,
     BONUS_SPLIT_KEYS,
@@ -299,6 +300,9 @@ export function BonusFormModal({
                 );
             }
 
+            if (isEdit) {
+                feedback.routine("save");
+            }
             onSaved?.({ event: saved, created: !isEdit });
             onClose();
         } catch (err: unknown) {

@@ -15,6 +15,7 @@ import { fadeRise } from "../lib/motion";
 import { PageHeader, SegmentedTabs } from "../components/ui";
 import { ExpensesPage } from "./ExpensesPage";
 import { BudgetPage } from "./BudgetPage";
+import { feedback } from "../lib/delight/feedback";
 
 export type SpendSubTab = "expenses" | "budget";
 
@@ -45,9 +46,12 @@ export function SpendPage({
     const handleTabChange = useCallback(
         (tabId: string) => {
             const nextTab = tabId as SpendSubTab;
+            if (nextTab !== activeTab) {
+                feedback.routine("tab");
+            }
             setSearchParams({ tab: nextTab }, { replace: true });
         },
-        [setSearchParams],
+        [activeTab, setSearchParams],
     );
 
     return (

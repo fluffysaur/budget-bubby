@@ -40,6 +40,7 @@ import { Input } from "../ui/Input";
 import { CategoryModeToggle } from "./CategoryModeToggle";
 import { Alert } from "../ui/Alert";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { feedback } from "../../lib/delight/feedback";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
 import type {
@@ -338,6 +339,7 @@ export function ManageCategoriesModal({
                 profile: activeProf,
                 allocations: updatedAllocs,
             });
+            feedback.routine("save");
             onCategoriesChanged?.();
         } catch (err: unknown) {
             console.error("Failed to save category allocations:", err);
@@ -441,6 +443,7 @@ export function ManageCategoriesModal({
             setFormMode(null);
             setEditingCategory(null);
             await loadCategories();
+            feedback.routine("save");
             onCategoriesChanged?.();
         } catch (err: unknown) {
             console.error("Failed to save category:", err);
@@ -459,6 +462,7 @@ export function ManageCategoriesModal({
             await deleteCategoryMutation.mutateAsync(deletingCategory.id);
             setDeletingCategory(null);
             await loadCategories();
+            feedback.routine("delete");
             onCategoriesChanged?.();
         } catch (err: unknown) {
             console.error("Failed to delete category:", err);

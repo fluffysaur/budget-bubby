@@ -30,6 +30,7 @@ import { useSettings } from "../../context/SettingsContext";
 import { usePrivacy } from "../../context/PrivacyContext";
 import { Badge } from "../ui/Badge";
 import { formatBadgeCount } from "../../hooks/useInboxBadge";
+import { feedback } from "../../lib/delight/feedback";
 
 export interface NavItem {
     id: string;
@@ -132,7 +133,12 @@ export function DesktopSidebar({
             <button
                 key={item.id}
                 type="button"
-                onClick={() => onSelectTab?.(item.id)}
+                onClick={() => {
+                    if (!isActive) {
+                        feedback.routine("tab");
+                    }
+                    onSelectTab?.(item.id);
+                }}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-press cursor-pointer ${
                     isActive
                         ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-extrabold"

@@ -47,6 +47,7 @@ import {
 } from "../../lib/appVersion";
 import { financeService } from "../../services/financeService";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
+import { feedback } from "../../lib/delight/feedback";
 import {
     requestNotificationPermission,
     dispatchPWANotification,
@@ -149,6 +150,7 @@ export function NotificationSettingsModal({
                 activeMemberId,
                 updates,
             );
+            feedback.routine("save");
         } catch (err) {
             console.error(
                 "Failed to save notification preference update:",

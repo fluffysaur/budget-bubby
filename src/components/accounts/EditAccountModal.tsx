@@ -22,6 +22,7 @@ import type {
 } from "../../types/finance";
 import { CPF_KINDS } from "../../lib/cpfAccounts";
 import { useUpdateAccountMutation } from "../../hooks/useFinanceQueries";
+import { feedback } from "../../lib/delight/feedback";
 
 export interface EditAccountModalProps {
     isOpen: boolean;
@@ -101,6 +102,7 @@ export function EditAccountModal({
                 },
             });
 
+            feedback.routine("save");
             onAccountUpdated?.(updated);
             onClose();
         } catch (err: unknown) {

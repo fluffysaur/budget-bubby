@@ -30,6 +30,7 @@ import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
 import { recordExercise } from "../../lib/bubby/activity";
 import { cpfKindFor } from "../../lib/cpfAccounts";
+import { feedback } from "../../lib/delight/feedback";
 
 /** Typical monthly contribution per CPF account, for the "+ CPF" quick fill. */
 const CPF_AUTO_INCREMENT: Record<CpfKind, number> = {
@@ -170,6 +171,7 @@ export function BulkBalanceUpdateModal({
                 snapshotDate,
             });
             recordExercise("balances");
+            feedback.routine("save");
             onBalancesUpdated?.(updated);
             onClose();
         } catch (err: unknown) {

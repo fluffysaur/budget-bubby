@@ -33,6 +33,7 @@ import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import { feedback } from "../../lib/delight/feedback";
 import {
     findDefaultRecurringCategoryId,
     isSpendType,
@@ -226,6 +227,7 @@ export function AddRecurringModal({
             }
 
             await onSave(payload);
+            feedback.routine("save");
             onClose();
         } catch (err: unknown) {
             setErrorMessage(

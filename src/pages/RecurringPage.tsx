@@ -47,6 +47,7 @@ import { RecurringTable } from "../components/recurring/RecurringTable";
 import { RenewalCalendar } from "../components/recurring/RenewalCalendar";
 import { AddRecurringModal } from "../components/recurring/AddRecurringModal";
 import type { RecurringItem, CreateRecurringItemInput } from "../types/finance";
+import { feedback } from "../lib/delight/feedback";
 
 export interface RecurringPageProps {
     className?: string;
@@ -160,6 +161,7 @@ export function RecurringPage({
             try {
                 setActionError(null);
                 await deleteRecurringMutation.mutateAsync(itemId);
+                feedback.routine("delete");
             } catch (err: unknown) {
                 console.error("Failed to delete recurring item:", err);
                 setActionError(

@@ -120,4 +120,53 @@ describe("delight feedback", () => {
         feedback.routine("delete");
         expect(spy).toHaveBeenCalledTimes(1);
     });
+
+    it("routine tab triggers lightTap haptic without sound or Bubby reaction", () => {
+        const reactions: string[] = [];
+        const off = onAppEvent("bubby:react", (d) => reactions.push(d.kind));
+        const spy = vi.spyOn(haptics, "lightTap");
+
+        feedback.routine("tab");
+        off();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(sounds.playChaChingSound).not.toHaveBeenCalled();
+        expect(sounds.playSoftPop).not.toHaveBeenCalled();
+        expect(sounds.playSuccessSound).not.toHaveBeenCalled();
+        expect(reactions).toHaveLength(0);
+    });
+
+    it("routine save triggers lightTap haptic without sound or Bubby reaction", () => {
+        const reactions: string[] = [];
+        const off = onAppEvent("bubby:react", (d) => reactions.push(d.kind));
+        const spy = vi.spyOn(haptics, "lightTap");
+
+        feedback.routine("save");
+        off();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(sounds.playChaChingSound).not.toHaveBeenCalled();
+        expect(sounds.playSoftPop).not.toHaveBeenCalled();
+        expect(sounds.playSuccessSound).not.toHaveBeenCalled();
+        expect(reactions).toHaveLength(0);
+    });
+
+    it("suppresses routine haptics when haptics_enabled is false in localStorage", () => {
+        localStorage.setItem(
+            "bb_notif_prefs_mem-1",
+            JSON.stringify({ haptics_enabled: false }),
+        );
+        feedback.routine("tab");
+        feedback.routine("save");
+        feedback.routine("delete");
+        expect(vibrate).not.toHaveBeenCalled();
+    });
+
+    it("suppresses routine haptics when prefers-reduced-motion is active", () => {
+        setReducedMotion(true);
+        feedback.routine("tab");
+        feedback.routine("save");
+        feedback.routine("delete");
+        expect(vibrate).not.toHaveBeenCalled();
+    });
 });
