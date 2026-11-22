@@ -21,6 +21,7 @@ import {
 } from "./useFinanceQueries";
 import { useMonthEndSurplus } from "./useMonthEndSurplus";
 import { useLoggedInMember } from "./useLoggedInMember";
+import { useOptionalHousehold } from "../context/HouseholdContext";
 import { onAppEvent, emitAppEvent, type BubbyReaction } from "../lib/appEvents";
 import { collectFeedEvents, type BonusEventLike } from "../lib/bubby/sources";
 import {
@@ -192,6 +193,8 @@ export interface BubbyPenguin {
 
 export interface UseBubbyResult {
     isReady: boolean;
+    /** True while household members are loading with no cached `me` yet. */
+    isMemberLoading: boolean;
     weeklyQuestsReady: boolean;
     monthlyQuestsReady: boolean;
     /** Your penguin's look (the household's before members load). */
@@ -228,7 +231,9 @@ export interface UseBubbyResult {
 }
 
 export function useBubby(): UseBubbyResult {
+    const householdContext = useOptionalHousehold();
     const { me, members } = useLoggedInMember();
+    const isMemberLoading = Boolean(householdContext?.loading && !me);
     const { today, minutes } = useSgtClock();
     const [store, setStore] = useState(readBubbyStore);
     const [onboardingStore, setOnboardingStore] = useState(readOnboardingStore);
@@ -451,6 +456,7 @@ export function useBubby(): UseBubbyResult {
             lastMonthReady &&
             snapshotsReady &&
             accountsReady,
+        isMemberLoading,
         // The monthly inputs have loaded (or failed), so that quest set is
         // complete and a treat for it cannot fire early
         weeklyQuestsReady: true,

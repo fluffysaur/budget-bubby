@@ -34,6 +34,7 @@ import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import { filterCategoriesForMember } from "../../lib/financialFormulas";
 import {
     findDefaultRecurringCategoryId,
     isSpendType,
@@ -181,11 +182,20 @@ export function AddRecurringModal({
         }
     }, [isOpen, initialItem, defaultOwnerId]);
 
+    const scopedCategories = useMemo(
+        () =>
+            filterCategoriesForMember(
+                categories,
+                ownerId === "joint" ? undefined : ownerId,
+            ),
+        [categories, ownerId],
+    );
+
     if (!isOpen) return null;
 
     const showCategory = isSpendType(type);
     const selectedCategoryId =
-        categoryId ?? findDefaultRecurringCategoryId(categories) ?? "";
+        categoryId ?? findDefaultRecurringCategoryId(scopedCategories) ?? "";
     const linkedGoal = goalId
         ? (goals.find((g) => g.id === goalId) ?? null)
         : null;
@@ -369,7 +379,7 @@ export function AddRecurringModal({
                                 className="bg-(--bg-canvas)"
                             >
                                 <option value="">No category</option>
-                                {categories.map((c) => (
+                                {scopedCategories.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name}
                                     </option>

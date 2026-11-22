@@ -578,15 +578,16 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         });
         expect(autoBalanceBtn).toBeInTheDocument();
 
-        // Verify sliders exist for categories
+        // Verify sliders exist for categories visible to the profile owner
         const sliders = screen.getAllByRole("slider");
-        expect(sliders.length).toBeGreaterThanOrEqual(mockCategories.length);
+        const visibleCount = mockCategories.filter(
+            (c) => !c.member_id || c.member_id === mockBaseProfiles[0].owner_id,
+        ).length;
+        expect(sliders.length).toBeGreaterThanOrEqual(visibleCount);
 
         // Verify live dollar equivalent is displayed next to sliders (e.g. S$XXX/mo)
         const dollarElements = screen.getAllByText(/\/mo/i);
-        expect(dollarElements.length).toBeGreaterThanOrEqual(
-            mockCategories.length,
-        );
+        expect(dollarElements.length).toBeGreaterThanOrEqual(visibleCount);
 
         // Verify Category Lock info tooltip exists next to Auto-Balance
         const lockInfoBtn = screen.getByRole("button", {
@@ -600,9 +601,7 @@ describe("Interactive Sliders, Live Dollar Equivalent & Auto-Balance", () => {
         // Verify category lock toggle buttons exist
         // (Buffer is the derived remainder, so it has no lock toggle)
         const lockButtons = screen.getAllByTitle(/lock /i);
-        expect(lockButtons.length).toBeGreaterThanOrEqual(
-            mockCategories.length - 1,
-        );
+        expect(lockButtons.length).toBeGreaterThanOrEqual(visibleCount - 1);
     }, 45000);
 
     it("auto-balances unlocked categories proportionally to exactly 100% while keeping locked categories unchanged", async () => {

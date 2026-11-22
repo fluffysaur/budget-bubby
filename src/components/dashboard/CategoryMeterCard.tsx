@@ -1,5 +1,5 @@
 import React from "react";
-import { ProgressRing, TruncatedText } from "../ui";
+import { Badge, ProgressRing, TruncatedText } from "../ui";
 import { CurrencyText } from "../ui/CurrencyText";
 
 export interface CategoryMeterCardProps {
@@ -7,6 +7,7 @@ export interface CategoryMeterCardProps {
     color: string;
     remaining: number;
     pct: number;
+    ownerName?: string;
 }
 
 export const CategoryMeterCard = React.memo(function CategoryMeterCard({
@@ -14,6 +15,7 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
     color,
     remaining,
     pct,
+    ownerName,
 }: CategoryMeterCardProps) {
     return (
         <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-cute-sm flex items-center gap-2.5">
@@ -32,8 +34,15 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
                 }
             />
             <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-(--text-ink) truncate font-display">
-                    <TruncatedText text={name} />
+                <div className="flex items-center gap-1 min-w-0">
+                    <div className="text-xs font-bold text-(--text-ink) truncate font-display min-w-0 flex-1">
+                        <TruncatedText text={name} />
+                    </div>
+                    {ownerName && (
+                        <Badge variant="lilac" size="sm" className="shrink-0">
+                            {ownerName}
+                        </Badge>
+                    )}
                 </div>
                 <div
                     className={`text-xs font-extrabold font-mono-num ${

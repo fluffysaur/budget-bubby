@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import {
     computeActiveReminders,
-    requestNotificationPermission,
     evaluateAndDispatchReminders,
     migrateLegacyDismissals,
     type AppReminder,
@@ -47,6 +46,7 @@ import { m, AnimatePresence } from "motion/react";
 import { pop, fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
+import { useNotificationPermission } from "../../hooks/useNotificationPermission";
 
 function useIsMobile(breakpoint = 640): boolean {
     const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -88,8 +88,11 @@ export function NotificationCenterPopover({
     const [reminders, setReminders] = useState<AppReminder[]>([]);
     const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
     const [readIds, setReadIds] = useState<Set<string>>(new Set());
-    const [permission, setPermission] =
-        useState<NotificationPermission>("default");
+    const {
+        permission,
+        needsSystemSettings,
+        request: requestPermission,
+    } = useNotificationPermission();
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const popoverRef = useRef<HTMLDivElement>(null);
     const desktopPopoverRef = useRef<HTMLDivElement>(null);
@@ -97,13 +100,6 @@ export function NotificationCenterPopover({
 
     const activeMemberId = me?.id || members?.[0]?.id || "mem-00000000-0011";
     const readParam = searchParams.get("read");
-
-    // Sync browser notification permission state
-    useEffect(() => {
-        if (typeof window !== "undefined" && "Notification" in window) {
-            setPermission(Notification.permission);
-        }
-    }, []);
 
     const loadReadIds = useCallback(async () => {
         const log = await financeService.getNotificationLog(activeMemberId);
@@ -164,15 +160,20 @@ export function NotificationCenterPopover({
         try {
             const prefs =
                 await financeService.getNotificationPreferences(activeMemberId);
-            await syncPushSubscription(activeMemberId, prefs.push_enabled);
+            if (permission === "unsupported") return;
+            await syncPushSubscription(
+                activeMemberId,
+                prefs.push_enabled,
+                permission,
+            );
         } catch (err) {
             console.debug("Failed to sync push subscription:", err);
         }
-    }, [activeMemberId]);
+    }, [activeMemberId, permission]);
 
     useEffect(() => {
         syncSubscription();
-    }, [syncSubscription, permission]);
+    }, [syncSubscription]);
 
     // A tapped push opens the app with ?read=key1,key2: mark those read, then strip the param
     useEffect(() => {
@@ -324,8 +325,7 @@ export function NotificationCenterPopover({
     };
 
     const handleRequestPermission = async () => {
-        const res = await requestNotificationPermission();
-        setPermission(res);
+        await requestPermission();
     };
 
     // Execute reminder action with deep navigation
@@ -439,18 +439,28 @@ export function NotificationCenterPopover({
         <>
             {/* Browser Permission Prompt Banner */}
             {permission === "default" && (
-                <div className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-(--pastel-mint)/40 border-2 border-(--border-ink) shadow-cute-sm">
-                    <div className="text-[11px] text-(--accent-mint-ink) dark:text-(--pastel-mint-dark) font-bold">
-                        Get alerts on this device?
-                    </div>
-                    <button
-                        type="button"
-                        data-testid="enable-push-notifications-btn"
-                        onClick={handleRequestPermission}
-                        className="px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-(--accent-mint-ink) border border-(--border-ink) text-[10px] font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer"
+                <div
+                    data-testid="push-permission-banner"
+                    className="mb-3 flex items-center justify-between gap-2 p-2.5 rounded-xl bg-(--pastel-mint)/40 border-2 border-(--border-ink) shadow-cute-sm"
+                >
+                    <div
+                        data-testid="push-permission-banner-text"
+                        className="min-w-0 flex-1 text-[11px] text-(--accent-mint-ink) dark:text-(--pastel-mint-dark) font-bold"
                     >
-                        Enable
-                    </button>
+                        {needsSystemSettings
+                            ? "Allow alerts in system settings, then reopen."
+                            : "Get alerts on this device?"}
+                    </div>
+                    {!needsSystemSettings && (
+                        <button
+                            type="button"
+                            data-testid="enable-push-notifications-btn"
+                            onClick={handleRequestPermission}
+                            className="px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-(--accent-mint-ink) border border-(--border-ink) text-[10px] font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer"
+                        >
+                            Enable
+                        </button>
+                    )}
                 </div>
             )}
 

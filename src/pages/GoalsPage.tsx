@@ -3,7 +3,7 @@
  * The household Roadmap and its goals:
  * - RoadmapCard: verdict, pool bar, timeline and trade-offs (household plan)
  * - ProjectionCard: net worth history, projection and life events
- * - Filter tabs: All, Active, Done
+ * - Filter tabs: Active, Done, All
  * - Responsive grid of GoalCards reading the same Roadmap result
  * - AddEditGoalModal for creating/updating goals; Mark done / Reopen
  */
@@ -48,7 +48,7 @@ export interface GoalsPageProps {
     embedded?: boolean;
 }
 
-type GoalFilterTab = "all" | "in_progress" | "achieved";
+type GoalFilterTab = "in_progress" | "achieved" | "all";
 
 export function GoalsPage({
     className = "",
@@ -84,7 +84,7 @@ export function GoalsPage({
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = goalsLoading && !goalsData;
     const errorMessage = goalsError ? (goalsError as Error).message : null;
-    const [activeTab, setActiveTab] = useState<GoalFilterTab>("all");
+    const [activeTab, setActiveTab] = useState<GoalFilterTab>("in_progress");
     const [highlightedGoalId, setHighlightedGoalId] = useState<string | null>(
         null,
     );
@@ -393,15 +393,6 @@ export function GoalsPage({
                 <SegmentedTabs
                     tabs={[
                         {
-                            id: "all",
-                            label: "All",
-                            badge: (
-                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
-                                    {perspectiveGoals.length}
-                                </span>
-                            ),
-                        },
-                        {
                             id: "in_progress",
                             label: "Active",
                             badge: (
@@ -416,6 +407,15 @@ export function GoalsPage({
                             badge: (
                                 <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
                                     {achievedGoals.length}
+                                </span>
+                            ),
+                        },
+                        {
+                            id: "all",
+                            label: "All",
+                            badge: (
+                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                    {perspectiveGoals.length}
                                 </span>
                             ),
                         },
@@ -436,7 +436,7 @@ export function GoalsPage({
                     icon={<span className="text-2xl">🎯</span>}
                     title="No Goals"
                     description={
-                        activeTab === "all"
+                        perspectiveGoals.length === 0
                             ? "Add a goal to start tracking savings progress."
                             : "No goals found in this view."
                     }

@@ -12,6 +12,7 @@ import { emitAppEvent, onAppEvent } from "../../lib/appEvents";
 import { Bubby } from "./Bubby";
 import { BubbyEgg } from "./BubbyEgg";
 import { FedTodayDots } from "./FedTodayDots";
+import { Skeleton } from "../ui";
 
 export interface BubbyAvatarButtonProps {
     className?: string;
@@ -28,6 +29,7 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
         fedToday,
         pet,
         hatched = true,
+        isMemberLoading = false,
         onboardingQuests = [],
     } = useBubby();
     const myPenguin = penguins.find((p) => p.isMe) ?? penguins[0];
@@ -58,19 +60,34 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
     return (
         <button
             type="button"
-            aria-label={hatched ? "Bubby" : "Bubby Egg"}
+            aria-label={
+                isMemberLoading
+                    ? "Loading Bubby"
+                    : hatched
+                      ? "Bubby"
+                      : "Bubby Egg"
+            }
+            aria-busy={isMemberLoading || undefined}
             data-testid="bubby-avatar"
             data-body={myPenguin?.body ?? body}
             data-mood={myPenguin?.mood ?? mood}
-            data-hatched={hatched ? "true" : "false"}
+            data-hatched={
+                isMemberLoading ? "loading" : hatched ? "true" : "false"
+            }
             onClick={() => {
+                if (isMemberLoading) return;
                 if (hatched) pet();
                 emitAppEvent("bubby:open-sheet", {});
             }}
             className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-transform ${className}`}
         >
             <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm overflow-hidden pt-0.5">
-                {!hatched ? (
+                {isMemberLoading ? (
+                    <Skeleton
+                        data-testid="bubby-avatar-skeleton"
+                        className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg self-center"
+                    />
+                ) : !hatched ? (
                     <BubbyEgg
                         cracks={doneCount}
                         accent={myPenguin?.scarf}
@@ -90,7 +107,7 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
                     />
                 )}
             </span>
-            {hatched && (
+            {!isMemberLoading && hatched && (
                 <FedTodayDots
                     members={members}
                     fedToday={fedToday}
@@ -98,14 +115,14 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
                     className="pointer-events-none absolute -bottom-0.5 left-1/2 -translate-x-1/2"
                 />
             )}
-            {readyToHatch && (
+            {!isMemberLoading && readyToHatch && (
                 <span
                     aria-hidden="true"
                     data-testid="bubby-egg-ready-dot"
                     className="pointer-events-none absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-(--border-ink) bg-(--pastel-butter)"
                 />
             )}
-            {hatched && pipKey > 0 && (
+            {!isMemberLoading && hatched && pipKey > 0 && (
                 <span
                     key={pipKey}
                     aria-hidden="true"

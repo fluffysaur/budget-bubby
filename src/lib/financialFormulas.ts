@@ -241,6 +241,37 @@ export function isSpendableCategory(
     return !ALLOCATION_NAME_HINTS.some((hint) => clean.includes(hint));
 }
 
+/**
+ * Returns categories visible to `memberId`: household-shared categories
+ * (`!c.member_id`) plus that member's personal categories (`c.member_id === memberId`).
+ * When `memberId` is omitted/empty, returns all categories (household view).
+ */
+export function filterCategoriesForMember(
+    categories: Category[],
+    memberId?: string | null,
+): Category[] {
+    if (!memberId) return categories;
+    return categories.filter((c) => !c.member_id || c.member_id === memberId);
+}
+
+/**
+ * Resolves the effective category ID of an expense for `memberId`.
+ * For shared expenses where `memberId` is the non-paying partner, returns
+ * `partner_category_id ?? category_id`; otherwise returns `category_id`.
+ */
+export function getExpenseCategoryForMember(
+    expense: Pick<
+        Expense,
+        "is_shared" | "payer_id" | "category_id" | "partner_category_id"
+    >,
+    memberId?: string | null,
+): string | null | undefined {
+    if (expense.is_shared && memberId && memberId !== expense.payer_id) {
+        return expense.partner_category_id ?? expense.category_id;
+    }
+    return expense.category_id;
+}
+
 /** Name of a category or a bare name string; empty for null/UUID-only input. */
 function categoryNameOf(categoryOrName?: Category | string | null): string {
     if (!categoryOrName) return "";
@@ -713,8 +744,12 @@ export function calculateExpenseTrends(
         months.push(addMonths(refMonth, i));
     }
 
-    // Spendable categories
-    const spendableCats = categories.filter((c) => isSpendableCategory(c));
+    // Spendable categories (scoped to member in personal perspective)
+    const visibleCats = filterCategoriesForMember(
+        categories,
+        perspective === "personal" ? memberId : undefined,
+    );
+    const spendableCats = visibleCats.filter((c) => isSpendableCategory(c));
     const spendableIds = new Set(spendableCats.map((c) => c.id));
     const recurringOwnerId =
         perspective === "household" || !memberId ? undefined : memberId;
@@ -729,21 +764,44 @@ export function calculateExpenseTrends(
         const monthExpenses = expenses.filter(
             (e) => e.date.startsWith(m) && !e.goal_id,
         );
+        const addToTrendCategory = (
+            catId: string | null | undefined,
+            amount: number,
+        ) => {
+            if (amount <= 0) return;
+            const cat = categories.find((c) => c.id === catId);
+            if (cat && !isSpendableCategory(cat)) return;
+            const catKey =
+                catId && byCategory[catId] !== undefined
+                    ? catId
+                    : spendableCats[0]?.id || "uncategorized";
+            byCategory[catKey] =
+                Math.round(((byCategory[catKey] || 0) + amount) * 100) / 100;
+        };
+
         for (const exp of monthExpenses) {
-            const cat = categories.find((c) => c.id === exp.category_id);
-            if (cat && !isSpendableCategory(cat)) {
+            if (
+                (perspective === "household" || !memberId) &&
+                exp.is_shared &&
+                exp.partner_category_id &&
+                exp.partner_category_id !== exp.category_id
+            ) {
+                const partnerRatio = exp.split_ratio ?? 0.5;
+                const total = Number(exp.amount) || 0;
+                const partnerShare =
+                    Math.round(total * partnerRatio * 100) / 100;
+                const payerShare = Math.round((total - partnerShare) * 100) / 100;
+                addToTrendCategory(exp.category_id, payerShare);
+                addToTrendCategory(exp.partner_category_id, partnerShare);
                 continue;
             }
+
+            const effectiveCatId =
+                perspective === "personal" && memberId
+                    ? getExpenseCategoryForMember(exp, memberId)
+                    : exp.category_id;
             const share = getMemberExpenseShare(exp, memberId, perspective);
-            if (share <= 0) continue;
-
-            const catKey =
-                exp.category_id && byCategory[exp.category_id] !== undefined
-                    ? exp.category_id
-                    : spendableCats[0]?.id || "uncategorized";
-
-            byCategory[catKey] =
-                Math.round(((byCategory[catKey] || 0) + share) * 100) / 100;
+            addToTrendCategory(effectiveCatId, share);
         }
 
         // Add recurring subscription/bill/other spend to its own spendable category
@@ -965,8 +1023,39 @@ export function calculateCumulativeSurplus({
         let goalSpent = 0;
 
         for (const exp of monthExpenses) {
-            const cat = exp.category_id
-                ? categoryMap.get(exp.category_id)
+            if (
+                (perspective === "household" || !memberId) &&
+                exp.is_shared &&
+                exp.partner_category_id &&
+                exp.partner_category_id !== exp.category_id
+            ) {
+                const partnerRatio = exp.split_ratio ?? 0.5;
+                const total = Number(exp.amount) || 0;
+                const partnerShare =
+                    Math.round(total * partnerRatio * 100) / 100;
+                const payerShare = Math.round((total - partnerShare) * 100) / 100;
+                const payerCat = exp.category_id
+                    ? categoryMap.get(exp.category_id)
+                    : undefined;
+                const partnerCat = categoryMap.get(exp.partner_category_id);
+                const payerSpendable = !payerCat || isSpendableCategory(payerCat);
+                const partnerSpendable =
+                    !partnerCat || isSpendableCategory(partnerCat);
+                const effectiveShare =
+                    (payerSpendable ? payerShare : 0) +
+                    (partnerSpendable ? partnerShare : 0);
+                if (effectiveShare <= 0) continue;
+                if (exp.goal_id) goalSpent += effectiveShare;
+                else spent += effectiveShare;
+                continue;
+            }
+
+            const effectiveCatId =
+                perspective === "personal" && memberId
+                    ? getExpenseCategoryForMember(exp, memberId)
+                    : exp.category_id;
+            const cat = effectiveCatId
+                ? categoryMap.get(effectiveCatId)
                 : undefined;
             // If category is known and not spendable, exclude
             if (cat && !isSpendableCategory(cat)) {
@@ -1108,8 +1197,35 @@ export function calculateSpendablePacing({
         // Skip goal-funded expenses
         if (exp.goal_id) continue;
 
-        const cat = exp.category_id
-            ? categoryMap.get(exp.category_id)
+        if (
+            (perspective === "household" || !memberId) &&
+            exp.is_shared &&
+            exp.partner_category_id &&
+            exp.partner_category_id !== exp.category_id
+        ) {
+            const partnerRatio = exp.split_ratio ?? 0.5;
+            const total = Number(exp.amount) || 0;
+            const partnerShare = Math.round(total * partnerRatio * 100) / 100;
+            const payerShare = Math.round((total - partnerShare) * 100) / 100;
+            const payerCat = exp.category_id
+                ? categoryMap.get(exp.category_id)
+                : undefined;
+            const partnerCat = categoryMap.get(exp.partner_category_id);
+            if (!payerCat || isSpendableCategory(payerCat)) {
+                spent += payerShare;
+            }
+            if (!partnerCat || isSpendableCategory(partnerCat)) {
+                spent += partnerShare;
+            }
+            continue;
+        }
+
+        const effectiveCatId =
+            perspective === "personal" && memberId
+                ? getExpenseCategoryForMember(exp, memberId)
+                : exp.category_id;
+        const cat = effectiveCatId
+            ? categoryMap.get(effectiveCatId)
             : undefined;
         if (cat && !isSpendableCategory(cat)) continue;
 

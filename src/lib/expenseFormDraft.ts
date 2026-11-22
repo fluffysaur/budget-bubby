@@ -14,6 +14,7 @@ export interface ExpenseFormDraft {
     customExchangeRate?: number;
     item: string;
     categoryId: string;
+    partnerCategoryId?: string;
     categoryManuallySelected: boolean;
     isGoalSpend: boolean;
     selectedGoalId: string;
@@ -79,6 +80,10 @@ export function buildExpenseInputFromDraft(
         ...(householdId ? { household_id: householdId } : {}),
         payer_id: draft.payerId,
         category_id: draft.isGoalSpend ? null : draft.categoryId || null,
+        partner_category_id:
+            draft.isGoalSpend || !draft.isShared
+                ? null
+                : draft.partnerCategoryId || null,
         date: draft.date || getTodayDateString(),
         time: draft.time || getCurrentSingaporeTime(),
         item: draft.item.trim(),

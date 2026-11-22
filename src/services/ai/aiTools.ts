@@ -1,5 +1,5 @@
 /**
- * Gemini function-calling definitions, automatic read tool executors,
+ * Provider-neutral AI tool definitions, automatic read tool executors,
  * structured action proposals, and confirmed mutation executors.
  */
 
@@ -13,7 +13,7 @@ import type {
     MonthlyBudget,
     Perspective,
 } from "../../types/finance";
-import type { GeminiFunctionDeclaration } from "./geminiClient";
+import type { AiToolDefinition } from "./providers/types";
 
 export type ReadToolName =
     | "getHouseholdOverview"
@@ -117,13 +117,13 @@ export type ProposedAction =
           errorMessage?: string;
       };
 
-export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
+export const BUBBY_TOOLS: AiToolDefinition[] = [
     {
         name: "getHouseholdOverview",
         description:
             "Get household summary including members, total net worth, liquid cash, investments, CPF, and currency.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {},
         },
     },
@@ -132,10 +132,10 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "List bank, investment, CPF, and cash accounts with their IDs, names, types, and current balances.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
                 perspective: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Optional perspective filter: 'household' for all accounts or a specific member key/ID.",
                 },
@@ -147,23 +147,23 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "List expenses for a given month or search query. Defaults to the current month.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
                 month: {
-                    type: "STRING",
+                    type: "string",
                     description: "Month in YYYY-MM format (e.g. '2026-11').",
                 },
                 search: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Optional keyword to filter expense item names or remarks.",
                 },
                 categoryId: {
-                    type: "STRING",
+                    type: "string",
                     description: "Optional category ID filter.",
                 },
                 limit: {
-                    type: "INTEGER",
+                    type: "integer",
                     description:
                         "Maximum number of expenses to return (default 40, max 100).",
                 },
@@ -175,15 +175,15 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "Get monthly budget breakdown, disposable pool, category allocations, actual spend, and remaining budget.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
                 month: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Month in YYYY-MM format (defaults to current month).",
                 },
                 memberId: {
-                    type: "STRING",
+                    type: "string",
                     description: "Optional household member ID.",
                 },
             },
@@ -194,7 +194,7 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "Get all household savings goals with target amounts, current progress, and target dates.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {},
         },
     },
@@ -203,42 +203,42 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "Propose logging a new expense for the user to review and confirm before saving.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
                 item: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Short expense description (e.g. 'Chicken rice lunch').",
                 },
                 amount: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "Positive expense amount in SGD.",
                 },
                 date: {
-                    type: "STRING",
+                    type: "string",
                     description: "Expense date in YYYY-MM-DD format.",
                 },
                 categoryName: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Category name (e.g. 'Food & Dining', 'Groceries', 'Transport').",
                 },
                 categoryId: {
-                    type: "STRING",
+                    type: "string",
                     description: "Optional exact category ID if known.",
                 },
                 isShared: {
-                    type: "BOOLEAN",
+                    type: "boolean",
                     description:
                         "Whether the expense is shared with partner (default false).",
                 },
                 splitRatio: {
-                    type: "NUMBER",
+                    type: "number",
                     description:
                         "Partner's share from 0 to 1 when shared (default 0.5).",
                 },
                 remarks: {
-                    type: "STRING",
+                    type: "string",
                     description: "Optional short note.",
                 },
             },
@@ -250,27 +250,27 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "Propose updating an account balance for the user to review and confirm before saving.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
                 accountId: {
-                    type: "STRING",
+                    type: "string",
                     description: "Account ID if known from getAccounts.",
                 },
                 accountName: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Account name to match (e.g. 'DBS Multiplier').",
                 },
                 newBalance: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "New account balance in SGD.",
                 },
                 date: {
-                    type: "STRING",
+                    type: "string",
                     description: "Snapshot date in YYYY-MM-DD format.",
                 },
                 notes: {
-                    type: "STRING",
+                    type: "string",
                     description: "Optional short note for the balance update.",
                 },
             },
@@ -282,35 +282,35 @@ export const BUBBY_TOOLS: GeminiFunctionDeclaration[] = [
         description:
             "Propose updating monthly budget income, bonus, deductions, or notes for the user to review and confirm.",
         parameters: {
-            type: "OBJECT",
+            type: "object",
             properties: {
                 month: {
-                    type: "STRING",
+                    type: "string",
                     description:
                         "Month in YYYY-MM format (defaults to current month).",
                 },
                 grossSalary: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "Updated monthly gross salary in SGD.",
                 },
                 bonus: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "Updated monthly bonus in SGD.",
                 },
                 cpfDeduction: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "Updated CPF deduction in SGD.",
                 },
                 taxesDeduction: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "Updated tax deduction in SGD.",
                 },
                 insuranceDeduction: {
-                    type: "NUMBER",
+                    type: "number",
                     description: "Updated insurance deduction in SGD.",
                 },
                 notes: {
-                    type: "STRING",
+                    type: "string",
                     description: "Optional note on the monthly budget.",
                 },
             },
@@ -341,8 +341,8 @@ function toFiniteNumber(val: unknown): number | undefined {
 }
 
 /**
- * Builds the system prompt with current date & active perspective so Gemini
- * produces grounded SGD answers and uses tools accurately.
+ * Builds the system prompt with current date & active perspective so the AI
+ * assistant produces grounded SGD answers and uses tools accurately.
  */
 export function buildBubbySystemInstruction(context: AiToolContext): string {
     const today = getTodayIso(context);
@@ -358,7 +358,7 @@ export function buildBubbySystemInstruction(context: AiToolContext): string {
     ].join(" ");
 }
 
-/** Executes a read-only Gemini tool call against financeService. */
+/** Executes a read-only AI tool call against financeService. */
 export async function executeReadTool(
     name: ReadToolName,
     args: Record<string, unknown>,
@@ -503,7 +503,7 @@ export async function executeReadTool(
 }
 
 /**
- * Converts a Gemini `propose*` tool call into a structured, reviewable
+ * Converts a `propose*` tool call into a structured, reviewable
  * ProposedAction card without mutating any data.
  */
 export async function buildProposedAction(
