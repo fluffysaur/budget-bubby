@@ -791,4 +791,25 @@ describe("GoalsPage Integration", () => {
             screen.getAllByRole("button", { name: /Add Goal/i }).length,
         ).toBeGreaterThan(0);
     });
+
+    it("renders goals sorted by target_date with earliest first", async () => {
+        vi.spyOn(financeService, "getGoals").mockResolvedValueOnce([
+            sampleBehindGoal, // 2027-09-01
+            sampleAchievedGoal, // 2027-05-01
+            sampleOnTrackGoal, // 2027-07-01
+        ]);
+
+        renderGoalsPage();
+
+        await waitFor(() => {
+            expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
+        });
+
+        const cards = screen.getAllByTestId(/^goal-card-goal-/);
+        expect(cards.map((el) => el.getAttribute("data-testid"))).toEqual([
+            WEDDING_CARD,
+            HDB_CARD,
+            RENO_CARD,
+        ]);
+    });
 });

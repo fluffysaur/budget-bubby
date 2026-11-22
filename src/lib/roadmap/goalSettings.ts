@@ -121,3 +121,17 @@ export function haircutFromHousehold(
             n.investment_haircut_months ?? DEFAULT_HAIRCUT_WINDOW_MONTHS,
     };
 }
+
+/** Sorts goals by target_date ascending (earliest first), with deterministic tie-breakers. */
+export function sortGoalsByDate<
+    T extends Pick<SavingsGoal, "target_date" | "created_at" | "id">,
+>(goals: readonly T[]): T[] {
+    return [...goals].sort(
+        (a, b) =>
+            (a.target_date || "\uffff").localeCompare(
+                b.target_date || "\uffff",
+            ) ||
+            (a.created_at ?? "").localeCompare(b.created_at ?? "") ||
+            a.id.localeCompare(b.id),
+    );
+}
