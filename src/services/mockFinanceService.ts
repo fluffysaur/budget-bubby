@@ -8,6 +8,7 @@
 import {
     normalizeGoalTags,
     normalizeHouseholdSettings,
+    sortGoalsByDate,
 } from "../lib/roadmap/goalSettings";
 import type {
     Account,
@@ -1228,7 +1229,9 @@ class MockFinanceServiceImpl implements FinanceService {
     }
 
     public async getGoals(): Promise<SavingsGoal[]> {
-        return cloneDeep(this.state.savingsGoals.map(normalizeGoalStatus));
+        return sortGoalsByDate(
+            cloneDeep(this.state.savingsGoals.map(normalizeGoalStatus)),
+        );
     }
 
     public async getGoal(id: string): Promise<SavingsGoal | null> {

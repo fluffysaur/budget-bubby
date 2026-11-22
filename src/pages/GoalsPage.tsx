@@ -28,6 +28,7 @@ import {
     useUpdateGoalMutation,
 } from "../hooks/useFinanceQueries";
 import { useRoadmap } from "../hooks/useRoadmap";
+import { sortGoalsByDate } from "../lib/roadmap/goalSettings";
 import { addMonths } from "../lib/dateUtils";
 import { feedback } from "../lib/delight/feedback";
 import { GoalCard } from "../components/goals/GoalCard";
@@ -108,13 +109,15 @@ export function GoalsPage({
         return map;
     }, [expenses]);
 
-    // Perspective-filtered goals if applicable
+    // Perspective-filtered goals if applicable, sorted by target_date (earliest first)
     const perspectiveGoals = useMemo(() => {
-        return goals.filter((g) => {
-            if (perspective === "household") return true;
-            // Joint or assigned to active member
-            return !g.owner_id || g.owner_id === activeMember?.id;
-        });
+        return sortGoalsByDate(
+            goals.filter((g) => {
+                if (perspective === "household") return true;
+                // Joint or assigned to active member
+                return !g.owner_id || g.owner_id === activeMember?.id;
+            }),
+        );
     }, [goals, perspective, activeMember]);
 
     // Filtered by Active Tab

@@ -6,6 +6,7 @@
 import {
     normalizeGoalTags,
     normalizeHouseholdSettings,
+    sortGoalsByDate,
 } from "../lib/roadmap/goalSettings";
 import type {
     Account,
@@ -1877,9 +1878,14 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
     public async getGoals(): Promise<SavingsGoal[]> {
         const client = this.getClient();
-        const { data, error } = await client.from("savings_goals").select("*");
+        const { data, error } = await client
+            .from("savings_goals")
+            .select("*")
+            .order("target_date", { ascending: true });
         if (error) throw error;
-        return ((data || []) as SavingsGoal[]).map(normalizeGoalStatus);
+        return sortGoalsByDate(
+            ((data || []) as SavingsGoal[]).map(normalizeGoalStatus),
+        );
     }
 
     public async getGoal(id: string): Promise<SavingsGoal | null> {
