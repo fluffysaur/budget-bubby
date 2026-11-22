@@ -6,10 +6,10 @@ steps=("$@")
 [ ${#steps[@]} -eq 0 ] && steps=(lint build test)
 cmd_for() {
     case "$1" in
-        lint) echo "npm run lint" ;;
-        build) echo "npm run build" ;;
-        test) echo "npm test" ;;
-        e2e) echo "npm run test:e2e" ;;
+        lint) echo "pnpm run lint" ;;
+        build) echo "pnpm run build" ;;
+        test) echo "pnpm test" ;;
+        e2e) echo "pnpm run test:e2e" ;;
         *) echo "" ;;
     esac
 }

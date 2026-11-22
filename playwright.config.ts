@@ -42,7 +42,7 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: `npm run dev -- --port ${E2E_PORT} --strictPort`,
+        command: `pnpm exec vite --port ${E2E_PORT} --strictPort`,
         url: E2E_URL,
         reuseExistingServer: false,
         // Empty Supabase vars override any .env file, forcing mock data mode.

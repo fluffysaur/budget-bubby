@@ -3,8 +3,8 @@ import {
     animate,
     useReducedMotion,
     type AnimationPlaybackControls,
+    type Easing,
 } from "motion/react";
-import type { Easing } from "motion-utils";
 import { DURATION, EASE_OUT_SOFT, prefersReducedMotion } from "../lib/motion";
 
 export interface UseTweenedNumberOptions {

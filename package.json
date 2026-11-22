@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=20"
   },
@@ -17,7 +18,7 @@
     "test:changed": "vitest run --changed",
     "test:e2e": "playwright test",
     "check": "bash scripts/check.sh",
-    "deploy:functions": "npm run build:functions && npx supabase functions deploy send-reminders --no-verify-jwt && npx supabase functions deploy capture-expense --no-verify-jwt"
+    "deploy:functions": "pnpm run build:functions && pnpm dlx supabase functions deploy send-reminders --no-verify-jwt && pnpm dlx supabase functions deploy capture-expense --no-verify-jwt"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.20",
