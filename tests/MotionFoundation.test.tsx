@@ -133,6 +133,10 @@ describe("Motion Foundation & Touch Ergonomics", () => {
         expect(fadeRise.transition.duration).toBe(0.18);
         expect(pop.transition.duration).toBe(0.16);
         expect(collapse.transition.duration).toBe(0.22);
+        expect(collapse.animate.transitionEnd).toEqual({
+            overflow: "visible",
+        });
+        expect(collapse.exit.overflow).toBe("hidden");
         expect(listItem.layout).toBe(true);
         expect(springSnappy.type).toBe("spring");
     });

@@ -60,6 +60,40 @@ interface ToastAlert {
     message: string;
 }
 
+type CategoryLimitAlertType = "exceeded" | "warning";
+
+const DISMISSED_ALERTS_KEY = "bb_dismissed_category_limit_alerts_v1";
+const DISMISSED_ALERTS_EVENT = "categoryLimitAlertsDismissed";
+
+function readDismissedAlerts(): Record<CategoryLimitAlertType, boolean> {
+    try {
+        const raw = window.sessionStorage.getItem(DISMISSED_ALERTS_KEY);
+        if (!raw) return { exceeded: false, warning: false };
+        const parsed = JSON.parse(raw) as Partial<
+            Record<CategoryLimitAlertType, unknown>
+        >;
+        return {
+            exceeded: Boolean(parsed.exceeded),
+            warning: Boolean(parsed.warning),
+        };
+    } catch {
+        return { exceeded: false, warning: false };
+    }
+}
+
+function persistDismissedAlerts(
+    next: Record<CategoryLimitAlertType, boolean>,
+): void {
+    try {
+        window.sessionStorage.setItem(
+            DISMISSED_ALERTS_KEY,
+            JSON.stringify(next),
+        );
+    } catch {
+        // ignore storage errors
+    }
+}
+
 export const CategoryLimitWarningBanner = React.memo(
     function CategoryLimitWarningBanner({
         categories = [],
@@ -73,6 +107,9 @@ export const CategoryLimitWarningBanner = React.memo(
             me?.id || members?.[0]?.id || "mem-00000000-0011";
 
         const [toast, setToast] = useState<ToastAlert | null>(null);
+        const [dismissedTypes, setDismissedTypes] = useState<
+            Record<CategoryLimitAlertType, boolean>
+        >(() => readDismissedAlerts());
         const [prefs, setPrefs] = useState<NotificationPreferences>(() =>
             getDefaultNotificationPreferences(activeMemberId),
         );
@@ -269,21 +306,62 @@ export const CategoryLimitWarningBanner = React.memo(
             return { exceededAlerts: exceeded, warningAlerts: warning };
         }, [categories, prefs.budget_warning_pct]);
 
+        useEffect(() => {
+            const handleSyncDismissed = () => {
+                setDismissedTypes(readDismissedAlerts());
+            };
+            window.addEventListener(
+                DISMISSED_ALERTS_EVENT,
+                handleSyncDismissed,
+            );
+            return () =>
+                window.removeEventListener(
+                    DISMISSED_ALERTS_EVENT,
+                    handleSyncDismissed,
+                );
+        }, []);
+
+        const handleDismissAlert = useCallback(
+            (type: CategoryLimitAlertType) => {
+                setDismissedTypes((prev) => {
+                    if (prev[type]) return prev;
+                    const next = { ...prev, [type]: true };
+                    persistDismissedAlerts(next);
+                    window.dispatchEvent(
+                        new CustomEvent(DISMISSED_ALERTS_EVENT),
+                    );
+                    return next;
+                });
+            },
+            [],
+        );
+
+        const visibleExceededAlerts = useMemo(
+            () => (dismissedTypes.exceeded ? [] : exceededAlerts),
+            [dismissedTypes.exceeded, exceededAlerts],
+        );
+
+        const visibleWarningAlerts = useMemo(
+            () => (dismissedTypes.warning ? [] : warningAlerts),
+            [dismissedTypes.warning, warningAlerts],
+        );
+
         const hasAnyAlerts =
-            exceededAlerts.length > 0 || warningAlerts.length > 0;
+            visibleExceededAlerts.length > 0 || visibleWarningAlerts.length > 0;
 
         // In single mode, keep only the most urgent alert: worst overspend, else closest to cap
         const { shownExceeded, shownWarning, hiddenCount } = useMemo(() => {
             if (!single) {
                 return {
-                    shownExceeded: exceededAlerts,
-                    shownWarning: warningAlerts,
+                    shownExceeded: visibleExceededAlerts,
+                    shownWarning: visibleWarningAlerts,
                     hiddenCount: 0,
                 };
             }
-            const total = exceededAlerts.length + warningAlerts.length;
-            if (exceededAlerts.length > 0) {
-                const worst = [...exceededAlerts]
+            const total =
+                visibleExceededAlerts.length + visibleWarningAlerts.length;
+            if (visibleExceededAlerts.length > 0) {
+                const worst = [...visibleExceededAlerts]
                     .sort((a, b) => b.over - a.over)
                     .slice(0, 1);
                 return {
@@ -292,7 +370,7 @@ export const CategoryLimitWarningBanner = React.memo(
                     hiddenCount: total - 1,
                 };
             }
-            const closest = [...warningAlerts]
+            const closest = [...visibleWarningAlerts]
                 .sort((a, b) => b.percentage - a.percentage)
                 .slice(0, 1);
             return {
@@ -300,7 +378,7 @@ export const CategoryLimitWarningBanner = React.memo(
                 shownWarning: closest,
                 hiddenCount: total - closest.length,
             };
-        }, [single, exceededAlerts, warningAlerts]);
+        }, [single, visibleExceededAlerts, visibleWarningAlerts]);
 
         return (
             <>
@@ -392,7 +470,10 @@ export const CategoryLimitWarningBanner = React.memo(
                                                 <div className="flex items-center gap-2 flex-wrap mb-1">
                                                     <span className="text-xs font-black uppercase tracking-wider text-(--accent-coral-ink) dark:text-rose-300 font-display">
                                                         Over Cap (
-                                                        {exceededAlerts.length})
+                                                        {
+                                                            visibleExceededAlerts.length
+                                                        }
+                                                        )
                                                     </span>
                                                 </div>
                                                 <div className="space-y-1">
@@ -436,6 +517,21 @@ export const CategoryLimitWarningBanner = React.memo(
                                                     )}
                                                 </div>
                                             </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleDismissAlert(
+                                                        "exceeded",
+                                                    )
+                                                }
+                                                aria-label="Dismiss Over Cap alert"
+                                                className="shrink-0 -mr-2 -mt-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                                            >
+                                                <X
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -457,7 +553,10 @@ export const CategoryLimitWarningBanner = React.memo(
                                                 <div className="flex items-center gap-2 flex-wrap mb-1">
                                                     <span className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 font-display">
                                                         Near Limit (
-                                                        {warningAlerts.length})
+                                                        {
+                                                            visibleWarningAlerts.length
+                                                        }
+                                                        )
                                                     </span>
                                                 </div>
                                                 <div className="space-y-1">
@@ -519,6 +618,21 @@ export const CategoryLimitWarningBanner = React.memo(
                                                     )}
                                                 </div>
                                             </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleDismissAlert(
+                                                        "warning",
+                                                    )
+                                                }
+                                                aria-label="Dismiss Near Limit alert"
+                                                className="shrink-0 -mr-2 -mt-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                                            >
+                                                <X
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                            </button>
                                         </div>
                                     </div>
                                 )}
