@@ -81,6 +81,9 @@ const InboxPage = lazy(() => import("./pages/InboxPage"));
 const OnboardingModal = lazy(
     () => import("./components/onboarding/OnboardingModal"),
 );
+const BubbyChatDrawer = lazy(
+    () => import("./components/ai/BubbyChatDrawer"),
+);
 
 /**
  * Minimal Header-Only Skeleton Loader displayed during route transition / lazy bundle resolution
@@ -307,6 +310,8 @@ function AppLayoutInner() {
         applyOnboardingDebugReset();
         return isFirstLaunch();
     });
+    const [isBubbyChatOpen, setIsBubbyChatOpen] = useState(false);
+
     const handleCloseOnboarding = useCallback(() => {
         markOnboardingSeen();
         setIsOnboardingOpen(false);
@@ -351,6 +356,7 @@ function AppLayoutInner() {
                 <AppHeader
                     onOpenQuickAdd={handleOpenQuickAdd}
                     onNavigateTab={handleSelectTab}
+                    onOpenBubbyChat={() => setIsBubbyChatOpen(true)}
                 />
 
                 {/* Scrollable Viewport / Route Container with Mobile Swipe-Down-To-Refresh */}
@@ -498,6 +504,14 @@ function AppLayoutInner() {
 
             {/* Bubby reactions, honest check-ins, milestones and the Bubby sheet */}
             <DelightHost />
+
+            {/* Bubby AI conversational assistant drawer */}
+            <Suspense fallback={null}>
+                <BubbyChatDrawer
+                    isOpen={isBubbyChatOpen}
+                    onClose={() => setIsBubbyChatOpen(false)}
+                />
+            </Suspense>
 
             {/* First-launch and on-demand onboarding guide */}
             <Suspense fallback={null}>
