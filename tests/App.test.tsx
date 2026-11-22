@@ -141,7 +141,12 @@ describe("App Integration & Routing", () => {
         );
         await waitFor(() => {
             const main = screen.getByRole("main");
-            expect(within(main).getByText(/^Target$/i)).toBeInTheDocument();
+            expect(
+                within(main).getByTestId("roadmap-card"),
+            ).toBeInTheDocument();
+            expect(
+                within(main).getByRole("tab", { name: /Active/i }),
+            ).toHaveAttribute("aria-selected", "true");
         });
         unmountGoals();
 

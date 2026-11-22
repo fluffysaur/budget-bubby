@@ -185,6 +185,9 @@ describe("Goal Notification Navigation and Scroll", () => {
             // Since Wedding Fund is achieved, GoalsPage should ensure it is displayed
             await waitFor(() => {
                 expect(screen.getByText("Wedding Fund")).toBeInTheDocument();
+                expect(
+                    screen.getByRole("tab", { name: /All/i }),
+                ).toHaveAttribute("aria-selected", "true");
             });
 
             await waitFor(() => {
