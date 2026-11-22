@@ -1,55 +1,35 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// Desktop shows a segmented switcher (aria-pressed); phones show a dropdown whose button shows the active label.
-async function expectActivePerspective(
-    page: Page,
-    isMobile: boolean,
-    name: RegExp,
-) {
-    if (isMobile) {
-        await expect(
-            page.getByRole("button", { name: "Select Financial Perspective" }),
-        ).toContainText(name);
-    } else {
-        await expect(
-            page
-                .getByRole("navigation", { name: "Perspective Switcher" })
-                .getByRole("button", { name, pressed: true }),
-        ).toBeVisible();
-    }
+// Header renders a perspective dropdown at every viewport whose trigger shows the active label.
+async function expectActivePerspective(page: Page, name: RegExp) {
+    await expect(
+        page.getByRole("button", { name: "Select Financial Perspective" }),
+    ).toContainText(name);
 }
 
-async function selectPerspective(page: Page, isMobile: boolean, name: RegExp) {
-    if (isMobile) {
-        await page
-            .getByRole("button", { name: "Select Financial Perspective" })
-            .click();
-        await page.getByRole("option", { name }).click();
-    } else {
-        await page
-            .getByRole("navigation", { name: "Perspective Switcher" })
-            .getByRole("button", { name })
-            .click();
-    }
+async function selectPerspective(page: Page, name: RegExp) {
+    await page
+        .getByRole("button", { name: "Select Financial Perspective" })
+        .click();
+    await page.getByRole("option", { name }).click();
 }
 
 test.describe("Navigation and Perspective Switching", () => {
     test("should switch perspectives between household, Yi Jia, and Rachel", async ({
         page,
-        isMobile,
     }) => {
         await page.goto("/");
 
-        await expectActivePerspective(page, isMobile, /Combined/i);
+        await expectActivePerspective(page, /Combined/i);
 
-        await selectPerspective(page, isMobile, /Yi Jia/i);
-        await expectActivePerspective(page, isMobile, /Yi Jia/i);
+        await selectPerspective(page, /Yi Jia/i);
+        await expectActivePerspective(page, /Yi Jia/i);
 
-        await selectPerspective(page, isMobile, /Rachel/i);
-        await expectActivePerspective(page, isMobile, /Rachel/i);
+        await selectPerspective(page, /Rachel/i);
+        await expectActivePerspective(page, /Rachel/i);
 
-        await selectPerspective(page, isMobile, /Combined/i);
-        await expectActivePerspective(page, isMobile, /Combined/i);
+        await selectPerspective(page, /Combined/i);
+        await expectActivePerspective(page, /Combined/i);
     });
 
     test("should navigate across all views via desktop sidebar", async ({
