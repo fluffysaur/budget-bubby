@@ -360,7 +360,7 @@ describe("InboxPage", () => {
             expect(screen.getByText("3 to sort")).toBeInTheDocument();
 
             // Pointer gesture on non-interactive card area should allow swipe-to-discard
-            const nonInteractive = within(card).getAllByText("Today")[0];
+            const nonInteractive = within(card).getByText("Grab Food");
             fireEvent.pointerDown(nonInteractive, {
                 button: 0,
                 pointerId: 3,
