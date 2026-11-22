@@ -48,6 +48,17 @@ export interface RoadmapPool {
     asOf: string;
 }
 
+export interface TrimCandidate {
+    categoryId: string;
+    categoryName: string;
+    /** Average monthly budgeted cap in the baseline window. */
+    monthlyBudget: number;
+    /** Average monthly actual spend in the baseline window. */
+    monthlySpent: number;
+    /** Unused budget headroom (max(0, monthlyBudget - monthlySpent)). */
+    headroom: number;
+}
+
 export interface RoadmapInput {
     /** 'YYYY-MM-DD' */
     today: string;
@@ -65,11 +76,21 @@ export interface RoadmapInput {
     cashFlowChanges?: CashFlowChange[];
     /** Household CPF OA, for goals with "Use CPF OA" on. */
     cpfOa?: RoadmapCpfOa | null;
+    /** Spendable categories with headroom for the "Trim category" trade-off. */
+    trimCandidates?: TrimCandidate[];
 }
 
 /** One edit to the plan. A scenario is a list of edits. */
 export type ScenarioEdit =
-    { type: "delay"; goalId: string; months: number } | { type: "bonus" };
+    | { type: "delay"; goalId: string; months: number }
+    | {
+          type: "trim";
+          categoryId: string;
+          categoryName: string;
+          monthlyAmount: number;
+      }
+    | { type: "lowerTarget"; goalId: string; targetAmount: number }
+    | { type: "bonus" };
 
 export type Scenario = readonly ScenarioEdit[];
 

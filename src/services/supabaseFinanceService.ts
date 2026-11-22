@@ -70,6 +70,7 @@ import {
     calculateRecurringCategorySpend,
     isSpendType,
     resolveDueDay,
+    resolveGoalLinkedStartDate,
 } from "../lib/recurringItems";
 import {
     getTodayDateString,
@@ -1957,7 +1958,29 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             .select()
             .single();
         if (error) throw error;
-        return normalizeGoalStatus(data as SavingsGoal);
+        const updatedGoal = normalizeGoalStatus(data as SavingsGoal);
+
+        // Keep start_date synced on any recurring items linked to this goal
+        if (finalUpdates.target_date !== undefined && updatedGoal.target_date) {
+            const { data: linkedItems } = await client
+                .from("recurring_items")
+                .select("id, goal_offset_months")
+                .eq("goal_id", id);
+            if (linkedItems && linkedItems.length > 0) {
+                for (const item of linkedItems) {
+                    const syncedStart = resolveGoalLinkedStartDate(
+                        updatedGoal.target_date,
+                        item.goal_offset_months,
+                    );
+                    await client
+                        .from("recurring_items")
+                        .update({ start_date: syncedStart })
+                        .eq("id", item.id);
+                }
+            }
+        }
+
+        return updatedGoal;
     }
 
     public async getRecurringItems(): Promise<RecurringItem[]> {
@@ -1981,6 +2004,21 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 ? Math.round((input.amount / 12) * 100) / 100
                 : Math.round(input.amount * 100) / 100;
 
+        const goalId = input.goal_id || null;
+        const goalOffsetMonths = goalId
+            ? (input.goal_offset_months ?? 0)
+            : null;
+        let derivedStartDate = input.start_date || null;
+        if (goalId) {
+            const linkedGoal = await this.getGoal(goalId);
+            if (linkedGoal?.target_date) {
+                derivedStartDate = resolveGoalLinkedStartDate(
+                    linkedGoal.target_date,
+                    goalOffsetMonths,
+                );
+            }
+        }
+
         const { data, error } = await client
             .from("recurring_items")
             .insert({
@@ -1994,7 +2032,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 amount: input.amount,
                 frequency: input.frequency,
                 payment_month: input.payment_month ?? null,
-                start_date: input.start_date || null,
+                start_date: derivedStartDate,
                 end_date: input.end_date || null,
                 notes: input.notes || null,
                 monthly_amortized_amount: monthlyAmortized,
@@ -2004,6 +2042,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                     : null,
                 paid_from_cpf_oa:
                     isSpendType(input.type) && !!input.paid_from_cpf_oa,
+                goal_id: goalId,
+                goal_offset_months: goalOffsetMonths,
             })
             .select()
             .single();
@@ -2024,14 +2064,25 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             finalUpdates.category_id = null;
             finalUpdates.paid_from_cpf_oa = false;
         }
-        if (updates.amount !== undefined || updates.frequency !== undefined) {
-            const { data: existing, error: fetchErr } = await client
+        const needsExisting =
+            updates.amount !== undefined ||
+            updates.frequency !== undefined ||
+            updates.goal_id !== undefined ||
+            updates.goal_offset_months !== undefined;
+        let existing: RecurringItem | null = null;
+        if (needsExisting) {
+            const { data: fetched, error: fetchErr } = await client
                 .from("recurring_items")
                 .select("*")
                 .eq("id", id)
                 .single();
             if (fetchErr) throw fetchErr;
-
+            existing = fetched as RecurringItem;
+        }
+        if (
+            existing &&
+            (updates.amount !== undefined || updates.frequency !== undefined)
+        ) {
             const newAmount =
                 updates.amount !== undefined ? updates.amount : existing.amount;
             const newFrequency =
@@ -2044,6 +2095,34 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                     : Math.round(newAmount * 100) / 100;
 
             finalUpdates.monthly_amortized_amount = monthlyAmortized;
+        }
+        if (
+            existing &&
+            (updates.goal_id !== undefined ||
+                updates.goal_offset_months !== undefined)
+        ) {
+            const nextGoalId =
+                updates.goal_id !== undefined
+                    ? updates.goal_id || null
+                    : (existing.goal_id ?? null);
+            if (!nextGoalId) {
+                finalUpdates.goal_id = null;
+                finalUpdates.goal_offset_months = null;
+            } else {
+                const nextOffset =
+                    updates.goal_offset_months !== undefined
+                        ? (updates.goal_offset_months ?? 0)
+                        : (existing.goal_offset_months ?? 0);
+                finalUpdates.goal_id = nextGoalId;
+                finalUpdates.goal_offset_months = nextOffset;
+                const linkedGoal = await this.getGoal(nextGoalId);
+                if (linkedGoal?.target_date) {
+                    finalUpdates.start_date = resolveGoalLinkedStartDate(
+                        linkedGoal.target_date,
+                        nextOffset,
+                    );
+                }
+            }
         }
 
         const { data, error } = await client

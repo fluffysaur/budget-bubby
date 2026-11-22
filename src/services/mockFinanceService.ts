@@ -79,6 +79,7 @@ import {
     findDefaultRecurringCategoryId,
     isSpendType,
     resolveDueDay,
+    resolveGoalLinkedStartDate,
 } from "../lib/recurringItems";
 import {
     getTodayDateString,
@@ -1290,6 +1291,23 @@ class MockFinanceServiceImpl implements FinanceService {
         }
         Object.assign(goal, rest);
 
+        // Keep start_date synced on any recurring items linked to this goal
+        if (rest.target_date !== undefined && goal.target_date) {
+            let syncedAny = false;
+            for (const item of this.state.recurringItems) {
+                if (item.goal_id === id) {
+                    item.start_date = resolveGoalLinkedStartDate(
+                        goal.target_date,
+                        item.goal_offset_months,
+                    );
+                    syncedAny = true;
+                }
+            }
+            if (syncedAny) {
+                this.syncUnlockedBudgetsForOwner();
+            }
+        }
+
         this.persist();
         return (await this.getGoal(id)) as SavingsGoal;
     }
@@ -1306,6 +1324,21 @@ class MockFinanceServiceImpl implements FinanceService {
                 ? Math.round((input.amount / 12) * 100) / 100
                 : Math.round(input.amount * 100) / 100;
 
+        const goalId = input.goal_id || null;
+        const goalOffsetMonths = goalId
+            ? (input.goal_offset_months ?? 0)
+            : null;
+        const linkedGoal = goalId
+            ? this.state.savingsGoals.find((g) => g.id === goalId)
+            : undefined;
+        const derivedStartDate =
+            linkedGoal?.target_date
+                ? resolveGoalLinkedStartDate(
+                      linkedGoal.target_date,
+                      goalOffsetMonths,
+                  )
+                : input.start_date || null;
+
         const newItem: RecurringItem = {
             id: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             household_id: input.household_id || this.state.household.id,
@@ -1315,7 +1348,7 @@ class MockFinanceServiceImpl implements FinanceService {
             amount: Math.round(input.amount * 100) / 100,
             frequency: input.frequency,
             payment_month: input.payment_month ?? null,
-            start_date: input.start_date || null,
+            start_date: derivedStartDate,
             end_date: input.end_date || null,
             notes: input.notes || null,
             monthly_amortized_amount: monthlyAmortized,
@@ -1325,6 +1358,8 @@ class MockFinanceServiceImpl implements FinanceService {
                 : null,
             paid_from_cpf_oa:
                 isSpendType(input.type) && !!input.paid_from_cpf_oa,
+            goal_id: goalId,
+            goal_offset_months: goalOffsetMonths,
         };
 
         this.state.recurringItems.push(newItem);
@@ -1349,6 +1384,23 @@ class MockFinanceServiceImpl implements FinanceService {
         if (!isSpendType(recurringItem.type)) {
             recurringItem.category_id = null;
             recurringItem.paid_from_cpf_oa = false;
+        }
+
+        if (!recurringItem.goal_id) {
+            recurringItem.goal_id = null;
+            recurringItem.goal_offset_months = null;
+        } else {
+            recurringItem.goal_offset_months =
+                recurringItem.goal_offset_months ?? 0;
+            const linkedGoal = this.state.savingsGoals.find(
+                (g) => g.id === recurringItem.goal_id,
+            );
+            if (linkedGoal?.target_date) {
+                recurringItem.start_date = resolveGoalLinkedStartDate(
+                    linkedGoal.target_date,
+                    recurringItem.goal_offset_months,
+                );
+            }
         }
 
         // Recompute monthly_amortized_amount if amount or frequency changed

@@ -453,6 +453,10 @@ export interface RecurringItem {
     category_id?: string | null; // budget category for subscription/bill/other spend
     /** Paid from CPF OA (e.g. a mortgage): reduces OA growth, not cash savings. */
     paid_from_cpf_oa?: boolean;
+    /** Optional linked goal whose target_date drives start_date. */
+    goal_id?: string | null;
+    /** Months after the linked goal's target_date (0 = at goal date). */
+    goal_offset_months?: number | null;
 }
 
 export interface CreateRecurringItemInput {
@@ -469,6 +473,8 @@ export interface CreateRecurringItemInput {
     due_day?: number | null; // 1 - 31
     category_id?: string | null;
     paid_from_cpf_oa?: boolean;
+    goal_id?: string | null;
+    goal_offset_months?: number | null;
 }
 
 // ---------------------------------------------------------------------------

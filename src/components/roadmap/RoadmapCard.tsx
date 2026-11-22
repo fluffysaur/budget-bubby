@@ -40,6 +40,13 @@ export interface RoadmapCardProps {
     onAddGoal?: () => void;
     /** Moves a goal's date by `months`; resolves once saved. */
     onApplyDelay?: (goalId: string, months: number) => Promise<void>;
+    /** Lowers a goal's target amount; resolves once saved. */
+    onApplyLowerTarget?: (
+        goalId: string,
+        targetAmount: number,
+    ) => Promise<void>;
+    /** Trims a spendable category and shifts it to savings; resolves once saved. */
+    onApplyTrim?: (categoryId: string, monthlyAmount: number) => Promise<void>;
     className?: string;
 }
 
@@ -130,6 +137,8 @@ export function RoadmapCard({
     roadmap,
     onAddGoal,
     onApplyDelay,
+    onApplyLowerTarget,
+    onApplyTrim,
     className = "",
 }: RoadmapCardProps) {
     const mask = useMoneyMask();
@@ -169,11 +178,43 @@ export function RoadmapCard({
     const goalTitle = (id?: string) =>
         result.goals.find((g) => g.goal.id === id)?.goal.title ?? "goal";
 
+    const tradeOffKey = (t: TradeOff) => {
+        if (t.edit.type === "delay") return `delay-${t.edit.goalId}`;
+        if (t.edit.type === "trim") return `trim-${t.edit.categoryId}`;
+        if (t.edit.type === "lowerTarget") return `lower-${t.edit.goalId}`;
+        return "bonus";
+    };
+
+    const tradeOffLabel = (t: TradeOff) => {
+        if (t.edit.type === "delay") {
+            return `Delay ${goalTitle(t.goalId)} ${t.edit.months} mo`;
+        }
+        if (t.edit.type === "trim") {
+            return `Trim ${t.edit.categoryName} ${mask(formatSGD(t.edit.monthlyAmount, { showCents: false }))}/mo`;
+        }
+        if (t.edit.type === "lowerTarget") {
+            return `Lower ${goalTitle(t.goalId)} to ${mask(formatSGD(t.edit.targetAmount, { showCents: false }))}`;
+        }
+        return "Count typical bonus";
+    };
+
+    const canApplyTradeOff = (t: TradeOff) =>
+        (t.edit.type === "delay" && Boolean(onApplyDelay)) ||
+        (t.edit.type === "lowerTarget" && Boolean(onApplyLowerTarget)) ||
+        (t.edit.type === "trim" && Boolean(onApplyTrim));
+
     const handleApply = async (t: TradeOff) => {
-        if (t.edit.type !== "delay" || !onApplyDelay) return;
-        setApplying(t.edit.goalId);
+        if (!canApplyTradeOff(t)) return;
+        const key = tradeOffKey(t);
+        setApplying(key);
         try {
-            await onApplyDelay(t.edit.goalId, t.edit.months);
+            if (t.edit.type === "delay" && onApplyDelay) {
+                await onApplyDelay(t.edit.goalId, t.edit.months);
+            } else if (t.edit.type === "lowerTarget" && onApplyLowerTarget) {
+                await onApplyLowerTarget(t.edit.goalId, t.edit.targetAmount);
+            } else if (t.edit.type === "trim" && onApplyTrim) {
+                await onApplyTrim(t.edit.categoryId, t.edit.monthlyAmount);
+            }
         } finally {
             setApplying(null);
         }
@@ -454,19 +495,14 @@ export function RoadmapCard({
                     <ul className="space-y-1.5">
                         {tradeOffs.map((t) => {
                             const onTrack = t.verdict !== "short";
-                            const key =
-                                t.edit.type === "delay"
-                                    ? `delay-${t.edit.goalId}`
-                                    : "bonus";
+                            const key = tradeOffKey(t);
                             return (
                                 <li
                                     key={key}
                                     className="flex min-h-11 items-center gap-2 rounded-xl bg-(--bg-cream) px-3 py-1.5"
                                 >
                                     <span className="min-w-0 flex-1 wrap-break-word text-xs font-bold text-(--text-ink)">
-                                        {t.edit.type === "delay"
-                                            ? `Delay ${goalTitle(t.goalId)} ${t.edit.months} mo`
-                                            : "Count typical bonus"}
+                                        {tradeOffLabel(t)}
                                     </span>
                                     <Badge
                                         variant={onTrack ? "ok" : "near"}
@@ -479,18 +515,17 @@ export function RoadmapCard({
                                                   `Short ${formatSGD(Math.ceil(t.shortfallPerMonth), { showCents: false })}/mo`,
                                               )}
                                     </Badge>
-                                    {t.edit.type === "delay" &&
-                                        onApplyDelay && (
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                className="shrink-0"
-                                                disabled={applying !== null}
-                                                onClick={() => handleApply(t)}
-                                            >
-                                                Apply
-                                            </Button>
-                                        )}
+                                    {canApplyTradeOff(t) && (
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            className="shrink-0"
+                                            disabled={applying !== null}
+                                            onClick={() => handleApply(t)}
+                                        >
+                                            Apply
+                                        </Button>
+                                    )}
                                 </li>
                             );
                         })}

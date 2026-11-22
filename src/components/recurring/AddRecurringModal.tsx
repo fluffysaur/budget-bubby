@@ -10,7 +10,7 @@
  * - Optional start and end dates (end must be on or after start)
  */
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Shield } from "lucide-react";
 import type {
     Category,
@@ -18,6 +18,7 @@ import type {
     RecurringItemType,
     RecurringFrequency,
     CreateRecurringItemInput,
+    SavingsGoal,
 } from "../../types/finance";
 import { useHousehold } from "../../context/HouseholdContext";
 import { isMockModeActive } from "../../services/financeService";
@@ -32,10 +33,11 @@ import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
-import { MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
 import {
     findDefaultRecurringCategoryId,
     isSpendType,
+    resolveGoalLinkedStartDate,
 } from "../../lib/recurringItems";
 import { Switch } from "../ui/Switch";
 import { Alert } from "../ui/Alert";
@@ -69,9 +71,13 @@ export interface AddRecurringModalProps {
     initialItem?: RecurringItem | null;
     /** Budget categories for the spend category picker (subscription/bill/other) */
     categories?: Category[];
+    /** Household savings goals for optional goal-linked start date */
+    goals?: SavingsGoal[];
 }
 
 const EMPTY_CATEGORIES: Category[] = [];
+const EMPTY_GOALS: SavingsGoal[] = [];
+const GOAL_OFFSET_OPTIONS = [0, 3, 6, 9, 12, 18, 24] as const;
 
 const MONTH_OPTIONS = MONTH_NAMES_FULL.map((label, idx) => ({
     value: idx + 1,
@@ -84,6 +90,7 @@ export function AddRecurringModal({
     onSave,
     initialItem = null,
     categories = EMPTY_CATEGORIES,
+    goals = EMPTY_GOALS,
 }: AddRecurringModalProps) {
     const { members, activeMember, isMockMode } = useSafeHousehold();
 
@@ -112,8 +119,18 @@ export function AddRecurringModal({
     // null = not chosen yet, falls back to the household's lifestyle category
     const [categoryId, setCategoryId] = useState<string | null>(null);
     const [paidFromCpfOa, setPaidFromCpfOa] = useState<boolean>(false);
+    const [goalId, setGoalId] = useState<string>("");
+    const [goalOffsetMonths, setGoalOffsetMonths] = useState<number>(0);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+    const linkableGoals = useMemo(
+        () =>
+            goals.filter(
+                (g) => g.status !== "achieved" || g.id === initialItem?.goal_id,
+            ),
+        [goals, initialItem?.goal_id],
+    );
 
     // Sync state when initialItem changes or modal opens
     useEffect(() => {
@@ -141,6 +158,8 @@ export function AddRecurringModal({
                 setNotes(initialItem.notes || "");
                 setCategoryId(initialItem.category_id ?? "");
                 setPaidFromCpfOa(!!initialItem.paid_from_cpf_oa);
+                setGoalId(initialItem.goal_id ?? "");
+                setGoalOffsetMonths(initialItem.goal_offset_months ?? 0);
             } else {
                 setName("");
                 setType("insurance");
@@ -154,6 +173,8 @@ export function AddRecurringModal({
                 setNotes("");
                 setCategoryId(null);
                 setPaidFromCpfOa(false);
+                setGoalId("");
+                setGoalOffsetMonths(0);
             }
             setErrorMessage(null);
             setIsSubmitting(false);
@@ -165,6 +186,17 @@ export function AddRecurringModal({
     const showCategory = isSpendType(type);
     const selectedCategoryId =
         categoryId ?? findDefaultRecurringCategoryId(categories) ?? "";
+    const linkedGoal = goalId
+        ? (goals.find((g) => g.id === goalId) ?? null)
+        : null;
+    const effectiveStartDate = linkedGoal?.target_date
+        ? resolveGoalLinkedStartDate(linkedGoal.target_date, goalOffsetMonths)
+        : startDate;
+    const offsetChoices = GOAL_OFFSET_OPTIONS.includes(
+        goalOffsetMonths as (typeof GOAL_OFFSET_OPTIONS)[number],
+    )
+        ? GOAL_OFFSET_OPTIONS
+        : [...GOAL_OFFSET_OPTIONS, goalOffsetMonths].sort((a, b) => a - b);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -198,7 +230,7 @@ export function AddRecurringModal({
             return;
         }
 
-        if (startDate && endDate && endDate < startDate) {
+        if (effectiveStartDate && endDate && endDate < effectiveStartDate) {
             setErrorMessage("End date must be on or after start date.");
             return;
         }
@@ -215,10 +247,12 @@ export function AddRecurringModal({
                     frequency === "annually" ? Number(paymentMonth) : null,
                 due_day: trimmedDueDay ? numericDueDay : null,
                 category_id: showCategory ? selectedCategoryId || null : null,
-                start_date: startDate || null,
+                start_date: effectiveStartDate || null,
                 end_date: endDate || null,
                 notes: notes.trim() || null,
                 paid_from_cpf_oa: showCategory && paidFromCpfOa,
+                goal_id: goalId || null,
+                goal_offset_months: goalId ? goalOffsetMonths : null,
             };
 
             if (initialItem?.id) {
@@ -431,14 +465,75 @@ export function AddRecurringModal({
                         </div>
                     </div>
 
+                    {/* Link to goal (optional) */}
+                    {linkableGoals.length > 0 && (
+                        <div className="space-y-2 rounded-xl border-2 border-(--border-subtle) bg-(--bg-cream) p-3">
+                            <div
+                                className={`grid gap-3 ${
+                                    goalId
+                                        ? "grid-cols-1 sm:grid-cols-2"
+                                        : "grid-cols-1"
+                                }`}
+                            >
+                                <Select
+                                    id="recurring-goal-link"
+                                    label="Link to goal"
+                                    value={goalId}
+                                    onChange={(e) => setGoalId(e.target.value)}
+                                    className="bg-(--bg-canvas)"
+                                >
+                                    <option value="">None (manual date)</option>
+                                    {linkableGoals.map((g) => (
+                                        <option key={g.id} value={g.id}>
+                                            {g.emoji} {g.title} (
+                                            {formatShortMonth(g.target_date)})
+                                        </option>
+                                    ))}
+                                </Select>
+                                {goalId && (
+                                    <Select
+                                        id="recurring-goal-offset"
+                                        label="Offset"
+                                        value={goalOffsetMonths}
+                                        onChange={(e) =>
+                                            setGoalOffsetMonths(
+                                                Number(e.target.value),
+                                            )
+                                        }
+                                        className="bg-(--bg-canvas)"
+                                    >
+                                        {offsetChoices.map((m) => (
+                                            <option key={m} value={m}>
+                                                {m === 0
+                                                    ? "At goal date"
+                                                    : `+${m} months`}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                )}
+                            </div>
+                            {linkedGoal && effectiveStartDate && (
+                                <p className="text-xs font-bold text-(--text-muted)">
+                                    Starts{" "}
+                                    <span className="font-mono-num text-(--text-ink)">
+                                        {formatShortMonth(effectiveStartDate)}
+                                    </span>{" "}
+                                    ({effectiveStartDate}) — moves if goal is
+                                    delayed
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     {/* Start & End Dates */}
                     <div className="grid grid-cols-2 gap-3">
                         <Input
                             id="recurring-start-date"
-                            label="Start"
+                            label={linkedGoal ? "Start (from goal)" : "Start"}
                             type="date"
-                            value={startDate}
+                            value={effectiveStartDate}
                             onChange={(e) => setStartDate(e.target.value)}
+                            disabled={Boolean(linkedGoal)}
                             mono
                             className="bg-(--bg-canvas)"
                         />
@@ -446,7 +541,7 @@ export function AddRecurringModal({
                             id="recurring-end-date"
                             label="End (Optional)"
                             type="date"
-                            min={startDate || undefined}
+                            min={effectiveStartDate || undefined}
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                             mono
