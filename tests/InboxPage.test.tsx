@@ -40,6 +40,8 @@ function renderInbox() {
 
 const transport = mockCategories.find((c) => c.name === "Transport")!;
 const food = mockCategories.find((c) => c.name === "Food")!;
+const lifestyle = mockCategories.find((c) => c.name === "Lifestyle")!;
+const tithing = mockCategories.find((c) => c.name === "Tithing")!;
 
 function item(over: Partial<InboxItem>): InboxItem {
     return {
@@ -381,6 +383,55 @@ describe("InboxPage", () => {
         } finally {
             vi.unstubAllGlobals();
         }
+    });
+
+    it("auto-expands non-spendable category chips when the guessed category is an allocation category", async () => {
+        await mockFinanceService.upsertMerchantRule({
+            merchant_key: "giving sg",
+            category_id: tithing.id,
+        });
+        mockFinanceService.inbox.setItems([
+            item({
+                id: "alloc-1",
+                merchant: "Giving SG",
+                merchant_key: "giving sg",
+                amount: 50,
+            }),
+        ]);
+        renderInbox();
+        const card = await findCard();
+        expect(
+            within(card).getByRole("button", { name: /^Tithing/ }),
+        ).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("maps keyboard shortcuts 1-5 to the visible category chips on the card", async () => {
+        renderInbox();
+        const card = await findCard();
+        // Default mock item guesses Transport (3rd visible chip); key "1" should pick 1st visible chip (Food), "2" -> Lifestyle
+        expect(
+            within(card).getByRole("button", { name: /^Transport/ }),
+        ).toHaveAttribute("aria-pressed", "true");
+
+        fireEvent.keyDown(window, { key: "1" });
+        expect(
+            within(card).getByRole("button", { name: /^Food/ }),
+        ).toHaveAttribute("aria-pressed", "true");
+
+        fireEvent.keyDown(window, { key: "2" });
+        expect(
+            within(card).getByRole("button", { name: /^Lifestyle/ }),
+        ).toHaveAttribute("aria-pressed", "true");
+
+        // Confirm uses the keyboard-picked category (Lifestyle)
+        fireEvent.keyDown(window, { key: "ArrowRight" });
+        await waitFor(() =>
+            expect(screen.getByText("2 to sort")).toBeInTheDocument(),
+        );
+        const expenses = await mockFinanceService.getExpenses();
+        expect(expenses.find((e) => e.item === "Grab Food")?.category_id).toBe(
+            lifestyle.id,
+        );
     });
 
     it("redirects away before the migration", async () => {
