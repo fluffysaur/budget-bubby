@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AutoCaptureSection } from "../settings/AutoCaptureSection";
+import { AiSettingsSection } from "../settings/AiSettingsSection";
 import {
     Bell,
     Volume2,
@@ -407,6 +408,9 @@ export function NotificationSettingsModal({
                             </div>
                         </div>
                     )}
+
+                    {/* Bubby AI (BYOK Gemini API key) */}
+                    <AiSettingsSection />
 
                     {/* Auto Capture (phone purchase capture tokens) */}
                     <AutoCaptureSection memberId={activeMemberId} />

@@ -20,6 +20,7 @@ import {
     Settings,
     Eye,
     EyeOff,
+    Sparkles,
 } from "lucide-react";
 import {
     useHousehold,
@@ -42,6 +43,7 @@ export interface AppHeaderProps {
     className?: string;
     onOpenQuickAdd?: () => void;
     onNavigateTab?: (tab: string) => void;
+    onOpenBubbyChat?: () => void;
 }
 
 const MEMBER_COLOR_PALETTE = [
@@ -77,6 +79,7 @@ export function AppHeader({
     className = "",
     onOpenQuickAdd,
     onNavigateTab,
+    onOpenBubbyChat,
 }: AppHeaderProps) {
     const {
         perspective,
@@ -448,6 +451,25 @@ export function AppHeader({
                             <span className="hidden xs:inline">Demo Mode</span>
                             <span className="xs:hidden">Demo</span>
                         </div>
+                    )}
+
+                    {/* Bubby AI Assistant trigger */}
+                    {onOpenBubbyChat && (
+                        <button
+                            type="button"
+                            onClick={onOpenBubbyChat}
+                            aria-label="Open Bubby AI"
+                            title="Bubby AI"
+                            data-testid="open-bubby-chat-btn"
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-transform"
+                        >
+                            <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) transition-colors">
+                                <Sparkles
+                                    className="h-4.5 w-4.5"
+                                    strokeWidth={2.5}
+                                />
+                            </span>
+                        </button>
                     )}
 
                     {/* Live household Bubby (tap to pet and open the sheet) */}
