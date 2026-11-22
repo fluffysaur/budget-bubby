@@ -76,6 +76,7 @@ export const collapse = {
         opacity: 1,
         overflow: "hidden" as const,
         transition: { duration: DURATION.base, ease: EASE_OUT_SOFT },
+        transitionEnd: { overflow: "visible" as const },
     },
     exit: {
         height: 0,

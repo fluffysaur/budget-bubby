@@ -49,6 +49,7 @@ vi.mock("../src/lib/soundEffects", () => ({
 describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        sessionStorage.clear();
     });
 
     const testCategories: MonthlyBudgetCategoryDetail[] = [
@@ -290,6 +291,105 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
         expect(screen.getByRole("alert")).toBeInTheDocument();
         expect(screen.getByText(/Food Over/i)).toBeInTheDocument();
         expect(screen.getByText(/S\$20\.00 over cap/i)).toBeInTheDocument();
+    });
+
+    it("dismisses Over Cap and Near Limit independently and persists in sessionStorage across remounts", () => {
+        const { unmount } = render(
+            <CategoryLimitWarningBanner categories={testCategories} />,
+        );
+
+        const dismissExceeded = screen.getByRole("button", {
+            name: /dismiss over cap alert/i,
+        });
+        const dismissWarning = screen.getByRole("button", {
+            name: /dismiss near limit alert/i,
+        });
+        expect(dismissExceeded.className).toContain("min-h-11");
+        expect(dismissWarning.className).toContain("min-h-11");
+
+        // Dismiss Over Cap only -> Near Limit stays visible
+        fireEvent.click(dismissExceeded);
+        expect(
+            screen.queryByTestId("category-limit-exceeded-banner"),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByTestId("category-limit-nearing-banner"),
+        ).toBeInTheDocument();
+
+        // Remount (e.g. navigating between Home and Budget) -> Over Cap stays dismissed
+        unmount();
+        const { unmount: unmountHome } = render(
+            <CategoryLimitWarningBanner single categories={testCategories} />,
+        );
+        expect(
+            screen.queryByTestId("category-limit-exceeded-banner"),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByTestId("category-limit-nearing-banner"),
+        ).toBeInTheDocument();
+
+        // Dismiss Near Limit as well -> entire warning region hides
+        fireEvent.click(
+            screen.getByRole("button", { name: /dismiss near limit alert/i }),
+        );
+        expect(
+            screen.queryByTestId("category-limit-warning-banner"),
+        ).not.toBeInTheDocument();
+
+        // New browser session (sessionStorage cleared) -> both alerts reappear
+        unmountHome();
+        sessionStorage.clear();
+        render(<CategoryLimitWarningBanner categories={testCategories} />);
+        expect(
+            screen.getByTestId("category-limit-exceeded-banner"),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByTestId("category-limit-nearing-banner"),
+        ).toBeInTheDocument();
+    });
+
+    it("still shows floating expenseAdded toast after the banner type is dismissed", () => {
+        const initialCats: MonthlyBudgetCategoryDetail[] = [
+            {
+                ...testCategories[1], // Lifestyle over cap -> Over Cap banner shown
+            },
+            {
+                ...testCategories[0],
+                actualSpent: 760, // 95% of 800
+                remaining: 40,
+            },
+        ];
+
+        render(<CategoryLimitWarningBanner categories={initialCats} />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: /dismiss over cap alert/i }),
+        );
+        expect(
+            screen.queryByTestId("category-limit-exceeded-banner"),
+        ).not.toBeInTheDocument();
+
+        act(() => {
+            const expense: Expense = {
+                id: "exp-03",
+                household_id: "hh-01",
+                payer_id: "mem-01",
+                category_id: "cat-food",
+                date: "2026-10-27",
+                item: "Dinner Feast",
+                amount: 60,
+                is_shared: false,
+                split_ratio: 0.5,
+                settled: false,
+            };
+            window.dispatchEvent(
+                new CustomEvent("expenseAdded", { detail: expense }),
+            );
+        });
+
+        expect(soundEffects.playBudgetExceededSound).toHaveBeenCalledTimes(1);
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(screen.getByText(/Food Over/i)).toBeInTheDocument();
     });
 });
 
