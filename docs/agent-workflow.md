@@ -105,7 +105,7 @@ Releases are automated via **Release Please** (`.github/workflows/release-please
     - `feat:` bumps minor (`0.1.0` → `0.2.0`).
     - `fix:` / `perf:` bumps patch (`0.1.0` → `0.1.1`).
     - Breaking changes stay pre-`1.0` until explicitly promoted.
-- **Flow:** Every merge to `main` auto-deploys to Vercel and updates a single open Release PR (`chore(main): release X.Y.Z`) that bumps `package.json`, `package-lock.json`, and `CHANGELOG.md`. Merging that Release PR creates the `vX.Y.Z` git tag and GitHub Release.
+- **Flow:** PRs merge into `main` (PR previews still deploy on Vercel), and Release Please updates a single open Release PR (`chore(main): release X.Y.Z`) that bumps `package.json`, `.release-please-manifest.json`, and `CHANGELOG.md`. Production deploys on Vercel are gated via `vercel.json` (`ignoreCommand` → `scripts/vercel-ignore.sh`): non-release merges to `main` are skipped, and merging the Release PR creates the `vX.Y.Z` git tag, GitHub Release, and triggers the production deploy.
 - **Promoting to `1.0.0`:** Include a commit footer `Release-As: 1.0.0` when ready for public launch.
 - **In-app visibility:** The Settings modal footer displays `vX.Y.Z (<short-sha>)` (injected at build time via `vite.config.ts`) to verify PWA updates on devices even between releases.
 - **GitHub repo setting:** Requires `Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests`.
