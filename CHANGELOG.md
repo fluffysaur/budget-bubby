@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0](https://github.com/fluffysaur/budget-bubby/compare/v0.2.0...v0.3.0) (2026-11-22)
+
+
+### Features
+
+* **ai:** integrate Gemini AI assistant drawer for budget queries and actions ([caa2123](https://github.com/fluffysaur/budget-bubby/commit/caa21238cdd4cdf014886db127f4e0db19c64398))
+* **ai:** integrate Gemini AI assistant drawer for budget queries and actions ([292126d](https://github.com/fluffysaur/budget-bubby/commit/292126d2c9c5d371143e27ed13c5b0b9acca1290))
+* **goals:** sort goals by target date (earliest first) ([#188](https://github.com/fluffysaur/budget-bubby/issues/188)) ([39ffcaa](https://github.com/fluffysaur/budget-bubby/commit/39ffcaac7e2f767ce69f0e6e803625bd7d2949e0))
+
 ## [0.2.0](https://github.com/fluffysaur/budget-bubby/compare/v0.1.0...v0.2.0) (2026-11-22)
 
 
