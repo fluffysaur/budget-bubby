@@ -632,34 +632,53 @@ describe("GoalsPage Integration", () => {
         expect(screen.queryByText("Total Saved")).not.toBeInTheDocument();
     });
 
-    it("filters goals using All, Active and Done tabs", async () => {
+    it("filters goals using Active, Done and All tabs with Active as default", async () => {
         renderGoalsPage();
 
         await waitFor(() => {
             expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
         });
 
-        // All 3 goals visible
-        expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
-        expect(screen.getByTestId(RENO_CARD)).toBeInTheDocument();
+        const filterNav = screen.getByRole("navigation", {
+            name: "Goals status filter",
+        });
+        const tabs = within(filterNav).getAllByRole("tab");
+        expect(
+            tabs.map((t) => t.textContent?.replace(/\d+$/, "").trim()),
+        ).toEqual(["Active", "Done", "All"]);
 
-        // Click "Active" tab
-        const inProgressTab = screen.getByRole("tab", { name: /Active/i });
-        fireEvent.click(inProgressTab);
+        const activeTab = within(filterNav).getByRole("tab", {
+            name: /Active/i,
+        });
+        const doneTab = within(filterNav).getByRole("tab", { name: /Done/i });
+        const allTab = within(filterNav).getByRole("tab", { name: /All/i });
 
-        // Wedding (achieved) should be hidden; HDB and Reno visible
+        // Active is selected by default: Wedding (achieved) is hidden; HDB and Reno visible
+        expect(activeTab).toHaveAttribute("aria-selected", "true");
         expect(screen.queryByTestId(WEDDING_CARD)).not.toBeInTheDocument();
         expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
         expect(screen.getByTestId(RENO_CARD)).toBeInTheDocument();
 
         // Click "Done" tab
-        const achievedTab = screen.getByRole("tab", { name: /Done/i });
-        fireEvent.click(achievedTab);
-
-        // Wedding visible; HDB and Reno hidden
+        fireEvent.click(doneTab);
+        expect(doneTab).toHaveAttribute("aria-selected", "true");
         expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
         expect(screen.queryByTestId(HDB_CARD)).not.toBeInTheDocument();
         expect(screen.queryByTestId(RENO_CARD)).not.toBeInTheDocument();
+
+        // Click "All" tab
+        fireEvent.click(allTab);
+        expect(allTab).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
+        expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
+        expect(screen.getByTestId(RENO_CARD)).toBeInTheDocument();
+
+        // Click "Active" tab
+        fireEvent.click(activeTab);
+        expect(activeTab).toHaveAttribute("aria-selected", "true");
+        expect(screen.queryByTestId(WEDDING_CARD)).not.toBeInTheDocument();
+        expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
+        expect(screen.getByTestId(RENO_CARD)).toBeInTheDocument();
     });
 
     it('opens AddEditGoalModal when "+ New Goal" button is clicked and refreshes upon creation', async () => {
@@ -759,6 +778,10 @@ describe("GoalsPage Integration", () => {
         renderGoalsPage();
 
         await waitFor(() => {
+            expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByRole("tab", { name: /Done/i }));
+        await waitFor(() => {
             expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
         });
         fireEvent.click(
@@ -788,8 +811,30 @@ describe("GoalsPage Integration", () => {
         });
 
         expect(
+            screen.getByText("Add a goal to start tracking savings progress."),
+        ).toBeInTheDocument();
+        expect(
             screen.getAllByRole("button", { name: /Add Goal/i }).length,
         ).toBeGreaterThan(0);
+    });
+
+    it("renders view-specific empty state on Active tab when only achieved goals exist", async () => {
+        vi.spyOn(financeService, "getGoals").mockResolvedValueOnce([
+            sampleAchievedGoal,
+        ]);
+
+        renderGoalsPage();
+
+        await waitFor(() => {
+            expect(
+                screen.getByText("No goals found in this view."),
+            ).toBeInTheDocument();
+        });
+        expect(
+            screen.queryByText(
+                "Add a goal to start tracking savings progress.",
+            ),
+        ).not.toBeInTheDocument();
     });
 
     it("renders goals sorted by target_date with earliest first", async () => {
@@ -802,11 +847,21 @@ describe("GoalsPage Integration", () => {
         renderGoalsPage();
 
         await waitFor(() => {
+            expect(screen.getByTestId(HDB_CARD)).toBeInTheDocument();
+        });
+
+        const activeCards = screen.getAllByTestId(/^goal-card-goal-/);
+        expect(
+            activeCards.map((el) => el.getAttribute("data-testid")),
+        ).toEqual([HDB_CARD, RENO_CARD]);
+
+        fireEvent.click(screen.getByRole("tab", { name: /All/i }));
+        await waitFor(() => {
             expect(screen.getByTestId(WEDDING_CARD)).toBeInTheDocument();
         });
 
-        const cards = screen.getAllByTestId(/^goal-card-goal-/);
-        expect(cards.map((el) => el.getAttribute("data-testid"))).toEqual([
+        const allCards = screen.getAllByTestId(/^goal-card-goal-/);
+        expect(allCards.map((el) => el.getAttribute("data-testid"))).toEqual([
             WEDDING_CARD,
             HDB_CARD,
             RENO_CARD,
