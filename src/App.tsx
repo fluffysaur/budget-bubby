@@ -54,6 +54,7 @@ import {
 } from "./components/expenses/ExpenseFormModal";
 import { useQuickAddDeepLink } from "./hooks/useQuickAddDeepLink";
 import { useInboxBadge } from "./hooks/useInboxBadge";
+import { usePartnerRealtimeSync } from "./hooks/usePartnerRealtimeSync";
 import { ExpenseSuccessCelebration } from "./components/expenses/ExpenseSuccessCelebration";
 import { OfflineBanner } from "./components/pwa/OfflineBanner";
 import { PWAUpdateToast } from "./components/pwa/PWAUpdateToast";
@@ -123,6 +124,9 @@ function AppLayoutInner() {
     const { refreshData, members } = useHousehold();
     const { me } = useLoggedInMember();
     const scrollPositions = useRef<Map<string, number>>(new Map());
+
+    // Live sync partner changes (expenses, inbox items) when Supabase is configured
+    usePartnerRealtimeSync();
 
     // Track main scroller position
     useEffect(() => {
