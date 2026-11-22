@@ -11,6 +11,7 @@ export interface SpendableCategoryItem {
     allocated: number;
     remaining: number;
     pct: number;
+    ownerName?: string;
 }
 
 export interface SpendableSummary {
@@ -96,6 +97,7 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
                                 color={cat.color}
                                 remaining={cat.remaining}
                                 pct={cat.pct}
+                                ownerName={cat.ownerName}
                             />
                         ))}
                     </div>

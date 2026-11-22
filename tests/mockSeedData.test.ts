@@ -27,8 +27,8 @@ describe("mockSeedData", () => {
         expect(mockMembers.map((m) => m.role)).toEqual(["owner", "member"]);
     });
 
-    it("exports all 7 core financial categories", () => {
-        expect(mockCategories).toHaveLength(7);
+    it("exports all 7 core financial categories plus seeded personal category", () => {
+        expect(mockCategories).toHaveLength(8);
         const categoryNames = mockCategories.map((c) => c.name);
         expect(categoryNames).toContain("Food");
         expect(categoryNames).toContain("Lifestyle");

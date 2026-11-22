@@ -268,7 +268,7 @@ describe("Category Management & Auto-Seeding", () => {
 
             // Restore
             const restored = await mockFinanceService.seedDefaultCategories();
-            expect(restored.length).toBe(7);
+            expect(restored.length).toBe(8);
         });
     });
 

@@ -812,6 +812,8 @@ export function ExpensesPage({
                     categories={categories}
                     members={members}
                     goals={goals}
+                    perspective={perspective}
+                    activeMemberId={activeMember?.id ?? null}
                     filter={filter}
                     onFilterChange={setFilter}
                     onResetFilters={handleResetFilters}

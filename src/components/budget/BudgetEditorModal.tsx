@@ -60,6 +60,7 @@ import {
     isBufferCategory,
     computeBufferRemainder,
     autoBalanceAllocations,
+    filterCategoriesForMember,
 } from "../../lib/financialFormulas";
 import { isValidUuid } from "../../lib/uuid";
 import { getCurrentMonth } from "../../lib/dateUtils";
@@ -123,11 +124,15 @@ export function BudgetEditorModal({
         () => propCategories ?? (isMockModeActive() ? mockCategories : []),
         [propCategories],
     );
+    const scopedCategories = useMemo(
+        () => filterCategoriesForMember(categories, profile?.owner_id),
+        [categories, profile?.owner_id],
+    );
     const titleId = useId();
 
     // Local categories list synced with prop
     const [localCategories, setLocalCategories] =
-        useState<Category[]>(categories);
+        useState<Category[]>(scopedCategories);
 
     // Form State (stored as strings to allow typing decimals and erasing to empty "")
     const [grossSalary, setGrossSalary] = useState<string>(
@@ -227,7 +232,7 @@ export function BudgetEditorModal({
             profile && profile.id !== prevProfileIdRef.current;
 
         if (isJustOpening || isProfileChanged) {
-            setLocalCategories(categories);
+            setLocalCategories(scopedCategories);
             if (profile) {
                 setGrossSalary(String(profile.gross_salary));
                 setCpfRate(
@@ -240,7 +245,7 @@ export function BudgetEditorModal({
             }
 
             const pctMap: Record<string, string> = {};
-            for (const cat of categories) {
+            for (const cat of scopedCategories) {
                 const existing = allocations.find(
                     (a) => a.category_id === cat.id,
                 );
@@ -265,7 +270,7 @@ export function BudgetEditorModal({
         }
 
         prevIsOpenRef.current = isOpen;
-    }, [isOpen, profile, allocations, categories]);
+    }, [isOpen, profile, allocations, scopedCategories]);
 
     // Live disposable pool calculation based on current form inputs and recurring item deductions
     const currentDisposablePool = useMemo(() => {
@@ -502,11 +507,15 @@ export function BudgetEditorModal({
     // Inline category CRUD handlers
     const refreshCategoriesFromService = async () => {
         const refreshed = await financeService.getCategories();
-        if (refreshed && refreshed.length > 0) {
-            setLocalCategories(refreshed);
+        const scoped = filterCategoriesForMember(
+            refreshed || [],
+            profile?.owner_id,
+        );
+        if (scoped.length > 0) {
+            setLocalCategories(scoped);
             setCategoryPercentages((prev) => {
                 const next: Record<string, string> = {};
-                for (const c of refreshed) {
+                for (const c of scoped) {
                     next[c.id] = prev[c.id] ?? "0";
                 }
                 return next;

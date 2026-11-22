@@ -71,6 +71,7 @@ import {
     normalizeGoalStatus,
     calculateCPFAndNetPay,
     calculateMemberRecurringDeductions,
+    getExpenseCategoryForMember,
     getMemberExpenseShare,
     isSpendableCategory,
 } from "../lib/financialFormulas";
@@ -556,13 +557,29 @@ class MockFinanceServiceImpl implements FinanceService {
     public async addCategory(input: CreateCategoryInput): Promise<Category> {
         const householdId =
             input.household_id || this.state.household.id || "hh-00000000-0001";
+        const trimmedName = input.name.trim();
+        const memberId = input.member_id ?? null;
+
+        const duplicate = this.state.categories.some(
+            (c) =>
+                c.household_id === householdId &&
+                (c.member_id ?? null) === memberId &&
+                c.name.trim().toLowerCase() === trimmedName.toLowerCase(),
+        );
+        if (duplicate) {
+            throw new Error(
+                `A category named "${trimmedName}" already exists in this scope.`,
+            );
+        }
+
         const newCategory: Category = {
             id:
                 typeof crypto !== "undefined" && crypto.randomUUID
                     ? crypto.randomUUID()
                     : `cat-${Date.now()}`,
             household_id: householdId,
-            name: input.name.trim(),
+            member_id: memberId,
+            name: trimmedName,
             color: input.color || "#64748B",
             icon: input.icon || "tag",
             is_system: input.is_system || false,
@@ -584,10 +601,28 @@ class MockFinanceServiceImpl implements FinanceService {
             throw new Error(`Category not found: ${id}`);
         }
         const current = this.state.categories[idx];
+        const nextName =
+            updates.name !== undefined ? updates.name.trim() : current.name;
+        const scopeMemberId = current.member_id ?? null;
+
+        if (updates.name !== undefined) {
+            const duplicate = this.state.categories.some(
+                (c) =>
+                    c.id !== id &&
+                    c.household_id === current.household_id &&
+                    (c.member_id ?? null) === scopeMemberId &&
+                    c.name.trim().toLowerCase() === nextName.toLowerCase(),
+            );
+            if (duplicate) {
+                throw new Error(
+                    `A category named "${nextName}" already exists in this scope.`,
+                );
+            }
+        }
+
         const updated: Category = {
             ...current,
-            name:
-                updates.name !== undefined ? updates.name.trim() : current.name,
+            name: nextName,
             color: updates.color !== undefined ? updates.color : current.color,
             icon: updates.icon !== undefined ? updates.icon : current.icon,
             group: updates.group !== undefined ? updates.group : current.group,
@@ -884,7 +919,8 @@ class MockFinanceServiceImpl implements FinanceService {
                 const expenseShareSum = this.state.expenses
                     .filter(
                         (e) =>
-                            e.category_id === bc.category_id &&
+                            getExpenseCategoryForMember(e, budget!.owner_id) ===
+                                bc.category_id &&
                             e.date.startsWith(month) &&
                             !e.goal_id,
                     )
@@ -1110,6 +1146,9 @@ class MockFinanceServiceImpl implements FinanceService {
             household_id: input.household_id || this.state.household.id,
             payer_id: input.payer_id,
             category_id: input.category_id || null,
+            partner_category_id: input.is_shared
+                ? (input.partner_category_id ?? null)
+                : null,
             date: input.date,
             time: input.time || getCurrentSingaporeTime(),
             item: input.item,
@@ -1152,6 +1191,9 @@ class MockFinanceServiceImpl implements FinanceService {
         }
 
         Object.assign(expense, updates);
+        if (!expense.is_shared) {
+            expense.partner_category_id = null;
+        }
         this.persist();
         return cloneDeep(expense);
     }

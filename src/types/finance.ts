@@ -101,6 +101,7 @@ export type CategoryGroup = "spendable" | "allocation";
 export interface Category {
     id: string;
     household_id: string;
+    member_id?: string | null;
     name: string;
     color: string;
     icon: string;
@@ -110,6 +111,7 @@ export interface Category {
 
 export interface CreateCategoryInput {
     household_id?: string;
+    member_id?: string | null;
     name: string;
     color?: string;
     icon?: string;
@@ -192,6 +194,7 @@ export interface Expense {
     household_id: string;
     payer_id: string;
     category_id?: string | null;
+    partner_category_id?: string | null;
     date: string; // 'YYYY-MM-DD'
     time?: string | null; // 'HH:mm' or 'HH:mm:ss'
     item: string;
@@ -238,6 +241,7 @@ export interface CreateExpenseInput {
     household_id?: string;
     payer_id: string;
     category_id?: string | null;
+    partner_category_id?: string | null;
     date: string;
     time?: string | null;
     item: string;
@@ -255,6 +259,7 @@ export interface CreateExpenseInput {
 export interface UpdateExpenseInput {
     payer_id?: string;
     category_id?: string | null;
+    partner_category_id?: string | null;
     date?: string;
     time?: string | null;
     item?: string;

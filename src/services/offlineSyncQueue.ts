@@ -349,6 +349,9 @@ function buildOptimisticExpense(
         household_id: input.household_id || "hh-offline",
         payer_id: input.payer_id,
         category_id: input.category_id || null,
+        partner_category_id: input.is_shared
+            ? (input.partner_category_id ?? null)
+            : null,
         date: input.date,
         time: input.time || getCurrentSingaporeTime(),
         item: input.item,
@@ -520,6 +523,7 @@ export async function updateExpense(
                 household_id: "hh-offline",
                 payer_id: updates.payer_id || "",
                 category_id: updates.category_id ?? null,
+                partner_category_id: updates.partner_category_id ?? null,
                 date: updates.date || getTodayDateString(),
                 item: updates.item || "",
                 amount: updates.amount ?? 0,
