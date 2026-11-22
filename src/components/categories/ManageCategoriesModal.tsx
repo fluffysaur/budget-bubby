@@ -33,11 +33,14 @@ import {
     useUpdateBaseProfileMutation,
 } from "../../hooks/useFinanceQueries";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
+import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { RangeSlider } from "../ui/RangeSlider";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
 import { Input } from "../ui/Input";
+import { TruncatedText } from "../ui/TruncatedText";
 import { CategoryModeToggle } from "./CategoryModeToggle";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { Alert } from "../ui/Alert";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { m, AnimatePresence } from "motion/react";
@@ -57,6 +60,7 @@ import {
     formatAllocationPercent,
     calculateMemberRecurringDeductions,
     autoBalanceAllocations,
+    filterCategoriesForMember,
 } from "../../lib/financialFormulas";
 import {
     PRESET_COLORS,
@@ -80,6 +84,12 @@ export function ManageCategoriesModal({
     className = "",
 }: ManageCategoriesModalProps) {
     const titleId = useId();
+    const household = useOptionalHousehold();
+    const members = useMemo(
+        () => household?.members ?? [],
+        [household?.members],
+    );
+    const activeMember = household?.activeMember ?? null;
 
     const addCategoryMutation = useAddCategoryMutation();
     const updateCategoryMutation = useUpdateCategoryMutation();
@@ -103,6 +113,7 @@ export function ManageCategoriesModal({
     const [groupTouched, setGroupTouched] = useState(false);
     const [color, setColor] = useState<string>("#F59E0B");
     const [icon, setIcon] = useState<string>("tag");
+    const [ownerMemberId, setOwnerMemberId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     // Allocations & Range Sliders State
@@ -384,6 +395,7 @@ export function ManageCategoriesModal({
         setGroupTouched(false);
         setColor(PRESET_COLORS[0]);
         setIcon("tag");
+        setOwnerMemberId(null);
         setErrorMessage(null);
         setFormMode("create");
     };
@@ -398,6 +410,7 @@ export function ManageCategoriesModal({
         );
         setColor(cat.color || "#64748B");
         setIcon(cat.icon || "tag");
+        setOwnerMemberId(cat.member_id ?? null);
         setErrorMessage(null);
         setFormMode("edit");
     };
@@ -425,6 +438,7 @@ export function ManageCategoriesModal({
                     color,
                     icon,
                     group: effectiveGroup,
+                    member_id: ownerMemberId,
                 });
             } else if (formMode === "edit" && editingCategory) {
                 await updateCategoryMutation.mutateAsync({
@@ -492,12 +506,26 @@ export function ManageCategoriesModal({
 
     if (!isOpen) return null;
 
-    const spendableCategories = categories.filter((c) =>
+    const visibleCategories = filterCategoriesForMember(
+        categories,
+        activeMember?.id,
+    );
+    const allocationViewCategories = filterCategoriesForMember(
+        categories,
+        activeMember?.id ?? baseProfiles[0]?.owner_id,
+    );
+    const spendableCategories = visibleCategories.filter((c) =>
         isSpendableCategory(c),
     );
-    const allocationCategories = categories.filter(
+    const allocationCategories = visibleCategories.filter(
         (c) => !isSpendableCategory(c),
     );
+    const getOwnerName = (memberId?: string | null): string | null => {
+        if (!memberId) return null;
+        return (
+            members.find((m) => m.id === memberId)?.display_name ?? "Personal"
+        );
+    };
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-xl">
@@ -593,7 +621,7 @@ export function ManageCategoriesModal({
                             </div>
 
                             <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-3 sm:p-4">
-                                {categories.map((cat) => {
+                                {allocationViewCategories.map((cat) => {
                                     const currentPct =
                                         categoryPercentages[cat.id] ?? 0;
                                     const isLocked = Boolean(
@@ -819,6 +847,75 @@ export function ManageCategoriesModal({
                                         }}
                                     />
 
+                                    {/* Ownership Selector (locked on edit) */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                            Ownership
+                                        </label>
+                                        {formMode === "edit" ? (
+                                            <div className="flex items-center gap-2">
+                                                <Badge
+                                                    variant={
+                                                        ownerMemberId
+                                                            ? "lilac"
+                                                            : "slate"
+                                                    }
+                                                    size="sm"
+                                                >
+                                                    {ownerMemberId
+                                                        ? `Personal (${getOwnerName(ownerMemberId)})`
+                                                        : "Shared"}
+                                                </Badge>
+                                                <span className="text-[11px] text-(--text-faint)">
+                                                    Locked after creation
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    aria-pressed={
+                                                        ownerMemberId === null
+                                                    }
+                                                    onClick={() =>
+                                                        setOwnerMemberId(null)
+                                                    }
+                                                    className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                                                        ownerMemberId === null
+                                                            ? "border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                                            : "border border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
+                                                    }`}
+                                                >
+                                                    Shared
+                                                </button>
+                                                {members.map((m) => (
+                                                    <button
+                                                        key={m.id}
+                                                        type="button"
+                                                        aria-pressed={
+                                                            ownerMemberId ===
+                                                            m.id
+                                                        }
+                                                        onClick={() =>
+                                                            setOwnerMemberId(
+                                                                m.id,
+                                                            )
+                                                        }
+                                                        className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                                                            ownerMemberId ===
+                                                            m.id
+                                                                ? "border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm"
+                                                                : "border border-(--border-subtle) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
+                                                        }`}
+                                                    >
+                                                        Personal (
+                                                        {m.display_name})
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {/* Color Presets */}
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
@@ -1015,7 +1112,7 @@ export function ManageCategoriesModal({
                                                                         {...listItem}
                                                                         className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
                                                                     >
-                                                                        <div className="flex items-center gap-3">
+                                                                        <div className="flex items-center gap-3 min-w-0 flex-1">
                                                                             <div
                                                                                 className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
                                                                                 style={{
@@ -1026,12 +1123,24 @@ export function ManageCategoriesModal({
                                                                             >
                                                                                 <IconComp className="h-4 w-4" />
                                                                             </div>
-                                                                            <div>
-                                                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                                    {
+                                                                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                                                <TruncatedText
+                                                                                    text={
                                                                                         cat.name
                                                                                     }
-                                                                                </span>
+                                                                                    className="text-xs font-bold text-slate-800 dark:text-slate-200"
+                                                                                />
+                                                                                {cat.member_id && (
+                                                                                    <Badge
+                                                                                        variant="lilac"
+                                                                                        size="sm"
+                                                                                        className="shrink-0"
+                                                                                    >
+                                                                                        {getOwnerName(
+                                                                                            cat.member_id,
+                                                                                        )}
+                                                                                    </Badge>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                         <div className="flex items-center gap-1">
@@ -1102,7 +1211,7 @@ export function ManageCategoriesModal({
                                                                         {...listItem}
                                                                         className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800/70 transition-colors"
                                                                     >
-                                                                        <div className="flex items-center gap-3">
+                                                                        <div className="flex items-center gap-3 min-w-0 flex-1">
                                                                             <div
                                                                                 className="h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
                                                                                 style={{
@@ -1113,12 +1222,24 @@ export function ManageCategoriesModal({
                                                                             >
                                                                                 <IconComp className="h-4 w-4" />
                                                                             </div>
-                                                                            <div>
-                                                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                                                    {
+                                                                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                                                <TruncatedText
+                                                                                    text={
                                                                                         cat.name
                                                                                     }
-                                                                                </span>
+                                                                                    className="text-xs font-bold text-slate-800 dark:text-slate-200"
+                                                                                />
+                                                                                {cat.member_id && (
+                                                                                    <Badge
+                                                                                        variant="lilac"
+                                                                                        size="sm"
+                                                                                        className="shrink-0"
+                                                                                    >
+                                                                                        {getOwnerName(
+                                                                                            cat.member_id,
+                                                                                        )}
+                                                                                    </Badge>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                         <div className="flex items-center gap-1">

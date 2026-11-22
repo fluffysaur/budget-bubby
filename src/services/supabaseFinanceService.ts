@@ -63,6 +63,7 @@ import {
     normalizeGoalStatus,
     calculateCPFAndNetPay,
     calculateMemberRecurringDeductions,
+    getExpenseCategoryForMember,
     getMemberExpenseShare,
     isSpendableCategory,
 } from "../lib/financialFormulas";
@@ -171,10 +172,14 @@ function normalizeNotificationPreferences(
  * `false` = known missing (skip it in writes), `true` = known present.
  */
 let categoryGroupColumnSupported: boolean | undefined;
+let categoryMemberIdColumnSupported: boolean | undefined;
+let expensePartnerCategoryColumnSupported: boolean | undefined;
 
-/** Test hook: forget what we learned about the categories."group" column. */
+/** Test hook: forget what we learned about optional category/expense columns. */
 export function resetCategoryGroupColumnSupport(): void {
     categoryGroupColumnSupported = undefined;
+    categoryMemberIdColumnSupported = undefined;
+    expensePartnerCategoryColumnSupported = undefined;
 }
 
 /** Postgres 42703 (undefined column) or PostgREST PGRST204 (column not in schema cache). */
@@ -802,10 +807,21 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             is_system: false,
         }));
 
-        const { data, error } = await client
+        let { data, error } = await client
             .from("categories")
             .upsert(rowsToInsert, { onConflict: "household_id,name" })
             .select();
+
+        if (error) {
+            // Partial unique index (idx_categories_shared_unique_name) may not match ON CONFLICT (household_id, name).
+            const code = (error as { code?: string }).code;
+            if (code === "42P10") {
+                ({ data, error } = await client
+                    .from("categories")
+                    .insert(rowsToInsert)
+                    .select());
+            }
+        }
 
         if (error) throw error;
         return ((data || []) as Category[]).map((row) => ({
@@ -834,23 +850,39 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             input.group !== undefined && categoryGroupColumnSupported !== false;
         if (wantsGroup) insertPayload.group = input.group;
 
+        const wantsMemberId =
+            input.member_id !== undefined &&
+            categoryMemberIdColumnSupported !== false;
+        if (wantsMemberId) insertPayload.member_id = input.member_id ?? null;
+
         let { data, error } = await client
             .from("categories")
             .insert(insertPayload)
             .select()
             .single();
 
-        if (error && wantsGroup && isMissingColumnError(error)) {
-            // categories.group migration not applied yet: retry once without it.
-            categoryGroupColumnSupported = false;
-            delete insertPayload.group;
-            ({ data, error } = await client
-                .from("categories")
-                .insert(insertPayload)
-                .select()
-                .single());
-        } else if (!error && wantsGroup) {
-            categoryGroupColumnSupported = true;
+        if (error && isMissingColumnError(error)) {
+            let retried = false;
+            if (wantsGroup && "group" in insertPayload) {
+                categoryGroupColumnSupported = false;
+                delete insertPayload.group;
+                retried = true;
+            }
+            if (wantsMemberId && "member_id" in insertPayload) {
+                categoryMemberIdColumnSupported = false;
+                delete insertPayload.member_id;
+                retried = true;
+            }
+            if (retried) {
+                ({ data, error } = await client
+                    .from("categories")
+                    .insert({ ...insertPayload })
+                    .select()
+                    .single());
+            }
+        } else if (!error) {
+            if (wantsGroup) categoryGroupColumnSupported = true;
+            if (wantsMemberId) categoryMemberIdColumnSupported = true;
         }
 
         if (error) throw error;
@@ -1443,7 +1475,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
 
             // Exclude goal-funded expenses from normal monthly spendable category caps
             const expenseShareSum = expenses
-                .filter((e) => e.category_id === row.category_id && !e.goal_id)
+                .filter(
+                    (e) =>
+                        getExpenseCategoryForMember(e, budget.owner_id) ===
+                            row.category_id && !e.goal_id,
+                )
                 .reduce(
                     (sum, e) =>
                         sum +
@@ -1662,11 +1698,26 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             throw new Error(`Invalid category ID: "${resolvedCategoryId}"`);
         }
 
+        const resolvedPartnerCategoryId: string | null = input.is_shared
+            ? input.partner_category_id || null
+            : null;
+        if (
+            resolvedPartnerCategoryId &&
+            !isValidUuid(resolvedPartnerCategoryId)
+        ) {
+            throw new Error(
+                `Invalid partner category ID: "${resolvedPartnerCategoryId}"`,
+            );
+        }
+
         const insertPayload: Record<string, unknown> = {
             ...(input.id ? { id: input.id } : {}),
             payer_id: resolvedPayerId,
             household_id: householdId,
             category_id: resolvedCategoryId,
+            ...(expensePartnerCategoryColumnSupported !== false
+                ? { partner_category_id: resolvedPartnerCategoryId }
+                : {}),
             date: input.date,
             time: input.time || getCurrentSingaporeTime(),
             item: input.item,
@@ -1686,10 +1737,25 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 input.exchange_rate !== undefined ? input.exchange_rate : null,
         };
 
-        const { data, error } = await client
+        let { data, error } = await client
             .from("expenses")
             .insert(insertPayload)
             .select();
+
+        if (
+            error &&
+            "partner_category_id" in insertPayload &&
+            isMissingColumnError(error)
+        ) {
+            expensePartnerCategoryColumnSupported = false;
+            delete insertPayload.partner_category_id;
+            ({ data, error } = await client
+                .from("expenses")
+                .insert(insertPayload)
+                .select());
+        } else if (!error && "partner_category_id" in insertPayload) {
+            expensePartnerCategoryColumnSupported = true;
+        }
 
         if (error) {
             const code = (error as { code?: string }).code;
@@ -1718,6 +1784,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 household_id: householdId,
                 payer_id: resolvedPayerId,
                 category_id: resolvedCategoryId,
+                partner_category_id: resolvedPartnerCategoryId,
                 date: input.date,
                 time: input.time || getCurrentSingaporeTime(),
                 item: input.item,
@@ -1748,12 +1815,41 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         updates: UpdateExpenseInput,
     ): Promise<Expense> {
         const client = this.getClient();
-        const { data, error } = await client
+        const payload: Record<string, unknown> = { ...updates };
+        if (payload.is_shared === false) {
+            payload.partner_category_id = null;
+        }
+        if (
+            "partner_category_id" in payload &&
+            expensePartnerCategoryColumnSupported === false
+        ) {
+            delete payload.partner_category_id;
+        }
+
+        let { data, error } = await client
             .from("expenses")
-            .update(updates)
+            .update(payload)
             .eq("id", id)
             .select()
             .single();
+
+        if (
+            error &&
+            "partner_category_id" in payload &&
+            isMissingColumnError(error)
+        ) {
+            expensePartnerCategoryColumnSupported = false;
+            delete payload.partner_category_id;
+            ({ data, error } = await client
+                .from("expenses")
+                .update(payload)
+                .eq("id", id)
+                .select()
+                .single());
+        } else if (!error && "partner_category_id" in payload) {
+            expensePartnerCategoryColumnSupported = true;
+        }
+
         if (error) throw error;
         return data as Expense;
     }

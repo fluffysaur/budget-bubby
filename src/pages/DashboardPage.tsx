@@ -126,6 +126,10 @@ export function DashboardPage({
                 allocated > 0
                     ? Math.min(100, Math.round((spent / allocated) * 100))
                     : 0;
+            const ownerName = bc.category?.member_id
+                ? (members.find((m) => m.id === bc.category?.member_id)
+                      ?.display_name ?? "Personal")
+                : undefined;
             return {
                 id: bc.category_id,
                 name: bc.category?.name || "Category",
@@ -134,6 +138,7 @@ export function DashboardPage({
                 allocated: Math.round(allocated * 100) / 100,
                 remaining: Math.round(remaining * 100) / 100,
                 pct,
+                ownerName,
             };
         });
 
@@ -157,7 +162,7 @@ export function DashboardPage({
             totalPct,
             categories: spendableItems,
         };
-    }, [monthlyBudget]);
+    }, [monthlyBudget, members]);
 
     // Weekly recap: decided once per visit (Mon-Wed, until acknowledged)
     const [recapWeek] = useState(() =>
