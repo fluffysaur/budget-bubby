@@ -10,7 +10,7 @@
  * - Optional start and end dates (end must be on or after start)
  */
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { Shield } from "lucide-react";
 import type {
     Category,
@@ -34,6 +34,7 @@ import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { MONTH_NAMES_FULL } from "../../lib/dateUtils";
 import { feedback } from "../../lib/delight/feedback";
+import { filterCategoriesForMember } from "../../lib/financialFormulas";
 import {
     findDefaultRecurringCategoryId,
     isSpendType,
@@ -161,11 +162,20 @@ export function AddRecurringModal({
         }
     }, [isOpen, initialItem, defaultOwnerId]);
 
+    const scopedCategories = useMemo(
+        () =>
+            filterCategoriesForMember(
+                categories,
+                ownerId === "joint" ? undefined : ownerId,
+            ),
+        [categories, ownerId],
+    );
+
     if (!isOpen) return null;
 
     const showCategory = isSpendType(type);
     const selectedCategoryId =
-        categoryId ?? findDefaultRecurringCategoryId(categories) ?? "";
+        categoryId ?? findDefaultRecurringCategoryId(scopedCategories) ?? "";
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -337,7 +347,7 @@ export function AddRecurringModal({
                                 className="bg-(--bg-canvas)"
                             >
                                 <option value="">No category</option>
-                                {categories.map((c) => (
+                                {scopedCategories.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name}
                                     </option>

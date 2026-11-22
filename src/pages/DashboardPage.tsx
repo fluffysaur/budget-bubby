@@ -81,7 +81,7 @@ export function DashboardPage({
     // Combined view shows the household total, same as Budget
     const {
         data: budgetData,
-        isLoading: budgetLoading,
+        isPending: budgetPending,
         isPlaceholderData: budgetPlaceholder,
     } = useBudgetDetailQuery(
         currentMonth,
@@ -108,7 +108,8 @@ export function DashboardPage({
         perspective === "household" ? undefined : activeMember?.id;
     const monthlyBudget = budgetData || null;
 
-    const isLoading = budgetLoading && !budgetData;
+    const isMembersPending = !isMockMode && members.length === 0;
+    const isLoading = isMembersPending || (budgetPending && !budgetData);
 
     // Spendable budget: total left plus a meter per spendable category
     const spendableSummary = useMemo(() => {
@@ -126,6 +127,10 @@ export function DashboardPage({
                 allocated > 0
                     ? Math.min(100, Math.round((spent / allocated) * 100))
                     : 0;
+            const ownerName = bc.category?.member_id
+                ? (members.find((m) => m.id === bc.category?.member_id)
+                      ?.display_name ?? "Personal")
+                : undefined;
             return {
                 id: bc.category_id,
                 name: bc.category?.name || "Category",
@@ -134,6 +139,7 @@ export function DashboardPage({
                 allocated: Math.round(allocated * 100) / 100,
                 remaining: Math.round(remaining * 100) / 100,
                 pct,
+                ownerName,
             };
         });
 
@@ -157,7 +163,7 @@ export function DashboardPage({
             totalPct,
             categories: spendableItems,
         };
-    }, [monthlyBudget]);
+    }, [monthlyBudget, members]);
 
     // Weekly recap: decided once per visit (Mon-Wed, until acknowledged)
     const [recapWeek] = useState(() =>

@@ -34,6 +34,7 @@ import { TruncatedText } from "../ui/TruncatedText";
 import { EmptyStateCard } from "../ui/EmptyStateCard";
 import { MeterBar } from "../ui/MeterBar";
 import { Badge } from "../ui/Badge";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
 import type { MonthlyBudgetCategoryDetail } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
@@ -68,6 +69,8 @@ export function CategoryProgressList({
     compact = false,
     className = "",
 }: CategoryProgressListProps) {
+    const household = useOptionalHousehold();
+    const members = household?.members ?? [];
     const absorption = useMemo(
         () => computeBufferAbsorption(categories),
         [categories],
@@ -214,12 +217,27 @@ export function CategoryProgressList({
                                     >
                                         <Icon className="h-4 w-4" />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                                             <TruncatedText
                                                 text={categoryName}
                                                 className="font-display font-black text-sm text-(--text-ink)"
                                             />
+                                            {catDetail.category?.member_id && (
+                                                <Badge
+                                                    variant="lilac"
+                                                    size="sm"
+                                                    className="shrink-0"
+                                                >
+                                                    {members.find(
+                                                        (m) =>
+                                                            m.id ===
+                                                            catDetail.category
+                                                                ?.member_id,
+                                                    )?.display_name ??
+                                                        "Personal"}
+                                                </Badge>
+                                            )}
                                             {subSpent > 0 && (
                                                 <TooltipPopover
                                                     label={`${categoryName} Recurring Breakdown`}

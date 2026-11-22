@@ -181,6 +181,7 @@ export function ExpenseFormModal({
         item: "",
         categoryId:
             spendableCategories[0]?.id || loggableCategories[0]?.id || "",
+        partnerCategoryId: "",
         categoryManuallySelected: false,
         isGoalSpend: false,
         selectedGoalId: "",
@@ -323,6 +324,7 @@ export function ExpenseFormModal({
                         : expense.amount,
                 item: expense.item,
                 categoryId: expense.category_id || "",
+                partnerCategoryId: expense.partner_category_id || "",
                 categoryManuallySelected: true,
                 payerId: expense.payer_id || members[0]?.id || "",
                 isShared: expense.is_shared,
@@ -349,6 +351,7 @@ export function ExpenseFormModal({
                     spendableCategories[0]?.id ||
                     loggableCategories[0]?.id ||
                     "",
+                partnerCategoryId: "",
                 categoryManuallySelected: false,
                 payerId:
                     defaultPayerId ||
@@ -634,6 +637,8 @@ export function ExpenseFormModal({
                         autoFocusAmount
                         initialShowMoreCategories={initialShowMoreCategories}
                         resetKey={`${isOpen}-${expense?.id ?? "new"}-${inboxItemId ?? ""}`}
+                        isEditMode={isEditMode}
+                        activeMemberId={activeMember?.id ?? null}
                     />
                 </ModalBody>
 

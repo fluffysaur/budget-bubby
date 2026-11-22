@@ -122,6 +122,16 @@ export const mockCategories: Category[] = [
         is_system: true,
         group: "spendable",
     },
+    {
+        id: "cat-00000000-0108",
+        household_id: "hh-00000000-0001",
+        member_id: "mem-00000000-0012",
+        name: "Hobbies",
+        color: "#EC4899",
+        icon: "gamepad-2",
+        is_system: false,
+        group: "spendable",
+    },
 ];
 
 export const mockBaseProfiles: BaseBudgetProfile[] = [
@@ -1148,6 +1158,7 @@ export const mockExpenses: Expense[] = [
         household_id: "hh-00000000-0001",
         payer_id: "mem-00000000-0012",
         category_id: "cat-00000000-0103", // Transport
+        partner_category_id: "cat-00000000-0102", // Lifestyle for partner
         date: "2026-10-18",
         time: "10:00",
         item: "Singapore Airlines Flight to Da Nang",

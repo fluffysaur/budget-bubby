@@ -133,7 +133,7 @@ export function ExpensesPage({
     // TanStack Query Cached Data Hooks
     const {
         data: expensesData,
-        isLoading: expensesLoading,
+        isPending: expensesPending,
         isPlaceholderData: expensesPlaceholder,
         isError: expensesError,
         error: expensesErrorObj,
@@ -187,7 +187,8 @@ export function ExpensesPage({
                   : [],
         [baseAllocationsData, isMockMode],
     );
-    const isLoading = expensesLoading && !expensesData;
+    const isMembersPending = !isMockMode && members.length === 0;
+    const isLoading = isMembersPending || (expensesPending && !expensesData);
 
     const { data: settleUpsData } = useSettleUpsQuery();
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -368,12 +369,15 @@ export function ExpensesPage({
     // Spendable Budget Pacing Calculation (Dynamically adjusts daily pace & tracks monthly limits)
     // Same budget as Home and Budget, so the Spendable card matches them
     const memberIds = useMemo(() => members.map((m) => m.id), [members]);
-    const { data: pacingBudget } = useBudgetDetailQuery(
-        filter.month || currentMonth,
-        perspective,
-        activeMember?.id,
-        memberIds,
-    );
+    const { data: pacingBudget, isPending: pacingBudgetPending } =
+        useBudgetDetailQuery(
+            filter.month || currentMonth,
+            perspective,
+            activeMember?.id,
+            memberIds,
+        );
+    const isSpendableLoading =
+        isLoading || (pacingBudgetPending && !pacingBudget);
 
     const lastMonth = useMemo(
         () => addMonths(currentMonth, -1),
@@ -616,7 +620,7 @@ export function ExpensesPage({
                     {/* Card 1: Spendable Remaining (Primary Card) */}
                     <StatCard
                         title="Spendable"
-                        loading={isLoading}
+                        loading={isSpendableLoading}
                         value={formatSGD(spendablePacing.spendableRemaining)}
                         subtitle={
                             spendablePacing.isCurrentMonth
@@ -808,6 +812,8 @@ export function ExpensesPage({
                     categories={categories}
                     members={members}
                     goals={goals}
+                    perspective={perspective}
+                    activeMemberId={activeMember?.id ?? null}
                     filter={filter}
                     onFilterChange={setFilter}
                     onResetFilters={handleResetFilters}

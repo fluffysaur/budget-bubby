@@ -14,6 +14,7 @@ import {
     getCurrentSingaporeTime,
 } from "../../lib/dateUtils";
 import {
+    filterCategoriesForMember,
     isLoggableCategory,
     isSpendableCategory,
 } from "../../lib/financialFormulas";
@@ -36,6 +37,7 @@ import { FxRateField } from "./FxRateField";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { RangeSlider } from "../ui/RangeSlider";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
+import { Select } from "../ui/Select";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { CurrencyText } from "../ui/CurrencyText";
 
@@ -53,6 +55,8 @@ export interface ExpenseFormFieldsProps {
     initialShowMoreCategories?: boolean;
     /** Changing this resets local UI toggles (More accordion, tag input, etc.). */
     resetKey?: string | number;
+    isEditMode?: boolean;
+    activeMemberId?: string | null;
 }
 
 export function ExpenseFormFields({
@@ -66,6 +70,8 @@ export function ExpenseFormFields({
     idPrefix = "expense",
     initialShowMoreCategories = false,
     resetKey,
+    isEditMode = false,
+    activeMemberId = null,
 }: ExpenseFormFieldsProps) {
     const [showMoreCategories, setShowMoreCategories] = useState<boolean>(
         initialShowMoreCategories,
@@ -85,9 +91,39 @@ export function ExpenseFormFields({
         setRecentTagsList(getStoredRecentTags());
     }, [resetKey, initialShowMoreCategories]);
 
+    const payerCategories = useMemo(
+        () =>
+            filterCategoriesForMember(
+                categories,
+                draft.payerId || activeMemberId,
+            ),
+        [categories, draft.payerId, activeMemberId],
+    );
     const loggableCategories = useMemo(
-        () => categories.filter((c) => isLoggableCategory(c)),
-        [categories],
+        () => payerCategories.filter((c) => isLoggableCategory(c)),
+        [payerCategories],
+    );
+    const partnerMember = useMemo(
+        () => members.find((m) => m.id !== draft.payerId) ?? null,
+        [members, draft.payerId],
+    );
+    const partnerLoggableCategories = useMemo(
+        () =>
+            filterCategoriesForMember(
+                categories,
+                activeMemberId && activeMemberId !== draft.payerId
+                    ? activeMemberId
+                    : partnerMember?.id,
+            ).filter((c) => isLoggableCategory(c)),
+        [categories, activeMemberId, draft.payerId, partnerMember?.id],
+    );
+    const isNonPayingPartnerEdit = Boolean(
+        isEditMode &&
+            draft.isShared &&
+            !draft.isGoalSpend &&
+            activeMemberId &&
+            draft.payerId &&
+            activeMemberId !== draft.payerId,
     );
     const spendableCategories = useMemo(
         () => loggableCategories.filter((c) => isSpendableCategory(c)),
@@ -161,7 +197,10 @@ export function ExpenseFormFields({
         (draft.remarks.trim() ? 1 : 0) +
         (draft.tags.length > 0 ? 1 : 0) +
         (draft.currencyCode !== "SGD" ? 1 : 0) +
-        (hasCustomSplit ? 1 : 0);
+        (hasCustomSplit ? 1 : 0) +
+        (draft.isShared && !draft.isGoalSpend && draft.partnerCategoryId
+            ? 1
+            : 0);
 
     const amountInSGD = convertToSGD(
         draft.amount,
@@ -432,6 +471,33 @@ export function ExpenseFormFields({
                     </div>
                 )}
             </div>
+
+            {/* Non-paying partner editing a shared expense: prominent "My Category" picker */}
+            {isNonPayingPartnerEdit && (
+                <div>
+                    <Select
+                        id={`${idPrefix}-my-category`}
+                        label="My Category"
+                        value={draft.partnerCategoryId || ""}
+                        onChange={(e) =>
+                            onChange({ partnerCategoryId: e.target.value })
+                        }
+                        className="bg-(--bg-canvas)"
+                    >
+                        <option value="">
+                            Same as payer (
+                            {categories.find((c) => c.id === draft.categoryId)
+                                ?.name || "Default"}
+                            )
+                        </option>
+                        {partnerLoggableCategories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </option>
+                        ))}
+                    </Select>
+                </div>
+            )}
 
             {/* Description Input */}
             <div>
@@ -716,6 +782,41 @@ export function ExpenseFormFields({
                                     </div>
                                 </div>
                             )}
+
+                            {draft.isShared &&
+                                !isNonPayingPartnerEdit &&
+                                !draft.isGoalSpend && (
+                                    <div className="pt-1">
+                                        <Select
+                                            id={`${idPrefix}-partner-category`}
+                                            label={`Partner's Category${partnerMember ? ` (${partnerMember.display_name})` : ""}`}
+                                            value={
+                                                draft.partnerCategoryId || ""
+                                            }
+                                            onChange={(e) =>
+                                                onChange({
+                                                    partnerCategoryId:
+                                                        e.target.value,
+                                                })
+                                            }
+                                            className="bg-(--bg-canvas)"
+                                        >
+                                            <option value="">
+                                                Same as payer
+                                            </option>
+                                            {partnerLoggableCategories.map(
+                                                (cat) => (
+                                                    <option
+                                                        key={cat.id}
+                                                        value={cat.id}
+                                                    >
+                                                        {cat.name}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </Select>
+                                    </div>
+                                )}
                         </div>
                     )}
 

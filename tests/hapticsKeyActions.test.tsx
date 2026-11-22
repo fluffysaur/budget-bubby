@@ -807,13 +807,13 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 const input = screen.getByLabelText(/gemini api key/i);
                 fireEvent.change(input, { target: { value: "AIzaSyTestKey123" } });
 
-                const saveBtn = screen.getByTestId("save-gemini-key-btn");
+                const saveBtn = screen.getByTestId("save-ai-key-btn");
                 fireEvent.click(saveBtn);
 
                 expect(routineSpy).toHaveBeenCalledWith("save");
 
                 // Clear key
-                const clearBtn = screen.getByTestId("clear-gemini-key-btn");
+                const clearBtn = screen.getByTestId("clear-ai-key-btn");
                 fireEvent.click(clearBtn);
 
                 expect(routineSpy).toHaveBeenCalledWith("delete");

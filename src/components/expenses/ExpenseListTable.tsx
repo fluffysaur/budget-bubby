@@ -54,14 +54,19 @@ import type {
     ExpenseSortField,
     SortDirection,
     ExpenseFilter,
+    Perspective,
 } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
+import { getExpenseCategoryForMember } from "../../lib/financialFormulas";
 
 export interface ExpenseListTableProps {
     expenses: Expense[];
     categories?: Category[];
     members?: HouseholdMember[];
     goals?: SavingsGoal[];
+    perspective?: Perspective;
+    activeMemberId?: string | null;
     onDeleteExpense?: (id: string) => Promise<void> | void;
     onEditExpense?: (expense: Expense) => void;
     onExpenseSaved?: (expense: Expense) => void;
@@ -83,6 +88,8 @@ export function ExpenseListTable({
     categories: propCategories,
     members: propMembers,
     goals: propGoals,
+    perspective: propPerspective,
+    activeMemberId: propActiveMemberId,
     onDeleteExpense,
     onEditExpense,
     onExpenseSaved,
@@ -99,6 +106,15 @@ export function ExpenseListTable({
     onResetFilters,
 }: ExpenseListTableProps) {
     const isMock = isMockModeActive();
+    const household = useOptionalHousehold();
+    const resolvedPerspective =
+        propPerspective ?? household?.perspective ?? "household";
+    const resolvedActiveMemberId =
+        propActiveMemberId !== undefined
+            ? propActiveMemberId
+            : (household?.activeMember?.id ?? null);
+    const isPersonalView =
+        resolvedPerspective === "personal" && Boolean(resolvedActiveMemberId);
     const categories = useMemo(
         () => propCategories ?? (isMock ? mockCategories : []),
         [propCategories, isMock],
@@ -233,12 +249,18 @@ export function ExpenseListTable({
             } else if (activeSortBy === "amount") {
                 comparison = a.amount - b.amount;
             } else if (activeSortBy === "category") {
+                const catIdA = isPersonalView
+                    ? getExpenseCategoryForMember(a, resolvedActiveMemberId)
+                    : a.category_id;
+                const catIdB = isPersonalView
+                    ? getExpenseCategoryForMember(b, resolvedActiveMemberId)
+                    : b.category_id;
                 const catA = a.goal_id
                     ? getGoal(a.goal_id)?.title || "Goal"
-                    : getCategory(a.category_id)?.name || "";
+                    : getCategory(catIdA)?.name || "";
                 const catB = b.goal_id
                     ? getGoal(b.goal_id)?.title || "Goal"
-                    : getCategory(b.category_id)?.name || "";
+                    : getCategory(catIdB)?.name || "";
                 comparison = catA.localeCompare(catB);
             } else if (activeSortBy === "payer") {
                 const payerA =
@@ -451,9 +473,27 @@ export function ExpenseListTable({
                                 <tbody className="divide-y divide-(--border-subtle) block sm:table-row-group">
                                     <AnimatePresence initial={false}>
                                         {paginatedExpenses.map((expense) => {
-                                            const category = getCategory(
-                                                expense.category_id,
-                                            );
+                                            const effectiveCategoryId =
+                                                isPersonalView
+                                                    ? getExpenseCategoryForMember(
+                                                          expense,
+                                                          resolvedActiveMemberId,
+                                                      )
+                                                    : expense.category_id;
+                                            const category =
+                                                getCategory(
+                                                    effectiveCategoryId,
+                                                );
+                                            const partnerCategory =
+                                                !isPersonalView &&
+                                                expense.is_shared &&
+                                                expense.partner_category_id &&
+                                                expense.partner_category_id !==
+                                                    expense.category_id
+                                                    ? getCategory(
+                                                          expense.partner_category_id,
+                                                      )
+                                                    : undefined;
                                             const payer = getMember(
                                                 expense.payer_id,
                                             );
@@ -576,6 +616,38 @@ export function ExpenseListTable({
                                                                     </span>
                                                                 );
                                                             })()
+                                                        ) : category &&
+                                                          partnerCategory ? (
+                                                            <span
+                                                                className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)"
+                                                                title={`${category.name} · ${partnerCategory.name}`}
+                                                            >
+                                                                <span
+                                                                    className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            category.color ||
+                                                                            "#dfc2ff",
+                                                                    }}
+                                                                />
+                                                                <span>
+                                                                    {
+                                                                        category.name
+                                                                    }{" "}
+                                                                    ·{" "}
+                                                                    {
+                                                                        partnerCategory.name
+                                                                    }
+                                                                </span>
+                                                                <span
+                                                                    className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            partnerCategory.color ||
+                                                                            "#dfc2ff",
+                                                                    }}
+                                                                />
+                                                            </span>
                                                         ) : category ? (
                                                             <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
                                                                 <span
