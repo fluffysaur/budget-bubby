@@ -40,15 +40,15 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
-import {
-    APP_VERSION,
-    GIT_SHA,
-    formatAppVersion,
-} from "../../lib/appVersion";
+import { APP_VERSION, GIT_SHA, formatAppVersion } from "../../lib/appVersion";
 import { financeService } from "../../services/financeService";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
+import { useNotificationPermission } from "../../hooks/useNotificationPermission";
 import {
-    requestNotificationPermission,
+    getDevicePushStatus,
+    type DevicePushStatus,
+} from "../../lib/pushSubscription";
+import {
     dispatchPWANotification,
     getCcDueReminderDays,
     DEFAULT_CHECKIN_TIME,
@@ -65,6 +65,13 @@ import type {
 } from "../../types/finance";
 
 /** CC due reminder chips: days before due (0 = due day). */
+const DEVICE_PUSH_LABELS: Record<DevicePushStatus, string> = {
+    subscribed: "Subscribed",
+    not_subscribed: "Not subscribed",
+    unsupported: "Push unsupported",
+    app_only: "App alerts only",
+};
+
 const CC_DUE_DAY_OPTIONS: { day: number; label: string }[] = [
     { day: 7, label: "7d" },
     { day: 3, label: "3d" },
@@ -104,18 +111,29 @@ export function NotificationSettingsModal({
             ),
         );
     const [, setIsLoading] = useState<boolean>(true);
-    const [permission, setPermission] =
-        useState<NotificationPermission>("default");
+    const {
+        permission,
+        refresh: refreshPermission,
+        request: requestPermission,
+    } = useNotificationPermission();
+    const [devicePushStatus, setDevicePushStatus] =
+        useState<DevicePushStatus | null>(null);
     const [testPushSent, setTestPushSent] = useState<boolean>(false);
     const hasVibrate =
         typeof navigator !== "undefined" && "vibrate" in navigator;
 
-    // Sync browser permission status
+    // Re-read permission and this device's subscription whenever the modal opens
     useEffect(() => {
-        if (typeof window !== "undefined" && "Notification" in window) {
-            setPermission(Notification.permission);
-        }
-    }, [isOpen]);
+        if (!isOpen) return;
+        refreshPermission();
+        let cancelled = false;
+        getDevicePushStatus().then((status) => {
+            if (!cancelled) setDevicePushStatus(status);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, permission, prefs.push_enabled, refreshPermission]);
 
     // Load preferences
     const loadPreferences = useCallback(async () => {
@@ -224,8 +242,7 @@ export function NotificationSettingsModal({
     const handleTestPush = async () => {
         let currentPerm = permission;
         if (currentPerm !== "granted") {
-            currentPerm = await requestNotificationPermission();
-            setPermission(currentPerm);
+            currentPerm = await requestPermission();
         }
         if (currentPerm === "granted") {
             const success = await dispatchPWANotification(
@@ -446,8 +463,13 @@ export function NotificationSettingsModal({
                                             {permission}
                                         </span>
                                     </div>
-                                    <p className="text-[11px] text-(--text-muted) font-medium mt-0.5">
-                                        System alerts on this device
+                                    <p
+                                        data-testid="device-push-status"
+                                        className="text-[11px] text-(--text-muted) font-medium mt-0.5"
+                                    >
+                                        {devicePushStatus
+                                            ? `This device: ${DEVICE_PUSH_LABELS[devicePushStatus]}`
+                                            : "System alerts on this device"}
                                     </p>
                                 </div>
                             </div>
@@ -867,7 +889,10 @@ export function NotificationSettingsModal({
                             data-testid="reset-notification-defaults-btn"
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                         >
-                            <RotateCcw className="h-3.5 w-3.5" strokeWidth={2.5} />
+                            <RotateCcw
+                                className="h-3.5 w-3.5"
+                                strokeWidth={2.5}
+                            />
                             <span>Reset to Defaults</span>
                         </button>
 
