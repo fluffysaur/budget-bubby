@@ -3,7 +3,15 @@
  */
 
 import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+    describe,
+    it,
+    expect,
+    vi,
+    beforeEach,
+    afterEach,
+    onTestFinished,
+} from "vitest";
 import {
     render,
     screen,
@@ -644,6 +652,90 @@ describe("Notifications Engine", () => {
             );
         });
 
+        it("hides the enable banner when permission changes after mount", async () => {
+            const notif = {
+                permission: "default" as NotificationPermission,
+                requestPermission: vi.fn().mockResolvedValue("default"),
+            };
+            Object.defineProperty(window, "Notification", {
+                value: notif,
+                configurable: true,
+                writable: true,
+            });
+
+            renderWithProviders(<NotificationCenterPopover />);
+            await act(async () => {
+                fireEvent.click(
+                    await screen.findByTestId("notification-bell-btn"),
+                );
+            });
+            expect(
+                await screen.findByTestId("push-permission-banner"),
+            ).toBeInTheDocument();
+
+            notif.permission = "granted";
+            await act(async () => {
+                window.dispatchEvent(new Event("focus"));
+            });
+
+            expect(
+                screen.queryByTestId("push-permission-banner"),
+            ).not.toBeInTheDocument();
+        });
+
+        it("hides the enable banner when the Notification API is unsupported", async () => {
+            const original = Object.getOwnPropertyDescriptor(
+                window,
+                "Notification",
+            );
+            Reflect.deleteProperty(window, "Notification");
+            onTestFinished(() => {
+                if (original)
+                    Object.defineProperty(window, "Notification", original);
+            });
+
+            renderWithProviders(<NotificationCenterPopover />);
+            await act(async () => {
+                fireEvent.click(
+                    await screen.findByTestId("notification-bell-btn"),
+                );
+            });
+            await screen.findByTestId("notification-center-popover");
+            expect(
+                screen.queryByTestId("push-permission-banner"),
+            ).not.toBeInTheDocument();
+        });
+
+        it("points to system settings when requestPermission resolves default", async () => {
+            Object.defineProperty(window, "Notification", {
+                value: {
+                    permission: "default",
+                    requestPermission: vi.fn().mockResolvedValue("default"),
+                },
+                configurable: true,
+                writable: true,
+            });
+
+            renderWithProviders(<NotificationCenterPopover />);
+            await act(async () => {
+                fireEvent.click(
+                    await screen.findByTestId("notification-bell-btn"),
+                );
+            });
+            await act(async () => {
+                fireEvent.click(
+                    await screen.findByTestId("enable-push-notifications-btn"),
+                );
+            });
+
+            expect(
+                screen.getByTestId("push-permission-banner-text"),
+            ).toHaveTextContent(/system settings/i);
+            expect(
+                screen.queryByTestId("enable-push-notifications-btn"),
+            ).not.toBeInTheDocument();
+        });
+
         it("uses logged-in member (me.id) for push sync, claims, read/dismiss state, and No Spend check-in in Combined view", async () => {
             vi.useFakeTimers({ shouldAdvanceTime: true });
             vi.setSystemTime(new Date("2026-10-29T19:00:00+08:00"));
@@ -697,6 +789,7 @@ describe("Notifications Engine", () => {
                 expect(syncSpy).toHaveBeenCalledWith(
                     "mem-00000000-0012",
                     expect.any(Boolean),
+                    expect.any(String),
                 );
             });
 
