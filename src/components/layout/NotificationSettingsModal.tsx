@@ -409,7 +409,7 @@ export function NotificationSettingsModal({
                         </div>
                     )}
 
-                    {/* Bubby AI (BYOK Gemini API key) */}
+                    {/* Bubby AI (BYOK API key) */}
                     <AiSettingsSection />
 
                     {/* Auto Capture (phone purchase capture tokens) */}

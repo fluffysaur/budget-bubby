@@ -1,6 +1,6 @@
 /**
- * Settings > Bubby AI: Bring-Your-Own-Key (BYOK) Gemini API configuration.
- * API key and model preference are stored locally in browser localStorage.
+ * Settings > Bubby AI: Provider-agnostic Bring-Your-Own-Key (BYOK) AI configuration.
+ * API keys and model preferences are stored per provider in browser localStorage.
  */
 
 import { useState } from "react";
@@ -14,19 +14,25 @@ import {
 } from "lucide-react";
 import {
     AI_CONFIG_CHANGED_EVENT,
-    getGeminiApiKey,
-    setGeminiApiKey,
-    clearGeminiApiKey,
-    getGeminiModel,
-    setGeminiModel,
-    testGeminiConnection,
-    GEMINI_MODEL_OPTIONS,
-} from "../../services/ai/geminiClient";
+    AI_PROVIDER_LIST,
+    AI_PROVIDER_META,
+    clearProviderApiKey,
+    getActiveAiProvider,
+    getProviderApiKey,
+    getProviderModel,
+    setActiveAiProvider,
+    setProviderApiKey,
+    setProviderModel,
+    testAiConnection,
+    type AiProviderId,
+} from "../../services/ai/providers";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+
+const CUSTOM_MODEL_SENTINEL = "__custom__";
 
 function notifyAiConfigChanged() {
     if (typeof window !== "undefined") {
@@ -34,12 +40,30 @@ function notifyAiConfigChanged() {
     }
 }
 
-export function AiSettingsSection() {
-    const [savedKey, setSavedKey] = useState<string>(() => getGeminiApiKey());
-    const [apiKeyDraft, setApiKeyDraft] = useState<string>(() =>
-        getGeminiApiKey(),
+function isCuratedModel(provider: AiProviderId, model: string): boolean {
+    return AI_PROVIDER_META[provider].curatedModels.some(
+        (m) => m.value === model,
     );
-    const [model, setModel] = useState<string>(() => getGeminiModel());
+}
+
+export function AiSettingsSection() {
+    const [provider, setProvider] = useState<AiProviderId>(() =>
+        getActiveAiProvider(),
+    );
+    const [savedKey, setSavedKey] = useState<string>(() =>
+        getProviderApiKey(getActiveAiProvider()),
+    );
+    const [apiKeyDraft, setApiKeyDraft] = useState<string>(() =>
+        getProviderApiKey(getActiveAiProvider()),
+    );
+    const [model, setModel] = useState<string>(() =>
+        getProviderModel(getActiveAiProvider()),
+    );
+    const [useCustomModel, setUseCustomModel] = useState<boolean>(() => {
+        const initialProvider = getActiveAiProvider();
+        const initialModel = getProviderModel(initialProvider);
+        return !isCuratedModel(initialProvider, initialModel);
+    });
     const [showKey, setShowKey] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [feedback, setFeedback] = useState<{
@@ -47,39 +71,70 @@ export function AiSettingsSection() {
         message: string;
     } | null>(null);
 
+    const providerMeta = AI_PROVIDER_META[provider];
     const isConfigured = savedKey.length > 0;
     const isDirty = apiKeyDraft.trim() !== savedKey;
 
+    const handleProviderChange = (nextProvider: AiProviderId) => {
+        setActiveAiProvider(nextProvider);
+        const nextKey = getProviderApiKey(nextProvider);
+        const nextModel = getProviderModel(nextProvider);
+        setProvider(nextProvider);
+        setSavedKey(nextKey);
+        setApiKeyDraft(nextKey);
+        setModel(nextModel);
+        setUseCustomModel(!isCuratedModel(nextProvider, nextModel));
+        setShowKey(false);
+        setFeedback(null);
+        notifyAiConfigChanged();
+    };
+
     const handleSave = () => {
-        const trimmed = apiKeyDraft.trim();
-        setGeminiApiKey(trimmed);
-        setGeminiModel(model);
-        setSavedKey(trimmed);
-        setApiKeyDraft(trimmed);
+        const trimmedKey = apiKeyDraft.trim();
+        const effectiveModel = model.trim() || providerMeta.defaultModel;
+        setProviderApiKey(provider, trimmedKey);
+        setProviderModel(provider, effectiveModel);
+        setSavedKey(trimmedKey);
+        setApiKeyDraft(trimmedKey);
+        setModel(effectiveModel);
         notifyAiConfigChanged();
         setFeedback({
-            variant: trimmed ? "success" : "info",
-            message: trimmed
-                ? "Gemini API key saved locally."
-                : "Gemini API key removed.",
+            variant: trimmedKey ? "success" : "info",
+            message: trimmedKey
+                ? `${providerMeta.label} API key saved locally.`
+                : `${providerMeta.label} API key removed.`,
         });
     };
 
     const handleClear = () => {
-        clearGeminiApiKey();
+        clearProviderApiKey(provider);
         setSavedKey("");
         setApiKeyDraft("");
         notifyAiConfigChanged();
         setFeedback({
             variant: "info",
-            message: "Gemini API key cleared from this device.",
+            message: `${providerMeta.label} API key cleared from this device.`,
         });
     };
 
-    const handleModelChange = (nextModel: string) => {
-        setModel(nextModel);
-        setGeminiModel(nextModel);
+    const handleModelSelectChange = (selectedValue: string) => {
+        if (selectedValue === CUSTOM_MODEL_SENTINEL) {
+            setUseCustomModel(true);
+            return;
+        }
+        setUseCustomModel(false);
+        setModel(selectedValue);
+        setProviderModel(provider, selectedValue);
         notifyAiConfigChanged();
+    };
+
+    const handleCustomModelChange = (nextModel: string) => {
+        setModel(nextModel);
+        const trimmed = nextModel.trim();
+        if (trimmed) {
+            setProviderModel(provider, trimmed);
+            notifyAiConfigChanged();
+        }
     };
 
     const handleTestConnection = async () => {
@@ -87,14 +142,19 @@ export function AiSettingsSection() {
         if (!candidateKey) {
             setFeedback({
                 variant: "danger",
-                message: "Enter a Gemini API key first.",
+                message: `Enter a ${providerMeta.label} API key first.`,
             });
             return;
         }
+        const effectiveModel = model.trim() || providerMeta.defaultModel;
         setIsTesting(true);
         setFeedback(null);
         try {
-            const result = await testGeminiConnection(candidateKey, model);
+            const result = await testAiConnection(
+                provider,
+                candidateKey,
+                effectiveModel,
+            );
             if (result.ok) {
                 setFeedback({
                     variant: "success",
@@ -111,34 +171,58 @@ export function AiSettingsSection() {
         }
     };
 
+    const selectValue =
+        useCustomModel || !isCuratedModel(provider, model)
+            ? CUSTOM_MODEL_SENTINEL
+            : model;
+
     return (
         <CollapsibleSection
             title="Bubby AI"
-            subtitle="Gemini API key stored locally"
-            badge={isConfigured ? "Connected" : "Not Set"}
+            subtitle={
+                isConfigured
+                    ? `${providerMeta.label} · Stored locally`
+                    : "AI key stored locally"
+            }
+            badge={isConfigured ? providerMeta.label : "Not Set"}
             badgeVariant={isConfigured ? "mint" : "slate"}
             icon={<Sparkles className="h-4 w-4" strokeWidth={2.5} />}
         >
             <div className="space-y-4">
                 <p className="text-xs text-(--text-muted) leading-relaxed">
-                    Bring your own Google Gemini API key. Your key stays in this
+                    Bring your own AI API key. Your key stays in this
                     browser&apos;s local storage and is never sent to Budget
                     Bubby servers.
                 </p>
 
+                <Select
+                    id="ai-provider-select"
+                    label="Provider"
+                    sizeVariant="sm"
+                    value={provider}
+                    onChange={(e) =>
+                        handleProviderChange(e.target.value as AiProviderId)
+                    }
+                    data-testid="ai-provider-select"
+                    options={AI_PROVIDER_LIST.map((p) => ({
+                        value: p.id,
+                        label: p.label,
+                    }))}
+                />
+
                 <Input
-                    id="gemini-api-key-input"
-                    label="Gemini API Key"
+                    id="ai-api-key-input"
+                    label={providerMeta.keyLabel}
                     type={showKey ? "text" : "password"}
                     value={apiKeyDraft}
                     onChange={(e) => {
                         setApiKeyDraft(e.target.value);
                         if (feedback) setFeedback(null);
                     }}
-                    placeholder="AIza..."
+                    placeholder={providerMeta.placeholder}
                     autoComplete="off"
                     spellCheck={false}
-                    data-testid="gemini-api-key-input"
+                    data-testid="ai-api-key-input"
                     rightElement={
                         <button
                             type="button"
@@ -146,7 +230,7 @@ export function AiSettingsSection() {
                             aria-label={
                                 showKey ? "Hide API key" : "Show API key"
                             }
-                            data-testid="toggle-gemini-key-visibility"
+                            data-testid="toggle-ai-key-visibility"
                             className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                         >
                             {showKey ? (
@@ -162,17 +246,38 @@ export function AiSettingsSection() {
                 />
 
                 <Select
-                    id="gemini-model-select"
+                    id="ai-model-select"
                     label="Model"
                     sizeVariant="sm"
-                    value={model}
-                    onChange={(e) => handleModelChange(e.target.value)}
-                    data-testid="gemini-model-select"
-                    options={GEMINI_MODEL_OPTIONS.map((opt) => ({
-                        value: opt.value,
-                        label: opt.label,
-                    }))}
+                    value={selectValue}
+                    onChange={(e) => handleModelSelectChange(e.target.value)}
+                    data-testid="ai-model-select"
+                    options={[
+                        ...providerMeta.curatedModels.map((opt) => ({
+                            value: opt.value,
+                            label: opt.label,
+                        })),
+                        {
+                            value: CUSTOM_MODEL_SENTINEL,
+                            label: "Custom model ID...",
+                        },
+                    ]}
                 />
+
+                {(useCustomModel || selectValue === CUSTOM_MODEL_SENTINEL) && (
+                    <Input
+                        id="ai-custom-model-input"
+                        label="Custom Model ID"
+                        value={model}
+                        onChange={(e) =>
+                            handleCustomModelChange(e.target.value)
+                        }
+                        placeholder={providerMeta.defaultModel}
+                        autoComplete="off"
+                        spellCheck={false}
+                        data-testid="ai-custom-model-input"
+                    />
+                )}
 
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
@@ -181,7 +286,7 @@ export function AiSettingsSection() {
                         size="sm"
                         onClick={handleSave}
                         disabled={!isDirty && isConfigured}
-                        data-testid="save-gemini-key-btn"
+                        data-testid="save-ai-key-btn"
                         leftIcon={<Check className="h-3.5 w-3.5 stroke-3" />}
                     >
                         Save Key
@@ -194,7 +299,7 @@ export function AiSettingsSection() {
                         onClick={handleTestConnection}
                         isLoading={isTesting}
                         disabled={!apiKeyDraft.trim() && !savedKey}
-                        data-testid="test-gemini-connection-btn"
+                        data-testid="test-ai-connection-btn"
                         leftIcon={
                             <Plug className="h-3.5 w-3.5" strokeWidth={2.5} />
                         }
@@ -208,7 +313,7 @@ export function AiSettingsSection() {
                             variant="ghost"
                             size="sm"
                             onClick={handleClear}
-                            data-testid="clear-gemini-key-btn"
+                            data-testid="clear-ai-key-btn"
                             leftIcon={
                                 <Trash2
                                     className="h-3.5 w-3.5"
@@ -226,7 +331,7 @@ export function AiSettingsSection() {
                         variant={feedback.variant}
                         onClose={() => setFeedback(null)}
                     >
-                        <span data-testid="gemini-settings-feedback">
+                        <span data-testid="ai-settings-feedback">
                             {feedback.message}
                         </span>
                     </Alert>
