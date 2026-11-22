@@ -1,5 +1,5 @@
 /**
- * Conversational AI assistant drawer ("Bubby AI") powered by Google Gemini.
+ * Conversational AI assistant drawer ("Bubby AI") with provider-agnostic streaming.
  * Supports automatic read-only budget queries with streaming responses and
  * safe user-confirmed action cards for financial mutations.
  */
@@ -27,11 +27,13 @@ import { useSafeQueryClient } from "../../hooks/useFinanceQueries";
 import { generateUuid } from "../../lib/uuid";
 import {
     AI_CONFIG_CHANGED_EVENT,
-    getGeminiConfig,
-    streamGeminiTurn,
-    type GeminiContent,
-    type GeminiPart,
-} from "../../services/ai/geminiClient";
+    AI_PROVIDER_META,
+    getActiveAiConfig,
+    streamAiTurn,
+    type AiMessage,
+    type AiProviderId,
+    type AiToolResult,
+} from "../../services/ai/providers";
 import {
     BUBBY_TOOLS,
     buildBubbySystemInstruction,
@@ -89,18 +91,23 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
     const queryClient = useSafeQueryClient();
 
     const [hasApiKey, setHasApiKey] = useState<boolean>(
-        () => getGeminiConfig().apiKey.length > 0,
+        () => getActiveAiConfig().apiKey.length > 0,
+    );
+    const [activeProvider, setActiveProvider] = useState<AiProviderId>(
+        () => getActiveAiConfig().provider,
     );
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isSending, setIsSending] = useState(false);
 
-    const historyRef = useRef<GeminiContent[]>([]);
+    const historyRef = useRef<AiMessage[]>([]);
     const abortRef = useRef<AbortController | null>(null);
     const scrollEndRef = useRef<HTMLDivElement>(null);
 
     const refreshKeyStatus = useCallback(() => {
-        setHasApiKey(getGeminiConfig().apiKey.length > 0);
+        const config = getActiveAiConfig();
+        setHasApiKey(config.apiKey.length > 0);
+        setActiveProvider(config.provider);
     }, []);
 
     useEffect(() => {
@@ -227,7 +234,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
             const text = (rawText ?? inputValue).trim();
             if (!text || isSending) return;
 
-            const { apiKey, model } = getGeminiConfig();
+            const { provider, apiKey, model } = getActiveAiConfig();
             if (!apiKey) {
                 setHasApiKey(false);
                 return;
@@ -250,9 +257,9 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                 },
             ]);
 
-            const nextContents: GeminiContent[] = [
+            const nextMessages: AiMessage[] = [
                 ...historyRef.current,
-                { role: "user", parts: [{ text }] },
+                { role: "user", text },
             ];
 
             const controller = new AbortController();
@@ -269,10 +276,11 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                 const collectedProposals: ProposedAction[] = [];
 
                 for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-                    const turnResult = await streamGeminiTurn({
+                    const turnResult = await streamAiTurn({
+                        provider,
                         apiKey,
                         model,
-                        contents: nextContents,
+                        messages: nextMessages,
                         systemInstruction,
                         tools: BUBBY_TOOLS,
                         signal: controller.signal,
@@ -292,32 +300,29 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                         },
                     });
 
-                    const modelParts: GeminiPart[] = [];
-                    if (turnResult.text) {
-                        modelParts.push({ text: turnResult.text });
-                    }
-                    for (const fc of turnResult.functionCalls) {
-                        modelParts.push({ functionCall: fc });
-                    }
-                    if (modelParts.length > 0) {
-                        nextContents.push({
-                            role: "model",
-                            parts: modelParts,
+                    if (turnResult.text || turnResult.toolCalls.length > 0) {
+                        nextMessages.push({
+                            role: "assistant",
+                            text: turnResult.text || undefined,
+                            toolCalls:
+                                turnResult.toolCalls.length > 0
+                                    ? turnResult.toolCalls
+                                    : undefined,
                         });
                     }
 
-                    if (turnResult.functionCalls.length === 0) {
+                    if (turnResult.toolCalls.length === 0) {
                         break;
                     }
 
-                    const readCalls = turnResult.functionCalls.filter((fc) =>
-                        isReadTool(fc.name),
+                    const readCalls = turnResult.toolCalls.filter((tc) =>
+                        isReadTool(tc.name),
                     );
-                    const proposalCalls = turnResult.functionCalls.filter((fc) =>
-                        isProposalTool(fc.name),
+                    const proposalCalls = turnResult.toolCalls.filter((tc) =>
+                        isProposalTool(tc.name),
                     );
 
-                    const responseParts: GeminiPart[] = [];
+                    const toolResults: AiToolResult[] = [];
 
                     for (const call of readCalls) {
                         if (!isReadTool(call.name)) continue;
@@ -339,22 +344,20 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                 call.args,
                                 toolContext,
                             );
-                            responseParts.push({
-                                functionResponse: {
-                                    name: call.name,
-                                    response: result,
-                                },
+                            toolResults.push({
+                                toolCallId: call.id,
+                                name: call.name,
+                                result,
                             });
                         } catch (err) {
-                            responseParts.push({
-                                functionResponse: {
-                                    name: call.name,
-                                    response: {
-                                        error:
-                                            err instanceof Error
-                                                ? err.message
-                                                : "Tool execution failed",
-                                    },
+                            toolResults.push({
+                                toolCallId: call.id,
+                                name: call.name,
+                                result: {
+                                    error:
+                                        err instanceof Error
+                                            ? err.message
+                                            : "Tool execution failed",
                                 },
                             });
                         }
@@ -380,21 +383,20 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                             toolContext,
                         );
                         collectedProposals.push(proposal);
-                        responseParts.push({
-                            functionResponse: {
-                                name: call.name,
-                                response: {
-                                    status: "awaiting_user_confirmation",
-                                    actionId: proposal.id,
-                                },
+                        toolResults.push({
+                            toolCallId: call.id,
+                            name: call.name,
+                            result: {
+                                status: "awaiting_user_confirmation",
+                                actionId: proposal.id,
                             },
                         });
                     }
 
-                    if (responseParts.length > 0) {
-                        nextContents.push({
-                            role: "user",
-                            parts: responseParts,
+                    if (toolResults.length > 0) {
+                        nextMessages.push({
+                            role: "tool",
+                            results: toolResults,
                         });
                     }
 
@@ -404,7 +406,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                     }
                 }
 
-                historyRef.current = nextContents;
+                historyRef.current = nextMessages;
 
                 const finalText =
                     accumulatedText.trim() ||
@@ -438,7 +440,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                 const errorMessage =
                     err instanceof Error
                         ? err.message
-                        : "Something went wrong talking to Gemini.";
+                        : "Something went wrong talking to the AI provider.";
                 setMessages((prev) =>
                     prev.map((msg) =>
                         msg.id === assistantMessageId
@@ -520,7 +522,10 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                         Bubby AI
                                     </h2>
                                     <p className="text-[11px] font-semibold text-(--text-muted) truncate">
-                                        Budget assistant
+                                        {hasApiKey
+                                            ? AI_PROVIDER_META[activeProvider]
+                                                  .label
+                                            : "Budget assistant"}
                                     </p>
                                 </div>
                             </div>
@@ -592,8 +597,8 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                         Add Key
                                     </h3>
                                     <p className="text-xs font-medium text-(--text-muted) max-w-65">
-                                        Add your Gemini API key in Settings to
-                                        chat with Bubby.
+                                        Add an AI API key in Settings to chat
+                                        with Bubby.
                                     </p>
                                     <Button
                                         type="button"

@@ -81,7 +81,7 @@ export function DashboardPage({
     // Combined view shows the household total, same as Budget
     const {
         data: budgetData,
-        isLoading: budgetLoading,
+        isPending: budgetPending,
         isPlaceholderData: budgetPlaceholder,
     } = useBudgetDetailQuery(
         currentMonth,
@@ -108,7 +108,8 @@ export function DashboardPage({
         perspective === "household" ? undefined : activeMember?.id;
     const monthlyBudget = budgetData || null;
 
-    const isLoading = budgetLoading && !budgetData;
+    const isMembersPending = !isMockMode && members.length === 0;
+    const isLoading = isMembersPending || (budgetPending && !budgetData);
 
     // Spendable budget: total left plus a meter per spendable category
     const spendableSummary = useMemo(() => {

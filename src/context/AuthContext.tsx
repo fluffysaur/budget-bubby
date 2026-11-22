@@ -17,6 +17,11 @@ import {
     isSupabaseConfigured,
     getPartnerEmails,
 } from "../services/supabaseClient";
+import { queryClient } from "../lib/queryClient";
+import {
+    clearPersistedQueryCache,
+    syncPersistedCacheUser,
+} from "../lib/queryPersistence";
 
 export type PartnerId = "yijia" | "rachel";
 
@@ -118,6 +123,7 @@ export function AuthProvider({
             .then(({ data: { session: currentSession } }) => {
                 if (!isMounted) return;
                 if (currentSession?.user) {
+                    syncPersistedCacheUser(currentSession.user.id, queryClient);
                     setSession(currentSession);
                     setUser(currentSession.user);
                     const partner = resolvePartnerFromEmail(
@@ -141,8 +147,14 @@ export function AuthProvider({
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, newSession) => {
+        } = supabase.auth.onAuthStateChange((event, newSession) => {
             if (!isMounted) return;
+            if (newSession?.user) {
+                syncPersistedCacheUser(newSession.user.id, queryClient);
+            } else if (event === "SIGNED_OUT") {
+                clearPersistedQueryCache();
+                queryClient.clear();
+            }
             setSession(newSession);
             setUser(newSession?.user ?? null);
             if (newSession?.user) {
@@ -170,6 +182,7 @@ export function AuthProvider({
 
             // Support PIN 000000 to enter Demo Mode
             if (pin === "000000") {
+                queryClient.clear();
                 setIsDemoMode(true);
                 if (typeof window !== "undefined" && window.sessionStorage) {
                     window.sessionStorage.setItem(
@@ -221,6 +234,7 @@ export function AuthProvider({
                     ) {
                         window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
                     }
+                    syncPersistedCacheUser(res1.data.user.id, queryClient);
                     await linkMemberProfile(yiJiaEmail);
                     setAuthLoading(false);
                     return true;
@@ -253,6 +267,7 @@ export function AuthProvider({
                     ) {
                         window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
                     }
+                    syncPersistedCacheUser(res2.data.user.id, queryClient);
                     await linkMemberProfile(rachelEmail);
                     setAuthLoading(false);
                     return true;
@@ -308,6 +323,8 @@ export function AuthProvider({
                 console.error("Sign out error:", err);
             }
         }
+        clearPersistedQueryCache();
+        queryClient.clear();
         setSession(null);
         setUser(null);
         setLoggedInPartner(null);

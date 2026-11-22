@@ -23,7 +23,9 @@
   "dependencies": {
     "@floating-ui/react": "^0.27.20",
     "@supabase/supabase-js": "^2.49.1",
+    "@tanstack/query-sync-storage-persister": "^5.108.2",
     "@tanstack/react-query": "^5.67.1",
+    "@tanstack/react-query-persist-client": "^5.108.2",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "motion": "^14.10.1",
