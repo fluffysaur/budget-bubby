@@ -15,7 +15,7 @@
     - [3. Dynamic Perspective Switching](#3-dynamic-perspective-switching)
     - [4. Budget Waterfall, % Sliders \& Limit Alerts](#4-budget-waterfall--sliders--limit-alerts)
     - [5. Cumulative Surplus / Deficit Rollover](#5-cumulative-surplus--deficit-rollover)
-    - [6. Big-Ticket Goals \& Sinking Fund Drawdowns](#6-big-ticket-goals--sinking-fund-drawdowns)
+    - [6. Big-Ticket Goals \& Sinking Fund Drawdowns](#6-big-ticket-goals--goal-linked-spending)
     - [7. Spend Tags \& Trip Expense Tracking](#7-spend-tags--trip-expense-tracking)
     - [8. Credit Card Statements Tracker](#8-credit-card-statements-tracker)
     - [9. Daily Check-in Streak \& Habit Tracker](#9-daily-check-in-streak--habit-tracker)
@@ -83,12 +83,12 @@
 ### 5. Cumulative Surplus / Deficit Rollover
 
 - **Month-to-Month Rollover**: `CumulativeSurplusCard` displays cumulative savings surplus rolled over across months.
-- **Spendable Isolation**: Calculated from monthly spendable cap minus spendable expenses, specifically excluding goal-funded drawdowns to avoid double penalties.
+- **Spendable Isolation**: Calculated from monthly spendable cap minus spendable expenses, specifically excluding goal-linked spending to avoid double penalties.
 
-### 6. Big-Ticket Goals & Sinking Fund Drawdowns
+### 6. Big-Ticket Goals & Goal-Linked Spending
 
 - **Milestone Couple Goals**: Track HDB Down Payment, Wedding Banquet, Home Renovation, Emergency Fund, and Honeymoon.
-- **Direct Expense Drawdown**: Connect expenses directly to goals (via Quick Add or `SpendFromGoalModal`). Spending draws down `saved_so_far` while isolating the spend from monthly budget caps to prevent double-counting.
+- **Direct Expense Drawdown**: Connect expenses directly to goals (via Quick Add or `SpendFromGoalModal`). Goal-tagged spending counts toward what the goal still needs (target minus goal-tagged spend) and is isolated from monthly budget caps to prevent double-counting. Goal progress is computed from the shared household pool in date order, not from deposits.
 - **Monthly Pacing Badges**: Real-time pacing indicators: _Ahead of Pace_, _On Track_, _Behind Pace_.
 
 ### 7. Spend Tags & Trip Expense Tracking
@@ -328,7 +328,7 @@ npm run test:e2e
     - `ExpenseLedgerBulk.test.tsx`: Sorting, pagination, edit/delete modals, fast log widget,.
     - `BudgetSurplusAlerts.test.tsx`: Category % sliders, cumulative surplus card, and 80%/100% warning alerts.
     - `CreditCardTracker.test.tsx`: Credit card statements, due dates & bill management.
-    - `SpendTagsAndGoals.test.tsx`: Spend tags overview, sinking fund goal drawdowns & budget isolation.
+    - `SpendTagsAndGoals.test.tsx`: Spend tags overview, goal-linked spending & budget isolation.
     - `StreakAndNotifications.test.tsx`: Daily check-in streak bar, notification scheduler reminders & notification popover.
     - `OfflineSyncAndPerf.test.tsx`: Offline outbox queue, reconnect sync, and lazy route Suspense loading.
 - **Component & Domain Tests**:
