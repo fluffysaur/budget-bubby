@@ -21,6 +21,8 @@ import {
     Eye,
     EyeOff,
     Sparkles,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from "lucide-react";
 import {
     useHousehold,
@@ -44,6 +46,9 @@ export interface AppHeaderProps {
     onOpenQuickAdd?: () => void;
     onNavigateTab?: (tab: string) => void;
     onOpenBubbyChat?: () => void;
+    /** Desktop sidebar state; the toggle renders only when a handler is given. */
+    sidebarCollapsed?: boolean;
+    onToggleSidebar?: () => void;
 }
 
 const MEMBER_COLOR_PALETTE = [
@@ -80,6 +85,8 @@ export function AppHeader({
     onOpenQuickAdd,
     onNavigateTab,
     onOpenBubbyChat,
+    sidebarCollapsed = false,
+    onToggleSidebar,
 }: AppHeaderProps) {
     const {
         perspective,
@@ -210,7 +217,41 @@ export function AppHeader({
         >
             <div className="flex h-full w-full items-center justify-between px-4 sm:px-6">
                 {/* Left: Perspective Switcher (dropdown at every viewport) */}
-                <div className="flex items-center">
+                <div className="flex items-center gap-3">
+                    {/* Desktop sidebar collapse / expand toggle */}
+                    {onToggleSidebar && (
+                        <button
+                            type="button"
+                            onClick={onToggleSidebar}
+                            aria-label={
+                                sidebarCollapsed
+                                    ? "Expand sidebar"
+                                    : "Collapse sidebar"
+                            }
+                            aria-expanded={!sidebarCollapsed}
+                            aria-controls="desktop-sidebar"
+                            title={
+                                sidebarCollapsed
+                                    ? "Expand sidebar"
+                                    : "Collapse sidebar"
+                            }
+                            data-testid="sidebar-toggle"
+                            className="hidden md:flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-cream) cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press"
+                        >
+                            {sidebarCollapsed ? (
+                                <PanelLeftOpen
+                                    className="h-4.5 w-4.5"
+                                    strokeWidth={2.5}
+                                />
+                            ) : (
+                                <PanelLeftClose
+                                    className="h-4.5 w-4.5"
+                                    strokeWidth={2.5}
+                                />
+                            )}
+                        </button>
+                    )}
+
                     {/* Perspective Dropdown */}
                     <div className="relative" ref={dropdownRef}>
                         <button

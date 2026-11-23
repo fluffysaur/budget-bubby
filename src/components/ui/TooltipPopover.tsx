@@ -30,6 +30,10 @@ export interface TooltipPopoverProps {
     className?: string;
     triggerOnHover?: boolean;
     triggerOnClick?: boolean;
+    /** Override the default bottom placement (e.g. "right" for a side rail). */
+    placement?: Placement;
+    /** Label-only bubble: no header or close button, sized to content. */
+    compact?: boolean;
     renderTrigger?: (
         props: Record<string, unknown>,
         isOpen: boolean,
@@ -48,16 +52,19 @@ export function TooltipPopover({
     triggerOnHover = true,
     triggerOnClick = true,
     renderTrigger,
+    placement: placementOverride,
+    compact = false,
 }: TooltipPopoverProps) {
     const effectiveAriaLabel = ariaLabel || label || "More information";
     const [isOpen, setIsOpen] = useState(false);
 
-    const placement: Placement =
+    const defaultPlacement: Placement =
         align === "left"
             ? "bottom-start"
             : align === "center"
               ? "bottom"
               : "bottom-end";
+    const placement = placementOverride ?? defaultPlacement;
 
     const {
         refs: { setReference, setFloating },
@@ -144,24 +151,36 @@ export function TooltipPopover({
                             }}
                             {...getFloatingProps()}
                             {...pop}
-                            className="z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute select-text"
+                            className={
+                                compact
+                                    ? "z-9999 w-max max-w-60 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm"
+                                    : "z-9999 w-72 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute select-text"
+                            }
                         >
-                            <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-(--border-subtle)">
-                                {title && (
-                                    <h4 className="text-xs font-black uppercase tracking-wider text-(--text-ink) font-display">
-                                        {title}
-                                    </h4>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOpen(false)}
-                                    aria-label="Close tooltip"
-                                    className="p-0.5 rounded text-(--text-muted) hover:text-(--text-ink) cursor-pointer ml-auto"
-                                >
-                                    <X className="h-3.5 w-3.5" />
-                                </button>
-                            </div>
-                            <div className="text-xs font-medium text-(--text-muted) leading-relaxed">
+                            {!compact && (
+                                <div className="flex items-start justify-between gap-2 mb-2 pb-1.5 border-b border-(--border-subtle)">
+                                    {title && (
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-(--text-ink) font-display">
+                                            {title}
+                                        </h4>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsOpen(false)}
+                                        aria-label="Close tooltip"
+                                        className="p-0.5 rounded text-(--text-muted) hover:text-(--text-ink) cursor-pointer ml-auto"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            )}
+                            <div
+                                className={
+                                    compact
+                                        ? undefined
+                                        : "text-xs font-medium text-(--text-muted) leading-relaxed"
+                                }
+                            >
                                 {typeof children === "function"
                                     ? children(() => setIsOpen(false))
                                     : children}
