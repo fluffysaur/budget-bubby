@@ -405,6 +405,7 @@ describe("AccountsPage card debt integration", () => {
             name: /Mark DBS Altitude Visa statement as Paid/i,
         });
         fireEvent.click(markPaidBtn);
+        fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
 
         await waitFor(() => {
             expect(

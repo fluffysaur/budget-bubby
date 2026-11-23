@@ -1551,6 +1551,8 @@ class MockFinanceServiceImpl implements FinanceService {
             statement.due_date = input.due_date;
             if (input.is_paid !== undefined) statement.is_paid = input.is_paid;
             if (input.paid_at !== undefined) statement.paid_at = input.paid_at;
+            if (input.amount_paid !== undefined)
+                statement.amount_paid = input.amount_paid;
             if (input.notes !== undefined) statement.notes = input.notes;
         } else {
             statement = {
@@ -1564,6 +1566,7 @@ class MockFinanceServiceImpl implements FinanceService {
                 due_date: input.due_date,
                 is_paid: input.is_paid || false,
                 paid_at: input.paid_at || null,
+                amount_paid: input.amount_paid ?? null,
                 notes: input.notes || null,
             };
             this.state.creditCardStatements.push(statement);

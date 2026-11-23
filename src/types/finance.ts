@@ -329,6 +329,8 @@ export interface CreditCardStatement {
     due_date: string; // 'YYYY-MM-DD'
     is_paid: boolean;
     paid_at?: string | null;
+    /** Partial payment amount; null/undefined means the full balance was paid. */
+    amount_paid?: number | null;
     notes?: string | null;
     card?: CreditCard;
 }
@@ -342,6 +344,7 @@ export interface UpsertCreditCardStatementInput {
     due_date: string;
     is_paid?: boolean;
     paid_at?: string | null;
+    amount_paid?: number | null;
     notes?: string | null;
 }
 

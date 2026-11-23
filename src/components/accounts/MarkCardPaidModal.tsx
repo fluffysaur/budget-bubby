@@ -94,6 +94,7 @@ function MarkCardPaidForm({
                 notes: cycle.statement?.notes ?? defaultNotes,
                 is_paid: true,
                 paid_at: new Date().toISOString(),
+                amount_paid: null,
             });
             feedback.milestone("bill-paid", {
                 dedupeKey: `bill-paid:${cycle.card.id}:${cycle.month}`,

@@ -1270,6 +1270,7 @@ export const mockCreditCardStatements: CreditCardStatement[] = [
         due_date: "2026-11-10",
         is_paid: true,
         paid_at: "2026-10-25T10:00:00.000Z",
+        amount_paid: 400,
         notes: "Shopee & groceries cash rebate",
     },
     {

@@ -116,6 +116,7 @@ function BulkSettleOverdueForm({
                         notes: cycle.statement?.notes ?? defaultNotes,
                         is_paid: true,
                         paid_at: now,
+                        amount_paid: null,
                     });
                 }),
             );

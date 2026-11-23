@@ -2332,6 +2332,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                     due_date: input.due_date,
                     is_paid: input.is_paid || false,
                     paid_at: input.paid_at || null,
+                    ...(input.amount_paid !== undefined
+                        ? { amount_paid: input.amount_paid }
+                        : {}),
                     notes: input.notes || null,
                 },
                 { onConflict: "card_id,month" },
