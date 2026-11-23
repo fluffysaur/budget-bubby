@@ -116,7 +116,6 @@ describe("aiTools", () => {
                 household_id: "hh-1",
                 title: "Emergency Fund",
                 target_amount: 30000,
-                saved_so_far: 18000,
                 target_date: "2027-12-01",
                 emoji: "🛡️",
                 status: "on_track",

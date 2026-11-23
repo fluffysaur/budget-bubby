@@ -163,15 +163,6 @@ function sumEvents(events: readonly BonusEvent[]): BonusTotals {
     );
 }
 
-/** Total amount a bonus sent to goals. */
-export function bonusGoalTotal(
-    event: Pick<BonusEvent, "goal_contributions">,
-): number {
-    return round2(
-        (event.goal_contributions || []).reduce((s, c) => s + c.amount, 0),
-    );
-}
-
 /**
  * Bonus income for one member (or the household) in a month.
  * - Events exist → their sums (legacy column ignored to avoid double counting)

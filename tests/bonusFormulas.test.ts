@@ -22,7 +22,6 @@ const event = (overrides: Partial<BonusEvent>): BonusEvent => ({
     cpf: 200,
     net: 800,
     split: [],
-    goal_contributions: [],
     ...overrides,
 });
 

@@ -21,6 +21,7 @@ function chain(result: Result) {
         "limit",
         "order",
         "update",
+        "insert",
         "upsert",
         "delete",
     ]) {
@@ -38,7 +39,6 @@ function chain(result: Result) {
 const OWNER = "00000000-0000-0000-0000-000000000011";
 const BUDGET_ID = "00000000-0000-0000-0000-000000000701";
 const FOOD = "00000000-0000-0000-0000-000000000101";
-const GOAL = "00000000-0000-0000-0000-000000000501";
 
 function budgetRow(overrides: Record<string, unknown> = {}) {
     return {
@@ -153,7 +153,7 @@ describe("supabaseFinanceService bonus log", () => {
         ).rejects.toMatchObject({ code: "500" });
     });
 
-    it("maps rows with nested goal contributions", async () => {
+    it("maps bonus rows", async () => {
         installClient({
             bonus_events: {
                 data: [
@@ -167,9 +167,6 @@ describe("supabaseFinanceService bonus log", () => {
                         cpf: "1200.00",
                         net: "4800.00",
                         split: [{ key: "goals", pct: 1, amount: 4800 }],
-                        bonus_goal_contributions: [
-                            { goal_id: GOAL, amount: "1920.00" },
-                        ],
                     },
                 ],
                 error: null,
@@ -181,7 +178,6 @@ describe("supabaseFinanceService bonus log", () => {
             gross: 6000,
             cpf: 1200,
             net: 4800,
-            goal_contributions: [{ goal_id: GOAL, amount: 1920 }],
         });
     });
 
@@ -275,32 +271,23 @@ describe("supabaseFinanceService bonus log", () => {
         });
     });
 
-    it("saves through the RPC without refreshing goal status", async () => {
+    it("inserts into bonus_events directly without touching goals", async () => {
         const client = installClient({
             households: { data: { id: "hh-uuid" }, error: null },
-            savings_goals: {
+            bonus_events: {
                 data: {
-                    id: GOAL,
-                    target_amount: 10000,
-                    saved_so_far: 0,
-                    target_date: "2027-12-31",
+                    id: "b-new",
+                    household_id: "hh-uuid",
+                    recipient_id: OWNER,
+                    type: "performance",
+                    received_on: "2026-11-05",
+                    gross: 10000,
+                    cpf: 2000,
+                    net: 8000,
+                    split: [],
                 },
                 error: null,
             },
-        });
-        client.rpc.mockResolvedValue({
-            data: {
-                id: "b-new",
-                household_id: "hh-uuid",
-                recipient_id: OWNER,
-                type: "performance",
-                received_on: "2026-11-05",
-                gross: 10000,
-                cpf: 2000,
-                net: 8000,
-                split: [],
-            },
-            error: null,
         });
         const updateGoal = vi.spyOn(supabaseFinanceService, "updateGoal");
 
@@ -312,36 +299,30 @@ describe("supabaseFinanceService bonus log", () => {
             cpf: 2000,
             note: "FY26",
             split: cloneDefaultSplit(),
-            goal_contributions: [
-                { goal_id: GOAL, amount: 3200 },
-                { goal_id: "zero", amount: 0 },
-            ],
         };
         const saved = await supabaseFinanceService.saveBonusEvent(input);
 
-        expect(client.rpc).toHaveBeenCalledWith("save_bonus_event", {
-            p_event: expect.objectContaining({
+        const bonusCall = client.from.mock.results.find(
+            (_, i) => client.from.mock.calls[i][0] === "bonus_events",
+        )?.value as { insert: ReturnType<typeof vi.fn> };
+        expect(bonusCall.insert).toHaveBeenCalledWith(
+            expect.objectContaining({
                 household_id: "hh-uuid",
                 recipient_id: OWNER,
                 gross: 10000,
                 cpf: 2000,
                 note: "FY26",
             }),
-            p_contributions: [{ goal_id: GOAL, amount: 3200 }],
-        });
+        );
+        expect(client.rpc).not.toHaveBeenCalled();
         expect(updateGoal).not.toHaveBeenCalled();
-        expect(saved.goal_contributions).toEqual([
-            { goal_id: GOAL, amount: 3200 },
-        ]);
+        expect(saved.id).toBe("b-new");
     });
 
-    it("throws BonusLogUnavailableError when the RPC is missing", async () => {
-        const client = installClient({
+    it("throws BonusLogUnavailableError when the table is missing", async () => {
+        installClient({
             households: { data: { id: "hh-uuid" }, error: null },
-        });
-        client.rpc.mockResolvedValue({
-            data: null,
-            error: { code: "PGRST202" },
+            bonus_events: { data: null, error: { code: "42P01" } },
         });
         await expect(
             supabaseFinanceService.saveBonusEvent({
@@ -351,7 +332,6 @@ describe("supabaseFinanceService bonus log", () => {
                 gross: 100,
                 cpf: 20,
                 split: cloneDefaultSplit(),
-                goal_contributions: [],
             }),
         ).rejects.toBeInstanceOf(BonusLogUnavailableError);
     });
@@ -379,7 +359,6 @@ describe("mockFinanceService bonus log", () => {
         gross: 10000,
         cpf: 2000,
         split: cloneDefaultSplit(),
-        goal_contributions: [],
     });
 
     it("creates, edits and deletes a bonus without touching goals", async () => {
@@ -388,7 +367,6 @@ describe("mockFinanceService bonus log", () => {
 
         const created = await mockFinanceService.saveBonusEvent(input);
         expect(created.net).toBe(8000);
-        expect(created.goal_contributions).toEqual([]);
 
         const edited = await mockFinanceService.saveBonusEvent({
             ...input,

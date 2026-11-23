@@ -373,16 +373,13 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
             expect(newGoal.id).toBeDefined();
             expect(newGoal.title).toBe("Kyoto Holiday Fund");
-            expect(newGoal.saved_so_far).toBe(0);
             expect(newGoal.status).toBe("on_track");
 
-            // saved_so_far edits are ignored and status is only changed when given
+            // status is only changed when given
             const renamed = await mockFinanceService.updateGoal(newGoal.id, {
                 title: "Kyoto Trip",
-                saved_so_far: 6000.0,
             } as never);
             expect(renamed.title).toBe("Kyoto Trip");
-            expect(renamed.saved_so_far).toBe(0);
             expect(renamed.status).toBe("on_track");
 
             const done = await mockFinanceService.updateGoal(newGoal.id, {
@@ -404,7 +401,6 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             const today = getTodayDateString();
             const goals = await financeService.getGoals();
             const targetGoal = goals[0];
-            const initialSaved = targetGoal.saved_so_far;
 
             const created = await financeService.addExpense({
                 payer_id: "mem-00000000-0011",
@@ -424,12 +420,12 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             expect(created.goal_id).toBe(targetGoal.id);
             expect(created.original_currency).toBe("VND");
 
-            // Verify goal saved_so_far represents total saved and does not deduct milestone progress
+            // Spending from a goal leaves the goal itself untouched
             const updatedGoals = await financeService.getGoals();
             const updatedTargetGoal = updatedGoals.find(
                 (g) => g.id === targetGoal.id,
             );
-            expect(updatedTargetGoal?.saved_so_far).toBe(initialSaved);
+            expect(updatedTargetGoal).toEqual(targetGoal);
         });
 
         it("filters expenses by tag and goalId", async () => {

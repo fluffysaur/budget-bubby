@@ -157,7 +157,6 @@ const mockBonus: BonusEvent = {
         { key: "savings", amount: 2000, pct: 0.5 },
         { key: "investments", amount: 2000, pct: 0.5 },
     ],
-    goal_contributions: [],
     created_at: "2026-11-20T00:00:00Z",
 };
 
@@ -409,7 +408,6 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                     emoji: "🏖️",
                     title: "Vacation",
                     target_amount: 3000,
-                    saved_so_far: 0,
                     target_date: "2027-12-01",
                     status: "on_track",
                     created_at: "2026-01-01T00:00:00Z",

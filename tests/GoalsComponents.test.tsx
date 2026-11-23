@@ -45,7 +45,6 @@ const sampleAchievedGoal: SavingsGoal = {
     owner_id: null,
     title: "Wedding Fund",
     target_amount: 55000.0,
-    saved_so_far: 55000.0,
     target_date: "2027-05-01",
     emoji: "💍",
     status: "achieved",
@@ -58,7 +57,6 @@ const sampleOnTrackGoal: SavingsGoal = {
     owner_id: null,
     title: "HDB Down Payment",
     target_amount: 190000.0,
-    saved_so_far: 100000.0,
     target_date: "2027-07-01",
     emoji: "🏠",
     status: "on_track",
@@ -71,7 +69,6 @@ const sampleBehindGoal: SavingsGoal = {
     owner_id: null,
     title: "Renovation Fund",
     target_amount: 90000.0,
-    saved_so_far: 10000.0,
     target_date: "2027-09-01",
     emoji: "🔨",
     status: "on_track",
@@ -495,9 +492,6 @@ describe("AddEditGoalModal Component", () => {
                     goal_type: "standard",
                 }),
             );
-            expect(addGoalSpy.mock.calls[0][0]).not.toHaveProperty(
-                "saved_so_far",
-            );
             expect(onGoalSavedMock).toHaveBeenCalledTimes(1);
             expect(onCloseMock).toHaveBeenCalledTimes(1);
         });
@@ -690,7 +684,6 @@ describe("GoalsPage Integration", () => {
                 owner_id: null,
                 title: "Japan Trip",
                 target_amount: 8000,
-                saved_so_far: 0,
                 target_date: "2027-11-01",
                 emoji: "✈️",
                 status: "on_track",

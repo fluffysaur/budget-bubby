@@ -686,7 +686,6 @@ export function useAddGoalMutation() {
                     household_id: input.household_id || "",
                     title: input.title,
                     target_amount: input.target_amount,
-                    saved_so_far: 0,
                     target_date: input.target_date,
                     emoji: input.emoji || "🎯",
                     status: "on_track",

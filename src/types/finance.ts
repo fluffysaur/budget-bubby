@@ -402,8 +402,6 @@ export interface SavingsGoal {
     owner_id?: string | null;
     title: string;
     target_amount: number;
-    /** @deprecated Legacy deposit total; progress is computed by the Roadmap. */
-    saved_so_far: number;
     target_date: string; // 'YYYY-MM-DD'
     emoji: string;
     /** Only "achieved" (Done) is meaningful; other values read as active. */
@@ -599,11 +597,6 @@ export interface BonusSplitShare {
     amount?: number;
 }
 
-export interface BonusGoalContribution {
-    goal_id: string;
-    amount: number;
-}
-
 export interface BonusEvent {
     id: string;
     household_id: string;
@@ -615,7 +608,6 @@ export interface BonusEvent {
     net: number; // generated in DB; computed in mock
     note?: string | null;
     split: BonusSplitShare[];
-    goal_contributions: BonusGoalContribution[];
     created_by?: string | null;
     created_at?: string;
     updated_at?: string;
@@ -630,7 +622,6 @@ export interface SaveBonusEventInput {
     cpf: number;
     note?: string | null;
     split: BonusSplitShare[];
-    goal_contributions: BonusGoalContribution[];
 }
 
 export interface BonusEventsResult {

@@ -84,7 +84,6 @@ describe("Issue #38: Domain Save Mutations", () => {
                 household_id: "hh-1",
                 title: "Japan Trip",
                 target_amount: 5000,
-                saved_so_far: 1200,
                 target_date: "2026-12-31",
                 emoji: "✈️",
                 status: "on_track",
@@ -92,7 +91,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             },
         ];
 
-        it("optimistically updates goal saved_so_far and rolls back on error", async () => {
+        it("optimistically updates a goal and rolls back on error", async () => {
             queryClient.setQueryData(queryKeys.goals, initialGoals);
 
             let rejectPromise!: (err: Error) => void;
@@ -112,7 +111,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             await act(async () => {
                 result.current.mutate({
                     id: "goal-1",
-                    updates: { saved_so_far: 1500 },
+                    updates: { title: "Korea Trip" },
                 });
             });
 
@@ -120,7 +119,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             const cachedBeforeServer = queryClient.getQueryData<SavingsGoal[]>(
                 queryKeys.goals,
             );
-            expect(cachedBeforeServer?.[0].saved_so_far).toBe(1500);
+            expect(cachedBeforeServer?.[0].title).toBe("Korea Trip");
 
             // Server fails
             await act(async () => {
@@ -131,9 +130,9 @@ describe("Issue #38: Domain Save Mutations", () => {
             const cachedAfterError = queryClient.getQueryData<SavingsGoal[]>(
                 queryKeys.goals,
             );
-            expect(cachedAfterError?.[0].saved_so_far).toBe(1200);
+            expect(cachedAfterError?.[0].title).toBe("Japan Trip");
             expect(updateSpy).toHaveBeenCalledWith("goal-1", {
-                saved_so_far: 1500,
+                title: "Korea Trip",
             });
         });
 

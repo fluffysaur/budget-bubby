@@ -24,7 +24,6 @@ const mockGoals: SavingsGoal[] = [
         owner_id: null,
         title: "Wedding Fund",
         target_amount: 50000,
-        saved_so_far: 50000,
         target_date: "2027-05-01",
         emoji: "💍",
         status: "achieved",
@@ -36,7 +35,6 @@ const mockGoals: SavingsGoal[] = [
         owner_id: "mem-00000000-0012", // Rachel's goal
         title: "Renovation Fund",
         target_amount: 80000,
-        saved_so_far: 15000,
         target_date: "2027-10-01",
         emoji: "🔨",
         status: "behind",

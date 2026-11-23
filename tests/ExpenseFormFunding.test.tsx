@@ -37,7 +37,6 @@ function makeGoal(
         household_id: "hh-1",
         title,
         target_amount: 1000,
-        saved_so_far: 500,
         target_date: "2027-12-01",
         emoji: "🎯",
         status: "on_track",
@@ -52,7 +51,6 @@ const goals = [
     makeGoal("g4", "Baby Fund"),
     makeGoal("g5", "Fully Funded Reno", {
         status: "achieved",
-        saved_so_far: 1000,
     }),
 ];
 
