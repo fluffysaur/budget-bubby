@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1](https://github.com/fluffysaur/budget-bubby/compare/v0.5.0...v0.5.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **ai:** label goal-funded expenses by goal in Bubby AI ([#243](https://github.com/fluffysaur/budget-bubby/issues/243)) ([f043246](https://github.com/fluffysaur/budget-bubby/commit/f043246bf1d0ae2419dd020fb0bcaf2c383dcc23))
+* **roadmap:** keep the reality check counting when accounts are added ([#245](https://github.com/fluffysaur/budget-bubby/issues/245)) ([df658ec](https://github.com/fluffysaur/budget-bubby/commit/df658ecc262fbb70cde681e303e7c4512a90bd04))
+* **ui:** stop segmented tabs scrolling vertically ([#244](https://github.com/fluffysaur/budget-bubby/issues/244)) ([630f399](https://github.com/fluffysaur/budget-bubby/commit/630f3992720ac2c450f44be19a652c54c5091c0f))
+
 ## [0.5.0](https://github.com/fluffysaur/budget-bubby/compare/v0.4.1...v0.5.0) (2026-11-23)
 
 
