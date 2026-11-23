@@ -16,6 +16,7 @@ import { GoalsPage } from "./GoalsPage";
 import { RecurringPage } from "./RecurringPage";
 import { BonusLogPanel } from "../components/bonus/BonusLogPanel";
 import { LoansPlaceholder } from "../components/loans/LoansPlaceholder";
+import { feedback } from "../lib/delight/feedback";
 
 export type PlanSubTab = "goals" | "loans" | "recurring" | "bonus";
 
@@ -72,7 +73,12 @@ export function PlanPage({
                     };
                 })}
                 activeTab={activeTab}
-                onChange={(id) => setActiveTab(id as PlanSubTab)}
+                onChange={(id) => {
+                    if (id !== activeTab) {
+                        feedback.routine("tab");
+                    }
+                    setActiveTab(id as PlanSubTab);
+                }}
             />
 
             {/* Embedded Sub-Tab Content with fadeRise animation */}

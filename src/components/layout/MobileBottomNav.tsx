@@ -42,6 +42,13 @@ export function MobileBottomNav({
         activeTab,
     );
 
+    const handleSelectTab = (tab: string, isCurrentlyActive: boolean) => {
+        if (!isCurrentlyActive) {
+            feedback.routine("tab");
+        }
+        onSelectTab?.(tab);
+    };
+
     return (
         <nav
             aria-label="Mobile Navigation"
@@ -51,7 +58,9 @@ export function MobileBottomNav({
                 {/* Tab 1: Home / Dashboard */}
                 <button
                     type="button"
-                    onClick={() => onSelectTab?.("dashboard")}
+                    onClick={() =>
+                        handleSelectTab("dashboard", activeTab === "dashboard")
+                    }
                     aria-label="Dashboard"
                     className={`flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         activeTab === "dashboard"
@@ -79,7 +88,7 @@ export function MobileBottomNav({
                 {/* Tab 2: Spend & Budget */}
                 <button
                     type="button"
-                    onClick={() => onSelectTab?.("spend")}
+                    onClick={() => handleSelectTab("spend", isSpendActive)}
                     aria-label={
                         spendBadgeCount > 0
                             ? `Spend, ${spendBadgeCount} to sort`
@@ -135,7 +144,9 @@ export function MobileBottomNav({
                 {/* Tab 3: Balances & Net Worth */}
                 <button
                     type="button"
-                    onClick={() => onSelectTab?.("accounts")}
+                    onClick={() =>
+                        handleSelectTab("accounts", activeTab === "accounts")
+                    }
                     aria-label="Accounts"
                     className={`flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         activeTab === "accounts"
@@ -160,7 +171,7 @@ export function MobileBottomNav({
                 {/* Tab 4: Plan (Goals, Recurring, Loans) */}
                 <button
                     type="button"
-                    onClick={() => onSelectTab?.("plan")}
+                    onClick={() => handleSelectTab("plan", isPlanActive)}
                     aria-label="Plan"
                     className={`flex flex-col items-center justify-end h-full pb-1.5 transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                         isPlanActive

@@ -43,6 +43,7 @@ import { Button } from "../ui/Button";
 import { APP_VERSION, GIT_SHA, formatAppVersion } from "../../lib/appVersion";
 import { financeService } from "../../services/financeService";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
+import { feedback } from "../../lib/delight/feedback";
 import { useNotificationPermission } from "../../hooks/useNotificationPermission";
 import {
     getDevicePushStatus,
@@ -167,6 +168,7 @@ export function NotificationSettingsModal({
                 activeMemberId,
                 updates,
             );
+            feedback.routine("save");
         } catch (err) {
             console.error(
                 "Failed to save notification preference update:",

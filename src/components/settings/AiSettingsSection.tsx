@@ -31,6 +31,7 @@ import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+import { feedback as delightFeedback } from "../../lib/delight/feedback";
 
 const CUSTOM_MODEL_SENTINEL = "__custom__";
 
@@ -98,6 +99,7 @@ export function AiSettingsSection() {
         setApiKeyDraft(trimmedKey);
         setModel(effectiveModel);
         notifyAiConfigChanged();
+        delightFeedback.routine("save");
         setFeedback({
             variant: trimmedKey ? "success" : "info",
             message: trimmedKey
@@ -111,6 +113,7 @@ export function AiSettingsSection() {
         setSavedKey("");
         setApiKeyDraft("");
         notifyAiConfigChanged();
+        delightFeedback.routine("delete");
         setFeedback({
             variant: "info",
             message: `${providerMeta.label} API key cleared from this device.`,

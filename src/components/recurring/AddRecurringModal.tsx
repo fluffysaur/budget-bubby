@@ -34,6 +34,7 @@ import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import { feedback } from "../../lib/delight/feedback";
 import { filterCategoriesForMember } from "../../lib/financialFormulas";
 import {
     findDefaultRecurringCategoryId,
@@ -270,6 +271,7 @@ export function AddRecurringModal({
             }
 
             await onSave(payload);
+            feedback.routine("save");
             onClose();
         } catch (err: unknown) {
             setErrorMessage(

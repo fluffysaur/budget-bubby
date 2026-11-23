@@ -29,6 +29,7 @@ import {
     BonusCelebration,
     type BonusCelebrationData,
 } from "./BonusCelebration";
+import { feedback } from "../../lib/delight/feedback";
 import { useHousehold } from "../../context/HouseholdContext";
 import {
     useBaseProfilesQuery,
@@ -111,6 +112,7 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     const handleConfirmDelete = async () => {
         if (!deletingEvent) return;
         await financeService.deleteBonusEvent(deletingEvent.id);
+        feedback.routine("delete");
         setDeletingEvent(null);
     };
 

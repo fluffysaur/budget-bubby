@@ -34,6 +34,7 @@ import { TruncatedText } from "../ui/TruncatedText";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
 import { recordExercise } from "../../lib/bubby/activity";
+import { feedback } from "../../lib/delight/feedback";
 
 export interface UpdateBalanceModalProps {
     isOpen: boolean;
@@ -153,6 +154,7 @@ export function UpdateBalanceModal({
                 snapshotDate: date || getTodayDateString(),
             });
 
+            feedback.routine("save");
             onBalanceUpdated?.(updatedAccount);
             onClose();
         } catch (err: unknown) {
@@ -205,6 +207,7 @@ export function UpdateBalanceModal({
                     snapshotDate,
                 });
             recordExercise("balances");
+            feedback.routine("save");
 
             onBalancesUpdated?.(updatedAccounts);
             if (updatedAccounts.length > 0) {

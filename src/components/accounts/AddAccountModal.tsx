@@ -29,6 +29,7 @@ import {
 } from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
+import { feedback } from "../../lib/delight/feedback";
 
 export interface AddAccountModalProps {
     isOpen: boolean;
@@ -140,6 +141,7 @@ export function AddAccountModal({
                 currency: "SGD",
             });
 
+            feedback.routine("save");
             onAccountCreated?.(created);
             onClose();
         } catch (err: unknown) {

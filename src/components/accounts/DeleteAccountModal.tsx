@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { Account } from "../../types/finance";
 import { useDeleteAccountMutation } from "../../hooks/useFinanceQueries";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { feedback } from "../../lib/delight/feedback";
 
 export interface DeleteAccountModalProps {
     isOpen: boolean;
@@ -32,6 +33,7 @@ export function DeleteAccountModal({
             setIsDeleting(true);
             setError(null);
             await deleteAccountMutation.mutateAsync(account.id);
+            feedback.routine("delete");
             onAccountDeleted?.(account.id);
             onClose();
         } catch (err: unknown) {

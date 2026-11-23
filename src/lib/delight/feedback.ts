@@ -35,7 +35,9 @@ export type RoutineKind =
     | "pet"
     | "goal-deposit"
     | "acknowledge"
-    | "fab";
+    | "fab"
+    | "tab"
+    | "save";
 
 type HapticName =
     | "tick"
@@ -67,6 +69,8 @@ const ROUTINE_CUES: Record<RoutineKind, Cue> = {
     },
     acknowledge: { sound: "softPop", react: "cheer" },
     fab: { haptic: "tick" },
+    tab: { haptic: "lightTap" },
+    save: { haptic: "lightTap" },
 };
 
 interface MilestoneCue extends Cue {

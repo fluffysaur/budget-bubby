@@ -140,7 +140,7 @@ export function getRelativeDueLabel(
 }
 
 export function CreditCardTrackerSection({
-    members,
+    members = [],
     perspective = "household",
     activeMemberId,
     className = "",
@@ -326,6 +326,7 @@ export function CreditCardTrackerSection({
                 is_paid: existingStatement ? existingStatement.is_paid : false,
                 paid_at: existingStatement ? existingStatement.paid_at : null,
             });
+            feedback.routine("save");
             invalidateCreditCards();
             setIsLogStatementOpen(false);
         } catch (err: unknown) {
@@ -340,6 +341,7 @@ export function CreditCardTrackerSection({
     const handleDeleteCard = async (cardId: string) => {
         try {
             await financeService.deleteCreditCard(cardId);
+            feedback.routine("delete");
             setCardToDelete(null);
             invalidateCreditCards();
         } catch (err) {

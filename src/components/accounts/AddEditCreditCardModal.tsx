@@ -30,6 +30,7 @@ import { Select } from "../ui/Select";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
+import { feedback } from "../../lib/delight/feedback";
 import type {
     CreditCard as CreditCardType,
     HouseholdMember,
@@ -74,7 +75,7 @@ export function AddEditCreditCardModal({
     isOpen,
     onClose,
     card,
-    members,
+    members = [],
     defaultOwnerId,
     onCardSaved,
     onDelete,
@@ -90,7 +91,7 @@ export function AddEditCreditCardModal({
     const [creditLimit, setCreditLimit] = useState<string>("");
     const [color, setColor] = useState<string>(PRESET_COLORS[0].hex);
     const [ownerId, setOwnerId] = useState<string>(
-        defaultOwnerId || members[0]?.id || "",
+        defaultOwnerId || members?.[0]?.id || "",
     );
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -210,6 +211,7 @@ export function AddEditCreditCardModal({
                 await financeService.addCreditCard(input);
             }
 
+            feedback.routine("save");
             onCardSaved?.();
             onClose();
         } catch (err: unknown) {
