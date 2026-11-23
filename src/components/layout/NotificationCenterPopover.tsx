@@ -560,7 +560,7 @@ export function NotificationCenterPopover({
                 aria-label={`Notifications (${unreadCount} unread)`}
                 aria-expanded={isOpen}
                 onClick={handleToggleOpen}
-                className="relative flex h-9 w-9 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
+                className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1 sm:after:-inset-0.5 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
             >
                 <Bell className="h-4 w-4" strokeWidth={2.5} />
 
