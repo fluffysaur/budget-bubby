@@ -23,7 +23,7 @@ import { CalendarClock, ChartLine, Lock } from "lucide-react";
 import { formatSGD, formatSGDCompact } from "../../lib/currency";
 import { formatShortMonth } from "../../lib/dateUtils";
 import {
-    REALITY_MIN_MONTHS,
+    REALITY_MIN_INTERVALS,
     type CashFlowChange,
     type ProjectionMilestone,
 } from "../../lib/roadmap";
@@ -200,9 +200,20 @@ export function ProjectionCard({
                         Update balances monthly to unlock
                     </p>
                     <p className="font-mono-num text-xs text-(--text-muted)">
-                        {Math.min(reality.updateMonths, REALITY_MIN_MONTHS)} of{" "}
-                        {REALITY_MIN_MONTHS} months
+                        {Math.min(
+                            reality.cleanIntervals,
+                            REALITY_MIN_INTERVALS,
+                        )}{" "}
+                        of {REALITY_MIN_INTERVALS} months
                     </p>
+                    {reality.resetByNewAccounts && (
+                        <p
+                            data-testid="projection-locked-reset"
+                            className="text-xs text-(--text-muted)"
+                        >
+                            New accounts reset the count
+                        </p>
+                    )}
                 </div>
             ) : (
                 <figure>

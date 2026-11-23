@@ -389,11 +389,12 @@ export function RoadmapCard({
                                     </dt>
                                     <dd>
                                         Your actual growth over{" "}
-                                        {reality.monthsUsed.length} months,
-                                        leaving out months with goal spending
+                                        {reality.monthsCovered} months, adding
+                                        back goal spending
                                         {roadmap.includeBonuses
                                             ? "."
-                                            : " or a bonus."}
+                                            : " and leaving out bonuses."}{" "}
+                                        Months with new accounts don't count.
                                     </dd>
                                 </div>
                             )}

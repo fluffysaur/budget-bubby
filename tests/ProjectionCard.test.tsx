@@ -67,19 +67,51 @@ function state(history: HistoryPoint[]): RoadmapState {
     };
 }
 
+/** A real balance update mid-month. */
+const update = (
+    month: string,
+    value: number,
+    newAccounts = false,
+): HistoryPoint => ({
+    month,
+    date: `${month}-15`,
+    value,
+    actual: true,
+    newAccounts,
+});
+
 describe("ProjectionCard", () => {
-    it("asks for monthly balance updates until 3 months exist", () => {
+    it("asks for monthly balance updates until 2 clean months exist", () => {
         render(
             <ProjectionCard
                 roadmap={state([
-                    { month: "2026-10", value: 48000, actual: true },
-                    { month: "2026-11", value: 50000, actual: true },
+                    update("2026-10", 48000),
+                    update("2026-11", 50000),
                 ])}
             />,
         );
         const locked = screen.getByTestId("projection-locked");
         expect(locked).toHaveTextContent("Update balances monthly to unlock");
-        expect(locked).toHaveTextContent("2 of 3 months");
+        expect(locked).toHaveTextContent("1 of 2 months");
+        expect(screen.queryByTestId("projection-locked-reset")).toBeNull();
+    });
+
+    it("says when newly recorded accounts reset the count", () => {
+        render(
+            <ProjectionCard
+                roadmap={state([
+                    update("2026-09", 20000),
+                    update("2026-10", 48000, true),
+                    update("2026-11", 50000),
+                ])}
+            />,
+        );
+        expect(screen.getByTestId("projection-locked")).toHaveTextContent(
+            "1 of 2 months",
+        );
+        expect(screen.getByTestId("projection-locked-reset")).toHaveTextContent(
+            "New accounts reset the count",
+        );
     });
 
     it("lists life events with their month and monthly change", () => {
@@ -96,9 +128,9 @@ describe("ProjectionCard", () => {
         render(
             <ProjectionCard
                 roadmap={state([
-                    { month: "2026-09", value: 46000, actual: true },
-                    { month: "2026-10", value: 48000, actual: true },
-                    { month: "2026-11", value: 50000, actual: true },
+                    update("2026-09", 46000),
+                    update("2026-10", 48000),
+                    update("2026-11", 50000),
                 ])}
             />,
         );
