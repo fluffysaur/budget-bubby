@@ -765,7 +765,7 @@ describe("Notifications Engine", () => {
             const recordSpy = vi
                 .spyOn(financeService, "recordDailyCheckin")
                 .mockResolvedValue({
-                    id: "chk-rachel",
+                    id: "chk-sam",
                     household_id: "hh-00000000-0001",
                     member_id: "mem-00000000-0012",
                     checkin_date: getTodayDateString(),
@@ -894,13 +894,13 @@ describe("Notifications Engine", () => {
                 {
                     id: "mem-1",
                     household_id: "hh-1",
-                    display_name: "Yi Jia",
+                    display_name: "Alex",
                     role: "owner",
                 },
                 {
                     id: "mem-2",
                     household_id: "hh-1",
-                    display_name: "Rachel",
+                    display_name: "Sam",
                     role: "member",
                 },
             ];
@@ -909,7 +909,7 @@ describe("Notifications Engine", () => {
                 {
                     id: "exp-1",
                     household_id: "hh-1",
-                    payer_id: "mem-2", // Rachel paid
+                    payer_id: "mem-2", // Sam paid
                     date: "2026-10-27",
                     item: "Din Tai Fung",
                     amount: 80,
@@ -920,7 +920,7 @@ describe("Notifications Engine", () => {
                 {
                     id: "exp-2",
                     household_id: "hh-1",
-                    payer_id: "mem-1", // Yi Jia paid -> don't alert Yi Jia
+                    payer_id: "mem-1", // Alex paid -> don't alert Alex
                     date: "2026-10-27",
                     item: "Groceries",
                     amount: 50,
@@ -938,7 +938,7 @@ describe("Notifications Engine", () => {
             );
             expect(reminders).toHaveLength(1);
             expect(reminders[0].type).toBe("partner_shared_spend");
-            expect(reminders[0].title).toBe("Rachel Logged Din Tai Fung");
+            expect(reminders[0].title).toBe("Sam Logged Din Tai Fung");
             expect(reminders[0].message).toBe("Your share: S$40.00");
         });
 
@@ -947,13 +947,13 @@ describe("Notifications Engine", () => {
                 {
                     id: "mem-1",
                     household_id: "hh-1",
-                    display_name: "Yi Jia",
+                    display_name: "Alex",
                     role: "owner",
                 },
                 {
                     id: "mem-2",
                     household_id: "hh-1",
-                    display_name: "Rachel",
+                    display_name: "Sam",
                     role: "member",
                 },
             ];
@@ -995,7 +995,7 @@ describe("Notifications Engine", () => {
                 "2026-10-28",
             );
             expect(day1).toHaveLength(1);
-            expect(day1[0].title).toBe("Rachel Logged 3 Expenses");
+            expect(day1[0].title).toBe("Sam Logged 3 Expenses");
             expect(day1[0].message).toBe("Your share: S$90.00");
             expect(day1[0].id).toBe(
                 "reminder-partner-spend-mem-1-mem-2-2026-10-28",
@@ -1018,7 +1018,7 @@ describe("Notifications Engine", () => {
                 netBalance: 250,
                 debtorId: "mem-2",
                 creditorId: "mem-1",
-                settlementText: "Rachel owes Yi Jia S$250.00",
+                settlementText: "Sam owes Alex S$250.00",
                 member1OwesMember2: 0,
                 member2OwesMember1: 250,
             };
@@ -1942,7 +1942,7 @@ describe("Notifications Engine", () => {
                         id: "card-mem1",
                         household_id: "hh-1",
                         owner_id: "mem-1",
-                        name: "Yi Jia Card",
+                        name: "Alex Card",
                         bank: "DBS",
                         billing_day: 1,
                         due_day: 28,
@@ -1962,7 +1962,7 @@ describe("Notifications Engine", () => {
                         id: "card-mem2",
                         household_id: "hh-1",
                         owner_id: "mem-2",
-                        name: "Rachel Card",
+                        name: "Sam Card",
                         bank: "UOB",
                         billing_day: 1,
                         due_day: 28,
@@ -1980,7 +1980,7 @@ describe("Notifications Engine", () => {
                 "mem-1",
             );
             expect(alertsMem1).toHaveLength(1);
-            expect(alertsMem1[0].title).toContain("Yi Jia Card");
+            expect(alertsMem1[0].title).toContain("Alex Card");
 
             // For mem-2: only mem-2's card
             const alertsMem2 = checkCreditCardDueReminders(
@@ -1990,7 +1990,7 @@ describe("Notifications Engine", () => {
                 "mem-2",
             );
             expect(alertsMem2).toHaveLength(1);
-            expect(alertsMem2[0].title).toContain("Rachel Card");
+            expect(alertsMem2[0].title).toContain("Sam Card");
         });
 
         it("strictly scopes missing credit card statements to active member", () => {
@@ -1999,7 +1999,7 @@ describe("Notifications Engine", () => {
                     id: "card-mem1",
                     household_id: "hh-1",
                     owner_id: "mem-1",
-                    name: "Yi Jia Card",
+                    name: "Alex Card",
                     bank: "DBS",
                     billing_day: 10,
                     due_day: 28,
@@ -2010,7 +2010,7 @@ describe("Notifications Engine", () => {
                     id: "card-mem2",
                     household_id: "hh-1",
                     owner_id: "mem-2",
-                    name: "Rachel Card",
+                    name: "Sam Card",
                     bank: "OCBC",
                     billing_day: 10,
                     due_day: 28,
@@ -2029,7 +2029,7 @@ describe("Notifications Engine", () => {
                 "mem-1",
             );
             expect(alertsMem1).toHaveLength(1);
-            expect(alertsMem1[0].title).toContain("Yi Jia Card");
+            expect(alertsMem1[0].title).toContain("Alex Card");
 
             const alertsMem2 = checkMissingCreditCardStatements(
                 cards,
@@ -2038,7 +2038,7 @@ describe("Notifications Engine", () => {
                 "mem-2",
             );
             expect(alertsMem2).toHaveLength(1);
-            expect(alertsMem2[0].title).toContain("Rachel Card");
+            expect(alertsMem2[0].title).toContain("Sam Card");
         });
 
         it("strictly scopes recurring bills to active member", () => {
@@ -2048,7 +2048,7 @@ describe("Notifications Engine", () => {
                     household_id: "hh-1",
                     owner_id: "mem-1",
                     type: "insurance",
-                    name: "Yi Jia Life Insurance",
+                    name: "Alex Life Insurance",
                     amount: 1500,
                     frequency: "annually",
                     payment_month: 10,
@@ -2060,7 +2060,7 @@ describe("Notifications Engine", () => {
                     household_id: "hh-1",
                     owner_id: "mem-2",
                     type: "insurance",
-                    name: "Rachel Health Insurance",
+                    name: "Sam Health Insurance",
                     amount: 800,
                     frequency: "annually",
                     payment_month: 10,
@@ -2076,7 +2076,7 @@ describe("Notifications Engine", () => {
                 "mem-1",
             );
             expect(alertsMem1).toHaveLength(1);
-            expect(alertsMem1[0].title).toContain("Yi Jia Life Insurance");
+            expect(alertsMem1[0].title).toContain("Alex Life Insurance");
 
             const alertsMem2 = checkRecurringBillsReminders(
                 recurringItems,
@@ -2084,7 +2084,7 @@ describe("Notifications Engine", () => {
                 "mem-2",
             );
             expect(alertsMem2).toHaveLength(1);
-            expect(alertsMem2[0].title).toContain("Rachel Health Insurance");
+            expect(alertsMem2[0].title).toContain("Sam Health Insurance");
         });
 
         it("surfaces goal reminders across household goals to keep both partners aligned", () => {
@@ -2093,7 +2093,7 @@ describe("Notifications Engine", () => {
                     id: "goal-mem1",
                     household_id: "hh-1",
                     owner_id: "mem-1",
-                    title: "Yi Jia Tech Upgrade",
+                    title: "Alex Tech Upgrade",
                     target_amount: 3000,
                     target_date: "2026-12-31",
                     emoji: "💻",
@@ -2114,7 +2114,7 @@ describe("Notifications Engine", () => {
             const alerts = checkGoalPacingReminders(goals);
             expect(alerts).toHaveLength(2);
             expect(
-                alerts.some((g) => g.title.includes("Yi Jia Tech Upgrade")),
+                alerts.some((g) => g.title.includes("Alex Tech Upgrade")),
             ).toBe(true);
             expect(
                 alerts.some((g) => g.title.includes("Couple Vacation")),
@@ -2126,16 +2126,16 @@ describe("Notifications Engine", () => {
                 netBalance: 250,
                 debtorId: "mem-2",
                 creditorId: "mem-1",
-                debtorName: "Rachel",
-                creditorName: "Yi Jia",
-                settlementText: "Rachel owes Yi Jia S$250.00",
+                debtorName: "Sam",
+                creditorName: "Alex",
+                settlementText: "Sam owes Alex S$250.00",
                 member1OwesMember2: 0,
                 member2OwesMember1: 250,
             };
 
             const testDate = new Date("2026-10-15T12:00:00");
 
-            // Debtor (mem-2) sees "You Owe Yi Jia"
+            // Debtor (mem-2) sees "You Owe Alex"
             const debtorReminder = checkSettlementReminder(
                 summary,
                 200,
@@ -2143,11 +2143,11 @@ describe("Notifications Engine", () => {
                 "mem-2",
             );
             expect(debtorReminder).not.toBeNull();
-            expect(debtorReminder?.title).toBe("You Owe Yi Jia");
+            expect(debtorReminder?.title).toBe("You Owe Alex");
             expect(debtorReminder?.message).toBe("S$250.00 to settle");
             expect(debtorReminder?.actionLabel).toBe("Settle Up");
 
-            // Creditor (mem-1) sees "Rachel Owes You"
+            // Creditor (mem-1) sees "Sam Owes You"
             const creditorReminder = checkSettlementReminder(
                 summary,
                 200,
@@ -2155,7 +2155,7 @@ describe("Notifications Engine", () => {
                 "mem-1",
             );
             expect(creditorReminder).not.toBeNull();
-            expect(creditorReminder?.title).toBe("Rachel Owes You");
+            expect(creditorReminder?.title).toBe("Sam Owes You");
             expect(creditorReminder?.message).toBe("S$250.00 to settle");
             expect(creditorReminder?.actionLabel).toBe("View");
         });

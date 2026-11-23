@@ -439,7 +439,7 @@ describe("AccountsPage", () => {
                         {
                             id: "mem-1",
                             household_id: "hh-1",
-                            display_name: "Yi Jia",
+                            display_name: "Alex",
                             role: "owner",
                         },
                     ]}
@@ -472,7 +472,7 @@ describe("AccountsPage", () => {
                         {
                             id: "mem-1",
                             household_id: "hh-1",
-                            display_name: "Yi Jia",
+                            display_name: "Alex",
                             role: "owner",
                         },
                     ]}
@@ -510,7 +510,7 @@ describe("AccountsPage", () => {
                         {
                             id: "mem-1",
                             household_id: "hh-1",
-                            display_name: "Yi Jia",
+                            display_name: "Alex",
                             role: "owner",
                         },
                     ]}
@@ -569,7 +569,7 @@ describe("AccountsPage", () => {
                         {
                             id: "mem-1",
                             household_id: "hh-1",
-                            display_name: "Yi Jia",
+                            display_name: "Alex",
                             role: "owner",
                         },
                     ]}

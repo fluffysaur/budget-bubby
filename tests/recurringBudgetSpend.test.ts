@@ -18,7 +18,7 @@ const spentFor = (detail: MonthlyBudgetDetail, categoryId: string) =>
     0;
 
 describe("mockFinanceService recurring spend by category", () => {
-    const yiJia = mockMembers.find((m) => m.display_name === "Yi Jia")!;
+    const alex = mockMembers.find((m) => m.display_name === "Alex")!;
 
     beforeEach(() => {
         mockFinanceService.resetData();
@@ -27,7 +27,7 @@ describe("mockFinanceService recurring spend by category", () => {
     it("counts seeded subscriptions toward Lifestyle via category_id", async () => {
         const detail = await mockFinanceService.getMonthlyBudget(
             "2026-11",
-            yiJia.id,
+            alex.id,
         );
         const lifestyle = detail.categories.find(
             (c) => c.category_id === LIFESTYLE,
@@ -44,11 +44,11 @@ describe("mockFinanceService recurring spend by category", () => {
     it("adds bills to their own category, annual items amortized, uncategorized to total only", async () => {
         const before = await mockFinanceService.getMonthlyBudget(
             "2026-11",
-            yiJia.id,
+            alex.id,
         );
 
         await mockFinanceService.addRecurringItem({
-            owner_id: yiJia.id,
+            owner_id: alex.id,
             type: "bill",
             name: "Meal Plan",
             amount: 120,
@@ -57,7 +57,7 @@ describe("mockFinanceService recurring spend by category", () => {
             category_id: FOOD,
         });
         await mockFinanceService.addRecurringItem({
-            owner_id: yiJia.id,
+            owner_id: alex.id,
             type: "other",
             name: "Cloud Storage",
             amount: 120,
@@ -66,7 +66,7 @@ describe("mockFinanceService recurring spend by category", () => {
             category_id: FOOD,
         });
         await mockFinanceService.addRecurringItem({
-            owner_id: yiJia.id,
+            owner_id: alex.id,
             type: "other",
             name: "Mystery Box",
             amount: 25,
@@ -75,7 +75,7 @@ describe("mockFinanceService recurring spend by category", () => {
             category_id: null,
         });
         await mockFinanceService.addRecurringItem({
-            owner_id: yiJia.id,
+            owner_id: alex.id,
             type: "bill",
             name: "Future Gym",
             amount: 80,
@@ -85,7 +85,7 @@ describe("mockFinanceService recurring spend by category", () => {
             category_id: FOOD,
         });
         await mockFinanceService.addRecurringItem({
-            owner_id: yiJia.id,
+            owner_id: alex.id,
             type: "insurance",
             name: "Travel Insurance",
             amount: 240,
@@ -96,7 +96,7 @@ describe("mockFinanceService recurring spend by category", () => {
 
         const after = await mockFinanceService.getMonthlyBudget(
             "2026-11",
-            yiJia.id,
+            alex.id,
         );
 
         // Food: +120 (monthly bill) + 10 (annual 120 / 12); Future Gym not active yet
@@ -123,7 +123,7 @@ describe("mockFinanceService recurring spend by category", () => {
         // Starting January, the gym bill counts too
         const jan = await mockFinanceService.getMonthlyBudget(
             "2027-01",
-            yiJia.id,
+            alex.id,
         );
         expect(
             jan.categories.find((c) => c.category_id === FOOD)!.recurringSpent,
@@ -132,7 +132,7 @@ describe("mockFinanceService recurring spend by category", () => {
 
     it("clears category_id when an item becomes insurance or tax", async () => {
         const created = await mockFinanceService.addRecurringItem({
-            owner_id: yiJia.id,
+            owner_id: alex.id,
             type: "bill",
             name: "Phone",
             amount: 30,

@@ -33,7 +33,7 @@ import type {
     Expense,
 } from "../src/types/finance";
 
-const [YJ, RACHEL] = mockMembers;
+const [YJ, SAM] = mockMembers;
 const TODAY = toSgtDateString();
 
 function chk(member_id: string, checkin_date: string): DailyCheckin {
@@ -114,7 +114,7 @@ describe("DelightHost", () => {
 
         await act(async () => {
             emitAppEvent("expenseAdded", {
-                ...expense(RACHEL.id, "2026-10-01", 1),
+                ...expense(SAM.id, "2026-10-01", 1),
                 source: "form",
             });
         });
@@ -159,7 +159,7 @@ describe("DelightHost", () => {
     it("celebrates your penguin's body change with confetti, once", async () => {
         writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
         const expenses = [0, 1, 2, 3].flatMap((d) =>
-            [YJ.id, RACHEL.id].map((m, i) =>
+            [YJ.id, SAM.id].map((m, i) =>
                 expense(m, addDays(TODAY, -d), d * 10 + i),
             ),
         );
@@ -177,28 +177,28 @@ describe("DelightHost", () => {
         // The partner's penguin was seen for the first time: recorded, no toast
         expect(readBubbyStore().lastBodies).toEqual({
             [YJ.id]: "chubby",
-            [RACHEL.id]: "chubby",
+            [SAM.id]: "chubby",
         });
         expect(
-            screen.queryByText(`${RACHEL.display_name}'s Bubby is well fed!`),
+            screen.queryByText(`${SAM.display_name}'s Bubby is well fed!`),
         ).not.toBeInTheDocument();
     });
 
     it("names the partner's penguin when it changes body", async () => {
         writeBubbyStore({
             lastMood: "normal",
-            lastBodies: { [YJ.id]: "regular", [RACHEL.id]: "regular" },
+            lastBodies: { [YJ.id]: "regular", [SAM.id]: "regular" },
         });
         // Only the partner logs: only their penguin fills up
         const expenses = [0, 1, 2, 3].map((d) =>
-            expense(RACHEL.id, addDays(TODAY, -d), d),
+            expense(SAM.id, addDays(TODAY, -d), d),
         );
         mockData({ expenses });
         await renderHost();
 
         expect(
             await screen.findByText(
-                `${RACHEL.display_name}'s Bubby is well fed!`,
+                `${SAM.display_name}'s Bubby is well fed!`,
             ),
         ).toBeInTheDocument();
         expect(readBubbyStore().lastBodies?.[YJ.id]).toBe("regular");
@@ -267,7 +267,7 @@ describe("DelightHost", () => {
 
     it("cheers once when both partners have fed Bubby today", async () => {
         writeBubbyStore({ lastBody: "regular", lastMood: "normal" });
-        mockData({ checkins: [chk(YJ.id, TODAY), chk(RACHEL.id, TODAY)] });
+        mockData({ checkins: [chk(YJ.id, TODAY), chk(SAM.id, TODAY)] });
         const reactions: string[] = [];
         const off = onAppEvent("bubby:react", (d) => reactions.push(d.kind));
         await renderHost();

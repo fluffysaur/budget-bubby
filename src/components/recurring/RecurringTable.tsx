@@ -143,14 +143,14 @@ export function RecurringTable({
             ownerId.toLowerCase().includes("yj") ||
             ownerId.toLowerCase().includes("yijia")
         ) {
-            return "Yi Jia";
+            return "Alex";
         }
         if (
             ownerId.includes("0012") ||
             ownerId.toLowerCase().includes("rc") ||
             ownerId.toLowerCase().includes("rachel")
         ) {
-            return "Rachel";
+            return "Sam";
         }
         return "Joint";
     };
@@ -327,9 +327,9 @@ export function RecurringTable({
                                         recurringItem.owner_id,
                                     );
                                     const ownerIcon =
-                                        owner === "Yi Jia"
+                                        owner === "Alex"
                                             ? "👨"
-                                            : owner === "Rachel"
+                                            : owner === "Sam"
                                               ? "👩"
                                               : "👥";
 

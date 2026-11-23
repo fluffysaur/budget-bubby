@@ -13,7 +13,7 @@ import { mockFinanceService } from "../src/services/mockFinanceService";
 import * as soundEffects from "../src/lib/soundEffects";
 import { cloneDefaultSplit, computeBonusSplit } from "../src/lib/bonusFormulas";
 
-const RACHEL = "mem-00000000-0012";
+const SAM = "mem-00000000-0012";
 
 function renderPanel() {
     return render(
@@ -27,7 +27,7 @@ function renderPanel() {
 
 async function seedBonus(overrides: { received_on?: string } = {}) {
     return mockFinanceService.saveBonusEvent({
-        recipient_id: RACHEL,
+        recipient_id: SAM,
         type: "performance",
         received_on:
             overrides.received_on ?? `${new Date().getFullYear()}-03-10`,
@@ -168,7 +168,7 @@ describe("BonusLogPanel", () => {
         );
         expect(await screen.findByText("Delete Bonus?")).toBeInTheDocument();
         expect(
-            screen.getByText(/Performance for Rachel\./),
+            screen.getByText(/Performance for Sam\./),
         ).toBeInTheDocument();
         expect(screen.queryByText(/from goals/)).not.toBeInTheDocument();
 
@@ -183,7 +183,7 @@ describe("BonusLogPanel", () => {
         renderPanel();
 
         const table = await screen.findByTestId("bonus-ytd-table");
-        expect(within(table).getByText("Rachel")).toBeInTheDocument();
+        expect(within(table).getByText("Sam")).toBeInTheDocument();
         expect(within(table).getByText("Household")).toBeInTheDocument();
         expect(
             screen.getByText(String(year), { selector: "span" }),

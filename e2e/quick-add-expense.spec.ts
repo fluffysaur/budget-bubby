@@ -43,12 +43,12 @@ test.describe("Quick Add Expense Flow", () => {
             await foodCategory.click();
         }
 
-        // Select payer Yi Jia
-        const yiJiaPayer = modal
-            .getByRole("button", { name: /Yi Jia/i })
+        // Select payer Alex
+        const alexPayer = modal
+            .getByRole("button", { name: /Alex/i })
             .first();
-        if (await yiJiaPayer.isVisible()) {
-            await yiJiaPayer.click();
+        if (await alexPayer.isVisible()) {
+            await alexPayer.click();
         }
 
         // Submit the form

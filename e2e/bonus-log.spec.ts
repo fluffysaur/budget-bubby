@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 // Mock data mode (see playwright.config.ts).
 // A S$10,000 bonus at 20% CPF leaves S$8,000 net; Goals 40% = S$3,200.
 
-async function logRachelBonus(page: Page) {
+async function logSamBonus(page: Page) {
     await page.goto("/plan?tab=bonus");
     await expect(page.getByText("No Bonuses")).toBeVisible();
 
@@ -13,7 +13,7 @@ async function logRachelBonus(page: Page) {
         modal.getByRole("heading", { level: 2, name: "Log Bonus" }),
     ).toBeVisible();
 
-    await modal.getByLabel("Recipient").selectOption({ label: "Rachel" });
+    await modal.getByLabel("Recipient").selectOption({ label: "Sam" });
     await modal.getByRole("button", { name: "Performance" }).click();
     await modal.getByLabel("Gross").fill("10000");
     await expect(modal.getByLabel("CPF")).toHaveValue("2000");
@@ -32,11 +32,11 @@ async function logRachelBonus(page: Page) {
 
 test.describe("Bonus Log", () => {
     test("logs, shows outside caps, edits and deletes", async ({ page }) => {
-        await logRachelBonus(page);
+        await logSamBonus(page);
 
         // Row under the current year, YTD net includes the bonus
         await expect(page.getByTestId("bonus-row")).toHaveCount(1);
-        await expect(page.getByTestId("bonus-row")).toContainText("Rachel");
+        await expect(page.getByTestId("bonus-row")).toContainText("Sam");
         await expect(page.getByTestId("bonus-ytd-table")).toContainText(
             "S$8,000",
         );
@@ -76,7 +76,7 @@ test.describe("Bonus Log", () => {
         if (!isMobile) {
             await page.setViewportSize({ width: 390, height: 844 });
         }
-        await logRachelBonus(page);
+        await logSamBonus(page);
 
         const overflow = await page.evaluate(
             () => document.documentElement.scrollWidth - window.innerWidth,

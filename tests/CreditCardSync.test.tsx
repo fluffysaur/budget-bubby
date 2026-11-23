@@ -22,7 +22,7 @@ const testMembers: HouseholdMember[] = [
     {
         id: "mem-00000000-0011",
         household_id: "hh-00000000-0001",
-        display_name: "Yi Jia",
+        display_name: "Alex",
         role: "owner",
     },
 ];

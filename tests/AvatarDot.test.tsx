@@ -14,7 +14,7 @@ describe("AvatarDot", () => {
     });
 
     it("is hidden from assistive tech when decorative", () => {
-        const { container } = render(<AvatarDot name="Rachel" decorative />);
+        const { container } = render(<AvatarDot name="Sam" decorative />);
         expect(screen.queryByRole("img")).not.toBeInTheDocument();
         expect(container.firstElementChild).toHaveAttribute(
             "aria-hidden",
@@ -25,21 +25,21 @@ describe("AvatarDot", () => {
     it("renders emoji avatar with accessible label", () => {
         render(
             <AvatarDot
-                name="Rachel"
+                name="Sam"
                 avatarUrl="👩"
-                ariaLabel="Rachel's avatar"
+                ariaLabel="Sam's avatar"
             />,
         );
-        const avatar = screen.getByRole("img", { name: "Rachel's avatar" });
+        const avatar = screen.getByRole("img", { name: "Sam's avatar" });
         expect(avatar).toBeInTheDocument();
         expect(avatar).toHaveTextContent("👩");
-        expect(avatar).toHaveAttribute("title", "Rachel");
+        expect(avatar).toHaveAttribute("title", "Sam");
     });
 
     it("renders first letter of name when avatarUrl is absent", () => {
-        render(<AvatarDot name="Yi Jia" />);
-        const avatar = screen.getByRole("img", { name: "Yi Jia" });
-        expect(avatar).toHaveTextContent("Y");
+        render(<AvatarDot name="Alex" />);
+        const avatar = screen.getByRole("img", { name: "Alex" });
+        expect(avatar).toHaveTextContent("A");
     });
 
     it("renders image element when avatarUrl is a valid URL path", () => {

@@ -130,7 +130,7 @@ describe("Expenses Settle Up", () => {
                 creditorId:
                     netBalance > 0 ? (real.members[0]?.id ?? null) : null,
                 settlementText:
-                    netBalance > 0 ? "Rachel owes Yi Jia" : "All settled up",
+                    netBalance > 0 ? "Sam owes Alex" : "All settled up",
                 member1OwesMember2: 0,
                 member2OwesMember1: netBalance,
             },
@@ -188,7 +188,7 @@ describe("Expenses Settle Up", () => {
                 netBalance: 85,
                 debtorId: real.members[1]?.id ?? null,
                 creditorId: real.members[0]?.id ?? null,
-                settlementText: "Rachel owes Yi Jia S$85.00",
+                settlementText: "Sam owes Alex S$85.00",
                 member1OwesMember2: 0,
                 member2OwesMember1: 85,
                 expenseIds: explicitIds,
@@ -315,13 +315,13 @@ describe("Header Bubby", () => {
     });
 
     it("lights the logged-in partner's dot, shows no counts, and pets + opens the sheet on tap", async () => {
-        const rachel = mockMembers.find((m) => m.display_name === "Rachel")!;
+        const sam = mockMembers.find((m) => m.display_name === "Sam")!;
         const today = toSgtDateString();
         vi.spyOn(financeService, "getDailyCheckins").mockResolvedValue([
             {
                 id: "r-0",
                 household_id: "hh-01",
-                member_id: rachel.id,
+                member_id: sam.id,
                 checkin_date: today,
                 type: "expense" as const,
             },
@@ -340,7 +340,7 @@ describe("Header Bubby", () => {
         const button = screen.getByRole("button", { name: "Bubby" });
         await waitFor(() =>
             expect(
-                screen.getByRole("img", { name: "Rachel, fed Bubby today" }),
+                screen.getByRole("img", { name: "Sam, fed Bubby today" }),
             ).toHaveAttribute("data-fed", "true"),
         );
         expect(button.textContent ?? "").not.toMatch(/\d/);
@@ -351,6 +351,6 @@ describe("Header Bubby", () => {
         fireEvent.click(button);
         off();
         expect(opened).toHaveBeenCalledTimes(1);
-        expect(readBubbyStore().petDays?.[rachel.id]).toEqual([today]);
+        expect(readBubbyStore().petDays?.[sam.id]).toEqual([today]);
     });
 });

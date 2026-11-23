@@ -126,7 +126,7 @@ describe("financialFormulas", () => {
         const member1 = "member-yijia";
         const member2 = "member-rachel";
 
-        it("calculates Splitwise-style settlement: Yi Jia paid $100 shared, Rachel paid $40 shared -> Rachel owes Yi Jia $30", () => {
+        it("calculates Splitwise-style settlement: Alex paid $100 shared, Sam paid $40 shared -> Sam owes Alex $30", () => {
             const expenses: Expense[] = [
                 {
                     id: "exp-1",
@@ -162,9 +162,9 @@ describe("financialFormulas", () => {
                 member2,
             );
 
-            // Yi Jia paid 100 -> Rachel owes 50
-            // Rachel paid 40 -> Yi Jia owes 20
-            // Net: Rachel owes Yi Jia 30
+            // Alex paid 100 -> Sam owes 50
+            // Sam paid 40 -> Alex owes 20
+            // Net: Sam owes Alex 30
             expect(settlement.netBalance).toBe(30);
             expect(settlement.debtorId).toBe(member2);
             expect(settlement.creditorId).toBe(member1);

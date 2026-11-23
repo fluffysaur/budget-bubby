@@ -62,7 +62,7 @@ const sampleItems: RecurringItem[] = [
     {
         id: "pol-01",
         household_id: "hh-01",
-        owner_id: "mem-00000000-0011", // Yi Jia
+        owner_id: "mem-00000000-0011", // Alex
         type: "insurance",
         name: "Manulife - Lifeready 25 Plus",
         amount: 3200.0,
@@ -76,7 +76,7 @@ const sampleItems: RecurringItem[] = [
     {
         id: "pol-02",
         household_id: "hh-01",
-        owner_id: "mem-00000000-0011", // Yi Jia
+        owner_id: "mem-00000000-0011", // Alex
         type: "insurance",
         name: "Income Enhanced Incomeshield Preferred",
         amount: 1600.0,
@@ -90,7 +90,7 @@ const sampleItems: RecurringItem[] = [
     {
         id: "pol-03",
         household_id: "hh-01",
-        owner_id: "mem-00000000-0011", // Yi Jia
+        owner_id: "mem-00000000-0011", // Alex
         type: "tax",
         name: "Income Tax (2026)",
         amount: 1100.0,
@@ -104,7 +104,7 @@ const sampleItems: RecurringItem[] = [
     {
         id: "pol-04",
         household_id: "hh-01",
-        owner_id: "mem-00000000-0012", // Rachel
+        owner_id: "mem-00000000-0012", // Sam
         type: "tax",
         name: "Income Tax (2026)",
         amount: 1800.0,
@@ -118,7 +118,7 @@ const sampleItems: RecurringItem[] = [
     {
         id: "pol-05",
         household_id: "hh-01",
-        owner_id: "mem-00000000-0012", // Rachel
+        owner_id: "mem-00000000-0012", // Sam
         type: "subscription",
         name: "Spotify Family Plan",
         amount: 19.98,
@@ -982,7 +982,7 @@ describe("RecurringPage Component", () => {
         });
     });
 
-    it("filters recurring items and metrics by perspective (Yi Jia vs Rachel)", async () => {
+    it("filters recurring items and metrics by perspective (Alex vs Sam)", async () => {
         const { rerender } = render(
             <HouseholdProvider initialPerspective="yijia">
                 <RecurringPage />
@@ -991,13 +991,13 @@ describe("RecurringPage Component", () => {
 
         await waitFor(() => {
             // In mock seed data:
-            // Yi Jia has Manulife ($3,200), IncomeShield ($1,600), Tax ($1,100) -> Total $5,900
+            // Alex has Manulife ($3,200), IncomeShield ($1,600), Tax ($1,100) -> Total $5,900
             expect(
                 screen.getAllByText(formatSGD(5900.0)).length,
             ).toBeGreaterThan(0);
         });
 
-        // Rachel's perspective
+        // Sam's perspective
         rerender(
             <HouseholdProvider initialPerspective="rachel">
                 <RecurringPage />
@@ -1006,7 +1006,7 @@ describe("RecurringPage Component", () => {
 
         await waitFor(() => {
             // In mock seed data:
-            // Rachel has Tax ($1,800) -> Total $1,800
+            // Sam has Tax ($1,800) -> Total $1,800
             expect(
                 screen.getAllByText(formatSGD(1800.0)).length,
             ).toBeGreaterThan(0);
@@ -1023,7 +1023,7 @@ describe("RecurringPage Component", () => {
             payment_month: 1,
         });
 
-        // Render using Yi Jia's actual member UUID as the perspective
+        // Render using Alex's actual member UUID as the perspective
         const { rerender } = render(
             <HouseholdProvider initialPerspective="mem-00000000-0011">
                 <RecurringPage />
@@ -1031,7 +1031,7 @@ describe("RecurringPage Component", () => {
         );
 
         await waitFor(() => {
-            // Yi Jia personal ($5,900) + 50% of Joint Property Tax ($600) = $6,500
+            // Alex personal ($5,900) + 50% of Joint Property Tax ($600) = $6,500
             expect(
                 screen.getAllByText(formatSGD(6500.0)).length,
             ).toBeGreaterThan(0);

@@ -180,10 +180,10 @@ describe("App Integration & Routing", () => {
             name: /Select Financial Perspective/i,
         });
         fireEvent.click(trigger);
-        fireEvent.click(screen.getByRole("option", { name: /Yi Jia/i }));
+        fireEvent.click(screen.getByRole("option", { name: /Alex/i }));
 
         await waitFor(() => {
-            expect(trigger).toHaveTextContent("Yi Jia");
+            expect(trigger).toHaveTextContent("Alex");
         });
 
         fireEvent.click(trigger);

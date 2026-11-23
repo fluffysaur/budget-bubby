@@ -180,8 +180,8 @@ describe("summarizeBonusesYtd", () => {
             ],
             2026,
             [
-                { id: "yj", display_name: "Yi Jia" },
-                { id: "rc", display_name: "Rachel" },
+                { id: "yj", display_name: "Alex" },
+                { id: "rc", display_name: "Sam" },
             ],
         );
         expect(ytd.members[0]).toMatchObject({

@@ -15,18 +15,18 @@ async function selectPerspective(page: Page, name: RegExp) {
 }
 
 test.describe("Navigation and Perspective Switching", () => {
-    test("should switch perspectives between household, Yi Jia, and Rachel", async ({
+    test("should switch perspectives between household, Alex, and Sam", async ({
         page,
     }) => {
         await page.goto("/");
 
         await expectActivePerspective(page, /Combined/i);
 
-        await selectPerspective(page, /Yi Jia/i);
-        await expectActivePerspective(page, /Yi Jia/i);
+        await selectPerspective(page, /Alex/i);
+        await expectActivePerspective(page, /Alex/i);
 
-        await selectPerspective(page, /Rachel/i);
-        await expectActivePerspective(page, /Rachel/i);
+        await selectPerspective(page, /Sam/i);
+        await expectActivePerspective(page, /Sam/i);
 
         await selectPerspective(page, /Combined/i);
         await expectActivePerspective(page, /Combined/i);

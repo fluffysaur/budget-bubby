@@ -370,7 +370,7 @@ describe("AccountsPage card debt integration", () => {
     });
 
     it("shows Combined net worth minus unpaid demo statements with card debt subtitle, and updates when DBS statement is marked paid", async () => {
-        // Total demo accounts = 544,200.00 (Yi Jia 206,700 + Rachel 337,500)
+        // Total demo accounts = 544,200.00 (Alex 206,700 + Sam 337,500)
         // Unpaid demo statements = 842.50 (DBS) + 350.20 (OCBC) = 1,192.70
         // Combined Net Worth = 544,200.00 - 1,192.70 = 543,007.30
         render(
@@ -388,7 +388,7 @@ describe("AccountsPage card debt integration", () => {
             screen.getByText(`${formatSGD(1192.7)} card debt`),
         ).toBeInTheDocument();
 
-        // Mark Yi Jia's DBS statement (S$842.50) paid via the Credit Cards tab
+        // Mark Alex's DBS statement (S$842.50) paid via the Credit Cards tab
         fireEvent.click(screen.getByRole("tab", { name: /credit cards/i }));
 
         // Step from Current -> Nov 2026 -> Oct 2026 where demo statements live
@@ -428,9 +428,9 @@ describe("AccountsPage card debt integration", () => {
         ).toBeInTheDocument();
     });
 
-    it("excludes Yi Jia's card debt in Rachel's view", async () => {
-        // Rachel's accounts = 190,000 + 50,000 + 60,000 + 17,000 + 20,500 = 337,500
-        // Rachel's only card statement (UOB One S$620) is already paid
+    it("excludes Alex's card debt in Sam's view", async () => {
+        // Sam's accounts = 190,000 + 50,000 + 60,000 + 17,000 + 20,500 = 337,500
+        // Sam's only card statement (UOB One S$620) is already paid
         render(
             <HouseholdProvider initialPerspective="rachel">
                 <AccountsPage />

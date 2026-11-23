@@ -39,6 +39,7 @@ import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { m, AnimatePresence } from "motion/react";
+import { DEMO_PARTNER_ALIASES } from "../../lib/members";
 import { pop } from "../../lib/motion";
 
 export interface AppHeaderProps {
@@ -77,6 +78,8 @@ function getPerspectiveKeyForMember(
     const clean = displayName.toLowerCase().replace(/\s+/g, "");
     if (clean.includes("yijia")) return "yijia";
     if (clean.includes("rachel")) return "rachel";
+    if (clean === DEMO_PARTNER_ALIASES.yijia) return "yijia";
+    if (clean === DEMO_PARTNER_ALIASES.rachel) return "rachel";
     return id;
 }
 

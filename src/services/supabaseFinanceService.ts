@@ -80,6 +80,7 @@ import {
     getCurrentSingaporeTime,
     getCurrentMonth,
 } from "../lib/dateUtils";
+import { displayNameMatchesPartner } from "../lib/members";
 import { isValidUuid } from "../lib/uuid";
 import {
     BonusLogUnavailableError,
@@ -547,7 +548,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                     (clean === "yijia" &&
                         m.display_name.toLowerCase().includes("yi jia")) ||
                     (clean === "rachel" &&
-                        m.display_name.toLowerCase().includes("rachel")),
+                        m.display_name.toLowerCase().includes("rachel")) ||
+                    displayNameMatchesPartner(m.display_name, clean),
             );
 
             if (!targetMember) {

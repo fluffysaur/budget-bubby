@@ -49,7 +49,7 @@ const mockGoals: SavingsGoal[] = [
 const testExpense: Expense = {
     id: "exp-test-e2-1",
     household_id: "hh-00000000-0001",
-    payer_id: "mem-00000000-0011", // Yi Jia
+    payer_id: "mem-00000000-0011", // Alex
     category_id: "cat-00000000-0101", // Food
     date: "2026-10-25",
     item: "Maxwell Chicken Rice",
@@ -65,7 +65,7 @@ const testExpense: Expense = {
 const testGoalExpense: Expense = {
     id: "exp-test-e2-2",
     household_id: "hh-00000000-0001",
-    payer_id: "mem-00000000-0012", // Rachel
+    payer_id: "mem-00000000-0012", // Sam
     category_id: "cat-00000000-0102", // Lifestyle
     date: "2026-10-26",
     item: "Japan Flight Tickets",
