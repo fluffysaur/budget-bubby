@@ -26,6 +26,8 @@ import {
     testAiConnection,
     type AiProviderId,
 } from "../../services/ai/providers";
+import { pushGeminiSettings } from "../../services/ai/aiSettingsSync";
+import { financeService } from "../../services/financeService";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -90,6 +92,12 @@ export function AiSettingsSection() {
         notifyAiConfigChanged();
     };
 
+    const syncGemini = (targetProvider: AiProviderId) => {
+        if (targetProvider === "gemini") {
+            void pushGeminiSettings(financeService);
+        }
+    };
+
     const handleSave = () => {
         const trimmedKey = apiKeyDraft.trim();
         const effectiveModel = model.trim() || providerMeta.defaultModel;
@@ -98,12 +106,15 @@ export function AiSettingsSection() {
         setSavedKey(trimmedKey);
         setApiKeyDraft(trimmedKey);
         setModel(effectiveModel);
+        syncGemini(provider);
         notifyAiConfigChanged();
         delightFeedback.routine("save");
         setFeedback({
             variant: trimmedKey ? "success" : "info",
             message: trimmedKey
-                ? `${providerMeta.label} API key saved locally.`
+                ? provider === "gemini"
+                    ? `${providerMeta.label} API key saved and synced.`
+                    : `${providerMeta.label} API key saved locally.`
                 : `${providerMeta.label} API key removed.`,
         });
     };
@@ -112,6 +123,7 @@ export function AiSettingsSection() {
         clearProviderApiKey(provider);
         setSavedKey("");
         setApiKeyDraft("");
+        syncGemini(provider);
         notifyAiConfigChanged();
         delightFeedback.routine("delete");
         setFeedback({
@@ -128,6 +140,7 @@ export function AiSettingsSection() {
         setUseCustomModel(false);
         setModel(selectedValue);
         setProviderModel(provider, selectedValue);
+        syncGemini(provider);
         notifyAiConfigChanged();
     };
 
@@ -184,8 +197,10 @@ export function AiSettingsSection() {
             title="Bubby AI"
             subtitle={
                 isConfigured
-                    ? `${providerMeta.label} · Stored locally`
-                    : "AI key stored locally"
+                    ? `${providerMeta.label} · ${
+                          provider === "gemini" ? "Synced" : "Stored locally"
+                      }`
+                    : "Bring your own key"
             }
             badge={isConfigured ? providerMeta.label : "Not Set"}
             badgeVariant={isConfigured ? "mint" : "slate"}
@@ -193,9 +208,9 @@ export function AiSettingsSection() {
         >
             <div className="space-y-4">
                 <p className="text-xs text-(--text-muted) leading-relaxed">
-                    Bring your own AI API key. Your key stays in this
-                    browser&apos;s local storage and is never sent to Budget
-                    Bubby servers.
+                    Bring your own AI API key. Your Gemini key syncs to your
+                    private account so it works on every device. Other
+                    providers stay on this device.
                 </p>
 
                 <Select
@@ -275,6 +290,7 @@ export function AiSettingsSection() {
                         onChange={(e) =>
                             handleCustomModelChange(e.target.value)
                         }
+                        onBlur={() => syncGemini(provider)}
                         placeholder={providerMeta.defaultModel}
                         autoComplete="off"
                         spellCheck={false}

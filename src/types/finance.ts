@@ -637,6 +637,12 @@ export interface BonusMonthSummary {
     source: "events" | "legacy" | "none";
 }
 
+/** Per-user synced AI settings (Gemini BYOK). Owner-only table. */
+export interface MemberAiSettings {
+    gemini_api_key: string | null;
+    gemini_model: string | null;
+}
+
 export interface NotificationPreferences {
     id?: string;
     household_id: string;

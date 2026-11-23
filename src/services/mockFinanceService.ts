@@ -44,6 +44,7 @@ import type {
     DailyCheckin,
     CheckinType,
     NotificationPreferences,
+    MemberAiSettings,
     UpdateNotificationPreferencesInput,
     NotificationLogEntry,
     NotificationLogRef,
@@ -103,6 +104,7 @@ import {
 } from "./localNotificationLog";
 
 const STORAGE_KEY = "budget_buddy_mock_dataset_v1";
+const MOCK_AI_SETTINGS_KEY = "bb_mock_member_ai_settings";
 
 function cloneDeep<T>(data: T): T {
     return JSON.parse(JSON.stringify(data));
@@ -1616,6 +1618,39 @@ class MockFinanceServiceImpl implements FinanceService {
         this.state.dailyCheckins.push(checkin);
         this.persist();
         return cloneDeep(checkin);
+    }
+
+    // AI Settings
+    public async getAiSettings(): Promise<MemberAiSettings> {
+        const empty: MemberAiSettings = {
+            gemini_api_key: null,
+            gemini_model: null,
+        };
+        if (typeof window === "undefined" || !window.localStorage) {
+            return empty;
+        }
+        try {
+            const raw = window.localStorage.getItem(MOCK_AI_SETTINGS_KEY);
+            if (!raw) return empty;
+            const parsed = JSON.parse(raw) as Partial<MemberAiSettings>;
+            return {
+                gemini_api_key: parsed.gemini_api_key ?? null,
+                gemini_model: parsed.gemini_model ?? null,
+            };
+        } catch {
+            return empty;
+        }
+    }
+
+    public async saveAiSettings(settings: MemberAiSettings): Promise<void> {
+        if (typeof window === "undefined" || !window.localStorage) return;
+        window.localStorage.setItem(
+            MOCK_AI_SETTINGS_KEY,
+            JSON.stringify({
+                gemini_api_key: settings.gemini_api_key,
+                gemini_model: settings.gemini_model,
+            }),
+        );
     }
 
     // Notification Preferences
