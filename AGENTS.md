@@ -12,6 +12,10 @@ Read the linked file before working in its area. Rules below are the always-on c
 
 Full git, PR, migration, screenshot and backlog rules: [docs/agent-workflow.md](docs/agent-workflow.md).
 
+## Supabase MCP
+
+`.mcp.json` (Claude Code) and `.vscode/mcp.json` (Copilot) register the Supabase MCP server for the live prod DB. **It must stay `read_only=true`.** Schema changes go through migration files and user review, never through MCP. Configure other agents (e.g. Antigravity) the same way, read-only. Never commit access tokens.
+
 ## UI & copy (summary)
 
 Details in [docs/agent-ui-reference.md](docs/agent-ui-reference.md). Read it before touching UI, styles or copy.
