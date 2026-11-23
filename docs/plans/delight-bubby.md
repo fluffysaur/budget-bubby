@@ -52,7 +52,7 @@ A **couple day** is a date where both members have a member-day.
 
 Two gaps in today's semantics would make this wrong:
 
-1. **Payer ≠ logger.** `addExpense` checks in `payer_id`. If Yi Jia logs a dinner Rachel paid for, Rachel gets the check-in.
+1. **Payer ≠ logger.** `addExpense` checks in `payer_id`. If Alex logs a dinner Sam paid for, Sam gets the check-in.
 2. **Expense date ≠ today.** Logging Monday's receipt on Wednesday checks in Monday. Inbox triage hits this all the time, because Apple Pay items are often confirmed a day or more later.
 
 **Fix (client-only, no migration):** add a `recordActivityCheckin()` helper (`src/lib/bubby/activity.ts`). After any successful add, bulk add, inbox confirm or inbox clear, it upserts a check-in for **the logged-in member on today's SGT date** (`getTodayDateString()`), type `expense`. The server-side payer/date check-in stays as it is, so backfilling a past day still fills that day.
@@ -206,9 +206,9 @@ There are no image assets. A new `<Bubby>` component renders one `<svg viewBox="
 
 - **Definition:** consecutive SGT dates on which **both** members have a member-day (expense, no-spend, inbox confirm or inbox clear, per section 3.1). Today counts as *pending*: it doesn't break the streak until the day is over. This matches today's maths (`supabaseFinanceService.ts:1376-1393`), now fed by the logged-in-member check-ins.
 - **Source:** `deriveBubbyState` (section 3.5). The existing `StreakSummary.coupleStreak` keeps working for the server reminder engine.
-- **UI:** the Bubby sheet's Today row shows "You ✓ · Rachel ·" and, once both have logged, "Couple day ✓ · 🔥 12". When only one has logged, the copy is neutral: "Waiting on Rachel". There's no nag text.
+- **UI:** the Bubby sheet's Today row shows "You ✓ · Sam ·" and, once both have logged, "Couple day ✓ · 🔥 12". When only one has logged, the copy is neutral: "Waiting on Sam". There's no nag text.
 - **Couple-day completion:** when the *second* partner's check-in lands (seen on resume or after your own log), play a **milestone-lite** moment once per device per day. Bubby plays `celebrate` with hearts, then `playSuccessSound()` and `haptics.celebrate()`, and the toast says "Couple day! 🔥 12". No full-screen confetti, unless it is also a streak milestone (7, 14, 30, 50, 100), which gets full confetti.
-- **Push to partner** ("Rachel logged, your turn") is out of scope here. It belongs to the notifications plan (`partner_shared_spend`, `couple_streak_risk`). See open question 5.
+- **Push to partner** ("Sam logged, your turn") is out of scope here. It belongs to the notifications plan (`partner_shared_spend`, `couple_streak_risk`). See open question 5.
 
 ## 5. Inbox-zero hook (consumer only)
 

@@ -1,6 +1,6 @@
 /**
  * AuthContext - Manages Supabase authentication with 6-digit PIN identification
- * Maps unique 6-digit PINs directly to Yi Jia or Rachel.
+ * Maps unique 6-digit PINs directly to one of the two partner accounts.
  */
 
 import React, {
@@ -12,18 +12,21 @@ import React, {
     useMemo,
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import {
-    supabase,
-    isSupabaseConfigured,
-    getPartnerEmails,
-} from "../services/supabaseClient";
+import { supabase, isSupabaseConfigured } from "../services/supabaseClient";
 import { queryClient } from "../lib/queryClient";
 import {
     clearPersistedQueryCache,
     syncPersistedCacheUser,
 } from "../lib/queryPersistence";
 
-export type PartnerId = "yijia" | "rachel";
+import {
+    PARTNER_IDS,
+    getPartnerEmail,
+    partnerFromEmail,
+    type PartnerId,
+} from "../lib/partners";
+
+export type { PartnerId };
 
 const DEMO_MODE_STORAGE_KEY = "budget_buddy_demo_pin";
 
@@ -85,29 +88,6 @@ export function AuthProvider({
         }
     }, []);
 
-    // Determine partner id from email address
-    const resolvePartnerFromEmail = useCallback(
-        (email?: string | null): PartnerId | null => {
-            if (!email) return null;
-            const { yiJiaEmail, rachelEmail } = getPartnerEmails();
-            const clean = email.toLowerCase().trim();
-            if (
-                clean === yiJiaEmail.toLowerCase().trim() ||
-                clean.includes("yijia")
-            ) {
-                return "yijia";
-            }
-            if (
-                clean === rachelEmail.toLowerCase().trim() ||
-                clean.includes("rachel")
-            ) {
-                return "rachel";
-            }
-            return null;
-        },
-        [],
-    );
-
     // Initialize and listen to Supabase auth state changes
     useEffect(() => {
         if (!isLive || !supabase) {
@@ -126,9 +106,7 @@ export function AuthProvider({
                     syncPersistedCacheUser(currentSession.user.id, queryClient);
                     setSession(currentSession);
                     setUser(currentSession.user);
-                    const partner = resolvePartnerFromEmail(
-                        currentSession.user.email,
-                    );
+                    const partner = partnerFromEmail(currentSession.user.email);
                     setLoggedInPartner(partner);
                     if (currentSession.user.email) {
                         linkMemberProfile(currentSession.user.email);
@@ -158,7 +136,7 @@ export function AuthProvider({
             setSession(newSession);
             setUser(newSession?.user ?? null);
             if (newSession?.user) {
-                const partner = resolvePartnerFromEmail(newSession.user.email);
+                const partner = partnerFromEmail(newSession.user.email);
                 setLoggedInPartner(partner);
                 if (newSession.user.email) {
                     linkMemberProfile(newSession.user.email);
@@ -173,7 +151,7 @@ export function AuthProvider({
             isMounted = false;
             subscription.unsubscribe();
         };
-    }, [isLive, resolvePartnerFromEmail, linkMemberProfile]);
+    }, [isLive, linkMemberProfile]);
 
     // Sign in by verifying the unique 6-digit PIN against both configured partner accounts
     const signInWithPin = useCallback(
@@ -190,7 +168,7 @@ export function AuthProvider({
                         "true",
                     );
                 }
-                setLoggedInPartner("yijia");
+                setLoggedInPartner("partner1");
                 setAuthLoading(false);
                 return true;
             }
@@ -198,10 +176,10 @@ export function AuthProvider({
             // In mock mode (no Supabase configured), simulate authentication
             if (!isLive || !supabase) {
                 if (pin === "123456" || pin.length === 6) {
-                    // If first digit is 1, treat as Yi Jia, otherwise Rachel for mock demonstration
+                    // A PIN starting with 2 signs in as partner 2, otherwise partner 1
                     const mockPartner: PartnerId = pin.startsWith("2")
-                        ? "rachel"
-                        : "yijia";
+                        ? "partner2"
+                        : "partner1";
                     setLoggedInPartner(mockPartner);
                     return true;
                 }
@@ -210,88 +188,55 @@ export function AuthProvider({
             }
 
             setAuthLoading(true);
-            const { yiJiaEmail, rachelEmail } = getPartnerEmails();
 
             try {
-                console.log(
-                    `[Auth] Attempting sign in with emails: Yi Jia (${yiJiaEmail}), Rachel (${rachelEmail})`,
-                );
+                // Try each partner's account with the entered PIN, in slot order.
+                const errors: (string | undefined)[] = [];
+                for (const partner of PARTNER_IDS) {
+                    const email = getPartnerEmail(partner);
+                    const res = await supabase.auth.signInWithPassword({
+                        email,
+                        password: pin,
+                    });
 
-                // 1. Try Yi Jia's account with the entered PIN
-                const res1 = await supabase.auth.signInWithPassword({
-                    email: yiJiaEmail,
-                    password: pin,
-                });
-
-                if (res1.data.session && res1.data.user) {
-                    setSession(res1.data.session);
-                    setUser(res1.data.user);
-                    setLoggedInPartner("yijia");
-                    setIsDemoMode(false);
-                    if (
-                        typeof window !== "undefined" &&
-                        window.sessionStorage
-                    ) {
-                        window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
+                    if (res.data.session && res.data.user) {
+                        setSession(res.data.session);
+                        setUser(res.data.user);
+                        setLoggedInPartner(partner);
+                        setIsDemoMode(false);
+                        if (
+                            typeof window !== "undefined" &&
+                            window.sessionStorage
+                        ) {
+                            window.sessionStorage.removeItem(
+                                DEMO_MODE_STORAGE_KEY,
+                            );
+                        }
+                        syncPersistedCacheUser(res.data.user.id, queryClient);
+                        await linkMemberProfile(email);
+                        setAuthLoading(false);
+                        return true;
                     }
-                    syncPersistedCacheUser(res1.data.user.id, queryClient);
-                    await linkMemberProfile(yiJiaEmail);
-                    setAuthLoading(false);
-                    return true;
-                }
 
-                if (
-                    res1.error &&
-                    res1.error.message !== "Invalid login credentials"
-                ) {
-                    console.warn(
-                        "[Auth] Yi Jia sign-in notice:",
-                        res1.error.message,
-                    );
-                }
-
-                // 2. If Yi Jia's didn't match, try Rachel's account
-                const res2 = await supabase.auth.signInWithPassword({
-                    email: rachelEmail,
-                    password: pin,
-                });
-
-                if (res2.data.session && res2.data.user) {
-                    setSession(res2.data.session);
-                    setUser(res2.data.user);
-                    setLoggedInPartner("rachel");
-                    setIsDemoMode(false);
-                    if (
-                        typeof window !== "undefined" &&
-                        window.sessionStorage
-                    ) {
-                        window.sessionStorage.removeItem(DEMO_MODE_STORAGE_KEY);
+                    const message = res.error?.message;
+                    errors.push(message);
+                    if (message && message !== "Invalid login credentials") {
+                        console.warn(
+                            `[Auth] ${partner} sign-in notice:`,
+                            message,
+                        );
                     }
-                    syncPersistedCacheUser(res2.data.user.id, queryClient);
-                    await linkMemberProfile(rachelEmail);
-                    setAuthLoading(false);
-                    return true;
-                }
-
-                if (
-                    res2.error &&
-                    res2.error.message !== "Invalid login credentials"
-                ) {
-                    console.warn(
-                        "[Auth] Rachel sign-in notice:",
-                        res2.error.message,
-                    );
                 }
 
                 // Check if there was an email confirmation error or config mismatch
-                const specificError =
-                    res1.error?.message?.includes("Email not confirmed") ||
-                    res2.error?.message?.includes("Email not confirmed")
-                        ? "Email address not confirmed in Supabase. Please auto-confirm it in Supabase Auth."
-                        : res1.error?.message &&
-                            res1.error.message !== "Invalid login credentials"
-                          ? res1.error.message
-                          : "Invalid PIN code. Enter 000000 to enter Demo Mode.";
+                const firstError = errors[0];
+                const specificError = errors.some((e) =>
+                    e?.includes("Email not confirmed"),
+                )
+                    ? "Email address not confirmed in Supabase. Please auto-confirm it in Supabase Auth."
+                    : firstError && firstError !== "Invalid login credentials"
+                      ? firstError
+                      : "Invalid PIN code. Enter 000000 to enter Demo Mode.";
 
                 setAuthError(specificError);
                 setAuthLoading(false);

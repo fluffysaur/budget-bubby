@@ -123,8 +123,8 @@ describe("financialFormulas", () => {
     });
 
     describe("calculateSharedExpenseSettlement", () => {
-        const member1 = "member-yijia";
-        const member2 = "member-rachel";
+        const member1 = "member-partner1";
+        const member2 = "member-partner2";
 
         it("calculates Splitwise-style settlement: Alex paid $100 shared, Sam paid $40 shared -> Sam owes Alex $30", () => {
             const expenses: Expense[] = [

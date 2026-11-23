@@ -28,7 +28,7 @@
  *    - addRecurringItem, updateRecurringItem, deleteRecurringItem on mockFinanceService / financeService
  * 6. RecurringPage component:
  *    - 2 summary cards (Annual Outflow, Next Renewal)
- *    - Perspective filtering (household vs yijia vs rachel)
+ *    - Perspective filtering (household vs partner1 vs partner2)
  *    - Modal opening, recurring item addition, editing, and deletion flow
  */
 
@@ -984,7 +984,7 @@ describe("RecurringPage Component", () => {
 
     it("filters recurring items and metrics by perspective (Alex vs Sam)", async () => {
         const { rerender } = render(
-            <HouseholdProvider initialPerspective="yijia">
+            <HouseholdProvider initialPerspective="partner1">
                 <RecurringPage />
             </HouseholdProvider>,
         );
@@ -999,7 +999,7 @@ describe("RecurringPage Component", () => {
 
         // Sam's perspective
         rerender(
-            <HouseholdProvider initialPerspective="rachel">
+            <HouseholdProvider initialPerspective="partner2">
                 <RecurringPage />
             </HouseholdProvider>,
         );

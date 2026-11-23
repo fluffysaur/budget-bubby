@@ -11,7 +11,8 @@ export function useLoggedInMember(fallbackMembers?: HouseholdMember[]): {
     me: HouseholdMember | null;
     members: HouseholdMember[];
 } {
-    const { loggedInPartner } = useAuth();
+    const { loggedInPartner, user } = useAuth();
+    const authUserId = user?.id ?? null;
     const household = useOptionalHousehold();
     const ctxMembers = household?.members;
     const members =
@@ -22,8 +23,14 @@ export function useLoggedInMember(fallbackMembers?: HouseholdMember[]): {
               : NO_MEMBERS;
     const activeMember = household?.activeMember ?? null;
     const me = useMemo(
-        () => resolveLoggedInMember(members, loggedInPartner, activeMember),
-        [members, loggedInPartner, activeMember],
+        () =>
+            resolveLoggedInMember(
+                members,
+                loggedInPartner,
+                activeMember,
+                authUserId,
+            ),
+        [members, loggedInPartner, activeMember, authUserId],
     );
     return { me, members };
 }

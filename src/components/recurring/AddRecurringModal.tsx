@@ -34,7 +34,7 @@ import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
-import { displayNameMatchesPartner } from "../../lib/members";
+import { matchPartnerMember } from "../../lib/members";
 import { feedback } from "../../lib/delight/feedback";
 import { filterCategoriesForMember } from "../../lib/financialFormulas";
 import {
@@ -98,9 +98,7 @@ export function AddRecurringModal({
     const { members, activeMember, isMockMode } = useSafeHousehold();
 
     // Find member IDs
-    const partnerOneMember = members.find((m) =>
-        displayNameMatchesPartner(m.display_name, "yijia"),
-    );
+    const partnerOneMember = matchPartnerMember(members, "partner1");
 
     const defaultOwnerId =
         activeMember?.id ||

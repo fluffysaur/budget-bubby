@@ -32,27 +32,27 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         });
 
         it("filters accounts by user perspective including joint accounts", async () => {
-            const yijiaAccounts = await mockFinanceService.getAccounts("yijia");
-            const rachelAccounts =
-                await mockFinanceService.getAccounts("rachel");
+            const partnerOneAccounts = await mockFinanceService.getAccounts("partner1");
+            const partnerTwoAccounts =
+                await mockFinanceService.getAccounts("partner2");
 
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
-            const rachelMember = mockMembers.find(
+            const partnerTwoMember = mockMembers.find(
                 (m) => m.display_name === "Sam",
             )!;
 
-            // Every account in yijia's perspective must belong to yijia or be joint
-            for (const acc of yijiaAccounts) {
-                expect(acc.owner_id === yijiaMember.id || acc.is_joint).toBe(
+            // Every account in partner1's perspective must belong to partner1 or be joint
+            for (const acc of partnerOneAccounts) {
+                expect(acc.owner_id === partnerOneMember.id || acc.is_joint).toBe(
                     true,
                 );
             }
 
-            // Every account in rachel's perspective must belong to rachel or be joint
-            for (const acc of rachelAccounts) {
-                expect(acc.owner_id === rachelMember.id || acc.is_joint).toBe(
+            // Every account in partner2's perspective must belong to partner2 or be joint
+            for (const acc of partnerTwoAccounts) {
+                expect(acc.owner_id === partnerTwoMember.id || acc.is_joint).toBe(
                     true,
                 );
             }
@@ -129,11 +129,11 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
                 await mockFinanceService.getHouseholdOverview();
 
             // Add a 50/50 shared expense paid by Alex ($100 => Sam owes $50)
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
             const created = await mockFinanceService.addExpense({
-                payer_id: yijiaMember.id,
+                payer_id: partnerOneMember.id,
                 category_id: "cat-00000000-0101",
                 date: "2026-09-15",
                 item: "Weekly Grocery Feast",
@@ -160,11 +160,11 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         });
 
         it("deletes an expense properly", async () => {
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
             const created = await mockFinanceService.addExpense({
-                payer_id: yijiaMember.id,
+                payer_id: partnerOneMember.id,
                 date: "2026-09-15",
                 item: "Temp Expense",
                 amount: 30.0,
@@ -181,10 +181,10 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         });
 
         it("settles shared expenses and resets net settlement balance to 0", async () => {
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
-            const rachelMember = mockMembers.find(
+            const partnerTwoMember = mockMembers.find(
                 (m) => m.display_name === "Sam",
             )!;
 
@@ -197,8 +197,8 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
             // Perform settlement
             await mockFinanceService.settleSharedExpenses(
-                yijiaMember.id,
-                rachelMember.id,
+                partnerOneMember.id,
+                partnerTwoMember.id,
             );
 
             // Verify settlement
@@ -215,8 +215,8 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             });
             for (const exp of sharedExpenses) {
                 if (
-                    exp.payer_id === yijiaMember.id ||
-                    exp.payer_id === rachelMember.id
+                    exp.payer_id === partnerOneMember.id ||
+                    exp.payer_id === partnerTwoMember.id
                 ) {
                     expect(exp.settled).toBe(true);
                 }
@@ -267,17 +267,17 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
     describe("Monthly Budget & Categories", () => {
         it("retrieves monthly budget detail with category breakdowns and actual spent", async () => {
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
             const budgetDetail = await mockFinanceService.getMonthlyBudget(
                 "2026-09",
-                yijiaMember.id,
+                partnerOneMember.id,
             );
 
             expect(budgetDetail).toBeDefined();
             expect(budgetDetail.budget.month).toBe("2026-09");
-            expect(budgetDetail.budget.owner_id).toBe(yijiaMember.id);
+            expect(budgetDetail.budget.owner_id).toBe(partnerOneMember.id);
             expect(budgetDetail.categories.length).toBeGreaterThan(0);
             expect(budgetDetail.disposablePool).toBe(
                 budgetDetail.budget.after_deductions,
@@ -286,12 +286,12 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         });
 
         it("updates monthly budget, ignores bonus and recalculates after_deductions", async () => {
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
             const budgetDetail = await mockFinanceService.getMonthlyBudget(
                 "2026-09",
-                yijiaMember.id,
+                partnerOneMember.id,
             );
 
             await mockFinanceService.updateMonthlyBudget({
@@ -305,7 +305,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
             const updatedDetail = await mockFinanceService.getMonthlyBudget(
                 "2026-09",
-                yijiaMember.id,
+                partnerOneMember.id,
             );
             expect(updatedDetail.budget.gross_salary).toBe(7000.0);
             // bonus is derived from the bonus log, never written back, and stays outside caps
@@ -315,12 +315,12 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         });
 
         it("updates base profile and allocations", async () => {
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
             const profiles = await mockFinanceService.getBaseProfiles();
             const profile = profiles.find(
-                (p) => p.owner_id === yijiaMember.id,
+                (p) => p.owner_id === partnerOneMember.id,
             )!;
 
             const updatedProfile = { ...profile, gross_salary: 6500.0 };
@@ -560,26 +560,26 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
         it("locks past months and keeps historical budgets intact when base profile changes in mock mode", async () => {
             const pastMonth = "2025-01";
-            const yijiaMember = mockMembers.find(
+            const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
             )!;
 
             // 1. Fetch past month budget
             const pastBudgetBefore = await mockFinanceService.getMonthlyBudget(
                 pastMonth,
-                yijiaMember.id,
+                partnerOneMember.id,
             );
             expect(pastBudgetBefore.budget.is_locked).toBe(true);
             const originalGross = pastBudgetBefore.budget.gross_salary;
 
             // 2. Update base profile with higher salary
             const profiles = await mockFinanceService.getBaseProfiles();
-            const yijiaProfile = profiles.find(
-                (p) => p.owner_id === yijiaMember.id,
+            const partnerOneProfile = profiles.find(
+                (p) => p.owner_id === partnerOneMember.id,
             )!;
             await mockFinanceService.updateBaseProfile(
                 {
-                    ...yijiaProfile,
+                    ...partnerOneProfile,
                     gross_salary: originalGross + 2500,
                 },
                 [],
@@ -588,7 +588,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             // 3. Past month budget gross salary must remain unchanged
             const pastBudgetAfter = await mockFinanceService.getMonthlyBudget(
                 pastMonth,
-                yijiaMember.id,
+                partnerOneMember.id,
             );
             expect(pastBudgetAfter.budget.gross_salary).toBe(originalGross);
             expect(pastBudgetAfter.budget.is_locked).toBe(true);

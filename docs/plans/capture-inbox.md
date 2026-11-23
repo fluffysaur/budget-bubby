@@ -789,7 +789,7 @@ One PR per phase (or 0+1 and 3+5 combined). Each PR description states what chan
     - (d) a future migration adding `expenses.card_id` matched to `credit_cards` (useful for statement reconciliation)
 
     The plan defaults to (a).
-3. **Partner's Inbox.** RLS lets both members read both inboxes. Should triage show only your own (the default in this plan), or also a read-only `Rachel's Inbox (2)` row?
+3. **Partner's Inbox.** RLS lets both members read both inboxes. Should triage show only your own (the default in this plan), or also a read-only `Sam's Inbox (2)` row?
 4. **Shared default.** Should a merchant rule also remember Mine/Shared (the plan does), or should split always default to the last split used?
 5. **Foreign transactions.** Confirm at triage time using cached FX (the plan), or keep foreign items pending until the card statement gives the real SGD amount?
 6. **Default ignore list.** Seed `ignore` rules for transit (SimplyGo / TransitLink) and petrol pre-auths? Transit fares are usually tracked as one monthly figure.

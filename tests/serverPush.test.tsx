@@ -189,7 +189,7 @@ describe("tapped push ?read= handling", () => {
             <MemoryRouter initialEntries={["/budget?read=key-a%2Ckey-b"]}>
                 <AuthProvider
                     initialAuthenticated={true}
-                    initialPartner="yijia"
+                    initialPartner="partner1"
                 >
                     <HouseholdProvider defaultPerspective="household">
                         <NotificationCenterPopover />

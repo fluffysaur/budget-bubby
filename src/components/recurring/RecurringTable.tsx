@@ -32,6 +32,7 @@ import {
     type RecurringItemStatus,
 } from "../../lib/recurringItems";
 import type {
+    HouseholdMember,
     RecurringItem,
     RecurringItemType,
     SavingsGoal,
@@ -39,6 +40,7 @@ import type {
 import { CurrencyText } from "../ui/CurrencyText";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
 
 export interface RecurringTableProps {
     recurringItems: RecurringItem[];
@@ -65,6 +67,8 @@ function formatStartsLabel(startDate: string): string {
     return `Starts ${MONTH_NAMES[Number(m) - 1]} '${y.slice(2)}`;
 }
 
+const NO_MEMBERS: HouseholdMember[] = [];
+
 export function RecurringTable({
     recurringItems,
     onEdit,
@@ -76,6 +80,8 @@ export function RecurringTable({
     title,
     goals = EMPTY_GOALS,
 }: RecurringTableProps) {
+    const household = useOptionalHousehold();
+    const members = household?.members ?? NO_MEMBERS;
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedType, setSelectedType] = useState<"all" | RecurringItemType>(
         "all",
@@ -136,23 +142,14 @@ export function RecurringTable({
             ? `${totalCount} ${totalCount === 1 ? "item" : "items"}`
             : `${shownCount} of ${totalCount} items`;
 
-    // Helper for owner label
-    const getOwnerLabel = (ownerId: string) => {
-        if (
-            ownerId.includes("0011") ||
-            ownerId.toLowerCase().includes("yj") ||
-            ownerId.toLowerCase().includes("yijia")
-        ) {
-            return "Alex";
-        }
-        if (
-            ownerId.includes("0012") ||
-            ownerId.toLowerCase().includes("rc") ||
-            ownerId.toLowerCase().includes("rachel")
-        ) {
-            return "Sam";
-        }
-        return "Joint";
+    // Owner label and icon from the household member list
+    const getOwner = (ownerId: string) => {
+        const index = members.findIndex((mem) => mem.id === ownerId);
+        if (index === -1) return { label: "Joint", icon: "👥" };
+        return {
+            label: members[index].display_name,
+            icon: index === 0 ? "👨" : "👩",
+        };
     };
 
     return (
@@ -323,15 +320,8 @@ export function RecurringTable({
                                             recurringItem.payment_month <= 12
                                           ? `${MONTH_NAMES[recurringItem.payment_month - 1]} (M${recurringItem.payment_month})`
                                           : "N/A";
-                                    const owner = getOwnerLabel(
-                                        recurringItem.owner_id,
-                                    );
-                                    const ownerIcon =
-                                        owner === "Alex"
-                                            ? "👨"
-                                            : owner === "Sam"
-                                              ? "👩"
-                                              : "👥";
+                                    const { label: owner, icon: ownerIcon } =
+                                        getOwner(recurringItem.owner_id);
 
                                     const status = statusById.get(
                                         recurringItem.id,
