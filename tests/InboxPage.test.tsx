@@ -66,8 +66,14 @@ describe("InboxPage", () => {
     beforeEach(() => {
         localStorage.clear();
         mockFinanceService.resetData();
+        // Pin the clock to midday SGT so seeded relative timestamps (e.g. "45
+        // minutes ago") never cross an SGT day boundary and flip "Today".
+        vi.setSystemTime(new Date("2026-11-23T04:00:00Z"));
     });
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 
     it("shows the newest item with its category guessed", async () => {
         renderInbox();
