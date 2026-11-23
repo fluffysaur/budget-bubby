@@ -48,7 +48,7 @@ export function SegmentedTabs<T extends string = string>({
     return (
         <nav
             aria-label={ariaLabel}
-            className={`flex w-full sm:w-auto overflow-x-auto no-scrollbar items-center gap-1 p-1 rounded-2xl bg-(--bg-cream) border-2 border-(--border-subtle) ${className}`}
+            className={`flex w-full sm:w-auto overflow-x-auto overflow-y-hidden touch-pan-x no-scrollbar items-center gap-1 p-1 rounded-2xl bg-(--bg-cream) border-2 border-(--border-subtle) ${className}`}
         >
             {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;

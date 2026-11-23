@@ -23,9 +23,7 @@ export type ReadToolName =
     | "getGoals";
 
 export type ProposalToolName =
-    | "proposeExpense"
-    | "proposeBalanceUpdate"
-    | "proposeBudgetAdjustment";
+    "proposeExpense" | "proposeBalanceUpdate" | "proposeBudgetAdjustment";
 
 export type AiToolName = ReadToolName | ProposalToolName;
 
@@ -145,7 +143,7 @@ export const BUBBY_TOOLS: AiToolDefinition[] = [
     {
         name: "getExpenses",
         description:
-            "List expenses for a given month or search query. Defaults to the current month.",
+            "List expenses for a given month or search query. Defaults to the current month. Expenses funded from a savings goal have goalName set and category null; they are not uncategorised. Use sortBy 'amount' for top or biggest expenses.",
         parameters: {
             type: "object",
             properties: {
@@ -161,6 +159,17 @@ export const BUBBY_TOOLS: AiToolDefinition[] = [
                 categoryId: {
                     type: "string",
                     description: "Optional category ID filter.",
+                },
+                goalId: {
+                    type: "string",
+                    description:
+                        "Optional savings goal ID filter (from getGoals) to list spend funded by that goal.",
+                },
+                sortBy: {
+                    type: "string",
+                    enum: ["date", "amount"],
+                    description:
+                        "Sort order before the limit is applied: 'date' (newest first, default) or 'amount' (largest first).",
                 },
                 limit: {
                     type: "integer",
@@ -416,40 +425,74 @@ export async function executeReadTool(
                 typeof args.categoryId === "string" && args.categoryId.trim()
                     ? args.categoryId.trim()
                     : undefined;
+            const goalId =
+                typeof args.goalId === "string" && args.goalId.trim()
+                    ? args.goalId.trim()
+                    : undefined;
+            const sortBy = args.sortBy === "amount" ? "amount" : "date";
             const rawLimit = toFiniteNumber(args.limit);
-            const limit = Math.min(Math.max(Math.round(rawLimit ?? 40), 1), 100);
+            const limit = Math.min(
+                Math.max(Math.round(rawLimit ?? 40), 1),
+                100,
+            );
 
-            const [expenses, categories] = await Promise.all([
+            const [expenses, categories, goals] = await Promise.all([
                 financeService.getExpenses({
                     month,
                     search,
                     categoryId,
+                    goalId,
                     payerId:
                         context.perspective !== "household"
                             ? context.activeMemberId
                             : undefined,
                 }),
                 financeService.getCategories(),
+                financeService.getGoals(),
             ]);
 
             const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+            const goalMap = new Map(goals.map((g) => [g.id, g.title]));
             const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+            const goalSpendTotal = expenses.reduce(
+                (sum, e) => (e.goal_id ? sum + e.amount : sum),
+                0,
+            );
+
+            const sorted = [...expenses].sort((a, b) =>
+                sortBy === "amount"
+                    ? b.amount - a.amount
+                    : b.date.localeCompare(a.date),
+            );
 
             return {
                 month,
+                sortBy,
                 totalCount: expenses.length,
                 totalAmount,
-                expenses: expenses.slice(0, limit).map((e) => ({
-                    id: e.id,
-                    date: e.date,
-                    item: e.item,
-                    amount: e.amount,
-                    category: e.category_id
-                        ? (categoryMap.get(e.category_id) ?? "Uncategorized")
-                        : "Uncategorized",
-                    isShared: e.is_shared,
-                    remarks: e.remarks ?? null,
-                })),
+                budgetSpendTotal: totalAmount - goalSpendTotal,
+                goalSpendTotal,
+                expenses: sorted.slice(0, limit).map((e) => {
+                    const goalName = e.goal_id
+                        ? (goalMap.get(e.goal_id) ?? "Savings goal")
+                        : null;
+                    return {
+                        id: e.id,
+                        date: e.date,
+                        item: e.item,
+                        amount: e.amount,
+                        category: e.category_id
+                            ? (categoryMap.get(e.category_id) ??
+                              "Uncategorized")
+                            : goalName
+                              ? null
+                              : "Uncategorized",
+                        goalId: e.goal_id ?? null,
+                        goalName,
+                        isShared: e.is_shared,
+                        remarks: e.remarks ?? null,
+                    };
+                }),
             };
         }
         case "getMonthlyBudget": {
@@ -481,7 +524,8 @@ export async function executeReadTool(
                     allocated: c.allocated_amount,
                     spent: c.actualSpent ?? 0,
                     remaining:
-                        c.remaining ?? c.allocated_amount - (c.actualSpent ?? 0),
+                        c.remaining ??
+                        c.allocated_amount - (c.actualSpent ?? 0),
                 })),
             };
         }
@@ -519,7 +563,8 @@ export async function buildProposedAction(
                 : "New expense";
         const amount = Math.abs(toFiniteNumber(args.amount) ?? 0);
         const date =
-            typeof args.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.date)
+            typeof args.date === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(args.date)
                 ? args.date
                 : today;
         const isShared = Boolean(args.isShared);
@@ -579,7 +624,8 @@ export async function buildProposedAction(
     if (name === "proposeBalanceUpdate") {
         const newBalance = toFiniteNumber(args.newBalance) ?? 0;
         const date =
-            typeof args.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(args.date)
+            typeof args.date === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(args.date)
                 ? args.date
                 : today;
         const notes =
@@ -680,7 +726,9 @@ export async function executeProposedAction(
             throw new Error("Expense amount must be greater than zero.");
         }
         if (!payload.payerId) {
-            throw new Error("No household member available to log this expense.");
+            throw new Error(
+                "No household member available to log this expense.",
+            );
         }
 
         const input: CreateExpenseInput = {
