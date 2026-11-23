@@ -290,8 +290,6 @@ export function BonusFormModal({
                 cpf: round2(cpf),
                 note: note.trim() || null,
                 split: computedSplit,
-                // Keep legacy contributions on edit; new bonuses fund no goals.
-                goal_contributions: editingEvent?.goal_contributions ?? [],
             });
             if (saveAsDefault && canSaveDefault) {
                 await financeService.saveBonusSplitDefault(

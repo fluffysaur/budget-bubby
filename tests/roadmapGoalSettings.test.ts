@@ -105,7 +105,6 @@ describe("buffer goal", () => {
             household_id: "h",
             title: "Buffer",
             target_amount: 9000,
-            saved_so_far: 0,
             target_date: "2027-06-01",
             emoji: "🛟",
             status: "on_track",

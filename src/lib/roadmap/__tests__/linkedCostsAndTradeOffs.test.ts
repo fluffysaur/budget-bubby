@@ -33,7 +33,6 @@ function makeGoal(overrides: Partial<SavingsGoal> = {}): SavingsGoal {
         owner_id: null,
         title: "House",
         target_amount: 80000,
-        saved_so_far: 0,
         target_date: "2027-07-01",
         emoji: "🏠",
         status: "on_track",

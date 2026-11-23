@@ -283,7 +283,6 @@ describe("financialFormulas", () => {
             household_id: "hh-1",
             title: "Trip",
             target_amount: 1000,
-            saved_so_far: 0,
             target_date: "2027-09-15",
             emoji: "x",
         };

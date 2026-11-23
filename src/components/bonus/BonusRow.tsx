@@ -8,7 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { m } from "motion/react";
 import { listItem } from "../../lib/motion";
 import { Badge, Button, CurrencyText, TruncatedText } from "../ui";
-import { BONUS_TYPE_LABELS, bonusGoalTotal } from "../../lib/bonusFormulas";
+import { BONUS_TYPE_LABELS } from "../../lib/bonusFormulas";
 import { MONTH_NAMES_SHORT } from "../../lib/dateUtils";
 import type { BonusEvent } from "../../types/finance";
 
@@ -33,7 +33,6 @@ export function BonusRow({
     onDelete,
 }: BonusRowProps) {
     const typeLabel = BONUS_TYPE_LABELS[event.type] ?? "Other";
-    const goalTotal = bonusGoalTotal(event);
 
     return (
         <m.div
@@ -61,11 +60,6 @@ export function BonusRow({
                         {formatShortDay(event.received_on)}
                     </span>
                 </div>
-                {goalTotal > 0 && (
-                    <Badge variant="mint" size="sm">
-                        <CurrencyText amount={goalTotal} /> to goals
-                    </Badge>
-                )}
             </div>
 
             <div className="shrink-0 text-right">

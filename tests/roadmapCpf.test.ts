@@ -302,7 +302,6 @@ describe("toRoadmapGoals", () => {
             household_id: "h",
             title: "House",
             target_amount: 100000,
-            saved_so_far: 0,
             target_date: "2028-11-01",
             emoji: "🏠",
             status: "on_track",

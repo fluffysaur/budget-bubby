@@ -35,7 +35,6 @@ async function seedBonus(overrides: { received_on?: string } = {}) {
         cpf: 2000,
         note: "FY26 Performance",
         split: computeBonusSplit(8000, cloneDefaultSplit()),
-        goal_contributions: [],
     });
 }
 
@@ -128,7 +127,6 @@ describe("BonusLogPanel", () => {
 
         const { events } = await mockFinanceService.getBonusEvents();
         expect(events).toHaveLength(1);
-        expect(events[0].goal_contributions).toEqual([]);
     });
 
     it("pre-fills edit and does not celebrate on save", async () => {

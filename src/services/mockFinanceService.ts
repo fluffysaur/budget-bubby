@@ -1289,7 +1289,6 @@ class MockFinanceServiceImpl implements FinanceService {
             owner_id: input.owner_id || null,
             title: input.title,
             target_amount: Math.round(input.target_amount * 100) / 100,
-            saved_so_far: 0,
             target_date: input.target_date,
             emoji: input.emoji || "🎯",
             status: "on_track",
@@ -1324,7 +1323,7 @@ class MockFinanceServiceImpl implements FinanceService {
         if (!goal) {
             throw new Error(`Savings goal with id "${id}" not found`);
         }
-        const { saved_so_far: _savedSoFar, ...rest } = updates;
+        const rest = { ...updates };
         if (rest.cpf_oa_cap !== undefined) {
             rest.cpf_oa_cap = roundCpfCap(rest.cpf_oa_cap);
         }
@@ -1731,17 +1730,6 @@ class MockFinanceServiceImpl implements FinanceService {
         }
         const existing = existingIdx >= 0 ? events[existingIdx] : undefined;
 
-        const contributions = input.goal_contributions
-            .filter(
-                (c) =>
-                    c.amount > 0 &&
-                    this.state.savingsGoals.some((g) => g.id === c.goal_id),
-            )
-            .map((c) => ({
-                goal_id: c.goal_id,
-                amount: Math.round(c.amount * 100) / 100,
-            }));
-
         const gross = Math.round(input.gross * 100) / 100;
         const cpf = Math.round(input.cpf * 100) / 100;
         const now = new Date().toISOString();
@@ -1758,7 +1746,6 @@ class MockFinanceServiceImpl implements FinanceService {
             net: Math.round((gross - cpf) * 100) / 100,
             note: input.note || null,
             split: cloneDeep(input.split),
-            goal_contributions: contributions,
             created_by: existing?.created_by ?? null,
             created_at: existing?.created_at ?? now,
             updated_at: now,

@@ -419,7 +419,6 @@ describe("inputs", () => {
                 household_id: "hh",
                 title: "Wedding",
                 target_amount: 30000,
-                saved_so_far: 999,
                 target_date: "2027-05-01",
                 emoji: "💍",
                 status: "achieved",

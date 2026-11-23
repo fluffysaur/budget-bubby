@@ -184,14 +184,8 @@ export function resetCategoryGroupColumnSupport(): void {
 }
 
 /** Postgres 42703 (undefined column) or PostgREST PGRST204 (column not in schema cache). */
-/** Maps a bonus_events row (with optional nested contributions) to a BonusEvent. */
+/** Maps a bonus_events row to a BonusEvent. */
 function mapBonusEventRow(row: Record<string, unknown>): BonusEvent {
-    const contributions = Array.isArray(row.bonus_goal_contributions)
-        ? (row.bonus_goal_contributions as Array<{
-              goal_id: string;
-              amount: unknown;
-          }>)
-        : [];
     const gross = Number(row.gross) || 0;
     const cpf = Number(row.cpf) || 0;
     const split = Array.isArray(row.split)
@@ -217,10 +211,6 @@ function mapBonusEventRow(row: Record<string, unknown>): BonusEvent {
                 : Math.round((gross - cpf) * 100) / 100,
         note: (row.note as string | null | undefined) ?? null,
         split,
-        goal_contributions: contributions.map((c) => ({
-            goal_id: c.goal_id,
-            amount: Number(c.amount) || 0,
-        })),
         created_by: (row.created_by as string | null | undefined) ?? null,
         created_at: row.created_at as string | undefined,
         updated_at: row.updated_at as string | undefined,
@@ -2008,7 +1998,6 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 owner_id: input.owner_id || null,
                 title: input.title,
                 target_amount: input.target_amount,
-                saved_so_far: 0,
                 target_date: input.target_date,
                 emoji: input.emoji || "🎯",
                 status: "on_track",
@@ -2035,7 +2024,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         updates: Partial<SavingsGoal>,
     ): Promise<SavingsGoal> {
         const client = this.getClient();
-        const { saved_so_far: _savedSoFar, ...finalUpdates } = updates;
+        const finalUpdates = { ...updates };
         if (finalUpdates.cpf_oa_cap !== undefined) {
             finalUpdates.cpf_oa_cap = roundCpfCap(finalUpdates.cpf_oa_cap);
         }
@@ -2664,7 +2653,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             return { available: false, events: [] };
         const { data, error } = await this.getClient()
             .from("bonus_events")
-            .select("*, bonus_goal_contributions(goal_id, amount)")
+            .select("*")
             .order("received_on", { ascending: false });
         if (error) {
             if (isMissingRelationError(error)) {
@@ -2751,47 +2740,43 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         const client = this.getClient();
         const householdId = await this.getHouseholdId();
         const createdBy = input.id ? null : await this.getCurrentMemberId();
-        const contributions = input.goal_contributions
-            .filter((c) => c.amount > 0)
-            .map((c) => ({
-                goal_id: c.goal_id,
-                amount: Math.round(c.amount * 100) / 100,
-            }));
-
-        const pEvent: Record<string, unknown> = {
-            household_id: householdId,
+        const fields = {
             recipient_id: input.recipient_id,
             type: input.type,
             received_on: input.received_on,
             gross: Math.round(input.gross * 100) / 100,
             cpf: Math.round(input.cpf * 100) / 100,
-            note: input.note ?? "",
+            note: input.note || null,
             split: input.split,
         };
-        if (input.id) pEvent.id = input.id;
-        if (createdBy) pEvent.created_by = createdBy;
 
-        const { data, error } = await client.rpc("save_bonus_event", {
-            p_event: pEvent,
-            p_contributions: contributions,
-        });
+        const { data, error } = input.id
+            ? await client
+                  .from("bonus_events")
+                  .update({ ...fields, updated_at: new Date().toISOString() })
+                  .eq("id", input.id)
+                  .select()
+                  .maybeSingle()
+            : await client
+                  .from("bonus_events")
+                  .insert({
+                      ...fields,
+                      household_id: householdId,
+                      ...(createdBy ? { created_by: createdBy } : {}),
+                  })
+                  .select()
+                  .single();
         if (error) this.throwBonusError(error);
+        if (!data) throw new Error("Bonus not found");
         this.bonusTableAvailable = true;
-
-        const row = (Array.isArray(data) ? data[0] : data) as Record<
-            string,
-            unknown
-        > | null;
-        return mapBonusEventRow({
-            ...(row ?? { id: input.id ?? "", ...pEvent }),
-            bonus_goal_contributions: contributions,
-        });
+        return mapBonusEventRow(data as Record<string, unknown>);
     }
 
     public async deleteBonusEvent(id: string): Promise<void> {
-        const { error } = await this.getClient().rpc("delete_bonus_event", {
-            p_event_id: id,
-        });
+        const { error } = await this.getClient()
+            .from("bonus_events")
+            .delete()
+            .eq("id", id);
         if (error) this.throwBonusError(error);
     }
 

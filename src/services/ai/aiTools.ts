@@ -492,8 +492,6 @@ export async function executeReadTool(
                     id: g.id,
                     title: g.title,
                     targetAmount: g.target_amount,
-                    savedSoFar: g.saved_so_far,
-                    remaining: Math.max(0, g.target_amount - g.saved_so_far),
                     targetDate: g.target_date,
                     status: g.status,
                 })),
