@@ -23,6 +23,7 @@ import type {
 import { CPF_KINDS } from "../../lib/cpfAccounts";
 import { useUpdateAccountMutation } from "../../hooks/useFinanceQueries";
 import { feedback } from "../../lib/delight/feedback";
+import { AccountOriginChoice } from "./AccountOriginChoice";
 
 export interface EditAccountModalProps {
     isOpen: boolean;
@@ -50,6 +51,8 @@ export function EditAccountModal({
     const [isJoint, setIsJoint] = useState(false);
     const [notes, setNotes] = useState("");
     const [cpfKind, setCpfKind] = useState<CpfKind | "">("");
+    // Legacy null reads as "Existing account", which is how it's treated.
+    const [isNewAccount, setIsNewAccount] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +65,7 @@ export function EditAccountModal({
             setIsJoint(account.is_joint);
             setNotes(account.notes || "");
             setCpfKind(account.cpf_kind ?? "");
+            setIsNewAccount(account.is_new_account === true);
             setError(null);
             setIsSubmitting(false);
         }
@@ -98,6 +102,11 @@ export function EditAccountModal({
                     notes: notes.trim() || null,
                     ...(isCpf && !isMatchedCpf && cpfKind
                         ? { cpf_kind: cpfKind }
+                        : {}),
+                    // Only sent when changed, so other edits never touch it.
+                    ...(!isCpf &&
+                    isNewAccount !== (account.is_new_account === true)
+                        ? { is_new_account: isNewAccount }
                         : {}),
                 },
             });
@@ -257,6 +266,14 @@ export function EditAccountModal({
                             </span>
                         )}
                     </div>
+
+                    {!isCpf && (
+                        <AccountOriginChoice
+                            value={isNewAccount}
+                            onChange={setIsNewAccount}
+                            labelClassName="text-xs"
+                        />
+                    )}
 
                     {/* Notes */}
                     <div>

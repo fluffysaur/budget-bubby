@@ -577,6 +577,11 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 notes: input.notes || null,
                 cpf_kind:
                     input.type === "CPF" ? (input.cpf_kind ?? null) : null,
+                // Sent only when chosen, so a $0 account still saves before
+                // the column's migration has run.
+                ...(input.is_new_account != null
+                    ? { is_new_account: input.is_new_account }
+                    : {}),
             })
             .select()
             .single();
@@ -611,6 +616,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         if (updates.is_joint !== undefined) payload.is_joint = updates.is_joint;
         if (updates.notes !== undefined) payload.notes = updates.notes;
         if (updates.cpf_kind !== undefined) payload.cpf_kind = updates.cpf_kind;
+        if (updates.is_new_account !== undefined)
+            payload.is_new_account = updates.is_new_account;
 
         const { data, error } = await client
             .from("accounts")

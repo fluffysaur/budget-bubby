@@ -71,17 +71,17 @@ function state(history: HistoryPoint[]): RoadmapState {
 const update = (
     month: string,
     value: number,
-    newAccounts = false,
+    untrackedOpening = 0,
 ): HistoryPoint => ({
     month,
     date: `${month}-15`,
     value,
     actual: true,
-    newAccounts,
+    untrackedOpening,
 });
 
 describe("ProjectionCard", () => {
-    it("asks for monthly balance updates until 2 clean months exist", () => {
+    it("asks for monthly balance updates until 3 months have one", () => {
         render(
             <ProjectionCard
                 roadmap={state([
@@ -92,26 +92,21 @@ describe("ProjectionCard", () => {
         );
         const locked = screen.getByTestId("projection-locked");
         expect(locked).toHaveTextContent("Update balances monthly to unlock");
-        expect(locked).toHaveTextContent("1 of 2 months");
-        expect(screen.queryByTestId("projection-locked-reset")).toBeNull();
+        expect(locked).toHaveTextContent("2 of 3 months");
+        expect(locked).not.toHaveTextContent("New accounts reset the count");
     });
 
-    it("says when newly recorded accounts reset the count", () => {
+    it("keeps counting when an account is recorded for the first time", () => {
         render(
             <ProjectionCard
                 roadmap={state([
                     update("2026-09", 20000),
-                    update("2026-10", 48000, true),
+                    update("2026-10", 48000, 27000),
                     update("2026-11", 50000),
                 ])}
             />,
         );
-        expect(screen.getByTestId("projection-locked")).toHaveTextContent(
-            "1 of 2 months",
-        );
-        expect(screen.getByTestId("projection-locked-reset")).toHaveTextContent(
-            "New accounts reset the count",
-        );
+        expect(screen.queryByTestId("projection-locked")).toBeNull();
     });
 
     it("lists life events with their month and monthly change", () => {

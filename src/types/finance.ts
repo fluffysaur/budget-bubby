@@ -53,6 +53,12 @@ export interface Account {
     notes?: string | null;
     /** Set for CPF accounts; null for an unmatched legacy CPF account. */
     cpf_kind?: CpfKind | null;
+    /**
+     * true: a new account funded from tracked accounts, so the reality check
+     * counts its balance from $0. false/null: money not tracked before, so
+     * its opening balance isn't savings.
+     */
+    is_new_account?: boolean | null;
     updated_at?: string;
 }
 
@@ -67,6 +73,7 @@ export interface CreateAccountInput {
     is_joint?: boolean;
     notes?: string | null;
     cpf_kind?: CpfKind | null;
+    is_new_account?: boolean | null;
 }
 
 export interface UpdateAccountInput {
@@ -77,6 +84,7 @@ export interface UpdateAccountInput {
     is_joint?: boolean;
     notes?: string | null;
     cpf_kind?: CpfKind | null;
+    is_new_account?: boolean | null;
 }
 
 export interface AccountSnapshot {

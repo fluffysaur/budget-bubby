@@ -38,6 +38,8 @@ export interface ProjectionCardProps {
 
 /** History shown before the projection, in months. */
 const HISTORY_MONTHS = 24;
+/** Months with a balance update needed: one more than the intervals. */
+const UNLOCK_MONTHS = REALITY_MIN_INTERVALS + 1;
 const LINE_COLOR = "#6366F1";
 
 interface ChartRow {
@@ -103,6 +105,7 @@ export function ProjectionCard({
     const { history, projection, reality, result } = roadmap;
     const lifeEvents = result.lifeEvents;
     const locked = reality.status === "locked";
+    const updatedMonths = history.filter((p) => p.actual).length;
 
     const rows = useMemo<ChartRow[]>(() => {
         const start = projection[0]?.month;
@@ -200,20 +203,9 @@ export function ProjectionCard({
                         Update balances monthly to unlock
                     </p>
                     <p className="font-mono-num text-xs text-(--text-muted)">
-                        {Math.min(
-                            reality.cleanIntervals,
-                            REALITY_MIN_INTERVALS,
-                        )}{" "}
-                        of {REALITY_MIN_INTERVALS} months
+                        {Math.min(updatedMonths, UNLOCK_MONTHS)} of{" "}
+                        {UNLOCK_MONTHS} months
                     </p>
-                    {reality.resetByNewAccounts && (
-                        <p
-                            data-testid="projection-locked-reset"
-                            className="text-xs text-(--text-muted)"
-                        >
-                            New accounts reset the count
-                        </p>
-                    )}
                 </div>
             ) : (
                 <figure>

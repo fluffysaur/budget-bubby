@@ -325,6 +325,7 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 fireEvent.change(screen.getByPlaceholderText("0.00"), {
                     target: { value: "200" },
                 });
+                fireEvent.click(screen.getByRole("radio", { name: "Existing account" }));
 
                 const submitBtn = screen.getByRole("button", { name: /create account/i });
                 await act(async () => {
