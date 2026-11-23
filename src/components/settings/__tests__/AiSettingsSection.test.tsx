@@ -47,7 +47,7 @@ describe("AiSettingsSection", () => {
         expect(aiProviders.getProviderApiKey("gemini")).toBe("AIza-demo-key");
         expect(
             screen.getByTestId("ai-settings-feedback"),
-        ).toHaveTextContent(/saved locally/i);
+        ).toHaveTextContent(/saved and synced/i);
 
         fireEvent.click(screen.getByTestId("test-ai-connection-btn"));
         await waitFor(() => {

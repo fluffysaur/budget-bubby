@@ -44,6 +44,7 @@ import type {
     DailyCheckin,
     CheckinType,
     NotificationPreferences,
+    MemberAiSettings,
     NotificationLogEntry,
     NotificationLogRef,
     PushSubscriptionInput,
@@ -2382,6 +2383,41 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             .single();
         if (error) throw error;
         return data as DailyCheckin;
+    }
+
+    // AI settings (owner-only table member_ai_settings, keyed on auth user id)
+    public async getAiSettings(): Promise<MemberAiSettings> {
+        const client = this.getClient();
+        const { data: authData } = await client.auth.getUser();
+        const userId = authData?.user?.id;
+        if (!userId) throw new Error("Not signed in");
+        const { data, error } = await client
+            .from("member_ai_settings")
+            .select("gemini_api_key, gemini_model")
+            .eq("user_id", userId)
+            .maybeSingle();
+        if (error) throw error;
+        return {
+            gemini_api_key: data?.gemini_api_key ?? null,
+            gemini_model: data?.gemini_model ?? null,
+        };
+    }
+
+    public async saveAiSettings(settings: MemberAiSettings): Promise<void> {
+        const client = this.getClient();
+        const { data: authData } = await client.auth.getUser();
+        const userId = authData?.user?.id;
+        if (!userId) throw new Error("Not signed in");
+        const { error } = await client.from("member_ai_settings").upsert(
+            {
+                user_id: userId,
+                gemini_api_key: settings.gemini_api_key,
+                gemini_model: settings.gemini_model,
+                updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" },
+        );
+        if (error) throw error;
     }
 
     // Notification Preferences

@@ -41,6 +41,8 @@ import { SettingsProvider } from "./context/SettingsContext";
 import { PrivacyProvider } from "./context/PrivacyContext";
 import { PinLoginScreen } from "./components/auth/PinLoginScreen";
 import { isSupabaseConfigured } from "./services/supabaseClient";
+import { financeService } from "./services/financeService";
+import { hydrateAiSettings } from "./services/ai/aiSettingsSync";
 import {
     useCategoriesQuery,
     useInvalidateFinance,
@@ -127,6 +129,11 @@ function AppLayoutInner() {
 
     // Live sync partner changes (expenses, inbox items) when Supabase is configured
     usePartnerRealtimeSync();
+
+    // Hydrate the local AI key/model cache from the synced remote settings
+    useEffect(() => {
+        void hydrateAiSettings(financeService);
+    }, []);
 
     // Track main scroller position
     useEffect(() => {
