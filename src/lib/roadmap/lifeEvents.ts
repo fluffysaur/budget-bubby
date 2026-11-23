@@ -13,8 +13,12 @@
  */
 
 import { addMonths, formatMonth, monthsBetween } from "../dateUtils";
-import { getRecurringMonthlyAmount, isSpendType } from "../recurringItems";
-import type { RecurringItem } from "../../types/finance";
+import {
+    getRecurringMonthlyAmount,
+    isSpendType,
+    resolveRecurringStartDate,
+} from "../recurringItems";
+import type { RecurringItem, SavingsGoal } from "../../types/finance";
 
 /** A dated change to monthly savings. */
 export interface CashFlowChange {
@@ -28,6 +32,10 @@ export interface CashFlowChange {
     endMonth: string | null;
     /** Change to monthly savings: negative for a new cost, positive when one ends. */
     monthlyDelta: number;
+    /** Linked goal id when this change tracks a goal's target date. */
+    goalId?: string | null;
+    /** Months after the linked goal's target date (0 = at goal date). */
+    goalOffsetMonths?: number | null;
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -39,10 +47,12 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 export function lifeEventsFromRecurring(
     items: RecurringItem[],
     coveredThrough: string,
+    goals?: Pick<SavingsGoal, "id" | "target_date">[],
 ): CashFlowChange[] {
     return changesFromItems(
         items.filter((i) => !i.paid_from_cpf_oa),
         coveredThrough,
+        goals,
     );
 }
 
@@ -53,23 +63,30 @@ export function lifeEventsFromRecurring(
 export function oaEventsFromRecurring(
     items: RecurringItem[],
     coveredThrough: string,
+    goals?: Pick<SavingsGoal, "id" | "target_date">[],
 ): CashFlowChange[] {
     return changesFromItems(
         items.filter((i) => i.paid_from_cpf_oa),
         coveredThrough,
+        goals,
     );
 }
 
 function changesFromItems(
     items: RecurringItem[],
     coveredThrough: string,
+    goals?: Pick<SavingsGoal, "id" | "target_date">[],
 ): CashFlowChange[] {
+    const goalsById = goals
+        ? new Map(goals.map((g) => [g.id, g]))
+        : undefined;
     const changes: CashFlowChange[] = [];
     for (const item of items) {
         if (!isSpendType(item.type)) continue;
         const amount = round2(getRecurringMonthlyAmount(item));
         if (amount <= 0) continue;
-        const start = item.start_date ? formatMonth(item.start_date) : null;
+        const effectiveStart = resolveRecurringStartDate(item, goalsById);
+        const start = effectiveStart ? formatMonth(effectiveStart) : null;
         const end = item.end_date ? formatMonth(item.end_date) : null;
         if (end && start && end < start) continue;
 
@@ -81,6 +98,12 @@ function changesFromItems(
                 startMonth: start,
                 endMonth: end,
                 monthlyDelta: -amount,
+                ...(item.goal_id
+                    ? {
+                          goalId: item.goal_id,
+                          goalOffsetMonths: item.goal_offset_months ?? 0,
+                      }
+                    : {}),
             });
             continue;
         }

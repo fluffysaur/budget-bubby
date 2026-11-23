@@ -22,6 +22,7 @@ import {
 import { Alert } from "../components/ui/Alert";
 import {
     useCategoriesQuery,
+    useGoalsQuery,
     useRecurringItemsQuery,
     useInvalidateFinance,
     useAddRecurringItemMutation,
@@ -78,6 +79,8 @@ export function RecurringPage({
     );
     const { data: categoriesData } = useCategoriesQuery();
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
+    const { data: goalsData } = useGoalsQuery();
+    const goals = useMemo(() => goalsData || [], [goalsData]);
     const isLoading = recurringItemsLoading && !recurringItemsData;
     const [actionError, setActionError] = useState<string | null>(null);
     const errorMessage =
@@ -298,6 +301,7 @@ export function RecurringPage({
                     <RecurringTable
                         title="All Recurring"
                         recurringItems={inScopeItems}
+                        goals={goals}
                         onEdit={handleEditItem}
                         onDelete={handleDeleteItem}
                         isDeleting={isDeletingRecurring}
@@ -311,6 +315,7 @@ export function RecurringPage({
                 isOpen={isModalOpen}
                 initialItem={editingItem}
                 categories={categories}
+                goals={goals}
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSaveItem}
             />

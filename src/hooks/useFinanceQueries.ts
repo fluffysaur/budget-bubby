@@ -310,6 +310,9 @@ export function useInvalidateFinance() {
             queryKey: ["finance", "budget-detail"],
         });
         queryClient.invalidateQueries({
+            queryKey: ["finance", "budget-history"],
+        });
+        queryClient.invalidateQueries({
             queryKey: ["finance", "base-profiles"],
         });
         queryClient.invalidateQueries({
@@ -730,7 +733,7 @@ export function useUpdateHouseholdSettingsMutation() {
 
 export function useUpdateGoalMutation() {
     const queryClient = useSafeQueryClient();
-    const { invalidateGoals } = useInvalidateFinance();
+    const { invalidateGoals, invalidateRecurring } = useInvalidateFinance();
 
     return useMutation<
         SavingsGoal,
@@ -766,8 +769,11 @@ export function useUpdateGoalMutation() {
                     );
                 }
             },
-            onSettled: () => {
+            onSettled: (_data, _err, vars) => {
                 invalidateGoals();
+                if (vars.updates.target_date !== undefined) {
+                    invalidateRecurring();
+                }
             },
         },
         queryClient,

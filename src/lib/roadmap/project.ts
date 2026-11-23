@@ -38,6 +38,8 @@ export function applyScenario(
     scenario: Scenario = [],
 ): { input: RoadmapInput; monthlySavings: number } {
     let goals = input.goals;
+    let cashFlowChanges = input.cashFlowChanges;
+    let cpfOa = input.cpfOa;
     let monthlySavings = input.monthlySavings;
     for (const edit of scenario) {
         if (edit.type === "delay") {
@@ -46,11 +48,52 @@ export function applyScenario(
                     ? { ...g, targetDate: addMonths(g.targetDate, edit.months) }
                     : g,
             );
+            cashFlowChanges = cashFlowChanges?.map((c) =>
+                c.goalId === edit.goalId
+                    ? {
+                          ...c,
+                          startMonth: addMonths(c.startMonth, edit.months),
+                          endMonth: c.endMonth
+                              ? addMonths(c.endMonth, edit.months)
+                              : null,
+                      }
+                    : c,
+            );
+            if (cpfOa) {
+                cpfOa = {
+                    ...cpfOa,
+                    changes: cpfOa.changes.map((c) =>
+                        c.goalId === edit.goalId
+                            ? {
+                                  ...c,
+                                  startMonth: addMonths(
+                                      c.startMonth,
+                                      edit.months,
+                                  ),
+                                  endMonth: c.endMonth
+                                      ? addMonths(c.endMonth, edit.months)
+                                      : null,
+                              }
+                            : c,
+                    ),
+                };
+            }
+        } else if (edit.type === "trim") {
+            monthlySavings += Math.max(0, edit.monthlyAmount);
+        } else if (edit.type === "lowerTarget") {
+            goals = goals.map((g) =>
+                g.id === edit.goalId
+                    ? { ...g, targetAmount: Math.max(0, edit.targetAmount) }
+                    : g,
+            );
         } else if (edit.type === "bonus") {
             monthlySavings += Math.max(0, input.typicalAnnualBonus ?? 0) / 12;
         }
     }
-    return { input: { ...input, goals }, monthlySavings };
+    return {
+        input: { ...input, goals, cashFlowChanges, cpfOa },
+        monthlySavings,
+    };
 }
 
 /**

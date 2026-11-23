@@ -165,6 +165,7 @@ export function useRoadmap(): RoadmapState {
                 recurringItems,
                 coveredThrough: baselineCoveredThrough(baseline, today),
                 household,
+                trimCandidates: baseline.trimCandidates,
             }),
         [
             household,

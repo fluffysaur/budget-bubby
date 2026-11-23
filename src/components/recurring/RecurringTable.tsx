@@ -28,9 +28,14 @@ import {
     getRecurringItemStatus,
     RECURRING_ITEM_TYPES,
     RECURRING_TYPE_LABELS,
+    resolveRecurringStartDate,
     type RecurringItemStatus,
 } from "../../lib/recurringItems";
-import type { RecurringItem, RecurringItemType } from "../../types/finance";
+import type {
+    RecurringItem,
+    RecurringItemType,
+    SavingsGoal,
+} from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
@@ -47,7 +52,11 @@ export interface RecurringTableProps {
     title?: string;
     /** Overrides "today" (Singapore time) for Active / Ended status. */
     referenceDate?: Date;
+    /** Household goals for resolving linked-cost badges and start dates. */
+    goals?: SavingsGoal[];
 }
+
+const EMPTY_GOALS: SavingsGoal[] = [];
 
 type StatusFilter = "active" | "ended" | "all";
 
@@ -65,6 +74,7 @@ export function RecurringTable({
     className = "",
     referenceDate,
     title,
+    goals = EMPTY_GOALS,
 }: RecurringTableProps) {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedType, setSelectedType] = useState<"all" | RecurringItemType>(
@@ -73,15 +83,20 @@ export function RecurringTable({
     const [selectedStatus, setSelectedStatus] =
         useState<StatusFilter>("active");
 
+    const goalsById = useMemo(
+        () => new Map(goals.map((g) => [g.id, g])),
+        [goals],
+    );
+
     // Status of each item as of this month
     const statusById = useMemo(() => {
         const month = formatMonth(referenceDate ?? getSingaporeDate());
         const map = new Map<string, RecurringItemStatus>();
         for (const item of recurringItems) {
-            map.set(item.id, getRecurringItemStatus(item, month));
+            map.set(item.id, getRecurringItemStatus(item, month, goalsById));
         }
         return map;
-    }, [recurringItems, referenceDate]);
+    }, [recurringItems, referenceDate, goalsById]);
 
     // Filtered recurring items
     const filteredItems = useMemo(() => {
@@ -322,6 +337,16 @@ export function RecurringTable({
                                         recurringItem.id,
                                     );
                                     const isEnded = status === "ended";
+                                    const linkedGoal = recurringItem.goal_id
+                                        ? goalsById.get(recurringItem.goal_id)
+                                        : undefined;
+                                    const effectiveStart =
+                                        resolveRecurringStartDate(
+                                            recurringItem,
+                                            goalsById,
+                                        );
+                                    const goalOffset =
+                                        recurringItem.goal_offset_months ?? 0;
 
                                     return (
                                         <m.tr
@@ -348,22 +373,39 @@ export function RecurringTable({
                                                                 }
                                                             </p>
                                                         )}
-                                                        {recurringItem.paid_from_cpf_oa && (
-                                                            <div className="mt-1">
-                                                                <Badge
-                                                                    variant="mint"
-                                                                    size="sm"
-                                                                    className="shrink-0"
-                                                                >
-                                                                    CPF OA
-                                                                </Badge>
-                                                            </div>
-                                                        )}
-                                                        {(isEnded ||
+                                                        {(recurringItem.paid_from_cpf_oa ||
+                                                            linkedGoal ||
+                                                            isEnded ||
                                                             (status ===
                                                                 "upcoming" &&
-                                                                recurringItem.start_date)) && (
-                                                            <div className="mt-1">
+                                                                effectiveStart)) && (
+                                                            <div className="mt-1 flex flex-wrap items-center gap-1">
+                                                                {recurringItem.paid_from_cpf_oa && (
+                                                                    <Badge
+                                                                        variant="mint"
+                                                                        size="sm"
+                                                                        className="shrink-0"
+                                                                    >
+                                                                        CPF OA
+                                                                    </Badge>
+                                                                )}
+                                                                {linkedGoal && (
+                                                                    <Badge
+                                                                        variant="butter"
+                                                                        size="sm"
+                                                                        className="shrink-0"
+                                                                    >
+                                                                        {linkedGoal.emoji ||
+                                                                            "🎯"}{" "}
+                                                                        {
+                                                                            linkedGoal.title
+                                                                        }
+                                                                        {goalOffset >
+                                                                        0
+                                                                            ? ` +${goalOffset}m`
+                                                                            : ""}
+                                                                    </Badge>
+                                                                )}
                                                                 {isEnded ? (
                                                                     <Badge
                                                                         variant="slate"
@@ -372,14 +414,18 @@ export function RecurringTable({
                                                                         Ended
                                                                     </Badge>
                                                                 ) : (
-                                                                    <Badge
-                                                                        variant="lilac"
-                                                                        size="sm"
-                                                                    >
-                                                                        {formatStartsLabel(
-                                                                            recurringItem.start_date!,
-                                                                        )}
-                                                                    </Badge>
+                                                                    status ===
+                                                                        "upcoming" &&
+                                                                    effectiveStart && (
+                                                                        <Badge
+                                                                            variant="lilac"
+                                                                            size="sm"
+                                                                        >
+                                                                            {formatStartsLabel(
+                                                                                effectiveStart,
+                                                                            )}
+                                                                        </Badge>
+                                                                    )
                                                                 )}
                                                             </div>
                                                         )}

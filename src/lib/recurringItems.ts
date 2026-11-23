@@ -18,8 +18,9 @@ import type {
     RecurringFrequency,
     RecurringItem,
     RecurringItemType,
+    SavingsGoal,
 } from "../types/finance";
-import { formatMonth, getNextDueDate } from "./dateUtils";
+import { addMonths, formatMonth, getNextDueDate } from "./dateUtils";
 import type { BadgeVariant } from "../components/ui/Badge";
 
 export const RECURRING_TYPE_ICONS: Record<RecurringItemType, LucideIcon> = {
@@ -105,15 +106,47 @@ export function getRecurringMonthlyAmount(item: RecurringItem): number {
 }
 
 /**
+ * Computes the effective start_date ('YYYY-MM-DD') for a goal-linked recurring item.
+ */
+export function resolveGoalLinkedStartDate(
+    goalTargetDate: string,
+    offsetMonths?: number | null,
+): string {
+    return addMonths(goalTargetDate, offsetMonths ?? 0);
+}
+
+/**
+ * Resolves the effective start_date for a recurring item, dynamically deriving
+ * it from the linked goal's target_date when `goal_id` is present in `goalsById`.
+ */
+export function resolveRecurringStartDate(
+    item: Pick<RecurringItem, "start_date" | "goal_id" | "goal_offset_months">,
+    goalsById?: ReadonlyMap<string, Pick<SavingsGoal, "target_date">>,
+): string | null {
+    if (item.goal_id && goalsById) {
+        const goal = goalsById.get(item.goal_id);
+        if (goal?.target_date) {
+            return resolveGoalLinkedStartDate(
+                goal.target_date,
+                item.goal_offset_months,
+            );
+        }
+    }
+    return item.start_date ?? null;
+}
+
+/**
  * True if the item is active in the given 'YYYY-MM' month, based on its
- * optional start_date and end_date (compared at month granularity).
+ * optional start_date (or linked goal's target_date) and end_date.
  */
 export function isRecurringItemActiveInMonth(
     item: RecurringItem,
     month: string,
+    goalsById?: ReadonlyMap<string, Pick<SavingsGoal, "target_date">>,
 ): boolean {
     const target = formatMonth(month);
-    if (item.start_date && formatMonth(item.start_date) > target) {
+    const startDate = resolveRecurringStartDate(item, goalsById);
+    if (startDate && formatMonth(startDate) > target) {
         return false;
     }
     if (item.end_date && formatMonth(item.end_date) < target) {
@@ -235,12 +268,14 @@ export type RecurringItemStatus = "active" | "upcoming" | "ended";
 export function getRecurringItemStatus(
     item: RecurringItem,
     month: string,
+    goalsById?: ReadonlyMap<string, Pick<SavingsGoal, "target_date">>,
 ): RecurringItemStatus {
     const target = formatMonth(month);
     if (item.end_date && formatMonth(item.end_date) < target) {
         return "ended";
     }
-    if (item.start_date && formatMonth(item.start_date) > target) {
+    const startDate = resolveRecurringStartDate(item, goalsById);
+    if (startDate && formatMonth(startDate) > target) {
         return "upcoming";
     }
     return "active";
