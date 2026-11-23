@@ -474,8 +474,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
 
                 historyRef.current = nextMessages;
 
-                const finalText =
-                    trimmedText || "Review and confirm below.";
+                const finalText = trimmedText || "Review and confirm below.";
 
                 setMessages((prev) =>
                     prev.map((msg) =>
@@ -494,10 +493,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                     ),
                 );
             } catch (err) {
-                if (
-                    err instanceof DOMException &&
-                    err.name === "AbortError"
-                ) {
+                if (err instanceof DOMException && err.name === "AbortError") {
                     setMessages((prev) =>
                         prev.map((msg) =>
                             msg.id === assistantMessageId
@@ -581,7 +577,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                 ease: EASE_IN_FAST,
                             },
                         }}
-                        className="relative z-10 flex h-dvh w-full max-w-md flex-col border-l-2 border-(--border-ink) bg-(--bg-canvas) shadow-cute-lg"
+                        className="relative z-10 flex h-dvh w-full max-w-md sm:max-w-xl flex-col border-l-2 border-(--border-ink) bg-(--bg-canvas) shadow-cute-lg"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between gap-2 border-b-2 border-(--border-ink) bg-(--bg-card) px-4 py-3">
@@ -647,10 +643,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                     aria-label="Close Bubby AI"
                                     data-testid="bubby-close-drawer-btn"
                                 >
-                                    <X
-                                        className="h-4 w-4"
-                                        strokeWidth={2.5}
-                                    />
+                                    <X className="h-4 w-4" strokeWidth={2.5} />
                                 </Button>
                             </div>
                         </div>
@@ -741,7 +734,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                             msg.content ||
                                             msg.isStreaming) && (
                                             <div
-                                                className={`max-w-[88%] rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-cute-sm ${
+                                                className={`${msg.role === "user" ? "max-w-[88%]" : "max-w-full"} rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-cute-sm ${
                                                     msg.role === "user"
                                                         ? "whitespace-pre-wrap bg-(--pastel-lilac) text-(--text-ink) font-semibold"
                                                         : "bg-(--bg-card) text-(--text-ink) font-medium"
@@ -786,7 +779,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                         )}
 
                                         {msg.error && (
-                                            <div className="w-full max-w-[92%]">
+                                            <div className="w-full">
                                                 <Alert variant="danger">
                                                     {msg.error}
                                                 </Alert>
@@ -795,7 +788,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
 
                                         {msg.proposedActions &&
                                             msg.proposedActions.length > 0 && (
-                                                <div className="w-full max-w-[92%] space-y-2">
+                                                <div className="w-full space-y-2">
                                                     {msg.proposedActions.map(
                                                         (action) => (
                                                             <ActionConfirmationCard
