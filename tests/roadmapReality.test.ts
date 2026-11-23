@@ -170,8 +170,13 @@ describe("baselineCoveredThrough", () => {
     });
 });
 
-const account = (id: string, type: Account["type"]): Account => ({
+const account = (
+    id: string,
+    type: Account["type"],
+    is_new_account?: boolean,
+): Account => ({
     id,
+    is_new_account,
     household_id: "hh",
     owner_id: "m1",
     name: id,
@@ -211,7 +216,8 @@ describe("poolHistory", () => {
                 date: "2026-06-28",
                 value: 10000,
                 actual: true,
-                newAccounts: true,
+                // First recorded on Jun 1 at 9000.
+                untrackedOpening: 9000,
             },
             { month: "2026-07", value: 12000, actual: false },
             { month: "2026-08", value: 14000, actual: false },
@@ -221,12 +227,12 @@ describe("poolHistory", () => {
                 value: 16000,
                 actual: true,
                 // The CPF account's first snapshot doesn't count.
-                newAccounts: false,
+                untrackedOpening: 0,
             },
         ]);
     });
 
-    it("flags updates where an account is recorded for the first time", () => {
+    it("sums opening balances of accounts first recorded since the last update", () => {
         const history = poolHistory(
             [account("a", "Cash"), account("b", "Investment")],
             [
@@ -237,7 +243,16 @@ describe("poolHistory", () => {
             ],
             [],
         );
-        expect(history.map((p) => p.newAccounts)).toEqual([true, true, false]);
+        expect(history.map((p) => p.untrackedOpening)).toEqual([1000, 5000, 0]);
+    });
+
+    it("counts a new account from $0", () => {
+        const history = poolHistory(
+            [account("a", "Cash"), account("b", "Cash", true)],
+            [snap("a", "2026-01-10", 1000), snap("b", "2026-02-12", 5000)],
+            [],
+        );
+        expect(history.map((p) => p.untrackedOpening)).toEqual([1000, 0]);
     });
 });
 
@@ -273,7 +288,7 @@ describe("realityCheck", () => {
     ]);
     const deposit = expense("2026-09-10", 5000, "wedding");
 
-    it("is locked under 2 clean intervals", () => {
+    it("is locked under 2 intervals", () => {
         const r = realityCheck({
             history: cashHistory([
                 ["2026-09-20", 1],
@@ -283,8 +298,7 @@ describe("realityCheck", () => {
             planPerMonth: 2000,
         });
         expect(r.status).toBe("locked");
-        expect(r.cleanIntervals).toBe(1);
-        expect(r.resetByNewAccounts).toBe(false);
+        expect(r.intervals).toBe(1);
     });
 
     it("never averages filled-in months", () => {
@@ -300,7 +314,7 @@ describe("realityCheck", () => {
         });
         expect(r).toMatchObject({
             status: "ok",
-            cleanIntervals: 2,
+            intervals: 2,
             monthsCovered: 4,
             grewPerMonth: 4000,
         });
@@ -332,54 +346,56 @@ describe("realityCheck", () => {
         expect(r.grewPerMonth).toBe(1000);
     });
 
-    it("skips intervals where accounts are recorded for the first time", () => {
-        // Most accounts recorded months after starting, then money moved
-        // from an old account into another newly recorded one.
-        const accounts = ["a", "b", "c", "d"].map((id) => account(id, "Cash"));
+    it("takes newly recorded accounts' openings out of growth", () => {
+        // Saves 1000 a month. Existing accounts b and c are recorded in May;
+        // in June, 30000 moves from a into a newly opened account d.
         const r = realityCheck({
             history: poolHistory(
-                accounts,
                 [
-                    snap("a", "2026-01-05", 100000),
+                    account("a", "Cash"),
+                    account("b", "Cash"),
+                    account("c", "Investment"),
+                    account("d", "Cash", true),
+                ],
+                [
+                    snap("a", "2026-01-20", 100000),
+                    snap("a", "2026-05-20", 104000),
                     snap("b", "2026-05-20", 60000),
                     snap("c", "2026-05-20", 40000),
-                    snap("a", "2026-06-20", 70000),
+                    snap("a", "2026-06-20", 75000),
                     snap("d", "2026-06-20", 30000),
                 ],
                 [],
             ),
             expenses: [],
-            planPerMonth: 2000,
+            planPerMonth: 1000,
         });
         expect(r).toMatchObject({
-            status: "locked",
-            cleanIntervals: 0,
-            resetByNewAccounts: true,
-            grewPerMonth: 0,
+            status: "ok",
+            intervals: 2,
+            monthsCovered: 5,
+            grewPerMonth: 1000,
+            differs: false,
         });
     });
 
-    it("counts the intervals after new accounts settle", () => {
+    it("reads an unflagged transfer into a new account as a dip", () => {
+        // Same move as above, but d isn't marked as a new account.
         const r = realityCheck({
             history: poolHistory(
-                [account("a", "Cash"), account("b", "Cash")],
+                [account("a", "Cash"), account("d", "Cash")],
                 [
-                    snap("a", "2026-01-05", 10000),
-                    snap("b", "2026-02-05", 50000),
-                    snap("a", "2026-03-05", 13000),
-                    snap("a", "2026-04-05", 17000),
+                    snap("a", "2026-01-20", 100000),
+                    snap("a", "2026-02-20", 101000),
+                    snap("a", "2026-03-20", 72000),
+                    snap("d", "2026-03-20", 30000),
                 ],
                 [],
             ),
             expenses: [],
-            planPerMonth: 3500,
+            planPerMonth: 1000,
         });
-        expect(r).toMatchObject({
-            status: "ok",
-            cleanIntervals: 2,
-            resetByNewAccounts: true,
-            grewPerMonth: 3500,
-        });
+        expect(r.grewPerMonth).toBe(-14000);
     });
 
     it("warns when growth is more than 20% off the plan", () => {

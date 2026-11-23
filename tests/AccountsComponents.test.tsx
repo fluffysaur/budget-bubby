@@ -526,6 +526,7 @@ describe("AccountsPage", () => {
             fireEvent.change(screen.getByLabelText(/balance/i), {
                 target: { value: "5000" },
             });
+            fireEvent.click(screen.getByRole("radio", { name: "New account" }));
 
             fireEvent.click(
                 screen.getByRole("button", { name: /create account/i }),
@@ -539,12 +540,74 @@ describe("AccountsPage", () => {
                         balance: 5000,
                         type: "Cash",
                         owner_id: "mem-1",
+                        is_new_account: true,
                     }),
                 );
             });
 
             expect(onAccountCreated).toHaveBeenCalled();
             expect(onClose).toHaveBeenCalled();
+        });
+
+        it("asks where a non-zero balance is from before saving", async () => {
+            const createSpy = vi.spyOn(financeService, "createAccount");
+            render(
+                <AddAccountModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={[
+                        {
+                            id: "mem-1",
+                            household_id: "hh-1",
+                            display_name: "Alex",
+                            role: "owner",
+                        },
+                    ]}
+                />,
+            );
+            fireEvent.change(screen.getByLabelText(/account name/i), {
+                target: { value: "Savings" },
+            });
+            fireEvent.change(screen.getByLabelText(/balance/i), {
+                target: { value: "0" },
+            });
+            expect(screen.queryByTestId("account-origin")).toBeNull();
+
+            fireEvent.change(screen.getByLabelText(/balance/i), {
+                target: { value: "800" },
+            });
+            expect(
+                screen.getByRole("radio", { name: "Existing account" }),
+            ).toHaveAttribute("aria-checked", "false");
+            fireEvent.click(
+                screen.getByRole("button", { name: /create account/i }),
+            );
+            expect(
+                await screen.findByText(/choose where this money is from/i),
+            ).toBeInTheDocument();
+            expect(createSpy).not.toHaveBeenCalled();
+        });
+
+        it("doesn't ask during initial setup", () => {
+            render(
+                <AddAccountModal
+                    isOpen={true}
+                    isInitialSetup={true}
+                    onClose={vi.fn()}
+                    members={[
+                        {
+                            id: "mem-1",
+                            household_id: "hh-1",
+                            display_name: "Alex",
+                            role: "owner",
+                        },
+                    ]}
+                />,
+            );
+            fireEvent.change(screen.getByLabelText(/balance/i), {
+                target: { value: "800" },
+            });
+            expect(screen.queryByTestId("account-origin")).toBeNull();
         });
     });
 
@@ -599,6 +662,43 @@ describe("AccountsPage", () => {
 
             expect(onAccountUpdated).toHaveBeenCalled();
             expect(onClose).toHaveBeenCalled();
+            expect(updateSpy.mock.calls[0][1]).not.toHaveProperty(
+                "is_new_account",
+            );
+        });
+
+        it("lets a legacy account be marked as a new account", async () => {
+            const updateSpy = vi
+                .spyOn(financeService, "updateAccount")
+                .mockResolvedValueOnce(sampleAccounts[0]);
+            render(
+                <EditAccountModal
+                    isOpen={true}
+                    account={sampleAccounts[0]}
+                    onClose={vi.fn()}
+                    members={[
+                        {
+                            id: "mem-1",
+                            household_id: "hh-1",
+                            display_name: "Alex",
+                            role: "owner",
+                        },
+                    ]}
+                />,
+            );
+            expect(
+                screen.getByRole("radio", { name: "Existing account" }),
+            ).toHaveAttribute("aria-checked", "true");
+            fireEvent.click(screen.getByRole("radio", { name: "New account" }));
+            fireEvent.click(
+                screen.getByRole("button", { name: /save changes/i }),
+            );
+            await waitFor(() => {
+                expect(updateSpy).toHaveBeenCalledWith(
+                    sampleAccounts[0].id,
+                    expect.objectContaining({ is_new_account: true }),
+                );
+            });
         });
     });
 

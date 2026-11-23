@@ -30,6 +30,7 @@ import {
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import { feedback } from "../../lib/delight/feedback";
+import { AccountOriginChoice } from "./AccountOriginChoice";
 
 export interface AddAccountModalProps {
     isOpen: boolean;
@@ -82,9 +83,16 @@ export function AddAccountModal({
     const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isNewAccount, setIsNewAccount] = useState<boolean | null>(null);
+
+    // Onboarding adds accounts you already had, so it doesn't ask. A $0
+    // opening is the same either way.
+    const asksOrigin =
+        !isInitialSetup && type !== "CPF" && parseFloat(balance) > 0;
 
     useEffect(() => {
         if (isOpen) {
+            setIsNewAccount(null);
             setName("");
             setInstitution("");
             setType("Cash");
@@ -117,6 +125,11 @@ export function AddAccountModal({
             return;
         }
 
+        if (asksOrigin && isNewAccount === null) {
+            setError("Please choose where this money is from.");
+            return;
+        }
+
         const resolvedOwnerId = ownerId || members[0]?.id;
         if (!resolvedOwnerId) {
             setError("Please select an account owner.");
@@ -139,6 +152,7 @@ export function AddAccountModal({
                 is_joint: isJoint,
                 notes: notes.trim() || null,
                 currency: "SGD",
+                ...(asksOrigin ? { is_new_account: isNewAccount } : {}),
             });
 
             feedback.routine("save");
@@ -329,6 +343,13 @@ export function AddAccountModal({
                             </div>
                         </div>
                     </div>
+
+                    {asksOrigin && (
+                        <AccountOriginChoice
+                            value={isNewAccount}
+                            onChange={setIsNewAccount}
+                        />
+                    )}
 
                     {/* Owner & Joint Status */}
                     <div className="grid grid-cols-2 gap-3 items-center">

@@ -345,6 +345,7 @@ class MockFinanceServiceImpl implements FinanceService {
             is_joint: input.is_joint || false,
             notes: input.notes || null,
             cpf_kind: input.type === "CPF" ? (input.cpf_kind ?? null) : null,
+            is_new_account: input.is_new_account ?? null,
             updated_at: new Date().toISOString(),
         };
 
@@ -381,6 +382,8 @@ class MockFinanceServiceImpl implements FinanceService {
         if (updates.is_joint !== undefined) account.is_joint = updates.is_joint;
         if (updates.notes !== undefined) account.notes = updates.notes;
         if (updates.cpf_kind !== undefined) account.cpf_kind = updates.cpf_kind;
+        if (updates.is_new_account !== undefined)
+            account.is_new_account = updates.is_new_account;
         account.updated_at = new Date().toISOString();
 
         this.persist();
