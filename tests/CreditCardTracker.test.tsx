@@ -148,7 +148,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(screen.getByText(formatSGD(1192.7))).toBeInTheDocument();
         });
 
-        it("toggles statement 1-tap paid / unpaid status with timestamp", async () => {
+        it("marks a statement paid in full via the paid modal", async () => {
             render(
                 <CreditCardTrackerSection
                     members={testMembers}
@@ -172,8 +172,11 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             });
             expect(dbsMarkPaidBtn).toBeInTheDocument();
 
-            // Tap Mark as Paid
+            // Tap Mark as Paid, then confirm a full payment
             fireEvent.click(dbsMarkPaidBtn);
+            fireEvent.click(
+                await screen.findByRole("button", { name: "Confirm" }),
+            );
 
             // Verify it toggles to Paid
             await waitFor(() => {
@@ -212,6 +215,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                     name: /Mark DBS Altitude Visa statement as Paid/i,
                 }),
             );
+            fireEvent.click(
+                await screen.findByRole("button", { name: "Confirm" }),
+            );
 
             await waitFor(() => {
                 expect(milestone).toHaveBeenCalledTimes(1);
@@ -239,7 +245,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(milestone).toHaveBeenCalledTimes(1);
         });
 
-        it("rolls back toggle and displays an alert when toggling paid status fails", async () => {
+        it("keeps the statement unpaid and shows the error when marking paid fails", async () => {
             vi.spyOn(
                 financeService,
                 "upsertCreditCardStatement",
@@ -264,29 +270,22 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(dbsMarkPaidBtn).toBeInTheDocument();
 
             fireEvent.click(dbsMarkPaidBtn);
+            fireEvent.click(
+                await screen.findByRole("button", { name: "Confirm" }),
+            );
 
-            // Verify failure alert is displayed
-            await waitFor(() => {
-                expect(
-                    screen.getByText(/Failed to update statement paid status/i),
-                ).toBeInTheDocument();
-            });
-
-            // Verify toggle button remains / rolls back to unpaid "Mark as Paid"
+            // The error shows in the modal, which stays open
             expect(
-                screen.getByRole("button", {
+                await screen.findByText(/Network failure/i),
+            ).toBeInTheDocument();
+
+            // Cancel: the statement is still unpaid
+            fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+            expect(
+                await screen.findByRole("button", {
                     name: /Mark DBS Altitude Visa statement as Paid/i,
                 }),
             ).toBeInTheDocument();
-
-            // Dismiss the alert
-            const dismissBtn = screen.getByRole("button", {
-                name: /Dismiss alert/i,
-            });
-            fireEvent.click(dismissBtn);
-            expect(
-                screen.queryByText(/Failed to update statement paid status/i),
-            ).not.toBeInTheDocument();
         });
 
         it("allows logging a new statement balance for a card without one in the month", async () => {

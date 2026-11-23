@@ -21,6 +21,7 @@ test.describe("Credit Card Paid Cycle Sync", () => {
                 name: /Mark OCBC 365 Dining & Groceries statement as Paid/i,
             })
             .click();
+        await page.getByRole("button", { name: "Confirm" }).click();
 
         await expect(
             page.getByRole("button", {

@@ -177,6 +177,7 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
                 name: /Mark Late Cycle Card statement as Paid/i,
             }),
         );
+        fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
 
         await waitFor(() => {
             expect(

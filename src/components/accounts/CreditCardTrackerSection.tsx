@@ -40,6 +40,8 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { StatementPaidModal } from "./StatementPaidModal";
+import { isPartialPayment } from "../../lib/creditCardPayments";
 import { m, AnimatePresence } from "motion/react";
 import { feedback } from "../../lib/delight/feedback";
 import { listItem } from "../../lib/motion";
@@ -190,6 +192,9 @@ export function CreditCardTrackerSection({
 
     // Toggle paid error state
     const [toggleError, setToggleError] = useState<string | null>(null);
+    const [stmtToPay, setStmtToPay] = useState<CreditCardStatement | null>(
+        null,
+    );
 
     // Filter cards by perspective
     const filteredCards = useMemo(() => {
@@ -245,27 +250,40 @@ export function CreditCardTrackerSection({
         };
     }, [cardEntries]);
 
-    // 1-Tap Toggle Paid / Unpaid
+    // Save paid state. amountPaid null = full payment (or unpaid).
+    const savePaidState = async (
+        stmt: CreditCardStatement,
+        nextPaid: boolean,
+        amountPaid: number | null,
+    ) => {
+        const input: UpsertCreditCardStatementInput = {
+            card_id: stmt.card_id,
+            month: stmt.month,
+            statement_amount: stmt.statement_amount,
+            due_date: stmt.due_date,
+            is_paid: nextPaid,
+            paid_at: nextPaid ? new Date().toISOString() : null,
+            amount_paid: nextPaid ? amountPaid : null,
+            notes: stmt.notes,
+        };
+        await financeService.upsertCreditCardStatement(input);
+        if (nextPaid) {
+            feedback.milestone("bill-paid", {
+                dedupeKey: `bill-paid:${stmt.card_id}:${stmt.month}`,
+            });
+        }
+        invalidateCreditCards();
+    };
+
+    // Unpaid -> opens the paid modal (full / partial). Paid -> unpaid in 1 tap.
     const handleTogglePaid = async (stmt: CreditCardStatement) => {
         setToggleError(null);
+        if (!stmt.is_paid) {
+            setStmtToPay(stmt);
+            return;
+        }
         try {
-            const nextPaid = !stmt.is_paid;
-            const input: UpsertCreditCardStatementInput = {
-                card_id: stmt.card_id,
-                month: stmt.month,
-                statement_amount: stmt.statement_amount,
-                due_date: stmt.due_date,
-                is_paid: nextPaid,
-                paid_at: nextPaid ? new Date().toISOString() : null,
-                notes: stmt.notes,
-            };
-            await financeService.upsertCreditCardStatement(input);
-            if (nextPaid) {
-                feedback.milestone("bill-paid", {
-                    dedupeKey: `bill-paid:${stmt.card_id}:${stmt.month}`,
-                });
-            }
-            invalidateCreditCards();
+            await savePaidState(stmt, false, null);
         } catch (err) {
             console.error("Failed to toggle statement paid status:", err);
             setToggleError(
@@ -325,6 +343,9 @@ export function CreditCardTrackerSection({
                 notes: stmtNotesInput.trim() ? stmtNotesInput.trim() : null,
                 is_paid: existingStatement ? existingStatement.is_paid : false,
                 paid_at: existingStatement ? existingStatement.paid_at : null,
+                amount_paid: existingStatement
+                    ? existingStatement.amount_paid
+                    : null,
             });
             feedback.routine("save");
             invalidateCreditCards();
@@ -737,6 +758,25 @@ export function CreditCardTrackerSection({
                                                             )}
                                                         </div>
 
+                                                        {isPartialPayment(
+                                                            stmt,
+                                                        ) && (
+                                                            <div
+                                                                className="flex items-center justify-between gap-2 text-xs"
+                                                                data-testid={`credit-card-partial-${card.id}`}
+                                                            >
+                                                                <span className="font-bold text-(--text-muted)">
+                                                                    Partial
+                                                                </span>
+                                                                <CurrencyText
+                                                                    amount={
+                                                                        stmt.amount_paid!
+                                                                    }
+                                                                    size="sm"
+                                                                />
+                                                            </div>
+                                                        )}
+
                                                         {/* Utilisation meter if limit configured */}
                                                         {card.credit_limit &&
                                                             card.credit_limit >
@@ -1017,6 +1057,17 @@ export function CreditCardTrackerSection({
                     </ModalFooter>
                 </form>
             </AnimatedModal>
+
+            <StatementPaidModal
+                statement={stmtToPay}
+                cardName={
+                    cards.find((c) => c.id === stmtToPay?.card_id)?.name ?? ""
+                }
+                onClose={() => setStmtToPay(null)}
+                onConfirm={(amountPaid) =>
+                    savePaidState(stmtToPay!, true, amountPaid)
+                }
+            />
 
             <MarkCardPaidModal
                 cycle={cycleToPay}
