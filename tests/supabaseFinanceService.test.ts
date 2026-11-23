@@ -68,7 +68,7 @@ describe("supabaseFinanceService", () => {
                                 data: [
                                     {
                                         id: validMemberId,
-                                        display_name: "Yi Jia",
+                                        display_name: "Alex",
                                     },
                                 ],
                                 error: null,
@@ -168,7 +168,7 @@ describe("supabaseFinanceService", () => {
             }),
             auth: {
                 getUser: vi.fn().mockResolvedValue({
-                    data: { user: { email: "yijia@example.com" } },
+                    data: { user: { email: "alex@example.com" } },
                 }),
             },
         };
@@ -705,7 +705,7 @@ describe("supabaseFinanceService", () => {
                                 data: [
                                     {
                                         id: validMemberId,
-                                        display_name: "Yi Jia",
+                                        display_name: "Alex",
                                     },
                                 ],
                                 error: null,
@@ -884,7 +884,7 @@ describe("supabaseFinanceService", () => {
                                 data: [
                                     {
                                         id: validMemberId,
-                                        display_name: "Yi Jia",
+                                        display_name: "Alex",
                                     },
                                 ],
                                 error: null,
@@ -1052,7 +1052,7 @@ describe("supabaseFinanceService", () => {
                                 data: [
                                     {
                                         id: validMemberId,
-                                        display_name: "Yi Jia",
+                                        display_name: "Alex",
                                     },
                                     { id: partnerId, display_name: "Partner" },
                                 ],
@@ -1062,7 +1062,7 @@ describe("supabaseFinanceService", () => {
                     };
                 }
                 if (table === "base_budget_profiles") {
-                    // Only Yi Jia has a profile; Partner has NONE
+                    // Only Alex has a profile; Partner has NONE
                     return {
                         select: vi.fn().mockResolvedValue({
                             data: [

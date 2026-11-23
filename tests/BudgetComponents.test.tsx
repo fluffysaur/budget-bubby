@@ -849,7 +849,7 @@ describe("BudgetPage", () => {
             expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
         });
         // Perspective is shown only in the header, not as a badge on the page
-        expect(screen.queryByText(/^Yi Jia$/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/^Alex$/)).not.toBeInTheDocument();
 
         rerender(
             <HouseholdProvider initialPerspective="household">
@@ -912,14 +912,14 @@ describe("BudgetPage", () => {
         vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
             household: {
                 id: "00000000-0000-0000-0000-000000000001",
-                name: "Yi Jia & Rachel",
+                name: "Alex & Sam",
                 currency: "SGD",
             },
             members: [
                 {
                     id: "00000000-0000-0000-0000-000000000011",
                     household_id: "00000000-0000-0000-0000-000000000001",
-                    display_name: "Yi Jia",
+                    display_name: "Alex",
                     role: "owner",
                     avatar_url: "👨",
                 },
@@ -1007,14 +1007,14 @@ describe("BudgetPage", () => {
         vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
             household: {
                 id: "00000000-0000-0000-0000-000000000001",
-                name: "Yi Jia & Rachel",
+                name: "Alex & Sam",
                 currency: "SGD",
             },
             members: [
                 {
                     id: "00000000-0000-0000-0000-000000000011",
                     household_id: "00000000-0000-0000-0000-000000000001",
-                    display_name: "Yi Jia",
+                    display_name: "Alex",
                     role: "owner",
                     avatar_url: "👨",
                 },

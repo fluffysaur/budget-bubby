@@ -28,7 +28,7 @@ import type {
 
 export const mockHousehold: Household = {
     id: "hh-00000000-0001",
-    name: "Yi Jia & Rachel",
+    name: "Alex & Sam",
     currency: "SGD",
     investment_haircut_pct: 20,
     investment_haircut_months: 24,
@@ -40,8 +40,8 @@ export const mockMembers: HouseholdMember[] = [
         id: "mem-00000000-0011",
         household_id: "hh-00000000-0001",
         user_id: null,
-        display_name: "Yi Jia",
-        email: "yijia@example.com",
+        display_name: "Alex",
+        email: "alex@example.com",
         role: "owner",
         avatar_url: "👨",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -50,8 +50,8 @@ export const mockMembers: HouseholdMember[] = [
         id: "mem-00000000-0012",
         household_id: "hh-00000000-0001",
         user_id: null,
-        display_name: "Rachel",
-        email: "rachel@example.com",
+        display_name: "Sam",
+        email: "sam@example.com",
         role: "member",
         avatar_url: "👩",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -156,7 +156,7 @@ export const mockBaseProfiles: BaseBudgetProfile[] = [
 ];
 
 export const mockBaseAllocations: BaseProfileAllocation[] = [
-    // Yi Jia Allocations (Food 15%, Lifestyle 15%, Transport 5%, Investments 35%, Savings 15%, Tithing 10%, Buffer 5%)
+    // Alex Allocations (Food 15%, Lifestyle 15%, Transport 5%, Investments 35%, Savings 15%, Tithing 10%, Buffer 5%)
     {
         id: "alloc-yj-01",
         profile_id: "prof-00000000-0201",
@@ -200,7 +200,7 @@ export const mockBaseAllocations: BaseProfileAllocation[] = [
         target_percentage: 0.05,
     },
 
-    // Rachel Allocations (Food 20%, Lifestyle 20%, Transport 5%, Investments 0%, Savings 40%, Tithing 10%, Buffer 5%)
+    // Sam Allocations (Food 20%, Lifestyle 20%, Transport 5%, Investments 0%, Savings 40%, Tithing 10%, Buffer 5%)
     {
         id: "alloc-rc-01",
         profile_id: "prof-00000000-0202",
@@ -246,7 +246,7 @@ export const mockBaseAllocations: BaseProfileAllocation[] = [
 ];
 
 export const mockAccounts: Account[] = [
-    // Yi Jia Accounts (13 accounts)
+    // Alex Accounts (13 accounts)
     {
         id: "acc-yj-01",
         household_id: "hh-00000000-0001",
@@ -407,7 +407,7 @@ export const mockAccounts: Account[] = [
         updated_at: "2026-09-15T00:00:00.000Z",
     },
 
-    // Rachel Accounts (5 accounts)
+    // Sam Accounts (5 accounts)
     {
         id: "acc-rc-01",
         household_id: "hh-00000000-0001",
@@ -764,7 +764,7 @@ export const mockSubscriptionItems: RecurringItem[] = [
 ];
 
 export const mockMonthlyBudgets: MonthlyBudget[] = [
-    // Yi Jia - Sep 2026: gross 6000, bonus 0, cpf 1200 (20%), taxes 91.67, insurance 400.00, after deductions = 4308.33
+    // Alex - Sep 2026: gross 6000, bonus 0, cpf 1200 (20%), taxes 91.67, insurance 400.00, after deductions = 4308.33
     {
         id: "mb-00000000-0701",
         household_id: "hh-00000000-0001",
@@ -780,7 +780,7 @@ export const mockMonthlyBudgets: MonthlyBudget[] = [
         is_locked: true,
         created_at: "2026-09-01T00:00:00.000Z",
     },
-    // Rachel - Sep 2026: gross 5200, bonus 0, cpf 1040 (20%), taxes 150.00, insurance 0.00, after deductions = 4010.00
+    // Sam - Sep 2026: gross 5200, bonus 0, cpf 1040 (20%), taxes 150.00, insurance 0.00, after deductions = 4010.00
     {
         id: "mb-00000000-0702",
         household_id: "hh-00000000-0001",
@@ -799,7 +799,7 @@ export const mockMonthlyBudgets: MonthlyBudget[] = [
 ];
 
 export const mockMonthlyBudgetCategories: MonthlyBudgetCategory[] = [
-    // Yi Jia Categories (Sep 2026, pool: 4308.33)
+    // Alex Categories (Sep 2026, pool: 4308.33)
     {
         id: "mbc-yj-01",
         monthly_budget_id: "mb-00000000-0701",
@@ -850,7 +850,7 @@ export const mockMonthlyBudgetCategories: MonthlyBudgetCategory[] = [
         allocated_amount: 215.41,
     },
 
-    // Rachel Categories (Sep 2026, pool: 4010.00)
+    // Sam Categories (Sep 2026, pool: 4010.00)
     {
         id: "mbc-rc-01",
         monthly_budget_id: "mb-00000000-0702",
@@ -1203,7 +1203,7 @@ export const mockCreditCards: CreditCard[] = [
     {
         id: "cc-00000000-0001",
         household_id: "hh-00000000-0001",
-        owner_id: "mem-00000000-0011", // Yi Jia
+        owner_id: "mem-00000000-0011", // Alex
         name: "DBS Altitude Visa",
         bank: "DBS",
         last4: "4128",
@@ -1217,7 +1217,7 @@ export const mockCreditCards: CreditCard[] = [
     {
         id: "cc-00000000-0002",
         household_id: "hh-00000000-0001",
-        owner_id: "mem-00000000-0012", // Rachel
+        owner_id: "mem-00000000-0012", // Sam
         name: "UOB One Card",
         bank: "UOB",
         last4: "8832",
@@ -1231,7 +1231,7 @@ export const mockCreditCards: CreditCard[] = [
     {
         id: "cc-00000000-0003",
         household_id: "hh-00000000-0001",
-        owner_id: "mem-00000000-0011", // Yi Jia (Joint use)
+        owner_id: "mem-00000000-0011", // Alex (Joint use)
         name: "OCBC 365 Dining & Groceries",
         bank: "OCBC",
         last4: "1945",

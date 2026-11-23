@@ -44,8 +44,8 @@ function TestConsumer() {
             <button onClick={() => setPerspective("household")}>
                 Set Household
             </button>
-            <button onClick={() => setPerspective("yijia")}>Set Yi Jia</button>
-            <button onClick={() => setPerspective("rachel")}>Set Rachel</button>
+            <button onClick={() => setPerspective("yijia")}>Set Alex</button>
+            <button onClick={() => setPerspective("rachel")}>Set Sam</button>
             <button onClick={toggleTheme}>Toggle Theme</button>
         </div>
     );
@@ -93,19 +93,19 @@ describe("HouseholdContext", () => {
             );
         });
 
-        // Switch to Yi Jia
+        // Switch to Alex
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: "Set Yi Jia" }));
+            fireEvent.click(screen.getByRole("button", { name: "Set Alex" }));
         });
         expect(screen.getByTestId("perspective")).toHaveTextContent("yijia");
-        expect(screen.getByTestId("active-member")).toHaveTextContent("Yi Jia");
+        expect(screen.getByTestId("active-member")).toHaveTextContent("Alex");
 
-        // Switch to Rachel
+        // Switch to Sam
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: "Set Rachel" }));
+            fireEvent.click(screen.getByRole("button", { name: "Set Sam" }));
         });
         expect(screen.getByTestId("perspective")).toHaveTextContent("rachel");
-        expect(screen.getByTestId("active-member")).toHaveTextContent("Rachel");
+        expect(screen.getByTestId("active-member")).toHaveTextContent("Sam");
 
         // Switch back to Household
         await act(async () => {
@@ -238,7 +238,7 @@ describe("Layout Components", () => {
                 screen.queryByRole("button", { name: /toggle theme/i }),
             ).not.toBeInTheDocument();
 
-            // Open perspective dropdown and select Rachel
+            // Open perspective dropdown and select Sam
             await act(async () => {
                 fireEvent.click(dropdownTrigger);
             });
@@ -247,10 +247,10 @@ describe("Layout Components", () => {
                 screen.getByRole("option", { name: /combined/i }),
             ).toBeInTheDocument();
             expect(
-                screen.getByRole("option", { name: /yi jia/i }),
+                screen.getByRole("option", { name: /alex/i }),
             ).toBeInTheDocument();
             const rachelOption = screen.getByRole("option", {
-                name: /rachel/i,
+                name: /sam/i,
             });
             expect(rachelOption).toBeInTheDocument();
 
@@ -258,7 +258,7 @@ describe("Layout Components", () => {
                 fireEvent.click(rachelOption);
             });
 
-            expect(dropdownTrigger).toHaveTextContent(/rachel/i);
+            expect(dropdownTrigger).toHaveTextContent(/sam/i);
         });
 
         it("hides Add Expense button on mobile viewports via responsive desktop-only classes", async () => {

@@ -45,10 +45,10 @@ function AuthTestComponent() {
             <div data-testid="perspective">{perspective}</div>
             <div data-testid="auth-error">{authError || "none"}</div>
             <button onClick={() => signInWithPin("123456")}>
-                Sign In Yi Jia
+                Sign In Alex
             </button>
             <button onClick={() => signInWithPin("234567")}>
-                Sign In Rachel
+                Sign In Sam
             </button>
             <button onClick={() => signInWithPin("000000")}>
                 Sign In Wrong
@@ -159,9 +159,9 @@ describe("PIN Authentication & Access Control", () => {
 
         expect(screen.getByTestId("perspective")).toHaveTextContent("yijia");
 
-        // Simulate Rachel PIN sign in
+        // Simulate Sam PIN sign in
         await act(async () => {
-            fireEvent.click(screen.getByText("Sign In Rachel"));
+            fireEvent.click(screen.getByText("Sign In Sam"));
         });
         expect(screen.getByTestId("partner")).toHaveTextContent("rachel");
     });
@@ -312,13 +312,13 @@ describe("PIN Authentication & Access Control", () => {
             expect(isBiometricsEnrolled()).toBe(false);
 
             // Enroll with PIN
-            const enrolled = await enrollBiometrics("123456", "Yi Jia");
+            const enrolled = await enrollBiometrics("123456", "Alex");
             expect(enrolled).toBe(true);
             expect(isBiometricsEnrolled()).toBe(true);
 
             const info = getEnrolledBiometricInfo();
             expect(info.enrolled).toBe(true);
-            expect(info.partnerName).toBe("Yi Jia");
+            expect(info.partnerName).toBe("Alex");
 
             // Storage has encrypted payload
             const stored = localStorage.getItem(BIOMETRICS_STORAGE_KEY);
@@ -350,7 +350,7 @@ describe("PIN Authentication & Access Control", () => {
                         ),
                     ),
                     enrolledAt: new Date().toISOString(),
-                    partnerName: "Rachel",
+                    partnerName: "Sam",
                 }),
             );
 

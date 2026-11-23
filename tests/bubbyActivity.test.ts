@@ -11,8 +11,8 @@ import { onAppEvent, type AppEventMap } from "../src/lib/appEvents";
 import type { DailyCheckin, HouseholdMember } from "../src/types/finance";
 
 const members: HouseholdMember[] = [
-    { id: "mem-yj", household_id: "hh", display_name: "Yi Jia", role: "owner" },
-    { id: "mem-r", household_id: "hh", display_name: "Rachel", role: "member" },
+    { id: "mem-yj", household_id: "hh", display_name: "Alex", role: "owner" },
+    { id: "mem-r", household_id: "hh", display_name: "Sam", role: "member" },
 ];
 
 function checkin(member_id: string, checkin_date: string): DailyCheckin {
@@ -58,7 +58,7 @@ describe("recordActivityCheckin", () => {
         const record = vi
             .spyOn(financeService, "recordDailyCheckin")
             .mockResolvedValue(checkin("mem-r", "2026-11-05"));
-        // Yi Jia logged a dinner Rachel paid for on Monday: server checked in Rachel on Monday
+        // Alex logged a dinner Sam paid for on Monday: server checked in Sam on Monday
         queryClient.setQueryData(queryKeys.dailyCheckins(), [
             checkin("mem-r", "2026-11-02"),
         ]);

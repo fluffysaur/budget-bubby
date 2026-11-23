@@ -8,7 +8,27 @@ function squash(value: string): string {
     return value.toLowerCase().replace(/\s+/g, "");
 }
 
-/** The member whose display name matches the logged-in partner id (e.g. "yijia" -> "Yi Jia"). */
+/**
+ * Demo members use placeholder display names, so the legacy partner ids map
+ * to those names too. Existing name-based matching keeps working unchanged.
+ */
+export const DEMO_PARTNER_ALIASES: Record<string, string> = {
+    yijia: "alex",
+    rachel: "sam",
+};
+
+/** True when a display name belongs to the given partner id or perspective key. */
+export function displayNameMatchesPartner(
+    displayName: string,
+    partnerId: string,
+): boolean {
+    const name = squash(displayName);
+    const target = squash(partnerId);
+    const alias = DEMO_PARTNER_ALIASES[target];
+    return name === target || name.includes(target) || (!!alias && name === alias);
+}
+
+/** The member whose display name matches the logged-in partner id (e.g. a legacy partner id resolves to its demo placeholder name). */
 export function matchPartnerMember(
     members: HouseholdMember[],
     loggedInPartner: string | null | undefined,
@@ -19,6 +39,7 @@ export function matchPartnerMember(
         members.find((m) => m.id === loggedInPartner) ??
         members.find((m) => squash(m.display_name) === target) ??
         members.find((m) => squash(m.display_name).includes(target)) ??
+        members.find((m) => displayNameMatchesPartner(m.display_name, target)) ??
         null
     );
 }

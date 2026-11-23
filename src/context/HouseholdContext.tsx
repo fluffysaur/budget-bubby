@@ -1,6 +1,6 @@
 /**
  * Household Context & Perspective State Management
- * Provides global perspective (Combined Household vs Yi Jia vs Rachel),
+ * Provides global perspective (Combined Household vs each member),
  * theme (light vs dark with DOM synchronization), and active member resolution.
  */
 
@@ -25,6 +25,7 @@ import { isSupabaseConfigured } from "../services/supabaseClient";
 import { useHouseholdOverviewQuery } from "../hooks/useFinanceQueries";
 import { useQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
+import { displayNameMatchesPartner } from "../lib/members";
 
 export interface HouseholdContextValue {
     perspective: Perspective;
@@ -139,7 +140,8 @@ function HouseholdProviderInner({
             return (
                 mLower === pLower ||
                 mSanitized === pSanitized ||
-                mLower.includes(pLower)
+                mLower.includes(pLower) ||
+                displayNameMatchesPartner(m.display_name, pSanitized)
             );
         });
 

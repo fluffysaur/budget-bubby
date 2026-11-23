@@ -169,7 +169,7 @@ describe("Add Expense minimal layout", () => {
         });
 
         expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
-            /Rachel/,
+            /Sam/,
         );
     });
 

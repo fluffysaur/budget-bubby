@@ -21,8 +21,8 @@ describe("mockSeedData", () => {
         expect(mockHousehold.currency).toBe("SGD");
         expect(mockMembers).toHaveLength(2);
         expect(mockMembers.map((m) => m.display_name)).toEqual([
-            "Yi Jia",
-            "Rachel",
+            "Alex",
+            "Sam",
         ]);
         expect(mockMembers.map((m) => m.role)).toEqual(["owner", "member"]);
     });
@@ -39,7 +39,7 @@ describe("mockSeedData", () => {
         expect(categoryNames).toContain("Buffer");
     });
 
-    it("allocations for Yi Jia and Rachel sum to 100%", () => {
+    it("allocations for Alex and Sam sum to 100%", () => {
         const yijiaProfile = mockBaseProfiles.find(
             (p) => p.owner_id === "mem-00000000-0011",
         );
@@ -73,7 +73,7 @@ describe("mockSeedData", () => {
         expect(Math.round(rachelTotalPct * 100)).toBe(100);
     });
 
-    it("contains 13 accounts for Yi Jia and 5 accounts for Rachel", () => {
+    it("contains 13 accounts for Alex and 5 accounts for Sam", () => {
         const yijiaAccounts = mockAccounts.filter(
             (a) => a.owner_id === "mem-00000000-0011",
         );

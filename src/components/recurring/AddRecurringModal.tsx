@@ -6,7 +6,7 @@
  * - Pre-filling for editing existing recurring items
  * - Field validation (Name required, positive Amount)
  * - Frequency selector with conditional renewal month, due day and spend category
- * - Owner selector (Yi Jia, Rachel, Joint)
+ * - Owner selector (partner one, partner two, Joint)
  * - Optional start and end dates (end must be on or after start)
  */
 
@@ -34,6 +34,7 @@ import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import { displayNameMatchesPartner } from "../../lib/members";
 import { feedback } from "../../lib/delight/feedback";
 import { filterCategoriesForMember } from "../../lib/financialFormulas";
 import {
@@ -97,13 +98,13 @@ export function AddRecurringModal({
     const { members, activeMember, isMockMode } = useSafeHousehold();
 
     // Find member IDs
-    const yiJiaMember = members.find((m) =>
-        m.display_name.toLowerCase().includes("yi jia"),
+    const partnerOneMember = members.find((m) =>
+        displayNameMatchesPartner(m.display_name, "yijia"),
     );
 
     const defaultOwnerId =
         activeMember?.id ||
-        yiJiaMember?.id ||
+        partnerOneMember?.id ||
         members[0]?.id ||
         (isMockMode ? "mem-00000000-0011" : "joint");
 

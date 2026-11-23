@@ -317,7 +317,7 @@ describe("calculateRecurringCategorySpend", () => {
             category_id: LIFESTYLE,
         }),
         makeItem({
-            id: "rachel-sub",
+            id: "sam-sub",
             owner_id: RC,
             amount: 15,
             monthly_amortized_amount: 15,
@@ -379,7 +379,7 @@ describe("calculateRecurringCategorySpend", () => {
         expect(ids).not.toContain("ins");
         expect(ids).not.toContain("future");
         expect(ids).not.toContain("ended");
-        expect(ids).not.toContain("rachel-sub");
+        expect(ids).not.toContain("sam-sub");
 
         const dec = calculateRecurringCategorySpend(items, "2026-12", {
             ownerId: YJ,

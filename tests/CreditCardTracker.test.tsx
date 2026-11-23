@@ -19,13 +19,13 @@ const testMembers: HouseholdMember[] = [
     {
         id: "mem-00000000-0011",
         household_id: "hh-00000000-0001",
-        display_name: "Yi Jia",
+        display_name: "Alex",
         role: "owner",
     },
     {
         id: "mem-00000000-0012",
         household_id: "hh-00000000-0001",
-        display_name: "Rachel",
+        display_name: "Sam",
         role: "member",
     },
 ];
@@ -109,7 +109,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(screen.getByText(/8832/)).toBeInTheDocument();
 
             // Owner label flex defense
-            const ownerLabels = screen.getAllByText("Yi Jia");
+            const ownerLabels = screen.getAllByText("Alex");
             expect(ownerLabels.length).toBeGreaterThanOrEqual(1);
             ownerLabels.forEach((label) => {
                 expect(label).toHaveClass(

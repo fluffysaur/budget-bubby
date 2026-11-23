@@ -3,7 +3,7 @@
  * Integrated Monthly Budget Tracking & Base Profile Management
  * Coordinates:
  * - Selected month navigation ('YYYY-MM')
- * - Active perspective (Combined Household vs Yi Jia vs Rachel)
+ * - Active perspective (Combined Household vs each member)
  * - High-level financial metric cards
  * - Spendable Category spending meters (Food, Lifestyle, Transport, Buffer) with recurring item tooltips
  * - Collapsible Wealth & Fixed Allocations (Investments, Savings, Tithing)

@@ -5,6 +5,7 @@
  * shared settlements, savings goals, and recurring items.
  */
 
+import { displayNameMatchesPartner } from "../lib/members";
 import {
     normalizeGoalTags,
     normalizeHouseholdSettings,
@@ -322,7 +323,8 @@ class MockFinanceServiceImpl implements FinanceService {
                 (clean === "yijia" &&
                     m.display_name.toLowerCase().includes("yi jia")) ||
                 (clean === "rachel" &&
-                    m.display_name.toLowerCase().includes("rachel")),
+                    m.display_name.toLowerCase().includes("rachel")) ||
+                displayNameMatchesPartner(m.display_name, clean),
         );
 
         if (!targetMember) {

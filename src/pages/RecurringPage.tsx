@@ -2,7 +2,7 @@
  * RecurringPage Component
  * Recurring items (insurance, tax, subscriptions, bills, other) & renewal calendar:
  * - 2 summary cards (as of today): Annual Outflow (with per-month figure) and Next Renewal
- * - Perspective filtering (Combined Household vs Yi Jia vs Rachel)
+ * - Perspective filtering (Combined Household vs each member)
  * - RenewalCalendar with year stepper and month detail
  * - RecurringTable with search, type filters, edit, and delete
  * - AddRecurringModal integration

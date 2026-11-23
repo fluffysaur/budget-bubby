@@ -21,10 +21,10 @@ test.describe("Budget Bubby App Smoke Test", () => {
             page.getByRole("option", { name: /Combined/i }),
         ).toBeVisible();
         await expect(
-            page.getByRole("option", { name: /Yi Jia/i }),
+            page.getByRole("option", { name: /Alex/i }),
         ).toBeVisible();
         await expect(
-            page.getByRole("option", { name: /Rachel/i }),
+            page.getByRole("option", { name: /Sam/i }),
         ).toBeVisible();
         await perspectiveSwitcher.click();
 

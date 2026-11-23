@@ -20,7 +20,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         it("dispatcher delegates to mockFinanceService when Supabase is not configured", async () => {
             const overview = await financeService.getHouseholdOverview();
             expect(overview).toBeDefined();
-            expect(overview.household.name).toBe("Yi Jia & Rachel");
+            expect(overview.household.name).toBe("Alex & Sam");
         });
     });
 
@@ -37,10 +37,10 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
                 await mockFinanceService.getAccounts("rachel");
 
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const rachelMember = mockMembers.find(
-                (m) => m.display_name === "Rachel",
+                (m) => m.display_name === "Sam",
             )!;
 
             // Every account in yijia's perspective must belong to yijia or be joint
@@ -128,9 +128,9 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             const overviewBefore =
                 await mockFinanceService.getHouseholdOverview();
 
-            // Add a 50/50 shared expense paid by Yi Jia ($100 => Rachel owes $50)
+            // Add a 50/50 shared expense paid by Alex ($100 => Sam owes $50)
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const created = await mockFinanceService.addExpense({
                 payer_id: yijiaMember.id,
@@ -161,7 +161,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
         it("deletes an expense properly", async () => {
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const created = await mockFinanceService.addExpense({
                 payer_id: yijiaMember.id,
@@ -182,10 +182,10 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
         it("settles shared expenses and resets net settlement balance to 0", async () => {
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const rachelMember = mockMembers.find(
-                (m) => m.display_name === "Rachel",
+                (m) => m.display_name === "Sam",
             )!;
 
             // Verify there is an active settlement balance first
@@ -268,7 +268,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
     describe("Monthly Budget & Categories", () => {
         it("retrieves monthly budget detail with category breakdowns and actual spent", async () => {
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const budgetDetail = await mockFinanceService.getMonthlyBudget(
                 "2026-09",
@@ -287,7 +287,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
         it("updates monthly budget, ignores bonus and recalculates after_deductions", async () => {
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const budgetDetail = await mockFinanceService.getMonthlyBudget(
                 "2026-09",
@@ -316,7 +316,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
         it("updates base profile and allocations", async () => {
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
             const profiles = await mockFinanceService.getBaseProfiles();
             const profile = profiles.find(
@@ -561,7 +561,7 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         it("locks past months and keeps historical budgets intact when base profile changes in mock mode", async () => {
             const pastMonth = "2025-01";
             const yijiaMember = mockMembers.find(
-                (m) => m.display_name === "Yi Jia",
+                (m) => m.display_name === "Alex",
             )!;
 
             // 1. Fetch past month budget

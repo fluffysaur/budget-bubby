@@ -28,7 +28,7 @@ const sampleExpenses: Expense[] = [
     {
         id: "exp-test-1",
         household_id: "hh-00000000-0001",
-        payer_id: "mem-00000000-0011", // Yi Jia
+        payer_id: "mem-00000000-0011", // Alex
         category_id: "cat-00000000-0101", // Food
         date: "2026-09-02",
         item: "FairPrice Finest Groceries",
@@ -42,7 +42,7 @@ const sampleExpenses: Expense[] = [
     {
         id: "exp-test-2",
         household_id: "hh-00000000-0001",
-        payer_id: "mem-00000000-0012", // Rachel
+        payer_id: "mem-00000000-0012", // Sam
         category_id: "cat-00000000-0101", // Food
         date: "2026-09-05",
         item: "Dinner at Din Tai Fung",
@@ -56,7 +56,7 @@ const sampleExpenses: Expense[] = [
     {
         id: "exp-test-3",
         household_id: "hh-00000000-0001",
-        payer_id: "mem-00000000-0011", // Yi Jia
+        payer_id: "mem-00000000-0011", // Alex
         category_id: "cat-00000000-0102", // Lifestyle
         date: "2026-09-09",
         item: "Mechanical Keyboard Switch",
@@ -125,11 +125,11 @@ describe("ExpenseFormModal", () => {
         expect(
             within(screen.getByLabelText("Payer Selection")).getByRole(
                 "button",
-                { name: /yi jia/i },
+                { name: /alex/i },
             ),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: /rachel/i }),
+            screen.getByRole("button", { name: /sam/i }),
         ).toBeInTheDocument();
 
         // Verify 50/50 shared toggle exists
@@ -145,7 +145,7 @@ describe("ExpenseFormModal", () => {
             .mockResolvedValueOnce({
                 id: "exp-new-123",
                 household_id: "hh-00000000-0001",
-                payer_id: "mem-00000000-0012", // Rachel
+                payer_id: "mem-00000000-0012", // Sam
                 category_id: "cat-00000000-0101", // Food
                 date: "2026-09-15",
                 item: "Cold Storage Snacks",
@@ -185,8 +185,8 @@ describe("ExpenseFormModal", () => {
         const foodChip = screen.getByRole("button", { name: /food/i });
         fireEvent.click(foodChip);
 
-        // Toggle Payer to Rachel
-        const rachelBtn = screen.getByRole("button", { name: /rachel/i });
+        // Toggle Payer to Sam
+        const rachelBtn = screen.getByRole("button", { name: /sam/i });
         fireEvent.click(rachelBtn);
 
         // Remarks
@@ -457,8 +457,8 @@ describe("ExpenseListTable", () => {
         expect(screen.getByText("Lifestyle")).toBeInTheDocument();
 
         // Payers
-        expect(screen.getAllByText(/Yi Jia/).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByText(/Rachel/).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Alex/).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Sam/).length).toBeGreaterThanOrEqual(1);
 
         // Shared 50/50 badges
         expect(screen.getAllByText(/shared/i).length).toBeGreaterThanOrEqual(2);
@@ -628,7 +628,7 @@ describe("ExpensesPage Integration", () => {
             sampleExpenses[2],
         ]);
         vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
-            household: { id: "hh-1", name: "Yi Jia & Rachel", currency: "SGD" },
+            household: { id: "hh-1", name: "Alex & Sam", currency: "SGD" },
             members: mockMembers,
             totalAssets: 100000,
             trueNetWorth: 100000,
@@ -636,9 +636,9 @@ describe("ExpensesPage Integration", () => {
                 netBalance: 52.4,
                 debtorId: mockMembers[0].id,
                 creditorId: mockMembers[1].id,
-                debtorName: "Yi Jia",
-                creditorName: "Rachel",
-                settlementText: "Yi Jia owes Rachel S$52.40",
+                debtorName: "Alex",
+                creditorName: "Sam",
+                settlementText: "Alex owes Sam S$52.40",
                 member1OwesMember2: 52.4,
                 member2OwesMember1: 0,
             },
@@ -657,7 +657,7 @@ describe("ExpensesPage Integration", () => {
         // The settlement card displays the global balance even though the ledger is filtered
         await waitFor(() => {
             expect(screen.getByText("S$52.40")).toBeInTheDocument();
-            expect(screen.getByText("Yi Jia → Rachel")).toBeInTheDocument();
+            expect(screen.getByText("Alex → Sam")).toBeInTheDocument();
         });
     });
 });

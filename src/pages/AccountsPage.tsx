@@ -1,7 +1,7 @@
 /**
  * AccountsPage Component
  * Full page coordinating:
- * - Active perspective (Combined Household vs Yi Jia vs Rachel)
+ * - Active perspective (Combined Household vs each member)
  * - Net worth summary card (total of all account balances)
  * - Net Worth progression chart (NetWorthChart)
  * - Grouped account listings with Notion-style table/card view (AccountGroupList)

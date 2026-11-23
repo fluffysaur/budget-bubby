@@ -32,7 +32,7 @@ const mockGoals: SavingsGoal[] = [
     {
         id: "goal-reno-02",
         household_id: "hh-00000000-0001",
-        owner_id: "mem-00000000-0012", // Rachel's goal
+        owner_id: "mem-00000000-0012", // Sam's goal
         title: "Renovation Fund",
         target_amount: 80000,
         target_date: "2027-10-01",
@@ -210,7 +210,7 @@ describe("Goal Notification Navigation and Scroll", () => {
                             initialAuthenticated={true}
                             initialPartner="yijia"
                         >
-                            {/* Start with yijia's personal perspective, but goal-reno-02 is Rachel's */}
+                            {/* Start with yijia's personal perspective, but goal-reno-02 is Sam's */}
                             <HouseholdProvider defaultPerspective="yijia">
                                 <GoalsPage />
                             </HouseholdProvider>

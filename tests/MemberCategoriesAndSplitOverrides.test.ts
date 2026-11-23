@@ -140,7 +140,7 @@ describe("Member-specific categories & per-member split overrides", () => {
 
         it("attributes payer share to category_id and partner share to partner_category_id in monthly budgets", async () => {
             const m2Personal = await mockFinanceService.addCategory({
-                name: "Rachel Treat",
+                name: "Sam Treat",
                 member_id: m2,
                 group: "spendable",
             });
