@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/fluffysaur/budget-bubby/compare/v0.4.0...v0.4.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **ai:** handle empty responses, SSE errors, and configurable reasoning effort ([#237](https://github.com/fluffysaur/budget-bubby/issues/237)) ([4a1b8dc](https://github.com/fluffysaur/budget-bubby/commit/4a1b8dc0ca2c61d269230c4bb9119fd8ac869ee1))
+
 ## [0.4.0](https://github.com/fluffysaur/budget-bubby/compare/v0.3.0...v0.4.0) (2026-11-23)
 
 
