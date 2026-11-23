@@ -82,6 +82,7 @@ function toGeminiFunctionDeclarations(tools: AiToolDefinition[]) {
 
 interface GeminiPart {
     text?: string;
+    thought?: boolean;
     functionCall?: {
         name: string;
         args?: Record<string, unknown>;
@@ -161,11 +162,34 @@ async function extractGeminiError(res: Response): Promise<string> {
 }
 
 interface RawGeminiChunk {
+    error?: {
+        message?: string;
+    };
     candidates?: Array<{
+        finishReason?: string;
         content?: {
             parts?: GeminiPart[];
         };
     }>;
+}
+
+const GEMINI_THINKING_BUDGETS = {
+    low: 1024,
+    medium: 8192,
+    high: 24576,
+} as const;
+
+function buildGeminiThinkingConfig(
+    model: string,
+    effort: "low" | "medium" | "high",
+): Record<string, unknown> | undefined {
+    if (/^gemini-3/i.test(model)) {
+        return { thinkingLevel: effort.toUpperCase() };
+    }
+    if (/^gemini-2\.5/i.test(model)) {
+        return { thinkingBudget: GEMINI_THINKING_BUDGETS[effort] };
+    }
+    return undefined;
 }
 
 export const geminiAdapter: AiProviderAdapter = {
@@ -217,6 +241,7 @@ export const geminiAdapter: AiProviderAdapter = {
         const {
             apiKey,
             model,
+            reasoningEffort = "low",
             messages,
             systemInstruction,
             tools,
@@ -245,6 +270,13 @@ export const geminiAdapter: AiProviderAdapter = {
                 { functionDeclarations: toGeminiFunctionDeclarations(tools) },
             ];
         }
+        const thinkingConfig = buildGeminiThinkingConfig(
+            effectiveModel,
+            reasoningEffort,
+        );
+        if (thinkingConfig) {
+            payload.generationConfig = { thinkingConfig };
+        }
 
         const res = await fetch(
             `${GEMINI_API_BASE}/models/${encodeURIComponent(effectiveModel)}:streamGenerateContent?alt=sse`,
@@ -264,32 +296,58 @@ export const geminiAdapter: AiProviderAdapter = {
         }
 
         let fullText = "";
+        let lastFinishReason: string | undefined;
         const toolCalls: AiToolCall[] = [];
 
         await readSseStream(res, ({ data }) => {
+            let parsed: RawGeminiChunk;
             try {
-                const parsed = JSON.parse(data) as RawGeminiChunk;
-                const parts = parsed.candidates?.[0]?.content?.parts ?? [];
-                for (const part of parts) {
-                    if (typeof part.text === "string" && part.text.length > 0) {
-                        fullText += part.text;
-                        onTextDelta?.(part.text);
-                    }
-                    if (
-                        part.functionCall &&
-                        typeof part.functionCall.name === "string"
-                    ) {
-                        toolCalls.push({
-                            id: generateUuid(),
-                            name: part.functionCall.name,
-                            args: part.functionCall.args ?? {},
-                        });
-                    }
-                }
+                parsed = JSON.parse(data) as RawGeminiChunk;
             } catch {
                 // Skip malformed partial frame
+                return;
+            }
+
+            if (parsed.error?.message) {
+                throw new Error(parsed.error.message);
+            }
+
+            const candidate = parsed.candidates?.[0];
+            if (candidate?.finishReason) {
+                lastFinishReason = candidate.finishReason;
+            }
+            const parts = candidate?.content?.parts ?? [];
+            for (const part of parts) {
+                if (
+                    !part.thought &&
+                    typeof part.text === "string" &&
+                    part.text.length > 0
+                ) {
+                    fullText += part.text;
+                    onTextDelta?.(part.text);
+                }
+                if (
+                    part.functionCall &&
+                    typeof part.functionCall.name === "string"
+                ) {
+                    toolCalls.push({
+                        id: generateUuid(),
+                        name: part.functionCall.name,
+                        args: part.functionCall.args ?? {},
+                    });
+                }
             }
         });
+
+        if (
+            !fullText.trim() &&
+            toolCalls.length === 0 &&
+            lastFinishReason === "MAX_TOKENS"
+        ) {
+            throw new Error(
+                "The model ran out of tokens before replying. Try lowering reasoning effort or using another model.",
+            );
+        }
 
         return { text: fullText, toolCalls };
     },

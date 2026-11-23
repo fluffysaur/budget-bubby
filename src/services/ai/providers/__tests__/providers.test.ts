@@ -11,6 +11,8 @@ import {
     getProviderModel,
     setProviderModel,
     getActiveAiConfig,
+    getAiReasoningEffort,
+    setAiReasoningEffort,
     getProviderKeyStorageKey,
     getProviderModelStorageKey,
     streamAiTurn,
@@ -101,6 +103,7 @@ describe("AI providers & storage", () => {
             provider: "openrouter",
             apiKey: "sk-or-v1-xyz",
             model: "deepseek/deepseek-r1",
+            reasoningEffort: "low",
         });
 
         // Other providers remain intact
@@ -536,5 +539,97 @@ describe("AI providers & storage", () => {
                 messages: [{ role: "user", text: "Hi" }],
             }),
         ).rejects.toThrow(/not configured/i);
+    });
+
+    it("defaults reasoningEffort to low, passes it per-provider, and surfaces OpenRouter SSE errors and length cutoffs", async () => {
+        expect(getAiReasoningEffort()).toBe("low");
+        setAiReasoningEffort("medium");
+        expect(getAiReasoningEffort()).toBe("medium");
+
+        const fetchMock = vi
+            .fn()
+            // 1. OpenRouter sends reasoning: { effort: "medium" } and returns in-stream error
+            .mockResolvedValueOnce(
+                new Response(
+                    makeSseStream([
+                        `data: ${JSON.stringify({
+                            error: { message: "Upstream provider timed out" },
+                        })}\n\n`,
+                    ]),
+                    { status: 200 },
+                ),
+            )
+            // 2. OpenRouter returns finish_reason: "length" with empty content
+            .mockResolvedValueOnce(
+                new Response(
+                    makeSseStream([
+                        `data: ${JSON.stringify({
+                            choices: [{ delta: {}, finish_reason: "length" }],
+                        })}\n\n`,
+                    ]),
+                    { status: 200 },
+                ),
+            )
+            // 3. Gemini 3.8 Flash receives thinkingLevel: "LOW" and ignores thought: true parts
+            .mockResolvedValueOnce(
+                new Response(
+                    makeSseStream([
+                        `data: ${JSON.stringify({
+                            candidates: [
+                                {
+                                    content: {
+                                        parts: [
+                                            { text: "internal thought", thought: true },
+                                            { text: "Final answer." },
+                                        ],
+                                    },
+                                },
+                            ],
+                        })}\n\n`,
+                    ]),
+                    { status: 200 },
+                ),
+            );
+        vi.stubGlobal("fetch", fetchMock);
+
+        await expect(
+            streamAiTurn({
+                provider: "openrouter",
+                apiKey: "sk-or-v1-test",
+                model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+                messages: [{ role: "user", text: "Summarize" }],
+            }),
+        ).rejects.toThrow("Upstream provider timed out");
+
+        const [, orInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+        const orBody = JSON.parse(orInit.body as string) as {
+            reasoning?: { effort?: string };
+        };
+        expect(orBody.reasoning).toEqual({ effort: "medium" });
+
+        await expect(
+            streamAiTurn({
+                provider: "openrouter",
+                apiKey: "sk-or-v1-test",
+                reasoningEffort: "low",
+                messages: [{ role: "user", text: "Summarize" }],
+            }),
+        ).rejects.toThrow(/ran out of tokens/i);
+
+        const gemResult = await streamAiTurn({
+            provider: "gemini",
+            apiKey: "AIza-test",
+            model: "gemini-3.8-flash",
+            reasoningEffort: "low",
+            messages: [{ role: "user", text: "Summarize" }],
+        });
+        expect(gemResult.text).toBe("Final answer.");
+        const [, gemInit] = fetchMock.mock.calls[2] as [string, RequestInit];
+        const gemBody = JSON.parse(gemInit.body as string) as {
+            generationConfig?: { thinkingConfig?: { thinkingLevel?: string } };
+        };
+        expect(gemBody.generationConfig?.thinkingConfig).toEqual({
+            thinkingLevel: "LOW",
+        });
     });
 });

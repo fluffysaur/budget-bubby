@@ -18,13 +18,16 @@ import {
     AI_PROVIDER_META,
     clearProviderApiKey,
     getActiveAiProvider,
+    getAiReasoningEffort,
     getProviderApiKey,
     getProviderModel,
     setActiveAiProvider,
+    setAiReasoningEffort,
     setProviderApiKey,
     setProviderModel,
     testAiConnection,
     type AiProviderId,
+    type AiReasoningEffort,
 } from "../../services/ai/providers";
 import { pushGeminiSettings } from "../../services/ai/aiSettingsSync";
 import { financeService } from "../../services/financeService";
@@ -67,6 +70,9 @@ export function AiSettingsSection() {
         const initialModel = getProviderModel(initialProvider);
         return !isCuratedModel(initialProvider, initialModel);
     });
+    const [reasoningEffort, setReasoningEffort] = useState<AiReasoningEffort>(
+        () => getAiReasoningEffort(),
+    );
     const [showKey, setShowKey] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [feedback, setFeedback] = useState<{
@@ -151,6 +157,12 @@ export function AiSettingsSection() {
             setProviderModel(provider, trimmed);
             notifyAiConfigChanged();
         }
+    };
+
+    const handleReasoningEffortChange = (nextEffort: AiReasoningEffort) => {
+        setReasoningEffort(nextEffort);
+        setAiReasoningEffort(nextEffort);
+        notifyAiConfigChanged();
     };
 
     const handleTestConnection = async () => {
@@ -297,6 +309,24 @@ export function AiSettingsSection() {
                         data-testid="ai-custom-model-input"
                     />
                 )}
+
+                <Select
+                    id="ai-reasoning-effort-select"
+                    label="Reasoning Effort"
+                    sizeVariant="sm"
+                    value={reasoningEffort}
+                    onChange={(e) =>
+                        handleReasoningEffortChange(
+                            e.target.value as AiReasoningEffort,
+                        )
+                    }
+                    data-testid="ai-reasoning-effort-select"
+                    options={[
+                        { value: "low", label: "Low (Recommended)" },
+                        { value: "medium", label: "Medium" },
+                        { value: "high", label: "High" },
+                    ]}
+                />
 
                 <div className="flex flex-wrap items-center gap-2">
                     <Button

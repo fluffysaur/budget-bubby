@@ -9,6 +9,7 @@ import {
     Sparkles,
     X,
     Send,
+    Square,
     Settings,
     Trash2,
     Loader2,
@@ -234,7 +235,8 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
             const text = (rawText ?? inputValue).trim();
             if (!text || isSending) return;
 
-            const { provider, apiKey, model } = getActiveAiConfig();
+            const { provider, apiKey, model, reasoningEffort } =
+                getActiveAiConfig();
             if (!apiKey) {
                 setHasApiKey(false);
                 return;
@@ -274,30 +276,34 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
             try {
                 let accumulatedText = "";
                 const collectedProposals: ProposedAction[] = [];
+                let exhaustedToolRounds = false;
+
+                const appendDelta = (delta: string) => {
+                    accumulatedText += delta;
+                    setMessages((prev) =>
+                        prev.map((msg) =>
+                            msg.id === assistantMessageId
+                                ? {
+                                      ...msg,
+                                      content: accumulatedText,
+                                      activeToolLabel: undefined,
+                                  }
+                                : msg,
+                        ),
+                    );
+                };
 
                 for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
                     const turnResult = await streamAiTurn({
                         provider,
                         apiKey,
                         model,
+                        reasoningEffort,
                         messages: nextMessages,
                         systemInstruction,
                         tools: BUBBY_TOOLS,
                         signal: controller.signal,
-                        onTextDelta: (delta) => {
-                            accumulatedText += delta;
-                            setMessages((prev) =>
-                                prev.map((msg) =>
-                                    msg.id === assistantMessageId
-                                        ? {
-                                              ...msg,
-                                              content: accumulatedText,
-                                              activeToolLabel: undefined,
-                                          }
-                                        : msg,
-                                ),
-                            );
-                        },
+                        onTextDelta: appendDelta,
                     });
 
                     if (turnResult.text || turnResult.toolCalls.length > 0) {
@@ -404,15 +410,71 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                     if (proposalCalls.length > 0 && readCalls.length === 0) {
                         break;
                     }
+
+                    if (
+                        round === MAX_TOOL_ROUNDS - 1 &&
+                        toolResults.length > 0
+                    ) {
+                        exhaustedToolRounds = true;
+                    }
+                }
+
+                // If max tool rounds were hit without a text reply, force one final synthesis turn without tools
+                if (
+                    exhaustedToolRounds &&
+                    !accumulatedText.trim() &&
+                    collectedProposals.length === 0
+                ) {
+                    setMessages((prev) =>
+                        prev.map((msg) =>
+                            msg.id === assistantMessageId
+                                ? {
+                                      ...msg,
+                                      activeToolLabel: "Summarizing...",
+                                  }
+                                : msg,
+                        ),
+                    );
+                    const synthesisResult = await streamAiTurn({
+                        provider,
+                        apiKey,
+                        model,
+                        reasoningEffort,
+                        messages: nextMessages,
+                        systemInstruction,
+                        signal: controller.signal,
+                        onTextDelta: appendDelta,
+                    });
+                    if (synthesisResult.text) {
+                        nextMessages.push({
+                            role: "assistant",
+                            text: synthesisResult.text,
+                        });
+                    }
+                }
+
+                const trimmedText = accumulatedText.trim();
+                if (!trimmedText && collectedProposals.length === 0) {
+                    setMessages((prev) =>
+                        prev.map((msg) =>
+                            msg.id === assistantMessageId
+                                ? {
+                                      ...msg,
+                                      content: "",
+                                      isStreaming: false,
+                                      activeToolLabel: undefined,
+                                      error: "The AI returned an empty response. Please try again.",
+                                  }
+                                : msg,
+                        ),
+                    );
+                    return;
                 }
 
                 historyRef.current = nextMessages;
 
                 const finalText =
-                    accumulatedText.trim() ||
-                    (collectedProposals.length > 0
-                        ? "Review and confirm below."
-                        : "Done.");
+                    trimmedText || "Review and confirm below.";
 
                 setMessages((prev) =>
                     prev.map((msg) =>
@@ -435,6 +497,18 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                     err instanceof DOMException &&
                     err.name === "AbortError"
                 ) {
+                    setMessages((prev) =>
+                        prev.map((msg) =>
+                            msg.id === assistantMessageId
+                                ? {
+                                      ...msg,
+                                      content: msg.content || "Stopped.",
+                                      isStreaming: false,
+                                      activeToolLabel: undefined,
+                                  }
+                                : msg,
+                        ),
+                    );
                     return;
                 }
                 const errorMessage =
@@ -662,37 +736,47 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                                 : "items-start"
                                         }`}
                                     >
-                                        <div
-                                            className={`max-w-[88%] rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word shadow-cute-sm ${
-                                                msg.role === "user"
-                                                    ? "bg-(--pastel-lilac) text-(--text-ink) font-semibold"
-                                                    : "bg-(--bg-card) text-(--text-ink) font-medium"
-                                            }`}
-                                        >
-                                            {msg.content}
-                                            {msg.isStreaming &&
-                                                !msg.content && (
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
-                                                        <Loader2
-                                                            className="h-3.5 w-3.5 animate-spin"
-                                                            strokeWidth={2.5}
-                                                        />
-                                                        {msg.activeToolLabel ??
-                                                            "Thinking..."}
-                                                    </span>
-                                                )}
-                                            {msg.isStreaming &&
-                                                msg.content &&
-                                                msg.activeToolLabel && (
-                                                    <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-(--text-muted)">
-                                                        <Loader2
-                                                            className="h-3 w-3 animate-spin"
-                                                            strokeWidth={2.5}
-                                                        />
-                                                        {msg.activeToolLabel}
-                                                    </div>
-                                                )}
-                                        </div>
+                                        {(msg.role === "user" ||
+                                            msg.content ||
+                                            msg.isStreaming) && (
+                                            <div
+                                                className={`max-w-[88%] rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word shadow-cute-sm ${
+                                                    msg.role === "user"
+                                                        ? "bg-(--pastel-lilac) text-(--text-ink) font-semibold"
+                                                        : "bg-(--bg-card) text-(--text-ink) font-medium"
+                                                }`}
+                                            >
+                                                {msg.content}
+                                                {msg.isStreaming &&
+                                                    !msg.content && (
+                                                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
+                                                            <Loader2
+                                                                className="h-3.5 w-3.5 animate-spin"
+                                                                strokeWidth={
+                                                                    2.5
+                                                                }
+                                                            />
+                                                            {msg.activeToolLabel ??
+                                                                "Thinking..."}
+                                                        </span>
+                                                    )}
+                                                {msg.isStreaming &&
+                                                    msg.content &&
+                                                    msg.activeToolLabel && (
+                                                        <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-(--text-muted)">
+                                                            <Loader2
+                                                                className="h-3 w-3 animate-spin"
+                                                                strokeWidth={
+                                                                    2.5
+                                                                }
+                                                            />
+                                                            {
+                                                                msg.activeToolLabel
+                                                            }
+                                                        </div>
+                                                    )}
+                                            </div>
+                                        )}
 
                                         {msg.error && (
                                             <div className="w-full max-w-[92%]">
@@ -757,23 +841,39 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                     aria-label="Message Bubby AI"
                                     data-testid="bubby-chat-input"
                                 />
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="icon-md"
-                                    disabled={
-                                        !hasApiKey ||
-                                        isSending ||
-                                        !inputValue.trim()
-                                    }
-                                    aria-label="Send message"
-                                    data-testid="bubby-chat-send-btn"
-                                >
-                                    <Send
-                                        className="h-4 w-4"
-                                        strokeWidth={2.5}
-                                    />
-                                </Button>
+                                {isSending ? (
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="icon-md"
+                                        onClick={() =>
+                                            abortRef.current?.abort()
+                                        }
+                                        aria-label="Stop generating"
+                                        data-testid="bubby-chat-stop-btn"
+                                    >
+                                        <Square
+                                            className="h-4 w-4"
+                                            strokeWidth={2.5}
+                                        />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="icon-md"
+                                        disabled={
+                                            !hasApiKey || !inputValue.trim()
+                                        }
+                                        aria-label="Send message"
+                                        data-testid="bubby-chat-send-btn"
+                                    >
+                                        <Send
+                                            className="h-4 w-4"
+                                            strokeWidth={2.5}
+                                        />
+                                    </Button>
+                                )}
                             </div>
                         </form>
                     </m.aside>

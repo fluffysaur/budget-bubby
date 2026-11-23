@@ -111,4 +111,20 @@ describe("AiSettingsSection", () => {
         // Gemini key is still preserved
         expect(aiProviders.getProviderApiKey("gemini")).toBe("AIza-gem-1");
     });
+
+    it("defaults reasoning effort to low and allows customizing it", () => {
+        renderSection();
+
+        fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
+
+        const effortSelect = screen.getByTestId(
+            "ai-reasoning-effort-select",
+        ) as HTMLSelectElement;
+        expect(effortSelect.value).toBe("low");
+        expect(aiProviders.getAiReasoningEffort()).toBe("low");
+
+        fireEvent.change(effortSelect, { target: { value: "high" } });
+        expect(effortSelect.value).toBe("high");
+        expect(aiProviders.getAiReasoningEffort()).toBe("high");
+    });
 });
