@@ -4,10 +4,14 @@
  *
  * - History is the pool (non-CPF net worth, full value) at the last balance
  *   update of each month. Months without an update are filled by straight
- *   lines between their neighbours.
- * - Unlocks at 3+ months with a balance update.
- * - Growth leaves out months with goal-tagged spending (a venue deposit is
- *   not a savings miss) and months with a bonus (the plan excludes bonuses).
+ *   lines between their neighbours, for the chart only.
+ * - Growth is measured between consecutive real updates and never uses the
+ *   filled-in months: total growth over clean intervals / months they span.
+ * - An interval where a pool account is recorded for the first time is
+ *   skipped: its balance already existed (or was moved in), it isn't savings.
+ * - Goal-tagged spending inside an interval is added back (a venue deposit is
+ *   not a savings miss), and bonuses are taken out (the plan excludes them).
+ * - Unlocks at 2+ clean intervals.
  * - The projection adds monthly savings and life events, and drops by each
  *   goal's still-needed amount in its month. No investment returns.
  */
@@ -25,7 +29,8 @@ import type {
 } from "../../types/finance";
 import type { RoadmapInput } from "./types";
 
-export const REALITY_MIN_MONTHS = 3;
+/** Clean update-to-update intervals needed before the check unlocks. */
+export const REALITY_MIN_INTERVALS = 2;
 /** Growth and plan differ by more than this share of the plan: warn. */
 export const REALITY_WARN_RATIO = 0.2;
 /** Months to show past the last goal. */
@@ -40,6 +45,13 @@ export interface HistoryPoint {
     value: number;
     /** False when filled in between two balance updates. */
     actual: boolean;
+    /** 'YYYY-MM-DD' of the balance update (actual points only). */
+    date?: string;
+    /**
+     * A pool account got its first-ever snapshot since the previous update
+     * (actual points only).
+     */
+    newAccounts?: boolean;
 }
 
 /** Monthly pool history at full value, gaps filled by straight lines. */
@@ -52,9 +64,30 @@ export function poolHistory(
     for (const date of balanceUpdateDates(accounts, snapshots)) {
         lastDateByMonth.set(date.slice(0, 7), date); // dates are sorted
     }
+
+    const poolIds = new Set(
+        accounts.filter((a) => a.type !== "CPF").map((a) => a.id),
+    );
+    const firstSnapshot = new Map<string, string>();
+    for (const s of snapshots) {
+        if (!poolIds.has(s.account_id)) continue;
+        const d = s.snapshot_date.slice(0, 10);
+        const prev = firstSnapshot.get(s.account_id);
+        if (!prev || d < prev) firstSnapshot.set(s.account_id, d);
+    }
+    const firstDates = [...firstSnapshot.values()];
+
+    let prevDate = "";
     const actual = [...lastDateByMonth.entries()].map(([month, date]) => {
         const pool = poolAtDate(accounts, snapshots, statements, date);
-        return { month, value: round2(pool.liquid + pool.investments) };
+        const newAccounts = firstDates.some((d) => d > prevDate && d <= date);
+        prevDate = date;
+        return {
+            month,
+            date,
+            newAccounts,
+            value: round2(pool.liquid + pool.investments),
+        };
     });
 
     const points: HistoryPoint[] = [];
@@ -77,19 +110,21 @@ export function poolHistory(
     return points;
 }
 
-export type RealityStatus = "locked" | "no_months" | "ok";
+export type RealityStatus = "locked" | "ok";
 export type RealityDirection = "above" | "below" | "match";
 
 export interface RealityCheck {
     status: RealityStatus;
-    /** Months with a balance update. */
-    updateMonths: number;
-    /** Average monthly pool growth over the months used. */
+    /** Update-to-update intervals used (no newly recorded accounts). */
+    cleanIntervals: number;
+    /** Some interval was skipped because accounts were newly recorded. */
+    resetByNewAccounts: boolean;
+    /** Average monthly pool growth over the clean intervals. */
     grewPerMonth: number;
     /** The plan's monthly savings. */
     planPerMonth: number;
-    /** Months whose growth was averaged. */
-    monthsUsed: string[];
+    /** Months spanned by the clean intervals. */
+    monthsCovered: number;
     /** Growth differs from the plan by more than ~20%. */
     differs: boolean;
     /** Direction when `differs` is true; "match" otherwise. */
@@ -101,6 +136,7 @@ export interface RealityCheck {
 export interface RealityCheckInput {
     history: HistoryPoint[];
     expenses: Expense[];
+    /** Bonuses to take out of growth; pass none when bonuses are included. */
     bonusEvents?: BonusEvent[];
     planPerMonth: number;
 }
@@ -111,36 +147,52 @@ export function realityCheck({
     bonusEvents = [],
     planPerMonth,
 }: RealityCheckInput): RealityCheck {
-    const updateMonths = history.filter((p) => p.actual).length;
+    const updates = history.filter(
+        (p): p is HistoryPoint & { date: string } => p.actual && !!p.date,
+    );
+
+    let cleanIntervals = 0;
+    let resetByNewAccounts = false;
+    let monthsCovered = 0;
+    let growth = 0;
+    for (let i = 1; i < updates.length; i++) {
+        const prev = updates[i - 1];
+        const cur = updates[i];
+        if (cur.newAccounts) {
+            resetByNewAccounts = true;
+            continue;
+        }
+        const inInterval = (d: string) => {
+            const day = d.slice(0, 10);
+            return day > prev.date && day <= cur.date;
+        };
+        const goalSpend = expenses
+            .filter((e) => e.goal_id && inInterval(e.date))
+            .reduce((s, e) => s + Math.max(0, Number(e.amount) || 0), 0);
+        const bonuses = bonusEvents
+            .filter((b) => inInterval(b.received_on))
+            .reduce((s, b) => s + (Number(b.net) || 0), 0);
+
+        cleanIntervals += 1;
+        monthsCovered += monthsBetween(prev.month, cur.month);
+        growth += cur.value - prev.value + goalSpend - bonuses;
+    }
+
     const base = {
-        updateMonths,
+        cleanIntervals,
+        resetByNewAccounts,
         grewPerMonth: 0,
         planPerMonth: round2(planPerMonth),
-        monthsUsed: [] as string[],
+        monthsCovered,
         differs: false,
         direction: "match" as RealityDirection,
         deltaPct: 0,
     };
-    if (updateMonths < REALITY_MIN_MONTHS) return { ...base, status: "locked" };
-
-    const skip = new Set<string>();
-    for (const e of expenses) {
-        if (e.goal_id && (Number(e.amount) || 0) > 0)
-            skip.add(e.date.slice(0, 7));
+    if (cleanIntervals < REALITY_MIN_INTERVALS || monthsCovered <= 0) {
+        return { ...base, status: "locked" };
     }
-    for (const b of bonusEvents) skip.add(b.received_on.slice(0, 7));
 
-    const deltas: Array<{ month: string; delta: number }> = [];
-    for (let i = 1; i < history.length; i++) {
-        const { month, value } = history[i];
-        if (skip.has(month)) continue;
-        deltas.push({ month, delta: value - history[i - 1].value });
-    }
-    if (deltas.length === 0) return { ...base, status: "no_months" };
-
-    const grewPerMonth = round2(
-        deltas.reduce((s, d) => s + d.delta, 0) / deltas.length,
-    );
+    const grewPerMonth = round2(growth / monthsCovered);
     const differs =
         Math.abs(grewPerMonth - planPerMonth) >
         REALITY_WARN_RATIO * Math.abs(planPerMonth);
@@ -160,7 +212,6 @@ export function realityCheck({
         ...base,
         status: "ok",
         grewPerMonth,
-        monthsUsed: deltas.map((d) => d.month),
         differs,
         direction,
         deltaPct,
