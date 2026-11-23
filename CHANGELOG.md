@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/fluffysaur/budget-bubby/compare/v0.4.1...v0.5.0) (2026-11-23)
+
+
+### Features
+
+* **ai:** render markdown in Bubby AI chat replies ([#239](https://github.com/fluffysaur/budget-bubby/issues/239)) ([d4f6e40](https://github.com/fluffysaur/budget-bubby/commit/d4f6e4028b0bd2b2d1de6b62cc6174efd9a73916))
+
+
+### Bug Fixes
+
+* **roadmap:** measure reality check between real balance updates ([#242](https://github.com/fluffysaur/budget-bubby/issues/242)) ([5c331d1](https://github.com/fluffysaur/budget-bubby/commit/5c331d1ea9c874aabb8c61f740a15ff6b340077c)), closes [#241](https://github.com/fluffysaur/budget-bubby/issues/241)
+
 ## [0.4.1](https://github.com/fluffysaur/budget-bubby/compare/v0.4.0...v0.4.1) (2026-11-23)
 
 
