@@ -3,45 +3,28 @@
  */
 
 import type { HouseholdMember } from "../types/finance";
-
-function squash(value: string): string {
-    return value.toLowerCase().replace(/\s+/g, "");
-}
+import { emailsMatch, getPartnerEmail, isPartnerId } from "./partners";
 
 /**
- * Demo members use placeholder display names, so the legacy partner ids map
- * to those names too. Existing name-based matching keeps working unchanged.
+ * The member a partner slot or member id refers to: a member id first, then
+ * the member linked to the signed-in auth user (when given), then the member
+ * whose email matches the partner's configured email. Never by display name.
  */
-export const DEMO_PARTNER_ALIASES: Record<string, string> = {
-    yijia: "alex",
-    rachel: "sam",
-};
-
-/** True when a display name belongs to the given partner id or perspective key. */
-export function displayNameMatchesPartner(
-    displayName: string,
-    partnerId: string,
-): boolean {
-    const name = squash(displayName);
-    const target = squash(partnerId);
-    const alias = DEMO_PARTNER_ALIASES[target];
-    return name === target || name.includes(target) || (!!alias && name === alias);
-}
-
-/** The member whose display name matches the logged-in partner id (e.g. a legacy partner id resolves to its demo placeholder name). */
 export function matchPartnerMember(
     members: HouseholdMember[],
-    loggedInPartner: string | null | undefined,
+    partnerOrMemberId: string | null | undefined,
+    authUserId?: string | null,
 ): HouseholdMember | null {
-    if (!loggedInPartner) return null;
-    const target = squash(loggedInPartner);
-    return (
-        members.find((m) => m.id === loggedInPartner) ??
-        members.find((m) => squash(m.display_name) === target) ??
-        members.find((m) => squash(m.display_name).includes(target)) ??
-        members.find((m) => displayNameMatchesPartner(m.display_name, target)) ??
-        null
-    );
+    if (!partnerOrMemberId) return null;
+    const byId = members.find((m) => m.id === partnerOrMemberId);
+    if (byId) return byId;
+    if (!isPartnerId(partnerOrMemberId)) return null;
+    if (authUserId) {
+        const linked = members.find((m) => m.user_id === authUserId);
+        if (linked) return linked;
+    }
+    const email = getPartnerEmail(partnerOrMemberId);
+    return members.find((m) => emailsMatch(m.email, email)) ?? null;
 }
 
 /**
@@ -52,9 +35,10 @@ export function resolveLoggedInMember(
     members: HouseholdMember[],
     loggedInPartner: string | null | undefined,
     fallback?: HouseholdMember | null,
+    authUserId?: string | null,
 ): HouseholdMember | null {
     return (
-        matchPartnerMember(members, loggedInPartner) ??
+        matchPartnerMember(members, loggedInPartner, authUserId) ??
         fallback ??
         members[0] ??
         null

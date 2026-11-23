@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a modern couple and personal finance web application (React 19, Vite, Tailwind CSS, Supabase PostgreSQL/Auth, Vercel) for Yi Jia and Rachel, replacing their Notion workspace with automated budgeting, loan amortization, shared expense splitting, and PWA mobile speed.
+**Goal:** Build a modern couple and personal finance web application (React 19, Vite, Tailwind CSS, Supabase PostgreSQL/Auth, Vercel) for Alex and Sam, replacing their Notion workspace with automated budgeting, loan amortization, shared expense splitting, and PWA mobile speed.
 
 **Architecture:** A fast Single-Page Application with a decoupled service layer. When Supabase credentials exist, it runs authenticated PostgreSQL queries with Row-Level Security. Without credentials, it falls back seamlessly to a local storage mock store with pre-seeded demo data for immediate testing. Public GitHub repository safe: no real financial figures are committed to Git.
 
@@ -93,7 +93,7 @@ Write comprehensive test suites covering:
 - After-deductions pool calculation
 - HDB Loan amortization ($500k @ 2.6%, $2,665/mo -> exact interest, principal, months, payoff date)
 - Prepayment simulation (extra $500/mo -> shortened term and saved interest)
-- Splitwise-style settlement calculation (Yi Jia paid $100 shared, Rachel paid $40 shared -> Rachel owes Yi Jia $30)
+- Splitwise-style settlement calculation (Alex paid $100 shared, Sam paid $40 shared -> Sam owes Alex $30)
 - Goal pacing status (`Achieved`, `On Track`, `Behind`)
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -132,9 +132,9 @@ Write `supabase/migrations/20260915_init.sql` defining:
 
 - [ ] **Step 2: Create private seed SQL script**
 Write `supabase/seed.private.sql` populated with the exact Notion data extracted during discovery:
-- Yi Jia & Rachel household members
-- 13 Yi Jia Accounts (UOB Lady's, SGX CDP, OCBC Invest, CPF OA/SA/MA, Webull, Moomoo, IBKR, POSB, UOB One, ESPP, OCBC 360)
-- 5 Rachel Accounts (OCBC 360, POSB, CPF OA/SA/MA)
+- Alex & Sam household members
+- 13 Alex Accounts (UOB Lady's, SGX CDP, OCBC Invest, CPF OA/SA/MA, Webull, Moomoo, IBKR, POSB, UOB One, ESPP, OCBC 360)
+- 5 Sam Accounts (OCBC 360, POSB, CPF OA/SA/MA)
 - HDB Loan ($500,000 @ 2.6%, $2,665/mo)
 - 5 Shared Goals (Wedding $55k, Honeymoon $10k, HDB Down Payment $190k, Renovation $90k, Baby Fund $30k)
 - Policies: Manulife Lifeready, Income Enhanced Incomeshield, IRAS Income Tax 2026
@@ -223,7 +223,7 @@ git commit -m "feat: implement dual-mode finance service layer with mock fallbac
   - Responsive layout shell with top header, desktop sidebar, and mobile bottom navigation with Quick Add action.
 
 - [ ] **Step 1: Write test for HouseholdContext**
-Test switching between `household`, `yijia`, and `rachel`, verifying `activeMember` updates accordingly.
+Test switching between `household`, `partner1`, and `partner2`, verifying `activeMember` updates accordingly.
 
 - [ ] **Step 2: Run test to verify failure**
 Run `npx vitest run tests/HouseholdContext.test.tsx` -> Expected: FAIL.
@@ -467,8 +467,8 @@ git commit -m "feat: add recurring policies table and 12-month renewal calendar"
 **Interfaces:**
 - Produces:
   - Top-level Dashboard adapting to active perspective:
-    - **Combined Household**: Net Worth ($Assets - Loans$), Settlement Widget ("Rachel owes Yi Jia $X" + "Settle Up"), Shared Goals carousel, upcoming renewal alerts.
-    - **Personal (Yi Jia / Rachel)**: Personal net worth, personal budget progress, personal accounts, personal expenses.
+    - **Combined Household**: Net Worth ($Assets - Loans$), Settlement Widget ("Sam owes Alex $X" + "Settle Up"), Shared Goals carousel, upcoming renewal alerts.
+    - **Personal (Alex / Sam)**: Personal net worth, personal budget progress, personal accounts, personal expenses.
 
 - [ ] **Step 1: Write test for SettlementWidget and Settle Up action**
 Verify settlement calculation renders who owes whom and clicking Settle Up invokes the service to clear unsettled balances.
@@ -569,8 +569,8 @@ export default defineConfig({
 ```
 
 - [ ] **Step 2: Write navigation.spec.ts & quick-add-expense.spec.ts**
-- `navigation.spec.ts`: Asserts loading the dashboard, clicking "Yi Jia" perspective pill, verifying active perspective updates, navigating to `/budget` and `/accounts`.
-- `quick-add-expense.spec.ts`: Clicks the "+ Quick Add" button, fills in `$88.50`, selects "Food", selects payer "Yi Jia", toggles "Shared 50/50", submits, and verifies the expense appears in the table and updates the settlement balance on the dashboard.
+- `navigation.spec.ts`: Asserts loading the dashboard, clicking "Alex" perspective pill, verifying active perspective updates, navigating to `/budget` and `/accounts`.
+- `quick-add-expense.spec.ts`: Clicks the "+ Quick Add" button, fills in `$88.50`, selects "Food", selects payer "Alex", toggles "Shared 50/50", submits, and verifies the expense appears in the table and updates the settlement balance on the dashboard.
 
 - [ ] **Step 3: Write mobile-viewport.spec.ts & loans-simulator.spec.ts**
 - `mobile-viewport.spec.ts`: Emulates iPhone 14 viewport, verifies bottom navigation bar renders with floating "+" Quick Add button, verifies sidebar is hidden.

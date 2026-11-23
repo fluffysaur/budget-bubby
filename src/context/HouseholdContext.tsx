@@ -25,7 +25,8 @@ import { isSupabaseConfigured } from "../services/supabaseClient";
 import { useHouseholdOverviewQuery } from "../hooks/useFinanceQueries";
 import { useQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
-import { displayNameMatchesPartner } from "../lib/members";
+import { matchPartnerMember } from "../lib/members";
+import { useOptionalAuth } from "./AuthContext";
 
 export interface HouseholdContextValue {
     perspective: Perspective;
@@ -62,6 +63,9 @@ function HouseholdProviderInner({
     const [perspective, setPerspective] = useState<Perspective>(
         defaultPerspective || initialPerspective,
     );
+    const auth = useOptionalAuth();
+    const loggedInPartner = auth?.loggedInPartner ?? null;
+    const authUserId = auth?.user?.id ?? null;
 
     useEffect(() => {
         if (defaultPerspective) {
@@ -131,22 +135,14 @@ function HouseholdProviderInner({
             return null;
         }
 
-        const pLower = perspective.toLowerCase().trim();
-        const found = members.find((m) => {
-            if (m.id === perspective) return true;
-            const mLower = m.display_name.toLowerCase().trim();
-            const mSanitized = mLower.replace(/\s+/g, "");
-            const pSanitized = pLower.replace(/\s+/g, "");
-            return (
-                mLower === pLower ||
-                mSanitized === pSanitized ||
-                mLower.includes(pLower) ||
-                displayNameMatchesPartner(m.display_name, pSanitized)
-            );
-        });
-
-        return found || null;
-    }, [perspective, members]);
+        // Member id, or a partner slot (e.g. the signed-in partner's default view).
+        // Unknown values (e.g. a legacy name-based id) fall back to no member.
+        return matchPartnerMember(
+            members,
+            perspective,
+            perspective === loggedInPartner ? authUserId : null,
+        );
+    }, [perspective, members, loggedInPartner, authUserId]);
 
     const themeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

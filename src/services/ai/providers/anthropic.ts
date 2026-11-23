@@ -112,6 +112,9 @@ async function extractAnthropicError(res: Response): Promise<string> {
 interface AnthropicStreamPayload {
     type?: string;
     index?: number;
+    error?: {
+        message?: string;
+    };
     content_block?: {
         type?: string;
         id?: string;
@@ -124,6 +127,15 @@ interface AnthropicStreamPayload {
         text?: string;
         partial_json?: string;
     };
+}
+
+const ANTHROPIC_THINKING_BUDGETS = {
+    medium: 2048,
+    high: 4096,
+} as const;
+
+function isAnthropicThinkingModel(model: string): boolean {
+    return /^claude-(3-7|sonnet-4|opus-4|haiku-4)/i.test(model);
 }
 
 export const anthropicAdapter: AiProviderAdapter = {
@@ -169,6 +181,7 @@ export const anthropicAdapter: AiProviderAdapter = {
         const {
             apiKey,
             model = DEFAULT_ANTHROPIC_MODEL,
+            reasoningEffort = "low",
             messages,
             systemInstruction,
             tools,
@@ -184,12 +197,26 @@ export const anthropicAdapter: AiProviderAdapter = {
         }
 
         const effectiveModel = model.trim() || DEFAULT_ANTHROPIC_MODEL;
+        const thinkingBudget =
+            reasoningEffort !== "low" &&
+            isAnthropicThinkingModel(effectiveModel)
+                ? ANTHROPIC_THINKING_BUDGETS[reasoningEffort]
+                : undefined;
+
         const payload: Record<string, unknown> = {
             model: effectiveModel,
-            max_tokens: ANTHROPIC_MAX_TOKENS,
+            max_tokens: thinkingBudget
+                ? thinkingBudget + ANTHROPIC_MAX_TOKENS
+                : ANTHROPIC_MAX_TOKENS,
             stream: true,
             messages: toAnthropicMessages(messages),
         };
+        if (thinkingBudget) {
+            payload.thinking = {
+                type: "enabled",
+                budget_tokens: thinkingBudget,
+            };
+        }
         if (systemInstruction) {
             payload.system = systemInstruction;
         }
@@ -251,54 +278,60 @@ export const anthropicAdapter: AiProviderAdapter = {
         };
 
         await readSseStream(res, ({ event, data }) => {
+            let parsed: AnthropicStreamPayload;
             try {
-                const parsed = JSON.parse(data) as AnthropicStreamPayload;
-                const eventType = parsed.type ?? event;
-                const index = parsed.index ?? 0;
-
-                if (eventType === "content_block_start") {
-                    const cb = parsed.content_block;
-                    if (cb?.type === "tool_use" && cb.name) {
-                        pendingToolBlocks.set(index, {
-                            id: cb.id ?? `tool_${index}`,
-                            name: cb.name,
-                            jsonChunks: [],
-                            initialInput:
-                                cb.input && Object.keys(cb.input).length > 0
-                                    ? cb.input
-                                    : undefined,
-                        });
-                    } else if (
-                        cb?.type === "text" &&
-                        typeof cb.text === "string" &&
-                        cb.text.length > 0
-                    ) {
-                        fullText += cb.text;
-                        onTextDelta?.(cb.text);
-                    }
-                } else if (eventType === "content_block_delta") {
-                    const delta = parsed.delta;
-                    if (
-                        delta?.type === "text_delta" &&
-                        typeof delta.text === "string" &&
-                        delta.text.length > 0
-                    ) {
-                        fullText += delta.text;
-                        onTextDelta?.(delta.text);
-                    } else if (
-                        delta?.type === "input_json_delta" &&
-                        typeof delta.partial_json === "string"
-                    ) {
-                        const block = pendingToolBlocks.get(index);
-                        if (block) {
-                            block.jsonChunks.push(delta.partial_json);
-                        }
-                    }
-                } else if (eventType === "content_block_stop") {
-                    finalizeBlock(index);
-                }
+                parsed = JSON.parse(data) as AnthropicStreamPayload;
             } catch {
                 // Skip malformed partial frame
+                return;
+            }
+
+            const eventType = parsed.type ?? event;
+            if (eventType === "error" && parsed.error?.message) {
+                throw new Error(parsed.error.message);
+            }
+            const index = parsed.index ?? 0;
+
+            if (eventType === "content_block_start") {
+                const cb = parsed.content_block;
+                if (cb?.type === "tool_use" && cb.name) {
+                    pendingToolBlocks.set(index, {
+                        id: cb.id ?? `tool_${index}`,
+                        name: cb.name,
+                        jsonChunks: [],
+                        initialInput:
+                            cb.input && Object.keys(cb.input).length > 0
+                                ? cb.input
+                                : undefined,
+                    });
+                } else if (
+                    cb?.type === "text" &&
+                    typeof cb.text === "string" &&
+                    cb.text.length > 0
+                ) {
+                    fullText += cb.text;
+                    onTextDelta?.(cb.text);
+                }
+            } else if (eventType === "content_block_delta") {
+                const delta = parsed.delta;
+                if (
+                    delta?.type === "text_delta" &&
+                    typeof delta.text === "string" &&
+                    delta.text.length > 0
+                ) {
+                    fullText += delta.text;
+                    onTextDelta?.(delta.text);
+                } else if (
+                    delta?.type === "input_json_delta" &&
+                    typeof delta.partial_json === "string"
+                ) {
+                    const block = pendingToolBlocks.get(index);
+                    if (block) {
+                        block.jsonChunks.push(delta.partial_json);
+                    }
+                }
+            } else if (eventType === "content_block_stop") {
+                finalizeBlock(index);
             }
         });
 

@@ -5,7 +5,7 @@
  * shared settlements, savings goals, and recurring items.
  */
 
-import { displayNameMatchesPartner } from "../lib/members";
+import { matchPartnerMember } from "../lib/members";
 import {
     normalizeGoalTags,
     normalizeHouseholdSettings,
@@ -315,16 +315,9 @@ class MockFinanceServiceImpl implements FinanceService {
             return cloneDeep(this.state.accounts);
         }
 
-        const clean = perspective.toLowerCase();
-        const targetMember = this.state.members.find(
-            (m) =>
-                m.id === perspective ||
-                m.display_name.toLowerCase().replace(/\s+/g, "") === clean ||
-                (clean === "yijia" &&
-                    m.display_name.toLowerCase().includes("yi jia")) ||
-                (clean === "rachel" &&
-                    m.display_name.toLowerCase().includes("rachel")) ||
-                displayNameMatchesPartner(m.display_name, clean),
+        const targetMember = matchPartnerMember(
+            this.state.members,
+            perspective,
         );
 
         if (!targetMember) {
@@ -1376,13 +1369,12 @@ class MockFinanceServiceImpl implements FinanceService {
         const linkedGoal = goalId
             ? this.state.savingsGoals.find((g) => g.id === goalId)
             : undefined;
-        const derivedStartDate =
-            linkedGoal?.target_date
-                ? resolveGoalLinkedStartDate(
-                      linkedGoal.target_date,
-                      goalOffsetMonths,
-                  )
-                : input.start_date || null;
+        const derivedStartDate = linkedGoal?.target_date
+            ? resolveGoalLinkedStartDate(
+                  linkedGoal.target_date,
+                  goalOffsetMonths,
+              )
+            : input.start_date || null;
 
         const newItem: RecurringItem = {
             id: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

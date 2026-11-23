@@ -129,7 +129,11 @@ async function extractOpenAiError(
 }
 
 interface RawOpenAiChunk {
+    error?: {
+        message?: string;
+    };
     choices?: Array<{
+        finish_reason?: string | null;
         delta?: {
             content?: string | null;
             tool_calls?: Array<{
@@ -142,6 +146,11 @@ interface RawOpenAiChunk {
             }>;
         };
     }>;
+}
+
+function isOpenAiReasoningModel(model: string): boolean {
+    const bareModel = model.includes("/") ? model.split("/").pop() ?? model : model;
+    return /^(o\d|gpt-5)/i.test(bareModel);
 }
 
 export function createOpenAiCompatibleAdapter(
@@ -202,6 +211,7 @@ export function createOpenAiCompatibleAdapter(
             const {
                 apiKey,
                 model = config.defaultModel,
+                reasoningEffort = "low",
                 messages,
                 systemInstruction,
                 tools,
@@ -225,6 +235,14 @@ export function createOpenAiCompatibleAdapter(
             if (tools && tools.length > 0) {
                 payload.tools = toOpenAiTools(tools);
             }
+            if (config.id === "openrouter") {
+                payload.reasoning = { effort: reasoningEffort };
+            } else if (
+                config.id === "openai" &&
+                isOpenAiReasoningModel(effectiveModel)
+            ) {
+                payload.reasoning_effort = reasoningEffort;
+            }
 
             const res = await fetch(config.endpoint, {
                 method: "POST",
@@ -238,47 +256,59 @@ export function createOpenAiCompatibleAdapter(
             }
 
             let fullText = "";
+            let lastFinishReason: string | null = null;
             const toolCallAcc = new Map<
                 number,
                 { id: string; name: string; argumentsText: string }
             >();
 
             await readSseStream(res, ({ data }) => {
+                let parsed: RawOpenAiChunk;
                 try {
-                    const parsed = JSON.parse(data) as RawOpenAiChunk;
-                    const delta = parsed.choices?.[0]?.delta;
-                    if (!delta) return;
-
-                    if (
-                        typeof delta.content === "string" &&
-                        delta.content.length > 0
-                    ) {
-                        fullText += delta.content;
-                        onTextDelta?.(delta.content);
-                    }
-
-                    if (Array.isArray(delta.tool_calls)) {
-                        for (const tc of delta.tool_calls) {
-                            const idx = tc.index ?? 0;
-                            const existing = toolCallAcc.get(idx) ?? {
-                                id: tc.id ?? `call_${idx}`,
-                                name: "",
-                                argumentsText: "",
-                            };
-                            if (tc.id) {
-                                existing.id = tc.id;
-                            }
-                            if (tc.function?.name) {
-                                existing.name += tc.function.name;
-                            }
-                            if (typeof tc.function?.arguments === "string") {
-                                existing.argumentsText += tc.function.arguments;
-                            }
-                            toolCallAcc.set(idx, existing);
-                        }
-                    }
+                    parsed = JSON.parse(data) as RawOpenAiChunk;
                 } catch {
                     // Skip malformed partial frame
+                    return;
+                }
+
+                if (parsed.error?.message) {
+                    throw new Error(parsed.error.message);
+                }
+
+                const choice = parsed.choices?.[0];
+                if (choice?.finish_reason) {
+                    lastFinishReason = choice.finish_reason;
+                }
+                const delta = choice?.delta;
+                if (!delta) return;
+
+                if (
+                    typeof delta.content === "string" &&
+                    delta.content.length > 0
+                ) {
+                    fullText += delta.content;
+                    onTextDelta?.(delta.content);
+                }
+
+                if (Array.isArray(delta.tool_calls)) {
+                    for (const tc of delta.tool_calls) {
+                        const idx = tc.index ?? 0;
+                        const existing = toolCallAcc.get(idx) ?? {
+                            id: tc.id ?? `call_${idx}`,
+                            name: "",
+                            argumentsText: "",
+                        };
+                        if (tc.id) {
+                            existing.id = tc.id;
+                        }
+                        if (tc.function?.name) {
+                            existing.name += tc.function.name;
+                        }
+                        if (typeof tc.function?.arguments === "string") {
+                            existing.argumentsText += tc.function.arguments;
+                        }
+                        toolCallAcc.set(idx, existing);
+                    }
                 }
             });
 
@@ -309,6 +339,19 @@ export function createOpenAiCompatibleAdapter(
                     name: entry.name,
                     args,
                 });
+            }
+
+            if (!fullText.trim() && toolCalls.length === 0) {
+                if (lastFinishReason === "length") {
+                    throw new Error(
+                        "The model ran out of tokens before replying. Try lowering reasoning effort or using another model.",
+                    );
+                }
+                if (lastFinishReason === "content_filter") {
+                    throw new Error(
+                        `The response was blocked by ${config.label}'s content filter.`,
+                    );
+                }
             }
 
             return { text: fullText, toolCalls };

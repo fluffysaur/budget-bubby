@@ -1,7 +1,7 @@
 # Budget Bubby 🇸ɢ 💍
 
 > **Couple & Personal Finance Planner for Singapore Households**
-> Designed for **Yi Jia & Rachel** to manage joint and personal cash flows, CPF, 50/50 expense settlements, HDB mortgage amortization, milestone savings goals, and daily spend habits.
+> Designed for **Alex & Sam** to manage joint and personal cash flows, CPF, 50/50 expense settlements, HDB mortgage amortization, milestone savings goals, and daily spend habits.
 
 ---
 
@@ -63,15 +63,15 @@
 
 ### 2. Couple Splits & 50/50 Settlement Center
 
-- **Automated Net Balance Computation**: Automatically tracks who paid for what and calculates running debt balances (e.g. _"Rachel owes Yi Jia S$1,234.56"_).
+- **Automated Net Balance Computation**: Automatically tracks who paid for what and calculates running debt balances (e.g. _"Sam owes Alex S$1,234.56"_).
 - **1-Click Settlement**: Clear shared balances in a single tap with recorded settlement timestamps and history audit logs.
 - **Custom Split Ratios**: Adjust splits per transaction when expenses are not strictly 50/50.
 
 ### 3. Dynamic Perspective Switching
 
 - **Combined Household**: Pooled net worth, joint assets, shared spending settlements, combined savings milestones, and household renewals.
-- **Yi Jia's Personal Perspective**: Individual salary, 20% CPF deduction, personal bank accounts, and personal category caps.
-- **Rachel's Personal Perspective**: Individual salary, 20% CPF deduction, personal bank accounts, and personal category caps.
+- **Alex's Personal Perspective**: Individual salary, 20% CPF deduction, personal bank accounts, and personal category caps.
+- **Sam's Personal Perspective**: Individual salary, 20% CPF deduction, personal bank accounts, and personal category caps.
 
 ### 4. Budget Waterfall, % Sliders & Limit Alerts
 
@@ -130,7 +130,7 @@
 
 - **Platform Biometrics**: Authenticate instantly via Touch ID, Face ID, or Windows Hello / Fingerprint directly from `PinLoginScreen`.
 - **Encrypted Local Token**: Device-bound biometric tokens encrypt user session verification without storing raw PINs in cleartext.
-- **Private 6-Digit PIN**: Secure fallback authentication for Yi Jia and Rachel.
+- **Private 6-Digit PIN**: Secure fallback authentication for Alex and Sam.
 
 ### 14. In-App Notifications & PWA Reminders
 
@@ -292,15 +292,17 @@ Create a `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-actual-anon-key-here
-VITE_YIJIA_EMAIL=yijia@example.com
-VITE_RACHEL_EMAIL=rachel@example.com
+VITE_PARTNER1_EMAIL=partner1@example.com
+VITE_PARTNER2_EMAIL=partner2@example.com
 ```
+
+Each partner is identified by these emails (matched against `household_members.email` and the linked auth user), never by display name.
 
 ### 4. Private PIN Access Setup
 
 1. In **Supabase Dashboard → Authentication → Users**, create the two partner user accounts:
-    - User 1: Yi Jia's email with Yi Jia's chosen unique 6-digit PIN as the password.
-    - User 2: Rachel's email with Rachel's chosen unique 6-digit PIN as the password.
+    - User 1: Alex's email with Alex's chosen unique 6-digit PIN as the password.
+    - User 2: Sam's email with Sam's chosen unique 6-digit PIN as the password.
 2. In **Authentication → Providers → Email**, turn off **"Allow new users to sign up"** so unauthorized visitors cannot create accounts.
 3. When accessing Budget Bubby, enter your 6-digit PIN (or authenticate with Fingerprint / Face ID).
 

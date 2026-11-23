@@ -2,7 +2,7 @@
 
 **Date**: 2026-09-15  
 **Status**: Approved (Brainstorming Complete)  
-**Authors**: Antigravity & Yi Jia  
+**Authors**: Antigravity & the maintainer  
 **Target Stack**: React 19, Vite, Tailwind CSS, Supabase (PostgreSQL, Auth, RLS), Vitest, Playwright, Vercel Hosting (Public GitHub Repository)
 
 ---
@@ -10,7 +10,7 @@
 ## 1. Executive Summary & Goals
 
 ### 1.1 Objective
-Build a modern, high-performance web application and installable PWA for **Yi Jia** and **Rachel** to manage their personal budgets and combined couple finances. The application directly replaces and surpasses their existing Notion finance workspace (`Combined Finances`, `Yi Jia's Budget`, and `Rachel's Budget`), eliminating Notion's key limitations:
+Build a modern, high-performance web application and installable PWA for **Alex** and **Sam** to manage their personal budgets and combined couple finances. The application directly replaces and surpasses their existing Notion finance workspace (`Combined Finances`, `Alex's Budget`, and `Sam's Budget`), eliminating Notion's key limitations:
 - **No manual relational plumbing**: Eliminates the need to create separate relational properties for every single category and budget row.
 - **Automated monthly roll-overs**: Replaces manual "Sync" buttons and brittle multi-line date formulas with automated template-based monthly budget initialization.
 - **Native financial engines**: Implements mathematically exact loan amortization, compound interest tracking, and lump-sum prepayment simulations (replacing Notion's WIP loan formula).
@@ -51,7 +51,7 @@ erDiagram
 
 #### `households`
 - `id` (uuid, PK, default `gen_random_uuid()`)
-- `name` (text, not null) — e.g. "Yi Jia & Rachel"
+- `name` (text, not null) — e.g. "Alex & Sam"
 - `currency` (text, default `'SGD'`)
 - `created_at` (timestamptz, default `now()`)
 
@@ -59,7 +59,7 @@ erDiagram
 - `id` (uuid, PK, default `gen_random_uuid()`)
 - `household_id` (uuid, FK -> `households.id` ON DELETE CASCADE)
 - `user_id` (uuid, nullable, FK -> `auth.users.id` ON DELETE CASCADE)
-- `display_name` (text, not null) — e.g. "Yi Jia", "Rachel"
+- `display_name` (text, not null) — e.g. "Alex", "Sam"
 - `email` (text, nullable)
 - `role` (text, default `'member'`) — `'owner'` | `'member'`
 - `avatar_url` (text, nullable)
@@ -257,12 +257,12 @@ with check (
 
 ### 3.3 Couple Shared Expense & Settlement Engine ("Who Owes Whom")
 For all unsettled expenses where `is_shared = true`:
-- If Yi Jia paid amount $A$ with split ratio $s = 0.50$: Rachel owes Yi Jia $A \times 0.50$.
-- If Rachel paid amount $B$ with split ratio $s = 0.50$: Yi Jia owes Rachel $B \times 0.50$.
+- If Alex paid amount $A$ with split ratio $s = 0.50$: Sam owes Alex $A \times 0.50$.
+- If Sam paid amount $B$ with split ratio $s = 0.50$: Alex owes Sam $B \times 0.50$.
 - **Net Settlement Balance**:
-  $$\text{Net Balance} = \sum (\text{Rachel owes Yi Jia}) - \sum (\text{Yi Jia owes Rachel})$$
-- If $\text{Net Balance} > 0$: "Rachel owes Yi Jia \$X"
-- If $\text{Net Balance} < 0$: "Yi Jia owes Rachel \$Y"
+  $$\text{Net Balance} = \sum (\text{Sam owes Alex}) - \sum (\text{Alex owes Sam})$$
+- If $\text{Net Balance} > 0$: "Sam owes Alex \$X"
+- If $\text{Net Balance} < 0$: "Alex owes Sam \$Y"
 - **Settle Up Action**: 1-click trigger marks current pending items as settled and records a settlement transaction.
 
 ### 3.4 Goal Pacing Engine
@@ -284,7 +284,7 @@ src/
 │   │   ├── AppHeader.tsx          # Perspective Switcher, Currency, Theme Toggle, Status
 │   │   ├── DesktopSidebar.tsx     # Desktop sidebar navigation
 │   │   ├── MobileBottomNav.tsx    # Mobile bottom navigation bar with Quick Add FAB
-│   │   └── PerspectiveBanner.tsx  # Shows current active context (Combined vs Yi Jia vs Rachel)
+│   │   └── PerspectiveBanner.tsx  # Shows current active context (Combined vs Alex vs Sam)
 │   ├── dashboard/
 │   │   ├── NetWorthCard.tsx       # Assets - Liabilities with sparkline / mini chart
 │   │   ├── SettlementWidget.tsx   # "Who Owes Whom" card + Settle Up button
@@ -357,8 +357,8 @@ When these variables are absent (such as in local demo clones or public reposito
 The application includes two seed files:
 1. `src/data/mockSeedData.ts`: Committed to Git. Contains realistic anonymized figures for public preview and testing.
 2. `supabase/seed.private.sql`: **Gitignored**. Pre-configured with the exact accounts, goals, loans, and policies extracted from your Notion databases, ready to run directly in your Supabase SQL editor:
-   - **Yi Jia Accounts**: UOB Lady's, SGX CDP, OCBC Invest, CPF OA, CPF SA, CPF MA, Webull, Moomoo, IBKR, POSB Savings, UOB One, ESPP 2025, OCBC 360.
-   - **Rachel Accounts**: OCBC 360, POSB Savings, CPF OA, CPF SA, CPF MA.
+   - **Alex Accounts**: UOB Lady's, SGX CDP, OCBC Invest, CPF OA, CPF SA, CPF MA, Webull, Moomoo, IBKR, POSB Savings, UOB One, ESPP 2025, OCBC 360.
+   - **Sam Accounts**: OCBC 360, POSB Savings, CPF OA, CPF SA, CPF MA.
    - **Shared Goals**: Wedding (\$55,000), Honeymoon (\$10,000), HDB Down Payment (\$190,000), Renovation (\$90,000), Baby Fund (\$30,000).
    - **Loans**: HDB Loan (\$500,000 @ 2.6% p.a., \$2,665/mo).
    - **Insurance**: Manulife Lifeready 25 Plus, Income Enhanced Incomeshield.

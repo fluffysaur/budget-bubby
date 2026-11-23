@@ -14,7 +14,7 @@ Net worth becomes **total account balances minus unpaid credit-card statements**
 1. **What counts as card debt:** only billed statements with `is_paid = false`. The current cycle's unbilled spending is not counted, because the app doesn't know it.
 2. **Perspective:**
     - Combined counts every card.
-    - Yi Jia's or Rachel's view counts only cards whose `credit_cards.owner_id` is that member.
+    - Alex's or Sam's view counts only cards whose `credit_cards.owner_id` is that member.
     - This mirrors how accounts are filtered.
 3. **History chart:** at each month-end M, subtract the statements that were still unpaid then. See the rule below. The chart's latest point must equal the Net Worth card.
 4. **Net Worth card:** shows the figure net of card debt, plus a short line like `S$1,240 card debt`. When there is no debt, keep the current `N accounts` subtitle.
@@ -32,7 +32,7 @@ Net worth becomes **total account balances minus unpaid credit-card statements**
 | Fetch all statements with their card joined: `getCreditCardStatements()` with no month | `supabaseFinanceService` / `mockFinanceService` (both join `card`) |
 | Query hooks: `useCreditCardStatementsQuery(month?)` and `useCreditCardsQuery()` | `src/hooks/useFinanceQueries.ts` |
 | Marking paid sets `paid_at: new Date().toISOString()`, and unmarking sets it back to `null` | `src/components/accounts/CreditCardTrackerSection.tsx` (~line 225) |
-| Demo data: Oct 2026 statements, one unpaid (S$842.50, Yi Jia's DBS card) and one paid on 2026-10-25 | `mockCreditCardStatements` in `src/data/mockSeedData.ts` |
+| Demo data: Oct 2026 statements, one unpaid (S$842.50, Alex's DBS card) and one paid on 2026-10-25 | `mockCreditCardStatements` in `src/data/mockSeedData.ts` |
 | Money rendering rule: amounts in JSX use `<CurrencyText>` (lint-enforced) | `src/components/ui/CurrencyText.tsx`, `src/lib/moneyStyles.ts` |
 
 `HouseholdOverview.trueNetWorth` in both services is currently just `totalAssets`, and no UI reads it. **Leave it alone.** Changing it is out of scope.
@@ -132,7 +132,7 @@ paidBy(stmt, end):
     - **`NetWorthChart`:** the legend shows assets minus debt.
 - **AccountsPage integration** (mock service via `HouseholdProvider`, like the existing `tests/AccountsComponents.test.tsx`):
     - Combined: the Net Worth card shows the total balance minus the S$842.50 unpaid demo statement, and the subtitle includes `card debt`.
-    - Rachel's view: excludes Yi Jia's card debt.
+    - Sam's view: excludes Alex's card debt.
     - After marking the statement paid through the service, the card updates.
 - **Existing tests:** update any that assert the old Net Worth value on the Accounts page, using the `withText` helper in `tests/helpers/textContent.ts` where an amount sits inside a sentence. Do not delete or weaken any assertions.
 
@@ -141,7 +141,7 @@ paidBy(stmt, end):
 - **Quality gate (AGENTS.md §7C):** `npm run lint` (0 errors, 0 warnings), `npm run build`, `npm test` and `npm run test:e2e` must all pass.
 - **Demo app check:**
     - Run it with `VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= npx vite --port 5301`.
-    - Open `/accounts` in Combined, Yi Jia and Rachel views.
+    - Open `/accounts` in Combined, Alex and Sam views.
     - Confirm the card and the chart's last point match in each view, and that marking the DBS statement paid (Accounts › Credit Cards) raises net worth by S$842.50.
     - Take before/after screenshots at 390px and 1280px for the PR.
 

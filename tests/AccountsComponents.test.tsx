@@ -396,13 +396,13 @@ describe("AccountsPage", () => {
     });
 
     it("updates accounts when switching perspective", async () => {
-        const yijiaAccounts = sampleAccounts.filter(
+        const partnerOneAccounts = sampleAccounts.filter(
             (a) => a.owner_id === "mem-1",
         );
         const getAccountsSpy = vi
             .spyOn(financeService, "getAccounts")
             .mockImplementation(async (perspective) => {
-                if (perspective === "yijia") return yijiaAccounts;
+                if (perspective === "partner1") return partnerOneAccounts;
                 return sampleAccounts;
             });
 
@@ -418,14 +418,14 @@ describe("AccountsPage", () => {
 
         await act(async () => {
             rerender(
-                <HouseholdProvider initialPerspective="yijia">
+                <HouseholdProvider initialPerspective="partner1">
                     <AccountsPage />
                 </HouseholdProvider>,
             );
         });
 
         await waitFor(() => {
-            expect(getAccountsSpy).toHaveBeenCalledWith("yijia");
+            expect(getAccountsSpy).toHaveBeenCalledWith("partner1");
         });
     });
 

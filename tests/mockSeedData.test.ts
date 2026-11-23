@@ -40,49 +40,49 @@ describe("mockSeedData", () => {
     });
 
     it("allocations for Alex and Sam sum to 100%", () => {
-        const yijiaProfile = mockBaseProfiles.find(
+        const partnerOneProfile = mockBaseProfiles.find(
             (p) => p.owner_id === "mem-00000000-0011",
         );
-        const rachelProfile = mockBaseProfiles.find(
+        const partnerTwoProfile = mockBaseProfiles.find(
             (p) => p.owner_id === "mem-00000000-0012",
         );
 
-        expect(yijiaProfile).toBeDefined();
-        expect(rachelProfile).toBeDefined();
+        expect(partnerOneProfile).toBeDefined();
+        expect(partnerTwoProfile).toBeDefined();
 
-        const yijiaAllocations = mockBaseAllocations.filter(
-            (a) => a.profile_id === yijiaProfile!.id,
+        const partnerOneAllocations = mockBaseAllocations.filter(
+            (a) => a.profile_id === partnerOneProfile!.id,
         );
-        const rachelAllocations = mockBaseAllocations.filter(
-            (a) => a.profile_id === rachelProfile!.id,
+        const partnerTwoAllocations = mockBaseAllocations.filter(
+            (a) => a.profile_id === partnerTwoProfile!.id,
         );
 
-        expect(yijiaAllocations).toHaveLength(7);
-        expect(rachelAllocations).toHaveLength(7);
+        expect(partnerOneAllocations).toHaveLength(7);
+        expect(partnerTwoAllocations).toHaveLength(7);
 
-        const yijiaTotalPct = yijiaAllocations.reduce(
+        const partnerOneTotalPct = partnerOneAllocations.reduce(
             (sum, a) => sum + a.target_percentage,
             0,
         );
-        const rachelTotalPct = rachelAllocations.reduce(
+        const partnerTwoTotalPct = partnerTwoAllocations.reduce(
             (sum, a) => sum + a.target_percentage,
             0,
         );
 
-        expect(Math.round(yijiaTotalPct * 100)).toBe(100);
-        expect(Math.round(rachelTotalPct * 100)).toBe(100);
+        expect(Math.round(partnerOneTotalPct * 100)).toBe(100);
+        expect(Math.round(partnerTwoTotalPct * 100)).toBe(100);
     });
 
     it("contains 13 accounts for Alex and 5 accounts for Sam", () => {
-        const yijiaAccounts = mockAccounts.filter(
+        const partnerOneAccounts = mockAccounts.filter(
             (a) => a.owner_id === "mem-00000000-0011",
         );
-        const rachelAccounts = mockAccounts.filter(
+        const partnerTwoAccounts = mockAccounts.filter(
             (a) => a.owner_id === "mem-00000000-0012",
         );
 
-        expect(yijiaAccounts).toHaveLength(13);
-        expect(rachelAccounts).toHaveLength(5);
+        expect(partnerOneAccounts).toHaveLength(13);
+        expect(partnerTwoAccounts).toHaveLength(5);
 
         const accountTypes = new Set(mockAccounts.map((a) => a.type));
         expect(accountTypes).toContain("Cash");

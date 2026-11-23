@@ -4,6 +4,8 @@
 
 export type AiProviderId = "gemini" | "anthropic" | "openai" | "openrouter";
 
+export type AiReasoningEffort = "low" | "medium" | "high";
+
 export interface AiToolCall {
     id: string;
     name: string;
@@ -71,6 +73,7 @@ export interface TestConnectionResult {
 export interface StreamTurnOptions {
     apiKey: string;
     model?: string;
+    reasoningEffort?: AiReasoningEffort;
     messages: AiMessage[];
     systemInstruction?: string;
     tools?: AiToolDefinition[];

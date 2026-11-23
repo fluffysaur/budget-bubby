@@ -186,8 +186,8 @@ describe("ExpenseFormModal", () => {
         fireEvent.click(foodChip);
 
         // Toggle Payer to Sam
-        const rachelBtn = screen.getByRole("button", { name: /sam/i });
-        fireEvent.click(rachelBtn);
+        const partnerTwoBtn = screen.getByRole("button", { name: /sam/i });
+        fireEvent.click(partnerTwoBtn);
 
         // Remarks
         const remarksInput = screen.getByLabelText(/remarks|notes/i);

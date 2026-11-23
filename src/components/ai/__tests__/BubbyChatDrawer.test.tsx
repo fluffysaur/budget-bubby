@@ -155,4 +155,102 @@ describe("BubbyChatDrawer", () => {
             expect(screen.getByText("Saved")).toBeInTheDocument();
         });
     });
+
+    it("forces a final synthesis turn when max tool rounds are exhausted", async () => {
+        aiProviders.setActiveAiProvider("openrouter");
+        aiProviders.setProviderApiKey("openrouter", "sk-or-v1-test");
+
+        vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
+            household: { id: "hh-1", name: "Demo Home", currency: "SGD" },
+            members: [
+                {
+                    id: "mem-1",
+                    household_id: "hh-1",
+                    display_name: "Alex",
+                    role: "owner",
+                },
+            ],
+            totalAssets: 52000,
+            trueNetWorth: 50000,
+            settlementSummary: {
+                netBalance: 0,
+                debtorId: null,
+                creditorId: null,
+                settlementText: "All settled up",
+                member1OwesMember2: 0,
+                member2OwesMember1: 0,
+            },
+            activeGoals: [],
+            upcomingBills: [],
+        });
+
+        const toolOnlyTurn = {
+            text: "",
+            toolCalls: [
+                {
+                    id: "tc-overview",
+                    name: "getHouseholdOverview",
+                    args: {},
+                },
+            ],
+        };
+
+        const streamSpy = vi
+            .spyOn(aiProviders, "streamAiTurn")
+            .mockResolvedValueOnce(toolOnlyTurn)
+            .mockResolvedValueOnce(toolOnlyTurn)
+            .mockResolvedValueOnce(toolOnlyTurn)
+            .mockResolvedValueOnce(toolOnlyTurn)
+            .mockResolvedValueOnce(toolOnlyTurn)
+            .mockImplementationOnce(async (opts) => {
+                opts.onTextDelta?.("Your net worth is S$50,000.00.");
+                return {
+                    text: "Your net worth is S$50,000.00.",
+                    toolCalls: [],
+                };
+            });
+
+        renderDrawer(true);
+
+        const input = screen.getByTestId("bubby-chat-input");
+        fireEvent.change(input, {
+            target: { value: "Summarize my accounts & net worth" },
+        });
+        fireEvent.click(screen.getByTestId("bubby-chat-send-btn"));
+
+        await waitFor(() => {
+            expect(
+                screen.getByText("Your net worth is S$50,000.00."),
+            ).toBeInTheDocument();
+        });
+
+        expect(streamSpy).toHaveBeenCalledTimes(6);
+        const finalCallOpts = streamSpy.mock.calls[5]?.[0];
+        expect(finalCallOpts?.tools).toBeUndefined();
+    });
+
+    it("shows an error alert instead of 'Done.' when the AI returns an empty response", async () => {
+        aiProviders.setActiveAiProvider("openrouter");
+        aiProviders.setProviderApiKey("openrouter", "sk-or-v1-test");
+
+        vi.spyOn(aiProviders, "streamAiTurn").mockResolvedValueOnce({
+            text: "",
+            toolCalls: [],
+        });
+
+        renderDrawer(true);
+
+        const input = screen.getByTestId("bubby-chat-input");
+        fireEvent.change(input, {
+            target: { value: "Summarize my accounts & net worth" },
+        });
+        fireEvent.click(screen.getByTestId("bubby-chat-send-btn"));
+
+        await waitFor(() => {
+            expect(
+                screen.getByText(/empty response/i),
+            ).toBeInTheDocument();
+        });
+        expect(screen.queryByText("Done.")).not.toBeInTheDocument();
+    });
 });

@@ -151,19 +151,19 @@ describe("PIN Authentication & Access Control", () => {
     it("identifies partner and sets default perspective accordingly", async () => {
         render(
             <AuthProvider initialAuthenticated={true}>
-                <HouseholdProvider defaultPerspective="yijia">
+                <HouseholdProvider defaultPerspective="partner1">
                     <AuthTestComponent />
                 </HouseholdProvider>
             </AuthProvider>,
         );
 
-        expect(screen.getByTestId("perspective")).toHaveTextContent("yijia");
+        expect(screen.getByTestId("perspective")).toHaveTextContent("partner1");
 
         // Simulate Sam PIN sign in
         await act(async () => {
             fireEvent.click(screen.getByText("Sign In Sam"));
         });
-        expect(screen.getByTestId("partner")).toHaveTextContent("rachel");
+        expect(screen.getByTestId("partner")).toHaveTextContent("partner2");
     });
 
     it("Lock/Sign Out button renders in DesktopSidebar and triggers signOut via modal portal", async () => {
