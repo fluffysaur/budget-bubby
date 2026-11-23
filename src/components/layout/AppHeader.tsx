@@ -206,9 +206,9 @@ export function AppHeader({
 
     return (
         <header
-            className={`sticky top-0 z-40 w-full border-b-2 border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
+            className={`sticky top-0 z-40 h-14 sm:h-16 w-full border-b-2 border-(--border-ink) bg-(--bg-card)/95 backdrop-blur-md transition-colors duration-200 ${className}`}
         >
-            <div className="flex h-14 sm:h-16 w-full items-center justify-between px-4 sm:px-6">
+            <div className="flex h-full w-full items-center justify-between px-4 sm:px-6">
                 {/* Left: Perspective Switcher (dropdown at every viewport) */}
                 <div className="flex items-center">
                     {/* Perspective Dropdown */}
@@ -461,14 +461,12 @@ export function AppHeader({
                             aria-label="Open Bubby AI"
                             title="Bubby AI"
                             data-testid="open-bubby-chat-btn"
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-transform"
+                            className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1 sm:after:-inset-0.5 after:content-[''] border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press"
                         >
-                            <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) transition-colors">
-                                <Sparkles
-                                    className="h-4.5 w-4.5"
-                                    strokeWidth={2.5}
-                                />
-                            </span>
+                            <Sparkles
+                                className="h-4.5 w-4.5"
+                                strokeWidth={2.5}
+                            />
                         </button>
                     )}
 

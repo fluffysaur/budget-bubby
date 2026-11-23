@@ -79,9 +79,9 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
                 if (hatched) pet();
                 emitAppEvent("bubby:open-sheet", {});
             }}
-            className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-transform ${className}`}
+            className={`relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 justify-center rounded-xl after:absolute after:-inset-1 sm:after:-inset-0.5 after:content-[''] items-end bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press ${className}`}
         >
-            <span className="flex h-9 w-9 sm:h-10 sm:w-10 items-end justify-center rounded-xl bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm overflow-hidden pt-0.5">
+            <span className="flex h-full w-full items-end justify-center overflow-hidden rounded-lg pt-0.5">
                 {isMemberLoading ? (
                     <Skeleton
                         data-testid="bubby-avatar-skeleton"
