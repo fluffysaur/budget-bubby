@@ -472,7 +472,7 @@ describe("DashboardPage", () => {
     it("uses the same layout in a personal perspective", async () => {
         await act(async () => {
             render(
-                <HouseholdProvider initialPerspective="yijia">
+                <HouseholdProvider initialPerspective="partner1">
                     <DashboardPage />
                 </HouseholdProvider>,
             );

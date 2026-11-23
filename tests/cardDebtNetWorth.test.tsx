@@ -208,31 +208,31 @@ describe("calculateCardDebt", () => {
 });
 
 describe("filterStatementsForPerspective", () => {
-    const yijiaCard = makeCard("cc-yj", "mem-yj", true);
-    const yijiaInactiveCard = makeCard("cc-yj-old", "mem-yj", false);
-    const rachelCard = makeCard("cc-rc", "mem-rc", true);
+    const partnerOneCard = makeCard("cc-yj", "mem-yj", true);
+    const partnerOneInactiveCard = makeCard("cc-yj-old", "mem-yj", false);
+    const partnerTwoCard = makeCard("cc-rc", "mem-rc", true);
 
     const statements: CreditCardStatement[] = [
         makeStmt({
             id: "s-yj",
-            card_id: yijiaCard.id,
+            card_id: partnerOneCard.id,
             month: "2026-10",
             statement_amount: 842.5,
-            card: yijiaCard,
+            card: partnerOneCard,
         }),
         makeStmt({
             id: "s-yj-inactive",
-            card_id: yijiaInactiveCard.id,
+            card_id: partnerOneInactiveCard.id,
             month: "2026-10",
             statement_amount: 100,
-            card: yijiaInactiveCard,
+            card: partnerOneInactiveCard,
         }),
         makeStmt({
             id: "s-rc",
-            card_id: rachelCard.id,
+            card_id: partnerTwoCard.id,
             month: "2026-10",
             statement_amount: 620,
-            card: rachelCard,
+            card: partnerTwoCard,
         }),
         makeStmt({
             id: "s-orphan",
@@ -250,22 +250,22 @@ describe("filterStatementsForPerspective", () => {
     });
 
     it("keeps only the active member's cards (including inactive cards) and drops unresolved owners in personal views", () => {
-        const yijiaFiltered = filterStatementsForPerspective(
+        const partnerOneFiltered = filterStatementsForPerspective(
             statements,
-            "yijia",
+            "partner1",
             "mem-yj",
         );
-        expect(yijiaFiltered.map((s) => s.id)).toEqual([
+        expect(partnerOneFiltered.map((s) => s.id)).toEqual([
             "s-yj",
             "s-yj-inactive",
         ]);
 
-        const rachelFiltered = filterStatementsForPerspective(
+        const partnerTwoFiltered = filterStatementsForPerspective(
             statements,
-            "rachel",
+            "partner2",
             "mem-rc",
         );
-        expect(rachelFiltered.map((s) => s.id)).toEqual(["s-rc"]);
+        expect(partnerTwoFiltered.map((s) => s.id)).toEqual(["s-rc"]);
     });
 });
 
@@ -432,7 +432,7 @@ describe("AccountsPage card debt integration", () => {
         // Sam's accounts = 190,000 + 50,000 + 60,000 + 17,000 + 20,500 = 337,500
         // Sam's only card statement (UOB One S$620) is already paid
         render(
-            <HouseholdProvider initialPerspective="rachel">
+            <HouseholdProvider initialPerspective="partner2">
                 <AccountsPage />
             </HouseholdProvider>,
         );

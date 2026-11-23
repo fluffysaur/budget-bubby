@@ -11,8 +11,21 @@ import { onAppEvent, type AppEventMap } from "../src/lib/appEvents";
 import type { DailyCheckin, HouseholdMember } from "../src/types/finance";
 
 const members: HouseholdMember[] = [
-    { id: "mem-yj", household_id: "hh", display_name: "Alex", role: "owner" },
-    { id: "mem-r", household_id: "hh", display_name: "Sam", role: "member" },
+    {
+        id: "mem-yj",
+        household_id: "hh",
+        display_name: "Alex",
+        email: "alex@example.com",
+        role: "owner",
+    },
+    {
+        id: "mem-r",
+        household_id: "hh",
+        display_name: "Sam",
+        email: "Sam@Example.com",
+        user_id: "auth-sam",
+        role: "member",
+    },
 ];
 
 function checkin(member_id: string, checkin_date: string): DailyCheckin {
@@ -26,10 +39,24 @@ function checkin(member_id: string, checkin_date: string): DailyCheckin {
 }
 
 describe("resolveLoggedInMember", () => {
-    it("matches partner ids to display names, ignoring spaces and case", () => {
-        expect(matchPartnerMember(members, "yijia")?.id).toBe("mem-yj");
-        expect(matchPartnerMember(members, "rachel")?.id).toBe("mem-r");
+    it("matches partner slots by configured email, ignoring case", () => {
+        expect(matchPartnerMember(members, "partner1")?.id).toBe("mem-yj");
+        expect(matchPartnerMember(members, "partner2")?.id).toBe("mem-r");
         expect(matchPartnerMember(members, null)).toBeNull();
+    });
+
+    it("matches member ids and the linked auth user", () => {
+        expect(matchPartnerMember(members, "mem-r")?.id).toBe("mem-r");
+        const unlinkedEmails = members.map((m) => ({ ...m, email: null }));
+        expect(
+            matchPartnerMember(unlinkedEmails, "partner2", "auth-sam")?.id,
+        ).toBe("mem-r");
+        expect(matchPartnerMember(unlinkedEmails, "partner2")).toBeNull();
+    });
+
+    it("never matches by display name", () => {
+        expect(matchPartnerMember(members, "alex")).toBeNull();
+        expect(matchPartnerMember(members, "Sam")).toBeNull();
     });
 
     it("falls back to the given member, then the first member (demo mode)", () => {
@@ -41,7 +68,7 @@ describe("resolveLoggedInMember", () => {
     });
 
     it("prefers the logged-in partner over the perspective member", () => {
-        expect(resolveLoggedInMember(members, "rachel", members[0])?.id).toBe(
+        expect(resolveLoggedInMember(members, "partner2", members[0])?.id).toBe(
             "mem-r",
         );
     });

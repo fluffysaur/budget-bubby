@@ -25,7 +25,7 @@ describe("expense logging excludes Savings", () => {
     it("hides Savings from the category picker, even under More", async () => {
         await act(async () => {
             render(
-                <HouseholdProvider initialPerspective="yijia">
+                <HouseholdProvider initialPerspective="partner1">
                     <ExpenseFormModal
                         isOpen
                         onClose={vi.fn()}

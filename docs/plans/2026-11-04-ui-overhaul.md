@@ -17,7 +17,7 @@ What we found:
 | The Dashboard has about 8 blocks competing for attention | `DashboardPage` |
 | Add Expense shows about 13 controls at once | `QuickAddExpenseModal` (1,187 lines) |
 | There are two separate expense-logging UIs | `QuickAddExpenseModal`, `FastLogWidget` |
-| Each of 7 pages handles perspective (Yi Jia / Rachel / Combined) itself. `PerspectiveBanner` is unused | pages, `layout/PerspectiveBanner.tsx` |
+| Each of 7 pages handles perspective (Alex / Sam / Combined) itself. `PerspectiveBanner` is unused | pages, `layout/PerspectiveBanner.tsx` |
 | Cards don't stand out enough from the background, and some text may be low contrast | tokens in `index.css` |
 | Loans aren't used | `components/loans`, `LoansPage` |
 | "Cannot coerce the result to a single JSON object" when adding an expense | add-expense save path |
@@ -116,7 +116,7 @@ Already done: the demo PIN 000000, the logout confirmation, removing the SGD and
 
 - **Always visible:** Amount, Category (or Goal when funding from a goal) and Description. The title is "Add Expense".
 - **"More" is closed by default** and holds date and time, payer and split, currency and FX, fund-from-goal, remarks and tags.
-- **Its toggle summarises the defaults**, e.g. `Today · Yi Jia · Shared`. It opens on its own when remarks, tags, a foreign currency or goal funding are set.
+- **Its toggle summarises the defaults**, e.g. `Today · Alex · Shared`. It opens on its own when remarks, tags, a foreign currency or goal funding are set.
 - **Split default:** an explicit prop, else the last split used (`budget_bubby_last_split_v1`), else Shared in Combined view and Personal otherwise.
 - **Fast Log:** `FastLogWidget` is deleted, and `/fast-log` now opens the Add Expense sheet over Home.
 

@@ -112,7 +112,7 @@ describe("Page loading skeletons", () => {
         );
 
         render(
-            <HouseholdProvider initialPerspective="yijia">
+            <HouseholdProvider initialPerspective="partner1">
                 <BudgetPage />
             </HouseholdProvider>,
         );
@@ -148,7 +148,7 @@ describe("Page loading skeletons", () => {
         );
 
         render(
-            <HouseholdProvider initialPerspective="yijia">
+            <HouseholdProvider initialPerspective="partner1">
                 <BudgetPage />
             </HouseholdProvider>,
         );
@@ -244,7 +244,7 @@ describe("Page loading skeletons", () => {
         );
 
         render(
-            <HouseholdProvider initialPerspective="yijia">
+            <HouseholdProvider initialPerspective="partner1">
                 <DashboardPage />
             </HouseholdProvider>,
         );

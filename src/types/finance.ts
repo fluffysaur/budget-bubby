@@ -3,7 +3,8 @@
  * Matches Supabase PostgreSQL schema with full Row-Level Security partition support.
  */
 
-export type Perspective = "household" | "yijia" | "rachel" | string;
+/** "household", a member id, or a partner slot ("partner1" / "partner2"). */
+export type Perspective = "household" | "partner1" | "partner2" | string;
 
 export interface Household {
     id: string;

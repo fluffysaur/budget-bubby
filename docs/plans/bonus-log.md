@@ -393,7 +393,7 @@ All mutations call `invalidateFinanceCache()`. That refreshes goals, monthly bud
 
 - Add `bonusEvents`, `bonusGoalContributions` and `bonusSplitDefaults` to state and persistence.
 - `saveBonusEvent` / `deleteBonusEvent` apply the same reverse-then-apply delta to `state.goals[].saved_so_far`, clamped at 0, and recompute status with `calculateGoalPacing`.
-- Optionally seed 2 sample events in `src/data/mockSeedData.ts` (e.g. Yi Jia AWS 2025-12, Rachel Performance 2026-03). Check `tests/mockSeedData.test.ts` for count assertions first.
+- Optionally seed 2 sample events in `src/data/mockSeedData.ts` (e.g. Alex AWS 2025-12, Sam Performance 2026-03). Check `tests/mockSeedData.test.ts` for count assertions first.
 
 ### 4.4 Query hooks (`src/hooks/useFinanceQueries.ts`)
 
@@ -636,7 +636,7 @@ Footer: `Button variant="ghost"` "Cancel" and `Button variant="primary"` **"Next
 `e2e/bonus-log.spec.ts`:
 
 1. Go to `/plan?tab=bonus` → see "No Bonuses" (or the seeded rows).
-2. Log Bonus → Rachel, Performance, gross 10,000 → CPF shows 2,000 → Next → Goals 40% = S$3,200 → "By gap" → Log Bonus → celebration toast visible → row appears under the current year, and YTD Net includes S$8,000.
+2. Log Bonus → Sam, Performance, gross 10,000 → CPF shows 2,000 → Next → Goals 40% = S$3,200 → "By gap" → Log Bonus → celebration toast visible → row appears under the current year, and YTD Net includes S$8,000.
 3. Goals tab → the funded goals' saved amounts increased by the assigned amounts.
 4. Budget page for that month → the Gross card includes S$10,000, the waterfall shows the "Outside caps" strip, and the Lifestyle cap is unchanged.
 5. Edit → change gross → warning → Rebalance → Save. Delete → confirm → the goals are reverted.
@@ -673,6 +673,6 @@ Deploy sequence for the user:
 3. **Sound naming.** AGENTS.md references `playSuccessSound()`, which doesn't exist. Should we add it as a softer chime in `soundEffects.ts`, alias it to `playChaChingSound`, or update AGENTS.md?
 4. **CPF accuracy.** The 20% default ignores the Additional Wage ceiling and age-band rates. Is pulling the default from the recipient's `cpf_employee_rate` with per-bonus override enough?
 5. **Eligible goals.** Recipient's + joint goals only, or all household goals? Partner-owned goals are hidden by default in this plan.
-6. **Perspective.** Should the log and YTD cards follow the Yi Jia / Rachel / Combined perspective, or always show the household? The plan always shows the household, with per-person rows.
+6. **Perspective.** Should the log and YTD cards follow the Alex / Sam / Combined perspective, or always show the household? The plan always shows the household, with per-person rows.
 7. **Lifestyle share.** It is recorded only, per the decision. Should a later iteration offer a "bonus pot" so this share can be spent without touching monthly caps?
 8. **Unassigned Goals remainder.** Allowed (recorded as intent), or require it to be fully assigned before Save?

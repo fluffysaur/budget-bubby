@@ -80,7 +80,7 @@ import {
     getCurrentSingaporeTime,
     getCurrentMonth,
 } from "../lib/dateUtils";
-import { displayNameMatchesPartner } from "../lib/members";
+import { matchPartnerMember } from "../lib/members";
 import { isValidUuid } from "../lib/uuid";
 import {
     BonusLogUnavailableError,
@@ -535,21 +535,13 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         let query = client.from("accounts").select("*");
 
         if (perspective !== "household") {
-            const clean = perspective.toLowerCase();
             // Fetch members to find corresponding member ID
             const { data: members } = await client
                 .from("household_members")
                 .select("*");
-            const targetMember = (members || []).find(
-                (m: HouseholdMember) =>
-                    m.id === perspective ||
-                    m.display_name.toLowerCase().replace(/\s+/g, "") ===
-                        clean ||
-                    (clean === "yijia" &&
-                        m.display_name.toLowerCase().includes("yi jia")) ||
-                    (clean === "rachel" &&
-                        m.display_name.toLowerCase().includes("rachel")) ||
-                    displayNameMatchesPartner(m.display_name, clean),
+            const targetMember = matchPartnerMember(
+                (members || []) as HouseholdMember[],
+                perspective,
             );
 
             if (!targetMember) {

@@ -39,7 +39,6 @@ import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { m, AnimatePresence } from "motion/react";
-import { DEMO_PARTNER_ALIASES } from "../../lib/members";
 import { pop } from "../../lib/motion";
 
 export interface AppHeaderProps {
@@ -70,18 +69,6 @@ const MEMBER_COLOR_PALETTE = [
             "bg-(--pastel-mint) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-bold",
     },
 ];
-
-function getPerspectiveKeyForMember(
-    displayName: string,
-    id: string,
-): PerspectiveType {
-    const clean = displayName.toLowerCase().replace(/\s+/g, "");
-    if (clean.includes("yijia")) return "yijia";
-    if (clean.includes("rachel")) return "rachel";
-    if (clean === DEMO_PARTNER_ALIASES.yijia) return "yijia";
-    if (clean === DEMO_PARTNER_ALIASES.rachel) return "rachel";
-    return id;
-}
 
 export function AppHeader({
     className = "",
@@ -188,7 +175,7 @@ export function AppHeader({
             const palette =
                 MEMBER_COLOR_PALETTE[idx % MEMBER_COLOR_PALETTE.length];
             list.push({
-                key: getPerspectiveKeyForMember(m.display_name, m.id),
+                key: m.id,
                 memberId: m.id,
                 label: m.display_name,
                 activeBg: palette.activeBg,

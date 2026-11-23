@@ -44,8 +44,8 @@ function TestConsumer() {
             <button onClick={() => setPerspective("household")}>
                 Set Household
             </button>
-            <button onClick={() => setPerspective("yijia")}>Set Alex</button>
-            <button onClick={() => setPerspective("rachel")}>Set Sam</button>
+            <button onClick={() => setPerspective("partner1")}>Set Alex</button>
+            <button onClick={() => setPerspective("partner2")}>Set Sam</button>
             <button onClick={toggleTheme}>Toggle Theme</button>
         </div>
     );
@@ -97,14 +97,14 @@ describe("HouseholdContext", () => {
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: "Set Alex" }));
         });
-        expect(screen.getByTestId("perspective")).toHaveTextContent("yijia");
+        expect(screen.getByTestId("perspective")).toHaveTextContent("partner1");
         expect(screen.getByTestId("active-member")).toHaveTextContent("Alex");
 
         // Switch to Sam
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: "Set Sam" }));
         });
-        expect(screen.getByTestId("perspective")).toHaveTextContent("rachel");
+        expect(screen.getByTestId("perspective")).toHaveTextContent("partner2");
         expect(screen.getByTestId("active-member")).toHaveTextContent("Sam");
 
         // Switch back to Household
@@ -249,13 +249,13 @@ describe("Layout Components", () => {
             expect(
                 screen.getByRole("option", { name: /alex/i }),
             ).toBeInTheDocument();
-            const rachelOption = screen.getByRole("option", {
+            const partnerTwoOption = screen.getByRole("option", {
                 name: /sam/i,
             });
-            expect(rachelOption).toBeInTheDocument();
+            expect(partnerTwoOption).toBeInTheDocument();
 
             await act(async () => {
-                fireEvent.click(rachelOption);
+                fireEvent.click(partnerTwoOption);
             });
 
             expect(dropdownTrigger).toHaveTextContent(/sam/i);
