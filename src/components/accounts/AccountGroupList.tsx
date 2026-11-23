@@ -6,7 +6,6 @@
  * - CPF (OA, SA, MA)
  * - Other Assets
  * Supports:
- * - All vs Non-CPF (Liquid) filter toggle
  * - Compact Notion-inspired row view (default) or Card view
  * - Inline quick balance editing + modal Update Balance trigger
  */
@@ -96,18 +95,13 @@ export function AccountGroupList({
     onAddAccount,
     className = "",
 }: AccountGroupListProps) {
-    const [scopeFilter, setScopeFilter] = useState<"all" | "non-cpf">("all");
     const [viewMode, setViewMode] = useState<"table" | "cards">("table");
     const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
     const [inlineValue, setInlineValue] = useState<string>("");
     const [isSavingInline, setIsSavingInline] = useState<boolean>(false);
 
-    const filteredAccounts = useMemo(() => {
-        if (scopeFilter === "non-cpf") {
-            return accounts.filter((a) => a.type !== "CPF");
-        }
-        return accounts;
-    }, [accounts, scopeFilter]);
+    // Accounts arrive already filtered by the shared account type filter
+    const filteredAccounts = accounts;
 
     // Total assets across all visible accounts
     const totalAssets = useMemo(() => {
@@ -117,16 +111,6 @@ export function AccountGroupList({
             ) / 100
         );
     }, [filteredAccounts]);
-
-    const nonCpfTotal = useMemo(() => {
-        return (
-            Math.round(
-                accounts
-                    .filter((a) => a.type !== "CPF")
-                    .reduce((sum, a) => sum + a.balance, 0) * 100,
-            ) / 100
-        );
-    }, [accounts]);
 
     // Group accounts by type
     const groupedData = useMemo(() => {
@@ -199,37 +183,12 @@ export function AccountGroupList({
 
     return (
         <div className={`space-y-5 ${className}`}>
-            {/* Filter & View Mode Toolbar */}
+            {/* View Mode Toolbar */}
             <Card
                 variant="white"
                 padding="none"
-                className="p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2"
+                className="p-2 sm:p-2.5 flex items-center justify-end gap-2"
             >
-                <div className="flex items-center gap-1.5">
-                    <button
-                        type="button"
-                        onClick={() => setScopeFilter("all")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-press cursor-pointer ${
-                            scopeFilter === "all"
-                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
-                                : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
-                        }`}
-                    >
-                        All ({accounts.length})
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setScopeFilter("non-cpf")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-press cursor-pointer ${
-                            scopeFilter === "non-cpf"
-                                ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
-                                : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
-                        }`}
-                    >
-                        Non-CPF Liquid (<CurrencyText amount={nonCpfTotal} />)
-                    </button>
-                </div>
-
                 <div className="flex items-center gap-1 bg-(--bg-cream) border-2 border-(--border-ink) p-1 rounded-xl shadow-cute-sm">
                     <button
                         type="button"
@@ -494,7 +453,9 @@ export function AccountGroupList({
                                                                     className="inline-flex items-center gap-1 rounded-lg border border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-[11px] font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
                                                                 >
                                                                     <Pencil className="h-3 w-3" />
-                                                                    <span>Update</span>
+                                                                    <span>
+                                                                        Update
+                                                                    </span>
                                                                 </button>
                                                                 {onEditAccount && (
                                                                     <button
