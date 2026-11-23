@@ -179,6 +179,16 @@ describe("suggestTradeOffs", () => {
                 shortfallPerMonth: 0,
             },
             {
+                edit: {
+                    type: "lowerTarget",
+                    goalId: "house",
+                    targetAmount: 68000,
+                },
+                goalId: "house",
+                verdict: "on_track",
+                shortfallPerMonth: 0,
+            },
+            {
                 edit: { type: "bonus" },
                 verdict: "on_track",
                 shortfallPerMonth: 0,

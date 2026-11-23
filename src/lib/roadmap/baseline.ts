@@ -21,6 +21,7 @@ import type {
     MonthlyBudgetHistoryRow,
     RecurringItem,
 } from "../../types/finance";
+import type { TrimCandidate } from "./types";
 
 export const BASELINE_WINDOW_MONTHS = 6;
 export const BASELINE_MIN_MONTHS = 3;
@@ -48,6 +49,8 @@ export interface BaselineResult {
      * the buffer goal.
      */
     averageMonthlySpend: number;
+    /** Spendable categories with budget headroom, sorted by headroom desc. */
+    trimCandidates: TrimCandidate[];
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -136,6 +139,126 @@ function spendableSpendFor(
     return spent;
 }
 
+function spendableBudgetByCategoryFor(
+    rows: BudgetHistoryRow[],
+    categoryById: Map<string, Category>,
+): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const row of rows) {
+        for (const c of row.categories) {
+            const cat = categoryById.get(c.category_id);
+            if (!cat || !isSpendableCategory(cat)) continue;
+            const amount = Number(c.allocated_amount) || 0;
+            map.set(c.category_id, (map.get(c.category_id) ?? 0) + amount);
+        }
+    }
+    return map;
+}
+
+function spendableSpendByCategoryFor(
+    month: string,
+    expenses: Expense[],
+    recurringItems: RecurringItem[],
+    categoryById: Map<string, Category>,
+): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const e of expenses) {
+        if (!e.date?.startsWith(month) || e.goal_id || !e.category_id) continue;
+        const cat = categoryById.get(e.category_id);
+        if (!cat || !isSpendableCategory(cat)) continue;
+        map.set(
+            e.category_id,
+            (map.get(e.category_id) ?? 0) + (Number(e.amount) || 0),
+        );
+    }
+    const recurring = calculateRecurringCategorySpend(
+        recurringItems.filter((i) => !i.paid_from_cpf_oa),
+        month,
+    );
+    for (const [categoryId, bucket] of Object.entries(recurring.byCategory)) {
+        const cat = categoryById.get(categoryId);
+        if (!cat || !isSpendableCategory(cat)) continue;
+        map.set(categoryId, (map.get(categoryId) ?? 0) + bucket.total);
+    }
+    return map;
+}
+
+/**
+ * Computes per-category spending headroom from spendable categories over
+ * `months` (or `budgetMonth` with 0 actual spend in estimate mode).
+ */
+export function computeTrimCandidates({
+    months,
+    budgetMonth,
+    rows,
+    categories,
+    expenses,
+    recurringItems,
+}: {
+    months: string[];
+    budgetMonth?: string;
+    rows: BudgetHistoryRow[];
+    categories: Category[];
+    expenses: Expense[];
+    recurringItems: RecurringItem[];
+}): TrimCandidate[] {
+    const categoryById = new Map(categories.map((c) => [c.id, c]));
+    const budgetTotals = new Map<string, number>();
+    const spendTotals = new Map<string, number>();
+    const targetMonths =
+        months.length > 0 ? months : budgetMonth ? [budgetMonth] : [];
+    if (targetMonths.length === 0) return [];
+
+    const countActualSpend = months.length > 0;
+    for (const m of targetMonths) {
+        const budgets = spendableBudgetByCategoryFor(
+            memberRowsFor(rows, m),
+            categoryById,
+        );
+        for (const [catId, amt] of budgets) {
+            budgetTotals.set(catId, (budgetTotals.get(catId) ?? 0) + amt);
+        }
+        if (countActualSpend) {
+            const spends = spendableSpendByCategoryFor(
+                m,
+                expenses,
+                recurringItems,
+                categoryById,
+            );
+            for (const [catId, amt] of spends) {
+                spendTotals.set(catId, (spendTotals.get(catId) ?? 0) + amt);
+            }
+        }
+    }
+
+    const candidates: TrimCandidate[] = [];
+    for (const cat of categories) {
+        if (!isSpendableCategory(cat)) continue;
+        const monthlyBudget = round2(
+            (budgetTotals.get(cat.id) ?? 0) / targetMonths.length,
+        );
+        const monthlySpent = round2(
+            (spendTotals.get(cat.id) ?? 0) / targetMonths.length,
+        );
+        const headroom = round2(Math.max(0, monthlyBudget - monthlySpent));
+        if (headroom > 0) {
+            candidates.push({
+                categoryId: cat.id,
+                categoryName: cat.name,
+                monthlyBudget,
+                monthlySpent,
+                headroom,
+            });
+        }
+    }
+
+    return candidates.sort(
+        (a, b) =>
+            b.headroom - a.headroom ||
+            a.categoryName.localeCompare(b.categoryName),
+    );
+}
+
 export interface BaselineInput {
     /** 'YYYY-MM-DD' */
     today: string;
@@ -198,12 +321,20 @@ export function computeBaseline({
 
     if (perMonth.length >= BASELINE_MIN_MONTHS) {
         const total = perMonth.reduce((s, p) => s + p.savings, 0);
+        const actualMonths = perMonth.map((p) => p.month);
         return {
             monthlySavings: round2(total / perMonth.length),
             source: "actual",
-            months: perMonth.map((p) => p.month),
+            months: actualMonths,
             perMonth,
             averageMonthlySpend: loggedSpend ?? 0,
+            trimCandidates: computeTrimCandidates({
+                months: actualMonths,
+                rows,
+                categories,
+                expenses,
+                recurringItems,
+            }),
         };
     }
 
@@ -218,6 +349,7 @@ export function computeBaseline({
             months: [],
             perMonth,
             averageMonthlySpend: loggedSpend ?? 0,
+            trimCandidates: [],
         };
     }
     const { savings, spendableCap } = budgetedFor(
@@ -230,5 +362,13 @@ export function computeBaseline({
         months: [budgetMonth],
         perMonth,
         averageMonthlySpend: loggedSpend ?? round2(spendableCap),
+        trimCandidates: computeTrimCandidates({
+            months: [],
+            budgetMonth,
+            rows,
+            categories,
+            expenses,
+            recurringItems,
+        }),
     };
 }

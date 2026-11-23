@@ -19,7 +19,12 @@ import type {
     RecurringItem,
     SavingsGoal,
 } from "../../types/finance";
-import type { RoadmapGoalInput, RoadmapInput, RoadmapPool } from "./types";
+import type {
+    RoadmapGoalInput,
+    RoadmapInput,
+    RoadmapPool,
+    TrimCandidate,
+} from "./types";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -107,6 +112,8 @@ export interface BuildRoadmapInputOptions {
         Household,
         "investment_haircut_pct" | "investment_haircut_months"
     > | null;
+    /** Spendable categories with headroom for the "Trim category" trade-off. */
+    trimCandidates?: TrimCandidate[];
 }
 
 export function buildRoadmapInput({
@@ -122,6 +129,7 @@ export function buildRoadmapInput({
     coveredThrough,
     pool,
     household,
+    trimCandidates,
 }: BuildRoadmapInputOptions): RoadmapInput {
     return {
         ...haircutFromHousehold(household),
@@ -133,7 +141,9 @@ export function buildRoadmapInput({
         cashFlowChanges: lifeEventsFromRecurring(
             recurringItems,
             coveredThrough ?? today.slice(0, 7),
+            goals,
         ),
-        cpfOa: computeCpfOa(accounts, snapshots, recurringItems, today),
+        cpfOa: computeCpfOa(accounts, snapshots, recurringItems, today, goals),
+        trimCandidates,
     };
 }

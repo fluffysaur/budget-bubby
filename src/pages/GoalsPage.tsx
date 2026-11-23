@@ -24,10 +24,13 @@ import {
     useGoalsQuery,
     useExpensesQuery,
     useCategoriesQuery,
+    useRecurringItemsQuery,
     useInvalidateFinance,
     useUpdateGoalMutation,
 } from "../hooks/useFinanceQueries";
+import { financeService } from "../services/financeService";
 import { useRoadmap } from "../hooks/useRoadmap";
+import { applyTrimTradeOff } from "../lib/roadmap";
 import { sortGoalsByDate } from "../lib/roadmap/goalSettings";
 import { addMonths } from "../lib/dateUtils";
 import { feedback } from "../lib/delight/feedback";
@@ -58,7 +61,8 @@ export function GoalsPage({
         overview,
         members: ctxMembers,
     } = useHousehold();
-    const { invalidateGoals, invalidateExpenses } = useInvalidateFinance();
+    const { invalidateGoals, invalidateExpenses, invalidateBudget } =
+        useInvalidateFinance();
 
     // Cached TanStack Queries
     const {
@@ -70,6 +74,7 @@ export function GoalsPage({
     const updateGoalMutation = useUpdateGoalMutation();
     const { data: expensesData } = useExpensesQuery();
     const { data: categoriesData } = useCategoriesQuery();
+    const { data: recurringData } = useRecurringItemsQuery();
 
     const [searchParams, setSearchParams] = useSearchParams();
     const targetGoalId = searchParams.get("goalId");
@@ -280,6 +285,37 @@ export function GoalsPage({
         });
     };
 
+    const handleApplyLowerTarget = async (
+        goalId: string,
+        targetAmount: number,
+    ) => {
+        await updateGoalMutation.mutateAsync({
+            id: goalId,
+            updates: { target_amount: targetAmount },
+        });
+    };
+
+    const handleApplyTrim = async (
+        categoryId: string,
+        monthlyAmount: number,
+    ) => {
+        const baseProfiles = await financeService.getBaseProfiles();
+        await applyTrimTradeOff({
+            categoryId,
+            monthlyAmount,
+            categories,
+            baseProfiles,
+            recurringItems: recurringData ?? [],
+            getBaseAllocations: (profileId) =>
+                financeService.getBaseAllocations(profileId),
+            getMonthlyBudget: (month, memberId) =>
+                financeService.getMonthlyBudget(month, memberId),
+            updateBaseProfile: (profile, allocations) =>
+                financeService.updateBaseProfile(profile, allocations),
+        });
+        invalidateBudget();
+    };
+
     const handleOpenSpendModal = (goal: SavingsGoal) => {
         setSpendGoal(goal);
         setIsSpendOpen(true);
@@ -347,6 +383,8 @@ export function GoalsPage({
                     roadmap={roadmap}
                     onAddGoal={handleOpenCreateModal}
                     onApplyDelay={handleApplyDelay}
+                    onApplyLowerTarget={handleApplyLowerTarget}
+                    onApplyTrim={handleApplyTrim}
                 />
             )}
 

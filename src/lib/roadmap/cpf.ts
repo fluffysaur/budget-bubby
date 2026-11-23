@@ -16,6 +16,7 @@ import type {
     Account,
     AccountSnapshot,
     RecurringItem,
+    SavingsGoal,
 } from "../../types/finance";
 import type { RoadmapCpfOa } from "./types";
 
@@ -68,6 +69,7 @@ export function computeCpfOa(
     snapshots: AccountSnapshot[],
     recurringItems: RecurringItem[],
     today: string,
+    goals?: Pick<SavingsGoal, "id" | "target_date">[],
 ): RoadmapCpfOa | null {
     const oaAccounts = accounts.filter(isCpfOa);
     if (oaAccounts.length === 0) return null;
@@ -91,6 +93,6 @@ export function computeCpfOa(
         ),
         monthlyGrowth: oaGrowth(oaIds, snapshots),
         asOf,
-        changes: oaEventsFromRecurring(recurringItems, formatMonth(asOf)),
+        changes: oaEventsFromRecurring(recurringItems, formatMonth(asOf), goals),
     };
 }
