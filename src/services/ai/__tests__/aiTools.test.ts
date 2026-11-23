@@ -150,6 +150,149 @@ describe("aiTools", () => {
         expect(goals.count).toBe(1);
     });
 
+    describe("getExpenses goal spend", () => {
+        const baseExpense = {
+            household_id: "hh-1",
+            payer_id: "mem-1",
+            is_shared: false,
+            split_ratio: 0,
+            settled: false,
+        };
+
+        beforeEach(() => {
+            vi.spyOn(financeService, "getCategories").mockResolvedValue([
+                {
+                    id: "cat-food",
+                    household_id: "hh-1",
+                    name: "Food & Dining",
+                    color: "#f97316",
+                    icon: "Utensils",
+                    is_system: false,
+                },
+            ]);
+            vi.spyOn(financeService, "getGoals").mockResolvedValue([
+                {
+                    id: "goal-wedding",
+                    household_id: "hh-1",
+                    title: "Wedding",
+                    target_amount: 30000,
+                    target_date: "2027-06-01",
+                    emoji: "💍",
+                    status: "on_track",
+                },
+            ]);
+        });
+
+        type ExpenseRow = { id: string };
+        const rows = (result: Record<string, unknown>) =>
+            result.expenses as ExpenseRow[];
+
+        function mockExpenses() {
+            return vi.spyOn(financeService, "getExpenses").mockResolvedValue([
+                {
+                    ...baseExpense,
+                    id: "exp-food",
+                    category_id: "cat-food",
+                    date: "2026-11-20",
+                    item: "Chicken rice",
+                    amount: 6.5,
+                },
+                {
+                    ...baseExpense,
+                    id: "exp-venue",
+                    category_id: null,
+                    goal_id: "goal-wedding",
+                    date: "2026-11-05",
+                    item: "Venue deposit",
+                    amount: 2000,
+                },
+                {
+                    ...baseExpense,
+                    id: "exp-misc",
+                    category_id: null,
+                    date: "2026-11-12",
+                    item: "Old item",
+                    amount: 15,
+                },
+            ]);
+        }
+
+        it("labels goal-funded expenses with the goal, not Uncategorized", async () => {
+            mockExpenses();
+            const result = await executeReadTool(
+                "getExpenses",
+                { month: "2026-11" },
+                context,
+            );
+            const byId = Object.fromEntries(rows(result).map((e) => [e.id, e]));
+
+            expect(byId["exp-venue"]).toMatchObject({
+                category: null,
+                goalId: "goal-wedding",
+                goalName: "Wedding",
+            });
+            expect(byId["exp-food"]).toMatchObject({
+                category: "Food & Dining",
+                goalName: null,
+            });
+            expect(byId["exp-misc"]).toMatchObject({
+                category: "Uncategorized",
+                goalName: null,
+            });
+        });
+
+        it("splits budget and goal spend totals", async () => {
+            mockExpenses();
+            const result = await executeReadTool(
+                "getExpenses",
+                { month: "2026-11" },
+                context,
+            );
+
+            expect(result.totalAmount).toBe(2021.5);
+            expect(result.goalSpendTotal).toBe(2000);
+            expect(result.budgetSpendTotal).toBe(21.5);
+        });
+
+        it("sorts newest first by default and largest first with sortBy amount", async () => {
+            mockExpenses();
+            const byDate = await executeReadTool(
+                "getExpenses",
+                { month: "2026-11" },
+                context,
+            );
+            expect(rows(byDate).map((e) => e.id)).toEqual([
+                "exp-food",
+                "exp-misc",
+                "exp-venue",
+            ]);
+
+            const byAmount = await executeReadTool(
+                "getExpenses",
+                { month: "2026-11", sortBy: "amount", limit: 2 },
+                context,
+            );
+            expect(rows(byAmount).map((e) => e.id)).toEqual([
+                "exp-venue",
+                "exp-misc",
+            ]);
+            expect(byAmount.totalCount).toBe(3);
+        });
+
+        it("passes goalId through to the finance service filter", async () => {
+            const spy = mockExpenses();
+            await executeReadTool(
+                "getExpenses",
+                { month: "2026-11", goalId: "goal-wedding" },
+                context,
+            );
+
+            expect(spy).toHaveBeenCalledWith(
+                expect.objectContaining({ goalId: "goal-wedding" }),
+            );
+        });
+    });
+
     it("builds a proposeExpense card without mutating, then saves and invalidates on confirm", async () => {
         vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
             household: { id: "hh-1", name: "Demo Home", currency: "SGD" },
