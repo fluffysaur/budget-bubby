@@ -54,6 +54,7 @@ import {
 } from "./components/expenses/ExpenseFormModal";
 import { useQuickAddDeepLink } from "./hooks/useQuickAddDeepLink";
 import { useInboxBadge } from "./hooks/useInboxBadge";
+import { useSidebarCollapsed } from "./hooks/useSidebarCollapsed";
 import { usePartnerRealtimeSync } from "./hooks/usePartnerRealtimeSync";
 import { ExpenseSuccessCelebration } from "./components/expenses/ExpenseSuccessCelebration";
 import { OfflineBanner } from "./components/pwa/OfflineBanner";
@@ -82,9 +83,7 @@ const InboxPage = lazy(() => import("./pages/InboxPage"));
 const OnboardingModal = lazy(
     () => import("./components/onboarding/OnboardingModal"),
 );
-const BubbyChatDrawer = lazy(
-    () => import("./components/ai/BubbyChatDrawer"),
-);
+const BubbyChatDrawer = lazy(() => import("./components/ai/BubbyChatDrawer"));
 
 /**
  * Minimal Header-Only Skeleton Loader displayed during route transition / lazy bundle resolution
@@ -258,6 +257,8 @@ function AppLayoutInner() {
 
     // Inbox count for the Spend badges and the app icon badge
     const inboxCount = useInboxBadge();
+    const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
+        useSidebarCollapsed();
     const { invalidateExpenses } = useInvalidateFinance();
 
     const handleExpenseAdded = useCallback(
@@ -335,9 +336,7 @@ function AppLayoutInner() {
             (path === "/spend" && params.get("tab") === "budget")
         ) {
             completeOnboardingTask("budget", meId);
-        } else if (
-            ["/plan", "/goals", "/loans", "/recurring"].includes(path)
-        ) {
+        } else if (["/plan", "/goals", "/loans", "/recurring"].includes(path)) {
             completeOnboardingTask("plan", meId);
         }
     }, [location.pathname, location.search, meId]);
@@ -349,6 +348,7 @@ function AppLayoutInner() {
                 activeTab={activeTab}
                 onSelectTab={handleSelectTab}
                 spendBadgeCount={inboxCount}
+                collapsed={sidebarCollapsed}
             />
 
             {/* Main Application Column */}
@@ -361,6 +361,8 @@ function AppLayoutInner() {
                     onOpenQuickAdd={handleOpenQuickAdd}
                     onNavigateTab={handleSelectTab}
                     onOpenBubbyChat={() => setIsBubbyChatOpen(true)}
+                    sidebarCollapsed={sidebarCollapsed}
+                    onToggleSidebar={toggleSidebar}
                 />
 
                 {/* Scrollable Viewport / Route Container with Mobile Swipe-Down-To-Refresh */}

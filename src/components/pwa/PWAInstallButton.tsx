@@ -5,10 +5,13 @@ import { IOSInstallModal } from "./IOSInstallModal";
 
 interface PWAInstallButtonProps {
     className?: string;
+    /** Icon-only square button (for the collapsed sidebar rail). */
+    collapsed?: boolean;
 }
 
 export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     className = "",
+    collapsed = false,
 }) => {
     const {
         canInstall,
@@ -29,10 +32,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                 onClick={promptInstall}
                 title="Install"
                 aria-label="Install"
-                className={`flex h-9 items-center gap-1.5 px-3 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint) text-(--accent-mint-ink) shadow-cute-sm transition-press hover:bg-(--pastel-mint-dark) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer font-bold text-xs ${className}`}
+                className={`flex items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint) text-(--accent-mint-ink) shadow-cute-sm transition-press hover:bg-(--pastel-mint-dark) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer font-bold text-xs ${
+                    collapsed ? "h-11 w-11" : "h-9 gap-1.5 px-3"
+                } ${className}`}
             >
                 <Download className="h-4 w-4 shrink-0" strokeWidth={2.5} />
-                <span>Install</span>
+                {!collapsed && <span>Install</span>}
             </button>
 
             <IOSInstallModal
