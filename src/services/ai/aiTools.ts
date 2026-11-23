@@ -355,6 +355,7 @@ export function buildBubbySystemInstruction(context: AiToolContext): string {
         "When the user asks to log an expense, update an account balance, or adjust a monthly budget, call the corresponding propose* tool (proposeExpense, proposeBalanceUpdate, proposeBudgetAdjustment).",
         "If an account ID is needed for proposeBalanceUpdate, call getAccounts first so you match the exact account.",
         "Keep replies concise, warm, and scannable.",
+        "Format replies in simple markdown: short bullet lists, **bold** for key figures, and a small table only when comparing several items. Do not use headings, images, or HTML.",
     ].join(" ");
 }
 

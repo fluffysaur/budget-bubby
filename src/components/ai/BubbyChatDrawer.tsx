@@ -48,6 +48,7 @@ import { ActionConfirmationCard } from "./ActionConfirmationCard";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { MarkdownText } from "../ui/MarkdownText";
 
 export interface ChatMessage {
     id: string;
@@ -663,13 +664,19 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                         }`}
                                     >
                                         <div
-                                            className={`max-w-[88%] rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word shadow-cute-sm ${
+                                            className={`max-w-[88%] rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-cute-sm ${
                                                 msg.role === "user"
-                                                    ? "bg-(--pastel-lilac) text-(--text-ink) font-semibold"
+                                                    ? "whitespace-pre-wrap bg-(--pastel-lilac) text-(--text-ink) font-semibold"
                                                     : "bg-(--bg-card) text-(--text-ink) font-medium"
                                             }`}
                                         >
-                                            {msg.content}
+                                            {msg.role === "user" ? (
+                                                msg.content
+                                            ) : (
+                                                <MarkdownText>
+                                                    {msg.content}
+                                                </MarkdownText>
+                                            )}
                                             {msg.isStreaming &&
                                                 !msg.content && (
                                                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
