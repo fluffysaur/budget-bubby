@@ -19,6 +19,7 @@ import type {
     AiProviderAdapter,
     AiProviderId,
     AiProviderMeta,
+    AiReasoningEffort,
     AiTurnResult,
     StreamTurnOptions,
     TestConnectionResult,
@@ -27,6 +28,9 @@ import type {
 export const AI_CONFIG_CHANGED_EVENT = "bubby:ai-config-changed";
 
 export const AI_ACTIVE_PROVIDER_STORAGE_KEY = "budget_bubby_ai_provider";
+export const AI_REASONING_EFFORT_STORAGE_KEY =
+    "budget_bubby_ai_reasoning_effort";
+export const DEFAULT_REASONING_EFFORT: AiReasoningEffort = "low";
 export const LEGACY_GEMINI_API_KEY_STORAGE_KEY = "budget_bubby_gemini_api_key";
 export const LEGACY_GEMINI_MODEL_STORAGE_KEY = "budget_bubby_gemini_model";
 
@@ -129,6 +133,12 @@ function isValidProviderId(value: string | null): value is AiProviderId {
         value === "openai" ||
         value === "openrouter"
     );
+}
+
+function isValidReasoningEffort(
+    value: string | null,
+): value is AiReasoningEffort {
+    return value === "low" || value === "medium" || value === "high";
 }
 
 function getSafeStorage(): Storage | null {
@@ -239,16 +249,30 @@ export function setProviderModel(provider: AiProviderId, model: string): void {
     }
 }
 
+export function getAiReasoningEffort(): AiReasoningEffort {
+    const storage = getSafeStorage();
+    const saved = storage?.getItem(AI_REASONING_EFFORT_STORAGE_KEY) ?? null;
+    return isValidReasoningEffort(saved) ? saved : DEFAULT_REASONING_EFFORT;
+}
+
+export function setAiReasoningEffort(effort: AiReasoningEffort): void {
+    const storage = getSafeStorage();
+    if (!storage) return;
+    storage.setItem(AI_REASONING_EFFORT_STORAGE_KEY, effort);
+}
+
 export function getActiveAiConfig(): {
     provider: AiProviderId;
     apiKey: string;
     model: string;
+    reasoningEffort: AiReasoningEffort;
 } {
     const provider = getActiveAiProvider();
     return {
         provider,
         apiKey: getProviderApiKey(provider),
         model: getProviderModel(provider),
+        reasoningEffort: getAiReasoningEffort(),
     };
 }
 
@@ -261,7 +285,10 @@ export async function streamAiTurn(
     options: StreamTurnOptions & { provider?: AiProviderId },
 ): Promise<AiTurnResult> {
     const provider = options.provider ?? getActiveAiProvider();
-    return getAiAdapter(provider).streamTurn(options);
+    return getAiAdapter(provider).streamTurn({
+        ...options,
+        reasoningEffort: options.reasoningEffort ?? getAiReasoningEffort(),
+    });
 }
 
 export async function testAiConnection(
