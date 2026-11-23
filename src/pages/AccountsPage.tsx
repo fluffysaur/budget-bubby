@@ -51,7 +51,15 @@ import { useEnsureCpfAccounts } from "../hooks/useEnsureCpfAccounts";
 import { unmatchedCpfAccounts } from "../lib/cpfAccounts";
 import { NetWorthChart } from "../components/accounts/NetWorthChart";
 import { CreditCardTrackerSection } from "../components/accounts/CreditCardTrackerSection";
-import type { Account } from "../types/finance";
+import { AccountTypeFilterBar } from "../components/accounts/AccountTypeFilterBar";
+import {
+    calculateFilteredNetWorth,
+    filterAccountsByTypes,
+    getAccountFilterLabel,
+    includesCardDebt,
+    toggleAccountType,
+} from "../lib/accountTypeFilter";
+import type { Account, AccountType } from "../types/finance";
 
 export interface AccountsPageProps {
     className?: string;
@@ -134,20 +142,41 @@ export function AccountsPage({
         }
     };
 
-    // Metrics Calculations
-    const totalAssets = useMemo(() => {
-        const sum = accounts.reduce((acc, a) => acc + a.balance, 0);
-        return Math.round(sum * 100) / 100;
-    }, [accounts]);
+    // Account type filter (empty = All)
+    const [typeFilter, setTypeFilter] = useState<AccountType[]>([]);
+    const availableTypes = useMemo(
+        () => Array.from(new Set(accounts.map((a) => a.type))),
+        [accounts],
+    );
+    // Drop stale selections (e.g. the last Other account was deleted)
+    const activeTypes = useMemo(
+        () => typeFilter.filter((t) => availableTypes.includes(t)),
+        [typeFilter, availableTypes],
+    );
+    const filterLabel = useMemo(
+        () => getAccountFilterLabel(activeTypes),
+        [activeTypes],
+    );
+    const filteredAccounts = useMemo(
+        () => filterAccountsByTypes(accounts, activeTypes),
+        [accounts, activeTypes],
+    );
+    const debtApplies = includesCardDebt(activeTypes);
 
+    // Metrics Calculations
     const cardDebt = useMemo(
         () => calculateCardDebt(statements, currentMonth),
         [statements, currentMonth],
     );
 
     const netWorth = useMemo(
-        () => Math.round((totalAssets - cardDebt) * 100) / 100,
-        [totalAssets, cardDebt],
+        () => calculateFilteredNetWorth(accounts, activeTypes, cardDebt),
+        [accounts, activeTypes, cardDebt],
+    );
+
+    const chartStatements = useMemo(
+        () => (debtApplies ? statements : []),
+        [debtApplies, statements],
     );
 
     return (
@@ -252,17 +281,33 @@ export function AccountsPage({
                                 Update Balances
                             </Button>
                         </div>
+                        {/* Shared account type filter */}
+                        <AccountTypeFilterBar
+                            selected={activeTypes}
+                            availableTypes={availableTypes}
+                            onToggle={(type) =>
+                                setTypeFilter(
+                                    toggleAccountType(activeTypes, type),
+                                )
+                            }
+                            onClear={() => setTypeFilter([])}
+                        />
+
                         {/* Net Worth */}
                         <StatCard
-                            title="Net Worth"
+                            title={<TruncatedText text={filterLabel} />}
                             loading={isLoading}
                             value={formatSGD(netWorth)}
                             subtitle={
-                                cardDebt > 0
+                                debtApplies && cardDebt > 0
                                     ? `${formatSGD(cardDebt)} card debt`
-                                    : `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
+                                    : `${filteredAccounts.length} account${filteredAccounts.length === 1 ? "" : "s"}`
                             }
-                            tooltip="Account balances minus unpaid card statements."
+                            tooltip={
+                                debtApplies
+                                    ? "Account balances minus unpaid card statements."
+                                    : "Account balances for the selected types."
+                            }
                             icon={<TrendingUp className="h-4 w-4" />}
                             iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                         />
@@ -274,9 +319,10 @@ export function AccountsPage({
                             <>
                                 {/* Net Worth Progression Area Chart */}
                                 <NetWorthChart
-                                    accounts={accounts}
+                                    accounts={filteredAccounts}
                                     snapshots={snapshots}
-                                    statements={statements}
+                                    statements={chartStatements}
+                                    title={filterLabel}
                                     onUpdateBalances={() => {
                                         setSelectedAccount(null);
                                         setIsUpdateModalOpen(true);
@@ -285,7 +331,7 @@ export function AccountsPage({
 
                                 {/* Grouped Accounts Listing with Table / Card view */}
                                 <AccountGroupList
-                                    accounts={accounts}
+                                    accounts={filteredAccounts}
                                     onUpdateBalance={handleOpenUpdateModal}
                                     onQuickSaveBalance={
                                         handleInlineUpdateBalance

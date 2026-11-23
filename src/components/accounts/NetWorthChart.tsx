@@ -29,6 +29,7 @@ import { TooltipPopover } from "../ui/TooltipPopover";
 import { Card } from "../ui/Card";
 import { CurrencyText } from "../ui/CurrencyText";
 import { Button } from "../ui/Button";
+import { TruncatedText } from "../ui/TruncatedText";
 
 export interface NetWorthDataPoint {
     date: string;
@@ -41,6 +42,8 @@ export interface NetWorthChartProps {
     snapshots?: AccountSnapshot[];
     statements?: CreditCardStatement[];
     onUpdateBalances?: () => void;
+    /** Title/legend label reflecting the active account type filter. */
+    title?: string;
     className?: string;
 }
 
@@ -86,6 +89,7 @@ export function NetWorthChart({
     snapshots,
     statements,
     onUpdateBalances,
+    title = "Net Worth",
     className = "",
 }: NetWorthChartProps) {
     const currentM = useCurrentMonth();
@@ -112,13 +116,13 @@ export function NetWorthChart({
         <Card variant="white" padding="lg" className={className}>
             {/* Header & Chart Legends */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b-2 border-(--border-ink) gap-3">
-                <div className="shrink-0">
+                <div className="min-w-0">
                     <div className="flex items-center gap-2">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
                             <TrendingUp className="h-4 w-4" />
                         </div>
-                        <h2 className="text-base sm:text-lg font-bold text-(--text-ink) font-display tracking-tight whitespace-nowrap">
-                            Net Worth
+                        <h2 className="min-w-0 text-base sm:text-lg font-bold text-(--text-ink) font-display tracking-tight">
+                            <TruncatedText text={title} />
                         </h2>
                         <TooltipPopover
                             title="Net Worth Formula"
@@ -126,20 +130,22 @@ export function NetWorthChart({
                             align="left"
                             className="shrink-0"
                         >
-                            Net Worth = account balances minus unpaid card
-                            statements. Accounts are included from their first
-                            balance update.
+                            Account balances, minus unpaid card statements when
+                            All or Cash is selected. Accounts are included from
+                            their first balance update.
                         </TooltipPopover>
                     </div>
                 </div>
 
                 {/* Legend Pills */}
-                <div className="flex items-center flex-wrap gap-2 text-xs font-semibold">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
-                        <span className="h-2 w-2 rounded-full bg-indigo-600" />
-                        <span>Net Worth</span>
+                <div className="flex min-w-0 items-center flex-wrap gap-2 text-xs font-semibold">
+                    <div className="inline-flex max-w-full items-center gap-2 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-600" />
+                        <span className="min-w-0">
+                            <TruncatedText text={title} />
+                        </span>
                         {latestPoint && (
-                            <span className="ml-1">
+                            <span className="ml-1 shrink-0">
                                 <CurrencyText amount={latestPoint.netWorth} />
                             </span>
                         )}
@@ -240,7 +246,7 @@ export function NetWorthChart({
                             <Area
                                 type="monotone"
                                 dataKey="netWorth"
-                                name="Net Worth"
+                                name={title}
                                 stroke="#6366F1"
                                 strokeWidth={2.5}
                                 fillOpacity={1}
