@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { queryClient } from "../src/lib/queryClient";
-import { queryKeys } from "../src/hooks/useFinanceQueries";
+import { keys } from "../src/lib/queryKeys";
 import { financeService } from "../src/services/financeService";
 import {
     recordActivityCheckin,
@@ -86,7 +86,7 @@ describe("recordActivityCheckin", () => {
             .spyOn(financeService, "recordDailyCheckin")
             .mockResolvedValue(checkin("mem-r", "2026-11-05"));
         // Alex logged a dinner Sam paid for on Monday: server checked in Sam on Monday
-        queryClient.setQueryData(queryKeys.dailyCheckins(), [
+        queryClient.setQueryData(keys.dailyCheckins.list(), [
             checkin("mem-r", "2026-11-02"),
         ]);
 
@@ -98,7 +98,7 @@ describe("recordActivityCheckin", () => {
         expect(result).toEqual({ firstForDate: true });
         expect(record).toHaveBeenCalledWith("mem-yj", "2026-11-05", "expense");
         const cached = queryClient.getQueryData<DailyCheckin[]>(
-            queryKeys.dailyCheckins(),
+            keys.dailyCheckins.list(),
         );
         expect(
             cached?.some(
@@ -118,7 +118,7 @@ describe("recordActivityCheckin", () => {
 
     it("skips the network when today is already logged", () => {
         const record = vi.spyOn(financeService, "recordDailyCheckin");
-        queryClient.setQueryData(queryKeys.dailyCheckins(), [
+        queryClient.setQueryData(keys.dailyCheckins.list(), [
             checkin("mem-yj", "2026-11-05"),
         ]);
 

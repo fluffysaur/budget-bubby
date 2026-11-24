@@ -9,6 +9,7 @@
  * 5. useSubmitLock: Concurrency guard blocks duplicate execution.
  */
 
+import { keys } from "../src/lib/queryKeys";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
     render,
@@ -24,7 +25,6 @@ import {
     useExpensesQuery,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
-    queryKeys,
 } from "../src/hooks/useFinanceQueries";
 import { useSubmitLock } from "../src/hooks/useSubmitLock";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
@@ -169,8 +169,8 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             );
 
             // Seed initial cache
-            queryClient.setQueryData(queryKeys.allExpenses, [mockOctExpense]);
-            queryClient.setQueryData(queryKeys.expenses({ month: "2026-10" }), [
+            queryClient.setQueryData(keys.expenses.every, [mockOctExpense]);
+            queryClient.setQueryData(keys.expenses.list({ month: "2026-10" }), [
                 mockOctExpense,
             ]);
 
@@ -191,7 +191,7 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
 
             // Check cache immediately (BEFORE server resolves!)
             const cachedAll = queryClient.getQueryData<Expense[]>(
-                queryKeys.allExpenses,
+                keys.expenses.every,
             );
             expect(cachedAll).toBeDefined();
             expect(cachedAll?.length).toBe(2);
@@ -199,7 +199,7 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             expect(cachedAll?.[0].amount).toBe(7.2);
 
             const cachedOct = queryClient.getQueryData<Expense[]>(
-                queryKeys.expenses({ month: "2026-10" }),
+                keys.expenses.list({ month: "2026-10" }),
             );
             expect(cachedOct).toBeDefined();
             expect(cachedOct?.length).toBe(2);
@@ -238,8 +238,8 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             );
 
             // Initial cache
-            queryClient.setQueryData(queryKeys.allExpenses, [mockOctExpense]);
-            queryClient.setQueryData(queryKeys.expenses({}), [mockOctExpense]);
+            queryClient.setQueryData(keys.expenses.every, [mockOctExpense]);
+            queryClient.setQueryData(keys.expenses.list({}), [mockOctExpense]);
 
             const newExpenseInput: CreateExpenseInput = {
                 payer_id: "mem-00000000-0011",
@@ -268,7 +268,7 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
             );
 
             const cachedAll = queryClient.getQueryData<Expense[]>(
-                queryKeys.allExpenses,
+                keys.expenses.every,
             );
             expect(cachedAll).toEqual([mockOctExpense]);
         });
@@ -286,8 +286,8 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
 
             // Initial cache has 2 items
             const initialList = [mockOctExpense, mockNovExpense];
-            queryClient.setQueryData(queryKeys.allExpenses, initialList);
-            queryClient.setQueryData(queryKeys.expenses({}), initialList);
+            queryClient.setQueryData(keys.expenses.every, initialList);
+            queryClient.setQueryData(keys.expenses.list({}), initialList);
 
             await act(async () => {
                 try {
@@ -306,7 +306,7 @@ describe("PR #5: Query Smoothness & Optimistic Mutations", () => {
 
             // Cache restored! Both items must be present
             const cachedAll = queryClient.getQueryData<Expense[]>(
-                queryKeys.allExpenses,
+                keys.expenses.every,
             );
             expect(cachedAll).toEqual(initialList);
         });

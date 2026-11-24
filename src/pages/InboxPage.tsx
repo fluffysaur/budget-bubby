@@ -7,16 +7,11 @@
  * Keyboard: ← discard, → / Enter confirm, ↑ / [ prev, ↓ / ] next, 1-5 pick chip, z undo.
  */
 
+import { keys } from "../lib/queryKeys";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    Inbox,
-    Trash2,
-} from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Inbox, Trash2 } from "lucide-react";
 import { useLoggedInMember } from "../hooks/useLoggedInMember";
 import { useSettings } from "../context/SettingsContext";
 import {
@@ -25,7 +20,6 @@ import {
     useGoalsQuery,
 } from "../hooks/useFinanceQueries";
 import {
-    inboxQueryKeys,
     useCaptureTokensQuery,
     useInboxQuery,
     useMerchantRulesQuery,
@@ -277,7 +271,7 @@ export function InboxPage() {
         async (view: ItemView, reason: "discarded" | "duplicate") => {
             setError(null);
             const cachedItems =
-                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                queryClient.getQueryData<InboxItemsResult>(keys.inbox.items)
                     ?.items ?? [];
             const remaining = Math.max(0, cachedItems.length - 1);
             haptics.lightTap();

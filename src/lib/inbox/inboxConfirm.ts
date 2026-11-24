@@ -6,6 +6,7 @@
 
 import { financeService } from "../../services/financeService";
 import { queryClient } from "../queryClient";
+import { keys } from "../queryKeys";
 import { storeLastSplit } from "../lastSplit";
 import { dispatchInboxExpenseAdded } from "../capture/inboxExpense";
 import { emitInboxEvent, type InboxEventMap } from "./inboxEvents";
@@ -15,18 +16,9 @@ import type {
     InboxItemsResult,
 } from "../../types/finance";
 
-export const INBOX_ITEMS_QUERY_KEY = [
-    "finance",
-    "inbox",
-    "items",
-    "pending",
-] as const;
-
 /** Pending items left in the cached inbox list. */
 export function cachedPendingCount(): number {
-    const cached = queryClient.getQueryData<InboxItemsResult>(
-        INBOX_ITEMS_QUERY_KEY,
-    );
+    const cached = queryClient.getQueryData<InboxItemsResult>(keys.inbox.items);
     return cached?.items.length ?? 0;
 }
 
@@ -46,7 +38,7 @@ export async function afterInboxConfirmed(params: {
     const remaining =
         params.remaining ??
         (
-            queryClient.getQueryData<InboxItemsResult>(INBOX_ITEMS_QUERY_KEY)
+            queryClient.getQueryData<InboxItemsResult>(keys.inbox.items)
                 ?.items ?? []
         ).filter((i) => i.id !== item.id).length;
 

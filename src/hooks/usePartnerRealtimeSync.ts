@@ -9,8 +9,8 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useOptionalHousehold } from "../context/HouseholdContext";
-import { queryKeys, useSafeQueryClient } from "./useFinanceQueries";
-import { inboxQueryKeys } from "./useInboxQueries";
+import { useSafeQueryClient } from "./useFinanceQueries";
+import { keys } from "../lib/queryKeys";
 import { isSupabaseConfigured, supabase } from "../services/supabaseClient";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { QueryClient } from "@tanstack/react-query";
@@ -79,19 +79,19 @@ export function usePartnerRealtimeSync(
                     }
                     expensesTimerRef.current = setTimeout(() => {
                         void queryClient.invalidateQueries({
-                            queryKey: ["finance", "expenses"],
+                            queryKey: keys.expenses.all,
                         });
                         void queryClient.invalidateQueries({
-                            queryKey: queryKeys.allExpenses,
+                            queryKey: keys.expenses.every,
                         });
                         void queryClient.invalidateQueries({
-                            queryKey: ["finance", "monthly-budget"],
+                            queryKey: keys.budget.monthlyAll,
                         });
                         void queryClient.invalidateQueries({
-                            queryKey: ["finance", "daily-checkins"],
+                            queryKey: keys.dailyCheckins.all,
                         });
                         void queryClient.invalidateQueries({
-                            queryKey: queryKeys.householdOverview,
+                            queryKey: keys.overview.all,
                         });
                     }, 150);
                 },
@@ -110,7 +110,7 @@ export function usePartnerRealtimeSync(
                     }
                     inboxTimerRef.current = setTimeout(() => {
                         void queryClient.invalidateQueries({
-                            queryKey: inboxQueryKeys.all,
+                            queryKey: keys.inbox.all,
                         });
                     }, 150);
                 },

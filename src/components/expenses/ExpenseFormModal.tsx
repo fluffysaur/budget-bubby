@@ -65,14 +65,23 @@ import {
 } from "../../lib/capture/inboxExpense";
 import { normalizeMerchant } from "../../lib/capture/merchant";
 import { TruncatedText } from "../ui/TruncatedText";
-import { useAddExpenseMutation } from "../../hooks/useFinanceQueries";
-import { useConfirmInboxItemMutation } from "../../hooks/useInboxQueries";
+import {
+    useAddExpenseMutation,
+    useGoalsQuery,
+} from "../../hooks/useFinanceQueries";
+import {
+    useConfirmInboxItemMutation,
+    useInboxQuery,
+} from "../../hooks/useInboxQueries";
 import {
     buildExpenseInputFromDraft,
     storeRecentTags,
     type ExpenseFormDraft,
 } from "../../lib/expenseFormDraft";
 import { ExpenseFormFields } from "./ExpenseFormFields";
+
+const EMPTY_GOALS: SavingsGoal[] = [];
+const EMPTY_INBOX_ITEMS: InboxItem[] = [];
 
 export interface ExpenseFormModalProps {
     isOpen: boolean;
@@ -140,8 +149,8 @@ export function ExpenseFormModal({
     const isEditMode = Boolean(expense);
     const needsMockFallback =
         isMockMode &&
-        (!(propMembers && propMembers.length > 0) &&
-            !(ctxMembers && ctxMembers.length > 0) ||
+        ((!(propMembers && propMembers.length > 0) &&
+            !(ctxMembers && ctxMembers.length > 0)) ||
             !(propCategories && propCategories.length > 0));
     const { members: mockMembers, categories: mockCategories } =
         useLazyMockDefaults(needsMockFallback);
@@ -209,8 +218,13 @@ export function ExpenseFormModal({
     const [initialShowMoreCategories, setInitialShowMoreCategories] =
         useState<boolean>(false);
 
-    // Goals State (all goals: achieved goals are fully funded pots you can still spend from)
-    const [goals, setGoals] = useState<SavingsGoal[]>(propGoals || []);
+    // Goals (all goals: achieved goals are fully funded pots you can still spend from)
+    const goalsQuery = useGoalsQuery({ enabled: !propGoals && isOpen });
+    const goals = useMemo(
+        () => propGoals ?? goalsQuery.data ?? EMPTY_GOALS,
+        [propGoals, goalsQuery.data],
+    );
+    const goalsError = goalsQuery.error;
 
     // Submission State
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -218,67 +232,39 @@ export function ExpenseFormModal({
 
     // Inbox: the item this save confirms, and newest items offered as chips
     const [linkedInboxId, setLinkedInboxId] = useState<string | null>(null);
-    const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+    const wantsInboxChips = isOpen && !isEditMode && !inboxItemId;
+    const inboxQuery = useInboxQuery({ enabled: wantsInboxChips });
+    const inboxData = inboxQuery.data;
+    const inboxItems = useMemo(
+        () =>
+            wantsInboxChips && inboxData?.available
+                ? inboxData.items
+                : EMPTY_INBOX_ITEMS,
+        [wantsInboxChips, inboxData],
+    );
+    const inboxError = inboxQuery.error;
     const [showInboxChips, setShowInboxChips] = useState<boolean>(false);
     const inboxChips = useMemo(() => inboxItems.slice(0, 3), [inboxItems]);
-    const wantsInboxChips = isOpen && !isEditMode && !inboxItemId;
 
     const patchDraft = useCallback((patch: Partial<ExpenseFormDraft>) => {
         setDraft((prev) => ({ ...prev, ...patch }));
     }, []);
 
-    // Newest inbox items, offered as "From Inbox" (household-wide)
     useEffect(() => {
-        if (!wantsInboxChips) return;
-        let isMounted = true;
-        financeService
-            .getInboxItems("pending")
-            .then((res) => {
-                if (isMounted) setInboxItems(res.available ? res.items : []);
-            })
-            .catch((err: unknown) => {
-                if (!isMounted) return;
-                emitAppEvent("app:error", {
-                    title: "Couldn't load inbox",
-                    subtitle:
-                        err instanceof Error && err.message
-                            ? err.message
-                            : "Inbox suggestions unavailable.",
-                });
-            });
-        return () => {
-            isMounted = false;
-        };
-    }, [wantsInboxChips]);
+        if (!inboxError) return;
+        emitAppEvent("app:error", {
+            title: "Couldn't load inbox",
+            subtitle: inboxError.message || "Inbox suggestions unavailable.",
+        });
+    }, [inboxError]);
 
-    // Fetch goals if not supplied in props
     useEffect(() => {
-        if (propGoals) {
-            setGoals(propGoals);
-            return;
-        }
-        let isMounted = true;
-        financeService
-            .getGoals()
-            .then((g) => {
-                if (isMounted && g) {
-                    setGoals(g);
-                }
-            })
-            .catch((err: unknown) => {
-                if (!isMounted) return;
-                emitAppEvent("app:error", {
-                    title: "Couldn't load goals",
-                    subtitle:
-                        err instanceof Error && err.message
-                            ? err.message
-                            : "Savings goals unavailable.",
-                });
-            });
-        return () => {
-            isMounted = false;
-        };
-    }, [propGoals, isOpen]);
+        if (!goalsError) return;
+        emitAppEvent("app:error", {
+            title: "Couldn't load goals",
+            subtitle: goalsError.message || "Savings goals unavailable.",
+        });
+    }, [goalsError]);
 
     const applyPrefillToDraft = useCallback(
         (

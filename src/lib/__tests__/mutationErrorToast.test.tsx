@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { keys } from "../queryKeys";
 import {
     render,
     screen,
@@ -11,10 +12,7 @@ import { LazyMotion, domAnimation } from "motion/react";
 import type { ReactNode } from "react";
 import { createAppQueryClient } from "../queryClient";
 import { onAppEvent, type ErrorToastDetail } from "../appEvents";
-import {
-    queryKeys,
-    useBulkUpdateAccountBalancesMutation,
-} from "../../hooks/useFinanceQueries";
+import { useBulkUpdateAccountBalancesMutation } from "../../hooks/useFinanceQueries";
 import { financeService } from "../../services/financeService";
 import { DelightHost } from "../../components/bubby/DelightHost";
 import type { Account } from "../../types/finance";
@@ -79,7 +77,7 @@ describe("MutationCache error toast and optimistic rollback", () => {
     it("fires the error toast and rolls back cached balances when bulkUpdateAccountBalances fails", async () => {
         const testClient = createAppQueryClient();
         testClient.setQueryData(
-            queryKeys.accounts("household"),
+            keys.accounts.list("household"),
             INITIAL_ACCOUNTS,
         );
 
@@ -129,7 +127,7 @@ describe("MutationCache error toast and optimistic rollback", () => {
 
         await waitFor(() => {
             const optimistic = testClient.getQueryData<Account[]>(
-                queryKeys.accounts("household"),
+                keys.accounts.list("household"),
             );
             expect(optimistic?.[0]?.balance).toBe(9999);
             expect(optimistic?.[1]?.balance).toBe(8888);
@@ -144,7 +142,7 @@ describe("MutationCache error toast and optimistic rollback", () => {
         });
 
         const restored = testClient.getQueryData<Account[]>(
-            queryKeys.accounts("household"),
+            keys.accounts.list("household"),
         );
         expect(restored).toEqual(INITIAL_ACCOUNTS);
 

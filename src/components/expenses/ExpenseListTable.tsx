@@ -41,12 +41,10 @@ import { AvatarDot } from "../ui/AvatarDot";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
 import { emitAppEvent } from "../../lib/appEvents";
+import { useGoalsQuery } from "../../hooks/useFinanceQueries";
 import { Button } from "../ui/Button";
 import { ExpenseFilterBar } from "./ExpenseFilterBar";
-import {
-    financeService,
-    isMockModeActive,
-} from "../../services/financeService";
+import { isMockModeActive } from "../../services/financeService";
 import type {
     Expense,
     Category,
@@ -60,6 +58,8 @@ import type {
 import { CurrencyText } from "../ui/CurrencyText";
 import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { getExpenseCategoryForMember } from "../../lib/financialFormulas";
+
+const EMPTY_GOALS: SavingsGoal[] = [];
 
 export interface ExpenseListTableProps {
     expenses: Expense[];
@@ -126,38 +126,21 @@ export function ExpenseListTable({
         () => propMembers ?? (isMock ? mockMembers : []),
         [propMembers, isMock, mockMembers],
     );
-    // Goals for Goal Spend badges
-    const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(
-        propGoals || [],
+    // Goals for Goal Spend badges (cached query, so mutations refresh them)
+    const hasPropGoals = Boolean(propGoals && propGoals.length > 0);
+    const goalsQuery = useGoalsQuery({ enabled: !hasPropGoals });
+    const internalGoals = useMemo(
+        () => (hasPropGoals ? propGoals! : (goalsQuery.data ?? EMPTY_GOALS)),
+        [hasPropGoals, propGoals, goalsQuery.data],
     );
-
+    const goalsError = goalsQuery.error;
     useEffect(() => {
-        if (propGoals && propGoals.length > 0) {
-            setInternalGoals(propGoals);
-            return;
-        }
-        let isMounted = true;
-        financeService
-            .getGoals()
-            .then((res) => {
-                if (isMounted && res) {
-                    setInternalGoals(res);
-                }
-            })
-            .catch((err: unknown) => {
-                if (!isMounted) return;
-                emitAppEvent("app:error", {
-                    title: "Couldn't load goals",
-                    subtitle:
-                        err instanceof Error && err.message
-                            ? err.message
-                            : "Goal badges may be missing.",
-                });
-            });
-        return () => {
-            isMounted = false;
-        };
-    }, [propGoals]);
+        if (!goalsError) return;
+        emitAppEvent("app:error", {
+            title: "Couldn't load goals",
+            subtitle: goalsError.message || "Goal badges may be missing.",
+        });
+    }, [goalsError]);
     // Internal sort state (fallback if uncontrolled)
     const [internalSortBy, setInternalSortBy] =
         useState<ExpenseSortField | null>(propSortBy || null);

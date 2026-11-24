@@ -12,7 +12,7 @@
  */
 
 import { queryClient } from "../queryClient";
-import { queryKeys } from "../../hooks/useFinanceQueries";
+import { keys } from "../queryKeys";
 import { financeService } from "../../services/financeService";
 import { emitAppEvent } from "../appEvents";
 import { toSgtDateString } from "./dates";
@@ -41,7 +41,7 @@ export function isMemberLoggedInCache(
     date: string,
 ): boolean | null {
     const cached = queryClient.getQueryData<DailyCheckin[]>(
-        queryKeys.dailyCheckins(),
+        keys.dailyCheckins.list(),
     );
     if (!cached) return null;
     return cached.some(
@@ -57,7 +57,7 @@ export function recordActivityCheckin(
     if (!memberId) return null;
     const key = `${memberId}|${today}`;
     const cached = queryClient.getQueryData<DailyCheckin[]>(
-        queryKeys.dailyCheckins(),
+        keys.dailyCheckins.list(),
     );
     const alreadyLogged =
         cached?.some(
@@ -75,7 +75,7 @@ export function recordActivityCheckin(
             checkin_date: today,
             type: "expense",
         };
-        queryClient.setQueryData<DailyCheckin[]>(queryKeys.dailyCheckins(), [
+        queryClient.setQueryData<DailyCheckin[]>(keys.dailyCheckins.list(), [
             optimistic,
             ...cached,
         ]);

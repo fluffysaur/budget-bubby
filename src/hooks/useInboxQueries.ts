@@ -4,12 +4,10 @@
  */
 
 import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
-import {
-    INBOX_ITEMS_QUERY_KEY,
-    afterInboxConfirmed,
-} from "../lib/inbox/inboxConfirm";
+import { afterInboxConfirmed } from "../lib/inbox/inboxConfirm";
+import { invalidateDomain, keys } from "../lib/queryKeys";
 import { useSafeQueryClient } from "./useFinanceQueries";
 import type { InboxEventMap } from "../lib/inbox/inboxEvents";
 import type {
@@ -21,26 +19,16 @@ import type {
     MerchantRule,
 } from "../types/finance";
 
-export const inboxQueryKeys = {
-    all: ["finance", "inbox"] as const,
-    items: INBOX_ITEMS_QUERY_KEY,
-    summary: (memberId?: string) =>
-        ["finance", "inbox", "summary", memberId ?? "household"] as const,
-    rules: ["finance", "inbox", "rules"] as const,
-    tokens: (memberId?: string) =>
-        ["finance", "inbox", "tokens", memberId ?? "me"] as const,
-};
-
 const INBOX_STALE_MS = 30_000;
 
 /** Refetch inbox queries when the app becomes visible again. */
 function useRefetchInboxOnVisible() {
-    const queryClient = useQueryClient();
+    const queryClient = useSafeQueryClient();
     useEffect(() => {
         if (typeof document === "undefined") return;
         const onVisible = () => {
             if (document.visibilityState === "visible") {
-                queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
+                queryClient.invalidateQueries({ queryKey: keys.inbox.all });
             }
         };
         document.addEventListener("visibilitychange", onVisible);
@@ -52,21 +40,25 @@ function useRefetchInboxOnVisible() {
 /** Household-wide pending items (both partners). */
 export function useInboxQuery(options: { enabled?: boolean } = {}) {
     useRefetchInboxOnVisible();
-    return useQuery<InboxItemsResult>({
-        queryKey: inboxQueryKeys.items,
-        queryFn: () => financeService.getInboxItems("pending"),
-        enabled: options.enabled ?? true,
-        staleTime: INBOX_STALE_MS,
-        refetchOnWindowFocus: true,
-        refetchOnMount: true,
-    });
+    const queryClient = useSafeQueryClient();
+    return useQuery<InboxItemsResult>(
+        {
+            queryKey: keys.inbox.items,
+            queryFn: () => financeService.getInboxItems("pending"),
+            enabled: options.enabled ?? true,
+            staleTime: INBOX_STALE_MS,
+            refetchOnWindowFocus: true,
+            refetchOnMount: true,
+        },
+        queryClient,
+    );
 }
 
 /** Pending count and total. No member id: the whole household. */
 export function useInboxSummary(memberId?: string) {
     useRefetchInboxOnVisible();
     return useQuery<InboxSummary>({
-        queryKey: inboxQueryKeys.summary(memberId),
+        queryKey: keys.inbox.summary(memberId),
         queryFn: () => financeService.getInboxSummary(memberId),
         staleTime: INBOX_STALE_MS,
         refetchOnWindowFocus: true,
@@ -76,14 +68,14 @@ export function useInboxSummary(memberId?: string) {
 
 export function useMerchantRulesQuery() {
     return useQuery<MerchantRule[]>({
-        queryKey: inboxQueryKeys.rules,
+        queryKey: keys.inbox.rules,
         queryFn: () => financeService.getMerchantRules(),
     });
 }
 
 export function useCaptureTokensQuery(memberId?: string) {
     return useQuery<CaptureTokensResult>({
-        queryKey: inboxQueryKeys.tokens(memberId),
+        queryKey: keys.inbox.tokens(memberId),
         queryFn: () => financeService.listCaptureTokens(memberId),
     });
 }
@@ -129,24 +121,24 @@ export function useConfirmInboxItemMutation() {
             },
             onMutate: async ({ item }) => {
                 await queryClient.cancelQueries({
-                    queryKey: inboxQueryKeys.items,
+                    queryKey: keys.inbox.items,
                 });
                 await queryClient.cancelQueries({
-                    queryKey: ["finance", "inbox", "summary"],
+                    queryKey: keys.inbox.summaryAll,
                 });
 
                 const previousItems =
                     queryClient.getQueryData<InboxItemsResult>(
-                        inboxQueryKeys.items,
+                        keys.inbox.items,
                     );
                 const previousSummaries =
                     queryClient.getQueriesData<InboxSummary>({
-                        queryKey: ["finance", "inbox", "summary"],
+                        queryKey: keys.inbox.summaryAll,
                     });
 
                 // Optimistically remove from items list
                 queryClient.setQueryData<InboxItemsResult>(
-                    inboxQueryKeys.items,
+                    keys.inbox.items,
                     (old) => {
                         if (!old) return old;
                         return {
@@ -175,7 +167,7 @@ export function useConfirmInboxItemMutation() {
             onError: (_err, _vars, context) => {
                 if (context?.previousItems) {
                     queryClient.setQueryData(
-                        inboxQueryKeys.items,
+                        keys.inbox.items,
                         context.previousItems,
                     );
                 }
@@ -186,26 +178,10 @@ export function useConfirmInboxItemMutation() {
                 }
             },
             onSettled: (_data, _err, vars) => {
-                queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
-                queryClient.invalidateQueries({
-                    queryKey: ["finance", "expenses"],
-                });
-                queryClient.invalidateQueries({
-                    queryKey: ["finance", "all-expenses"],
-                });
-                queryClient.invalidateQueries({
-                    queryKey: ["finance", "monthly-budget"],
-                });
-                queryClient.invalidateQueries({
-                    queryKey: ["finance", "budget-detail"],
-                });
-                queryClient.invalidateQueries({
-                    queryKey: ["finance", "household-overview"],
-                });
+                queryClient.invalidateQueries({ queryKey: keys.inbox.all });
+                invalidateDomain(queryClient, "expenses");
                 if (vars?.input?.goal_id) {
-                    queryClient.invalidateQueries({
-                        queryKey: ["finance", "goals"],
-                    });
+                    invalidateDomain(queryClient, "goals");
                 }
             },
         },
@@ -240,24 +216,24 @@ export function useResolveInboxItemMutation() {
             },
             onMutate: async ({ id, reason }) => {
                 await queryClient.cancelQueries({
-                    queryKey: inboxQueryKeys.items,
+                    queryKey: keys.inbox.items,
                 });
                 await queryClient.cancelQueries({
-                    queryKey: ["finance", "inbox", "summary"],
+                    queryKey: keys.inbox.summaryAll,
                 });
 
                 const previousItems =
                     queryClient.getQueryData<InboxItemsResult>(
-                        inboxQueryKeys.items,
+                        keys.inbox.items,
                     );
                 const previousSummaries =
                     queryClient.getQueriesData<InboxSummary>({
-                        queryKey: ["finance", "inbox", "summary"],
+                        queryKey: keys.inbox.summaryAll,
                     });
 
                 if (reason === "discarded" || reason === "duplicate") {
                     queryClient.setQueryData<InboxItemsResult>(
-                        inboxQueryKeys.items,
+                        keys.inbox.items,
                         (old) => {
                             if (!old) return old;
                             return {
@@ -286,7 +262,7 @@ export function useResolveInboxItemMutation() {
             onError: (_err, _vars, context) => {
                 if (context?.previousItems) {
                     queryClient.setQueryData(
-                        inboxQueryKeys.items,
+                        keys.inbox.items,
                         context.previousItems,
                     );
                 }
@@ -297,7 +273,7 @@ export function useResolveInboxItemMutation() {
                 }
             },
             onSettled: () => {
-                queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
+                queryClient.invalidateQueries({ queryKey: keys.inbox.all });
             },
         },
         queryClient,
