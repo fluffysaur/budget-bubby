@@ -720,14 +720,18 @@ export function useAddGoalMutation() {
 /** Saves household Roadmap settings (investment haircut %, window). */
 export function useUpdateHouseholdSettingsMutation() {
     const queryClient = useSafeQueryClient();
-    return useMutation<Household, Error, HouseholdSettingsInput>({
-        mutationFn: (settings) =>
-            financeService.updateHouseholdSettings(settings),
-        onSuccess: () =>
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.householdOverview,
-            }),
-    });
+    return useMutation<Household, Error, HouseholdSettingsInput>(
+        {
+            networkMode: "always",
+            mutationFn: (settings) =>
+                financeService.updateHouseholdSettings(settings),
+            onSuccess: () =>
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.householdOverview,
+                }),
+        },
+        queryClient,
+    );
 }
 
 export function useUpdateGoalMutation() {

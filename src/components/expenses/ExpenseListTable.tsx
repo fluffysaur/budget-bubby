@@ -40,6 +40,7 @@ import { Select } from "../ui/Select";
 import { AvatarDot } from "../ui/AvatarDot";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
+import { emitAppEvent } from "../../lib/appEvents";
 import { Button } from "../ui/Button";
 import { ExpenseFilterBar } from "./ExpenseFilterBar";
 import {
@@ -141,7 +142,16 @@ export function ExpenseListTable({
                     setInternalGoals(res);
                 }
             })
-            .catch(() => {});
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                emitAppEvent("app:error", {
+                    title: "Couldn't load goals",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Goal badges may be missing.",
+                });
+            });
         return () => {
             isMounted = false;
         };

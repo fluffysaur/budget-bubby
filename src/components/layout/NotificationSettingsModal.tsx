@@ -40,6 +40,7 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import { Alert } from "../ui/Alert";
 import { APP_VERSION, GIT_SHA, formatAppVersion } from "../../lib/appVersion";
 import { financeService } from "../../services/financeService";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
@@ -112,6 +113,7 @@ export function NotificationSettingsModal({
             ),
         );
     const [, setIsLoading] = useState<boolean>(true);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const {
         permission,
         refresh: refreshPermission,
@@ -140,13 +142,18 @@ export function NotificationSettingsModal({
     const loadPreferences = useCallback(async () => {
         try {
             setIsLoading(true);
+            setErrorMessage(null);
             const data =
                 await financeService.getNotificationPreferences(activeMemberId);
             setPrefs(data);
             setBudgetWarningDraft(String(data.budget_warning_pct));
             setSettlementThresholdDraft(String(data.settlement_threshold_sgd));
         } catch (err) {
-            console.error("Failed to load notification preferences:", err);
+            setErrorMessage(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not load notification settings.",
+            );
         } finally {
             setIsLoading(false);
         }
@@ -162,6 +169,8 @@ export function NotificationSettingsModal({
     const handleUpdate = async (
         updates: UpdateNotificationPreferencesInput,
     ) => {
+        const previousPrefs = prefs;
+        setErrorMessage(null);
         setPrefs((prev) => ({ ...prev, ...updates }));
         try {
             await financeService.updateNotificationPreferences(
@@ -170,9 +179,15 @@ export function NotificationSettingsModal({
             );
             feedback.routine("save");
         } catch (err) {
-            console.error(
-                "Failed to save notification preference update:",
-                err,
+            setPrefs(previousPrefs);
+            setBudgetWarningDraft(String(previousPrefs.budget_warning_pct));
+            setSettlementThresholdDraft(
+                String(previousPrefs.settlement_threshold_sgd),
+            );
+            setErrorMessage(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not save notification preference.",
             );
         }
     };
@@ -226,7 +241,9 @@ export function NotificationSettingsModal({
 
     // Reset to defaults
     const handleResetDefaults = async () => {
+        const previousPrefs = prefs;
         const defaults = getDefaultNotificationPreferences(activeMemberId);
+        setErrorMessage(null);
         setPrefs(defaults);
         setBudgetWarningDraft(String(defaults.budget_warning_pct));
         setSettlementThresholdDraft(String(defaults.settlement_threshold_sgd));
@@ -236,7 +253,16 @@ export function NotificationSettingsModal({
                 defaults,
             );
         } catch (err) {
-            console.error("Failed to reset notification preferences:", err);
+            setPrefs(previousPrefs);
+            setBudgetWarningDraft(String(previousPrefs.budget_warning_pct));
+            setSettlementThresholdDraft(
+                String(previousPrefs.settlement_threshold_sgd),
+            );
+            setErrorMessage(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not reset notification settings.",
+            );
         }
     };
 
@@ -287,6 +313,15 @@ export function NotificationSettingsModal({
                 />
 
                 <ModalBody className="p-4 sm:p-6 space-y-6">
+                    {errorMessage && (
+                        <Alert
+                            variant="danger"
+                            onClose={() => setErrorMessage(null)}
+                        >
+                            {errorMessage}
+                        </Alert>
+                    )}
+
                     {/* Sound Effects Section */}
                     <div>
                         <h4 className="text-xs font-black uppercase tracking-wider text-(--text-muted) mb-3 font-display">

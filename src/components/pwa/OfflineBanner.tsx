@@ -31,6 +31,7 @@ import { formatSGD } from "../../lib/currency";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
+import { emitAppEvent } from "../../lib/appEvents";
 
 function formatMutationLabel(mutation: QueuedMutation): string {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,7 +122,16 @@ export const OfflineBanner: React.FC = () => {
         let isMounted = true;
 
         // Flush any pending items if starting up online
-        flushIfOnline().catch(console.error);
+        flushIfOnline().catch((err: unknown) => {
+            if (!isMounted) return;
+            emitAppEvent("app:error", {
+                title: "Sync failed",
+                subtitle:
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not sync offline changes.",
+            });
+        });
 
         const handleSyncStatus = (event: Event) => {
             if (!isMounted) return;
@@ -164,7 +174,16 @@ export const OfflineBanner: React.FC = () => {
                             return householdRef.current.refreshData();
                         }
                     })
-                    .catch(console.error);
+                    .catch((err: unknown) => {
+                        if (!isMounted) return;
+                        emitAppEvent("app:error", {
+                            title: "Sync failed",
+                            subtitle:
+                                err instanceof Error && err.message
+                                    ? err.message
+                                    : "Could not sync offline changes.",
+                        });
+                    });
             } else {
                 setShowSyncedConfirmation(true);
                 if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
@@ -173,7 +192,18 @@ export const OfflineBanner: React.FC = () => {
                 }, 3500);
 
                 if (householdRef.current?.refreshData) {
-                    householdRef.current.refreshData().catch(console.error);
+                    householdRef.current
+                        .refreshData()
+                        .catch((err: unknown) => {
+                            if (!isMounted) return;
+                            emitAppEvent("app:error", {
+                                title: "Refresh failed",
+                                subtitle:
+                                    err instanceof Error && err.message
+                                        ? err.message
+                                        : "Could not refresh data.",
+                            });
+                        });
                 }
             }
         };

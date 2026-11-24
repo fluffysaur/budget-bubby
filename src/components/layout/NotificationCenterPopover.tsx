@@ -37,8 +37,10 @@ import {
 } from "../../lib/notificationScheduler";
 import { syncPushSubscription } from "../../lib/pushSubscription";
 import { Button } from "../ui/Button";
+import { Alert } from "../ui/Alert";
 import { TruncatedText } from "../ui/TruncatedText";
 import { ScrollArea } from "../ui/ScrollArea";
+import { emitAppEvent } from "../../lib/appEvents";
 import { financeService } from "../../services/financeService";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
@@ -88,6 +90,7 @@ export function NotificationCenterPopover({
     const [reminders, setReminders] = useState<AppReminder[]>([]);
     const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
     const [readIds, setReadIds] = useState<Set<string>>(new Set());
+    const [loadError, setLoadError] = useState<string | null>(null);
     const {
         permission,
         needsSystemSettings,
@@ -113,6 +116,7 @@ export function NotificationCenterPopover({
     // Load active reminders for current member
     const loadReminders = useCallback(async () => {
         try {
+            setLoadError(null);
             const [active, read] = await Promise.all([
                 computeActiveReminders({ memberId: activeMemberId }),
                 loadReadIds(),
@@ -120,7 +124,11 @@ export function NotificationCenterPopover({
             setReminders(active);
             setReadIds(read);
         } catch (err) {
-            console.error("Failed to load reminders:", err);
+            setLoadError(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not load reminders.",
+            );
         }
     }, [activeMemberId, loadReadIds]);
 
@@ -132,6 +140,7 @@ export function NotificationCenterPopover({
         setReminders([]);
         setDismissedIds(new Set());
         setReadIds(new Set());
+        setLoadError(null);
 
         migrateLegacyDismissals(activeMemberId)
             .then(() =>
@@ -146,8 +155,13 @@ export function NotificationCenterPopover({
                     setReadIds(read);
                 }
             })
-            .catch((err) => {
-                console.error("Failed to load reminders:", err);
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                setLoadError(
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not load reminders.",
+                );
             });
 
         return () => {
@@ -167,7 +181,11 @@ export function NotificationCenterPopover({
                 permission,
             );
         } catch (err) {
-            console.debug("Failed to sync push subscription:", err);
+            setLoadError(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not sync alert settings.",
+            );
         }
     }, [activeMemberId, permission]);
 
@@ -187,9 +205,20 @@ export function NotificationCenterPopover({
         setReadIds((prev) => new Set([...prev, ...keys]));
         financeService
             .markNotificationsRead(activeMemberId, refs)
-            .catch((err) =>
-                console.debug("Failed to mark pushed reminders read:", err),
-            );
+            .catch((err: unknown) => {
+                setReadIds((prev) => {
+                    const next = new Set(prev);
+                    for (const k of keys) next.delete(k);
+                    return next;
+                });
+                emitAppEvent("app:error", {
+                    title: "Update failed",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Could not mark reminders read.",
+                });
+            });
         setSearchParams(
             (prev) => {
                 const next = new URLSearchParams(prev);
@@ -283,15 +312,27 @@ export function NotificationCenterPopover({
         if (!opening) return;
         const unread = visibleReminders.filter((r) => !readIds.has(r.id));
         if (unread.length === 0) return;
-        setReadIds((prev) => new Set([...prev, ...unread.map((r) => r.id)]));
+        const unreadIds = unread.map((r) => r.id);
+        setReadIds((prev) => new Set([...prev, ...unreadIds]));
         financeService
             .markNotificationsRead(
                 activeMemberId,
                 unread.map((r) => ({ key: r.id, type: r.type })),
             )
-            .catch((err) =>
-                console.debug("Failed to mark reminders read:", err),
-            );
+            .catch((err: unknown) => {
+                setReadIds((prev) => {
+                    const next = new Set(prev);
+                    for (const id of unreadIds) next.delete(id);
+                    return next;
+                });
+                emitAppEvent("app:error", {
+                    title: "Update failed",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Could not mark reminders read.",
+                });
+            });
     };
 
     const handleDismiss = (reminder: AppReminder) => {
@@ -301,7 +342,20 @@ export function NotificationCenterPopover({
                 key: reminder.id,
                 type: reminder.type,
             })
-            .catch((err) => console.debug("Failed to dismiss reminder:", err));
+            .catch((err: unknown) => {
+                setDismissedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(reminder.id);
+                    return next;
+                });
+                emitAppEvent("app:error", {
+                    title: "Dismiss failed",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Could not dismiss reminder.",
+                });
+            });
     };
 
     // Explicit "No Spend" check-in from the daily check-in reminder
@@ -318,7 +372,13 @@ export function NotificationCenterPopover({
             await refreshData();
             await loadReminders();
         } catch (err) {
-            console.error("Failed to record no-spend check-in:", err);
+            emitAppEvent("app:error", {
+                title: "Check-in failed",
+                subtitle:
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not record no-spend check-in.",
+            });
         } finally {
             setIsProcessing(false);
         }
@@ -392,7 +452,13 @@ export function NotificationCenterPopover({
                 }
             }
         } catch (err) {
-            console.error("Failed to execute reminder action:", err);
+            emitAppEvent("app:error", {
+                title: "Action failed",
+                subtitle:
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not open reminder.",
+            });
         } finally {
             setIsProcessing(false);
         }
@@ -437,6 +503,16 @@ export function NotificationCenterPopover({
     // Shared list of reminder items
     const renderRemindersList = () => (
         <>
+            {loadError && (
+                <Alert
+                    variant="danger"
+                    className="mb-3"
+                    onClose={() => setLoadError(null)}
+                >
+                    {loadError}
+                </Alert>
+            )}
+
             {/* Browser Permission Prompt Banner */}
             {permission === "default" && (
                 <div
