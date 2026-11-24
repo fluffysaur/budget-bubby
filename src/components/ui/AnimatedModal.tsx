@@ -15,6 +15,7 @@ import { ScrollArea } from "./ScrollArea";
 import {
     checkContainerDirty,
     findScrollableAncestor,
+    getFocusableElements,
 } from "../../lib/domUtils";
 import { prefersReducedMotion } from "../../lib/motion";
 import { usePrivacy } from "../../context/PrivacyContext";
@@ -23,11 +24,23 @@ import { maskMoneyNode } from "../../lib/maskMoney";
 const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// Module-level stack of open modal IDs so Escape only closes the top-most modal
+interface OpenModalEntry {
+    id: symbol;
+    getContainer: () => HTMLElement | null;
+}
+
+// Module-level stack of open modal entries so Escape/Tab only target the top-most modal
 // and body/main overflow is saved once when the first modal opens and restored when the last closes.
-const openModalStack: symbol[] = [];
+const openModalStack: OpenModalEntry[] = [];
 let savedBodyOverflow: string | null = null;
 let savedMainOverflow: string | null = null;
+
+export type AnimatedModalVariant =
+    | "modal"
+    | "side-sheet"
+    | "popover"
+    | "fullscreen"
+    | "spotlight";
 
 export interface AnimatedModalProps {
     isOpen: boolean;
@@ -38,6 +51,16 @@ export interface AnimatedModalProps {
     maxWidth?: string;
     className?: string;
     isDrawerOnMobile?: boolean;
+    variant?: AnimatedModalVariant;
+    initialFocusRef?: React.RefObject<HTMLElement | null>;
+    anchorRef?: React.RefObject<HTMLElement | null>;
+    ariaLabel?: string;
+    ariaLabelledBy?: string;
+    closeOnBackdropClick?: boolean;
+    closeOnEscape?: boolean;
+    backdropClassName?: string;
+    backdropStyle?: React.CSSProperties;
+    "data-testid"?: string;
 }
 
 interface ModalDragContextValue {
@@ -101,8 +124,19 @@ export function AnimatedModal({
     children,
     maxWidth = "max-w-md",
     className = "",
-    isDrawerOnMobile = true,
+    isDrawerOnMobile: isDrawerOnMobileProp = true,
+    variant = "modal",
+    initialFocusRef,
+    anchorRef,
+    ariaLabel,
+    ariaLabelledBy,
+    closeOnBackdropClick = true,
+    closeOnEscape = true,
+    backdropClassName = "",
+    backdropStyle,
+    "data-testid": dataTestId,
 }: AnimatedModalProps) {
+    const isDrawerOnMobile = variant === "modal" && isDrawerOnMobileProp;
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isClosing, setIsClosing] = useState(false);
     const [isSlidingOut, setIsSlidingOut] = useState(false);
@@ -110,7 +144,24 @@ export function AnimatedModal({
     const closingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const drawerRef = useRef<HTMLDivElement>(null);
+    const discardDialogRef = useRef<HTMLDivElement>(null);
     const modalIdRef = useRef<symbol>(Symbol("AnimatedModal"));
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+    const lastFocusBeforeDiscardRef = useRef<HTMLElement | null>(null);
+    const [mountTriggerEl] = useState<HTMLElement | null>(() => {
+        if (!isOpen || typeof document === "undefined") return null;
+        return document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+    });
+    const usedMountTriggerRef = useRef(false);
+    const [popoverPos, setPopoverPos] = useState<{
+        top: number;
+        right: number;
+    }>({
+        top: 56,
+        right: 16,
+    });
 
     // Touch gesture state for mobile slide-down-to-close
     const [dragTranslateY, setDragTranslateY] = useState(0);
@@ -483,7 +534,46 @@ export function AnimatedModal({
 
     const isActive = shouldRender && !isClosing;
 
-    // Register in open modal stack and prevent background scrolling across stacked modals
+    // Capture trigger element before modal mounts or activates
+    useIsomorphicLayoutEffect(() => {
+        if (!isOpen) return;
+        if (!usedMountTriggerRef.current && mountTriggerEl) {
+            usedMountTriggerRef.current = true;
+            if (!previousFocusRef.current) {
+                previousFocusRef.current = mountTriggerEl;
+            }
+            return;
+        }
+        usedMountTriggerRef.current = true;
+        if (!previousFocusRef.current && typeof document !== "undefined") {
+            const active = document.activeElement;
+            if (
+                active instanceof HTMLElement &&
+                !drawerRef.current?.contains(active)
+            ) {
+                previousFocusRef.current = active;
+            }
+        }
+    }, [isOpen, mountTriggerEl]);
+
+    // Position desktop popover relative to anchor button
+    useIsomorphicLayoutEffect(() => {
+        if (!isActive || variant !== "popover") return;
+        const updatePosition = () => {
+            const anchor = anchorRef?.current;
+            if (!anchor || typeof window === "undefined") return;
+            const rect = anchor.getBoundingClientRect();
+            if (rect.width === 0 && rect.height === 0) return;
+            const top = Math.min(rect.bottom + 8, window.innerHeight - 24);
+            const right = Math.max(12, window.innerWidth - rect.right);
+            setPopoverPos({ top, right });
+        };
+        updatePosition();
+        window.addEventListener("resize", updatePosition);
+        return () => window.removeEventListener("resize", updatePosition);
+    }, [isActive, variant, anchorRef]);
+
+    // Register in open modal stack and manage scroll lock synchronously
     useIsomorphicLayoutEffect(() => {
         if (!isActive) return;
 
@@ -497,12 +587,15 @@ export function AnimatedModal({
                 mainEl.style.overflow = "hidden";
             }
         }
-        if (!openModalStack.includes(id)) {
-            openModalStack.push(id);
+        if (!openModalStack.some((entry) => entry.id === id)) {
+            openModalStack.push({
+                id,
+                getContainer: () => drawerRef.current,
+            });
         }
 
         return () => {
-            const idx = openModalStack.lastIndexOf(id);
+            const idx = openModalStack.findIndex((entry) => entry.id === id);
             if (idx !== -1) {
                 openModalStack.splice(idx, 1);
             }
@@ -525,28 +618,152 @@ export function AnimatedModal({
         };
     }, [isActive]);
 
-    // Handle ESC key (only top-most open modal responds)
+    // Move initial focus on open and restore focus to trigger on close (after commitRoot so React selection restoration never overrides it)
+    useEffect(() => {
+        if (!isActive) return;
+
+        const container = drawerRef.current;
+        if (container && typeof document !== "undefined") {
+            const preferred = initialFocusRef?.current;
+            if (preferred && container.contains(preferred)) {
+                preferred.focus({ preventScroll: true });
+            } else if (!container.contains(document.activeElement)) {
+                const focusables = getFocusableElements(container);
+                (focusables[0] ?? container).focus({ preventScroll: true });
+            }
+        }
+
+        return () => {
+            const prev = previousFocusRef.current;
+            if (typeof document !== "undefined") {
+                const topEntry = openModalStack[openModalStack.length - 1];
+                if (prev && prev.isConnected && prev !== document.body) {
+                    prev.focus({ preventScroll: true });
+                } else if (topEntry) {
+                    const topContainer = topEntry.getContainer();
+                    if (topContainer) {
+                        const focusables = getFocusableElements(topContainer);
+                        (focusables[0] ?? topContainer).focus({
+                            preventScroll: true,
+                        });
+                    }
+                }
+            }
+        };
+    }, [isActive, initialFocusRef]);
+
+    // Clear captured trigger only after focus restoration cleanup has run
+    useEffect(() => {
+        if (!isOpen && !isActive) {
+            previousFocusRef.current = null;
+        }
+    }, [isOpen, isActive]);
+
+    // Manage focus inside the discard confirmation alertdialog
+    useEffect(() => {
+        if (!isActive) {
+            lastFocusBeforeDiscardRef.current = null;
+            return;
+        }
+        if (showDiscardConfirm) {
+            const active =
+                typeof document !== "undefined" ? document.activeElement : null;
+            if (
+                active instanceof HTMLElement &&
+                drawerRef.current?.contains(active)
+            ) {
+                lastFocusBeforeDiscardRef.current = active;
+            }
+            const discardEl = discardDialogRef.current;
+            if (discardEl) {
+                const focusables = getFocusableElements(discardEl);
+                (focusables[0] ?? discardEl).focus({ preventScroll: true });
+            }
+        } else if (lastFocusBeforeDiscardRef.current) {
+            const target = lastFocusBeforeDiscardRef.current;
+            lastFocusBeforeDiscardRef.current = null;
+            if (target.isConnected) {
+                target.focus({ preventScroll: true });
+            } else if (drawerRef.current) {
+                const focusables = getFocusableElements(drawerRef.current);
+                (focusables[0] ?? drawerRef.current).focus({
+                    preventScroll: true,
+                });
+            }
+        }
+    }, [showDiscardConfirm, isActive]);
+
+    // Handle ESC and Tab/Shift+Tab trapping (only top-most open modal responds)
     useEffect(() => {
         if (!isActive) return;
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (
+                openModalStack.length > 0 &&
+                openModalStack[openModalStack.length - 1].id !==
+                    modalIdRef.current
+            ) {
+                return;
+            }
+
             if (e.key === "Escape") {
-                if (
-                    openModalStack.length > 0 &&
-                    openModalStack[openModalStack.length - 1] !==
-                        modalIdRef.current
-                ) {
-                    return;
-                }
                 if (showDiscardConfirm) {
                     setShowDiscardConfirm(false);
                     return;
                 }
-                handleRequestClose();
+                if (closeOnEscape) {
+                    handleRequestClose();
+                }
+                return;
+            }
+
+            if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                const activeContainer = showDiscardConfirm
+                    ? discardDialogRef.current
+                    : drawerRef.current;
+                if (!activeContainer) return;
+
+                const activeEl = document.activeElement;
+                if (
+                    activeEl instanceof HTMLElement &&
+                    !activeContainer.contains(activeEl) &&
+                    activeEl.closest('[role="tooltip"]')
+                ) {
+                    return;
+                }
+
+                const focusables = getFocusableElements(activeContainer);
+                if (focusables.length === 0) {
+                    e.preventDefault();
+                    activeContainer.focus({ preventScroll: true });
+                    return;
+                }
+
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                const isInside =
+                    activeEl instanceof HTMLElement &&
+                    activeContainer.contains(activeEl);
+
+                if (e.shiftKey) {
+                    if (
+                        !isInside ||
+                        activeEl === first ||
+                        activeEl === activeContainer
+                    ) {
+                        e.preventDefault();
+                        last.focus({ preventScroll: true });
+                    }
+                } else {
+                    if (!isInside || activeEl === last) {
+                        e.preventDefault();
+                        first.focus({ preventScroll: true });
+                    }
+                }
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isActive, showDiscardConfirm, handleRequestClose]);
+    }, [isActive, showDiscardConfirm, closeOnEscape, handleRequestClose]);
 
     if (!shouldRender) return null;
 
@@ -555,51 +772,102 @@ export function AnimatedModal({
             ? Math.max(0, 1 - dragTranslateY / 320)
             : 1;
 
+    const resolvedMaxWidth = maxWidth
+        ? SM_MAX_WIDTH_MAP[maxWidth] ||
+          (maxWidth.includes("sm:") ? maxWidth : `sm:${maxWidth}`)
+        : "";
+
+    const defaultBackdropBg =
+        variant === "popover"
+            ? "transparent"
+            : `rgba(0, 0, 0, ${0.6 * backdropOpacityFactor})`;
+
+    const computedBackdropStyle: React.CSSProperties = backdropStyle
+        ? backdropStyle
+        : { backgroundColor: defaultBackdropBg };
+
+    const backdropLayoutClass =
+        variant === "side-sheet"
+            ? "fixed inset-0 z-50 flex justify-end overflow-hidden overscroll-y-contain transition-opacity duration-200"
+            : variant === "popover"
+              ? "fixed inset-0 z-50 transition-opacity duration-150"
+              : variant === "fullscreen"
+                ? "fixed inset-0 z-50 flex flex-col overflow-hidden overscroll-y-contain transition-opacity duration-200"
+                : variant === "spotlight"
+                  ? "fixed inset-0 z-9999 flex items-center justify-center p-6 overflow-hidden overscroll-y-contain transition-opacity duration-200"
+                  : `fixed inset-0 z-50 flex overflow-hidden overscroll-y-contain ${
+                        isDrawerOnMobile
+                            ? "items-end sm:items-center"
+                            : "items-center"
+                    } justify-center p-0 sm:p-4 transition-opacity duration-200`;
+
+    const panelVariantClass =
+        variant === "side-sheet"
+            ? `h-dvh w-full max-w-full ${resolvedMaxWidth} border-l-2 border-(--border-ink) bg-(--bg-canvas) shadow-cute-lg flex flex-col overflow-hidden ${
+                  isClosing ? "animate-side-sheet-out" : "animate-side-sheet-in"
+              }`
+            : variant === "popover"
+              ? `fixed z-50 w-96 max-w-[calc(100vw-1.5rem)] rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) shadow-cute-lg flex flex-col overflow-hidden ${
+                    isClosing ? "animate-modal-out" : "animate-pop"
+                }`
+              : variant === "fullscreen"
+                ? `h-dvh w-full flex flex-col bg-(--bg-canvas) overflow-hidden ${
+                      isClosing ? "animate-modal-out" : "animate-modal-in"
+                  }`
+                : variant === "spotlight"
+                  ? `flex w-full max-w-xs flex-col items-center justify-center ${
+                        isClosing ? "animate-modal-out" : "animate-modal-in"
+                    }`
+                  : `w-full max-w-full ${resolvedMaxWidth} ${
+                        isDrawerOnMobile
+                            ? `max-h-[92dvh] sm:max-h-[90dvh] rounded-t-3xl sm:rounded-2xl ${
+                                  isClosing
+                                      ? "modal-sheet-exit"
+                                      : "modal-sheet-enter"
+                              }`
+                            : `max-h-[90dvh] rounded-2xl ${isClosing ? "animate-modal-out" : "animate-modal-in"}`
+                    } bg-(--bg-card) border-t-2 sm:border-2 border-(--border-ink) shadow-cute-lg flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom,0px)]`;
+
+    const panelStyle: React.CSSProperties | undefined =
+        variant === "popover"
+            ? { top: popoverPos.top, right: popoverPos.right }
+            : isDrawerOnMobile && (dragTranslateY > 0 || isSlidingOut)
+              ? {
+                    transform: isSlidingOut
+                        ? "translate3d(0, 100%, 0)"
+                        : `translate3d(0, ${dragTranslateY}px, 0)`,
+                    transition:
+                        isDragging || prefersReducedMotion()
+                            ? "none"
+                            : "transform var(--duration-base) var(--ease-out-soft)",
+                }
+              : undefined;
+
     const modalNode = (
         <div
             role="dialog"
             aria-modal="true"
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
             onClick={(e) => {
-                if (e.target === e.currentTarget) {
+                if (closeOnBackdropClick && e.target === e.currentTarget) {
                     handleRequestClose();
                 }
             }}
-            style={{
-                backgroundColor: `rgba(0, 0, 0, ${0.6 * backdropOpacityFactor})`,
-            }}
-            className={`fixed inset-0 z-50 flex overflow-hidden overscroll-y-contain ${
-                isDrawerOnMobile ? "items-end sm:items-center" : "items-center"
-            } justify-center p-0 sm:p-4 transition-opacity duration-200 ${
+            style={computedBackdropStyle}
+            className={`${backdropLayoutClass} ${
                 isClosing ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
+            } ${backdropClassName}`}
         >
             <div
                 ref={drawerRef}
+                tabIndex={-1}
+                data-testid={dataTestId}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                style={
-                    isDrawerOnMobile && (dragTranslateY > 0 || isSlidingOut)
-                        ? {
-                              transform: isSlidingOut
-                                  ? "translate3d(0, 100%, 0)"
-                                  : `translate3d(0, ${dragTranslateY}px, 0)`,
-                              transition:
-                                  isDragging || prefersReducedMotion()
-                                      ? "none"
-                                      : "transform var(--duration-base) var(--ease-out-soft)",
-                          }
-                        : undefined
-                }
-                className={`w-full max-w-full ${SM_MAX_WIDTH_MAP[maxWidth] || `sm:${maxWidth}`} ${
-                    isDrawerOnMobile
-                        ? `max-h-[92dvh] sm:max-h-[90dvh] rounded-t-3xl sm:rounded-2xl ${
-                              isClosing
-                                  ? "modal-sheet-exit"
-                                  : "modal-sheet-enter"
-                          }`
-                        : `max-h-[90dvh] rounded-2xl ${isClosing ? "animate-modal-out" : "animate-modal-in"}`
-                } bg-(--bg-card) border-t-2 sm:border-2 border-(--border-ink) shadow-cute-lg flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom,0px)] ${className}`}
+                style={panelStyle}
+                className={`focus:outline-none ${panelVariantClass} ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {isDrawerOnMobile && (
@@ -620,12 +888,14 @@ export function AnimatedModal({
             {/* Discard Unsaved Changes Confirmation Dialog */}
             {showDiscardConfirm && (
                 <div
+                    ref={discardDialogRef}
+                    tabIndex={-1}
                     data-discard-dialog="true"
                     role="alertdialog"
                     aria-modal="true"
                     aria-labelledby="discard-dialog-title"
                     aria-describedby="discard-dialog-desc"
-                    className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-modal-in"
+                    className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-modal-in focus:outline-none"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="w-full max-w-sm rounded-2xl bg-(--bg-card) border-2 border-(--border-ink) shadow-cute-lg p-5 flex flex-col gap-4 text-(--text-ink)">

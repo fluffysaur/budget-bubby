@@ -4,17 +4,23 @@
  * then splits & fades the eggshell away as Bubby pops out celebrating.
  */
 
-import { useCallback, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { INK } from "../../lib/bubby/anchors";
 import type { BubbyBody } from "../../lib/bubby/body";
 import { playEggCrack, playHatchFanfare } from "../../lib/soundEffects";
+import { AnimatedModal } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { Bubby } from "./Bubby";
 import { BubbyEgg } from "./BubbyEgg";
 
 const TAPS_REQUIRED = 3;
+const NOOP = () => {};
+const HATCH_BACKDROP_STYLE = {
+    background:
+        "radial-gradient(circle at center, rgba(255, 236, 179, 0.16) 0%, rgba(16, 14, 22, 0.84) 46%, rgba(6, 5, 10, 0.96) 100%)",
+    backdropFilter: "blur(6px)",
+};
 
 export interface HatchStageProps {
     body?: BubbyBody;
@@ -74,6 +80,13 @@ export function HatchStage({
 }: HatchStageProps) {
     const [taps, setTaps] = useState(0);
     const isHatched = taps >= TAPS_REQUIRED;
+    const meetBtnRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (isHatched) {
+            meetBtnRef.current?.focus({ preventScroll: true });
+        }
+    }, [isHatched]);
 
     const handleTap = useCallback(() => {
         if (isHatched) return;
@@ -101,18 +114,16 @@ export function HatchStage({
               ? "Keep tapping!"
               : "One more tap!";
 
-    const content = (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Hatch Bubby"
+    return (
+        <AnimatedModal
+            isOpen={true}
+            onClose={isHatched ? onContinue : NOOP}
+            variant="spotlight"
+            closeOnBackdropClick={false}
+            closeOnEscape={isHatched}
+            ariaLabel="Hatch Bubby"
             data-testid="hatch-stage"
-            className="fixed inset-0 z-9999 flex items-center justify-center p-6 animate-toast-in"
-            style={{
-                background:
-                    "radial-gradient(circle at center, rgba(255, 236, 179, 0.16) 0%, rgba(16, 14, 22, 0.84) 46%, rgba(6, 5, 10, 0.96) 100%)",
-                backdropFilter: "blur(6px)",
-            }}
+            backdropStyle={HATCH_BACKDROP_STYLE}
         >
             <div className="flex w-full max-w-xs flex-col items-center gap-5 text-center">
                 {!isHatched ? (
@@ -190,6 +201,7 @@ export function HatchStage({
                         </div>
 
                         <Button
+                            ref={meetBtnRef}
                             variant="primary"
                             size="md"
                             leftIcon={
@@ -207,11 +219,8 @@ export function HatchStage({
                     </>
                 )}
             </div>
-        </div>
+        </AnimatedModal>
     );
-
-    if (typeof document === "undefined") return content;
-    return createPortal(content, document.body);
 }
 
 export default HatchStage;

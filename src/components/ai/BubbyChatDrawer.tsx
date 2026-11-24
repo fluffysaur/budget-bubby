@@ -15,13 +15,8 @@ import {
     Loader2,
     ExternalLink,
 } from "lucide-react";
-import { m, AnimatePresence } from "motion/react";
-import {
-    DURATION,
-    EASE_IN_FAST,
-    EASE_OUT_SOFT,
-    fadeRise,
-} from "../../lib/motion";
+import { m } from "motion/react";
+import { fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useSettings } from "../../context/SettingsContext";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
@@ -53,6 +48,7 @@ import {
 } from "../../services/ai/aiTools";
 import { ActionConfirmationCard } from "./ActionConfirmationCard";
 import { Alert } from "../ui/Alert";
+import { AnimatedModal } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { MarkdownText } from "../ui/MarkdownText";
@@ -160,17 +156,6 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
             );
         };
     }, [refreshKeyStatus]);
-
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                onClose();
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
 
     useEffect(() => {
         if (scrollEndRef.current?.scrollIntoView) {
@@ -569,49 +554,16 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex justify-end"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Bubby AI Assistant"
-                    data-testid="bubby-chat-drawer"
-                >
-                    {/* Backdrop */}
-                    <m.div
-                        key="bubby-drawer-backdrop"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: DURATION.fast }}
-                        onClick={onClose}
-                        className="fixed inset-0 bg-(--text-ink)/30 backdrop-blur-[2px]"
-                    />
-
-                    {/* Drawer Panel */}
-                    <m.aside
-                        key="bubby-drawer-panel"
-                        initial={{ x: "100%", opacity: 0.8 }}
-                        animate={{
-                            x: 0,
-                            opacity: 1,
-                            transition: {
-                                duration: DURATION.base,
-                                ease: EASE_OUT_SOFT,
-                            },
-                        }}
-                        exit={{
-                            x: "100%",
-                            opacity: 0.8,
-                            transition: {
-                                duration: DURATION.fast,
-                                ease: EASE_IN_FAST,
-                            },
-                        }}
-                        className="relative z-10 flex h-dvh w-full max-w-md sm:max-w-xl flex-col border-l-2 border-(--border-ink) bg-(--bg-canvas) shadow-cute-lg"
-                    >
-                        {/* Header */}
+        <AnimatedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            variant="side-sheet"
+            maxWidth=""
+            ariaLabel="Bubby AI Assistant"
+            data-testid="bubby-chat-drawer"
+            className="max-w-md sm:max-w-xl"
+        >
+            {/* Header */}
                         <div className="flex items-center justify-between gap-2 border-b-2 border-(--border-ink) bg-(--bg-card) px-4 py-3">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm">
@@ -936,10 +888,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                 )}
                             </div>
                         </form>
-                    </m.aside>
-                </div>
-            )}
-        </AnimatePresence>
+        </AnimatedModal>
     );
 }
 

@@ -534,6 +534,27 @@ describe("Notifications Engine", () => {
             ).not.toBeInTheDocument();
         });
 
+        it("traps focus inside NotificationCenterPopover and restores focus to the bell trigger on Escape", async () => {
+            renderWithProviders(<NotificationCenterPopover />);
+
+            const bellBtn = await screen.findByTestId("notification-bell-btn");
+            bellBtn.focus();
+            await act(async () => {
+                fireEvent.click(bellBtn);
+            });
+
+            const popover = screen.getByTestId("notification-center-popover");
+            expect(popover).toBeInTheDocument();
+            expect(popover.contains(document.activeElement)).toBe(true);
+
+            fireEvent.keyDown(window, { key: "Escape" });
+
+            expect(
+                screen.queryByTestId("notification-center-popover"),
+            ).not.toBeInTheDocument();
+            expect(document.activeElement).toBe(bellBtn);
+        });
+
         it("stores dismissals in the notification log per member", async () => {
             const memberId = "mem-test-dismiss";
             await financeService.dismissNotification(memberId, {

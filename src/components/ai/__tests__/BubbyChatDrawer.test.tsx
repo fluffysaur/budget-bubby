@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -255,5 +256,64 @@ describe("BubbyChatDrawer", () => {
             ).toBeInTheDocument();
         });
         expect(screen.queryByText("Done.")).not.toBeInTheDocument();
+    });
+
+    it("traps Tab focus inside the drawer and restores focus to the trigger button on close", () => {
+        function DrawerTriggerHarness() {
+            const [open, setOpen] = useState(false);
+            return (
+                <>
+                    <button type="button" onClick={() => setOpen(true)}>
+                        Open Chat
+                    </button>
+                    <BubbyChatDrawer
+                        isOpen={open}
+                        onClose={() => setOpen(false)}
+                    />
+                </>
+            );
+        }
+
+        const qc = new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+        });
+        render(
+            <LazyMotion features={domAnimation} strict>
+                <QueryClientProvider client={qc}>
+                    <AuthProvider initialAuthenticated>
+                        <HouseholdProvider>
+                            <SettingsProvider>
+                                <PrivacyProvider>
+                                    <DrawerTriggerHarness />
+                                </PrivacyProvider>
+                            </SettingsProvider>
+                        </HouseholdProvider>
+                    </AuthProvider>
+                </QueryClientProvider>
+            </LazyMotion>,
+        );
+
+        const trigger = screen.getByRole("button", { name: "Open Chat" });
+        trigger.focus();
+        fireEvent.click(trigger);
+
+        const drawer = screen.getByTestId("bubby-chat-drawer");
+        expect(drawer).toBeInTheDocument();
+        expect(document.body.style.overflow).toBe("hidden");
+
+        const settingsBtn = screen.getByTestId("bubby-open-settings-btn");
+        const setupKeyCta = screen.getByTestId("bubby-setup-key-cta");
+        expect(document.activeElement).toBe(settingsBtn);
+
+        fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+        expect(document.activeElement).toBe(setupKeyCta);
+
+        fireEvent.keyDown(window, { key: "Tab" });
+        expect(document.activeElement).toBe(settingsBtn);
+
+        fireEvent.keyDown(window, { key: "Escape" });
+        expect(screen.queryByTestId("bubby-chat-drawer")).not.toBeInTheDocument();
+        expect(document.activeElement).toBe(trigger);
+        expect(document.body.style.overflow).not.toBe("hidden");
     });
 });
