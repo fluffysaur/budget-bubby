@@ -74,3 +74,49 @@ export function findScrollableAncestor(
     }
     return null;
 }
+
+const FOCUSABLE_SELECTOR = [
+    "a[href]",
+    "area[href]",
+    "button:not([disabled])",
+    'input:not([disabled]):not([type="hidden"])',
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "summary",
+    '[tabindex]:not([tabindex="-1"])',
+    '[contenteditable="true"]',
+    '[contenteditable=""]',
+].join(", ");
+
+function isElementHidden(el: HTMLElement, boundary: HTMLElement): boolean {
+    if (el.closest("[hidden], [inert]")) return true;
+    let current: HTMLElement | null = el;
+    while (current && current !== boundary) {
+        if (typeof window !== "undefined" && window.getComputedStyle) {
+            const style = window.getComputedStyle(current);
+            if (style.display === "none" || style.visibility === "hidden") {
+                return true;
+            }
+        }
+        current = current.parentElement;
+    }
+    return false;
+}
+
+/**
+ * Returns keyboard-focusable descendants of `container` in DOM order.
+ */
+export function getFocusableElements(
+    container: HTMLElement | null,
+): HTMLElement[] {
+    if (!container) return [];
+    const candidates = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    const result: HTMLElement[] = [];
+    for (let i = 0; i < candidates.length; i++) {
+        const el = candidates[i];
+        if (el.tabIndex < 0) continue;
+        if (isElementHidden(el, container)) continue;
+        result.push(el);
+    }
+    return result;
+}

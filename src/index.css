@@ -465,6 +465,28 @@ html.theme-transition *::after {
     }
 }
 
+@keyframes sideSheetSlideIn {
+    from {
+        transform: translate3d(100%, 0, 0);
+        opacity: 0.8;
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes sideSheetSlideOut {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate3d(100%, 0, 0);
+        opacity: 0.8;
+    }
+}
+
 @keyframes chaChingPop {
     0% {
         transform: scale(0.85);
@@ -550,6 +572,18 @@ html.theme-transition *::after {
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+}
+
+.animate-side-sheet-in {
+    animation: sideSheetSlideIn var(--duration-base) var(--ease-out-soft)
+        forwards;
+    will-change: transform, opacity;
+}
+
+.animate-side-sheet-out {
+    animation: sideSheetSlideOut var(--duration-fast) var(--ease-in-fast)
+        forwards;
+    will-change: transform, opacity;
 }
 
 /* Scrollbar Utility - Hides scrollbars while keeping touch/scroll functionality */
@@ -1148,7 +1182,9 @@ html.theme-transition *::after {
     .animate-modal-in,
     .animate-modal-out,
     .animate-drawer-in,
-    .animate-drawer-out {
+    .animate-drawer-out,
+    .animate-side-sheet-in,
+    .animate-side-sheet-out {
         animation-duration: 1ms !important;
     }
 }
