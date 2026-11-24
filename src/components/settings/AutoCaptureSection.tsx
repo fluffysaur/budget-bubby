@@ -12,10 +12,8 @@ import {
     isDemoModeActive,
 } from "../../services/financeService";
 import { isSupabaseConfigured } from "../../services/supabaseClient";
-import {
-    useCaptureTokensQuery,
-    inboxQueryKeys,
-} from "../../hooks/useInboxQueries";
+import { useCaptureTokensQuery } from "../../hooks/finance/inbox";
+import { keys } from "../../lib/queryKeys";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import {
     getCaptureEndpointUrl,
@@ -294,7 +292,7 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
     const atLimit = tokens.length >= MAX_ACTIVE_CAPTURE_TOKENS;
 
     const refresh = () =>
-        queryClient.invalidateQueries({ queryKey: inboxQueryKeys.all });
+        queryClient.invalidateQueries({ queryKey: keys.inbox.all });
 
     const openCreate = () => {
         setLabel("iPhone");

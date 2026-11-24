@@ -21,7 +21,7 @@ import type {
     HouseholdMember,
 } from "../../types/finance";
 import { CPF_KINDS } from "../../lib/cpfAccounts";
-import { useUpdateAccountMutation } from "../../hooks/useFinanceQueries";
+import { useUpdateAccountMutation } from "../../hooks/finance/accounts";
 import { feedback } from "../../lib/delight/feedback";
 import { AccountOriginChoice } from "./AccountOriginChoice";
 

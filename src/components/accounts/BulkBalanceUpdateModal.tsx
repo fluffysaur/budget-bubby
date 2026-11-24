@@ -14,7 +14,7 @@ import {
     ArrowDownRight,
 } from "lucide-react";
 import { getTodayDateString } from "../../lib/dateUtils";
-import { useBulkUpdateAccountBalancesMutation } from "../../hooks/useFinanceQueries";
+import { useBulkUpdateAccountBalancesMutation } from "../../hooks/finance/accounts";
 import type {
     Account,
     BulkBalanceUpdateItem,

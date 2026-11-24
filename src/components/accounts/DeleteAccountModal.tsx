@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import type { Account } from "../../types/finance";
-import { useDeleteAccountMutation } from "../../hooks/useFinanceQueries";
+import { useDeleteAccountMutation } from "../../hooks/finance/accounts";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { feedback } from "../../lib/delight/feedback";
 

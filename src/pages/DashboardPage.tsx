@@ -21,11 +21,13 @@ import {
 } from "../components/ui";
 import {
     useRecurringItemsQuery,
+    useBudgetDetailQuery,
+} from "../hooks/finance/budget";
+import {
     useCreditCardStatementsQuery,
     useCreditCardsQuery,
-    useInvalidateFinance,
-    useBudgetDetailQuery,
-} from "../hooks/useFinanceQueries";
+} from "../hooks/finance/cards";
+import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import {

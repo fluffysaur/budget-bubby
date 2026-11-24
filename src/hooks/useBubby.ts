@@ -9,16 +9,13 @@
  * snacks come from bb_bubby_v2.
  */
 
+import { keys } from "../lib/queryKeys";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
-import {
-    queryKeys,
-    useAccountsQuery,
-    useAccountSnapshotsQuery,
-    useCreditCardStatementsQuery,
-    useExpensesQuery,
-} from "./useFinanceQueries";
+import { useAccountsQuery, useAccountSnapshotsQuery } from "./finance/accounts";
+import { useCreditCardStatementsQuery } from "./finance/cards";
+import { useExpensesQuery } from "./finance/expenses";
 import { useMonthEndSurplus } from "./useMonthEndSurplus";
 import { useLoggedInMember } from "./useLoggedInMember";
 import { useOptionalHousehold } from "../context/HouseholdContext";
@@ -168,7 +165,7 @@ function reactionFor(
 /** All members' check-ins, shared app-wide. */
 export function useHouseholdCheckinsQuery() {
     return useQuery<DailyCheckin[]>({
-        queryKey: queryKeys.dailyCheckins(),
+        queryKey: keys.dailyCheckins.list(),
         queryFn: () => financeService.getDailyCheckins(),
         staleTime: 60_000,
         refetchOnWindowFocus: true,
@@ -258,17 +255,17 @@ export function useBubby(): UseBubbyResult {
         useCreditCardStatementsQuery();
     // Only fetch extra starter-quest signals while the logged-in user's egg is unhatched
     const { data: baseProfilesData } = useQuery({
-        queryKey: queryKeys.baseProfiles,
+        queryKey: keys.budget.baseProfiles,
         queryFn: () => financeService.getBaseProfiles(),
         enabled: !hatched,
     });
     const { data: goalsData } = useQuery({
-        queryKey: queryKeys.goals,
+        queryKey: keys.goals.all,
         queryFn: () => financeService.getGoals(),
         enabled: !hatched,
     });
     const { data: recurringData } = useQuery({
-        queryKey: queryKeys.recurringItems,
+        queryKey: keys.recurring.all,
         queryFn: () => financeService.getRecurringItems(),
         enabled: !hatched,
     });

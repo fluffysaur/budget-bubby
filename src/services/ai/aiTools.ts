@@ -6,7 +6,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { financeService } from "../financeService";
 import { queryClient as defaultQueryClient } from "../../lib/queryClient";
-import { queryKeys } from "../../hooks/useFinanceQueries";
+import { keys } from "../../lib/queryKeys";
 import { generateUuid } from "../../lib/uuid";
 import type {
     CreateExpenseInput,
@@ -744,11 +744,11 @@ export async function executeProposedAction(
         await financeService.addExpense(input);
 
         await Promise.all([
-            qc.invalidateQueries({ queryKey: ["finance", "expenses"] }),
-            qc.invalidateQueries({ queryKey: queryKeys.allExpenses }),
-            qc.invalidateQueries({ queryKey: ["finance", "monthly-budget"] }),
-            qc.invalidateQueries({ queryKey: ["finance", "daily-checkins"] }),
-            qc.invalidateQueries({ queryKey: queryKeys.householdOverview }),
+            qc.invalidateQueries({ queryKey: keys.expenses.all }),
+            qc.invalidateQueries({ queryKey: keys.expenses.every }),
+            qc.invalidateQueries({ queryKey: keys.budget.monthlyAll }),
+            qc.invalidateQueries({ queryKey: keys.dailyCheckins.all }),
+            qc.invalidateQueries({ queryKey: keys.overview.all }),
         ]);
         return;
     }
@@ -769,9 +769,9 @@ export async function executeProposedAction(
         );
 
         await Promise.all([
-            qc.invalidateQueries({ queryKey: ["finance", "accounts"] }),
-            qc.invalidateQueries({ queryKey: queryKeys.householdOverview }),
-            qc.invalidateQueries({ queryKey: queryKeys.goals }),
+            qc.invalidateQueries({ queryKey: keys.accounts.all }),
+            qc.invalidateQueries({ queryKey: keys.overview.all }),
+            qc.invalidateQueries({ queryKey: keys.goals.all }),
         ]);
         return;
     }
@@ -805,7 +805,7 @@ export async function executeProposedAction(
     await financeService.updateMonthlyBudget(budgetUpdate);
 
     await Promise.all([
-        qc.invalidateQueries({ queryKey: ["finance", "monthly-budget"] }),
-        qc.invalidateQueries({ queryKey: queryKeys.householdOverview }),
+        qc.invalidateQueries({ queryKey: keys.budget.monthlyAll }),
+        qc.invalidateQueries({ queryKey: keys.overview.all }),
     ]);
 }

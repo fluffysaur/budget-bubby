@@ -12,8 +12,8 @@ import { CreditCardPaymentsWidget } from "../src/components/dashboard/CreditCard
 import {
     useCreditCardsQuery,
     useCreditCardStatementsQuery,
-    useInvalidateFinance,
-} from "../src/hooks/useFinanceQueries";
+} from "../src/hooks/finance/cards";
+import { useInvalidateFinance } from "../src/hooks/finance/shared";
 import { financeService } from "../src/services/financeService";
 import { mockFinanceService } from "../src/services/mockFinanceService";
 import type { HouseholdMember } from "../src/types/finance";
@@ -77,14 +77,10 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
             screen.getByTestId("credit-card-period-label"),
         ).toHaveTextContent("Current");
         expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
-        expect(
-            screen.getAllByText(/Pending · Sept? 2026/),
-        ).toHaveLength(2);
+        expect(screen.getAllByText(/Pending · Sept? 2026/)).toHaveLength(2);
 
         // Step < into October 2026 month history -> all 3 show October statements
-        fireEvent.click(
-            screen.getByRole("button", { name: "Previous Month" }),
-        );
+        fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
         expect(
             screen.getByTestId("credit-card-period-label"),
         ).toHaveTextContent("October 2026");
@@ -99,9 +95,7 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
             screen.getByTestId("credit-card-period-label"),
         ).toHaveTextContent("Current");
         expect(screen.getByText("Statement · Oct 2026")).toBeInTheDocument();
-        expect(
-            screen.getAllByText(/Pending · Sept? 2026/),
-        ).toHaveLength(2);
+        expect(screen.getAllByText(/Pending · Sept? 2026/)).toHaveLength(2);
     });
 
     it("syncs paid and unpaid status bidirectionally between Credit Cards tab and Home widget across different billing days", async () => {
@@ -207,7 +201,9 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
         fireEvent.click(
             screen.getByRole("button", { name: /Mark Early Cycle Card paid/i }),
         );
-        fireEvent.click(await screen.findByRole("button", { name: "Mark Paid" }));
+        fireEvent.click(
+            await screen.findByRole("button", { name: "Mark Paid" }),
+        );
 
         await waitFor(() => {
             expect(
@@ -220,7 +216,9 @@ describe("Credit Card Active Cycle & Bidirectional Sync", () => {
         fireEvent.click(
             screen.getByRole("button", { name: /Mark Late Cycle Card paid/i }),
         );
-        fireEvent.click(await screen.findByRole("button", { name: "Mark Paid" }));
+        fireEvent.click(
+            await screen.findByRole("button", { name: "Mark Paid" }),
+        );
 
         await waitFor(() => {
             expect(

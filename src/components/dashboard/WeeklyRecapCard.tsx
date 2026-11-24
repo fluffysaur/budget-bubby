@@ -15,11 +15,9 @@ import { CurrencyText } from "../ui/CurrencyText";
 import { Bubby } from "../bubby/Bubby";
 import { FedTodayDots } from "../bubby/FedTodayDots";
 import { useBubby, useHouseholdCheckinsQuery } from "../../hooks/useBubby";
-import {
-    useAccountSnapshotsQuery,
-    useCategoriesQuery,
-    useExpensesQuery,
-} from "../../hooks/useFinanceQueries";
+import { useAccountSnapshotsQuery } from "../../hooks/finance/accounts";
+import { useCategoriesQuery } from "../../hooks/finance/categories";
+import { useExpensesQuery } from "../../hooks/finance/expenses";
 import {
     buildWeeklyRecap,
     recapMonths,

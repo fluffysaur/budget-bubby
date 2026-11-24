@@ -1,8 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { usePartnerRealtimeSync } from "../usePartnerRealtimeSync";
-import { queryKeys } from "../useFinanceQueries";
-import { inboxQueryKeys } from "../useInboxQueries";
+import { keys } from "../../lib/queryKeys";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -117,23 +116,23 @@ describe("usePartnerRealtimeSync", () => {
 
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(5);
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-            queryKey: ["finance", "expenses"],
+            queryKey: keys.expenses.all,
         });
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-            queryKey: queryKeys.allExpenses,
+            queryKey: keys.expenses.every,
         });
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-            queryKey: ["finance", "monthly-budget"],
+            queryKey: keys.budget.monthlyAll,
         });
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-            queryKey: ["finance", "daily-checkins"],
+            queryKey: keys.dailyCheckins.all,
         });
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-            queryKey: queryKeys.householdOverview,
+            queryKey: keys.overview.all,
         });
     });
 
-    it("debounces bursts (~150ms) and invalidates inboxQueryKeys.all on inbox_items change", () => {
+    it("debounces bursts (~150ms) and invalidates keys.inbox.all on inbox_items change", () => {
         renderHook(() =>
             usePartnerRealtimeSync({
                 householdId: "hh-1234",
@@ -162,7 +161,7 @@ describe("usePartnerRealtimeSync", () => {
 
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(1);
         expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-            queryKey: inboxQueryKeys.all,
+            queryKey: keys.inbox.all,
         });
     });
 

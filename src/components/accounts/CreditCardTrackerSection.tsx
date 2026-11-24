@@ -63,8 +63,8 @@ import { useFollowCurrentMonth } from "../../hooks/useCurrentMonth";
 import {
     useCreditCardsQuery,
     useCreditCardStatementsQuery,
-    useInvalidateFinance,
-} from "../../hooks/useFinanceQueries";
+} from "../../hooks/finance/cards";
+import { useInvalidateFinance } from "../../hooks/finance/shared";
 import { AddEditCreditCardModal } from "./AddEditCreditCardModal";
 import { MarkCardPaidModal } from "./MarkCardPaidModal";
 import {
@@ -474,475 +474,493 @@ export function CreditCardTrackerSection({
                             : "space-y-4 transition-opacity"
                     }
                 >
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <StatCard
-                        title="Due"
-                        loading={isLoading}
-                        value={formatSGD(totalBillDue)}
-                        subtitle={`${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
-                        icon={<ReceiptText className="h-4 w-4" />}
-                        tone="lilac"
-                        footer={
-                            totalBillDue > 0 ? (
-                                <StackedBar
-                                    segments={[
-                                        {
-                                            id: "paid",
-                                            label: "Paid",
-                                            value: totalPaid,
-                                            tone: "ok",
-                                        },
-                                        {
-                                            id: "unpaid",
-                                            label: "Unpaid",
-                                            value: totalUnpaid,
-                                            tone: "near",
-                                        },
-                                    ]}
-                                    size="xs"
-                                    ariaLabel={mask(
-                                        `Paid ${formatSGD(totalPaid)}, Unpaid ${formatSGD(totalUnpaid)}`,
-                                    )}
-                                />
-                            ) : undefined
-                        }
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <StatCard
+                            title="Due"
+                            loading={isLoading}
+                            value={formatSGD(totalBillDue)}
+                            subtitle={`${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
+                            icon={<ReceiptText className="h-4 w-4" />}
+                            tone="lilac"
+                            footer={
+                                totalBillDue > 0 ? (
+                                    <StackedBar
+                                        segments={[
+                                            {
+                                                id: "paid",
+                                                label: "Paid",
+                                                value: totalPaid,
+                                                tone: "ok",
+                                            },
+                                            {
+                                                id: "unpaid",
+                                                label: "Unpaid",
+                                                value: totalUnpaid,
+                                                tone: "near",
+                                            },
+                                        ]}
+                                        size="xs"
+                                        ariaLabel={mask(
+                                            `Paid ${formatSGD(totalPaid)}, Unpaid ${formatSGD(totalUnpaid)}`,
+                                        )}
+                                    />
+                                ) : undefined
+                            }
+                        />
 
-                    <StatCard
-                        title="Paid"
-                        loading={isLoading}
-                        value={formatSGD(totalPaid)}
-                        icon={<FileCheck2 className="h-4 w-4" />}
-                        tone="ok"
-                    />
+                        <StatCard
+                            title="Paid"
+                            loading={isLoading}
+                            value={formatSGD(totalPaid)}
+                            icon={<FileCheck2 className="h-4 w-4" />}
+                            tone="ok"
+                        />
 
-                    <StatCard
-                        title="Unpaid"
-                        loading={isLoading}
-                        value={formatSGD(totalUnpaid)}
-                        subtitle={totalUnpaid > 0 ? "Pending" : "All paid"}
-                        icon={<AlertTriangle className="h-4 w-4" />}
-                        tone={totalUnpaid > 0 ? "near" : "ok"}
-                    />
-                </div>
-
-                {/* Card Listing */}
-                {isLoading ? (
-                    <CreditCardListSkeleton />
-                ) : filteredCards.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
-                        <CreditCardIcon className="h-10 w-10 text-(--text-faint) mb-3" />
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-                            No Cards
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-(--text-faint) max-w-sm mt-1">
-                            Add a card to track statements.
-                        </p>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="mt-4"
-                            leftIcon={<Plus className="h-4 w-4" />}
-                            onClick={() => {
-                                setCardToEdit(null);
-                                setIsAddEditCardOpen(true);
-                            }}
-                        >
-                            Add Card
-                        </Button>
+                        <StatCard
+                            title="Unpaid"
+                            loading={isLoading}
+                            value={formatSGD(totalUnpaid)}
+                            subtitle={totalUnpaid > 0 ? "Pending" : "All paid"}
+                            icon={<AlertTriangle className="h-4 w-4" />}
+                            tone={totalUnpaid > 0 ? "near" : "ok"}
+                        />
                     </div>
-                ) : (
-                    <div
-                        className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4"
-                        data-testid="credit-card-list"
-                    >
-                        <AnimatePresence initial={false}>
-                            {cardEntries.map(({ card, cardMonth, stmt }) => {
-                                const owner = members.find(
-                                    (m) => m.id === card.owner_id,
-                                );
-                                const dueStatus = stmt
-                                    ? getRelativeDueLabel(
-                                          stmt.due_date,
-                                          stmt.is_paid,
-                                          stmt.paid_at,
-                                      )
-                                    : null;
-                                // No logged statement: show dates computed from card config
-                                const pendingCycle = stmt
-                                    ? null
-                                    : getCardCycle(
-                                          card,
-                                          cardMonth,
-                                          null,
-                                          todayStr,
-                                      );
-                                const pendingStatus = pendingCycle
-                                    ? getRelativeDueLabel(
-                                          pendingCycle.dueDate,
-                                          false,
-                                      )
-                                    : null;
 
-                                return (
-                                    <m.div
-                                        key={card.id}
-                                        data-testid={`credit-card-card-${card.id}`}
-                                        {...listItem}
-                                        className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
-                                    >
-                                        {/* Color Top Stripe */}
-                                        <div
-                                            className="absolute top-0 left-0 right-0 h-1.5"
-                                            style={{
-                                                backgroundColor:
-                                                    card.color || "#dfc2ff",
-                                            }}
-                                        />
+                    {/* Card Listing */}
+                    {isLoading ? (
+                        <CreditCardListSkeleton />
+                    ) : filteredCards.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center">
+                            <CreditCardIcon className="h-10 w-10 text-(--text-faint) mb-3" />
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                                No Cards
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-(--text-faint) max-w-sm mt-1">
+                                Add a card to track statements.
+                            </p>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                className="mt-4"
+                                leftIcon={<Plus className="h-4 w-4" />}
+                                onClick={() => {
+                                    setCardToEdit(null);
+                                    setIsAddEditCardOpen(true);
+                                }}
+                            >
+                                Add Card
+                            </Button>
+                        </div>
+                    ) : (
+                        <div
+                            className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4"
+                            data-testid="credit-card-list"
+                        >
+                            <AnimatePresence initial={false}>
+                                {cardEntries.map(
+                                    ({ card, cardMonth, stmt }) => {
+                                        const owner = members.find(
+                                            (m) => m.id === card.owner_id,
+                                        );
+                                        const dueStatus = stmt
+                                            ? getRelativeDueLabel(
+                                                  stmt.due_date,
+                                                  stmt.is_paid,
+                                                  stmt.paid_at,
+                                              )
+                                            : null;
+                                        // No logged statement: show dates computed from card config
+                                        const pendingCycle = stmt
+                                            ? null
+                                            : getCardCycle(
+                                                  card,
+                                                  cardMonth,
+                                                  null,
+                                                  todayStr,
+                                              );
+                                        const pendingStatus = pendingCycle
+                                            ? getRelativeDueLabel(
+                                                  pendingCycle.dueDate,
+                                                  false,
+                                              )
+                                            : null;
 
-                                        <div>
-                                            {/* Card Header */}
-                                            <div className="flex items-start justify-between gap-2 mt-1">
-                                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                    <div
-                                                        className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
-                                                        style={{
-                                                            backgroundColor:
-                                                                card.color ||
-                                                                "#dfc2ff",
-                                                        }}
-                                                    >
-                                                        {card.bank.slice(0, 4)}
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <h4 className="font-display font-black text-sm text-(--text-ink) truncate">
-                                                            <TruncatedText
-                                                                text={card.name}
-                                                            />
-                                                        </h4>
-                                                        <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5 min-w-0">
-                                                            {card.last4 && (
-                                                                <span className="font-mono-num font-bold text-xs bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink) px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap">
-                                                                    ••••{" "}
-                                                                    {card.last4}
-                                                                </span>
-                                                            )}
-                                                            <span className="font-semibold truncate min-w-0">
-                                                                {card.bank}
-                                                            </span>
-                                                            {owner && (
-                                                                <div className="inline-flex items-center gap-1 min-w-0">
-                                                                    <AvatarDot
-                                                                        name={
-                                                                            owner.display_name
-                                                                        }
-                                                                        avatarUrl={
-                                                                            owner.avatar_url
-                                                                        }
-                                                                        size="xs"
-                                                                        decorative
-                                                                    />
-                                                                    <span className="font-semibold truncate whitespace-nowrap min-w-0">
-                                                                        {
-                                                                            owner.display_name
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-1 shrink-0">
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Edit ${card.name}`}
-                                                        onClick={() => {
-                                                            setCardToEdit(card);
-                                                            setIsAddEditCardOpen(
-                                                                true,
-                                                            );
-                                                        }}
-                                                        className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
-                                                    >
-                                                        <Pencil className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Card Configuration Specs as Icon Rows */}
-                                            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
-                                                <StatRow
-                                                    icon={
-                                                        <ReceiptText className="h-3.5 w-3.5" />
-                                                    }
-                                                    label="Statement Day"
-                                                    value={ordinal(
-                                                        card.billing_day,
-                                                    )}
-                                                    showLabel
+                                        return (
+                                            <m.div
+                                                key={card.id}
+                                                data-testid={`credit-card-card-${card.id}`}
+                                                {...listItem}
+                                                className="flex flex-col justify-between rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 shadow-cute-sm hover:shadow-cute transition-press relative overflow-hidden"
+                                            >
+                                                {/* Color Top Stripe */}
+                                                <div
+                                                    className="absolute top-0 left-0 right-0 h-1.5"
+                                                    style={{
+                                                        backgroundColor:
+                                                            card.color ||
+                                                            "#dfc2ff",
+                                                    }}
                                                 />
-                                                <StatRow
-                                                    icon={
-                                                        <Calendar className="h-3.5 w-3.5" />
-                                                    }
-                                                    label="Due Day"
-                                                    value={ordinal(
-                                                        card.due_day,
-                                                    )}
-                                                    showLabel
-                                                />
-                                                <span className="font-mono-num font-medium text-[11px]">
-                                                    {card.credit_limit
-                                                        ? mask(
-                                                              `Limit ${formatSGD(card.credit_limit, { showCents: false })}`,
-                                                          )
-                                                        : "No limit"}
-                                                </span>
-                                            </div>
 
-                                            {/* Statement Information for Selected Month */}
-                                            <div className="mt-3 border-t border-(--border-subtle) pt-3">
-                                                {stmt ? (
-                                                    <div className="space-y-2.5">
-                                                        <div className="flex items-baseline justify-between">
-                                                            <span className="text-xs font-bold text-(--text-muted)">
-                                                                {viewMode ===
-                                                                "active"
-                                                                    ? `Statement · ${formatShortMonth(cardMonth)}`
-                                                                    : "Statement"}
-                                                            </span>
-                                                            <span className="text-(--text-ink) font-display font-black text-lg">
-                                                                <CurrencyText
-                                                                    amount={
-                                                                        stmt.statement_amount
-                                                                    }
-                                                                    size="md"
-                                                                />
-                                                            </span>
-                                                        </div>
-
-                                                        {/* Due Date & Status Badge Countdown */}
-                                                        <div className="flex items-center justify-between text-xs">
-                                                            <div className="flex items-center gap-2">
-                                                                <span
-                                                                    className="text-[11px] font-mono-num text-(--text-muted)"
-                                                                    title={`Due ${formatDisplayDate(stmt.due_date)}`}
-                                                                >
-                                                                    {formatDisplayDate(
-                                                                        stmt.due_date,
-                                                                    )}
-                                                                </span>
-                                                                <CalendarStrip
-                                                                    daysRemaining={
-                                                                        stmt.is_paid
-                                                                            ? null
-                                                                            : dueStatus?.isOverdue
-                                                                              ? -1
-                                                                              : (dueStatus?.daysDiff ??
-                                                                                null)
-                                                                    }
-                                                                    status={
-                                                                        stmt.is_paid
-                                                                            ? "paid"
-                                                                            : dueStatus?.isOverdue
-                                                                              ? "overdue"
-                                                                              : undefined
-                                                                    }
-                                                                    totalDots={
-                                                                        5
-                                                                    }
-                                                                    size="xs"
-                                                                />
-                                                            </div>
-
-                                                            {dueStatus && (
-                                                                <Badge
-                                                                    variant={
-                                                                        stmt.is_paid
-                                                                            ? "paid"
-                                                                            : dueStatus.isOverdue
-                                                                              ? "over"
-                                                                              : "due"
-                                                                    }
-                                                                    size="sm"
-                                                                    title={`Due ${formatDisplayDate(stmt.due_date)}`}
-                                                                >
-                                                                    {
-                                                                        dueStatus.label
-                                                                    }
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-
-                                                        {isPartialPayment(
-                                                            stmt,
-                                                        ) && (
+                                                <div>
+                                                    {/* Card Header */}
+                                                    <div className="flex items-start justify-between gap-2 mt-1">
+                                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                                             <div
-                                                                className="flex items-center justify-between gap-2 text-xs"
-                                                                data-testid={`credit-card-partial-${card.id}`}
+                                                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-black text-xs shadow-cute-sm shrink-0 border border-(--border-ink)"
+                                                                style={{
+                                                                    backgroundColor:
+                                                                        card.color ||
+                                                                        "#dfc2ff",
+                                                                }}
                                                             >
-                                                                <span className="font-bold text-(--text-muted)">
-                                                                    Partial
-                                                                </span>
-                                                                <CurrencyText
-                                                                    amount={
-                                                                        stmt.amount_paid!
-                                                                    }
-                                                                    size="sm"
-                                                                />
-                                                            </div>
-                                                        )}
-
-                                                        {/* Utilisation meter if limit configured */}
-                                                        {card.credit_limit &&
-                                                            card.credit_limit >
-                                                                0 && (
-                                                                <div className="pt-1">
-                                                                    <MeterBar
-                                                                        value={
-                                                                            stmt.statement_amount
-                                                                        }
-                                                                        max={
-                                                                            card.credit_limit
-                                                                        }
-                                                                        size="sm"
-                                                                        aria-label={`${card.name} limit utilisation`}
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                        {stmt.notes && (
-                                                            <p className="text-xs text-(--text-muted) italic line-clamp-1">
-                                                                &ldquo;
-                                                                {stmt.notes}
-                                                                &rdquo;
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div
-                                                        className="flex items-center justify-between gap-2 py-1"
-                                                        data-testid={`credit-card-pending-${card.id}`}
-                                                    >
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="text-xs font-bold text-(--text-muted)">
-                                                                {viewMode ===
-                                                                "active"
-                                                                    ? `Pending · ${formatShortMonth(cardMonth)}`
-                                                                    : "Pending"}
-                                                            </div>
-                                                            <div className="text-[11px] text-(--text-muted)">
-                                                                Statement{" "}
-                                                                {formatDisplayDate(
-                                                                    pendingCycle!
-                                                                        .statementDate,
+                                                                {card.bank.slice(
+                                                                    0,
+                                                                    4,
                                                                 )}
                                                             </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <h4 className="font-display font-black text-sm text-(--text-ink) truncate">
+                                                                    <TruncatedText
+                                                                        text={
+                                                                            card.name
+                                                                        }
+                                                                    />
+                                                                </h4>
+                                                                <div className="flex items-center gap-2 text-xs text-(--text-muted) mt-0.5 min-w-0">
+                                                                    {card.last4 && (
+                                                                        <span className="font-mono-num font-bold text-xs bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink) px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap">
+                                                                            ••••{" "}
+                                                                            {
+                                                                                card.last4
+                                                                            }
+                                                                        </span>
+                                                                    )}
+                                                                    <span className="font-semibold truncate min-w-0">
+                                                                        {
+                                                                            card.bank
+                                                                        }
+                                                                    </span>
+                                                                    {owner && (
+                                                                        <div className="inline-flex items-center gap-1 min-w-0">
+                                                                            <AvatarDot
+                                                                                name={
+                                                                                    owner.display_name
+                                                                                }
+                                                                                avatarUrl={
+                                                                                    owner.avatar_url
+                                                                                }
+                                                                                size="xs"
+                                                                                decorative
+                                                                            />
+                                                                            <span className="font-semibold truncate whitespace-nowrap min-w-0">
+                                                                                {
+                                                                                    owner.display_name
+                                                                                }
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <Badge
-                                                            variant={
-                                                                pendingStatus!
-                                                                    .isOverdue
-                                                                    ? "over"
-                                                                    : "due"
-                                                            }
-                                                            size="sm"
-                                                            className="shrink-0"
-                                                            title={`Due ${formatDisplayDate(pendingCycle!.dueDate)}`}
-                                                        >
-                                                            {
-                                                                pendingStatus!
-                                                                    .label
-                                                            }
-                                                        </Badge>
+
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                aria-label={`Edit ${card.name}`}
+                                                                onClick={() => {
+                                                                    setCardToEdit(
+                                                                        card,
+                                                                    );
+                                                                    setIsAddEditCardOpen(
+                                                                        true,
+                                                                    );
+                                                                }}
+                                                                className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                            >
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
 
-                                        {/* Footer Actions: 1-Tap Paid / Unpaid Toggle & Log Statement */}
-                                        <div className="mt-4 border-t border-(--border-subtle) pt-3 flex items-center justify-between gap-2">
-                                            {stmt ? (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        aria-label={
-                                                            stmt.is_paid
-                                                                ? `Mark ${card.name} statement as Unpaid`
-                                                                : `Mark ${card.name} statement as Paid`
-                                                        }
-                                                        onClick={() =>
-                                                            handleTogglePaid(
-                                                                stmt,
-                                                            )
-                                                        }
-                                                        className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer ${
-                                                            stmt.is_paid
-                                                                ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
-                                                                : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
-                                                        }`}
-                                                    >
-                                                        <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
-                                                        <span>
-                                                            {stmt.is_paid
-                                                                ? "Paid"
-                                                                : "Mark as Paid"}
+                                                    {/* Card Configuration Specs as Icon Rows */}
+                                                    <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-(--text-muted) border-t border-(--border-subtle) pt-2.5">
+                                                        <StatRow
+                                                            icon={
+                                                                <ReceiptText className="h-3.5 w-3.5" />
+                                                            }
+                                                            label="Statement Day"
+                                                            value={ordinal(
+                                                                card.billing_day,
+                                                            )}
+                                                            showLabel
+                                                        />
+                                                        <StatRow
+                                                            icon={
+                                                                <Calendar className="h-3.5 w-3.5" />
+                                                            }
+                                                            label="Due Day"
+                                                            value={ordinal(
+                                                                card.due_day,
+                                                            )}
+                                                            showLabel
+                                                        />
+                                                        <span className="font-mono-num font-medium text-[11px]">
+                                                            {card.credit_limit
+                                                                ? mask(
+                                                                      `Limit ${formatSGD(card.credit_limit, { showCents: false })}`,
+                                                                  )
+                                                                : "No limit"}
                                                         </span>
-                                                    </button>
+                                                    </div>
 
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Edit ${card.name} statement`}
-                                                        onClick={() =>
-                                                            handleOpenLogStatement(
-                                                                card,
-                                                                cardMonth,
-                                                            )
-                                                        }
-                                                        className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Mark ${card.name} statement as Paid`}
-                                                        onClick={() =>
-                                                            setCycleToPay(
-                                                                pendingCycle,
-                                                            )
-                                                        }
-                                                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
-                                                    >
-                                                        <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
-                                                        <span>Paid</span>
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Log statement for ${card.name}`}
-                                                        onClick={() =>
-                                                            handleOpenLogStatement(
-                                                                card,
-                                                                cardMonth,
-                                                            )
-                                                        }
-                                                        className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
-                                                    >
-                                                        Edit Statement
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </m.div>
-                                );
-                            })}
-                        </AnimatePresence>
-                    </div>
-                )}
-            </div>
+                                                    {/* Statement Information for Selected Month */}
+                                                    <div className="mt-3 border-t border-(--border-subtle) pt-3">
+                                                        {stmt ? (
+                                                            <div className="space-y-2.5">
+                                                                <div className="flex items-baseline justify-between">
+                                                                    <span className="text-xs font-bold text-(--text-muted)">
+                                                                        {viewMode ===
+                                                                        "active"
+                                                                            ? `Statement · ${formatShortMonth(cardMonth)}`
+                                                                            : "Statement"}
+                                                                    </span>
+                                                                    <span className="text-(--text-ink) font-display font-black text-lg">
+                                                                        <CurrencyText
+                                                                            amount={
+                                                                                stmt.statement_amount
+                                                                            }
+                                                                            size="md"
+                                                                        />
+                                                                    </span>
+                                                                </div>
+
+                                                                {/* Due Date & Status Badge Countdown */}
+                                                                <div className="flex items-center justify-between text-xs">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span
+                                                                            className="text-[11px] font-mono-num text-(--text-muted)"
+                                                                            title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                                                        >
+                                                                            {formatDisplayDate(
+                                                                                stmt.due_date,
+                                                                            )}
+                                                                        </span>
+                                                                        <CalendarStrip
+                                                                            daysRemaining={
+                                                                                stmt.is_paid
+                                                                                    ? null
+                                                                                    : dueStatus?.isOverdue
+                                                                                      ? -1
+                                                                                      : (dueStatus?.daysDiff ??
+                                                                                        null)
+                                                                            }
+                                                                            status={
+                                                                                stmt.is_paid
+                                                                                    ? "paid"
+                                                                                    : dueStatus?.isOverdue
+                                                                                      ? "overdue"
+                                                                                      : undefined
+                                                                            }
+                                                                            totalDots={
+                                                                                5
+                                                                            }
+                                                                            size="xs"
+                                                                        />
+                                                                    </div>
+
+                                                                    {dueStatus && (
+                                                                        <Badge
+                                                                            variant={
+                                                                                stmt.is_paid
+                                                                                    ? "paid"
+                                                                                    : dueStatus.isOverdue
+                                                                                      ? "over"
+                                                                                      : "due"
+                                                                            }
+                                                                            size="sm"
+                                                                            title={`Due ${formatDisplayDate(stmt.due_date)}`}
+                                                                        >
+                                                                            {
+                                                                                dueStatus.label
+                                                                            }
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+
+                                                                {isPartialPayment(
+                                                                    stmt,
+                                                                ) && (
+                                                                    <div
+                                                                        className="flex items-center justify-between gap-2 text-xs"
+                                                                        data-testid={`credit-card-partial-${card.id}`}
+                                                                    >
+                                                                        <span className="font-bold text-(--text-muted)">
+                                                                            Partial
+                                                                        </span>
+                                                                        <CurrencyText
+                                                                            amount={
+                                                                                stmt.amount_paid!
+                                                                            }
+                                                                            size="sm"
+                                                                        />
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Utilisation meter if limit configured */}
+                                                                {card.credit_limit &&
+                                                                    card.credit_limit >
+                                                                        0 && (
+                                                                        <div className="pt-1">
+                                                                            <MeterBar
+                                                                                value={
+                                                                                    stmt.statement_amount
+                                                                                }
+                                                                                max={
+                                                                                    card.credit_limit
+                                                                                }
+                                                                                size="sm"
+                                                                                aria-label={`${card.name} limit utilisation`}
+                                                                            />
+                                                                        </div>
+                                                                    )}
+
+                                                                {stmt.notes && (
+                                                                    <p className="text-xs text-(--text-muted) italic line-clamp-1">
+                                                                        &ldquo;
+                                                                        {
+                                                                            stmt.notes
+                                                                        }
+                                                                        &rdquo;
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div
+                                                                className="flex items-center justify-between gap-2 py-1"
+                                                                data-testid={`credit-card-pending-${card.id}`}
+                                                            >
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="text-xs font-bold text-(--text-muted)">
+                                                                        {viewMode ===
+                                                                        "active"
+                                                                            ? `Pending · ${formatShortMonth(cardMonth)}`
+                                                                            : "Pending"}
+                                                                    </div>
+                                                                    <div className="text-[11px] text-(--text-muted)">
+                                                                        Statement{" "}
+                                                                        {formatDisplayDate(
+                                                                            pendingCycle!
+                                                                                .statementDate,
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <Badge
+                                                                    variant={
+                                                                        pendingStatus!
+                                                                            .isOverdue
+                                                                            ? "over"
+                                                                            : "due"
+                                                                    }
+                                                                    size="sm"
+                                                                    className="shrink-0"
+                                                                    title={`Due ${formatDisplayDate(pendingCycle!.dueDate)}`}
+                                                                >
+                                                                    {
+                                                                        pendingStatus!
+                                                                            .label
+                                                                    }
+                                                                </Badge>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Footer Actions: 1-Tap Paid / Unpaid Toggle & Log Statement */}
+                                                <div className="mt-4 border-t border-(--border-subtle) pt-3 flex items-center justify-between gap-2">
+                                                    {stmt ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                aria-label={
+                                                                    stmt.is_paid
+                                                                        ? `Mark ${card.name} statement as Unpaid`
+                                                                        : `Mark ${card.name} statement as Paid`
+                                                                }
+                                                                onClick={() =>
+                                                                    handleTogglePaid(
+                                                                        stmt,
+                                                                    )
+                                                                }
+                                                                className={`flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer ${
+                                                                    stmt.is_paid
+                                                                        ? "bg-(--pastel-mint) text-(--text-ink) hover:opacity-90"
+                                                                        : "bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
+                                                                }`}
+                                                            >
+                                                                <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
+                                                                <span>
+                                                                    {stmt.is_paid
+                                                                        ? "Paid"
+                                                                        : "Mark as Paid"}
+                                                                </span>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                aria-label={`Edit ${card.name} statement`}
+                                                                onClick={() =>
+                                                                    handleOpenLogStatement(
+                                                                        card,
+                                                                        cardMonth,
+                                                                    )
+                                                                }
+                                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--bg-canvas) hover:bg-(--pastel-butter-light) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                aria-label={`Mark ${card.name} statement as Paid`}
+                                                                onClick={() =>
+                                                                    setCycleToPay(
+                                                                        pendingCycle,
+                                                                    )
+                                                                }
+                                                                className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold border border-(--border-ink) shadow-cute-sm transition-press cursor-pointer bg-(--bg-card) hover:bg-(--pastel-mint-light) text-(--text-ink)"
+                                                            >
+                                                                <CheckCircle2 className="h-3.5 w-3.5 text-(--text-ink)" />
+                                                                <span>
+                                                                    Paid
+                                                                </span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                aria-label={`Log statement for ${card.name}`}
+                                                                onClick={() =>
+                                                                    handleOpenLogStatement(
+                                                                        card,
+                                                                        cardMonth,
+                                                                    )
+                                                                }
+                                                                className="py-1.5 px-2.5 rounded-xl text-xs font-bold text-(--text-ink) bg-(--pastel-lilac-light) hover:bg-(--pastel-lilac) border border-(--border-ink) shadow-cute-sm transition-colors cursor-pointer shrink-0"
+                                                            >
+                                                                Edit Statement
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </m.div>
+                                        );
+                                    },
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Add / Edit Card Modal */}

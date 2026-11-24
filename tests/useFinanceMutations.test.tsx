@@ -10,28 +10,33 @@
  * 6. Inbox mutations: optimistic confirm/resolve, rollback on error.
  */
 
+import { keys } from "../src/lib/queryKeys";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
-    useUpdateGoalMutation,
-    useAddGoalMutation,
-    useUpdateRecurringItemMutation,
-    useDeleteRecurringItemMutation,
     useUpdateAccountBalanceMutation,
     useBulkUpdateAccountBalancesMutation,
+} from "../src/hooks/finance/accounts";
+import {
+    useUpdateRecurringItemMutation,
+    useDeleteRecurringItemMutation,
+    useUpdateBaseProfileMutation,
+} from "../src/hooks/finance/budget";
+import {
     useAddCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation,
-    useUpdateBaseProfileMutation,
-    queryKeys,
-} from "../src/hooks/useFinanceQueries";
+} from "../src/hooks/finance/categories";
+import {
+    useUpdateGoalMutation,
+    useAddGoalMutation,
+} from "../src/hooks/finance/goals";
 import {
     useConfirmInboxItemMutation,
     useResolveInboxItemMutation,
-    inboxQueryKeys,
-} from "../src/hooks/useInboxQueries";
+} from "../src/hooks/finance/inbox";
 import { financeService } from "../src/services/financeService";
 import type {
     SavingsGoal,
@@ -92,7 +97,7 @@ describe("Issue #38: Domain Save Mutations", () => {
         ];
 
         it("optimistically updates a goal and rolls back on error", async () => {
-            queryClient.setQueryData(queryKeys.goals, initialGoals);
+            queryClient.setQueryData(keys.goals.all, initialGoals);
 
             let rejectPromise!: (err: Error) => void;
             const updateSpy = vi
@@ -117,7 +122,7 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             // Optimistic update should immediately reflect in cache
             const cachedBeforeServer = queryClient.getQueryData<SavingsGoal[]>(
-                queryKeys.goals,
+                keys.goals.all,
             );
             expect(cachedBeforeServer?.[0].title).toBe("Korea Trip");
 
@@ -128,7 +133,7 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             // Cache should be rolled back to initial state
             const cachedAfterError = queryClient.getQueryData<SavingsGoal[]>(
-                queryKeys.goals,
+                keys.goals.all,
             );
             expect(cachedAfterError?.[0].title).toBe("Japan Trip");
             expect(updateSpy).toHaveBeenCalledWith("goal-1", {
@@ -137,7 +142,7 @@ describe("Issue #38: Domain Save Mutations", () => {
         });
 
         it("optimistically adds a goal and rolls back on error", async () => {
-            queryClient.setQueryData(queryKeys.goals, initialGoals);
+            queryClient.setQueryData(keys.goals.all, initialGoals);
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "addGoal").mockImplementation(
@@ -161,7 +166,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals),
+                queryClient.getQueryData<SavingsGoal[]>(keys.goals.all),
             ).toHaveLength(2);
 
             await act(async () => {
@@ -169,7 +174,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<SavingsGoal[]>(queryKeys.goals),
+                queryClient.getQueryData<SavingsGoal[]>(keys.goals.all),
             ).toHaveLength(1);
         });
     });
@@ -191,10 +196,7 @@ describe("Issue #38: Domain Save Mutations", () => {
         ];
 
         it("optimistically updates recurring item and rolls back on error", async () => {
-            queryClient.setQueryData(
-                queryKeys.recurringItems,
-                initialRecurring,
-            );
+            queryClient.setQueryData(keys.recurring.all, initialRecurring);
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "updateRecurringItem").mockImplementation(
@@ -217,7 +219,7 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             expect(
                 queryClient.getQueryData<RecurringItem[]>(
-                    queryKeys.recurringItems,
+                    keys.recurring.all,
                 )?.[0].amount,
             ).toBe(30);
 
@@ -227,16 +229,13 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             expect(
                 queryClient.getQueryData<RecurringItem[]>(
-                    queryKeys.recurringItems,
+                    keys.recurring.all,
                 )?.[0].amount,
             ).toBe(25.98);
         });
 
         it("optimistically deletes recurring item", async () => {
-            queryClient.setQueryData(
-                queryKeys.recurringItems,
-                initialRecurring,
-            );
+            queryClient.setQueryData(keys.recurring.all, initialRecurring);
 
             vi.spyOn(financeService, "deleteRecurringItem").mockResolvedValue(
                 undefined as never,
@@ -254,9 +253,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<RecurringItem[]>(
-                    queryKeys.recurringItems,
-                ),
+                queryClient.getQueryData<RecurringItem[]>(keys.recurring.all),
             ).toHaveLength(0);
         });
     });
@@ -288,8 +285,8 @@ describe("Issue #38: Domain Save Mutations", () => {
         ];
 
         it("optimistically updates single account balance across perspective queries", async () => {
-            queryClient.setQueryData(queryKeys.accounts(), initialAccounts);
-            queryClient.setQueryData(queryKeys.accounts("mem-1"), [
+            queryClient.setQueryData(keys.accounts.list(), initialAccounts);
+            queryClient.setQueryData(keys.accounts.list("mem-1"), [
                 initialAccounts[0],
             ]);
 
@@ -317,13 +314,13 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             // Check household perspective
             expect(
-                queryClient.getQueryData<Account[]>(queryKeys.accounts())?.[0]
+                queryClient.getQueryData<Account[]>(keys.accounts.list())?.[0]
                     .balance,
             ).toBe(12500);
             // Check member perspective
             expect(
                 queryClient.getQueryData<Account[]>(
-                    queryKeys.accounts("mem-1"),
+                    keys.accounts.list("mem-1"),
                 )?.[0].balance,
             ).toBe(12500);
 
@@ -333,18 +330,18 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<Account[]>(queryKeys.accounts())?.[0]
+                queryClient.getQueryData<Account[]>(keys.accounts.list())?.[0]
                     .balance,
             ).toBe(10000);
             expect(
                 queryClient.getQueryData<Account[]>(
-                    queryKeys.accounts("mem-1"),
+                    keys.accounts.list("mem-1"),
                 )?.[0].balance,
             ).toBe(10000);
         });
 
         it("optimistically performs bulk balance updates", async () => {
-            queryClient.setQueryData(queryKeys.accounts(), initialAccounts);
+            queryClient.setQueryData(keys.accounts.list(), initialAccounts);
 
             let resolvePromise!: (val: Account[]) => void;
             vi.spyOn(
@@ -374,7 +371,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             const updatedCached = queryClient.getQueryData<Account[]>(
-                queryKeys.accounts(),
+                keys.accounts.list(),
             );
             expect(updatedCached?.[0].balance).toBe(11000);
             expect(updatedCached?.[1].balance).toBe(6000);
@@ -398,7 +395,7 @@ describe("Issue #38: Domain Save Mutations", () => {
         ];
 
         it("optimistically updates a category", async () => {
-            queryClient.setQueryData(queryKeys.categories, initialCategories);
+            queryClient.setQueryData(keys.categories.all, initialCategories);
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "updateCategory").mockImplementation(
@@ -420,7 +417,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<Category[]>(queryKeys.categories)?.[0]
+                queryClient.getQueryData<Category[]>(keys.categories.all)?.[0]
                     .name,
             ).toBe("Food & Dining");
 
@@ -429,13 +426,13 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<Category[]>(queryKeys.categories)?.[0]
+                queryClient.getQueryData<Category[]>(keys.categories.all)?.[0]
                     .name,
             ).toBe("Dining");
         });
 
         it("optimistically adds a category and rolls back on error", async () => {
-            queryClient.setQueryData(queryKeys.categories, initialCategories);
+            queryClient.setQueryData(keys.categories.all, initialCategories);
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "addCategory").mockImplementation(
@@ -459,7 +456,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<Category[]>(queryKeys.categories),
+                queryClient.getQueryData<Category[]>(keys.categories.all),
             ).toHaveLength(2);
 
             await act(async () => {
@@ -467,12 +464,12 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<Category[]>(queryKeys.categories),
+                queryClient.getQueryData<Category[]>(keys.categories.all),
             ).toHaveLength(1);
         });
 
         it("optimistically deletes a category", async () => {
-            queryClient.setQueryData(queryKeys.categories, initialCategories);
+            queryClient.setQueryData(keys.categories.all, initialCategories);
 
             vi.spyOn(financeService, "deleteCategory").mockResolvedValue(
                 undefined as never,
@@ -487,7 +484,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<Category[]>(queryKeys.categories),
+                queryClient.getQueryData<Category[]>(keys.categories.all),
             ).toHaveLength(0);
         });
     });
@@ -512,9 +509,9 @@ describe("Issue #38: Domain Save Mutations", () => {
         ];
 
         it("optimistically updates base profile allocations and rolls back on error", async () => {
-            queryClient.setQueryData(queryKeys.baseProfiles, [mockProfile]);
+            queryClient.setQueryData(keys.budget.baseProfiles, [mockProfile]);
             queryClient.setQueryData(
-                queryKeys.baseAllocations("prof-1"),
+                keys.budget.baseAllocations("prof-1"),
                 mockAllocations,
             );
 
@@ -547,12 +544,12 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             expect(
                 queryClient.getQueryData<BaseBudgetProfile[]>(
-                    queryKeys.baseProfiles,
+                    keys.budget.baseProfiles,
                 )?.[0].gross_salary,
             ).toBe(7000);
             expect(
                 queryClient.getQueryData<BaseProfileAllocation[]>(
-                    queryKeys.baseAllocations("prof-1"),
+                    keys.budget.baseAllocations("prof-1"),
                 )?.[0].target_percentage,
             ).toBe(0.6);
 
@@ -562,12 +559,12 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             expect(
                 queryClient.getQueryData<BaseBudgetProfile[]>(
-                    queryKeys.baseProfiles,
+                    keys.budget.baseProfiles,
                 )?.[0].gross_salary,
             ).toBe(6000);
             expect(
                 queryClient.getQueryData<BaseProfileAllocation[]>(
-                    queryKeys.baseAllocations("prof-1"),
+                    keys.budget.baseAllocations("prof-1"),
                 )?.[0].target_percentage,
             ).toBe(0.5);
         });
@@ -593,7 +590,7 @@ describe("Issue #38: Domain Save Mutations", () => {
         };
 
         it("optimistically removes item on confirm and rolls back on error", async () => {
-            queryClient.setQueryData(inboxQueryKeys.items, initialInboxResult);
+            queryClient.setQueryData(keys.inbox.items, initialInboxResult);
 
             let rejectPromise!: (err: Error) => void;
             vi.spyOn(financeService, "confirmInboxItem").mockImplementation(
@@ -627,7 +624,7 @@ describe("Issue #38: Domain Save Mutations", () => {
 
             // Optimistically removed
             expect(
-                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                queryClient.getQueryData<InboxItemsResult>(keys.inbox.items)
                     ?.items,
             ).toHaveLength(0);
 
@@ -637,13 +634,13 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                queryClient.getQueryData<InboxItemsResult>(keys.inbox.items)
                     ?.items,
             ).toHaveLength(1);
         });
 
         it("optimistically resolves item", async () => {
-            queryClient.setQueryData(inboxQueryKeys.items, initialInboxResult);
+            queryClient.setQueryData(keys.inbox.items, initialInboxResult);
 
             let resolvePromise!: (val: void) => void;
             vi.spyOn(financeService, "resolveInboxItem").mockImplementation(
@@ -662,7 +659,7 @@ describe("Issue #38: Domain Save Mutations", () => {
             });
 
             expect(
-                queryClient.getQueryData<InboxItemsResult>(inboxQueryKeys.items)
+                queryClient.getQueryData<InboxItemsResult>(keys.inbox.items)
                     ?.items,
             ).toHaveLength(0);
 

@@ -6,12 +6,12 @@
 
 import { useMemo } from "react";
 import {
-    useAllExpensesQuery,
     useBaseAllocationsQuery,
     useBaseProfilesQuery,
     useBudgetDetailQuery,
-    useCategoriesQuery,
-} from "./useFinanceQueries";
+} from "./finance/budget";
+import { useCategoriesQuery } from "./finance/categories";
+import { useAllExpensesQuery } from "./finance/expenses";
 import { useOptionalHousehold } from "../context/HouseholdContext";
 import { addMonths } from "../lib/dateUtils";
 import { detectUnspentMonthEndSurplus } from "../lib/financialFormulas";

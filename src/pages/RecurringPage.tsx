@@ -22,14 +22,14 @@ import {
 } from "../components/ui";
 import { Alert } from "../components/ui/Alert";
 import {
-    useCategoriesQuery,
-    useGoalsQuery,
     useRecurringItemsQuery,
-    useInvalidateFinance,
     useAddRecurringItemMutation,
     useUpdateRecurringItemMutation,
     useDeleteRecurringItemMutation,
-} from "../hooks/useFinanceQueries";
+} from "../hooks/finance/budget";
+import { useCategoriesQuery } from "../hooks/finance/categories";
+import { useGoalsQuery } from "../hooks/finance/goals";
+import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { formatSGD } from "../lib/currency";
 import {

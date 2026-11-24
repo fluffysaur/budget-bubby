@@ -46,10 +46,8 @@ import {
     completeOpenRouterOAuthCallback,
     setPendingOpenRouterFeedback,
 } from "./services/ai/openrouterAuth";
-import {
-    useCategoriesQuery,
-    useInvalidateFinance,
-} from "./hooks/useFinanceQueries";
+import { useCategoriesQuery } from "./hooks/finance/categories";
+import { useInvalidateFinance } from "./hooks/finance/shared";
 import { DesktopSidebar } from "./components/layout/DesktopSidebar";
 import { AppHeader } from "./components/layout/AppHeader";
 import { MobileBottomNav } from "./components/layout/MobileBottomNav";

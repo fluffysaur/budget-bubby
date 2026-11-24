@@ -32,10 +32,8 @@ import {
 } from "./BonusCelebration";
 import { feedback } from "../../lib/delight/feedback";
 import { useHousehold } from "../../context/HouseholdContext";
-import {
-    useBaseProfilesQuery,
-    useBonusEventsQuery,
-} from "../../hooks/useFinanceQueries";
+import { useBaseProfilesQuery } from "../../hooks/finance/budget";
+import { useBonusEventsQuery } from "../../hooks/finance/settleUps";
 import {
     BONUS_TYPE_LABELS,
     groupBonusesByYear,

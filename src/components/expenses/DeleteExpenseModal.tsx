@@ -25,7 +25,7 @@ import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { feedback } from "../../lib/delight/feedback";
 import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
-import { useDeleteExpenseMutation } from "../../hooks/useFinanceQueries";
+import { useDeleteExpenseMutation } from "../../hooks/finance/expenses";
 import type { Expense, Category, HouseholdMember } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 

@@ -20,7 +20,7 @@ import { fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useSettings } from "../../context/SettingsContext";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
-import { useSafeQueryClient } from "../../hooks/useFinanceQueries";
+import { useSafeQueryClient } from "../../hooks/finance/shared";
 import { generateUuid } from "../../lib/uuid";
 import {
     AI_CONFIG_CHANGED_EVENT,
@@ -564,330 +564,291 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
             className="max-w-md sm:max-w-xl"
         >
             {/* Header */}
-                        <div className="flex items-center justify-between gap-2 border-b-2 border-(--border-ink) bg-(--bg-card) px-4 py-3">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm">
-                                    <Sparkles
-                                        className="h-4.5 w-4.5"
+            <div className="flex items-center justify-between gap-2 border-b-2 border-(--border-ink) bg-(--bg-card) px-4 py-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--pastel-lilac) text-(--text-ink) shadow-cute-sm">
+                        <Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />
+                    </div>
+                    <div className="min-w-0">
+                        <h2 className="text-sm font-black font-display text-(--text-ink) truncate">
+                            Bubby AI
+                        </h2>
+                        <p className="text-[11px] font-semibold text-(--text-muted) truncate">
+                            {hasApiKey
+                                ? AI_PROVIDER_META[activeProvider].label
+                                : "Budget assistant"}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {messages.length > 0 && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={handleClearChat}
+                            aria-label="Clear chat"
+                            title="Clear chat"
+                            data-testid="bubby-clear-chat-btn"
+                        >
+                            <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                        </Button>
+                    )}
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => {
+                            onClose();
+                            openSettings();
+                        }}
+                        aria-label="AI Settings"
+                        title="AI Settings"
+                        data-testid="bubby-open-settings-btn"
+                    >
+                        <Settings className="h-4 w-4" strokeWidth={2.5} />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={onClose}
+                        aria-label="Close Bubby AI"
+                        data-testid="bubby-close-drawer-btn"
+                    >
+                        <X className="h-4 w-4" strokeWidth={2.5} />
+                    </Button>
+                </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                {oauthBanner && (
+                    <Alert
+                        variant={oauthBanner.variant}
+                        onClose={() => setOauthBanner(null)}
+                    >
+                        <span data-testid="bubby-oauth-feedback">
+                            {oauthBanner.message}
+                        </span>
+                    </Alert>
+                )}
+                {!hasApiKey ? (
+                    <div
+                        className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3"
+                        data-testid="bubby-no-key-state"
+                    >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) shadow-cute-sm">
+                            <Sparkles
+                                className="h-6 w-6 text-(--text-ink)"
+                                strokeWidth={2.5}
+                            />
+                        </div>
+                        <h3 className="text-base font-black font-display text-(--text-ink)">
+                            Connect AI
+                        </h3>
+                        <p className="text-xs font-medium text-(--text-muted) max-w-65">
+                            Connect OpenRouter in one click, or add an API key
+                            in Settings.
+                        </p>
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
+                                isLoading={isConnectingOpenRouter}
+                                onClick={handleConnectOpenRouter}
+                                data-testid="bubby-connect-openrouter-btn"
+                                leftIcon={
+                                    <ExternalLink
+                                        className="h-4 w-4"
                                         strokeWidth={2.5}
                                     />
-                                </div>
-                                <div className="min-w-0">
-                                    <h2 className="text-sm font-black font-display text-(--text-ink) truncate">
-                                        Bubby AI
-                                    </h2>
-                                    <p className="text-[11px] font-semibold text-(--text-muted) truncate">
-                                        {hasApiKey
-                                            ? AI_PROVIDER_META[activeProvider]
-                                                  .label
-                                            : "Budget assistant"}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                                {messages.length > 0 && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={handleClearChat}
-                                        aria-label="Clear chat"
-                                        title="Clear chat"
-                                        data-testid="bubby-clear-chat-btn"
-                                    >
-                                        <Trash2
-                                            className="h-4 w-4"
-                                            strokeWidth={2.5}
-                                        />
-                                    </Button>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    onClick={() => {
-                                        onClose();
-                                        openSettings();
-                                    }}
-                                    aria-label="AI Settings"
-                                    title="AI Settings"
-                                    data-testid="bubby-open-settings-btn"
-                                >
+                                }
+                            >
+                                Connect OpenRouter
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                    onClose();
+                                    openSettings();
+                                }}
+                                data-testid="bubby-setup-key-cta"
+                                leftIcon={
                                     <Settings
                                         className="h-4 w-4"
                                         strokeWidth={2.5}
                                     />
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    onClick={onClose}
-                                    aria-label="Close Bubby AI"
-                                    data-testid="bubby-close-drawer-btn"
-                                >
-                                    <X className="h-4 w-4" strokeWidth={2.5} />
-                                </Button>
-                            </div>
+                                }
+                            >
+                                Open Settings
+                            </Button>
                         </div>
-
-                        {/* Body */}
-                        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-                            {oauthBanner && (
-                                <Alert
-                                    variant={oauthBanner.variant}
-                                    onClose={() => setOauthBanner(null)}
+                    </div>
+                ) : messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-10 px-2 space-y-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm">
+                            <Sparkles
+                                className="h-6 w-6 text-(--text-ink)"
+                                strokeWidth={2.5}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-base font-black font-display text-(--text-ink)">
+                                Ask Bubby
+                            </h3>
+                            <p className="text-xs font-medium text-(--text-muted) max-w-65">
+                                Ask about your spending, budget, or propose an
+                                expense.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-2 pt-1">
+                            {STARTER_PROMPTS.map((prompt) => (
+                                <button
+                                    key={prompt}
+                                    type="button"
+                                    onClick={() => void handleSend(prompt)}
+                                    className="min-h-11 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-3 py-2 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-cream) transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                 >
-                                    <span data-testid="bubby-oauth-feedback">
-                                        {oauthBanner.message}
-                                    </span>
-                                </Alert>
-                            )}
-                            {!hasApiKey ? (
+                                    {prompt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    messages.map((msg) => (
+                        <m.div
+                            key={msg.id}
+                            {...fadeRise}
+                            className={`flex flex-col gap-2 ${
+                                msg.role === "user"
+                                    ? "items-end"
+                                    : "items-start"
+                            }`}
+                        >
+                            {(msg.role === "user" ||
+                                msg.content ||
+                                msg.isStreaming) && (
                                 <div
-                                    className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3"
-                                    data-testid="bubby-no-key-state"
+                                    className={`${msg.role === "user" ? "max-w-[88%]" : "max-w-full"} rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-cute-sm ${
+                                        msg.role === "user"
+                                            ? "whitespace-pre-wrap bg-(--pastel-lilac) text-(--text-ink) font-semibold"
+                                            : "bg-(--bg-card) text-(--text-ink) font-medium"
+                                    }`}
                                 >
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--pastel-lilac-light) shadow-cute-sm">
-                                        <Sparkles
-                                            className="h-6 w-6 text-(--text-ink)"
-                                            strokeWidth={2.5}
-                                        />
-                                    </div>
-                                    <h3 className="text-base font-black font-display text-(--text-ink)">
-                                        Connect AI
-                                    </h3>
-                                    <p className="text-xs font-medium text-(--text-muted) max-w-65">
-                                        Connect OpenRouter in one click, or add
-                                        an API key in Settings.
-                                    </p>
-                                    <div className="flex flex-wrap items-center justify-center gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="primary"
-                                            size="sm"
-                                            isLoading={isConnectingOpenRouter}
-                                            onClick={handleConnectOpenRouter}
-                                            data-testid="bubby-connect-openrouter-btn"
-                                            leftIcon={
-                                                <ExternalLink
-                                                    className="h-4 w-4"
+                                    {msg.role === "user" ? (
+                                        msg.content
+                                    ) : (
+                                        <MarkdownText>
+                                            {msg.content}
+                                        </MarkdownText>
+                                    )}
+                                    {msg.isStreaming && !msg.content && (
+                                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
+                                            <Loader2
+                                                className="h-3.5 w-3.5 animate-spin"
+                                                strokeWidth={2.5}
+                                            />
+                                            {msg.activeToolLabel ??
+                                                "Thinking..."}
+                                        </span>
+                                    )}
+                                    {msg.isStreaming &&
+                                        msg.content &&
+                                        msg.activeToolLabel && (
+                                            <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-(--text-muted)">
+                                                <Loader2
+                                                    className="h-3 w-3 animate-spin"
                                                     strokeWidth={2.5}
                                                 />
-                                            }
-                                        >
-                                            Connect OpenRouter
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => {
-                                                onClose();
-                                                openSettings();
-                                            }}
-                                            data-testid="bubby-setup-key-cta"
-                                            leftIcon={
-                                                <Settings
-                                                    className="h-4 w-4"
-                                                    strokeWidth={2.5}
-                                                />
-                                            }
-                                        >
-                                            Open Settings
-                                        </Button>
-                                    </div>
+                                                {msg.activeToolLabel}
+                                            </div>
+                                        )}
                                 </div>
-                            ) : messages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center text-center py-10 px-2 space-y-4">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm">
-                                        <Sparkles
-                                            className="h-6 w-6 text-(--text-ink)"
-                                            strokeWidth={2.5}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h3 className="text-base font-black font-display text-(--text-ink)">
-                                            Ask Bubby
-                                        </h3>
-                                        <p className="text-xs font-medium text-(--text-muted) max-w-65">
-                                            Ask about your spending, budget, or
-                                            propose an expense.
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-wrap justify-center gap-2 pt-1">
-                                        {STARTER_PROMPTS.map((prompt) => (
-                                            <button
-                                                key={prompt}
-                                                type="button"
-                                                onClick={() =>
-                                                    void handleSend(prompt)
+                            )}
+
+                            {msg.error && (
+                                <div className="w-full">
+                                    <Alert variant="danger">{msg.error}</Alert>
+                                </div>
+                            )}
+
+                            {msg.proposedActions &&
+                                msg.proposedActions.length > 0 && (
+                                    <div className="w-full space-y-2">
+                                        {msg.proposedActions.map((action) => (
+                                            <ActionConfirmationCard
+                                                key={action.id}
+                                                action={action}
+                                                onConfirm={(act) =>
+                                                    handleConfirmAction(
+                                                        msg.id,
+                                                        act,
+                                                    )
                                                 }
-                                                className="min-h-11 rounded-xl border-2 border-(--border-ink) bg-(--bg-card) px-3 py-2 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-cream) transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                            >
-                                                {prompt}
-                                            </button>
+                                                onCancel={(actId) =>
+                                                    handleCancelAction(
+                                                        msg.id,
+                                                        actId,
+                                                    )
+                                                }
+                                            />
                                         ))}
                                     </div>
-                                </div>
-                            ) : (
-                                messages.map((msg) => (
-                                    <m.div
-                                        key={msg.id}
-                                        {...fadeRise}
-                                        className={`flex flex-col gap-2 ${
-                                            msg.role === "user"
-                                                ? "items-end"
-                                                : "items-start"
-                                        }`}
-                                    >
-                                        {(msg.role === "user" ||
-                                            msg.content ||
-                                            msg.isStreaming) && (
-                                            <div
-                                                className={`${msg.role === "user" ? "max-w-[88%]" : "max-w-full"} rounded-2xl border-2 border-(--border-ink) px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-cute-sm ${
-                                                    msg.role === "user"
-                                                        ? "whitespace-pre-wrap bg-(--pastel-lilac) text-(--text-ink) font-semibold"
-                                                        : "bg-(--bg-card) text-(--text-ink) font-medium"
-                                                }`}
-                                            >
-                                                {msg.role === "user" ? (
-                                                    msg.content
-                                                ) : (
-                                                    <MarkdownText>
-                                                        {msg.content}
-                                                    </MarkdownText>
-                                                )}
-                                                {msg.isStreaming &&
-                                                    !msg.content && (
-                                                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-(--text-muted)">
-                                                            <Loader2
-                                                                className="h-3.5 w-3.5 animate-spin"
-                                                                strokeWidth={
-                                                                    2.5
-                                                                }
-                                                            />
-                                                            {msg.activeToolLabel ??
-                                                                "Thinking..."}
-                                                        </span>
-                                                    )}
-                                                {msg.isStreaming &&
-                                                    msg.content &&
-                                                    msg.activeToolLabel && (
-                                                        <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-(--text-muted)">
-                                                            <Loader2
-                                                                className="h-3 w-3 animate-spin"
-                                                                strokeWidth={
-                                                                    2.5
-                                                                }
-                                                            />
-                                                            {
-                                                                msg.activeToolLabel
-                                                            }
-                                                        </div>
-                                                    )}
-                                            </div>
-                                        )}
-
-                                        {msg.error && (
-                                            <div className="w-full">
-                                                <Alert variant="danger">
-                                                    {msg.error}
-                                                </Alert>
-                                            </div>
-                                        )}
-
-                                        {msg.proposedActions &&
-                                            msg.proposedActions.length > 0 && (
-                                                <div className="w-full space-y-2">
-                                                    {msg.proposedActions.map(
-                                                        (action) => (
-                                                            <ActionConfirmationCard
-                                                                key={action.id}
-                                                                action={action}
-                                                                onConfirm={(
-                                                                    act,
-                                                                ) =>
-                                                                    handleConfirmAction(
-                                                                        msg.id,
-                                                                        act,
-                                                                    )
-                                                                }
-                                                                onCancel={(
-                                                                    actId,
-                                                                ) =>
-                                                                    handleCancelAction(
-                                                                        msg.id,
-                                                                        actId,
-                                                                    )
-                                                                }
-                                                            />
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
-                                    </m.div>
-                                ))
-                            )}
-                            <div ref={scrollEndRef} />
-                        </div>
-
-                        {/* Composer */}
-                        <form
-                            onSubmit={handleFormSubmit}
-                            className="border-t-2 border-(--border-ink) bg-(--bg-card) px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-                        >
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    value={inputValue}
-                                    onChange={(e) =>
-                                        setInputValue(e.target.value)
-                                    }
-                                    placeholder={
-                                        hasApiKey
-                                            ? "Ask Bubby..."
-                                            : "Add API key in Settings"
-                                    }
-                                    disabled={!hasApiKey || isSending}
-                                    aria-label="Message Bubby AI"
-                                    data-testid="bubby-chat-input"
-                                />
-                                {isSending ? (
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        size="icon-md"
-                                        onClick={() =>
-                                            abortRef.current?.abort()
-                                        }
-                                        aria-label="Stop generating"
-                                        data-testid="bubby-chat-stop-btn"
-                                    >
-                                        <Square
-                                            className="h-4 w-4"
-                                            strokeWidth={2.5}
-                                        />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="icon-md"
-                                        disabled={
-                                            !hasApiKey || !inputValue.trim()
-                                        }
-                                        aria-label="Send message"
-                                        data-testid="bubby-chat-send-btn"
-                                    >
-                                        <Send
-                                            className="h-4 w-4"
-                                            strokeWidth={2.5}
-                                        />
-                                    </Button>
                                 )}
-                            </div>
-                        </form>
+                        </m.div>
+                    ))
+                )}
+                <div ref={scrollEndRef} />
+            </div>
+
+            {/* Composer */}
+            <form
+                onSubmit={handleFormSubmit}
+                className="border-t-2 border-(--border-ink) bg-(--bg-card) px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+            >
+                <div className="flex items-center gap-2">
+                    <Input
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder={
+                            hasApiKey
+                                ? "Ask Bubby..."
+                                : "Add API key in Settings"
+                        }
+                        disabled={!hasApiKey || isSending}
+                        aria-label="Message Bubby AI"
+                        data-testid="bubby-chat-input"
+                    />
+                    {isSending ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="icon-md"
+                            onClick={() => abortRef.current?.abort()}
+                            aria-label="Stop generating"
+                            data-testid="bubby-chat-stop-btn"
+                        >
+                            <Square className="h-4 w-4" strokeWidth={2.5} />
+                        </Button>
+                    ) : (
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            size="icon-md"
+                            disabled={!hasApiKey || !inputValue.trim()}
+                            aria-label="Send message"
+                            data-testid="bubby-chat-send-btn"
+                        >
+                            <Send className="h-4 w-4" strokeWidth={2.5} />
+                        </Button>
+                    )}
+                </div>
+            </form>
         </AnimatedModal>
     );
 }

@@ -37,7 +37,7 @@ import {
 } from "../../lib/bonusFormulas";
 import { autoBalanceAllocations } from "../../lib/financialFormulas";
 import { getTodayDateString } from "../../lib/dateUtils";
-import { useBonusSplitDefaultQuery } from "../../hooks/useFinanceQueries";
+import { useBonusSplitDefaultQuery } from "../../hooks/finance/settleUps";
 import { financeService } from "../../services/financeService";
 import type {
     BaseBudgetProfile,
