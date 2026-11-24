@@ -41,8 +41,6 @@ import { SettingsProvider, useSettings } from "./context/SettingsContext";
 import { PrivacyProvider } from "./context/PrivacyContext";
 import { PinLoginScreen } from "./components/auth/PinLoginScreen";
 import { isSupabaseConfigured } from "./services/supabaseClient";
-import { financeService } from "./services/financeService";
-import { hydrateAiSettings } from "./services/ai/aiSettingsSync";
 import {
     OPENROUTER_CALLBACK_PATH,
     completeOpenRouterOAuthCallback,
@@ -131,7 +129,6 @@ function AppLayoutInner() {
     const { openSettings } = useSettings();
     const { me } = useLoggedInMember();
     const scrollPositions = useRef<Map<string, number>>(new Map());
-    const hasHydratedAiRef = useRef(false);
     const processedOAuthCallbackRef = useRef<string | null>(null);
     const isMountedRef = useRef(true);
 
@@ -144,14 +141,6 @@ function AppLayoutInner() {
 
     // Live sync partner changes (expenses, inbox items) when Supabase is configured
     usePartnerRealtimeSync();
-
-    // Hydrate the local AI key/model cache from the synced remote settings
-    useEffect(() => {
-        if (location.pathname === OPENROUTER_CALLBACK_PATH) return;
-        if (hasHydratedAiRef.current) return;
-        hasHydratedAiRef.current = true;
-        void hydrateAiSettings(financeService);
-    }, [location.pathname]);
 
     // Track main scroller position
     useEffect(() => {
@@ -362,13 +351,12 @@ function AppLayoutInner() {
         void (async () => {
             const result = await completeOpenRouterOAuthCallback(
                 location.search,
-                financeService,
             );
             setPendingOpenRouterFeedback({
                 target: result.returnTo,
                 variant: result.ok ? "success" : "danger",
                 message: result.ok
-                    ? "OpenRouter connected and synced."
+                    ? "OpenRouter connected on this device."
                     : result.error || "Failed to connect OpenRouter.",
             });
             if (!isMountedRef.current) return;

@@ -29,6 +29,7 @@ import {
     isMockModeActive,
 } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
+import { emitAppEvent } from "../../lib/appEvents";
 import {
     getTodayDateString,
     getCurrentSingaporeTime,
@@ -235,7 +236,16 @@ export function ExpenseFormModal({
             .then((res) => {
                 if (isMounted) setInboxItems(res.available ? res.items : []);
             })
-            .catch(() => {});
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                emitAppEvent("app:error", {
+                    title: "Couldn't load inbox",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Inbox suggestions unavailable.",
+                });
+            });
         return () => {
             isMounted = false;
         };
@@ -255,7 +265,16 @@ export function ExpenseFormModal({
                     setGoals(g);
                 }
             })
-            .catch(() => {});
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                emitAppEvent("app:error", {
+                    title: "Couldn't load goals",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Savings goals unavailable.",
+                });
+            });
         return () => {
             isMounted = false;
         };

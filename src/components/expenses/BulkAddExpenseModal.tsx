@@ -40,6 +40,7 @@ import { BulkAddFooterBar } from "./bulk-add/BulkAddFooterBar";
 import { useBulkAddRows } from "./bulk-add/useBulkAddRows";
 import { useBulkAddSubmit } from "./bulk-add/useBulkAddSubmit";
 import { matchPartnerMember } from "../../lib/members";
+import { emitAppEvent } from "../../lib/appEvents";
 
 export interface BulkAddExpenseModalProps {
     isOpen: boolean;
@@ -121,19 +122,28 @@ export function BulkAddExpenseModal({
     useEffect(() => {
         if (propGoals && propGoals.length > 0) {
             setActiveGoals(propGoals);
-        } else if (isOpen) {
-            financeService
-                .getGoals()
-                .then((g) => {
-                    if (g) setActiveGoals(g);
-                })
-                .catch((err) => {
-                    console.error(
-                        "Failed to load goals in BulkAddExpenseModal:",
-                        err,
-                    );
-                });
+            return;
         }
+        if (!isOpen) return;
+        let isMounted = true;
+        financeService
+            .getGoals()
+            .then((g) => {
+                if (isMounted && g) setActiveGoals(g);
+            })
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                emitAppEvent("app:error", {
+                    title: "Couldn't load goals",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Savings goals unavailable.",
+                });
+            });
+        return () => {
+            isMounted = false;
+        };
     }, [propGoals, isOpen]);
 
     const { state, dispatch, summary, isDirty, foreignCurrencies } =

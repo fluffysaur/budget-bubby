@@ -13,7 +13,6 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     Bell,
@@ -36,14 +35,15 @@ import {
     type AppReminder,
 } from "../../lib/notificationScheduler";
 import { syncPushSubscription } from "../../lib/pushSubscription";
+import { AnimatedModal } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
+import { Alert } from "../ui/Alert";
 import { TruncatedText } from "../ui/TruncatedText";
 import { ScrollArea } from "../ui/ScrollArea";
+import { emitAppEvent } from "../../lib/appEvents";
 import { financeService } from "../../services/financeService";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
-import { m, AnimatePresence } from "motion/react";
-import { pop, fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { useNotificationPermission } from "../../hooks/useNotificationPermission";
@@ -88,15 +88,14 @@ export function NotificationCenterPopover({
     const [reminders, setReminders] = useState<AppReminder[]>([]);
     const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
     const [readIds, setReadIds] = useState<Set<string>>(new Set());
+    const [loadError, setLoadError] = useState<string | null>(null);
     const {
         permission,
         needsSystemSettings,
         request: requestPermission,
     } = useNotificationPermission();
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
-    const popoverRef = useRef<HTMLDivElement>(null);
-    const desktopPopoverRef = useRef<HTMLDivElement>(null);
-    const mobileOverlayRef = useRef<HTMLDivElement>(null);
+    const bellButtonRef = useRef<HTMLButtonElement>(null);
 
     const activeMemberId = me?.id || members?.[0]?.id || "mem-00000000-0011";
     const readParam = searchParams.get("read");
@@ -113,6 +112,7 @@ export function NotificationCenterPopover({
     // Load active reminders for current member
     const loadReminders = useCallback(async () => {
         try {
+            setLoadError(null);
             const [active, read] = await Promise.all([
                 computeActiveReminders({ memberId: activeMemberId }),
                 loadReadIds(),
@@ -120,7 +120,11 @@ export function NotificationCenterPopover({
             setReminders(active);
             setReadIds(read);
         } catch (err) {
-            console.error("Failed to load reminders:", err);
+            setLoadError(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not load reminders.",
+            );
         }
     }, [activeMemberId, loadReadIds]);
 
@@ -132,6 +136,7 @@ export function NotificationCenterPopover({
         setReminders([]);
         setDismissedIds(new Set());
         setReadIds(new Set());
+        setLoadError(null);
 
         migrateLegacyDismissals(activeMemberId)
             .then(() =>
@@ -146,8 +151,13 @@ export function NotificationCenterPopover({
                     setReadIds(read);
                 }
             })
-            .catch((err) => {
-                console.error("Failed to load reminders:", err);
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                setLoadError(
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not load reminders.",
+                );
             });
 
         return () => {
@@ -167,7 +177,11 @@ export function NotificationCenterPopover({
                 permission,
             );
         } catch (err) {
-            console.debug("Failed to sync push subscription:", err);
+            setLoadError(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not sync alert settings.",
+            );
         }
     }, [activeMemberId, permission]);
 
@@ -187,9 +201,20 @@ export function NotificationCenterPopover({
         setReadIds((prev) => new Set([...prev, ...keys]));
         financeService
             .markNotificationsRead(activeMemberId, refs)
-            .catch((err) =>
-                console.debug("Failed to mark pushed reminders read:", err),
-            );
+            .catch((err: unknown) => {
+                setReadIds((prev) => {
+                    const next = new Set(prev);
+                    for (const k of keys) next.delete(k);
+                    return next;
+                });
+                emitAppEvent("app:error", {
+                    title: "Update failed",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Could not mark reminders read.",
+                });
+            });
         setSearchParams(
             (prev) => {
                 const next = new URLSearchParams(prev);
@@ -217,58 +242,6 @@ export function NotificationCenterPopover({
             );
     }, [loadReminders, syncSubscription]);
 
-    // Click outside listener for desktop popover
-    useEffect(() => {
-        if (!isOpen) return;
-
-        function handleClickOutside(e: MouseEvent) {
-            const target = e.target as Node;
-            if (!target) return;
-
-            // On mobile, the full-screen overlay covers the whole screen; do not close on body clicks
-            if (isMobile) return;
-
-            // Check if click was inside bell button wrapper
-            if (popoverRef.current && popoverRef.current.contains(target)) {
-                return;
-            }
-
-            // Check if click was inside desktop popover
-            if (
-                desktopPopoverRef.current &&
-                desktopPopoverRef.current.contains(target)
-            ) {
-                return;
-            }
-
-            // Check if click was inside mobile overlay
-            if (
-                mobileOverlayRef.current &&
-                mobileOverlayRef.current.contains(target)
-            ) {
-                return;
-            }
-
-            setIsOpen(false);
-        }
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [isOpen, isMobile]);
-
-    // Escape key listener
-    useEffect(() => {
-        function handleKeyDown(e: KeyboardEvent) {
-            if (e.key === "Escape" && isOpen) {
-                setIsOpen(false);
-            }
-        }
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen]);
-
     // Filter out dismissed reminders
     const visibleReminders = reminders.filter((r) => !dismissedIds.has(r.id));
     const count = visibleReminders.length;
@@ -283,15 +256,27 @@ export function NotificationCenterPopover({
         if (!opening) return;
         const unread = visibleReminders.filter((r) => !readIds.has(r.id));
         if (unread.length === 0) return;
-        setReadIds((prev) => new Set([...prev, ...unread.map((r) => r.id)]));
+        const unreadIds = unread.map((r) => r.id);
+        setReadIds((prev) => new Set([...prev, ...unreadIds]));
         financeService
             .markNotificationsRead(
                 activeMemberId,
                 unread.map((r) => ({ key: r.id, type: r.type })),
             )
-            .catch((err) =>
-                console.debug("Failed to mark reminders read:", err),
-            );
+            .catch((err: unknown) => {
+                setReadIds((prev) => {
+                    const next = new Set(prev);
+                    for (const id of unreadIds) next.delete(id);
+                    return next;
+                });
+                emitAppEvent("app:error", {
+                    title: "Update failed",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Could not mark reminders read.",
+                });
+            });
     };
 
     const handleDismiss = (reminder: AppReminder) => {
@@ -301,7 +286,20 @@ export function NotificationCenterPopover({
                 key: reminder.id,
                 type: reminder.type,
             })
-            .catch((err) => console.debug("Failed to dismiss reminder:", err));
+            .catch((err: unknown) => {
+                setDismissedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(reminder.id);
+                    return next;
+                });
+                emitAppEvent("app:error", {
+                    title: "Dismiss failed",
+                    subtitle:
+                        err instanceof Error && err.message
+                            ? err.message
+                            : "Could not dismiss reminder.",
+                });
+            });
     };
 
     // Explicit "No Spend" check-in from the daily check-in reminder
@@ -318,7 +316,13 @@ export function NotificationCenterPopover({
             await refreshData();
             await loadReminders();
         } catch (err) {
-            console.error("Failed to record no-spend check-in:", err);
+            emitAppEvent("app:error", {
+                title: "Check-in failed",
+                subtitle:
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not record no-spend check-in.",
+            });
         } finally {
             setIsProcessing(false);
         }
@@ -392,7 +396,13 @@ export function NotificationCenterPopover({
                 }
             }
         } catch (err) {
-            console.error("Failed to execute reminder action:", err);
+            emitAppEvent("app:error", {
+                title: "Action failed",
+                subtitle:
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not open reminder.",
+            });
         } finally {
             setIsProcessing(false);
         }
@@ -437,6 +447,16 @@ export function NotificationCenterPopover({
     // Shared list of reminder items
     const renderRemindersList = () => (
         <>
+            {loadError && (
+                <Alert
+                    variant="danger"
+                    className="mb-3"
+                    onClose={() => setLoadError(null)}
+                >
+                    {loadError}
+                </Alert>
+            )}
+
             {/* Browser Permission Prompt Banner */}
             {permission === "default" && (
                 <div
@@ -552,9 +572,10 @@ export function NotificationCenterPopover({
     );
 
     return (
-        <div ref={popoverRef} className={`relative inline-block ${className}`}>
+        <div className={`relative inline-block ${className}`}>
             {/* Bell Icon Button */}
             <button
+                ref={bellButtonRef}
                 type="button"
                 data-testid="notification-bell-btn"
                 aria-label={`Notifications (${unreadCount} unread)`}
@@ -574,19 +595,65 @@ export function NotificationCenterPopover({
                 )}
             </button>
 
-            {/* Desktop Popover Container */}
-            <AnimatePresence>
-                {isOpen && !isMobile && (
-                    <m.div
-                        key="notification-desktop-popover"
-                        ref={desktopPopoverRef}
-                        data-testid="notification-center-popover"
-                        role="region"
-                        aria-label="Notification center"
-                        {...pop}
-                        className="absolute right-0 mt-2 w-96 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 shadow-cute-lg z-50"
-                    >
-                        {/* Header */}
+            <AnimatedModal
+                isOpen={isOpen}
+                onClose={() => setIsOpen(false)}
+                variant={isMobile ? "fullscreen" : "popover"}
+                anchorRef={bellButtonRef}
+                ariaLabel={
+                    isMobile
+                        ? "Notifications and reminders"
+                        : "Notification center"
+                }
+                data-testid={
+                    isMobile
+                        ? "notification-center-mobile-overlay"
+                        : "notification-center-popover"
+                }
+                className={isMobile ? "" : "p-4"}
+            >
+                {isMobile ? (
+                    <>
+                        {/* Mobile Sticky Header */}
+                        <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
+                            <div className="flex items-center gap-2.5">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
+                                    <Bell
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-sm font-black text-(--text-ink) font-display">
+                                        Notifications
+                                    </h2>
+                                    {count > 0 && (
+                                        <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
+                                            {count}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                aria-label="Close notification center"
+                                data-testid="close-notification-overlay-btn"
+                                onClick={() => setIsOpen(false)}
+                                className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                            >
+                                <X className="h-4 w-4" strokeWidth={2.5} />
+                            </button>
+                        </div>
+
+                        {/* Mobile Body Content */}
+                        <ScrollArea className="flex-1 px-4 py-4 space-y-3 pb-12">
+                            {renderRemindersList()}
+                        </ScrollArea>
+                    </>
+                ) : (
+                    <>
+                        {/* Desktop Header */}
                         <div className="flex items-center justify-between pb-3 border-b-2 border-(--border-subtle)">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
@@ -621,69 +688,9 @@ export function NotificationCenterPopover({
                         <ScrollArea className="mt-3 max-h-80 space-y-2.5 pr-0.5">
                             {renderRemindersList()}
                         </ScrollArea>
-                    </m.div>
+                    </>
                 )}
-            </AnimatePresence>
-
-            {/* Mobile Full-Screen Overlay Portal (rendered directly to body on mobile) */}
-            {typeof document !== "undefined" &&
-                createPortal(
-                    <AnimatePresence>
-                        {isOpen && isMobile && (
-                            <m.div
-                                key="notification-mobile-overlay"
-                                ref={mobileOverlayRef}
-                                data-testid="notification-center-mobile-overlay"
-                                role="dialog"
-                                aria-modal="true"
-                                aria-label="Notifications and reminders"
-                                {...fadeRise}
-                                className="fixed inset-0 z-50 flex flex-col bg-(--bg-canvas)"
-                            >
-                                {/* Mobile Sticky Header */}
-                                <div className="flex h-14 items-center justify-between px-4 border-b-2 border-(--border-ink) bg-(--bg-card) shrink-0 shadow-cute-sm">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
-                                            <Bell
-                                                className="h-4 w-4"
-                                                strokeWidth={2.5}
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="text-sm font-black text-(--text-ink) font-display">
-                                                Notifications
-                                            </h2>
-                                            {count > 0 && (
-                                                <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
-                                                    {count}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        aria-label="Close notification center"
-                                        data-testid="close-notification-overlay-btn"
-                                        onClick={() => setIsOpen(false)}
-                                        className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                    >
-                                        <X
-                                            className="h-4 w-4"
-                                            strokeWidth={2.5}
-                                        />
-                                    </button>
-                                </div>
-
-                                {/* Mobile Body Content */}
-                                <ScrollArea className="flex-1 px-4 py-4 space-y-3 pb-12">
-                                    {renderRemindersList()}
-                                </ScrollArea>
-                            </m.div>
-                        )}
-                    </AnimatePresence>,
-                    document.body,
-                )}
+            </AnimatedModal>
         </div>
     );
 }

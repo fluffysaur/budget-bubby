@@ -242,17 +242,13 @@ export function ExpensesPage({
     };
 
     // Handle deleting an expense
-    const handleDeleteExpense = async (id: string) => {
+    const handleDeleteExpense = (id: string) => {
         if (deleteExpenseMutation.isPending) return;
         const exists =
             expenses.some((e) => e.id === id) ||
             allExpenses.some((e) => e.id === id);
         if (!exists) return;
-        try {
-            await deleteExpenseMutation.mutateAsync(id);
-        } catch (err) {
-            console.error("Failed to delete expense:", err);
-        }
+        deleteExpenseMutation.mutate(id);
     };
 
     // Reset all filters

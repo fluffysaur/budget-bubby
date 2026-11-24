@@ -24,7 +24,7 @@ import { setExerciseActor } from "../../lib/bubby/activity";
 import {
     emitAppEvent,
     onAppEvent,
-    type MilestoneDetail,
+    type MilestoneToastAction,
 } from "../../lib/appEvents";
 import { feedback } from "../../lib/delight/feedback";
 import { setInboxPending } from "../../lib/delight/inboxState";
@@ -43,12 +43,16 @@ import { mondayOf, toSgtDateString } from "../../lib/bubby/dates";
 import type { BubbyBody } from "../../lib/bubby/body";
 import { ConfettiBurst } from "../ui/ConfettiBurst";
 import { AnimatePresence } from "motion/react";
-import { MilestoneToast } from "./MilestoneToast";
+import { MilestoneToast, type ToastVariant } from "./MilestoneToast";
 
 const BubbySheet = lazy(() => import("./BubbySheet"));
 
-interface QueuedToast extends MilestoneDetail {
+interface QueuedToast {
     id: number;
+    variant: ToastVariant;
+    title: string;
+    subtitle?: string;
+    primary?: MilestoneToastAction;
 }
 
 const MAX_QUEUED_TOASTS = 3;
@@ -356,21 +360,40 @@ export function DelightHost() {
         return () => offs.forEach((off) => off());
     }, []);
 
-    // Milestone confetti and toasts
-    useEffect(
-        () =>
-            onAppEvent("delight:milestone", (detail) => {
-                if (detail.confetti) setBurstKey((k) => k + 1);
-                if (detail.title) {
-                    toastSeq.current += 1;
-                    const id = toastSeq.current;
-                    setToasts((prev) =>
-                        [...prev, { ...detail, id }].slice(-MAX_QUEUED_TOASTS),
-                    );
-                }
-            }),
-        [],
-    );
+    // Milestone confetti and toasts (plus global app-error toasts)
+    useEffect(() => {
+        const enqueueToast = (toast: Omit<QueuedToast, "id">) => {
+            toastSeq.current += 1;
+            const id = toastSeq.current;
+            setToasts((prev) =>
+                [...prev, { ...toast, id }].slice(-MAX_QUEUED_TOASTS),
+            );
+        };
+        const offMilestone = onAppEvent("delight:milestone", (detail) => {
+            if (detail.confetti) setBurstKey((k) => k + 1);
+            if (detail.title) {
+                enqueueToast({
+                    variant: "milestone",
+                    title: detail.title,
+                    subtitle: detail.subtitle,
+                    primary: detail.primary,
+                });
+            }
+        });
+        const offError = onAppEvent("app:error", (detail) => {
+            if (detail.title) {
+                enqueueToast({
+                    variant: "error",
+                    title: detail.title,
+                    subtitle: detail.subtitle,
+                });
+            }
+        });
+        return () => {
+            offMilestone();
+            offError();
+        };
+    }, []);
 
     // Bubby sheet: one lazy instance, kept mounted after first open for the exit animation
     useEffect(
@@ -405,7 +428,8 @@ export function DelightHost() {
                 {current && (
                     <MilestoneToast
                         key={current.id}
-                        title={current.title ?? ""}
+                        variant={current.variant}
+                        title={current.title}
                         subtitle={current.subtitle}
                         body={body}
                         primaryLabel={current.primary?.label}
@@ -417,7 +441,11 @@ export function DelightHost() {
                                   }
                                 : undefined
                         }
-                        onAcknowledge={acknowledge}
+                        onAcknowledge={
+                            current.variant === "error"
+                                ? shiftToast
+                                : acknowledge
+                        }
                         onTimeout={shiftToast}
                     />
                 )}

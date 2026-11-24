@@ -56,6 +56,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Alert } from "../components/ui/Alert";
+import { QueryErrorAlert } from "../components/ui/QueryErrorAlert";
 import { EmptyStateCard } from "../components/ui/EmptyStateCard";
 import { InboxCard, InboxCardSkeleton } from "../components/inbox/InboxCard";
 import {
@@ -106,7 +107,13 @@ export function InboxPage() {
     const queryClient = useQueryClient();
     const { openSettings } = useSettings();
     const { me, members } = useLoggedInMember();
-    const { data, isLoading } = useInboxQuery();
+    const {
+        data,
+        isLoading,
+        isError: inboxQueryError,
+        error: inboxQueryErrorObj,
+        refetch: refetchInbox,
+    } = useInboxQuery();
     const { data: categoriesData } = useCategoriesQuery();
     const { data: expensesData } = useAllExpensesQuery();
     const { data: rulesData } = useMerchantRulesQuery();
@@ -310,19 +317,22 @@ export function InboxPage() {
         else void resolveView(error.view, error.reason);
     }, [error, confirmView, resolveView]);
 
-    const handleUndo = useCallback(async () => {
+    const handleUndo = useCallback(() => {
         if (!undoItem) return;
         const item = undoItem;
         setUndoItem(null);
         if (undoTimer.current) clearTimeout(undoTimer.current);
-        try {
-            await resolveInboxMutation.mutateAsync({
+        resolveInboxMutation.mutate(
+            {
                 id: item.id,
                 reason: "pending",
-            });
-        } catch (err) {
-            console.error("Failed to undo inbox resolution:", err);
-        }
+            },
+            {
+                onError: () => {
+                    setUndoItem(item);
+                },
+            },
+        );
     }, [undoItem, resolveInboxMutation]);
 
     const handleBatch = useCallback(async () => {
@@ -451,6 +461,13 @@ export function InboxPage() {
             />
 
             <div className="mx-auto w-full max-w-md space-y-4">
+                {inboxQueryError && (
+                    <QueryErrorAlert
+                        error={inboxQueryErrorObj}
+                        onRetry={() => void refetchInbox()}
+                    />
+                )}
+
                 {error && (
                     <Alert
                         variant="danger"
@@ -473,7 +490,7 @@ export function InboxPage() {
 
                 {isLoading ? (
                     <InboxCardSkeleton />
-                ) : top ? (
+                ) : inboxQueryError && !data ? null : top ? (
                     <>
                         <div className="flex items-center justify-between gap-2">
                             <Button

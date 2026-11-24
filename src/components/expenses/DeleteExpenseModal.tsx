@@ -72,9 +72,9 @@ export function DeleteExpenseModal({
         if (isDeleting) return;
         try {
             setErrorMessage(null);
+            await deleteMutation.mutateAsync(expense.id);
             feedback.routine("delete");
             onDeleted?.(expense.id);
-            await deleteMutation.mutateAsync(expense.id);
             onClose();
         } catch (err) {
             console.error("Failed to delete expense:", err);

@@ -53,4 +53,44 @@ test.describe("Modal behaviour", () => {
         );
         expect(parseFloat(duration)).toBeLessThanOrEqual(0.001);
     });
+
+    test("traps Tab focus inside modal and drawer and restores focus to trigger on Escape", async ({
+        page,
+        isMobile,
+    }) => {
+        test.skip(isMobile, "Desktop keyboard Tab traversal");
+        await page.goto("/");
+        await expect(
+            page.getByRole("heading", { level: 1, name: /^Home$/i }),
+        ).toBeVisible({ timeout: 15000 });
+
+        const chatTrigger = page.getByTestId("open-bubby-chat-btn");
+        await chatTrigger.focus();
+        await chatTrigger.click();
+
+        const drawer = page.getByTestId("bubby-chat-drawer");
+        await expect(drawer).toBeVisible({ timeout: 15000 });
+        await page.waitForTimeout(250);
+
+        // Tab several times and ensure focus never leaves the drawer
+        for (let i = 0; i < 8; i++) {
+            await page.keyboard.press("Tab");
+            const insideDrawer = await drawer.evaluate((el) =>
+                el.contains(document.activeElement),
+            );
+            expect(insideDrawer).toBe(true);
+        }
+
+        // Shift+Tab from first element wraps inside drawer
+        await page.keyboard.press("Shift+Tab");
+        const insideAfterShiftTab = await drawer.evaluate((el) =>
+            el.contains(document.activeElement),
+        );
+        expect(insideAfterShiftTab).toBe(true);
+
+        // Escape closes drawer and restores focus to the trigger button
+        await page.keyboard.press("Escape");
+        await expect(drawer).not.toBeVisible();
+        await expect(chatTrigger).toBeFocused();
+    });
 });
