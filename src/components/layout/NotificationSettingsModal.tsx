@@ -947,6 +947,24 @@ export function NotificationSettingsModal({
                             Done
                         </Button>
                     </div>
+                    <nav
+                        aria-label="Legal"
+                        data-testid="settings-legal-links"
+                        className="flex items-center justify-center gap-4 text-xs font-bold text-(--text-muted)"
+                    >
+                        <a
+                            href="/privacy"
+                            className="inline-flex min-h-11 items-center underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink)"
+                        >
+                            Privacy
+                        </a>
+                        <a
+                            href="/terms"
+                            className="inline-flex min-h-11 items-center underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink)"
+                        >
+                            Terms
+                        </a>
+                    </nav>
                     <div
                         data-testid="app-version-label"
                         className="text-center text-[11px] font-bold font-mono-num text-(--text-faint)"

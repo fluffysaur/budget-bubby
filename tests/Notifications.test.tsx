@@ -18,6 +18,7 @@ import {
     fireEvent,
     waitFor,
     act,
+    within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { NotificationCenterPopover } from "../src/components/layout/NotificationCenterPopover";
@@ -1558,6 +1559,13 @@ describe("Notifications Engine", () => {
             expect(screen.getByTestId("app-version-label")).toHaveTextContent(
                 /^v\d+\.\d+\.\d+ \(test\)$/,
             );
+            const legal = screen.getByTestId("settings-legal-links");
+            expect(
+                within(legal).getByRole("link", { name: "Privacy" }),
+            ).toHaveAttribute("href", "/privacy");
+            expect(
+                within(legal).getByRole("link", { name: "Terms" }),
+            ).toHaveAttribute("href", "/terms");
             expect(screen.getByText("Push Notifications")).toBeInTheDocument();
             expect(
                 screen.getByRole("heading", { name: "Sound Effects" }),

@@ -74,6 +74,7 @@ import {
     markOnboardingSeen,
 } from "./lib/onboarding";
 import { useLoggedInMember } from "./hooks/useLoggedInMember";
+import { LEGAL_PATHS } from "./data/legalContent";
 import type { Expense } from "./types/finance";
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -83,6 +84,7 @@ const AccountsPage = lazy(() => import("./pages/AccountsPage"));
 const PlanPage = lazy(() => import("./pages/PlanPage"));
 const FastLogPage = lazy(() => import("./pages/FastLogPage"));
 const InboxPage = lazy(() => import("./pages/InboxPage"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 const OnboardingModal = lazy(
     () => import("./components/onboarding/OnboardingModal"),
 );
@@ -620,6 +622,29 @@ export function AppShell() {
     );
 }
 
+/**
+ * Public legal pages bypass the auth gate so they work logged out and in demo mode.
+ */
+export function PublicRoutes() {
+    const { pathname } = useLocation();
+    const normalized = pathname.replace(/\/+$/, "");
+    if (normalized === LEGAL_PATHS.privacy) {
+        return (
+            <Suspense fallback={<RouteSkeletonLoader />}>
+                <LegalPage doc="privacy" />
+            </Suspense>
+        );
+    }
+    if (normalized === LEGAL_PATHS.terms) {
+        return (
+            <Suspense fallback={<RouteSkeletonLoader />}>
+                <LegalPage doc="terms" />
+            </Suspense>
+        );
+    }
+    return <AppShell />;
+}
+
 export interface AppProps {
     initialEntries?: string[];
     initialAuthenticated?: boolean;
@@ -640,7 +665,7 @@ export function App({ initialEntries, initialAuthenticated }: AppProps = {}) {
                 <QueryClientProvider client={queryClient}>
                     <AuthProvider initialAuthenticated={initialAuthenticated}>
                         <RouterComponent {...routerProps}>
-                            <AppShell />
+                            <PublicRoutes />
                         </RouterComponent>
                     </AuthProvider>
                 </QueryClientProvider>
