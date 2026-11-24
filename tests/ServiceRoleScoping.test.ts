@@ -72,11 +72,11 @@ describe("service-role queries are scoped (captureExpense)", () => {
 });
 
 describe("service-role queries are scoped (sendReminders)", () => {
-    // The cron job intentionally iterates every household; it only reads
-    // ids/names, then per-member subscription lookups are scoped by member_id.
+    // The cron job intentionally lists every household, then handles each one
+    // with a client scoped to that household (see householdScopedClient.ts).
     const expected = [
         "households:select:", // cron: all households by design
-        "household_members:select:", // cron: all members by design
+        "household_members:select:household_id", // one household's members
         "push_subscriptions:select:member_id",
         "push_subscriptions:delete:endpoint", // endpoint came from that member's own list
     ];
@@ -84,5 +84,11 @@ describe("service-role queries are scoped (sendReminders)", () => {
     it("matches the reviewed query manifest", () => {
         const found = extractChains("sendReminders.ts").map(key);
         expect(found.sort()).toEqual([...expected].sort());
+    });
+
+    it("builds each household's service on a scoped client", () => {
+        expect(remindersSource).toContain(
+            "scopeClientToHousehold(client, householdId)",
+        );
     });
 });
