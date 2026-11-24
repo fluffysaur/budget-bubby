@@ -18,21 +18,6 @@ import {
     getActiveAiProvider,
     getProviderApiKey,
 } from "../providers";
-import type { MemberAiSettings } from "../../../types/finance";
-
-function fakeStore(initial?: Partial<MemberAiSettings>) {
-    return {
-        getAiSettings: vi.fn().mockResolvedValue({
-            gemini_api_key: null,
-            gemini_model: null,
-            openrouter_api_key: null,
-            openrouter_model: null,
-            active_provider: null,
-            ...initial,
-        }),
-        saveAiSettings: vi.fn().mockResolvedValue(undefined),
-    };
-}
 
 describe("openrouterAuth", () => {
     beforeEach(() => {
@@ -82,7 +67,7 @@ describe("openrouterAuth", () => {
         );
     });
 
-    it("exchanges callback code, stores OpenRouter key, switches active provider, and syncs", async () => {
+    it("exchanges callback code, stores OpenRouter key locally, and switches active provider", async () => {
         const navigate = vi.fn();
         await startOpenRouterOAuth("chat", "/accounts", navigate);
 
@@ -94,12 +79,8 @@ describe("openrouterAuth", () => {
         );
         const changedSpy = vi.fn();
         window.addEventListener(AI_CONFIG_CHANGED_EVENT, changedSpy);
-        const store = fakeStore();
 
-        const result = await completeOpenRouterOAuthCallback(
-            "?code=auth_code_123",
-            store,
-        );
+        const result = await completeOpenRouterOAuthCallback("?code=auth_code_123");
         window.removeEventListener(AI_CONFIG_CHANGED_EVENT, changedSpy);
 
         expect(result).toEqual({
@@ -118,12 +99,6 @@ describe("openrouterAuth", () => {
         expect(getActiveAiProvider()).toBe("openrouter");
         expect(localStorage.getItem(OPENROUTER_PKCE_STORAGE_KEY)).toBeNull();
         expect(changedSpy).toHaveBeenCalledTimes(1);
-        expect(store.saveAiSettings).toHaveBeenCalledWith(
-            expect.objectContaining({
-                openrouter_api_key: "test-openrouter-key",
-                active_provider: "openrouter",
-            }),
-        );
     });
 
     it("handles cancelled OAuth callbacks cleanly", async () => {
@@ -186,7 +161,7 @@ describe("openrouterAuth", () => {
         setPendingOpenRouterFeedback({
             target: "chat",
             variant: "success",
-            message: "OpenRouter connected and synced.",
+            message: "OpenRouter connected on this device.",
         });
 
         expect(hasPendingOpenRouterFeedback("settings")).toBe(false);
@@ -195,7 +170,7 @@ describe("openrouterAuth", () => {
         expect(consumePendingOpenRouterFeedback("chat")).toEqual({
             target: "chat",
             variant: "success",
-            message: "OpenRouter connected and synced.",
+            message: "OpenRouter connected on this device.",
         });
         expect(consumePendingOpenRouterFeedback("chat")).toBeNull();
     });

@@ -3,8 +3,6 @@
  * Never logs or persists PKCE verifiers beyond the single callback exchange.
  */
 
-import type { FinanceService } from "../financeService";
-import { pushAiSettings } from "./aiSettingsSync";
 import {
     AI_CONFIG_CHANGED_EVENT,
     setActiveAiProvider,
@@ -41,8 +39,6 @@ interface StoredPkceState {
     returnPath: string;
     createdAt: number;
 }
-
-type AiSettingsStore = Pick<FinanceService, "getAiSettings" | "saveAiSettings">;
 
 let inMemoryFeedback: OpenRouterOAuthFeedback | null = null;
 
@@ -233,7 +229,6 @@ export async function exchangeOpenRouterCode(
 
 export async function completeOpenRouterOAuthCallback(
     search: string,
-    store?: AiSettingsStore,
 ): Promise<OpenRouterCallbackResult> {
     const storage = getLocalStorage();
     const rawState = storage?.getItem(OPENROUTER_PKCE_STORAGE_KEY) ?? null;
@@ -297,9 +292,6 @@ export async function completeOpenRouterOAuthCallback(
         setActiveAiProvider("openrouter");
         if (typeof window !== "undefined") {
             window.dispatchEvent(new Event(AI_CONFIG_CHANGED_EVENT));
-        }
-        if (store) {
-            await pushAiSettings(store);
         }
         return {
             ok: true,

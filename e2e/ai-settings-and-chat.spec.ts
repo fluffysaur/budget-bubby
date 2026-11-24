@@ -49,7 +49,7 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
         await page.getByTestId("save-ai-key-btn").click();
 
         await expect(page.getByTestId("ai-settings-feedback")).toContainText(
-            /OpenRouter API key saved and synced/i,
+            /OpenRouter API key saved locally/i,
         );
 
         // Close Settings modal and reopen Bubby chat drawer

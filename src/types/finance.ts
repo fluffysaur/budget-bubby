@@ -649,15 +649,6 @@ export interface BonusMonthSummary {
     source: "events" | "legacy" | "none";
 }
 
-/** Per-user synced AI settings (Gemini & OpenRouter BYOK + active provider). Owner-only table. */
-export interface MemberAiSettings {
-    gemini_api_key: string | null;
-    gemini_model: string | null;
-    openrouter_api_key: string | null;
-    openrouter_model: string | null;
-    active_provider: string | null;
-}
-
 export interface NotificationPreferences {
     id?: string;
     household_id: string;
