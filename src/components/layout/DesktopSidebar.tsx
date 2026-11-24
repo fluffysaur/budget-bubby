@@ -238,7 +238,7 @@ export function DesktopSidebar({
                                 size="sm"
                                 className={
                                     collapsed
-                                        ? "absolute top-0 -right-2 min-w-4 px-1 text-[10px] leading-none"
+                                        ? "absolute top-0 -right-2 min-w-4 px-1 text-2xs leading-none"
                                         : "shrink-0"
                                 }
                             >
@@ -254,7 +254,9 @@ export function DesktopSidebar({
     };
 
     const expandedWidth = isLg ? EXPANDED_WIDTH_LG : EXPANDED_WIDTH;
-    const btnSize = collapsed ? "h-11 w-11" : "h-9 w-9";
+    const btnSize = collapsed
+        ? "h-11 w-11"
+        : "relative h-9 w-9 after:absolute after:-inset-1.5 after:content-['']";
     const privacyLabel = isPrivacyMode ? "Show amounts" : "Hide amounts";
     const themeTitle = `Switch to ${theme === "dark" ? "light" : "dark"} mode`;
 

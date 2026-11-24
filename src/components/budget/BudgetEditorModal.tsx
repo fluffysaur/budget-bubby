@@ -927,7 +927,7 @@ export function BudgetEditorModal({
                                             /mo
                                         </span>
                                     </div>
-                                    <span className="block text-[10px] text-(--text-muted) mt-1">
+                                    <span className="block text-2xs text-(--text-muted) mt-1">
                                         From tax items
                                     </span>
                                 </div>
@@ -1055,7 +1055,7 @@ export function BudgetEditorModal({
                                                     onClick={() =>
                                                         setCatColor(c)
                                                     }
-                                                    className="h-5 w-5 rounded-full border-2 border-(--border-ink) flex items-center justify-center transition-transform cursor-pointer"
+                                                    className="relative h-5 w-5 rounded-full after:absolute after:-inset-3 after:content-[''] border-2 border-(--border-ink) flex items-center justify-center transition-transform cursor-pointer"
                                                     style={{
                                                         backgroundColor: c,
                                                         transform:
@@ -1087,7 +1087,7 @@ export function BudgetEditorModal({
                                                                 )
                                                             }
                                                             title={item.label}
-                                                            className={`p-1.5 rounded-lg border-2 border-(--border-ink) transition-press cursor-pointer ${
+                                                            className={`relative p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] border-2 border-(--border-ink) transition-press cursor-pointer ${
                                                                 isSelected
                                                                     ? "bg-(--pastel-mint) text-(--text-ink) shadow-cute-sm"
                                                                     : "bg-(--bg-canvas) text-(--text-muted) hover:text-(--text-ink)"
@@ -1216,7 +1216,7 @@ export function BudgetEditorModal({
                                                             {cat.name}
                                                         </label>
                                                         {isBuffer && (
-                                                            <span className="text-[10px] font-bold text-(--text-ink) bg-(--bg-cream) px-2 py-0.5 rounded-full border border-(--border-ink) shrink-0">
+                                                            <span className="text-2xs font-bold text-(--text-ink) bg-(--bg-cream) px-2 py-0.5 rounded-full border border-(--border-ink) shrink-0">
                                                                 Remainder
                                                             </span>
                                                         )}
@@ -1231,7 +1231,7 @@ export function BudgetEditorModal({
                                                                     <button
                                                                         {...triggerProps}
                                                                         type="button"
-                                                                        className="text-[10px] font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-cute-sm cursor-pointer transition-colors"
+                                                                        className="relative after:absolute after:-inset-2.5 after:content-[''] text-2xs font-bold text-(--text-ink) bg-(--pastel-butter) hover:bg-(--pastel-butter-dark) px-2 py-0.5 rounded-full border border-(--border-ink) shadow-cute-sm cursor-pointer transition-colors"
                                                                     >
                                                                         Locked
                                                                     </button>
@@ -1255,7 +1255,7 @@ export function BudgetEditorModal({
                                                                     disabled={
                                                                         isCatSaving
                                                                     }
-                                                                    className="px-2 py-0.5 rounded text-[10px] font-bold bg-(--pastel-coral-light) text-rose-800 border border-(--border-ink) hover:bg-rose-200 cursor-pointer"
+                                                                    className="px-2 py-0.5 rounded text-2xs font-bold bg-(--pastel-coral-light) text-rose-800 border border-(--border-ink) hover:bg-rose-200 cursor-pointer"
                                                                 >
                                                                     Delete
                                                                 </button>
@@ -1266,13 +1266,13 @@ export function BudgetEditorModal({
                                                                             null,
                                                                         )
                                                                     }
-                                                                    className="px-2 py-0.5 rounded text-[10px] font-semibold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
+                                                                    className="px-2 py-0.5 rounded text-2xs font-semibold text-(--text-muted) hover:text-(--text-ink) cursor-pointer"
                                                                 >
                                                                     Cancel
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <div className="inline-flex items-center gap-0.5 ml-1">
+                                                            <div className="inline-flex items-center gap-2 ml-1">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() =>
@@ -1282,7 +1282,7 @@ export function BudgetEditorModal({
                                                                     }
                                                                     title={`Edit ${cat.name}`}
                                                                     aria-label="Edit category"
-                                                                    className="p-1 rounded-md text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                                                    className="relative p-1 rounded-md after:absolute after:-inset-3 after:content-[''] text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                                                                 >
                                                                     <Pencil className="h-3 w-3" />
                                                                 </button>
@@ -1295,7 +1295,7 @@ export function BudgetEditorModal({
                                                                     }
                                                                     title={`Delete ${cat.name}`}
                                                                     aria-label="Delete category"
-                                                                    className="p-1 rounded-md text-(--text-muted) hover:text-rose-600 hover:bg-(--pastel-coral-light) transition-colors cursor-pointer"
+                                                                    className="relative p-1 rounded-md after:absolute after:-inset-3 after:content-[''] text-(--text-muted) hover:text-rose-600 hover:bg-(--pastel-coral-light) transition-colors cursor-pointer"
                                                                 >
                                                                     <Trash2 className="h-3 w-3" />
                                                                 </button>
@@ -1350,7 +1350,7 @@ export function BudgetEditorModal({
                                                                 title={`Monthly dollar amount for ${cat.name}`}
                                                                 className="w-16 text-right text-base sm:text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
                                                             />
-                                                            <span className="text-[10px] font-bold text-(--text-muted)">
+                                                            <span className="text-2xs font-bold text-(--text-muted)">
                                                                 /mo
                                                             </span>
                                                         </div>

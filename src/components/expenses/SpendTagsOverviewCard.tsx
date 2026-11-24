@@ -162,7 +162,7 @@ export function SpendTagsOverviewCard({
                             type="button"
                             aria-label="Clear tag filter"
                             onClick={onClearTag}
-                            className="flex h-6 w-6 items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                            className="relative flex h-6 w-6 items-center justify-center rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                         >
                             <X className="h-4 w-4" />
                         </button>
@@ -226,7 +226,7 @@ export function SpendTagsOverviewCard({
                                                         onSelectTag?.(item.tag);
                                                     }
                                                 }}
-                                                className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-press cursor-pointer ${
+                                                className={`relative flex items-center gap-1 px-2 py-0.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-2xs font-bold transition-press cursor-pointer ${
                                                     isSelected
                                                         ? "bg-purple-600 text-white"
                                                         : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 group-hover:border-purple-300"
@@ -272,7 +272,7 @@ export function SpendTagsOverviewCard({
                                                 .map((cat) => (
                                                     <span
                                                         key={cat.id}
-                                                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700/80 px-1.5 py-0.5 rounded-md border border-slate-200/50 dark:border-slate-600/50"
+                                                        className="inline-flex items-center gap-1 text-2xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700/80 px-1.5 py-0.5 rounded-md border border-slate-200/50 dark:border-slate-600/50"
                                                     >
                                                         <span
                                                             className="h-1.5 w-1.5 rounded-full"
@@ -293,7 +293,7 @@ export function SpendTagsOverviewCard({
                                                     </span>
                                                 ))}
                                             {item.categories.length > 3 && (
-                                                <span className="text-[10px] text-(--text-faint)">
+                                                <span className="text-2xs text-(--text-faint)">
                                                     +
                                                     {item.categories.length - 3}{" "}
                                                     more

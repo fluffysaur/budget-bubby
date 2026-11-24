@@ -95,7 +95,7 @@ export function BonusAllocationCollapsible({
                                     {bucket.name}
                                 </span>
                                 <span
-                                    className="rounded-md px-1.5 py-0.5 text-[10px] font-black text-white border border-black/20"
+                                    className="rounded-md px-1.5 py-0.5 text-2xs font-black text-white border border-black/20"
                                     style={{ backgroundColor: bucket.color }}
                                 >
                                     {Math.round(bucket.percentage * 100)}%

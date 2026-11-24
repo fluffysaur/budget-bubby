@@ -690,7 +690,7 @@ export function ManageCategoriesModal({
                                                         {cat.name}
                                                     </label>
                                                     {isLocked && (
-                                                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800/60">
+                                                        <span className="text-2xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800/60">
                                                             Locked
                                                         </span>
                                                     )}
@@ -931,7 +931,7 @@ export function ManageCategoriesModal({
                                                     key={c}
                                                     type="button"
                                                     onClick={() => setColor(c)}
-                                                    className="h-7 w-7 rounded-full border-2 transition-transform cursor-pointer flex items-center justify-center"
+                                                    className="relative h-7 w-7 rounded-full after:absolute after:-inset-2.5 after:content-[''] border-2 transition-transform cursor-pointer flex items-center justify-center"
                                                     style={{
                                                         backgroundColor: c,
                                                         borderColor:
@@ -970,7 +970,7 @@ export function ManageCategoriesModal({
                                                             setIcon(item.id)
                                                         }
                                                         title={item.label}
-                                                        className={`p-2 rounded-xl flex flex-col items-center justify-center border transition-press cursor-pointer ${
+                                                        className={`min-h-11 p-2 rounded-xl flex flex-col items-center justify-center border transition-press cursor-pointer ${
                                                             isSelected
                                                                 ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
                                                                 : "border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -1093,7 +1093,7 @@ export function ManageCategoriesModal({
                                                         }
                                                         )
                                                     </span>
-                                                    <span className="text-[10px] lowercase text-(--text-faint) font-normal">
+                                                    <span className="text-2xs lowercase text-(--text-faint) font-normal">
                                                         tracked against monthly
                                                         spend
                                                     </span>
@@ -1147,7 +1147,7 @@ export function ManageCategoriesModal({
                                                                                 )}
                                                                             </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-1">
+                                                                        <div className="flex items-center gap-2">
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() =>
@@ -1155,7 +1155,7 @@ export function ManageCategoriesModal({
                                                                                         cat,
                                                                                     )
                                                                                 }
-                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                className="relative p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                                 title="Edit Category"
                                                                             >
                                                                                 <Pencil className="h-3.5 w-3.5" />
@@ -1167,7 +1167,7 @@ export function ManageCategoriesModal({
                                                                                         cat,
                                                                                     )
                                                                                 }
-                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                className="relative p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                                 title="Delete Category"
                                                                             >
                                                                                 <Trash2 className="h-3.5 w-3.5" />
@@ -1192,7 +1192,7 @@ export function ManageCategoriesModal({
                                                         }
                                                         )
                                                     </span>
-                                                    <span className="text-[10px] lowercase text-(--text-faint) font-normal">
+                                                    <span className="text-2xs lowercase text-(--text-faint) font-normal">
                                                         transferred directly
                                                         from gross income
                                                     </span>
@@ -1246,7 +1246,7 @@ export function ManageCategoriesModal({
                                                                                 )}
                                                                             </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-1">
+                                                                        <div className="flex items-center gap-2">
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() =>
@@ -1254,7 +1254,7 @@ export function ManageCategoriesModal({
                                                                                         cat,
                                                                                     )
                                                                                 }
-                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                className="relative p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-(--text-faint) hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                                 title="Edit Category"
                                                                             >
                                                                                 <Pencil className="h-3.5 w-3.5" />
@@ -1266,7 +1266,7 @@ export function ManageCategoriesModal({
                                                                                         cat,
                                                                                     )
                                                                                 }
-                                                                                className="p-1.5 rounded-lg text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                                                                className="relative p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-(--text-faint) hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                                                                                 title="Delete Category"
                                                                             >
                                                                                 <Trash2 className="h-3.5 w-3.5" />

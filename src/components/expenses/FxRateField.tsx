@@ -37,7 +37,7 @@ export function FxRateInput({
 
     return (
         <label className="flex items-center gap-1.5">
-            <span className="text-[10px] text-(--text-muted)">1 SGD =</span>
+            <span className="text-2xs text-(--text-muted)">1 SGD =</span>
             <input
                 type="number"
                 inputMode="decimal"
@@ -53,7 +53,7 @@ export function FxRateInput({
                 onBlur={() => setDraft(null)}
                 className={`text-base sm:text-sm w-20 ${INPUT_CLASS}`}
             />
-            <span className="text-[10px] font-semibold">{currencyCode}</span>
+            <span className="text-2xs font-semibold">{currencyCode}</span>
         </label>
     );
 }
@@ -121,7 +121,7 @@ export function FxRateField({
                     onCustomRateChange={onCustomRateChange}
                 />
             </div>
-            <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px] text-(--text-muted)">
+            <div className="mt-1.5 flex items-center justify-between gap-2 text-2xs text-(--text-muted)">
                 <span>{statusLabel}</span>
                 {customRate !== undefined && (
                     <button

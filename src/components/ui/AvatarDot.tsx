@@ -32,7 +32,7 @@ export interface AvatarDotProps {
 }
 
 const SIZE_CLASSES: Record<AvatarDotSize, string> = {
-    xs: "h-4 w-4 text-[9px]",
+    xs: "h-4 w-4 text-2xs",
     sm: "h-5 w-5 text-[11px]",
     md: "h-7 w-7 text-sm",
     lg: "h-9 w-9 text-base",

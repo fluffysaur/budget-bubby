@@ -32,7 +32,7 @@ export function QuestProgressBars({
                     <div key={tier.label} className="flex items-center gap-2">
                         <span
                             aria-hidden="true"
-                            className="w-12 shrink-0 text-[10px] font-bold uppercase tracking-wider text-(--text-muted)"
+                            className="w-12 shrink-0 text-2xs font-bold uppercase tracking-wider text-(--text-muted)"
                         >
                             {tier.label}
                         </span>
@@ -46,7 +46,7 @@ export function QuestProgressBars({
                         />
                         <span
                             aria-hidden="true"
-                            className="w-8 shrink-0 text-right text-[10px] font-bold tabular-nums text-(--text-muted)"
+                            className="w-8 shrink-0 text-right text-2xs font-bold tabular-nums text-(--text-muted)"
                         >
                             {done}/{total}
                         </span>

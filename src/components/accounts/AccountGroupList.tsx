@@ -332,14 +332,14 @@ export function AccountGroupList({
                                                                 />
                                                             </div>
                                                             {account.institution && (
-                                                                <span className="rounded-md bg-(--bg-cream) px-1.5 py-0.5 text-[10px] font-bold text-(--text-ink) border border-(--border-ink)">
+                                                                <span className="rounded-md bg-(--bg-cream) px-1.5 py-0.5 text-2xs font-bold text-(--text-ink) border border-(--border-ink)">
                                                                     {
                                                                         account.institution
                                                                     }
                                                                 </span>
                                                             )}
                                                             {account.is_joint && (
-                                                                <span className="rounded-md bg-(--pastel-pink-light) px-1.5 py-0.5 text-[10px] font-bold text-(--text-ink) border border-(--border-ink)">
+                                                                <span className="rounded-md bg-(--pastel-pink-light) px-1.5 py-0.5 text-2xs font-bold text-(--text-ink) border border-(--border-ink)">
                                                                     Joint
                                                                 </span>
                                                             )}
@@ -402,9 +402,9 @@ export function AccountGroupList({
                                                                         )
                                                                     }
                                                                     aria-label="Save inline balance"
-                                                                    className="p-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                                                                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
                                                                 >
-                                                                    <Check className="h-3.5 w-3.5" />
+                                                                    <Check className="h-4 w-4" />
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -414,9 +414,9 @@ export function AccountGroupList({
                                                                         )
                                                                     }
                                                                     aria-label="Cancel inline edit"
-                                                                    className="p-1 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-(--text-faint) cursor-pointer"
+                                                                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-(--text-faint) cursor-pointer"
                                                                 >
-                                                                    <X className="h-3.5 w-3.5" />
+                                                                    <X className="h-4 w-4" />
                                                                 </button>
                                                             </div>
                                                         ) : (
@@ -467,7 +467,7 @@ export function AccountGroupList({
                                                                         }
                                                                         aria-label={`Edit ${account.name}`}
                                                                         title="Edit"
-                                                                        className="p-1.5 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
+                                                                        className="relative inline-flex items-center justify-center p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
                                                                     >
                                                                         <Settings className="h-3 w-3" />
                                                                     </button>

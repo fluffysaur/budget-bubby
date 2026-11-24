@@ -88,7 +88,7 @@ export function BonusCelebration({
                         e.stopPropagation();
                         onDone();
                     }}
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-(--text-muted) transition-colors hover:bg-(--bg-cream) hover:text-(--text-ink)"
+                    className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md after:absolute after:-inset-3 after:content-[''] text-(--text-muted) transition-colors hover:bg-(--bg-cream) hover:text-(--text-ink)"
                 >
                     <X className="h-3.5 w-3.5" />
                 </button>

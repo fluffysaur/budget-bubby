@@ -430,7 +430,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                     type="button"
                                     onClick={() => setToast(null)}
                                     aria-label="Dismiss notification"
-                                    className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                                    className="relative p-1 rounded-lg after:absolute after:-inset-2.5 after:content-[''] hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-(--text-faint) hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>

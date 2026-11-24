@@ -444,7 +444,7 @@ export function AddEditCreditCardModal({
                                     type="button"
                                     title={c.label}
                                     onClick={() => setColor(c.hex)}
-                                    className={`h-7 w-7 rounded-full border-2 border-(--border-ink) transition-transform cursor-pointer ${
+                                    className={`relative h-7 w-7 rounded-full after:absolute after:-inset-2.5 after:content-[''] border-2 border-(--border-ink) transition-transform cursor-pointer ${
                                         color === c.hex
                                             ? "ring-2 ring-purple-600 scale-110 shadow-cute-sm"
                                             : "hover:scale-105 opacity-80 hover:opacity-100"

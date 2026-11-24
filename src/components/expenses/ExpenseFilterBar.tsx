@@ -282,7 +282,7 @@ export function ExpenseFilterBar({
                                 type="button"
                                 aria-label="Dismiss search"
                                 onClick={handleClearSearch}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-(--text-muted) hover:text-(--text-ink) text-xs font-bold cursor-pointer transition-colors"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full after:absolute after:-inset-3 after:content-[''] bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-(--text-muted) hover:text-(--text-ink) text-xs font-bold cursor-pointer transition-colors"
                             >
                                 <X className="h-3 w-3 stroke-3" />
                             </button>
@@ -358,7 +358,7 @@ export function ExpenseFilterBar({
                             />
                             <span>Filters</span>
                             {activeFilterCount > 0 && (
-                                <span className="flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-(--pastel-lilac) border border-(--border-ink) text-[10px] font-black text-(--text-ink)">
+                                <span className="flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-(--pastel-lilac) border border-(--border-ink) text-2xs font-black text-(--text-ink)">
                                     {activeFilterCount}
                                 </span>
                             )}

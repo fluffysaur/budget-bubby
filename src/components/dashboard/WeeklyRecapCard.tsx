@@ -174,7 +174,7 @@ export function WeeklyRecapCard({
                                         fedToday={new Set(d.fed)}
                                         size="xs"
                                     />
-                                    <span className="text-[9px] font-bold text-(--text-faint)">
+                                    <span className="text-2xs font-bold text-(--text-faint)">
                                         {
                                             DAY_LETTERS[
                                                 new Date(

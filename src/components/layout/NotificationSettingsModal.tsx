@@ -489,7 +489,7 @@ export function NotificationSettingsModal({
                                             Push Notifications
                                         </span>
                                         <span
-                                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                            className={`px-1.5 py-0.5 rounded-full text-2xs font-black uppercase tracking-wider border ${
                                                 permission === "granted"
                                                     ? "bg-(--pastel-mint) text-(--accent-mint-ink) border-(--accent-mint-ink)/40"
                                                     : permission === "denied"

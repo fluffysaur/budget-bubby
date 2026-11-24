@@ -238,7 +238,7 @@ export function ProjectionCard({
                                         formatShortMonth(m)
                                     }
                                     tick={{
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fill: "var(--text-faint)",
                                     }}
                                 />
@@ -250,7 +250,7 @@ export function ProjectionCard({
                                         mask(formatSGDCompact(v))
                                     }
                                     tick={{
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fill: "var(--text-faint)",
                                     }}
                                 />

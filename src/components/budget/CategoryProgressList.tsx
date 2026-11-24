@@ -286,7 +286,7 @@ export function CategoryProgressList({
                                             )}
                                         </div>
                                         {subSpent > 0 && (
-                                            <div className="flex items-center gap-1 text-[10px] font-medium text-(--text-muted)">
+                                            <div className="flex items-center gap-1 text-2xs font-medium text-(--text-muted)">
                                                 <Repeat className="h-2.5 w-2.5 text-purple-600 dark:text-purple-400" />
                                                 <span>
                                                     Includes{" "}
@@ -387,7 +387,7 @@ export function CategoryProgressList({
                             {!tracksCap ? (
                                 <div className="flex items-center justify-between text-left my-2">
                                     <div>
-                                        <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
+                                        <span className="block text-2xs uppercase font-bold text-(--text-muted)">
                                             Set aside
                                         </span>
                                         <span className="text-(--text-ink)">
@@ -399,7 +399,7 @@ export function CategoryProgressList({
                                     </div>
                                     {actual > 0 && (
                                         <div className="text-right">
-                                            <span className="block text-[10px] uppercase font-bold text-(--text-muted)">
+                                            <span className="block text-2xs uppercase font-bold text-(--text-muted)">
                                                 Funded
                                             </span>
                                             <span className="text-(--text-ink)">

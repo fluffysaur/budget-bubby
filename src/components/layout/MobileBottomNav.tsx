@@ -80,7 +80,7 @@ export function MobileBottomNav({
                             strokeWidth={2.5}
                         />
                     </div>
-                    <span className="text-[10px] font-bold leading-tight">
+                    <span className="text-2xs font-bold leading-tight">
                         Home
                     </span>
                 </button>
@@ -113,12 +113,12 @@ export function MobileBottomNav({
                         <span
                             aria-hidden="true"
                             data-testid="spend-inbox-badge"
-                            className="absolute top-1.5 right-[calc(50%-1.375rem)] min-w-5 rounded-full border-2 border-(--border-ink) bg-(--pastel-coral-light) px-1 text-center text-[10px] font-black leading-4 text-(--text-ink)"
+                            className="absolute top-1.5 right-[calc(50%-1.375rem)] min-w-5 rounded-full border-2 border-(--border-ink) bg-(--pastel-coral-light) px-1 text-center text-2xs font-black leading-4 text-(--text-ink)"
                         >
                             {formatBadgeCount(spendBadgeCount)}
                         </span>
                     )}
-                    <span className="text-[10px] font-bold leading-tight">
+                    <span className="text-2xs font-bold leading-tight">
                         Spend
                     </span>
                 </button>
@@ -136,7 +136,7 @@ export function MobileBottomNav({
                     >
                         <Plus className="h-6 w-6 stroke-3" />
                     </button>
-                    <span className="text-[10px] font-bold leading-tight text-(--text-muted) group-hover:text-(--text-ink) transition-colors pointer-events-none">
+                    <span className="text-2xs font-bold leading-tight text-(--text-muted) group-hover:text-(--text-ink) transition-colors pointer-events-none">
                         Quick Add
                     </span>
                 </div>
@@ -163,7 +163,7 @@ export function MobileBottomNav({
                     >
                         <Landmark className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-bold leading-tight">
+                    <span className="text-2xs font-bold leading-tight">
                         Balances
                     </span>
                 </button>
@@ -188,7 +188,7 @@ export function MobileBottomNav({
                     >
                         <Compass className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-bold leading-tight">
+                    <span className="text-2xs font-bold leading-tight">
                         Plan
                     </span>
                 </button>

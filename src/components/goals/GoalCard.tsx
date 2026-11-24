@@ -215,7 +215,7 @@ export function GoalCard({
                         }
                     />
                     <div className="min-w-0 flex-1">
-                        <span className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                        <span className="block text-2xs sm:text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                             {isDone ? "Target" : "Left to Fill"}
                         </span>
                         <div className="flex flex-wrap items-baseline gap-x-1.5 font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
@@ -286,7 +286,7 @@ export function GoalCard({
                             {/* 2x2 Grid */}
                             <div className="grid grid-cols-2 gap-3 rounded-xl border border-(--border-subtle) bg-(--bg-card) p-3 text-xs">
                                 <div>
-                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                    <span className="text-2xs font-bold text-(--text-muted) uppercase tracking-wider block">
                                         Target Amount
                                     </span>
                                     <span
@@ -301,7 +301,7 @@ export function GoalCard({
                                 </div>
 
                                 <div>
-                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                    <span className="text-2xs font-bold text-(--text-muted) uppercase tracking-wider block">
                                         Covered Today
                                     </span>
                                     <span
@@ -316,7 +316,7 @@ export function GoalCard({
                                 </div>
 
                                 <div>
-                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                    <span className="text-2xs font-bold text-(--text-muted) uppercase tracking-wider block">
                                         Goal Spend
                                     </span>
                                     <span
@@ -331,7 +331,7 @@ export function GoalCard({
                                 </div>
 
                                 <div>
-                                    <span className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider block">
+                                    <span className="text-2xs font-bold text-(--text-muted) uppercase tracking-wider block">
                                         Pace
                                     </span>
                                     <span
@@ -402,7 +402,7 @@ export function GoalCard({
                                             <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
                                                 {exp.item}
                                             </span>
-                                            <span className="text-[10px] text-(--text-faint)">
+                                            <span className="text-2xs text-(--text-faint)">
                                                 {formatDisplayDate(exp.date)}
                                             </span>
                                         </div>
@@ -465,7 +465,7 @@ export function GoalCard({
                     onClick={() => onEdit?.(goal)}
                     aria-label={`Edit ${goal.title}`}
                     title={`Edit ${goal.title}`}
-                    className="inline-flex items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) p-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
+                    className="relative inline-flex items-center justify-center rounded-xl after:absolute after:-inset-1.5 after:content-[''] border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) p-2 text-xs font-bold shadow-cute-sm hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
                 >
                     <Pencil className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                 </button>

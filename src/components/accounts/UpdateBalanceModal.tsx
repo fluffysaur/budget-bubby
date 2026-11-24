@@ -515,12 +515,12 @@ export function UpdateBalanceModal({
                                                     className="text-xs sm:text-sm font-bold text-(--text-ink)"
                                                 />
                                                 {acc.is_joint && (
-                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shrink-0">
+                                                    <span className="text-2xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shrink-0">
                                                         Joint
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="text-[10px] text-(--text-muted) flex items-center gap-1.5 font-medium mt-0.5">
+                                            <div className="text-2xs text-(--text-muted) flex items-center gap-1.5 font-medium mt-0.5">
                                                 <span>
                                                     {acc.institution ||
                                                         acc.type}
@@ -541,7 +541,7 @@ export function UpdateBalanceModal({
                                         {/* Delta Pill */}
                                         {isModified ? (
                                             <span
-                                                className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-(--border-ink) shadow-cute-sm ${
+                                                className={`inline-flex items-center gap-0.5 text-2xs font-bold px-2 py-0.5 rounded-lg border border-(--border-ink) shadow-cute-sm ${
                                                     diff > 0
                                                         ? "bg-(--pastel-sage-light) text-(--text-ink)"
                                                         : "bg-(--pastel-coral-light) text-(--text-ink)"
@@ -556,7 +556,7 @@ export function UpdateBalanceModal({
                                                 <CurrencyText amount={diff} />
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] text-(--text-muted) opacity-40 hidden sm:inline">
+                                            <span className="text-2xs text-(--text-muted) opacity-40 hidden sm:inline">
                                                 —
                                             </span>
                                         )}

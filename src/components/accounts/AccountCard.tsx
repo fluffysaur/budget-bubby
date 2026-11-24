@@ -87,17 +87,17 @@ export function AccountCard({
                             </h3>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 {account.institution && (
-                                    <span className="inline-flex items-center px-1.5 py-0.2 rounded-md text-[10px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
+                                    <span className="inline-flex items-center px-1.5 py-0.2 rounded-md text-2xs font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
                                         {account.institution}
                                     </span>
                                 )}
                                 <span
-                                    className={`inline-flex items-center px-1.5 py-0.2 rounded-md text-[10px] font-bold border ${typeStyle.badge}`}
+                                    className={`inline-flex items-center px-1.5 py-0.2 rounded-md text-2xs font-bold border ${typeStyle.badge}`}
                                 >
                                     {account.type}
                                 </span>
                                 {account.is_joint && (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[10px] font-bold bg-(--pastel-pink-light) text-(--text-ink) border border-(--border-ink)">
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-2xs font-bold bg-(--pastel-pink-light) text-(--text-ink) border border-(--border-ink)">
                                         <AvatarDot
                                             name="Joint"
                                             icon={
@@ -122,7 +122,7 @@ export function AccountCard({
                                 onClick={() => onEditAccount(account)}
                                 aria-label={`Edit ${account.name}`}
                                 title="Edit"
-                                className="p-1 rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                className="relative p-1 rounded-lg after:absolute after:-inset-3 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                             >
                                 <Settings className="h-3.5 w-3.5" />
                             </button>
@@ -152,7 +152,7 @@ export function AccountCard({
 
             {/* Footer: Last Updated & Update Balance Action */}
             <div className="mt-3 pt-2.5 border-t border-(--border-subtle) flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1 text-[10px] font-mono-num text-(--text-muted) truncate">
+                <div className="flex items-center gap-1 text-2xs font-mono-num text-(--text-muted) truncate">
                     <Clock className="h-3 w-3 shrink-0" />
                     <span className="truncate">
                         {account.updated_at

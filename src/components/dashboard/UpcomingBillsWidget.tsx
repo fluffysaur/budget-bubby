@@ -84,7 +84,7 @@ export const UpcomingBillRow = React.memo(function UpcomingBillRow({
                     <CurrencyText amount={item.amount} size="md" />
                 </div>
                 {item.frequency === "annually" && (
-                    <div className="text-[10px] font-mono-num text-(--text-muted)">
+                    <div className="text-2xs font-mono-num text-(--text-muted)">
                         ~
                         <CurrencyText amount={item.monthly_amortized_amount} />
                         /mo

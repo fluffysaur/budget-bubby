@@ -59,7 +59,7 @@ export function AccountOriginChoice({
                     </button>
                 ))}
             </div>
-            <p className="mt-1 text-[10px] text-(--text-muted)">
+            <p className="mt-1 text-2xs text-(--text-muted)">
                 Existing = money we weren't tracking yet.
             </p>
         </div>

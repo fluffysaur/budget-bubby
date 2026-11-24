@@ -357,7 +357,7 @@ export function CumulativeSurplusCard({
                                                     title={mask(
                                                         `Goal-funded spending of ${formatSGD(point.goalSpent)} safely excluded`,
                                                     )}
-                                                    className="text-[9px] px-1 py-0.2 rounded bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) font-bold"
+                                                    className="text-2xs px-1 py-0.2 rounded bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) font-bold"
                                                 >
                                                     Goal
                                                 </span>

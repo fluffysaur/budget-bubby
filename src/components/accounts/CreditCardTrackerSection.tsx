@@ -401,7 +401,7 @@ export function CreditCardTrackerSection({
                                     setSelectedMonth((m) => addMonths(m, -1));
                                 }
                             }}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
+                            className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
@@ -427,7 +427,7 @@ export function CreditCardTrackerSection({
                                     setSelectedMonth(next);
                                 }
                             }}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                            className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </button>
@@ -663,7 +663,7 @@ export function CreditCardTrackerSection({
                                                                 true,
                                                             );
                                                         }}
-                                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
+                                                        className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-butter-light) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-colors cursor-pointer"
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
                                                     </button>
