@@ -8,7 +8,7 @@ import {
     keys,
     type InvalidationDomain,
 } from "../queryKeys";
-import { useInvalidateFinance } from "../../hooks/useFinanceQueries";
+import { useInvalidateFinance } from "../../hooks/finance/shared";
 
 /** Snapshot of what each domain refreshed before the registry existed. */
 const EXPECTED: Record<InvalidationDomain, string[]> = {

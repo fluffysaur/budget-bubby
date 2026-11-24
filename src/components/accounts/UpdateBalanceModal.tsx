@@ -22,7 +22,7 @@ import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import {
     useUpdateAccountBalanceMutation,
     useBulkUpdateAccountBalancesMutation,
-} from "../../hooks/useFinanceQueries";
+} from "../../hooks/finance/accounts";
 import { getTodayDateString } from "../../lib/dateUtils";
 import {
     AnimatedModal,

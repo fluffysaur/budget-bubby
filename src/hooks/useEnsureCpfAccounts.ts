@@ -8,7 +8,8 @@ import { useEffect } from "react";
 import { useHousehold } from "../context/HouseholdContext";
 import { missingCpfAccounts } from "../lib/cpfAccounts";
 import { financeService } from "../services/financeService";
-import { useAccountsQuery, useInvalidateFinance } from "./useFinanceQueries";
+import { useAccountsQuery } from "./finance/accounts";
+import { useInvalidateFinance } from "./finance/shared";
 
 const attempted = new Set<string>();
 

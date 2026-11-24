@@ -65,10 +65,8 @@ import {
 } from "../../lib/capture/inboxExpense";
 import { normalizeMerchant } from "../../lib/capture/merchant";
 import { TruncatedText } from "../ui/TruncatedText";
-import {
-    useAddExpenseMutation,
-    useGoalsQuery,
-} from "../../hooks/useFinanceQueries";
+import { useAddExpenseMutation } from "../../hooks/finance/expenses";
+import { useGoalsQuery } from "../../hooks/finance/goals";
 import {
     useConfirmInboxItemMutation,
     useInboxQuery,

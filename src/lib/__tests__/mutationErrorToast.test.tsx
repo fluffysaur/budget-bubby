@@ -12,7 +12,7 @@ import { LazyMotion, domAnimation } from "motion/react";
 import type { ReactNode } from "react";
 import { createAppQueryClient } from "../queryClient";
 import { onAppEvent, type ErrorToastDetail } from "../appEvents";
-import { useBulkUpdateAccountBalancesMutation } from "../../hooks/useFinanceQueries";
+import { useBulkUpdateAccountBalancesMutation } from "../../hooks/finance/accounts";
 import { financeService } from "../../services/financeService";
 import { DelightHost } from "../../components/bubby/DelightHost";
 import type { Account } from "../../types/finance";

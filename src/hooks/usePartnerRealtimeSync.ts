@@ -9,7 +9,7 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useOptionalHousehold } from "../context/HouseholdContext";
-import { useSafeQueryClient } from "./useFinanceQueries";
+import { useSafeQueryClient } from "./finance/shared";
 import { keys } from "../lib/queryKeys";
 import { isSupabaseConfigured, supabase } from "../services/supabaseClient";
 import type { SupabaseClient } from "@supabase/supabase-js";

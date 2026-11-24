@@ -20,7 +20,7 @@ import type {
     AccountType,
     HouseholdMember,
 } from "../../types/finance";
-import { useCreateAccountMutation } from "../../hooks/useFinanceQueries";
+import { useCreateAccountMutation } from "../../hooks/finance/accounts";
 import {
     AnimatedModal,
     ModalHeader,

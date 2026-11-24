@@ -15,7 +15,7 @@ import {
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { useUpdateHouseholdSettingsMutation } from "../../hooks/useFinanceQueries";
+import { useUpdateHouseholdSettingsMutation } from "../../hooks/finance/budget";
 import {
     DEFAULT_HAIRCUT_PERCENT,
     DEFAULT_HAIRCUT_WINDOW_MONTHS,

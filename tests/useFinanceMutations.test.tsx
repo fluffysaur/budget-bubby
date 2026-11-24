@@ -16,17 +16,23 @@ import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
-    useUpdateGoalMutation,
-    useAddGoalMutation,
-    useUpdateRecurringItemMutation,
-    useDeleteRecurringItemMutation,
     useUpdateAccountBalanceMutation,
     useBulkUpdateAccountBalancesMutation,
+} from "../src/hooks/finance/accounts";
+import {
+    useUpdateRecurringItemMutation,
+    useDeleteRecurringItemMutation,
+    useUpdateBaseProfileMutation,
+} from "../src/hooks/finance/budget";
+import {
     useAddCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation,
-    useUpdateBaseProfileMutation,
-} from "../src/hooks/useFinanceQueries";
+} from "../src/hooks/finance/categories";
+import {
+    useUpdateGoalMutation,
+    useAddGoalMutation,
+} from "../src/hooks/finance/goals";
 import {
     useConfirmInboxItemMutation,
     useResolveInboxItemMutation,

@@ -26,13 +26,13 @@ import {
 } from "../components/ui";
 import { CollapsibleSection } from "../components/ui/CollapsibleSection";
 import {
-    useCategoriesQuery,
     useBaseProfilesQuery,
     useBaseAllocationsQuery,
     useRecurringItemsQuery,
     useBudgetDetailQuery,
-    useInvalidateFinance,
-} from "../hooks/useFinanceQueries";
+} from "../hooks/finance/budget";
+import { useCategoriesQuery } from "../hooks/finance/categories";
+import { useInvalidateFinance } from "../hooks/finance/shared";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { getCurrentMonth } from "../lib/dateUtils";
@@ -248,8 +248,7 @@ export function BudgetPage({
         budgetDetail?.spendableSpent ??
         spendableCats.reduce((s, c) => s + (c.actualSpent || 0), 0);
     const spendableRemaining =
-        budgetDetail?.spendableRemaining ??
-        spendableAllocated - spendableSpent;
+        budgetDetail?.spendableRemaining ?? spendableAllocated - spendableSpent;
     const savingsCats = allocationCats.filter((c) =>
         isSavingsCategory(c.category),
     );
@@ -473,7 +472,8 @@ export function BudgetPage({
                                         title="Allocations"
                                         subtitle={`${formatSGD(
                                             allocationCats.reduce(
-                                                (s, c) => s + c.allocated_amount,
+                                                (s, c) =>
+                                                    s + c.allocated_amount,
                                                 0,
                                             ),
                                             { showCents: false },
@@ -501,7 +501,9 @@ export function BudgetPage({
                                     <BudgetWaterfall
                                         budget={budgetDetail?.budget}
                                         categories={budgetDetail?.categories}
-                                        bonusSummary={budgetDetail?.bonusSummary}
+                                        bonusSummary={
+                                            budgetDetail?.bonusSummary
+                                        }
                                         onEditProfile={() => handleOpenEditor()}
                                         onViewBonus={handleViewBonus}
                                     />

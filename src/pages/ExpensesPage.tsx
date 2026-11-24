@@ -31,19 +31,21 @@ import {
     MeterBar,
 } from "../components/ui";
 import {
-    useExpensesQuery,
-    useSettleUpsQuery,
-    useAllExpensesQuery,
     useRecurringItemsQuery,
-    useCategoriesQuery,
-    useGoalsQuery,
     useBaseProfilesQuery,
     useBaseAllocationsQuery,
     useBudgetDetailQuery,
-    useInvalidateFinance,
+} from "../hooks/finance/budget";
+import { useCategoriesQuery } from "../hooks/finance/categories";
+import {
+    useExpensesQuery,
+    useAllExpensesQuery,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
-} from "../hooks/useFinanceQueries";
+} from "../hooks/finance/expenses";
+import { useGoalsQuery } from "../hooks/finance/goals";
+import { useSettleUpsQuery } from "../hooks/finance/settleUps";
+import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";

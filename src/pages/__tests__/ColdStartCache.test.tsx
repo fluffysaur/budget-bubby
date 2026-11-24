@@ -14,7 +14,8 @@ import { DashboardPage } from "../DashboardPage";
 import { ExpensesPage } from "../ExpensesPage";
 import * as useBubbyModule from "../../hooks/useBubby";
 import * as householdModule from "../../context/HouseholdContext";
-import * as financeQueriesModule from "../../hooks/useFinanceQueries";
+import * as budgetHooks from "../../hooks/finance/budget";
+import * as expenseHooks from "../../hooks/finance/expenses";
 import type { HouseholdMember, MonthlyBudgetDetail } from "../../types/finance";
 
 const TEST_MEMBERS: HouseholdMember[] = [
@@ -200,12 +201,12 @@ describe("Cold start skeleton & cached privacy masking", () => {
             loading: true,
             refreshData: vi.fn(),
         });
-        vi.spyOn(financeQueriesModule, "useBudgetDetailQuery").mockReturnValue({
+        vi.spyOn(budgetHooks, "useBudgetDetailQuery").mockReturnValue({
             data: undefined,
             isLoading: false,
             isPending: true,
             isPlaceholderData: false,
-        } as unknown as ReturnType<typeof financeQueriesModule.useBudgetDetailQuery>);
+        } as unknown as ReturnType<typeof budgetHooks.useBudgetDetailQuery>);
 
         renderWithProviders(<DashboardPage />);
 
@@ -228,12 +229,12 @@ describe("Cold start skeleton & cached privacy masking", () => {
             loading: false,
             refreshData: vi.fn(),
         });
-        vi.spyOn(financeQueriesModule, "useBudgetDetailQuery").mockReturnValue({
+        vi.spyOn(budgetHooks, "useBudgetDetailQuery").mockReturnValue({
             data: TEST_BUDGET,
             isLoading: false,
             isPending: false,
             isPlaceholderData: false,
-        } as unknown as ReturnType<typeof financeQueriesModule.useBudgetDetailQuery>);
+        } as unknown as ReturnType<typeof budgetHooks.useBudgetDetailQuery>);
 
         renderWithProviders(<DashboardPage />);
 
@@ -257,7 +258,7 @@ describe("Cold start skeleton & cached privacy masking", () => {
             loading: true,
             refreshData: vi.fn(),
         });
-        vi.spyOn(financeQueriesModule, "useExpensesQuery").mockReturnValue({
+        vi.spyOn(expenseHooks, "useExpensesQuery").mockReturnValue({
             data: [],
             isLoading: false,
             isPending: false,
@@ -265,13 +266,13 @@ describe("Cold start skeleton & cached privacy masking", () => {
             isError: false,
             error: null,
             refetch: vi.fn(),
-        } as unknown as ReturnType<typeof financeQueriesModule.useExpensesQuery>);
-        vi.spyOn(financeQueriesModule, "useBudgetDetailQuery").mockReturnValue({
+        } as unknown as ReturnType<typeof expenseHooks.useExpensesQuery>);
+        vi.spyOn(budgetHooks, "useBudgetDetailQuery").mockReturnValue({
             data: undefined,
             isLoading: false,
             isPending: true,
             isPlaceholderData: false,
-        } as unknown as ReturnType<typeof financeQueriesModule.useBudgetDetailQuery>);
+        } as unknown as ReturnType<typeof budgetHooks.useBudgetDetailQuery>);
 
         renderWithProviders(<ExpensesPage />);
 

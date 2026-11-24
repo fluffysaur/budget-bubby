@@ -14,11 +14,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Inbox, Trash2 } from "lucide-react";
 import { useLoggedInMember } from "../hooks/useLoggedInMember";
 import { useSettings } from "../context/SettingsContext";
-import {
-    useAllExpensesQuery,
-    useCategoriesQuery,
-    useGoalsQuery,
-} from "../hooks/useFinanceQueries";
+import { useCategoriesQuery } from "../hooks/finance/categories";
+import { useAllExpensesQuery } from "../hooks/finance/expenses";
+import { useGoalsQuery } from "../hooks/finance/goals";
 import {
     useCaptureTokensQuery,
     useInboxQuery,

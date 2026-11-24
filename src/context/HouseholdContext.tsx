@@ -21,7 +21,7 @@ import type {
 export type { Perspective, Perspective as PerspectiveType };
 import { isDemoModeActive } from "../services/financeService";
 import { isSupabaseConfigured } from "../services/supabaseClient";
-import { useHouseholdOverviewQuery } from "../hooks/useFinanceQueries";
+import { useHouseholdOverviewQuery } from "../hooks/finance/budget";
 import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { useQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";

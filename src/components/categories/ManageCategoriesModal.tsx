@@ -26,12 +26,12 @@ import {
     Sliders,
 } from "lucide-react";
 import { financeService } from "../../services/financeService";
+import { useUpdateBaseProfileMutation } from "../../hooks/finance/budget";
 import {
     useAddCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation,
-    useUpdateBaseProfileMutation,
-} from "../../hooks/useFinanceQueries";
+} from "../../hooks/finance/categories";
 import { AnimatedModal, ModalHeader } from "../ui/AnimatedModal";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";

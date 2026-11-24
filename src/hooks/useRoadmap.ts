@@ -6,18 +6,17 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import { useAccountSnapshotsQuery, useAccountsQuery } from "./finance/accounts";
 import {
-    useAccountSnapshotsQuery,
-    useAccountsQuery,
-    useAllExpensesQuery,
-    useBonusEventsQuery,
     useHouseholdOverviewQuery,
     useBudgetHistoryQuery,
-    useCategoriesQuery,
-    useCreditCardStatementsQuery,
-    useGoalsQuery,
     useRecurringItemsQuery,
-} from "./useFinanceQueries";
+} from "./finance/budget";
+import { useCreditCardStatementsQuery } from "./finance/cards";
+import { useCategoriesQuery } from "./finance/categories";
+import { useAllExpensesQuery } from "./finance/expenses";
+import { useGoalsQuery } from "./finance/goals";
+import { useBonusEventsQuery } from "./finance/settleUps";
 import { getTodayDateString } from "../lib/dateUtils";
 import {
     baselineCoveredThrough,

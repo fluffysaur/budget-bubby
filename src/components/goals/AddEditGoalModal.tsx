@@ -29,7 +29,7 @@ import { Switch } from "../ui/Switch";
 import {
     useAddGoalMutation,
     useUpdateGoalMutation,
-} from "../../hooks/useFinanceQueries";
+} from "../../hooks/finance/goals";
 import { formatISODate } from "../../lib/dateUtils";
 import { CurrencyText } from "../ui/CurrencyText";
 import { feedback } from "../../lib/delight/feedback";

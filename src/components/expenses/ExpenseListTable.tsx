@@ -41,7 +41,7 @@ import { AvatarDot } from "../ui/AvatarDot";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
 import { emitAppEvent } from "../../lib/appEvents";
-import { useGoalsQuery } from "../../hooks/useFinanceQueries";
+import { useGoalsQuery } from "../../hooks/finance/goals";
 import { Button } from "../ui/Button";
 import { ExpenseFilterBar } from "./ExpenseFilterBar";
 import { isMockModeActive } from "../../services/financeService";

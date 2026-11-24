@@ -21,14 +21,11 @@ import {
     SegmentedTabs,
     QueryErrorAlert,
 } from "../components/ui";
-import {
-    useGoalsQuery,
-    useExpensesQuery,
-    useCategoriesQuery,
-    useRecurringItemsQuery,
-    useInvalidateFinance,
-    useUpdateGoalMutation,
-} from "../hooks/useFinanceQueries";
+import { useRecurringItemsQuery } from "../hooks/finance/budget";
+import { useCategoriesQuery } from "../hooks/finance/categories";
+import { useExpensesQuery } from "../hooks/finance/expenses";
+import { useGoalsQuery, useUpdateGoalMutation } from "../hooks/finance/goals";
+import { useInvalidateFinance } from "../hooks/finance/shared";
 import { financeService } from "../services/financeService";
 import { useRoadmap } from "../hooks/useRoadmap";
 import { applyTrimTradeOff } from "../lib/roadmap";

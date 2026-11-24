@@ -31,10 +31,10 @@ import {
 import {
     useAccountsQuery,
     useAccountSnapshotsQuery,
-    useCreditCardStatementsQuery,
-    useInvalidateFinance,
     useUpdateAccountBalanceMutation,
-} from "../hooks/useFinanceQueries";
+} from "../hooks/finance/accounts";
+import { useCreditCardStatementsQuery } from "../hooks/finance/cards";
+import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { formatSGD } from "../lib/currency";
 import {

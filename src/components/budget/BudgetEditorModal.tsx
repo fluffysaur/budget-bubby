@@ -32,12 +32,14 @@ import {
     isMockModeActive,
 } from "../../services/financeService";
 import {
+    useUpdateBaseProfileMutation,
+    useUpdateMonthlyBudgetMutation,
+} from "../../hooks/finance/budget";
+import {
     useAddCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation,
-    useUpdateBaseProfileMutation,
-    useUpdateMonthlyBudgetMutation,
-} from "../../hooks/useFinanceQueries";
+} from "../../hooks/finance/categories";
 import {
     AnimatedModal,
     ModalHeader,

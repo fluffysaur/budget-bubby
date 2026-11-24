@@ -13,12 +13,9 @@ import { keys } from "../lib/queryKeys";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { financeService } from "../services/financeService";
-import {
-    useAccountsQuery,
-    useAccountSnapshotsQuery,
-    useCreditCardStatementsQuery,
-    useExpensesQuery,
-} from "./useFinanceQueries";
+import { useAccountsQuery, useAccountSnapshotsQuery } from "./finance/accounts";
+import { useCreditCardStatementsQuery } from "./finance/cards";
+import { useExpensesQuery } from "./finance/expenses";
 import { useMonthEndSurplus } from "./useMonthEndSurplus";
 import { useLoggedInMember } from "./useLoggedInMember";
 import { useOptionalHousehold } from "../context/HouseholdContext";

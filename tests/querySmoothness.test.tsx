@@ -25,7 +25,7 @@ import {
     useExpensesQuery,
     useAddExpenseMutation,
     useDeleteExpenseMutation,
-} from "../src/hooks/useFinanceQueries";
+} from "../src/hooks/finance/expenses";
 import { useSubmitLock } from "../src/hooks/useSubmitLock";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
 import { financeService } from "../src/services/financeService";
