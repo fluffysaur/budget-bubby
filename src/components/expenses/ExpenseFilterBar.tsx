@@ -32,7 +32,7 @@ import type {
     ExpenseSortField,
     SortDirection,
 } from "../../types/finance";
-import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { isMockModeActive } from "../../services/financeService";
 import { Select } from "../ui/Select";
 import { formatShortMonth } from "../../lib/dateUtils";
@@ -66,13 +66,15 @@ export function ExpenseFilterBar({
     embeddedInCard = false,
 }: ExpenseFilterBarProps) {
     const isMock = isMockModeActive();
+    const { categories: mockCategories, members: mockMembers } =
+        useLazyMockDefaults(isMock && (!propCategories || !propMembers));
     const categories = useMemo(
         () => propCategories ?? (isMock ? mockCategories : []),
-        [propCategories, isMock],
+        [propCategories, isMock, mockCategories],
     );
     const members = useMemo(
         () => propMembers ?? (isMock ? mockMembers : []),
-        [propMembers, isMock],
+        [propMembers, isMock, mockMembers],
     );
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const currentMonth = useCurrentMonth();

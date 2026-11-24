@@ -79,9 +79,11 @@ describe("HouseholdContext", () => {
         );
         expect(screen.getByTestId("active-member")).toHaveTextContent("none");
         expect(screen.getByTestId("is-mock-mode")).toHaveTextContent("mock");
-        expect(
-            Number(screen.getByTestId("members-count").textContent),
-        ).toBeGreaterThanOrEqual(2);
+        await waitFor(() => {
+            expect(
+                Number(screen.getByTestId("members-count").textContent),
+            ).toBeGreaterThanOrEqual(2);
+        });
     });
 
     it("updates perspective and resolves activeMember correctly", async () => {

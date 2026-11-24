@@ -38,7 +38,7 @@ import {
     isLoggableCategory,
     isSpendableCategory,
 } from "../../lib/financialFormulas";
-import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import type {
     Category,
@@ -138,6 +138,13 @@ export function ExpenseFormModal({
     const perspective = household?.perspective ?? "household";
     const isMockMode = household?.isMockMode ?? isMockModeActive();
     const isEditMode = Boolean(expense);
+    const needsMockFallback =
+        isMockMode &&
+        (!(propMembers && propMembers.length > 0) &&
+            !(ctxMembers && ctxMembers.length > 0) ||
+            !(propCategories && propCategories.length > 0));
+    const { members: mockMembers, categories: mockCategories } =
+        useLazyMockDefaults(needsMockFallback);
 
     const members = useMemo(
         () =>
@@ -148,7 +155,7 @@ export function ExpenseFormModal({
                   : isMockMode
                     ? mockMembers
                     : [],
-        [propMembers, ctxMembers, isMockMode],
+        [propMembers, ctxMembers, isMockMode, mockMembers],
     );
     const { me } = useLoggedInMember(members);
 
@@ -159,7 +166,7 @@ export function ExpenseFormModal({
                 : isMockMode
                   ? mockCategories
                   : [],
-        [propCategories, isMockMode],
+        [propCategories, isMockMode, mockCategories],
     );
 
     // Savings is a target, not a spending bucket: it can't be logged against.

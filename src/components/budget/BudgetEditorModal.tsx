@@ -50,7 +50,7 @@ import { TooltipPopover } from "../ui/TooltipPopover";
 import { Alert } from "../ui/Alert";
 import { CategoryModeToggle } from "../categories/CategoryModeToggle";
 import { feedback } from "../../lib/delight/feedback";
-import { mockCategories } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import {
     calculateCPFAndNetPay,
     calculateDisposableBudget,
@@ -121,9 +121,13 @@ export function BudgetEditorModal({
     const updateBaseProfileMutation = useUpdateBaseProfileMutation();
     const updateMonthlyBudgetMutation = useUpdateMonthlyBudgetMutation();
 
+    const isMock = isMockModeActive();
+    const { categories: mockCategories } = useLazyMockDefaults(
+        isMock && !propCategories,
+    );
     const categories = useMemo(
-        () => propCategories ?? (isMockModeActive() ? mockCategories : []),
-        [propCategories],
+        () => propCategories ?? (isMock ? mockCategories : []),
+        [propCategories, isMock, mockCategories],
     );
     const scopedCategories = useMemo(
         () => filterCategoriesForMember(categories, profile?.owner_id),

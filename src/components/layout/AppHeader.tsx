@@ -29,7 +29,7 @@ import {
     type PerspectiveType,
 } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
-import { mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
@@ -97,6 +97,9 @@ export function AppHeader({
         promptInstall,
     } = usePWAInstall();
 
+    const { members: mockMembers } = useLazyMockDefaults(
+        isMockMode && !(ctxMembers && ctxMembers.length > 0),
+    );
     const members = useMemo(
         () =>
             ctxMembers && ctxMembers.length > 0
@@ -104,7 +107,7 @@ export function AppHeader({
                 : isMockMode
                   ? mockMembers
                   : [],
-        [ctxMembers, isMockMode],
+        [ctxMembers, isMockMode, mockMembers],
     );
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);

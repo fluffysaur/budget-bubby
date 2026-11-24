@@ -20,9 +20,9 @@ import type {
     CreateRecurringItemInput,
     SavingsGoal,
 } from "../../types/finance";
-import { useHousehold } from "../../context/HouseholdContext";
+import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { isMockModeActive } from "../../services/financeService";
-import { mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import {
     AnimatedModal,
     ModalHeader,
@@ -46,23 +46,24 @@ import { Switch } from "../ui/Switch";
 import { Alert } from "../ui/Alert";
 
 function useSafeHousehold() {
-    try {
-        return useHousehold();
-    } catch {
-        const isMock = isMockModeActive();
-        return {
-            members: isMock ? mockMembers : [],
-            activeMember: isMock ? mockMembers[0] : null,
-            perspective: "household" as const,
-            setPerspective: () => {},
-            theme: "light" as const,
-            toggleTheme: () => {},
-            isMockMode: isMock,
-            overview: null,
-            loading: false,
-            refreshData: async () => {},
-        };
+    const ctx = useOptionalHousehold();
+    const isMock = ctx?.isMockMode ?? isMockModeActive();
+    const { members: mockMembers } = useLazyMockDefaults(!ctx && isMock);
+    if (ctx) {
+        return ctx;
     }
+    return {
+        members: isMock ? mockMembers : [],
+        activeMember: isMock ? (mockMembers[0] ?? null) : null,
+        perspective: "household" as const,
+        setPerspective: () => {},
+        theme: "light" as const,
+        toggleTheme: () => {},
+        isMockMode: isMock,
+        overview: null,
+        loading: false,
+        refreshData: async () => {},
+    };
 }
 
 export interface AddRecurringModalProps {

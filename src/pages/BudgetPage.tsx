@@ -42,11 +42,7 @@ import {
     isSavingsCategory,
     isSpendableCategory,
 } from "../lib/financialFormulas";
-import {
-    mockBaseProfiles,
-    mockBaseAllocations,
-    mockCategories,
-} from "../data/mockSeedData";
+import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { MonthPicker } from "../components/budget/MonthPicker";
 import { BudgetWaterfall } from "../components/budget/BudgetWaterfall";
 import { CategoriesHeader } from "../components/budget/CategoriesHeader";
@@ -84,22 +80,33 @@ export function BudgetPage({
     const { data: baseAllocationsData } = useBaseAllocationsQuery();
     const { data: recurringItemsData } = useRecurringItemsQuery();
 
+    const needsMockFallback =
+        isMockMode &&
+        (!(categoriesData && categoriesData.length > 0) ||
+            !(baseProfilesData && baseProfilesData.length > 0) ||
+            !(baseAllocationsData && baseAllocationsData.length > 0));
+    const {
+        categories: mockCategories,
+        baseProfiles: mockBaseProfiles,
+        baseAllocations: mockBaseAllocations,
+    } = useLazyMockDefaults(needsMockFallback);
+
     const categories = useMemo(() => {
         if (categoriesData && categoriesData.length > 0) return categoriesData;
         return isMockMode ? mockCategories : [];
-    }, [categoriesData, isMockMode]);
+    }, [categoriesData, isMockMode, mockCategories]);
 
     const baseProfiles = useMemo(() => {
         if (baseProfilesData && baseProfilesData.length > 0)
             return baseProfilesData;
         return isMockMode ? mockBaseProfiles : [];
-    }, [baseProfilesData, isMockMode]);
+    }, [baseProfilesData, isMockMode, mockBaseProfiles]);
 
     const baseAllocations = useMemo(() => {
         if (baseAllocationsData && baseAllocationsData.length > 0)
             return baseAllocationsData;
         return isMockMode ? mockBaseAllocations : [];
-    }, [baseAllocationsData, isMockMode]);
+    }, [baseAllocationsData, isMockMode, mockBaseAllocations]);
 
     // Modal State
     const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
@@ -176,6 +183,7 @@ export function BudgetPage({
         members,
         overview,
         isMockMode,
+        mockBaseProfiles,
     ]);
 
     const activeAllocations = useMemo(() => {
