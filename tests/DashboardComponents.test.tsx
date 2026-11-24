@@ -600,9 +600,13 @@ describe("DashboardPage", () => {
                 totalRemaining: -50,
             };
             render(<LeftToSpendHero summary={overspentSummary} />);
+            expect(screen.getByText("From Next Month")).toBeInTheDocument();
             expect(screen.getByTestId("left-to-spend-amount")).toHaveClass(
-                "text-(--accent-coral-ink)",
+                "text-amber-800",
             );
+            expect(
+                screen.getByTestId("left-to-spend-amount"),
+            ).toHaveTextContent("S$50.00");
         });
 
         it("keeps two meter columns on tablet and goes four-up only at lg", () => {

@@ -133,14 +133,12 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
             screen.getByTestId("category-limit-warning-banner"),
         ).toBeInTheDocument();
 
-        // Rose Exceeded Alert
+        // Calm Soft-Amber Over Cap Alert
         expect(
             screen.getByTestId("category-limit-exceeded-banner"),
         ).toBeInTheDocument();
         expect(
-            screen.getByText(
-                withText(/Lifestyle has exceeded cap by S\$45\.00!/i),
-            ),
+            screen.getByText(withText(/Lifestyle is S\$45\.00 over/i)),
         ).toBeInTheDocument();
 
         // Amber Nearing Alert
@@ -243,7 +241,7 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
         expect(screen.getByText(/S\$150\.00 left/i)).toBeInTheDocument();
     });
 
-    it("triggers playBudgetExceededSound and displays toast when expenseAdded crosses 100%", () => {
+    it("shows calm Honest log toast without exceeded sound when expenseAdded crosses 100%", () => {
         // Initial category at 95% ($760 / $800)
         const initialCats: MonthlyBudgetCategoryDetail[] = [
             {
@@ -287,10 +285,12 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
             );
         });
 
-        expect(soundEffects.playBudgetExceededSound).toHaveBeenCalledTimes(1);
+        expect(soundEffects.playBudgetExceededSound).not.toHaveBeenCalled();
         expect(screen.getByRole("alert")).toBeInTheDocument();
-        expect(screen.getByText(/Food Over/i)).toBeInTheDocument();
-        expect(screen.getByText(/S\$20\.00 over cap/i)).toBeInTheDocument();
+        expect(screen.getByText(/Honest log/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/S\$20\.00 into next month/i),
+        ).toBeInTheDocument();
     });
 
     it("dismisses Over Cap and Near Limit independently and persists in sessionStorage across remounts", () => {
@@ -387,9 +387,12 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
             );
         });
 
-        expect(soundEffects.playBudgetExceededSound).toHaveBeenCalledTimes(1);
+        expect(soundEffects.playBudgetExceededSound).not.toHaveBeenCalled();
         expect(screen.getByRole("alert")).toBeInTheDocument();
-        expect(screen.getByText(/Food Over/i)).toBeInTheDocument();
+        expect(screen.getByText(/Honest log/i)).toBeInTheDocument();
+        expect(
+            screen.getByText(/S\$65\.00 into next month/i),
+        ).toBeInTheDocument();
     });
 });
 

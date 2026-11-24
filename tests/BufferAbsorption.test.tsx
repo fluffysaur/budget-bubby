@@ -1,7 +1,10 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { CategoryProgressList } from "../src/components/budget/CategoryProgressList";
-import type { Category, MonthlyBudgetCategoryDetail } from "../src/types/finance";
+import type {
+    Category,
+    MonthlyBudgetCategoryDetail,
+} from "../src/types/finance";
 
 describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
     const foodCategory: Category = {
@@ -60,7 +63,9 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
 
         // Food category retains visibility of spending and overage
         expect(screen.getByText("Food")).toBeInTheDocument();
-        expect(screen.getAllByText("S$100.00").length).toBeGreaterThanOrEqual(2);
+        expect(screen.getAllByText("S$100.00").length).toBeGreaterThanOrEqual(
+            2,
+        );
         expect(
             screen.getByText(
                 (content, el) =>
@@ -71,11 +76,15 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
 
         // Food displays 'Covered by Buffer' badge
         expect(screen.getByText("Covered by Buffer")).toBeInTheDocument();
-        expect(screen.getByTestId("badge-covered-cat-food")).toBeInTheDocument();
+        expect(
+            screen.getByTestId("badge-covered-cat-food"),
+        ).toBeInTheDocument();
 
         // Alarming top over-budget alert banner should NOT be displayed
         expect(
-            screen.queryByText(/categories have exceeded budget|category has exceeded budget/i),
+            screen.queryByText(
+                /categories have exceeded budget|category has exceeded budget/i,
+            ),
         ).not.toBeInTheDocument();
 
         // Buffer category card deducts absorbed overages from remaining balance
@@ -164,7 +173,9 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
 
         // Buffer hits $0 remaining with a Depleted alert state
         expect(screen.getByText("Depleted")).toBeInTheDocument();
-        expect(screen.getByTestId("badge-depleted-cat-buf")).toBeInTheDocument();
+        expect(
+            screen.getByTestId("badge-depleted-cat-buf"),
+        ).toBeInTheDocument();
         expect(screen.getByText("S$0.00")).toBeInTheDocument();
 
         // Affected categories indicate 'Partially covered'
@@ -187,8 +198,8 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
             ),
         ).toBeInTheDocument();
 
-        // Over-budget alert banner shows categories exceeding buffer cushion
-        expect(screen.getByText(/2 categories have exceeded budget/i)).toBeInTheDocument();
+        // Over-cap alert banner shows categories exceeding buffer cushion
+        expect(screen.getByText(/2 categories over cap/i)).toBeInTheDocument();
     });
 
     it("displays 'Uncovered by $X' when Buffer has $0 available capacity", () => {
@@ -217,7 +228,9 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
 
         expect(screen.getByText("Depleted")).toBeInTheDocument();
         expect(screen.getByText(/Uncovered by/i)).toBeInTheDocument();
-        expect(screen.getByTestId("badge-uncovered-cat-food")).toBeInTheDocument();
+        expect(
+            screen.getByTestId("badge-uncovered-cat-food"),
+        ).toBeInTheDocument();
     });
 
     it("displays cushion breakdown in Buffer details popover", () => {
@@ -255,7 +268,7 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
             screen.getByText((_, el) =>
                 Boolean(
                     el?.tagName.toLowerCase() === "li" &&
-                        el.textContent?.includes("Food: S$50.00"),
+                    el.textContent?.includes("Food: S$50.00"),
                 ),
             ),
         ).toBeInTheDocument();

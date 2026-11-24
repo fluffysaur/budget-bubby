@@ -138,7 +138,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         expect(destructiveSpy).toHaveBeenCalledTimes(1);
     });
 
-    it("triggers haptics.warning and haptics.alert on category budget boundary crossings", async () => {
+    it("triggers haptics.warning at 80% and stays calm without haptics.alert at 100%", async () => {
         const warningSpy = vi.spyOn(haptics, "warning");
         const alertSpy = vi.spyOn(haptics, "alert");
 
@@ -194,7 +194,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
                 }),
             );
         });
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).not.toHaveBeenCalled();
     });
 
     it("allows toggling and testing haptics in NotificationSettingsModal", async () => {

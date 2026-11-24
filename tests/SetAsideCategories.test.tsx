@@ -115,7 +115,7 @@ describe("CategoryProgressList set-aside rows", () => {
     it("still warns for spendable categories over cap", () => {
         const food = detail(cat("Food", "spendable"), 100, 150);
         render(<CategoryProgressList categories={[food]} />);
-        expect(screen.getByText(/exceeded budget/i)).toBeInTheDocument();
+        expect(screen.getByText(/over cap:/i)).toBeInTheDocument();
         expect(
             screen.getByTestId(`badge-rose-${food.category_id}`),
         ).toBeInTheDocument();
@@ -130,9 +130,7 @@ describe("CategoryProgressList set-aside rows", () => {
                 ]}
             />,
         );
-        expect(
-            screen.getByText(/1 category has exceeded budget/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/1 category over cap:/i)).toBeInTheDocument();
     });
 });
 

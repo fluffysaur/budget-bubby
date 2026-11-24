@@ -44,18 +44,22 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                        Left to Spend
+                        {isOverspent ? "From Next Month" : "Left to Spend"}
                     </span>
                     <div
                         data-testid="left-to-spend-amount"
                         className={`mt-1 ${
                             isOverspent
-                                ? "text-(--accent-coral-ink) dark:text-rose-400"
+                                ? "text-amber-800 dark:text-amber-300"
                                 : "text-(--text-ink)"
                         }`}
                     >
                         <CurrencyText
-                            amount={summary.totalRemaining}
+                            amount={
+                                isOverspent
+                                    ? Math.abs(summary.totalRemaining)
+                                    : summary.totalRemaining
+                            }
                             size="hero"
                             animate
                         />
@@ -82,6 +86,7 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
                     value={summary.totalSpent}
                     max={summary.totalAllocated}
                     size="md"
+                    tone={isOverspent ? "near" : undefined}
                     aria-label="Spendable budget progress"
                 />
             </div>

@@ -1,14 +1,16 @@
 /**
  * CategoryLimitWarningBanner Component
  * Persistent alert banner displayed on BudgetPage and DashboardPage when
- * any spendable category spending is nearing or exceeding its monthly cap:
+ * any spendable category spending is nearing or over its monthly cap:
  * - Nearing limit (>= 80% and < 100%): Amber warning alert
- * - Over limit (>= 100%): Rose exceeded alert
+ * - Over limit (>= 100%, covered by Buffer): Calm neutral slate alert
+ * - Over limit (>= 100%, uncovered / total over): Calm soft-amber alert
  *
  * Listens to the window 'expenseAdded' event:
  * - If a newly logged expense pushes any category across 80%, triggers playBudgetWarningSound()
- *   and shows an immediate alert toast notification.
- * - If it pushes across 100%, triggers playBudgetExceededSound() and shows an immediate alert toast.
+ *   and shows an immediate amber warning toast.
+ * - If it pushes across 100%, shows a calm acknowledgement toast ("Logged!" when covered by
+ *   Buffer, or "Honest log" when total spendable moves into next month) with no alarm sound.
  */
 
 import React, {
@@ -18,19 +20,15 @@ import React, {
     useRef,
     useCallback,
 } from "react";
-import {
-    AlertCircle,
-    AlertTriangle,
-    X,
-    ShieldAlert,
-    ArrowUpRight,
-} from "lucide-react";
+import { AlertTriangle, X, ArrowUpRight, Shield, Sparkles } from "lucide-react";
 import { formatSGD } from "../../lib/currency";
-import { isSpendableCategory } from "../../lib/financialFormulas";
 import {
-    playBudgetWarningSound,
-    playBudgetExceededSound,
-} from "../../lib/soundEffects";
+    computeBufferAbsorption,
+    isBufferCategory,
+    isSpendableCategory,
+} from "../../lib/financialFormulas";
+import { evaluateSpendablePostLog } from "../../lib/honestLog";
+import { playBudgetWarningSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { financeService } from "../../services/financeService";
@@ -55,12 +53,12 @@ export interface CategoryLimitWarningBannerProps {
 
 interface ToastAlert {
     id: string;
-    type: "warning" | "exceeded";
+    type: "warning" | "covered" | "total-over";
     title: string;
     message: string;
 }
 
-type CategoryLimitAlertType = "exceeded" | "warning";
+type CategoryLimitAlertType = "exceeded" | "covered" | "warning";
 
 const DISMISSED_ALERTS_KEY = "bb_dismissed_category_limit_alerts_v1";
 const DISMISSED_ALERTS_EVENT = "categoryLimitAlertsDismissed";
@@ -68,16 +66,17 @@ const DISMISSED_ALERTS_EVENT = "categoryLimitAlertsDismissed";
 function readDismissedAlerts(): Record<CategoryLimitAlertType, boolean> {
     try {
         const raw = window.sessionStorage.getItem(DISMISSED_ALERTS_KEY);
-        if (!raw) return { exceeded: false, warning: false };
+        if (!raw) return { exceeded: false, covered: false, warning: false };
         const parsed = JSON.parse(raw) as Partial<
             Record<CategoryLimitAlertType, unknown>
         >;
         return {
             exceeded: Boolean(parsed.exceeded),
+            covered: Boolean(parsed.covered),
             warning: Boolean(parsed.warning),
         };
     } catch {
-        return { exceeded: false, warning: false };
+        return { exceeded: false, covered: false, warning: false };
     }
 }
 
@@ -190,23 +189,41 @@ export const CategoryLimitWarningBanner = React.memo(
                 const warningThreshold = currentPrefs.budget_warning_pct || 80;
 
                 if (newPct >= 100 && prevPct < 100) {
-                    try {
-                        playBudgetExceededSound();
-                        haptics.alert();
-                    } catch (err) {
-                        console.debug(
-                            "Error triggering exceeded sound/haptic:",
-                            err,
-                        );
-                    }
                     if (currentPrefs.budget_limit_alerts) {
                         const overAmount = Math.max(0, newSpent - allocated);
-                        setToast({
-                            id: String(Date.now()),
-                            type: "exceeded",
-                            title: `${catName} Over`,
-                            message: `${formatSGD(overAmount)} over cap`,
-                        });
+                        const evalResult = evaluateSpendablePostLog(
+                            currentCats,
+                            expense,
+                        );
+                        const isBuffer = isBufferCategory(
+                            targetCat.category || targetCat.category_id,
+                        );
+
+                        if (
+                            !isBuffer &&
+                            evalResult.projectedCategoryStatus === "covered"
+                        ) {
+                            setToast({
+                                id: String(Date.now()),
+                                type: "covered",
+                                title: "Logged!",
+                                message: `${catName} is ${formatSGD(overAmount)} over — covered by Buffer`,
+                            });
+                        } else if (evalResult.isTotalOver) {
+                            setToast({
+                                id: String(Date.now()),
+                                type: "total-over",
+                                title: "Honest log",
+                                message: `${formatSGD(evalResult.totalOverAmount)} into next month`,
+                            });
+                        } else {
+                            setToast({
+                                id: String(Date.now()),
+                                type: "covered",
+                                title: "Logged!",
+                                message: `${catName} is ${formatSGD(overAmount)} over cap`,
+                            });
+                        }
                     }
                 } else if (
                     newPct >= warningThreshold &&
@@ -248,8 +265,24 @@ export const CategoryLimitWarningBanner = React.memo(
         }, [toast]);
 
         // Derived persistent banner alerts
-        const { exceededAlerts, warningAlerts } = useMemo(() => {
+        const {
+            exceededAlerts,
+            coveredAlerts,
+            warningAlerts,
+            totalSpendableRemaining,
+        } = useMemo(() => {
+            const absorption = computeBufferAbsorption(categories);
             const exceeded: Array<{
+                id: string;
+                name: string;
+                spent: number;
+                allocated: number;
+                over: number;
+                percentage: number;
+                color?: string;
+            }> = [];
+
+            const covered: Array<{
                 id: string;
                 name: string;
                 spent: number;
@@ -269,19 +302,24 @@ export const CategoryLimitWarningBanner = React.memo(
                 color?: string;
             }> = [];
 
+            let remainingSum = 0;
+
             for (const c of categories) {
                 if (!isSpendableCategory(c.category || c.category_id)) continue;
                 const allocated = c.allocated_amount || 0;
+                const spent = c.actualSpent || 0;
+                remainingSum += allocated - spent;
                 if (allocated <= 0) continue;
 
-                const spent = c.actualSpent || 0;
                 const percentage = (spent / allocated) * 100;
                 const name = c.category?.name || "Category";
+                const catId = c.category_id || c.category?.id || "";
+                const isBuffer = isBufferCategory(c.category || c.category_id);
 
                 const warningThreshold = prefs.budget_warning_pct || 80;
 
                 if (percentage >= 100) {
-                    exceeded.push({
+                    const entry = {
                         id: c.category_id,
                         name,
                         spent,
@@ -289,7 +327,16 @@ export const CategoryLimitWarningBanner = React.memo(
                         over: spent - allocated,
                         percentage: Math.round(percentage),
                         color: c.category?.color,
-                    });
+                    };
+                    if (
+                        !isBuffer &&
+                        absorption.categoryBreakdown[catId]?.status ===
+                            "covered"
+                    ) {
+                        covered.push(entry);
+                    } else {
+                        exceeded.push(entry);
+                    }
                 } else if (percentage >= warningThreshold) {
                     warning.push({
                         id: c.category_id,
@@ -303,7 +350,12 @@ export const CategoryLimitWarningBanner = React.memo(
                 }
             }
 
-            return { exceededAlerts: exceeded, warningAlerts: warning };
+            return {
+                exceededAlerts: exceeded,
+                coveredAlerts: covered,
+                warningAlerts: warning,
+                totalSpendableRemaining: remainingSum,
+            };
         }, [categories, prefs.budget_warning_pct]);
 
         useEffect(() => {
@@ -341,44 +393,73 @@ export const CategoryLimitWarningBanner = React.memo(
             [dismissedTypes.exceeded, exceededAlerts],
         );
 
+        const visibleCoveredAlerts = useMemo(
+            () => (dismissedTypes.covered ? [] : coveredAlerts),
+            [dismissedTypes.covered, coveredAlerts],
+        );
+
         const visibleWarningAlerts = useMemo(
             () => (dismissedTypes.warning ? [] : warningAlerts),
             [dismissedTypes.warning, warningAlerts],
         );
 
         const hasAnyAlerts =
-            visibleExceededAlerts.length > 0 || visibleWarningAlerts.length > 0;
+            visibleExceededAlerts.length > 0 ||
+            visibleCoveredAlerts.length > 0 ||
+            visibleWarningAlerts.length > 0;
 
-        // In single mode, keep only the most urgent alert: worst overspend, else closest to cap
-        const { shownExceeded, shownWarning, hiddenCount } = useMemo(() => {
-            if (!single) {
-                return {
-                    shownExceeded: visibleExceededAlerts,
-                    shownWarning: visibleWarningAlerts,
-                    hiddenCount: 0,
-                };
-            }
-            const total =
-                visibleExceededAlerts.length + visibleWarningAlerts.length;
-            if (visibleExceededAlerts.length > 0) {
-                const worst = [...visibleExceededAlerts]
-                    .sort((a, b) => b.over - a.over)
+        // In single mode, keep only the most urgent alert: uncovered/total over, then Buffer-covered, else closest to cap
+        const { shownExceeded, shownCovered, shownWarning, hiddenCount } =
+            useMemo(() => {
+                if (!single) {
+                    return {
+                        shownExceeded: visibleExceededAlerts,
+                        shownCovered: visibleCoveredAlerts,
+                        shownWarning: visibleWarningAlerts,
+                        hiddenCount: 0,
+                    };
+                }
+                const total =
+                    visibleExceededAlerts.length +
+                    visibleCoveredAlerts.length +
+                    visibleWarningAlerts.length;
+                if (visibleExceededAlerts.length > 0) {
+                    const worst = [...visibleExceededAlerts]
+                        .sort((a, b) => b.over - a.over)
+                        .slice(0, 1);
+                    return {
+                        shownExceeded: worst,
+                        shownCovered: [],
+                        shownWarning: [],
+                        hiddenCount: total - 1,
+                    };
+                }
+                if (visibleCoveredAlerts.length > 0) {
+                    const worstCovered = [...visibleCoveredAlerts]
+                        .sort((a, b) => b.over - a.over)
+                        .slice(0, 1);
+                    return {
+                        shownExceeded: [],
+                        shownCovered: worstCovered,
+                        shownWarning: [],
+                        hiddenCount: total - 1,
+                    };
+                }
+                const closest = [...visibleWarningAlerts]
+                    .sort((a, b) => b.percentage - a.percentage)
                     .slice(0, 1);
                 return {
-                    shownExceeded: worst,
-                    shownWarning: [],
-                    hiddenCount: total - 1,
+                    shownExceeded: [],
+                    shownCovered: [],
+                    shownWarning: closest,
+                    hiddenCount: total - closest.length,
                 };
-            }
-            const closest = [...visibleWarningAlerts]
-                .sort((a, b) => b.percentage - a.percentage)
-                .slice(0, 1);
-            return {
-                shownExceeded: [],
-                shownWarning: closest,
-                hiddenCount: total - closest.length,
-            };
-        }, [single, visibleExceededAlerts, visibleWarningAlerts]);
+            }, [
+                single,
+                visibleExceededAlerts,
+                visibleCoveredAlerts,
+                visibleWarningAlerts,
+            ]);
 
         return (
             <>
@@ -394,20 +475,25 @@ export const CategoryLimitWarningBanner = React.memo(
                         >
                             <div
                                 className={`p-4 rounded-2xl border-2 border-(--border-ink) shadow-cute-lg flex items-start gap-3 backdrop-blur-md ${
-                                    toast.type === "exceeded"
-                                        ? "bg-(--accent-coral-subtle) text-(--accent-coral-ink) dark:bg-rose-950/40 dark:text-rose-300"
-                                        : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                                    toast.type === "covered"
+                                        ? "bg-(--bg-cream) text-(--text-ink) dark:bg-(--bg-elevated) dark:text-(--text-ink)"
+                                        : "bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
                                 }`}
                             >
                                 <div
                                     className={`p-2 rounded-xl border border-(--border-ink) shadow-cute-sm shrink-0 ${
-                                        toast.type === "exceeded"
-                                            ? "bg-(--accent-coral) text-white"
+                                        toast.type === "covered"
+                                            ? "bg-(--pastel-mint-light) text-emerald-900"
                                             : "bg-(--pastel-butter) text-(--text-ink)"
                                     }`}
                                 >
-                                    {toast.type === "exceeded" ? (
-                                        <ShieldAlert
+                                    {toast.type === "covered" ? (
+                                        <Shield
+                                            className="h-5 w-5"
+                                            strokeWidth={2.5}
+                                        />
+                                    ) : toast.type === "total-over" ? (
+                                        <Sparkles
                                             className="h-5 w-5"
                                             strokeWidth={2.5}
                                         />
@@ -453,27 +539,26 @@ export const CategoryLimitWarningBanner = React.memo(
                                 aria-label="Category Budget Guardrails"
                                 className="space-y-2.5"
                             >
-                                {/* Exceeded Cap Alert (Rose) */}
+                                {/* Over Cap / From Next Month Alert (Soft Amber) */}
                                 {shownExceeded.length > 0 && (
                                     <div
                                         data-testid="category-limit-exceeded-banner"
-                                        className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-colors"
+                                        className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-cute-sm transition-colors"
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border border-(--border-ink) shrink-0 mt-0.5">
-                                                <AlertCircle
+                                            <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shrink-0 mt-0.5">
+                                                <AlertTriangle
                                                     className="h-4 w-4"
                                                     strokeWidth={2.5}
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-(--accent-coral-ink) dark:text-rose-300 font-display">
-                                                        Over Cap (
-                                                        {
-                                                            visibleExceededAlerts.length
-                                                        }
-                                                        )
+                                                    <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 font-display">
+                                                        {totalSpendableRemaining <
+                                                        0
+                                                            ? `From Next Month (${visibleExceededAlerts.length})`
+                                                            : `Over Cap (${visibleExceededAlerts.length})`}
                                                     </span>
                                                 </div>
                                                 <div className="space-y-1">
@@ -481,18 +566,17 @@ export const CategoryLimitWarningBanner = React.memo(
                                                         (item) => (
                                                             <div
                                                                 key={item.id}
-                                                                className="flex items-center justify-between gap-2 text-xs font-bold text-(--accent-coral-ink) dark:text-rose-300 flex-wrap"
+                                                                className="flex items-center justify-between gap-2 text-xs font-bold text-amber-900 dark:text-amber-200 flex-wrap"
                                                             >
                                                                 <span>
                                                                     {item.name}{" "}
-                                                                    has exceeded
-                                                                    cap by{" "}
+                                                                    is{" "}
                                                                     <CurrencyText
                                                                         amount={
                                                                             item.over
                                                                         }
-                                                                    />
-                                                                    !
+                                                                    />{" "}
+                                                                    over
                                                                 </span>
                                                                 <span className="text-[11px] font-mono-num opacity-90">
                                                                     <CurrencyText
@@ -525,6 +609,90 @@ export const CategoryLimitWarningBanner = React.memo(
                                                     )
                                                 }
                                                 aria-label="Dismiss Over Cap alert"
+                                                className="shrink-0 -mr-2 -mt-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                                            >
+                                                <X
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Covered by Buffer Alert (Neutral Slate) */}
+                                {shownCovered.length > 0 && (
+                                    <div
+                                        data-testid="category-limit-covered-banner"
+                                        className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) dark:bg-(--bg-elevated) text-(--text-ink) shadow-cute-sm transition-colors"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-1.5 rounded-xl bg-(--pastel-mint-light) text-emerald-900 border border-(--border-ink) shrink-0 mt-0.5">
+                                                <Shield
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                    <span className="text-xs font-black uppercase tracking-wider text-(--text-ink) font-display">
+                                                        Covered by Buffer (
+                                                        {
+                                                            visibleCoveredAlerts.length
+                                                        }
+                                                        )
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {shownCovered.map(
+                                                        (item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="flex items-center justify-between gap-2 text-xs font-bold text-(--text-ink) flex-wrap"
+                                                            >
+                                                                <span>
+                                                                    {item.name}{" "}
+                                                                    is{" "}
+                                                                    <CurrencyText
+                                                                        amount={
+                                                                            item.over
+                                                                        }
+                                                                    />{" "}
+                                                                    over —
+                                                                    covered by
+                                                                    Buffer
+                                                                </span>
+                                                                <span className="text-[11px] font-mono-num opacity-80">
+                                                                    <CurrencyText
+                                                                        amount={
+                                                                            item.spent
+                                                                        }
+                                                                    />{" "}
+                                                                    of{" "}
+                                                                    <CurrencyText
+                                                                        amount={
+                                                                            item.allocated
+                                                                        }
+                                                                    />{" "}
+                                                                    (
+                                                                    {
+                                                                        item.percentage
+                                                                    }
+                                                                    %)
+                                                                </span>
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleDismissAlert(
+                                                        "covered",
+                                                    )
+                                                }
+                                                aria-label="Dismiss Covered by Buffer alert"
                                                 className="shrink-0 -mr-2 -mt-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
                                             >
                                                 <X
