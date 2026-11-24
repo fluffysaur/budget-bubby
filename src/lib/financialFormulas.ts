@@ -16,6 +16,7 @@ import type {
     Category,
     CreditCardStatement,
     Expense,
+    HouseholdMember,
     ExpenseTrendsSummary,
     MonthlyBalancePoint,
     MonthlyExpenseTrendPoint,
@@ -44,6 +45,7 @@ import {
 } from "./dateUtils";
 import { formatSGD } from "./currency";
 import { isValidUuid } from "./uuid";
+import { getSettlementMembers } from "./members";
 import {
     calculateRecurringCategorySpend,
     getRecurringMonthlyShare,
@@ -197,6 +199,36 @@ export function calculateSharedExpenseSettlement(
             expenseIds,
         };
     }
+}
+
+/** Settlement for a household with fewer than two members. */
+export const EMPTY_SETTLEMENT: SettlementSummary = {
+    netBalance: 0,
+    debtorId: null,
+    creditorId: null,
+    settlementText: "All settled up",
+    member1OwesMember2: 0,
+    member2OwesMember1: 0,
+};
+
+/**
+ * Shared-expense settlement between the household's two settling members,
+ * passed to the calculation by explicit id.
+ */
+export function calculateHouseholdSettlement(
+    expenses: Expense[],
+    members: readonly HouseholdMember[],
+): SettlementSummary {
+    const pair = getSettlementMembers(members);
+    if (!pair) return { ...EMPTY_SETTLEMENT };
+    const [first, second] = pair;
+    return calculateSharedExpenseSettlement(
+        expenses,
+        first.id,
+        second.id,
+        first.display_name,
+        second.display_name,
+    );
 }
 
 /**
@@ -790,7 +822,8 @@ export function calculateExpenseTrends(
                 const total = Number(exp.amount) || 0;
                 const partnerShare =
                     Math.round(total * partnerRatio * 100) / 100;
-                const payerShare = Math.round((total - partnerShare) * 100) / 100;
+                const payerShare =
+                    Math.round((total - partnerShare) * 100) / 100;
                 addToTrendCategory(exp.category_id, payerShare);
                 addToTrendCategory(exp.partner_category_id, partnerShare);
                 continue;
@@ -1033,12 +1066,14 @@ export function calculateCumulativeSurplus({
                 const total = Number(exp.amount) || 0;
                 const partnerShare =
                     Math.round(total * partnerRatio * 100) / 100;
-                const payerShare = Math.round((total - partnerShare) * 100) / 100;
+                const payerShare =
+                    Math.round((total - partnerShare) * 100) / 100;
                 const payerCat = exp.category_id
                     ? categoryMap.get(exp.category_id)
                     : undefined;
                 const partnerCat = categoryMap.get(exp.partner_category_id);
-                const payerSpendable = !payerCat || isSpendableCategory(payerCat);
+                const payerSpendable =
+                    !payerCat || isSpendableCategory(payerCat);
                 const partnerSpendable =
                     !partnerCat || isSpendableCategory(partnerCat);
                 const effectiveShare =

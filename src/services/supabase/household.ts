@@ -11,7 +11,7 @@ import type {
     RecurringItem,
     SavingsGoal,
 } from "../../types/finance";
-import { calculateSharedExpenseSettlement } from "../../lib/financialFormulas";
+import { calculateHouseholdSettlement } from "../../lib/financialFormulas";
 
 import type { SupabaseContext } from "./context";
 
@@ -88,25 +88,10 @@ export class HouseholdStore {
         if (expError) throw expError;
         const expenses = (expensesData || []) as Expense[];
 
-        const m1 = members[0];
-        const m2 = members[1];
-        const settlementSummary =
-            m1 && m2
-                ? calculateSharedExpenseSettlement(
-                      expenses,
-                      m1.id,
-                      m2.id,
-                      m1.display_name,
-                      m2.display_name,
-                  )
-                : {
-                      netBalance: 0,
-                      debtorId: null,
-                      creditorId: null,
-                      settlementText: "All settled up",
-                      member1OwesMember2: 0,
-                      member2OwesMember1: 0,
-                  };
+        const settlementSummary = calculateHouseholdSettlement(
+            expenses,
+            members,
+        );
 
         // 6. Savings Goals
         const { data: goalsData, error: goalError } = await client

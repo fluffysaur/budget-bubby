@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+    act,
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LazyMotion, domAnimation } from "motion/react";
 import { HouseholdProvider } from "../../../context/HouseholdContext";
@@ -61,13 +67,15 @@ describe("BubbyChatDrawer", () => {
         aiProviders.setActiveAiProvider("anthropic");
         aiProviders.setProviderApiKey("anthropic", "sk-ant-test-key");
 
-        vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
+        const overviewSpy = vi.spyOn(financeService, "getHouseholdOverview");
+        overviewSpy.mockResolvedValue({
             household: { id: "hh-1", name: "Demo Home", currency: "SGD" },
             members: [
                 {
-                    id: "mem-1",
+                    id: "mem-00000000-0011",
                     household_id: "hh-1",
                     display_name: "Alex",
+                    email: "alex@example.com",
                     role: "owner",
                 },
             ],
@@ -127,6 +135,9 @@ describe("BubbyChatDrawer", () => {
             });
 
         renderDrawer(true);
+        // The payer is the current member, known once the household loads
+        await waitFor(() => expect(overviewSpy).toHaveBeenCalled());
+        await act(async () => {});
 
         const input = screen.getByTestId("bubby-chat-input");
         fireEvent.change(input, { target: { value: "Log S$14.50 ramen" } });
@@ -171,6 +182,7 @@ describe("BubbyChatDrawer", () => {
                     id: "mem-1",
                     household_id: "hh-1",
                     display_name: "Alex",
+                    email: "alex@example.com",
                     role: "owner",
                 },
             ],

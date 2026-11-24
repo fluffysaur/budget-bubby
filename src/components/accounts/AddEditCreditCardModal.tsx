@@ -31,6 +31,7 @@ import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import type {
     CreditCard as CreditCardType,
     HouseholdMember,
@@ -81,6 +82,8 @@ export function AddEditCreditCardModal({
     onDelete,
 }: AddEditCreditCardModalProps) {
     const isEditing = Boolean(card);
+    const { me } = useLoggedInMember(members);
+    const initialOwnerId = defaultOwnerId || me?.id || "";
 
     const [name, setName] = useState<string>("");
     const [bank, setBank] = useState<string>("DBS");
@@ -90,9 +93,7 @@ export function AddEditCreditCardModal({
     const [dueDay, setDueDay] = useState<number | string>(5);
     const [creditLimit, setCreditLimit] = useState<string>("");
     const [color, setColor] = useState<string>(PRESET_COLORS[0].hex);
-    const [ownerId, setOwnerId] = useState<string>(
-        defaultOwnerId || members?.[0]?.id || "",
-    );
+    const [ownerId, setOwnerId] = useState<string>(initialOwnerId);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -110,9 +111,7 @@ export function AddEditCreditCardModal({
                     card.credit_limit ? card.credit_limit.toString() : "",
                 );
                 setColor(card.color || PRESET_COLORS[0].hex);
-                setOwnerId(
-                    card.owner_id || defaultOwnerId || members[0]?.id || "",
-                );
+                setOwnerId(card.owner_id || initialOwnerId);
             } else {
                 setName("");
                 setBank("DBS");
@@ -122,12 +121,12 @@ export function AddEditCreditCardModal({
                 setDueDay(5);
                 setCreditLimit("");
                 setColor(PRESET_COLORS[0].hex);
-                setOwnerId(defaultOwnerId || members[0]?.id || "");
+                setOwnerId(initialOwnerId);
             }
             setErrorMessage(null);
             setIsSubmitting(false);
         }
-    }, [isOpen, card, members, defaultOwnerId]);
+    }, [isOpen, card, initialOwnerId]);
 
     if (!isOpen) return null;
 
@@ -180,6 +179,11 @@ export function AddEditCreditCardModal({
             (isNaN(numericLimit) || numericLimit < 0)
         ) {
             setErrorMessage("Please enter a valid credit limit");
+            return;
+        }
+
+        if (!ownerId) {
+            setErrorMessage("Please select a cardholder.");
             return;
         }
 
@@ -422,6 +426,9 @@ export function AddEditCreditCardModal({
                                 onChange={(e) => setOwnerId(e.target.value)}
                                 className="bg-(--bg-canvas)"
                             >
+                                <option value="" disabled>
+                                    Choose cardholder
+                                </option>
                                 {members.map((m) => (
                                     <option key={m.id} value={m.id}>
                                         {m.display_name}

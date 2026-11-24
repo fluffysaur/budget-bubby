@@ -44,8 +44,12 @@ function TestConsumer() {
             <button onClick={() => setPerspective("household")}>
                 Set Household
             </button>
-            <button onClick={() => setPerspective("partner1")}>Set Alex</button>
-            <button onClick={() => setPerspective("partner2")}>Set Sam</button>
+            <button onClick={() => setPerspective("mem-00000000-0011")}>
+                Set Alex
+            </button>
+            <button onClick={() => setPerspective("mem-00000000-0012")}>
+                Set Sam
+            </button>
             <button onClick={toggleTheme}>Toggle Theme</button>
         </div>
     );
@@ -99,14 +103,18 @@ describe("HouseholdContext", () => {
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: "Set Alex" }));
         });
-        expect(screen.getByTestId("perspective")).toHaveTextContent("partner1");
+        expect(screen.getByTestId("perspective")).toHaveTextContent(
+            "mem-00000000-0011",
+        );
         expect(screen.getByTestId("active-member")).toHaveTextContent("Alex");
 
         // Switch to Sam
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: "Set Sam" }));
         });
-        expect(screen.getByTestId("perspective")).toHaveTextContent("partner2");
+        expect(screen.getByTestId("perspective")).toHaveTextContent(
+            "mem-00000000-0012",
+        );
         expect(screen.getByTestId("active-member")).toHaveTextContent("Sam");
 
         // Switch back to Household
@@ -119,6 +127,50 @@ describe("HouseholdContext", () => {
             "household",
         );
         expect(screen.getByTestId("active-member")).toHaveTextContent("none");
+    });
+
+    it("falls back to the household view for a legacy partner-slot perspective", async () => {
+        await act(async () => {
+            render(
+                <HouseholdProvider initialPerspective="partner1">
+                    <TestConsumer />
+                </HouseholdProvider>,
+            );
+        });
+
+        await waitFor(() => {
+            expect(screen.getByTestId("perspective")).toHaveTextContent(
+                "household",
+            );
+        });
+        expect(screen.getByTestId("active-member")).toHaveTextContent("none");
+    });
+
+    it("follows the current member into their own view when asked", async () => {
+        await act(async () => {
+            render(
+                <HouseholdProvider followCurrentMember>
+                    <TestConsumer />
+                </HouseholdProvider>,
+            );
+        });
+
+        // Mock mode without a provider: the default demo member is current
+        await waitFor(() => {
+            expect(screen.getByTestId("active-member")).toHaveTextContent(
+                "Alex",
+            );
+        });
+
+        // Switching away is not undone by the follow
+        await act(async () => {
+            fireEvent.click(
+                screen.getByRole("button", { name: "Set Household" }),
+            );
+        });
+        expect(screen.getByTestId("perspective")).toHaveTextContent(
+            "household",
+        );
     });
 
     it("toggles theme and synchronizes dark class on document element", async () => {

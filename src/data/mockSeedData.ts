@@ -25,6 +25,7 @@ import type {
     SettleUp,
     BonusSplitShare,
 } from "../types/finance";
+import { DEMO_MEMBER_EMAILS } from "./demoMembers";
 
 export const mockHousehold: Household = {
     id: "hh-00000000-0001",
@@ -41,7 +42,7 @@ export const mockMembers: HouseholdMember[] = [
         household_id: "hh-00000000-0001",
         user_id: null,
         display_name: "Alex",
-        email: "alex@example.com",
+        email: DEMO_MEMBER_EMAILS[0],
         role: "owner",
         avatar_url: "👨",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -51,7 +52,7 @@ export const mockMembers: HouseholdMember[] = [
         household_id: "hh-00000000-0001",
         user_id: null,
         display_name: "Sam",
-        email: "sam@example.com",
+        email: DEMO_MEMBER_EMAILS[1],
         role: "member",
         avatar_url: "👩",
         created_at: "2026-01-01T00:00:00.000Z",

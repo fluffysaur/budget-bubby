@@ -6,11 +6,9 @@ import type {
     UpdateAccountInput,
     AccountSnapshot,
     BulkBalanceUpdateItem,
-    HouseholdMember,
     Perspective,
 } from "../../types/finance";
 import { getTodayDateString } from "../../lib/dateUtils";
-import { matchPartnerMember } from "../../lib/members";
 import { isValidUuid } from "../../lib/uuid";
 import { fetchAllPages, type PaginatableQuery } from "./shared";
 import type { SupabaseContext } from "./context";
@@ -23,20 +21,12 @@ export class AccountsStore {
         let query = client.from("accounts").select("*");
 
         if (perspective !== "household") {
-            // Fetch members to find corresponding member ID
-            const { data: members } = await client
-                .from("household_members")
-                .select("*");
-            const targetMember = matchPartnerMember(
-                (members || []) as HouseholdMember[],
-                perspective,
-            );
-
-            if (!targetMember) {
+            // A member perspective is that member's id. Anything else (e.g. a
+            // legacy partner slot) matches no member, so it shows nothing.
+            if (!isValidUuid(perspective)) {
                 return [];
             }
-
-            query = query.or(`owner_id.eq.${targetMember.id},is_joint.eq.true`);
+            query = query.or(`owner_id.eq.${perspective},is_joint.eq.true`);
         }
 
         const { data, error } = await query;

@@ -584,7 +584,7 @@ function AppLayoutInner() {
  * Shows PinLoginScreen if Supabase is configured and user is not authenticated.
  */
 export function AppShell() {
-    const { isAuthenticated, authLoading, loggedInPartner } = useAuth();
+    const { isAuthenticated, authLoading, signedInEmail } = useAuth();
     const optionalContext = useOptionalHousehold();
 
     // If live Supabase is configured and we are still verifying the session
@@ -597,11 +597,12 @@ export function AppShell() {
         return <PinLoginScreen />;
     }
 
-    const defaultPerspective = loggedInPartner || "household";
+    // After sign-in, open on the signed-in member's own view
+    const followCurrentMember = Boolean(signedInEmail);
 
     if (!optionalContext) {
         return (
-            <HouseholdProvider defaultPerspective={defaultPerspective}>
+            <HouseholdProvider followCurrentMember={followCurrentMember}>
                 <SettingsProvider>
                     <PrivacyProvider>
                         <AppLayoutInner />

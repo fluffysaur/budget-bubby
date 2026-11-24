@@ -5,6 +5,8 @@ interface ImportMetaEnv {
     readonly VITE_SUPABASE_ANON_KEY?: string;
     /** Web Push public key. When set, pushes come from the send-reminders function. */
     readonly VITE_VAPID_PUBLIC_KEY?: string;
+    /** Members' PIN sign-in emails, comma-separated. */
+    readonly VITE_MEMBER_EMAILS?: string;
 }
 
 interface ImportMeta {
