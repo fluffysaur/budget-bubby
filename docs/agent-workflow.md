@@ -70,8 +70,8 @@ The repo is private but kept publishable, and screenshots stay in git history, s
     - Screenshots live on the orphan branch `chore/pr-screenshots`. It is never merged and never deleted.
     - Use a separate worktree: `git worktree add --orphan -b chore/pr-screenshots ../bb-shots` the first time, or `git worktree add ../bb-shots chore/pr-screenshots` after that.
     - Put the images in a folder named after the PR branch, with `/` replaced by `-`, e.g. `fix-offline-queue/after-390-dark-home.png`. Commit, push, then remove the worktree.
-    - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
-    - Verify the images are pushed to `origin/chore/pr-screenshots` and filenames match the PR body links before creating the PR.
+    - Embed them in the PR body with `https://github.com/fluffysaur/budget-bubby/blob/chore/pr-screenshots/<folder>/<file>.png?raw=true`, in a before/after table. Do not use `raw.githubusercontent.com` URLs: the repo is private, so GitHub's image proxy fetches them anonymously and they render broken.
+    - Verify with `git ls-tree -r --name-only origin/chore/pr-screenshots` that the images are pushed and filenames match the PR body links before creating the PR. Anonymous `curl` of the image URLs returns 404 on a private repo, so don't use it as a check.
 - **Not test baselines.** Screenshots are never committed to feature branches or used as visual-regression baselines.
 
 ### H. Backlog (GitHub Issues)
