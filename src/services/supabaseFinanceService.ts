@@ -380,9 +380,7 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
             const { data: authData } = await client.auth.getUser();
             if (authData?.user?.email) {
                 currentUserEmail = authData.user.email;
-                await client.rpc("claim_household_member_profile", {
-                    user_email: authData.user.email,
-                });
+                await client.rpc("claim_household_member_profile");
 
                 // Retry after claiming
                 const { data: retryHh } = await client
