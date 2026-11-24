@@ -3,12 +3,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
     AI_SETTINGS_SYNCED_STORAGE_KEY,
     hydrateAiSettings,
+    pushAiSettings,
     pushGeminiSettings,
 } from "../aiSettingsSync";
 import {
     AI_CONFIG_CHANGED_EVENT,
+    getActiveAiProvider,
     getProviderApiKey,
+    getProviderModel,
     getProviderModelStorageKey,
+    setActiveAiProvider,
     setProviderApiKey,
     setProviderModel,
 } from "../providers";
@@ -18,9 +22,16 @@ import type { MemberAiSettings } from "../../../types/finance";
 
 const USER_ID = "00000000-0000-0000-0000-0000000000aa";
 
-function fakeStore(remote: MemberAiSettings) {
+function fakeStore(remote: Partial<MemberAiSettings>) {
     return {
-        getAiSettings: vi.fn().mockResolvedValue(remote),
+        getAiSettings: vi.fn().mockResolvedValue({
+            gemini_api_key: null,
+            gemini_model: null,
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
+            ...remote,
+        }),
         saveAiSettings: vi.fn().mockResolvedValue(undefined),
     };
 }
@@ -80,6 +91,9 @@ describe("hydrateAiSettings", () => {
         expect(store.saveAiSettings).toHaveBeenCalledWith({
             gemini_api_key: "local-key",
             gemini_model: "gemini-flash",
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
         });
         expect(getProviderApiKey("gemini")).toBe("local-key");
     });
@@ -112,9 +126,13 @@ describe("hydrateAiSettings", () => {
     it("does not mark synced when the migration upload fails", async () => {
         setProviderApiKey("gemini", "local-key");
         const store = {
-            getAiSettings: vi
-                .fn()
-                .mockResolvedValue({ gemini_api_key: null, gemini_model: null }),
+            getAiSettings: vi.fn().mockResolvedValue({
+                gemini_api_key: null,
+                gemini_model: null,
+                openrouter_api_key: null,
+                openrouter_model: null,
+                active_provider: null,
+            }),
             saveAiSettings: vi.fn().mockRejectedValue(new Error("offline")),
         };
 
@@ -134,6 +152,9 @@ describe("pushGeminiSettings", () => {
         expect(store.saveAiSettings).toHaveBeenLastCalledWith({
             gemini_api_key: "new-key",
             gemini_model: null,
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
         });
 
         setProviderApiKey("gemini", "");
@@ -141,6 +162,9 @@ describe("pushGeminiSettings", () => {
         expect(store.saveAiSettings).toHaveBeenLastCalledWith({
             gemini_api_key: null,
             gemini_model: null,
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
         });
     });
 
@@ -153,17 +177,66 @@ describe("pushGeminiSettings", () => {
     });
 });
 
+describe("OpenRouter and active_provider sync", () => {
+    it("hydrates OpenRouter key, model, and active_provider from remote", async () => {
+        const store = fakeStore({
+            openrouter_api_key: "sk-or-v1-remote",
+            openrouter_model: "openai/gpt-4o-mini",
+            active_provider: "openrouter",
+        });
+
+        await hydrateAiSettings(store);
+
+        expect(getProviderApiKey("openrouter")).toBe("sk-or-v1-remote");
+        expect(getProviderModel("openrouter")).toBe("openai/gpt-4o-mini");
+        expect(getActiveAiProvider()).toBe("openrouter");
+    });
+
+    it("does not overwrite local active_provider when remote active_provider is null", async () => {
+        setActiveAiProvider("anthropic");
+        localStorage.setItem(AI_SETTINGS_SYNCED_STORAGE_KEY, "1");
+        const store = fakeStore({ active_provider: null });
+
+        await hydrateAiSettings(store);
+
+        expect(getActiveAiProvider()).toBe("anthropic");
+        expect(store.saveAiSettings).not.toHaveBeenCalled();
+    });
+
+    it("pushes OpenRouter key, model, and active_provider via pushAiSettings", async () => {
+        const store = fakeStore({});
+        setActiveAiProvider("openrouter");
+        setProviderApiKey("openrouter", "sk-or-v1-local");
+        setProviderModel("openrouter", "deepseek/deepseek-r1");
+
+        expect(await pushAiSettings(store)).toBe(true);
+        expect(store.saveAiSettings).toHaveBeenLastCalledWith({
+            gemini_api_key: null,
+            gemini_model: null,
+            openrouter_api_key: "sk-or-v1-local",
+            openrouter_model: "deepseek/deepseek-r1",
+            active_provider: "openrouter",
+        });
+    });
+});
+
 describe("SupabaseFinanceServiceImpl AI settings", () => {
     it("reads the signed-in member's row", async () => {
         const { client, from, eq } = fakeSupabaseClient({
             gemini_api_key: "k",
             gemini_model: "m",
+            openrouter_api_key: "or-k",
+            openrouter_model: "or-m",
+            active_provider: "openrouter",
         });
         const service = new SupabaseFinanceServiceImpl(client);
 
         expect(await service.getAiSettings()).toEqual({
             gemini_api_key: "k",
             gemini_model: "m",
+            openrouter_api_key: "or-k",
+            openrouter_model: "or-m",
+            active_provider: "openrouter",
         });
         expect(from).toHaveBeenCalledWith("member_ai_settings");
         expect(eq).toHaveBeenCalledWith("user_id", USER_ID);
@@ -176,6 +249,9 @@ describe("SupabaseFinanceServiceImpl AI settings", () => {
         expect(await service.getAiSettings()).toEqual({
             gemini_api_key: null,
             gemini_model: null,
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
         });
     });
 
@@ -186,6 +262,9 @@ describe("SupabaseFinanceServiceImpl AI settings", () => {
         await service.saveAiSettings({
             gemini_api_key: "k",
             gemini_model: null,
+            openrouter_api_key: "or-k",
+            openrouter_model: null,
+            active_provider: "openrouter",
         });
 
         expect(upsert).toHaveBeenCalledWith(
@@ -193,6 +272,9 @@ describe("SupabaseFinanceServiceImpl AI settings", () => {
                 user_id: USER_ID,
                 gemini_api_key: "k",
                 gemini_model: null,
+                openrouter_api_key: "or-k",
+                openrouter_model: null,
+                active_provider: "openrouter",
                 updated_at: expect.any(String),
             }),
             { onConflict: "user_id" },
@@ -205,16 +287,25 @@ describe("mockFinanceService AI settings", () => {
         expect(await mockFinanceService.getAiSettings()).toEqual({
             gemini_api_key: null,
             gemini_model: null,
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
         });
 
         await mockFinanceService.saveAiSettings({
             gemini_api_key: "demo-key",
             gemini_model: "gemini-flash",
+            openrouter_api_key: "sk-or-v1-demo",
+            openrouter_model: "openai/gpt-4o-mini",
+            active_provider: "openrouter",
         });
 
         expect(await mockFinanceService.getAiSettings()).toEqual({
             gemini_api_key: "demo-key",
             gemini_model: "gemini-flash",
+            openrouter_api_key: "sk-or-v1-demo",
+            openrouter_model: "openai/gpt-4o-mini",
+            active_provider: "openrouter",
         });
     });
 });

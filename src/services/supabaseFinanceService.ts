@@ -2386,13 +2386,18 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         if (!userId) throw new Error("Not signed in");
         const { data, error } = await client
             .from("member_ai_settings")
-            .select("gemini_api_key, gemini_model")
+            .select(
+                "gemini_api_key, gemini_model, openrouter_api_key, openrouter_model, active_provider",
+            )
             .eq("user_id", userId)
             .maybeSingle();
         if (error) throw error;
         return {
             gemini_api_key: data?.gemini_api_key ?? null,
             gemini_model: data?.gemini_model ?? null,
+            openrouter_api_key: data?.openrouter_api_key ?? null,
+            openrouter_model: data?.openrouter_model ?? null,
+            active_provider: data?.active_provider ?? null,
         };
     }
 
@@ -2406,6 +2411,9 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
                 user_id: userId,
                 gemini_api_key: settings.gemini_api_key,
                 gemini_model: settings.gemini_model,
+                openrouter_api_key: settings.openrouter_api_key,
+                openrouter_model: settings.openrouter_model,
+                active_provider: settings.active_provider,
                 updated_at: new Date().toISOString(),
             },
             { onConflict: "user_id" },

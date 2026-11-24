@@ -13,6 +13,7 @@ import {
     Settings,
     Trash2,
     Loader2,
+    ExternalLink,
 } from "lucide-react";
 import { m, AnimatePresence } from "motion/react";
 import {
@@ -35,6 +36,11 @@ import {
     type AiProviderId,
     type AiToolResult,
 } from "../../services/ai/providers";
+import {
+    consumePendingOpenRouterFeedback,
+    startOpenRouterOAuth,
+    type OpenRouterOAuthFeedback,
+} from "../../services/ai/openrouterAuth";
 import {
     BUBBY_TOOLS,
     buildBubbySystemInstruction,
@@ -101,6 +107,9 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const [isConnectingOpenRouter, setIsConnectingOpenRouter] = useState(false);
+    const [oauthBanner, setOauthBanner] =
+        useState<OpenRouterOAuthFeedback | null>(null);
 
     const historyRef = useRef<AiMessage[]>([]);
     const abortRef = useRef<AbortController | null>(null);
@@ -110,7 +119,30 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
         const config = getActiveAiConfig();
         setHasApiKey(config.apiKey.length > 0);
         setActiveProvider(config.provider);
+        const pending = consumePendingOpenRouterFeedback("chat");
+        if (pending) {
+            setOauthBanner(pending);
+        }
     }, []);
+
+    const handleConnectOpenRouter = () => {
+        setIsConnectingOpenRouter(true);
+        const currentPath =
+            typeof window !== "undefined"
+                ? `${window.location.pathname}${window.location.search}`
+                : "/";
+        void startOpenRouterOAuth("chat", currentPath).catch((err) => {
+            setIsConnectingOpenRouter(false);
+            setOauthBanner({
+                target: "chat",
+                variant: "danger",
+                message:
+                    err instanceof Error
+                        ? err.message
+                        : "Could not start OpenRouter sign-in.",
+            });
+        });
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -650,6 +682,16 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
 
                         {/* Body */}
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                            {oauthBanner && (
+                                <Alert
+                                    variant={oauthBanner.variant}
+                                    onClose={() => setOauthBanner(null)}
+                                >
+                                    <span data-testid="bubby-oauth-feedback">
+                                        {oauthBanner.message}
+                                    </span>
+                                </Alert>
+                            )}
                             {!hasApiKey ? (
                                 <div
                                     className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3"
@@ -662,30 +704,48 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                         />
                                     </div>
                                     <h3 className="text-base font-black font-display text-(--text-ink)">
-                                        Add Key
+                                        Connect AI
                                     </h3>
                                     <p className="text-xs font-medium text-(--text-muted) max-w-65">
-                                        Add an AI API key in Settings to chat
-                                        with Bubby.
+                                        Connect OpenRouter in one click, or add
+                                        an API key in Settings.
                                     </p>
-                                    <Button
-                                        type="button"
-                                        variant="primary"
-                                        size="sm"
-                                        onClick={() => {
-                                            onClose();
-                                            openSettings();
-                                        }}
-                                        data-testid="bubby-setup-key-cta"
-                                        leftIcon={
-                                            <Settings
-                                                className="h-4 w-4"
-                                                strokeWidth={2.5}
-                                            />
-                                        }
-                                    >
-                                        Open Settings
-                                    </Button>
+                                    <div className="flex flex-wrap items-center justify-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="primary"
+                                            size="sm"
+                                            isLoading={isConnectingOpenRouter}
+                                            onClick={handleConnectOpenRouter}
+                                            data-testid="bubby-connect-openrouter-btn"
+                                            leftIcon={
+                                                <ExternalLink
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                            }
+                                        >
+                                            Connect OpenRouter
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                onClose();
+                                                openSettings();
+                                            }}
+                                            data-testid="bubby-setup-key-cta"
+                                            leftIcon={
+                                                <Settings
+                                                    className="h-4 w-4"
+                                                    strokeWidth={2.5}
+                                                />
+                                            }
+                                        >
+                                            Open Settings
+                                        </Button>
+                                    </div>
                                 </div>
                             ) : messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center text-center py-10 px-2 space-y-4">

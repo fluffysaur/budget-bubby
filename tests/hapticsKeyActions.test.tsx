@@ -802,6 +802,11 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 const toggleCollapsible = screen.getByRole("button", { name: /bubby ai/i });
                 fireEvent.click(toggleCollapsible);
 
+                // Select Gemini provider
+                fireEvent.change(screen.getByTestId("ai-provider-select"), {
+                    target: { value: "gemini" },
+                });
+
                 // Enter new key and save
                 const input = screen.getByLabelText(/gemini api key/i);
                 fireEvent.change(input, { target: { value: "AIzaSyTestKey123" } });

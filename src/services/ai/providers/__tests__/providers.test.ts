@@ -64,6 +64,9 @@ describe("AI providers & storage", () => {
     });
 
     it("migrates legacy budget_bubby_gemini_* keys to per-provider storage under gemini", () => {
+        expect(getActiveAiProvider()).toBe("openrouter");
+        expect(getProviderApiKey("gemini")).toBe("");
+
         localStorage.setItem(
             LEGACY_GEMINI_API_KEY_STORAGE_KEY,
             "AIza-legacy-key",

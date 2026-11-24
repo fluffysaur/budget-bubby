@@ -20,7 +20,7 @@ export const OPENROUTER_API_ENDPOINT =
     "https://openrouter.ai/api/v1/chat/completions";
 
 export const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
-export const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-4.5";
+export const DEFAULT_OPENROUTER_MODEL = "openrouter/free";
 
 interface OpenAiCompatibleConfig {
     id: Extract<AiProviderId, "openai" | "openrouter">;
