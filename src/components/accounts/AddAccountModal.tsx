@@ -31,6 +31,7 @@ import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import { feedback } from "../../lib/delight/feedback";
 import { AccountOriginChoice } from "./AccountOriginChoice";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 
 export interface AddAccountModalProps {
     isOpen: boolean;
@@ -71,12 +72,12 @@ export function AddAccountModal({
     onAccountCreated,
 }: AddAccountModalProps) {
     const createAccountMutation = useCreateAccountMutation();
+    const { me } = useLoggedInMember(members);
+    const initialOwnerId = defaultOwnerId || me?.id || "";
     const [name, setName] = useState("");
     const [institution, setInstitution] = useState("");
     const [type, setType] = useState<AccountType>("Cash");
-    const [ownerId, setOwnerId] = useState(
-        defaultOwnerId || members[0]?.id || "",
-    );
+    const [ownerId, setOwnerId] = useState(initialOwnerId);
     const [isJoint, setIsJoint] = useState(false);
     const [balance, setBalance] = useState("");
     const [notes, setNotes] = useState("");
@@ -96,7 +97,7 @@ export function AddAccountModal({
             setName("");
             setInstitution("");
             setType("Cash");
-            setOwnerId(defaultOwnerId || members[0]?.id || "");
+            setOwnerId(initialOwnerId);
             setIsJoint(false);
             setBalance("");
             setNotes("");
@@ -104,7 +105,7 @@ export function AddAccountModal({
             setError(null);
             setIsSubmitting(false);
         }
-    }, [isOpen, defaultOwnerId, members]);
+    }, [isOpen, initialOwnerId]);
 
     const handleSelectPreset = (preset: SingaporePreset) => {
         setName(preset.name);
@@ -130,7 +131,7 @@ export function AddAccountModal({
             return;
         }
 
-        const resolvedOwnerId = ownerId || members[0]?.id;
+        const resolvedOwnerId = ownerId;
         if (!resolvedOwnerId) {
             setError("Please select an account owner.");
             return;
@@ -363,6 +364,9 @@ export function AddAccountModal({
                                 sizeVariant="sm"
                                 className="bg-(--bg-canvas)"
                             >
+                                <option value="" disabled>
+                                    Choose owner
+                                </option>
                                 {members.map((m) => (
                                     <option key={m.id} value={m.id}>
                                         {m.display_name}

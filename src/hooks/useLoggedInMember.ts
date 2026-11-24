@@ -1,18 +1,21 @@
 import { useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useOptionalHousehold } from "../context/HouseholdContext";
-import { resolveLoggedInMember } from "../lib/members";
+import { findCurrentMember } from "../lib/members";
 import type { HouseholdMember } from "../types/finance";
 
 const NO_MEMBERS: HouseholdMember[] = [];
 
-/** The household member using this device, plus the full member list. */
+/**
+ * The household member using this device (resolved from the signed-in user,
+ * or the demo member), plus the full member list. `me` is null when the
+ * signed-in user matches no member: callers must not guess one.
+ */
 export function useLoggedInMember(fallbackMembers?: HouseholdMember[]): {
     me: HouseholdMember | null;
     members: HouseholdMember[];
 } {
-    const { loggedInPartner, user } = useAuth();
-    const authUserId = user?.id ?? null;
+    const { memberIdentity } = useAuth();
     const household = useOptionalHousehold();
     const ctxMembers = household?.members;
     const members =
@@ -21,16 +24,9 @@ export function useLoggedInMember(fallbackMembers?: HouseholdMember[]): {
             : fallbackMembers && fallbackMembers.length > 0
               ? fallbackMembers
               : NO_MEMBERS;
-    const activeMember = household?.activeMember ?? null;
     const me = useMemo(
-        () =>
-            resolveLoggedInMember(
-                members,
-                loggedInPartner,
-                activeMember,
-                authUserId,
-            ),
-        [members, loggedInPartner, activeMember, authUserId],
+        () => findCurrentMember(members, memberIdentity),
+        [members, memberIdentity],
     );
     return { me, members };
 }

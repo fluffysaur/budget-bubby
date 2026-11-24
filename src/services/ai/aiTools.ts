@@ -135,7 +135,7 @@ export const BUBBY_TOOLS: AiToolDefinition[] = [
                 perspective: {
                     type: "string",
                     description:
-                        "Optional perspective filter: 'household' for all accounts or a specific member key/ID.",
+                        "Optional perspective filter: 'household' for all accounts or a member ID.",
                 },
             },
         },
@@ -545,9 +545,21 @@ export async function executeReadTool(
     }
 }
 
+/** A proposal that cannot be built; its message goes back to the model. */
+export class ProposalUnavailableError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ProposalUnavailableError";
+    }
+}
+
+export const UNKNOWN_PAYER_MESSAGE =
+    "Can't tell who paid: the member using this device is not known. Ask the user to log it from the Add Expense form.";
+
 /**
  * Converts a `propose*` tool call into a structured, reviewable
- * ProposedAction card without mutating any data.
+ * ProposedAction card without mutating any data. Throws
+ * ProposalUnavailableError when the card cannot be built safely.
  */
 export async function buildProposedAction(
     name: ProposalToolName,
@@ -581,9 +593,12 @@ export async function buildProposedAction(
             financeService.getCategories(),
         ]);
 
-        const payer =
-            overview.members.find((m) => m.id === context.activeMemberId) ??
-            overview.members[0];
+        const payer = overview.members.find(
+            (m) => m.id === context.activeMemberId,
+        );
+        if (!payer) {
+            throw new ProposalUnavailableError(UNKNOWN_PAYER_MESSAGE);
+        }
 
         let matchedCategory =
             typeof args.categoryId === "string"
@@ -606,8 +621,8 @@ export async function buildProposedAction(
                 item,
                 amount,
                 date,
-                payerId: payer?.id ?? context.activeMemberId ?? "",
-                payerName: payer?.display_name,
+                payerId: payer.id,
+                payerName: payer.display_name,
                 categoryId: matchedCategory?.id ?? null,
                 categoryName:
                     matchedCategory?.name ??

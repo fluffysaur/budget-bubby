@@ -252,7 +252,7 @@ describe("filterStatementsForPerspective", () => {
     it("keeps only the active member's cards (including inactive cards) and drops unresolved owners in personal views", () => {
         const partnerOneFiltered = filterStatementsForPerspective(
             statements,
-            "partner1",
+            "mem-yj",
             "mem-yj",
         );
         expect(partnerOneFiltered.map((s) => s.id)).toEqual([
@@ -262,7 +262,7 @@ describe("filterStatementsForPerspective", () => {
 
         const partnerTwoFiltered = filterStatementsForPerspective(
             statements,
-            "partner2",
+            "mem-rc",
             "mem-rc",
         );
         expect(partnerTwoFiltered.map((s) => s.id)).toEqual(["s-rc"]);
@@ -432,7 +432,7 @@ describe("AccountsPage card debt integration", () => {
         // Sam's accounts = 190,000 + 50,000 + 60,000 + 17,000 + 20,500 = 337,500
         // Sam's only card statement (UOB One S$620) is already paid
         render(
-            <HouseholdProvider initialPerspective="partner2">
+            <HouseholdProvider initialPerspective="mem-00000000-0012">
                 <AccountsPage />
             </HouseholdProvider>,
         );

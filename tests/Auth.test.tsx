@@ -28,7 +28,7 @@ import { SettingsProvider } from "../src/context/SettingsContext";
 
 function AuthTestComponent() {
     const {
-        loggedInPartner,
+        signedInEmail,
         isAuthenticated,
         signInWithPin,
         signOut,
@@ -41,15 +41,13 @@ function AuthTestComponent() {
             <div data-testid="is-authenticated">
                 {isAuthenticated ? "yes" : "no"}
             </div>
-            <div data-testid="partner">{loggedInPartner || "none"}</div>
+            <div data-testid="partner">{signedInEmail || "none"}</div>
             <div data-testid="perspective">{perspective}</div>
             <div data-testid="auth-error">{authError || "none"}</div>
             <button onClick={() => signInWithPin("123456")}>
                 Sign In Alex
             </button>
-            <button onClick={() => signInWithPin("234567")}>
-                Sign In Sam
-            </button>
+            <button onClick={() => signInWithPin("234567")}>Sign In Sam</button>
             <button onClick={() => signInWithPin("000000")}>
                 Sign In Wrong
             </button>
@@ -148,22 +146,34 @@ describe("PIN Authentication & Access Control", () => {
         });
     });
 
-    it("identifies partner and sets default perspective accordingly", async () => {
+    it("identifies the member and follows them into their own view", async () => {
         render(
             <AuthProvider initialAuthenticated={true}>
-                <HouseholdProvider defaultPerspective="partner1">
+                <HouseholdProvider followCurrentMember>
                     <AuthTestComponent />
                 </HouseholdProvider>
             </AuthProvider>,
         );
 
-        expect(screen.getByTestId("perspective")).toHaveTextContent("partner1");
+        // Mock mode: the default demo member is current before any sign-in
+        await waitFor(() => {
+            expect(screen.getByTestId("perspective")).toHaveTextContent(
+                "mem-00000000-0011",
+            );
+        });
 
-        // Simulate Sam PIN sign in
+        // Simulate the second member's PIN sign in
         await act(async () => {
             fireEvent.click(screen.getByText("Sign In Sam"));
         });
-        expect(screen.getByTestId("partner")).toHaveTextContent("partner2");
+        expect(screen.getByTestId("partner")).toHaveTextContent(
+            "sam@example.com",
+        );
+        await waitFor(() => {
+            expect(screen.getByTestId("perspective")).toHaveTextContent(
+                "mem-00000000-0012",
+            );
+        });
     });
 
     it("Lock/Sign Out button renders in DesktopSidebar and triggers signOut via modal portal", async () => {

@@ -54,7 +54,7 @@ export interface BonusLogPanelProps {
 
 export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     const mask = useMoneyMask();
-    const { members, activeMember } = useHousehold();
+    const { members, activeMember, currentMember } = useHousehold();
     const {
         data: bonusData,
         isLoading,
@@ -357,7 +357,7 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                 onClose={() => setIsFormOpen(false)}
                 members={members}
                 baseProfiles={profiles}
-                defaultRecipientId={activeMember?.id ?? members[0]?.id}
+                defaultRecipientId={activeMember?.id ?? currentMember?.id}
                 editingEvent={editingEvent}
                 canSaveDefault={available}
                 onSaved={handleSaved}

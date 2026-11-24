@@ -79,7 +79,7 @@ export async function migrateLegacyDismissals(memberId: string): Promise<void> {
  * Computes all active, non-dismissed reminders for a member.
  */
 export async function computeActiveReminders(
-    options?: ComputeRemindersOptions,
+    options: ComputeRemindersOptions,
 ): Promise<AppReminder[]> {
     try {
         return await computeRemindersFrom(financeService, options);
@@ -159,9 +159,10 @@ export async function dispatchPWANotification(
  * and this only returns the reminders for the bell.
  */
 export async function evaluateAndDispatchReminders(
-    options?: ComputeRemindersOptions,
+    options: ComputeRemindersOptions,
 ): Promise<AppReminder[]> {
-    const memberId = options?.memberId || "mem-00000000-0011";
+    const memberId = options.memberId;
+    if (!memberId) return [];
     let prefs: NotificationPreferences;
     try {
         prefs = await financeService.getNotificationPreferences(memberId);
@@ -174,7 +175,7 @@ export async function evaluateAndDispatchReminders(
     // During quiet hours nothing is claimed, so held reminders push on the
     // first evaluation after quiet hours end.
     const quiet = isWithinQuietHours(
-        currentMinutes(options?.currentHour, options?.referenceDate),
+        currentMinutes(options.currentHour, options.referenceDate),
         prefs.quiet_hours_start,
         prefs.quiet_hours_end,
     );

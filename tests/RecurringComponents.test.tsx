@@ -984,7 +984,7 @@ describe("RecurringPage Component", () => {
 
     it("filters recurring items and metrics by perspective (Alex vs Sam)", async () => {
         const { rerender } = render(
-            <HouseholdProvider initialPerspective="partner1">
+            <HouseholdProvider initialPerspective="mem-00000000-0011">
                 <RecurringPage />
             </HouseholdProvider>,
         );
@@ -999,7 +999,7 @@ describe("RecurringPage Component", () => {
 
         // Sam's perspective
         rerender(
-            <HouseholdProvider initialPerspective="partner2">
+            <HouseholdProvider initialPerspective="mem-00000000-0012">
                 <RecurringPage />
             </HouseholdProvider>,
         );

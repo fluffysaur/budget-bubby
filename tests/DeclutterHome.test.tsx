@@ -329,7 +329,10 @@ describe("Header Bubby", () => {
 
         await act(async () => {
             render(
-                <AuthProvider initialAuthenticated initialPartner="partner2">
+                <AuthProvider
+                    initialAuthenticated
+                    initialMemberEmail="sam@example.com"
+                >
                     <HouseholdProvider defaultPerspective="household">
                         <BubbyAvatarButton />
                     </HouseholdProvider>

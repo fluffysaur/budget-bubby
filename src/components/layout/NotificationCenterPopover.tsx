@@ -82,7 +82,7 @@ export function NotificationCenterPopover({
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { refreshData } = useHousehold();
-    const { me, members } = useLoggedInMember();
+    const { me } = useLoggedInMember();
     const isMobile = useIsMobile();
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [reminders, setReminders] = useState<AppReminder[]>([]);
@@ -97,10 +97,12 @@ export function NotificationCenterPopover({
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const bellButtonRef = useRef<HTMLButtonElement>(null);
 
-    const activeMemberId = me?.id || members?.[0]?.id || "mem-00000000-0011";
+    // Reminders belong to the member using this device; none until known
+    const activeMemberId = me?.id ?? "";
     const readParam = searchParams.get("read");
 
     const loadReadIds = useCallback(async () => {
+        if (!activeMemberId) return new Set<string>();
         const log = await financeService.getNotificationLog(activeMemberId);
         return new Set(
             log
@@ -111,6 +113,7 @@ export function NotificationCenterPopover({
 
     // Load active reminders for current member
     const loadReminders = useCallback(async () => {
+        if (!activeMemberId) return;
         try {
             setLoadError(null);
             const [active, read] = await Promise.all([
@@ -137,6 +140,7 @@ export function NotificationCenterPopover({
         setDismissedIds(new Set());
         setReadIds(new Set());
         setLoadError(null);
+        if (!activeMemberId) return;
 
         migrateLegacyDismissals(activeMemberId)
             .then(() =>
@@ -167,6 +171,7 @@ export function NotificationCenterPopover({
 
     // Keep this device's push subscription in line with permission and preferences
     const syncSubscription = useCallback(async () => {
+        if (!activeMemberId) return;
         try {
             const prefs =
                 await financeService.getNotificationPreferences(activeMemberId);
@@ -191,7 +196,7 @@ export function NotificationCenterPopover({
 
     // A tapped push opens the app with ?read=key1,key2: mark those read, then strip the param
     useEffect(() => {
-        if (!readParam) return;
+        if (!readParam || !activeMemberId) return;
         const keys = readParam.split(",").filter(Boolean);
         const known = new Map(reminders.map((r) => [r.id, r.type]));
         const refs = keys.map((key) => ({

@@ -6,7 +6,7 @@ import type {
     HouseholdOverview,
     HouseholdSettingsInput,
 } from "../../types/finance";
-import { calculateSharedExpenseSettlement } from "../../lib/financialFormulas";
+import { calculateHouseholdSettlement } from "../../lib/financialFormulas";
 import { cloneDeep } from "./context";
 import type { MockContext } from "./context";
 
@@ -32,26 +32,10 @@ export class HouseholdStore {
 
         const trueNetWorth = totalAssets;
 
-        const m1 = this.ctx.state.members[0];
-        const m2 = this.ctx.state.members[1];
-
-        const settlementSummary =
-            m1 && m2
-                ? calculateSharedExpenseSettlement(
-                      this.ctx.state.expenses,
-                      m1.id,
-                      m2.id,
-                      m1.display_name,
-                      m2.display_name,
-                  )
-                : {
-                      netBalance: 0,
-                      debtorId: null,
-                      creditorId: null,
-                      settlementText: "All settled up",
-                      member1OwesMember2: 0,
-                      member2OwesMember1: 0,
-                  };
+        const settlementSummary = calculateHouseholdSettlement(
+            this.ctx.state.expenses,
+            this.ctx.state.members,
+        );
 
         const activeGoals = this.ctx.state.savingsGoals.filter(
             (g) => g.status !== "achieved",

@@ -92,9 +92,8 @@ export function NotificationSettingsModal({
     onClose,
     memberId: propMemberId,
 }: NotificationSettingsModalProps) {
-    const { me, members } = useLoggedInMember();
-    const activeMemberId =
-        propMemberId || me?.id || members?.[0]?.id || "mem-00000000-0011";
+    const { me } = useLoggedInMember();
+    const activeMemberId = propMemberId || me?.id || "";
 
     const [prefs, setPrefs] = useState<NotificationPreferences>(() =>
         getDefaultNotificationPreferences(activeMemberId),
@@ -140,6 +139,10 @@ export function NotificationSettingsModal({
 
     // Load preferences
     const loadPreferences = useCallback(async () => {
+        if (!activeMemberId) {
+            setIsLoading(false);
+            return;
+        }
         try {
             setIsLoading(true);
             setErrorMessage(null);
@@ -169,6 +172,7 @@ export function NotificationSettingsModal({
     const handleUpdate = async (
         updates: UpdateNotificationPreferencesInput,
     ) => {
+        if (!activeMemberId) return;
         const previousPrefs = prefs;
         setErrorMessage(null);
         setPrefs((prev) => ({ ...prev, ...updates }));
@@ -241,6 +245,7 @@ export function NotificationSettingsModal({
 
     // Reset to defaults
     const handleResetDefaults = async () => {
+        if (!activeMemberId) return;
         const previousPrefs = prefs;
         const defaults = getDefaultNotificationPreferences(activeMemberId);
         setErrorMessage(null);
