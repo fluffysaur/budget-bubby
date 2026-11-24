@@ -72,3 +72,37 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  rls:
+    name: rls
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned on purpose: a floating CLI can change migration/test behaviour
+      # under us. Bump deliberately, in its own PR.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.1
+
+      # Some older migrations use a date-only version (YYYYMMDD_name.sql) and two
+      # share 20261029, which the CLI rejects as duplicate versions. Give those
+      # unique 14-digit versions in this CI checkout only (not committed).
+      - name: Normalise migration versions
+        run: |
+          i=0
+          for f in supabase/migrations/[0-9]*.sql; do
+            base=$(basename "$f")
+            if [[ "$base" =~ ^([0-9]{8})_(.*)$ ]]; then
+              i=$((i + 1))
+              mv "$f" "supabase/migrations/${BASH_REMATCH[1]}$(printf '%06d' "$i")_${BASH_REMATCH[2]}"
+            fi
+          done
+          ls supabase/migrations
+
+      - name: Start local Supabase (database only)
+        run: supabase start -x storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: RLS isolation tests (pgTAP)
+        run: supabase test db

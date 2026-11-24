@@ -1,0 +1,10 @@
+# Local Supabase stack config, used only by `supabase start` / `supabase test db`
+# (the RLS isolation tests and CI). Never link this to the live project.
+project_id = "budget-bubby"
+
+[db]
+port = 54322
+major_version = 17
+
+[db.migrations]
+enabled = true
