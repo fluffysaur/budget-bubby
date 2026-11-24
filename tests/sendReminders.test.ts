@@ -8,7 +8,7 @@ import {
     isAuthorizedBearer,
     runSendReminders,
     timingSafeEqual,
-    toSingaporeWallClock,
+    toWallClock,
     type SendRemindersDeps,
     type PushTarget,
 } from "../src/server/sendReminders";
@@ -54,8 +54,8 @@ function makeDeps(
         auth: "a",
     };
     const deps = {
-        service: mockFinanceService,
-        listHouseholdIds: async () => ["hh-00000000-0001"],
+        createService: () => mockFinanceService,
+        listHouseholds: async () => [{ id: "hh-00000000-0001" }],
         listMembers: async () => [{ id: MEMBER }],
         listSubscriptions: async () => [target],
         deleteSubscription: vi.fn().mockResolvedValue(undefined),
@@ -211,21 +211,92 @@ describe("runSendReminders", () => {
         mockFinanceService.inbox.setItems([]);
     });
 
-    it("converts instants to Singapore wall-clock time", () => {
-        const d = toSingaporeWallClock(new Date("2026-10-29T11:30:00Z"));
-        expect(d.getHours()).toBe(19);
-        expect(d.getMinutes()).toBe(30);
+    it("converts instants to wall-clock time, defaulting to Singapore", () => {
+        const instant = new Date("2026-10-29T11:30:00Z");
+        const sg = toWallClock(instant);
+        expect(sg.getHours()).toBe(19);
+        expect(sg.getMinutes()).toBe(30);
+        const ny = toWallClock(instant, "America/New_York");
+        expect(ny.getHours()).toBe(7);
+        // Invalid names fall back to Singapore rather than throwing
+        expect(toWallClock(instant, "Not/AZone").getHours()).toBe(19);
     });
 
-    it("refuses to run unless exactly one household exists", async () => {
-        await expect(
-            runSendReminders(
-                makeDeps({ listHouseholdIds: async () => ["a", "b"] }),
-            ),
-        ).rejects.toThrow(/exactly one household/);
-        await expect(
-            runSendReminders(makeDeps({ listHouseholdIds: async () => [] })),
-        ).rejects.toThrow(/exactly one household/);
+    it("runs every household with its own scoped service and timezone", async () => {
+        const createService = vi.fn((_id: string) => mockFinanceService);
+        const listMembers = vi.fn(async (_id: string) => [{ id: MEMBER }]);
+        const result = await runSendReminders(
+            makeDeps({
+                dryRun: true,
+                createService,
+                listMembers,
+                // 11:00 UTC: 19:00 in Singapore, 07:00 in New York
+                now: new Date("2026-10-29T11:00:00Z"),
+                listHouseholds: async () => [
+                    { id: "hh-a" },
+                    { id: "hh-b", timezone: "Asia/Tokyo" },
+                    { id: "hh-c", timezone: "America/New_York" },
+                ],
+            }),
+        );
+        const ids = ["hh-a", "hh-b", "hh-c"];
+        expect(createService.mock.calls.map(([id]) => id)).toEqual(ids);
+        expect(listMembers.mock.calls.map(([id]) => id)).toEqual(ids);
+        expect(result.members.map((m) => m.householdId)).toEqual(ids);
+        // Tokyo is 20:00 (awake); New York is 07:00 (inside 22:00-08:00 quiet hours)
+        expect(result.members.map((m) => m.skipped)).toEqual([
+            undefined,
+            undefined,
+            "quiet_hours",
+        ]);
+    });
+
+    it("isolates failures so one household cannot block the others", async () => {
+        const deps = makeDeps({
+            createService: (id: string) => {
+                if (id === "hh-a") throw new Error("boom");
+                return mockFinanceService;
+            },
+            listHouseholds: async () => [{ id: "hh-a" }, { id: "hh-b" }],
+        });
+        const result = await runSendReminders(deps);
+        expect(result.members[0]).toMatchObject({
+            householdId: "hh-a",
+            error: "boom",
+        });
+        expect(result.members[1].householdId).toBe("hh-b");
+        expect(result.members[1].error).toBeUndefined();
+        expect(result.members[1].keys.length).toBeGreaterThan(0);
+        expect(deps.sendPush).toHaveBeenCalled();
+    });
+
+    it("isolates a failing member within a household", async () => {
+        const deps = makeDeps({
+            listMembers: async () => [{ id: "bad" }, { id: MEMBER }],
+            listSubscriptions: async (id: string) => {
+                if (id === "bad") throw new Error("db down");
+                return [
+                    {
+                        endpoint: "https://push.example/a",
+                        p256dh: "p",
+                        auth: "a",
+                    },
+                ];
+            },
+        });
+        const result = await runSendReminders(deps);
+        expect(result.members[0]).toMatchObject({
+            memberId: "bad",
+            error: "db down",
+        });
+        expect(result.members[1].error).toBeUndefined();
+    });
+
+    it("does not throw with no households", async () => {
+        const result = await runSendReminders(
+            makeDeps({ listHouseholds: async () => [] }),
+        );
+        expect(result.members).toEqual([]);
     });
 
     it("pushes each reminder once across hourly runs", async () => {
@@ -334,9 +405,9 @@ describe("timingSafeEqual & isAuthorizedBearer", () => {
             await isAuthorizedBearer("Bearer my-cron-secre", "my-cron-secret"),
         ).toBe(false);
         expect(await isAuthorizedBearer(null, "my-cron-secret")).toBe(false);
-        expect(await isAuthorizedBearer("my-cron-secret", "my-cron-secret")).toBe(
-            false,
-        );
+        expect(
+            await isAuthorizedBearer("my-cron-secret", "my-cron-secret"),
+        ).toBe(false);
         expect(await isAuthorizedBearer("Bearer ", "")).toBe(false);
     });
 });
