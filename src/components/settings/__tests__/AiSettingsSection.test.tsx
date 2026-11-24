@@ -33,8 +33,16 @@ describe("AiSettingsSection", () => {
 
         expect(screen.getByText("Not Set")).toBeInTheDocument();
 
-        // Expand the collapsible section
+        // Expand the collapsible section (defaults to OpenRouter)
         fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
+        expect(
+            screen.getByTestId("connect-openrouter-btn"),
+        ).toBeInTheDocument();
+
+        // Switch to Gemini to test manual API key input flow
+        fireEvent.change(screen.getByTestId("ai-provider-select"), {
+            target: { value: "gemini" },
+        });
 
         const input = screen.getByTestId(
             "ai-api-key-input",
@@ -73,7 +81,10 @@ describe("AiSettingsSection", () => {
 
         fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
 
-        // Save Gemini key
+        // Switch to Gemini and save Gemini key
+        fireEvent.change(screen.getByTestId("ai-provider-select"), {
+            target: { value: "gemini" },
+        });
         fireEvent.change(screen.getByTestId("ai-api-key-input"), {
             target: { value: "AIza-gem-1" },
         });

@@ -119,10 +119,10 @@ export const AI_PROVIDER_META: Record<AiProviderId, AiProviderMeta> = {
 };
 
 export const AI_PROVIDER_LIST: readonly AiProviderMeta[] = [
+    AI_PROVIDER_META.openrouter,
     AI_PROVIDER_META.gemini,
     AI_PROVIDER_META.anthropic,
     AI_PROVIDER_META.openai,
-    AI_PROVIDER_META.openrouter,
 ];
 
 const ADAPTERS: Record<AiProviderId, AiProviderAdapter> = {
@@ -197,7 +197,7 @@ export function getActiveAiProvider(): AiProviderId {
     const storage = getSafeStorage();
     migrateLegacyGeminiStorage(storage);
     const saved = storage?.getItem(AI_ACTIVE_PROVIDER_STORAGE_KEY) ?? null;
-    return isValidProviderId(saved) ? saved : "gemini";
+    return isValidProviderId(saved) ? saved : "openrouter";
 }
 
 export function setActiveAiProvider(provider: AiProviderId): void {
