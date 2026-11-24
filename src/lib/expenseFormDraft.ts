@@ -29,6 +29,28 @@ export interface ExpenseFormDraft {
 
 const GLOBAL_RECENT_TAGS_STORAGE_KEY = "budget_bubby_recent_tags_global_v2";
 
+/** Strip any leading `#`s and surrounding whitespace from a single expense tag. */
+export function normalizeExpenseTag(raw: string): string {
+    return raw.trim().replace(/^#+/, "").trim();
+}
+
+/** Normalize and case-insensitively deduplicate an expense tag list (stored without `#`). */
+export function normalizeExpenseTags(
+    tags: readonly string[] | null | undefined,
+): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of tags ?? []) {
+        const tag = normalizeExpenseTag(raw);
+        if (!tag) continue;
+        const key = tag.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(tag);
+    }
+    return out;
+}
+
 export function getStoredRecentTags(): string[] {
     if (typeof window === "undefined" || !window.localStorage) return [];
     try {
@@ -54,8 +76,8 @@ export function storeRecentTags(newTags: string[]): void {
     try {
         const existing = getStoredRecentTags();
         const combined = [
-            ...newTags.map((t) => t.trim().replace(/^#/, "")).filter(Boolean),
-            ...existing,
+            ...newTags.map(normalizeExpenseTag).filter(Boolean),
+            ...existing.map(normalizeExpenseTag).filter(Boolean),
         ];
         const unique: string[] = [];
         for (const t of combined) {
@@ -96,6 +118,9 @@ export function buildExpenseInputFromDraft(
         is_shared: draft.isShared,
         split_ratio: draft.isShared ? draft.splitRatio : 0.0,
         goal_id: draft.isGoalSpend ? draft.selectedGoalId || null : null,
-        tags: draft.tags.length > 0 ? draft.tags : undefined,
+        tags: (() => {
+            const normalized = normalizeExpenseTags(draft.tags);
+            return normalized.length > 0 ? normalized : undefined;
+        })(),
     };
 }

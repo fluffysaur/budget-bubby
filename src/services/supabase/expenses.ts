@@ -8,6 +8,10 @@ import type {
 } from "../../types/finance";
 import { addMonths, getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { isValidUuid } from "../../lib/uuid";
+import {
+    normalizeExpenseTag,
+    normalizeExpenseTags,
+} from "../../lib/expenseFormDraft";
 import { PartialBulkAddError } from "../bulkAddError";
 import {
     isMissingColumnError,
@@ -63,7 +67,9 @@ export class ExpensesStore {
                 query = query.eq("goal_id", filter.goalId);
             }
             if (filter?.tag) {
-                query = query.contains("tags", [filter.tag]);
+                query = query.contains("tags", [
+                    normalizeExpenseTag(filter.tag),
+                ]);
             }
             if (filter?.search) {
                 query = query.or(buildExpenseSearchOrFilter(filter.search));
@@ -129,7 +135,7 @@ export class ExpensesStore {
             is_shared: input.is_shared,
             split_ratio: input.split_ratio ?? 0.5,
             settled: false,
-            tags: input.tags || [],
+            tags: normalizeExpenseTags(input.tags),
             goal_id: input.goal_id || null,
             original_amount:
                 input.original_amount !== undefined
@@ -196,7 +202,7 @@ export class ExpensesStore {
                 is_shared: input.is_shared,
                 split_ratio: input.split_ratio ?? 0.5,
                 settled: false,
-                tags: input.tags || [],
+                tags: normalizeExpenseTags(input.tags),
                 goal_id: input.goal_id || null,
                 original_amount:
                     input.original_amount !== undefined
@@ -219,6 +225,9 @@ export class ExpensesStore {
     ): Promise<Expense> {
         const client = this.ctx.getClient();
         const payload: Record<string, unknown> = { ...updates };
+        if (updates.tags !== undefined) {
+            payload.tags = normalizeExpenseTags(updates.tags);
+        }
         if (payload.is_shared === false) {
             payload.partner_category_id = null;
         }

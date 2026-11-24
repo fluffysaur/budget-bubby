@@ -331,4 +331,47 @@ describe("Big-Ticket Goals Sinking Fund & Drawdown", () => {
         // It should only include the normal food spend ($50 + any prior non-goal seed food for Oct)
         expect(foodCategory?.actualSpent).toBeLessThan(1000);
     });
+
+    it("merges legacy #-prefixed tags with unprefixed tags without double ##", () => {
+        const mixedExpenses: Expense[] = [
+            {
+                id: "e-hash-1",
+                household_id: "hh-1",
+                payer_id: "m1",
+                category_id: "cat-food",
+                date: "2026-11-01",
+                item: "Bali Accoms",
+                amount: 105.78,
+                is_shared: false,
+                split_ratio: 0,
+                settled: false,
+                tags: ["#BaliTrip"],
+            },
+            {
+                id: "e-hash-2",
+                household_id: "hh-1",
+                payer_id: "m1",
+                category_id: "cat-food",
+                date: "2026-11-01",
+                item: "Income Insurance",
+                amount: 20.2,
+                is_shared: false,
+                split_ratio: 0,
+                settled: false,
+                tags: ["BaliTrip"],
+            },
+        ];
+
+        render(
+            <SpendTagsOverviewCard
+                expenses={mixedExpenses}
+                activeTag="#BaliTrip"
+            />,
+        );
+
+        expect(screen.getByText("1 tag")).toBeInTheDocument();
+        expect(screen.getByTestId("tag-card-BaliTrip")).toBeInTheDocument();
+        expect(screen.getByText("Filtering by #BaliTrip")).toBeInTheDocument();
+        expect(screen.queryByText(/##/)).not.toBeInTheDocument();
+    });
 });

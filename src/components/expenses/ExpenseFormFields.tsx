@@ -25,6 +25,7 @@ import {
 import { guessCategoryId } from "../../lib/categoryGuess";
 import {
     getStoredRecentTags,
+    normalizeExpenseTag,
     type ExpenseFormDraft,
     type FundingSource,
 } from "../../lib/expenseFormDraft";
@@ -161,15 +162,14 @@ export function ExpenseFormFields({
     };
 
     const handleAddTag = (rawTag: string) => {
-        const trimmed = rawTag.trim();
-        if (!trimmed) return;
-        const clean = trimmed.replace(/^#/, "");
-        const formatted = `#${clean}`;
+        const clean = normalizeExpenseTag(rawTag);
+        if (!clean) return;
         const alreadyTagged = draft.tags.some(
-            (t) => t.replace(/^#/, "").toLowerCase() === clean.toLowerCase(),
+            (t) =>
+                normalizeExpenseTag(t).toLowerCase() === clean.toLowerCase(),
         );
         if (!alreadyTagged) {
-            onChange({ tags: [...draft.tags, formatted] });
+            onChange({ tags: [...draft.tags, clean] });
         }
         setNewTagInput("");
     };
@@ -184,8 +184,8 @@ export function ExpenseFormFields({
                 (rTag) =>
                     !draft.tags.some(
                         (t) =>
-                            t.replace(/^#/, "").toLowerCase() ===
-                            rTag.toLowerCase(),
+                            normalizeExpenseTag(t).toLowerCase() ===
+                            normalizeExpenseTag(rTag).toLowerCase(),
                     ),
             )
             .slice(0, 3);
@@ -901,7 +901,7 @@ export function ExpenseFormFields({
                                         key={tag}
                                         className="inline-flex items-center gap-1 rounded-full border border-(--border-ink) bg-(--pastel-lilac-light) px-2.5 py-0.5 text-[11px] font-bold text-(--text-ink)"
                                     >
-                                        <span>#{tag.replace(/^#/, "")}</span>
+                                        <span>#{normalizeExpenseTag(tag)}</span>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveTag(tag)}
@@ -953,11 +953,11 @@ export function ExpenseFormFields({
                                     <button
                                         key={rTag}
                                         type="button"
-                                        aria-label={`Add tag ${rTag.replace(/^#/, "")}`}
+                                        aria-label={`Add tag ${normalizeExpenseTag(rTag)}`}
                                         onClick={() => handleAddTag(rTag)}
                                         className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-(--border-subtle) bg-(--bg-canvas) px-2 py-0.5 text-[11px] font-bold text-(--text-ink) shadow-cute-sm transition-colors hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"
                                     >
-                                        <span>+ #{rTag.replace(/^#/, "")}</span>
+                                        <span>+ #{normalizeExpenseTag(rTag)}</span>
                                     </button>
                                 ))}
                             </div>

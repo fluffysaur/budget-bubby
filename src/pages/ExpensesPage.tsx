@@ -49,6 +49,7 @@ import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
+import { normalizeExpenseTag } from "../lib/expenseFormDraft";
 import { addMonths, getCurrentMonth } from "../lib/dateUtils";
 import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
 import {
@@ -831,7 +832,7 @@ export function ExpensesPage({
                         badge={
                             filter.tag ? (
                                 <span className="px-2 py-0.5 rounded-full text-2xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
-                                    #{filter.tag}
+                                    #{normalizeExpenseTag(filter.tag)}
                                 </span>
                             ) : undefined
                         }
@@ -848,12 +849,19 @@ export function ExpensesPage({
                             }
                             categories={categories}
                             activeTag={filter.tag}
-                            onSelectTag={(tag) =>
+                            onSelectTag={(tag) => {
+                                const clean = normalizeExpenseTag(tag);
                                 setFilter((prev) => ({
                                     ...prev,
-                                    tag: prev.tag === tag ? undefined : tag,
-                                }))
-                            }
+                                    tag:
+                                        prev.tag &&
+                                        normalizeExpenseTag(
+                                            prev.tag,
+                                        ).toLowerCase() === clean.toLowerCase()
+                                            ? undefined
+                                            : clean,
+                                }));
+                            }}
                             onClearTag={() =>
                                 setFilter((prev) => ({
                                     ...prev,

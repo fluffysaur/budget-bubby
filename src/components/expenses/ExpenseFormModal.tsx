@@ -73,6 +73,7 @@ import {
 } from "../../hooks/finance/inbox";
 import {
     buildExpenseInputFromDraft,
+    normalizeExpenseTags,
     storeRecentTags,
     type ExpenseFormDraft,
 } from "../../lib/expenseFormDraft";
@@ -339,7 +340,7 @@ export function ExpenseFormModal({
                 date: expense.date,
                 time: expense.time || "",
                 remarks: expense.remarks || "",
-                tags: expense.tags ? [...expense.tags] : [],
+                tags: normalizeExpenseTags(expense.tags),
                 selectedGoalId: expense.goal_id || "",
                 isGoalSpend: Boolean(expense.goal_id),
             });
@@ -442,7 +443,7 @@ export function ExpenseFormModal({
                     ...builtInput,
                     date: draft.date || expense.date,
                     time: draft.time || null,
-                    tags: draft.tags.map((t) => t.trim()).filter(Boolean),
+                    tags: normalizeExpenseTags(draft.tags),
                 };
                 const updated = await financeService.updateExpense(
                     expense.id,

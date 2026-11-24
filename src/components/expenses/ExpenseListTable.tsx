@@ -32,6 +32,7 @@ import {
     extractTimeFromISO,
 } from "../../lib/dateUtils";
 import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
+import { normalizeExpenseTag } from "../../lib/expenseFormDraft";
 import { ExpenseFormModal } from "./ExpenseFormModal";
 import { DeleteExpenseModal } from "./DeleteExpenseModal";
 import { TruncatedText } from "../ui/TruncatedText";
@@ -565,10 +566,10 @@ export function ExpenseListTable({
                                                                     0 && (
                                                                     <span className="text-2xs font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
                                                                         #
-                                                                        {
+                                                                        {normalizeExpenseTag(
                                                                             expense
-                                                                                .tags[0]
-                                                                        }
+                                                                                .tags[0],
+                                                                        )}
                                                                     </span>
                                                                 )}
                                                         </div>

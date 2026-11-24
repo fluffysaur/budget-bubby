@@ -483,7 +483,7 @@ describe("ExpenseFormModal Currency Conversion & UX", () => {
                 is_shared: true,
                 split_ratio: 0.5,
                 settled: false,
-                tags: ["#VietnamTrip"],
+                tags: ["VietnamTrip"],
                 goal_id: "goal-vietnam-trip",
             });
 
@@ -511,9 +511,9 @@ describe("ExpenseFormModal Currency Conversion & UX", () => {
             target: { value: "Tasty street food" },
         });
 
-        // Add Tag
+        // Add Tag (even if user types a leading '#')
         const tagInput = screen.getByPlaceholderText(/vietnamtrip/i);
-        fireEvent.change(tagInput, { target: { value: "VietnamTrip" } });
+        fireEvent.change(tagInput, { target: { value: "#VietnamTrip" } });
         fireEvent.click(screen.getByRole("button", { name: /\+ tag/i }));
         expect(screen.getByText("#VietnamTrip")).toBeInTheDocument();
 
@@ -529,7 +529,7 @@ describe("ExpenseFormModal Currency Conversion & UX", () => {
         await waitFor(() => {
             expect(addExpenseSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    tags: ["#VietnamTrip"],
+                    tags: ["VietnamTrip"],
                     goal_id: "goal-vietnam-trip",
                     category_id: null,
                     remarks: "Tasty street food",

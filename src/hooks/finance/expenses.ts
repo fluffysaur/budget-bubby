@@ -5,6 +5,7 @@ import { financeService } from "../../services/financeService";
 import { isOnline } from "../../services/offlineSyncQueue";
 import { keys } from "../../lib/queryKeys";
 import { generateUuid } from "../../lib/uuid";
+import { normalizeExpenseTag } from "../../lib/expenseFormDraft";
 import type {
     ExpenseFilter,
     Expense,
@@ -39,8 +40,17 @@ export function matchesExpenseFilter(
     if (filter.payerId && expense.payer_id !== filter.payerId) return false;
     if (filter.isShared !== undefined && expense.is_shared !== filter.isShared)
         return false;
-    if (filter.tag && (!expense.tags || !expense.tags.includes(filter.tag)))
-        return false;
+    if (filter.tag) {
+        const target = normalizeExpenseTag(filter.tag).toLowerCase();
+        if (
+            !expense.tags ||
+            !expense.tags.some(
+                (t) => normalizeExpenseTag(t).toLowerCase() === target,
+            )
+        ) {
+            return false;
+        }
+    }
     if (filter.search) {
         const term = filter.search.toLowerCase().trim();
         const itemMatch = expense.item.toLowerCase().includes(term);
