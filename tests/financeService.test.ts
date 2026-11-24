@@ -32,9 +32,10 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
         });
 
         it("filters accounts by user perspective including joint accounts", async () => {
-            const partnerOneAccounts = await mockFinanceService.getAccounts("partner1");
+            const partnerOneAccounts =
+                await mockFinanceService.getAccounts("mem-00000000-0011");
             const partnerTwoAccounts =
-                await mockFinanceService.getAccounts("partner2");
+                await mockFinanceService.getAccounts("mem-00000000-0012");
 
             const partnerOneMember = mockMembers.find(
                 (m) => m.display_name === "Alex",
@@ -45,16 +46,16 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
 
             // Every account in partner1's perspective must belong to partner1 or be joint
             for (const acc of partnerOneAccounts) {
-                expect(acc.owner_id === partnerOneMember.id || acc.is_joint).toBe(
-                    true,
-                );
+                expect(
+                    acc.owner_id === partnerOneMember.id || acc.is_joint,
+                ).toBe(true);
             }
 
             // Every account in partner2's perspective must belong to partner2 or be joint
             for (const acc of partnerTwoAccounts) {
-                expect(acc.owner_id === partnerTwoMember.id || acc.is_joint).toBe(
-                    true,
-                );
+                expect(
+                    acc.owner_id === partnerTwoMember.id || acc.is_joint,
+                ).toBe(true);
             }
         });
 

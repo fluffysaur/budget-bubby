@@ -34,7 +34,7 @@ import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
-import { matchPartnerMember } from "../../lib/members";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { feedback } from "../../lib/delight/feedback";
 import { filterCategoriesForMember } from "../../lib/financialFormulas";
 import {
@@ -54,7 +54,7 @@ function useSafeHousehold() {
     }
     return {
         members: isMock ? mockMembers : [],
-        activeMember: isMock ? (mockMembers[0] ?? null) : null,
+        activeMember: null,
         perspective: "household" as const,
         setPerspective: () => {},
         theme: "light" as const,
@@ -96,16 +96,11 @@ export function AddRecurringModal({
     categories = EMPTY_CATEGORIES,
     goals = EMPTY_GOALS,
 }: AddRecurringModalProps) {
-    const { members, activeMember, isMockMode } = useSafeHousehold();
+    const { members, activeMember } = useSafeHousehold();
+    const { me } = useLoggedInMember(members);
 
-    // Find member IDs
-    const partnerOneMember = matchPartnerMember(members, "partner1");
-
-    const defaultOwnerId =
-        activeMember?.id ||
-        partnerOneMember?.id ||
-        members[0]?.id ||
-        (isMockMode ? "mem-00000000-0011" : "joint");
+    // The member in view, else the member using this device, else joint
+    const defaultOwnerId = activeMember?.id || me?.id || "joint";
 
     // Form states
     const [name, setName] = useState<string>("");

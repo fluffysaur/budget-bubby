@@ -25,19 +25,26 @@ import { useHouseholdOverviewQuery } from "../hooks/finance/budget";
 import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { useQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
-import { matchPartnerMember } from "../lib/members";
+import {
+    findCurrentMember,
+    normalisePerspective,
+    resolvePerspectiveMember,
+} from "../lib/members";
 import {
     THEME_STORAGE_KEY,
     applyThemeClass,
     readStoredTheme,
 } from "../lib/theme";
-import { useOptionalAuth } from "./AuthContext";
+import { useAuth } from "./AuthContext";
 
 export interface HouseholdContextValue {
     perspective: Perspective;
     setPerspective: (perspective: Perspective) => void;
     members: HouseholdMember[];
+    /** The member the current perspective shows; null for the household view. */
     activeMember: HouseholdMember | null;
+    /** The member using this device (from the signed-in user), if known. */
+    currentMember: HouseholdMember | null;
     theme: "light" | "dark";
     toggleTheme: () => void;
     isMockMode: boolean;
@@ -55,6 +62,11 @@ export interface HouseholdProviderProps {
     initialPerspective?: Perspective;
     initialTheme?: "light" | "dark";
     defaultPerspective?: Perspective;
+    /**
+     * Switch to the current member's own view once they are known, and again
+     * if a different member signs in. Used by the app shell after sign-in.
+     */
+    followCurrentMember?: boolean;
 }
 
 function HouseholdProviderInner({
@@ -62,21 +74,19 @@ function HouseholdProviderInner({
     initialPerspective = "household",
     initialTheme,
     defaultPerspective,
+    followCurrentMember = false,
 }: HouseholdProviderProps) {
-    const [perspective, setPerspective] = useState<Perspective>(
-        defaultPerspective || initialPerspective,
-    );
-    const auth = useOptionalAuth();
-    const loggedInPartner = auth?.loggedInPartner ?? null;
-    const authUserId = auth?.user?.id ?? null;
+    const requestedPerspective = defaultPerspective || initialPerspective;
+    const [perspective, setPerspective] =
+        useState<Perspective>(requestedPerspective);
+    const { memberIdentity } = useAuth();
 
-    useEffect(() => {
-        if (defaultPerspective) {
-            setPerspective(defaultPerspective);
-        } else if (initialPerspective) {
-            setPerspective(initialPerspective);
-        }
-    }, [defaultPerspective, initialPerspective]);
+    // Follow perspective props when they change (adjusted during render)
+    const [lastRequested, setLastRequested] = useState(requestedPerspective);
+    if (requestedPerspective !== lastRequested) {
+        setLastRequested(requestedPerspective);
+        setPerspective(requestedPerspective);
+    }
 
     // Initialize theme from prop, localStorage, or fallback to 'light'
     const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -127,20 +137,36 @@ function HouseholdProviderInner({
         await refetch();
     }, [queryClient, refetch]);
 
-    // Resolve active member based on current perspective
-    const activeMember = useMemo<HouseholdMember | null>(() => {
-        if (perspective === "household") {
-            return null;
-        }
+    const currentMember = useMemo(
+        () => findCurrentMember(members, memberIdentity),
+        [members, memberIdentity],
+    );
 
-        // Member id, or a partner slot (e.g. the signed-in partner's default view).
-        // Unknown values (e.g. a legacy name-based id) fall back to no member.
-        return matchPartnerMember(
-            members,
-            perspective,
-            perspective === loggedInPartner ? authUserId : null,
-        );
-    }, [perspective, members, loggedInPartner, authUserId]);
+    // Open on the signed-in member's own view once they resolve
+    const currentMemberId = currentMember?.id ?? null;
+    const [followedMemberId, setFollowedMemberId] = useState<string | null>(
+        null,
+    );
+    if (
+        followCurrentMember &&
+        currentMemberId &&
+        currentMemberId !== followedMemberId
+    ) {
+        setFollowedMemberId(currentMemberId);
+        setPerspective(currentMemberId);
+    }
+
+    // A perspective that is not a known member (e.g. a legacy partner slot
+    // from older stored state) falls back to the household view.
+    const effectivePerspective = useMemo(
+        () => normalisePerspective(perspective, members),
+        [perspective, members],
+    );
+
+    const activeMember = useMemo(
+        () => resolvePerspectiveMember(members, effectivePerspective),
+        [members, effectivePerspective],
+    );
 
     const themeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -170,10 +196,11 @@ function HouseholdProviderInner({
 
     const contextValue: HouseholdContextValue = useMemo(
         () => ({
-            perspective,
+            perspective: effectivePerspective,
             setPerspective,
             members,
             activeMember,
+            currentMember,
             theme,
             toggleTheme,
             isMockMode,
@@ -182,10 +209,11 @@ function HouseholdProviderInner({
             refreshData,
         }),
         [
-            perspective,
+            effectivePerspective,
             setPerspective,
             members,
             activeMember,
+            currentMember,
             theme,
             toggleTheme,
             isMockMode,

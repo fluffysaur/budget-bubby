@@ -72,7 +72,10 @@ import type {
 function renderWithProviders(ui: React.ReactElement) {
     return render(
         <MemoryRouter>
-            <AuthProvider initialAuthenticated={true} initialPartner="partner1">
+            <AuthProvider
+                initialAuthenticated={true}
+                initialMemberEmail="alex@example.com"
+            >
                 <HouseholdProvider defaultPerspective="household">
                     {ui}
                 </HouseholdProvider>
@@ -798,7 +801,7 @@ describe("Notifications Engine", () => {
                 <MemoryRouter>
                     <AuthProvider
                         initialAuthenticated={true}
-                        initialPartner="partner2"
+                        initialMemberEmail="sam@example.com"
                     >
                         <HouseholdProvider defaultPerspective="household">
                             <NotificationCenterPopover />

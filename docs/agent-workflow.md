@@ -15,7 +15,7 @@ Loaded on demand from [AGENTS.md](../AGENTS.md). Read before committing, branchi
 Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, `raise-issue --express`), or starting a message with "express", is the user's explicit approval for the steps that skill names. It removes the "may I?" prompts only.
 
 - **Scope:** that one invocation (one issue, one branch). Later commits or pushes (e.g. after review comments) ask again unless `--express` is passed again.
-- **Still enforced:** the quality gate (C), the branching rules (B: no `main`, no force-push, never merge, no `--no-verify`), the public-repo privacy audit, approval for destructive git commands, and the `needs-db` confirmation. Any failure stops the run and is reported.
+- **Still enforced:** the quality gate (C), the branching rules (B: no `main`, no force-push, never merge, no `--no-verify`), the privacy audit, approval for destructive git commands, and the `needs-db` confirmation. Any failure stops the run and is reported.
 - **Audit trail:** end with the PR/issue URL, a checks summary and a list of what was done unprompted (commit message, branch pushed, screenshots).
 - **Pickup:** the issue is confirmed once (naming an issue number counts as confirmation); the run then branches, implements, runs `npm run check`, commits, pushes, pushes PR screenshots to `chore/pr-screenshots` if UI changed, and opens the PR. It stops at the open PR.
 - **Raise:** skips the "create this issue?" gate. The draft is still printed, the duplicate check and privacy audit still run, and a duplicate match stops and asks.
@@ -54,7 +54,7 @@ Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, 
 
 ### G. PR Screenshots
 
-This repo is **public**, so everything in a screenshot is public too.
+The repo is private but kept publishable, and screenshots stay in git history, so treat every screenshot as public.
 
 - **When required (mandatory):** Every PR that changes any UI — `src/components/`, `src/pages/`, `src/index.css`, layout, spacing, styles, copy, icons, badges, modals, themes, or user-visible flows — must attach before/after screenshots before the PR is opened (or updated). Never silently omit them. If the environment genuinely cannot run a browser, explicitly state the blocker in `## Screenshots` and treat screenshot verification as unverified.
 - **Demo data only.** Capture from the e2e dev server, which forces mock mode (`playwright.config.ts` sets empty Supabase env vars). Never capture from the live DB.
@@ -70,8 +70,8 @@ This repo is **public**, so everything in a screenshot is public too.
     - Screenshots live on the orphan branch `chore/pr-screenshots`. It is never merged and never deleted.
     - Use a separate worktree: `git worktree add --orphan -b chore/pr-screenshots ../bb-shots` the first time, or `git worktree add ../bb-shots chore/pr-screenshots` after that.
     - Put the images in a folder named after the PR branch, with `/` replaced by `-`, e.g. `fix-offline-queue/after-390-dark-home.png`. Commit, push, then remove the worktree.
-    - Embed them in the PR body with `https://raw.githubusercontent.com/fluffysaur/budget-bubby/chore/pr-screenshots/<folder>/<file>.png`, in a before/after table.
-    - Verify the images are pushed to `origin/chore/pr-screenshots` and filenames match the PR body links before creating the PR.
+    - Embed them in the PR body with `https://github.com/fluffysaur/budget-bubby/blob/chore/pr-screenshots/<folder>/<file>.png?raw=true`, in a before/after table. Do not use `raw.githubusercontent.com` URLs: the repo is private, so GitHub's image proxy fetches them anonymously and they render broken.
+    - Verify with `git ls-tree -r --name-only origin/chore/pr-screenshots` that the images are pushed and filenames match the PR body links before creating the PR. Anonymous `curl` of the image URLs returns 404 on a private repo, so don't use it as a check.
 - **Not test baselines.** Screenshots are never committed to feature branches or used as visual-regression baselines.
 
 ### H. Backlog (GitHub Issues)
@@ -92,7 +92,7 @@ Add `bug` or `enhancement` to every backlog issue. Add `needs-db` when the fix n
     - **Refs:** plan, audit ID or PR
     - **DB change:** none, or the SQL the user must run
 
-    The repo is public, so never include personal names, real balances or other private data.
+    Keep issues publishable: placeholder names and amounts only, never personal names, real balances or other private data.
 
 - **Clearing:** The PR that fixes an issue says `Closes #<n>` in its body.
 - **Picking up:** Run `gh issue list --label backlog --label P0`, then P1 and so on, and take the highest unblocked issue. Issues labelled `needs-db` wait until the user confirms the SQL has run.

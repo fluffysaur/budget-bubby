@@ -39,6 +39,7 @@ import { autoBalanceAllocations } from "../../lib/financialFormulas";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { useBonusSplitDefaultQuery } from "../../hooks/finance/settleUps";
 import { financeService } from "../../services/financeService";
+import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import type {
     BaseBudgetProfile,
     BonusEvent,
@@ -117,6 +118,8 @@ export function BonusFormModal({
 }: BonusFormModalProps) {
     const isEdit = Boolean(editingEvent);
     const online = useOnlineStatus();
+    const { me } = useLoggedInMember(members);
+    const initialRecipientId = defaultRecipientId || me?.id || "";
 
     const [step, setStep] = useState<Step>("details");
     const [recipientId, setRecipientId] = useState<string>("");
@@ -169,7 +172,7 @@ export function BonusFormModal({
             setSplitTouched(true);
         } else {
             const today = getTodayDateString();
-            setRecipientId(defaultRecipientId || members[0]?.id || "");
+            setRecipientId(initialRecipientId);
             setType(defaultBonusType(today));
             setReceivedOn(today);
             setGrossInput("");
@@ -179,7 +182,7 @@ export function BonusFormModal({
             setPctInputs(splitToPercentInputs(cloneDefaultSplit()));
             setSplitTouched(false);
         }
-    }, [isOpen, editingEvent, defaultRecipientId, members]);
+    }, [isOpen, editingEvent, initialRecipientId]);
 
     // Start from the recipient's saved default until the user edits the split
     useEffect(() => {

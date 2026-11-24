@@ -52,11 +52,13 @@ import { formatSGD } from "../lib/currency";
 import { addMonths, getCurrentMonth } from "../lib/dateUtils";
 import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
 import {
+    calculateHouseholdSettlement,
     calculateSharedExpenseSettlement,
     calculateExpenseTrendsSummary,
     calculateSpendablePacing,
     detectUnspentMonthEndSurplus,
 } from "../lib/financialFormulas";
+import { getSettlementMembers } from "../lib/members";
 import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import { BulkAddExpenseModal } from "../components/expenses/BulkAddExpenseModal";
@@ -284,33 +286,15 @@ export function ExpensesPage({
             return overview.settlementSummary;
         }
 
-        const m1 = members[0];
-        const m2 = members[1];
-        if (!m1 || !m2) {
-            return {
-                netBalance: 0,
-                debtorId: null,
-                creditorId: null,
-                settlementText: "All settled up",
-                member1OwesMember2: 0,
-                member2OwesMember1: 0,
-            };
-        }
-
-        return calculateSharedExpenseSettlement(
-            expenses,
-            m1.id,
-            m2.id,
-            m1.display_name,
-            m2.display_name,
-        );
+        return calculateHouseholdSettlement(expenses, members);
     }, [overview, expenses, members]);
 
     // Mark the unsettled shared expenses displayed in the settlement summary as settled
     const handleSettleUp = async () => {
         await runSettleLock(async () => {
-            const [m1, m2] = members;
-            if (!m1 || !m2) return;
+            const pair = getSettlementMembers(members);
+            if (!pair) return;
+            const [m1, m2] = pair;
             const idsToSettle = settleTargetIds ?? settlement.expenseIds;
             if (idsToSettle && idsToSettle.length > 0) {
                 // Net amount and direction of just the expenses being settled

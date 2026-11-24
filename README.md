@@ -292,17 +292,16 @@ Create a `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-actual-anon-key-here
-VITE_PARTNER1_EMAIL=partner1@example.com
-VITE_PARTNER2_EMAIL=partner2@example.com
+VITE_MEMBER_EMAILS=member1@example.com,member2@example.com
 ```
 
-Each partner is identified by these emails (matched against `household_members.email` and the linked auth user), never by display name.
+`VITE_MEMBER_EMAILS` lists each member's sign-in email; PIN sign-in tries them in order. Once signed in, the current member is the `household_members` row linked to the auth user (`user_id`), else the one whose `email` matches. Members are never identified by display name or list position.
 
 ### 4. Private PIN Access Setup
 
-1. In **Supabase Dashboard → Authentication → Users**, create the two partner user accounts:
-    - User 1: Alex's email with Alex's chosen unique 6-digit PIN as the password.
-    - User 2: Sam's email with Sam's chosen unique 6-digit PIN as the password.
+1. In **Supabase Dashboard → Authentication → Users**, create one user per household member:
+    - Use the member's email (the same one as in `household_members.email` and `VITE_MEMBER_EMAILS`).
+    - Set their chosen unique 6-digit PIN as the password.
 2. In **Authentication → Providers → Email**, turn off **"Allow new users to sign up"** so unauthorized visitors cannot create accounts.
 3. When accessing Budget Bubby, enter your 6-digit PIN (or authenticate with Fingerprint / Face ID).
 

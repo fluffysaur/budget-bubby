@@ -1,9 +1,11 @@
--- Manual RLS checks for docs/plans/2026-11-24-auth-hardening-before-beta.md.
--- NOT run in CI. Run against a LOCAL Supabase copy only (never the live DB).
--- Everything runs in a transaction and rolls back. Each `do` block raises on failure.
--- To be folded into the #235 harness once it exists.
+-- pgTAP checks for the household_members auth hardening
+-- (docs/plans/2026-11-24-auth-hardening-before-beta.md).
+-- Run with `supabase test db` against a LOCAL stack only (never the live DB).
+-- Everything runs in a transaction and rolls back.
 
 begin;
+create extension if not exists pgtap with schema extensions;
+select plan(7);
 
 -- Fixtures: two households, two linked members, one unlinked member.
 insert into auth.users (id, email, email_confirmed_at, aud, role) values
@@ -14,76 +16,56 @@ insert into households (id, name) values
   ('10000000-0000-0000-0000-00000000000a', 'HH A'),
   ('10000000-0000-0000-0000-00000000000b', 'HH B');
 insert into household_members (id, household_id, user_id, display_name, email, role) values
-  ('20000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000a1', 'A', 'a@example.test', 'partner'),
-  ('20000000-0000-0000-0000-00000000000b', '10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000b1', 'B', 'b@example.test', 'partner'),
-  ('20000000-0000-0000-0000-00000000000c', '10000000-0000-0000-0000-00000000000b', null, 'C', 'c@example.test', 'partner');
+  ('20000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000a1', 'A', 'a@example.test', 'member'),
+  ('20000000-0000-0000-0000-00000000000b', '10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000b1', 'B', 'b@example.test', 'member'),
+  ('20000000-0000-0000-0000-00000000000c', '10000000-0000-0000-0000-00000000000b', null, 'C', 'c@example.test', 'member');
 
 -- Act as user A.
 set local role authenticated;
 select set_config('request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-0000000000a1","email":"a@example.test","role":"authenticated"}', true);
 
--- 1. Linked member claiming again is a no-op (existing members unaffected).
-do $$ begin
-  if (public.claim_household_member_profile() ->> 'success')::boolean is not true then
-    raise exception 'FAIL: already-linked member should succeed as no-op';
-  end if;
-end $$;
+select ok(
+  (public.claim_household_member_profile() ->> 'success')::boolean is true,
+  'already-linked member claiming again is a successful no-op');
 
--- 2. A cannot claim another household's unlinked row (email mismatch).
-do $$ begin
-  if exists (select 1 from household_members where id = '20000000-0000-0000-0000-00000000000c' and user_id is not null) then
-    raise exception 'FAIL: A linked someone else''s row';
-  end if;
-end $$;
+select is(
+  (select count(*) from household_members
+    where id = '20000000-0000-0000-0000-00000000000c' and user_id is not null),
+  0::bigint,
+  'A cannot claim another household''s unlinked row');
 
--- 3. Direct insert into another household fails.
-do $$ begin
-  begin
-    insert into household_members (household_id, user_id, display_name, email, role)
-    values ('10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000a1', 'X', 'x@example.test', 'partner');
-    raise exception 'FAIL: insert into other household succeeded';
-  exception when insufficient_privilege or others then
-    if sqlerrm like 'FAIL:%' then raise; end if;
-  end;
-end $$;
+select throws_ok(
+  $$insert into household_members (household_id, user_id, display_name, email, role)
+    values ('10000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000a1', 'X', 'x@example.test', 'member')$$,
+  '42501', null,
+  'direct insert into another household is denied');
 
--- 4. Changing household_id fails.
-do $$ begin
-  begin
-    update household_members set household_id = '10000000-0000-0000-0000-00000000000b'
-    where id = '20000000-0000-0000-0000-00000000000a';
-    raise exception 'FAIL: household_id changed';
-  exception when others then
-    if sqlerrm like 'FAIL:%' then raise; end if;
-  end;
-end $$;
+select throws_ok(
+  $$update household_members set household_id = '10000000-0000-0000-0000-00000000000b'
+    where id = '20000000-0000-0000-0000-00000000000a'$$,
+  '42501', null,
+  'household_id cannot be changed');
 
--- 5. Re-pointing a linked row's user_id fails.
-do $$ begin
-  begin
-    update household_members set user_id = '00000000-0000-0000-0000-0000000000b1'
-    where id = '20000000-0000-0000-0000-00000000000a';
-    raise exception 'FAIL: user_id re-pointed';
-  exception when others then
-    if sqlerrm like 'FAIL:%' then raise; end if;
-  end;
-end $$;
+select throws_ok(
+  $$update household_members set user_id = '00000000-0000-0000-0000-0000000000b1'
+    where id = '20000000-0000-0000-0000-00000000000a'$$,
+  '42501', null,
+  'a linked row''s user_id cannot be re-pointed');
 
--- 6. A cannot see household B's members.
-do $$ begin
-  if exists (select 1 from household_members where household_id = '10000000-0000-0000-0000-00000000000b') then
-    raise exception 'FAIL: A can read household B members';
-  end if;
-end $$;
+select is(
+  (select count(*) from household_members
+    where household_id = '10000000-0000-0000-0000-00000000000b'),
+  0::bigint,
+  'A cannot read household B members');
 
--- 7. Unconfirmed email cannot claim.
+-- Unconfirmed email cannot claim.
 select set_config('request.jwt.claims',
   '{"sub":"00000000-0000-0000-0000-0000000000c1","email":"c@example.test","role":"authenticated"}', true);
-do $$ begin
-  if (public.claim_household_member_profile() ->> 'success')::boolean is true then
-    raise exception 'FAIL: unconfirmed email claimed a profile';
-  end if;
-end $$;
+select ok(
+  (public.claim_household_member_profile() ->> 'success')::boolean is not true,
+  'unconfirmed email cannot claim a profile');
 
+reset role;
+select * from finish();
 rollback;

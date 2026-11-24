@@ -63,7 +63,7 @@ function renderWithProviders(
             <MemoryRouter initialEntries={initialEntries}>
                 <AuthProvider
                     initialAuthenticated={true}
-                    initialPartner="partner1"
+                    initialMemberEmail="alex@example.com"
                 >
                     <HouseholdProvider defaultPerspective="household">
                         {ui}
@@ -208,10 +208,10 @@ describe("Goal Notification Navigation and Scroll", () => {
                     >
                         <AuthProvider
                             initialAuthenticated={true}
-                            initialPartner="partner1"
+                            initialMemberEmail="alex@example.com"
                         >
                             {/* Start with partner1's personal perspective, but goal-reno-02 is Sam's */}
-                            <HouseholdProvider defaultPerspective="partner1">
+                            <HouseholdProvider defaultPerspective="mem-00000000-0011">
                                 <GoalsPage />
                             </HouseholdProvider>
                         </AuthProvider>

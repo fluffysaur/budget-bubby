@@ -39,7 +39,7 @@ import { BulkRowTableRow } from "./bulk-add/BulkRowTableRow";
 import { BulkAddFooterBar } from "./bulk-add/BulkAddFooterBar";
 import { useBulkAddRows } from "./bulk-add/useBulkAddRows";
 import { useBulkAddSubmit } from "./bulk-add/useBulkAddSubmit";
-import { matchPartnerMember } from "../../lib/members";
+import { findCurrentMember } from "../../lib/members";
 import { emitAppEvent } from "../../lib/appEvents";
 
 export interface BulkAddExpenseModalProps {
@@ -66,7 +66,7 @@ export function BulkAddExpenseModal({
     defaultShared,
 }: BulkAddExpenseModalProps) {
     const household = useOptionalHousehold();
-    const { loggedInPartner, user } = useAuth();
+    const { memberIdentity } = useAuth();
     const isMockMode = household?.isMockMode ?? isMockModeActive();
     const ctxMembers = household?.members;
     const needsMockFallback =
@@ -107,14 +107,12 @@ export function BulkAddExpenseModal({
         return perspective === "household";
     }, [defaultShared, perspective]);
 
-    // Active member on member view, logged in partner on combined view, or first member
+    // Active member on member view, else the member using this device
     const resolvedDefaultPayerId = useMemo(() => {
         if (defaultPayerId) return defaultPayerId;
         if (activeMember) return activeMember.id;
-        const match = matchPartnerMember(members, loggedInPartner, user?.id);
-        if (match) return match.id;
-        return members[0]?.id || "";
-    }, [defaultPayerId, activeMember, loggedInPartner, members, user]);
+        return findCurrentMember(members, memberIdentity)?.id ?? "";
+    }, [defaultPayerId, activeMember, members, memberIdentity]);
 
     const [activeGoals, setActiveGoals] = useState<SavingsGoal[]>(
         propGoals || [],

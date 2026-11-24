@@ -8,13 +8,15 @@
  *   3. Pick what is eligible this hour, claim each key in notification_log
  *      (a key is pushed at most once), and push to every device.
  *
- * Data is loaded with the app's Supabase service using a service-role
- * client. The service relies on RLS for household scoping, which a service
- * role bypasses, so this refuses to run unless exactly one household exists.
+ * Runs once per household. Data is loaded with the app's Supabase service
+ * using a service-role client, which bypasses RLS, so each household gets its
+ * own service over a client filtered to that household, and its own timezone
+ * (falling back to Singapore until households have a timezone column).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseFinanceServiceImpl } from "../services/supabaseFinanceService";
+import { scopeClientToHousehold } from "./householdScopedClient";
 import {
     computeRemindersFrom,
     type ReminderDataSource,
@@ -41,10 +43,23 @@ export interface SendPushResult {
     gone?: boolean;
 }
 
+export interface HouseholdInfo {
+    id: string;
+    /** IANA timezone; defaults to Singapore when missing or invalid. */
+    timezone?: string | null;
+}
+
+export const DEFAULT_TIMEZONE = "Asia/Singapore";
+
 export interface SendRemindersDeps {
-    service: ReminderDataSource & Pick<FinanceService, "claimNotificationSend">;
-    listHouseholdIds(): Promise<string[]>;
-    listMembers(): Promise<{ id: string; display_name?: string }[]>;
+    /** A service whose every query is scoped to the given household. */
+    createService(
+        householdId: string,
+    ): ReminderDataSource & Pick<FinanceService, "claimNotificationSend">;
+    listHouseholds(): Promise<HouseholdInfo[]>;
+    listMembers(
+        householdId: string,
+    ): Promise<{ id: string; display_name?: string }[]>;
     listSubscriptions(memberId: string): Promise<PushTarget[]>;
     deleteSubscription(endpoint: string): Promise<void>;
     sendPush(target: PushTarget, message: PushMessage): Promise<SendPushResult>;
@@ -54,17 +69,19 @@ export interface SendRemindersDeps {
 }
 
 export interface MemberRunResult {
+    householdId: string;
     memberId: string;
     skipped?: "push_off" | "no_devices" | "quiet_hours";
     /** Reminder keys claimed (or, in a dry run, that would be). */
     keys: string[];
     pushes: number;
     removedDevices: number;
+    /** Set when this household or member failed; the run carried on. */
+    error?: string;
 }
 
 export interface SendRemindersResult {
     ranAt: string;
-    sgTime: string;
     dryRun: boolean;
     members: MemberRunResult[];
 }
@@ -94,21 +111,29 @@ export async function isAuthorizedBearer(
     return timingSafeEqual(authorization, `Bearer ${secret}`);
 }
 
-/** Date whose local fields hold Singapore wall-clock time. */
-export function toSingaporeWallClock(date: Date): Date {
-    return new Date(
-        date.toLocaleString("en-US", { timeZone: "Asia/Singapore" }),
-    );
+/** Date whose local fields hold wall-clock time in `timeZone`. */
+export function toWallClock(
+    date: Date,
+    timeZone: string = DEFAULT_TIMEZONE,
+): Date {
+    try {
+        return new Date(date.toLocaleString("en-US", { timeZone }));
+    } catch {
+        // Invalid timezone name: use the default rather than failing the run.
+        return new Date(
+            date.toLocaleString("en-US", { timeZone: DEFAULT_TIMEZONE }),
+        );
+    }
 }
 
 async function claimAll(
-    deps: SendRemindersDeps,
+    service: ReturnType<SendRemindersDeps["createService"]>,
     memberId: string,
     reminders: AppReminder[],
 ): Promise<AppReminder[]> {
     const claimed: AppReminder[] = [];
     for (const reminder of reminders) {
-        const won = await deps.service.claimNotificationSend(memberId, {
+        const won = await service.claimNotificationSend(memberId, {
             key: reminder.id,
             type: reminder.type,
         });
@@ -119,17 +144,20 @@ async function claimAll(
 
 async function runForMember(
     deps: SendRemindersDeps,
+    service: ReturnType<SendRemindersDeps["createService"]>,
+    householdId: string,
     memberId: string,
     sgNow: Date,
 ): Promise<MemberRunResult> {
     const result: MemberRunResult = {
+        householdId,
         memberId,
         keys: [],
         pushes: 0,
         removedDevices: 0,
     };
 
-    const prefs = await deps.service.getNotificationPreferences(memberId);
+    const prefs = await service.getNotificationPreferences(memberId);
     if (!prefs.push_enabled) return { ...result, skipped: "push_off" };
 
     let targets = await deps.listSubscriptions(memberId);
@@ -146,7 +174,7 @@ async function runForMember(
         return { ...result, skipped: "quiet_hours" };
     }
 
-    const reminders = await computeRemindersFrom(deps.service, {
+    const reminders = await computeRemindersFrom(service, {
         memberId,
         referenceDate: sgNow,
         currentHour: sgNow.getHours(),
@@ -155,7 +183,7 @@ async function runForMember(
 
     let toSend: PushSelection;
     if (deps.dryRun) {
-        const log = await deps.service.getNotificationLog(memberId);
+        const log = await service.getNotificationLog(memberId);
         const seen = new Set(log.map((e) => e.reminder_key));
         toSend = {
             single: selection.single.filter((r) => !seen.has(r.id)),
@@ -163,8 +191,8 @@ async function runForMember(
         };
     } else {
         toSend = {
-            single: await claimAll(deps, memberId, selection.single),
-            digest: await claimAll(deps, memberId, selection.digest),
+            single: await claimAll(service, memberId, selection.single),
+            digest: await claimAll(service, memberId, selection.digest),
         };
     }
     result.keys = [...toSend.single, ...toSend.digest].map((r) => r.id);
@@ -191,26 +219,59 @@ async function runForMember(
     return result;
 }
 
+function failedResult(
+    householdId: string,
+    memberId: string,
+    err: unknown,
+): MemberRunResult {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error("send-reminders failed", householdId, memberId, error);
+    return {
+        householdId,
+        memberId,
+        keys: [],
+        pushes: 0,
+        removedDevices: 0,
+        error,
+    };
+}
+
 export async function runSendReminders(
     deps: SendRemindersDeps,
 ): Promise<SendRemindersResult> {
-    const householdIds = await deps.listHouseholdIds();
-    if (householdIds.length !== 1) {
-        throw new Error(
-            `send-reminders supports exactly one household, found ${householdIds.length}`,
-        );
-    }
-
-    const sgNow = toSingaporeWallClock(deps.now);
-    const members = await deps.listMembers();
+    const households = await deps.listHouseholds();
     const results: MemberRunResult[] = [];
-    for (const member of members) {
-        results.push(await runForMember(deps, member.id, sgNow));
+    for (const household of households) {
+        // One bad household or member must not block the rest.
+        try {
+            const service = deps.createService(household.id);
+            const localNow = toWallClock(
+                deps.now,
+                household.timezone ?? undefined,
+            );
+            const members = await deps.listMembers(household.id);
+            for (const member of members) {
+                try {
+                    results.push(
+                        await runForMember(
+                            deps,
+                            service,
+                            household.id,
+                            member.id,
+                            localNow,
+                        ),
+                    );
+                } catch (err) {
+                    results.push(failedResult(household.id, member.id, err));
+                }
+            }
+        } catch (err) {
+            results.push(failedResult(household.id, "", err));
+        }
     }
 
     return {
         ranAt: deps.now.toISOString(),
-        sgTime: `${formatISODate(sgNow)} ${String(sgNow.getHours()).padStart(2, "0")}:${String(sgNow.getMinutes()).padStart(2, "0")}`,
         dryRun: !!deps.dryRun,
         members: results,
     };
@@ -221,23 +282,32 @@ export function createSupabaseSendDeps(
     client: SupabaseClient,
     options: Pick<SendRemindersDeps, "sendPush" | "now" | "dryRun">,
 ): SendRemindersDeps {
-    const service = new SupabaseFinanceServiceImpl(client, {
-        localFallback: false,
-    });
     return {
-        service,
         ...options,
-        async listHouseholdIds() {
+        createService(householdId) {
+            return new SupabaseFinanceServiceImpl(
+                scopeClientToHousehold(client, householdId),
+                { localFallback: false },
+            );
+        },
+        async listHouseholds() {
+            // select("*") so a future `timezone` column is picked up as-is.
             const { data, error } = await client
                 .from("households")
-                .select("id");
+                .select("*")
+                .order("id");
             if (error) throw error;
-            return (data || []).map((row) => row.id as string);
+            return (data || []).map((row) => ({
+                id: row.id as string,
+                timezone:
+                    typeof row.timezone === "string" ? row.timezone : null,
+            }));
         },
-        async listMembers() {
+        async listMembers(householdId) {
             const { data, error } = await client
                 .from("household_members")
-                .select("id, display_name");
+                .select("id, display_name")
+                .eq("household_id", householdId);
             if (error) throw error;
             return (data || []) as { id: string; display_name?: string }[];
         },

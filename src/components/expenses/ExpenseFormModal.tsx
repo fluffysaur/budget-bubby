@@ -200,12 +200,7 @@ export function ExpenseFormModal({
         categoryManuallySelected: false,
         isGoalSpend: false,
         selectedGoalId: "",
-        payerId:
-            defaultPayerId ||
-            activeMember?.id ||
-            me?.id ||
-            members[0]?.id ||
-            "",
+        payerId: defaultPayerId || activeMember?.id || me?.id || "",
         isShared: resolvedDefaultShared,
         splitRatio: 0.5,
         date: getTodayDateString(),
@@ -336,7 +331,7 @@ export function ExpenseFormModal({
                 categoryId: expense.category_id || "",
                 partnerCategoryId: expense.partner_category_id || "",
                 categoryManuallySelected: true,
-                payerId: expense.payer_id || members[0]?.id || "",
+                payerId: expense.payer_id || me?.id || "",
                 isShared: expense.is_shared,
                 splitRatio: expense.is_shared
                     ? (expense.split_ratio ?? 0.5)
@@ -363,12 +358,7 @@ export function ExpenseFormModal({
                     "",
                 partnerCategoryId: "",
                 categoryManuallySelected: false,
-                payerId:
-                    defaultPayerId ||
-                    activeMember?.id ||
-                    me?.id ||
-                    members[0]?.id ||
-                    "",
+                payerId: defaultPayerId || activeMember?.id || me?.id || "",
                 isShared:
                     defaultShared ??
                     getStoredLastSplit() ??

@@ -387,6 +387,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                         }
                     }
 
+                    const proposalsBefore = collectedProposals.length;
                     for (const call of proposalCalls) {
                         if (!isProposalTool(call.name)) continue;
                         setMessages((prev) =>
@@ -401,11 +402,27 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                     : msg,
                             ),
                         );
-                        const proposal = await buildProposedAction(
-                            call.name,
-                            call.args,
-                            toolContext,
-                        );
+                        let proposal: ProposedAction;
+                        try {
+                            proposal = await buildProposedAction(
+                                call.name,
+                                call.args,
+                                toolContext,
+                            );
+                        } catch (err) {
+                            // Tell the model why, so it can explain instead
+                            toolResults.push({
+                                toolCallId: call.id,
+                                name: call.name,
+                                result: {
+                                    error:
+                                        err instanceof Error
+                                            ? err.message
+                                            : "Could not prepare this action",
+                                },
+                            });
+                            continue;
+                        }
                         collectedProposals.push(proposal);
                         toolResults.push({
                             toolCallId: call.id,
@@ -425,7 +442,10 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                     }
 
                     // If proposals were generated, show them right away for user confirmation
-                    if (proposalCalls.length > 0 && readCalls.length === 0) {
+                    if (
+                        collectedProposals.length > proposalsBefore &&
+                        readCalls.length === 0
+                    ) {
                         break;
                     }
 

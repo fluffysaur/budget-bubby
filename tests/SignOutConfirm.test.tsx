@@ -101,7 +101,8 @@ describe("SignOutConfirm", () => {
             signOut: mockSignOut,
             clearAuthError: vi.fn(),
             isDemoMode: false,
-            loggedInPartner: null,
+            signedInEmail: null,
+            memberIdentity: null,
         });
 
         render(<SignOutConfirm isOpen={true} onClose={handleClose} />);
