@@ -17,6 +17,7 @@ export * from "./PageSkeletons";
 export * from "./EmptyStateCard";
 export * from "./PullToRefresh";
 export * from "./Alert";
+export * from "./QueryErrorAlert";
 export * from "./ConfirmModal";
 export * from "./CategoryBadge";
 export * from "./BubbyConstruction";

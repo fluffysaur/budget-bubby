@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
+import { QueryErrorAlert } from "../ui/QueryErrorAlert";
 import { StatCard } from "../ui/StatCard";
 import { CreditCardListSkeleton } from "../ui/PageSkeletons";
 import { TruncatedText } from "../ui/TruncatedText";
@@ -154,11 +155,20 @@ export function CreditCardTrackerSection({
     const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth);
     useFollowCurrentMonth(selectedMonth, setSelectedMonth);
 
-    const { data: cardsData, isLoading: cardsLoading } = useCreditCardsQuery();
+    const {
+        data: cardsData,
+        isLoading: cardsLoading,
+        isError: cardsError,
+        error: cardsErrorObj,
+        refetch: refetchCards,
+    } = useCreditCardsQuery();
     const {
         data: statementsData,
         isLoading: statementsLoading,
         isPlaceholderData: statementsPlaceholder,
+        isError: statementsError,
+        error: statementsErrorObj,
+        refetch: refetchStatements,
     } = useCreditCardStatementsQuery();
 
     const cards = useMemo(() => cardsData || [], [cardsData]);
@@ -360,14 +370,10 @@ export function CreditCardTrackerSection({
     };
 
     const handleDeleteCard = async (cardId: string) => {
-        try {
-            await financeService.deleteCreditCard(cardId);
-            feedback.routine("delete");
-            setCardToDelete(null);
-            invalidateCreditCards();
-        } catch (err) {
-            console.error("Failed to delete credit card:", err);
-        }
+        await financeService.deleteCreditCard(cardId);
+        feedback.routine("delete");
+        setCardToDelete(null);
+        invalidateCreditCards();
     };
 
     return (
@@ -443,6 +449,16 @@ export function CreditCardTrackerSection({
                 </div>
             </div>
 
+            {(cardsError || statementsError) && (
+                <QueryErrorAlert
+                    error={cardsErrorObj ?? statementsErrorObj}
+                    onRetry={() => {
+                        if (cardsError) void refetchCards();
+                        if (statementsError) void refetchStatements();
+                    }}
+                />
+            )}
+
             {toggleError && (
                 <Alert variant="danger" onClose={() => setToggleError(null)}>
                     {toggleError}
@@ -450,13 +466,14 @@ export function CreditCardTrackerSection({
             )}
 
             {/* 3 Summary Cards & Card Listing (dimmed during month switch) */}
-            <div
-                className={
-                    statementsPlaceholder
-                        ? "space-y-4 opacity-60 transition-opacity"
-                        : "space-y-4 transition-opacity"
-                }
-            >
+            {(!cardsError || Boolean(cardsData)) && (
+                <div
+                    className={
+                        statementsPlaceholder
+                            ? "space-y-4 opacity-60 transition-opacity"
+                            : "space-y-4 transition-opacity"
+                    }
+                >
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <StatCard
                         title="Due"
@@ -926,6 +943,7 @@ export function CreditCardTrackerSection({
                     </div>
                 )}
             </div>
+            )}
 
             {/* Add / Edit Card Modal */}
             <AddEditCreditCardModal

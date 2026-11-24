@@ -5,7 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mockFinanceService } from "../src/services/mockFinanceService";
 import {
+    isAuthorizedBearer,
     runSendReminders,
+    timingSafeEqual,
     toSingaporeWallClock,
     type SendRemindersDeps,
     type PushTarget,
@@ -310,5 +312,31 @@ describe("runSendReminders", () => {
             ([t]) => t.endpoint === gone.endpoint,
         );
         expect(goneCalls).toHaveLength(1);
+    });
+});
+
+describe("timingSafeEqual & isAuthorizedBearer", () => {
+    it("compares equal and unequal strings accurately regardless of length", async () => {
+        expect(await timingSafeEqual("secret-123", "secret-123")).toBe(true);
+        expect(await timingSafeEqual("secret-123", "secret-124")).toBe(false);
+        expect(await timingSafeEqual("secret-123", "secret")).toBe(false);
+        expect(await timingSafeEqual("", "")).toBe(true);
+    });
+
+    it("authorizes matching Bearer token and rejects missing/wrong/empty tokens", async () => {
+        expect(
+            await isAuthorizedBearer("Bearer my-cron-secret", "my-cron-secret"),
+        ).toBe(true);
+        expect(
+            await isAuthorizedBearer("Bearer wrong-secret", "my-cron-secret"),
+        ).toBe(false);
+        expect(
+            await isAuthorizedBearer("Bearer my-cron-secre", "my-cron-secret"),
+        ).toBe(false);
+        expect(await isAuthorizedBearer(null, "my-cron-secret")).toBe(false);
+        expect(await isAuthorizedBearer("my-cron-secret", "my-cron-secret")).toBe(
+            false,
+        );
+        expect(await isAuthorizedBearer("Bearer ", "")).toBe(false);
     });
 });

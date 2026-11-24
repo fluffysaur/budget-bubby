@@ -36,7 +36,6 @@ import type {
     DailyCheckin,
     CheckinType,
     NotificationPreferences,
-    MemberAiSettings,
     UpdateNotificationPreferencesInput,
     NotificationLogEntry,
     NotificationLogRef,
@@ -147,9 +146,6 @@ export interface FinanceService extends InboxService {
         date: string,
         type: CheckinType,
     ): Promise<DailyCheckin>;
-    // AI settings (owner-only, synced across the member's devices)
-    getAiSettings(): Promise<MemberAiSettings>;
-    saveAiSettings(settings: MemberAiSettings): Promise<void>;
     // Notification Preferences
     getNotificationPreferences(
         memberId: string,
@@ -492,9 +488,6 @@ export const financeService: FinanceService = {
         invalidateFinanceCache();
         return res;
     },
-    // AI settings are not cached by finance queries, so no invalidation.
-    getAiSettings: () => getActiveService().getAiSettings(),
-    saveAiSettings: (settings) => getActiveService().saveAiSettings(settings),
     // Notification Preferences
     getNotificationPreferences: (memberId) =>
         getActiveService().getNotificationPreferences(memberId),

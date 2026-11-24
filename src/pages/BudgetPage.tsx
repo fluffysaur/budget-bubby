@@ -22,6 +22,7 @@ import {
     BudgetContentSkeleton,
     MeterBar,
     Badge,
+    QueryErrorAlert,
 } from "../components/ui";
 import { CollapsibleSection } from "../components/ui/CollapsibleSection";
 import {
@@ -114,6 +115,9 @@ export function BudgetPage({
         data: budgetDetailData,
         isLoading: budgetLoading,
         isPlaceholderData: budgetPlaceholder,
+        isError: budgetError,
+        error: budgetErrorObj,
+        refetch: refetchBudget,
     } = useBudgetDetailQuery(
         selectedMonth,
         perspective,
@@ -308,178 +312,197 @@ export function BudgetPage({
                 </div>
             )}
 
-            {/* Category Limit Warning Banner (Guardrails) */}
-            <CategoryLimitWarningBanner
-                categories={budgetDetail?.categories || []}
-            />
-
-            {/* High-Level Budget Hero Card */}
-            <div
-                className={
-                    budgetPlaceholder
-                        ? "space-y-5 opacity-60 transition-opacity"
-                        : "space-y-5 transition-opacity"
-                }
-            >
-                <StatCard
-                    title={spendableRemaining < 0 ? "Over" : "Left"}
-                    loading={isLoading}
-                    value={
-                        <CurrencyText
-                            formatted={formatSGD(Math.abs(spendableRemaining), {
-                                showCents: false,
-                            })}
-                        />
-                    }
-                    badge={
-                        spendableRemaining < 0 ? (
-                            <Badge variant="over">Over</Badge>
-                        ) : (
-                            <Badge variant="ok">On Track</Badge>
-                        )
-                    }
-                    tooltip={`Spendable budget of ${formatSGD(spendableAllocated)} minus ${formatSGD(spendableSpent)} spent.`}
-                    icon={<Wallet className="h-4 w-4" />}
-                    iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-                    footer={
-                        spendableAllocated > 0 ? (
-                            <MeterBar
-                                value={spendableSpent}
-                                max={spendableAllocated}
-                                size="md"
-                                aria-label="Monthly budget spent"
-                            />
-                        ) : undefined
-                    }
+            {/* Budget Query Error Banner */}
+            {budgetError && (
+                <QueryErrorAlert
+                    error={budgetErrorObj}
+                    onRetry={() => void refetchBudget()}
                 />
+            )}
 
-                {/* Loading Indicator */}
-                {isLoading ? (
-                    <BudgetContentSkeleton />
-                ) : (
-                    <>
-                        {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
-                        <div className="space-y-3">
-                            <CategoriesHeader
-                                remaining={spendableRemaining}
-                                allocated={spendableAllocated}
-                                spent={spendableSpent}
-                            />
+            {(!budgetError || Boolean(budgetDetailData)) && (
+                <>
+                    {/* Category Limit Warning Banner (Guardrails) */}
+                    <CategoryLimitWarningBanner
+                        categories={budgetDetail?.categories || []}
+                    />
 
-                            {categories.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center">
-                                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-                                        <Tag className="h-5 w-5" />
-                                    </div>
-                                    <h3 className="mt-2.5 text-sm font-bold text-slate-800 dark:text-slate-200">
-                                        No Categories
-                                    </h3>
-                                    <p className="mt-1 text-xs text-slate-500 dark:text-(--text-faint)">
-                                        Add categories or restore presets to
-                                        start tracking.
-                                    </p>
-                                    <div className="mt-3 flex items-center justify-center gap-2.5">
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            onClick={() => handleOpenEditor()}
-                                        >
-                                            Add Category
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                                await financeService.seedDefaultCategories();
-                                                await handleCategoriesChanged();
-                                            }}
-                                        >
-                                            Presets
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <CategoryProgressList
-                                    categories={
-                                        spendableCats.length > 0
-                                            ? spendableCats
-                                            : budgetDetail?.categories || []
-                                    }
+                    {/* High-Level Budget Hero Card */}
+                    <div
+                        className={
+                            budgetPlaceholder
+                                ? "space-y-5 opacity-60 transition-opacity"
+                                : "space-y-5 transition-opacity"
+                        }
+                    >
+                        <StatCard
+                            title={spendableRemaining < 0 ? "Over" : "Left"}
+                            loading={isLoading}
+                            value={
+                                <CurrencyText
+                                    formatted={formatSGD(
+                                        Math.abs(spendableRemaining),
+                                        {
+                                            showCents: false,
+                                        },
+                                    )}
                                 />
-                            )}
-
-                            <UncategorizedRecurringRow
-                                amount={
-                                    budgetDetail?.uncategorizedRecurringSpent ??
-                                    0
-                                }
-                                items={
-                                    budgetDetail?.uncategorizedRecurringItems
-                                }
-                            />
-                        </div>
-
-                        {/* Cumulative Spending Surplus / Deficit Card */}
-                        <CumulativeSurplusCard
-                            selectedMonth={selectedMonth}
-                            memberId={
-                                perspective !== "household" && activeMember
-                                    ? activeMember.id
-                                    : undefined
                             }
-                            perspective={perspective}
+                            badge={
+                                spendableRemaining < 0 ? (
+                                    <Badge variant="over">Over</Badge>
+                                ) : (
+                                    <Badge variant="ok">On Track</Badge>
+                                )
+                            }
+                            tooltip={`Spendable budget of ${formatSGD(spendableAllocated)} minus ${formatSGD(spendableSpent)} spent.`}
+                            icon={<Wallet className="h-4 w-4" />}
+                            iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                            footer={
+                                spendableAllocated > 0 ? (
+                                    <MeterBar
+                                        value={spendableSpent}
+                                        max={spendableAllocated}
+                                        size="md"
+                                        aria-label="Monthly budget spent"
+                                    />
+                                ) : undefined
+                            }
                         />
 
-                        {savingsCats.length > 0 && (
-                            <SavingsBreakdownCard
-                                baseSavings={baseSavings}
-                                spendableAllocated={spendableAllocated}
-                                spendableSpent={spendableSpent}
-                            />
-                        )}
+                        {/* Loading Indicator */}
+                        {isLoading ? (
+                            <BudgetContentSkeleton />
+                        ) : (
+                            <>
+                                {/* Section: Spendable Category Spending Meters (Food, Lifestyle, Transport, Buffer) */}
+                                <div className="space-y-3">
+                                    <CategoriesHeader
+                                        remaining={spendableRemaining}
+                                        allocated={spendableAllocated}
+                                        spent={spendableSpent}
+                                    />
 
-                        {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
-                        {allocationCats.length > 0 && (
-                            <CollapsibleSection
-                                title="Allocations"
-                                subtitle={`${formatSGD(
-                                    allocationCats.reduce(
-                                        (s, c) => s + c.allocated_amount,
-                                        0,
-                                    ),
-                                    { showCents: false },
-                                )}/mo`}
-                                icon={
-                                    <PiggyBank className="h-5 w-5 text-purple-700 dark:text-purple-300" />
-                                }
-                                defaultOpen={false}
-                            >
-                                <CategoryProgressList
-                                    categories={allocationCats}
-                                    compact
+                                    {categories.length === 0 ? (
+                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center">
+                                            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                                                <Tag className="h-5 w-5" />
+                                            </div>
+                                            <h3 className="mt-2.5 text-sm font-bold text-slate-800 dark:text-slate-200">
+                                                No Categories
+                                            </h3>
+                                            <p className="mt-1 text-xs text-slate-500 dark:text-(--text-faint)">
+                                                Add categories or restore
+                                                presets to start tracking.
+                                            </p>
+                                            <div className="mt-3 flex items-center justify-center gap-2.5">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        handleOpenEditor()
+                                                    }
+                                                >
+                                                    Add Category
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={async () => {
+                                                        await financeService.seedDefaultCategories();
+                                                        await handleCategoriesChanged();
+                                                    }}
+                                                >
+                                                    Presets
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <CategoryProgressList
+                                            categories={
+                                                spendableCats.length > 0
+                                                    ? spendableCats
+                                                    : budgetDetail?.categories ||
+                                                      []
+                                            }
+                                        />
+                                    )}
+
+                                    <UncategorizedRecurringRow
+                                        amount={
+                                            budgetDetail?.uncategorizedRecurringSpent ??
+                                            0
+                                        }
+                                        items={
+                                            budgetDetail?.uncategorizedRecurringItems
+                                        }
+                                    />
+                                </div>
+
+                                {/* Cumulative Spending Surplus / Deficit Card */}
+                                <CumulativeSurplusCard
+                                    selectedMonth={selectedMonth}
+                                    memberId={
+                                        perspective !== "household" &&
+                                        activeMember
+                                            ? activeMember.id
+                                            : undefined
+                                    }
+                                    perspective={perspective}
                                 />
-                            </CollapsibleSection>
-                        )}
 
-                        {/* Collapsible: Budget Waterfall Breakdown */}
-                        <CollapsibleSection
-                            title="Income Flow"
-                            icon={
-                                <DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-                            }
-                            defaultOpen={true}
-                        >
-                            <BudgetWaterfall
-                                budget={budgetDetail?.budget}
-                                categories={budgetDetail?.categories}
-                                bonusSummary={budgetDetail?.bonusSummary}
-                                onEditProfile={() => handleOpenEditor()}
-                                onViewBonus={handleViewBonus}
-                            />
-                        </CollapsibleSection>
-                    </>
-                )}
-            </div>
+                                {savingsCats.length > 0 && (
+                                    <SavingsBreakdownCard
+                                        baseSavings={baseSavings}
+                                        spendableAllocated={spendableAllocated}
+                                        spendableSpent={spendableSpent}
+                                    />
+                                )}
+
+                                {/* Collapsible: Wealth & Fixed Allocations (Savings, Investments, Tithing) */}
+                                {allocationCats.length > 0 && (
+                                    <CollapsibleSection
+                                        title="Allocations"
+                                        subtitle={`${formatSGD(
+                                            allocationCats.reduce(
+                                                (s, c) => s + c.allocated_amount,
+                                                0,
+                                            ),
+                                            { showCents: false },
+                                        )}/mo`}
+                                        icon={
+                                            <PiggyBank className="h-5 w-5 text-purple-700 dark:text-purple-300" />
+                                        }
+                                        defaultOpen={false}
+                                    >
+                                        <CategoryProgressList
+                                            categories={allocationCats}
+                                            compact
+                                        />
+                                    </CollapsibleSection>
+                                )}
+
+                                {/* Collapsible: Budget Waterfall Breakdown */}
+                                <CollapsibleSection
+                                    title="Income Flow"
+                                    icon={
+                                        <DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                                    }
+                                    defaultOpen={true}
+                                >
+                                    <BudgetWaterfall
+                                        budget={budgetDetail?.budget}
+                                        categories={budgetDetail?.categories}
+                                        bonusSummary={budgetDetail?.bonusSummary}
+                                        onEditProfile={() => handleOpenEditor()}
+                                        onViewBonus={handleViewBonus}
+                                    />
+                                </CollapsibleSection>
+                            </>
+                        )}
+                    </div>
+                </>
+            )}
 
             {/* Unified Budget & Categories Editor Modal */}
             {activeProfile && (

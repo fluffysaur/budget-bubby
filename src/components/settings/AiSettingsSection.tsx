@@ -31,14 +31,12 @@ import {
     type AiProviderId,
     type AiReasoningEffort,
 } from "../../services/ai/providers";
-import { pushAiSettings } from "../../services/ai/aiSettingsSync";
 import { fetchOpenRouterFreeModels } from "../../services/ai/openrouterModels";
 import {
     consumePendingOpenRouterFeedback,
     hasPendingOpenRouterFeedback,
     startOpenRouterOAuth,
 } from "../../services/ai/openrouterAuth";
-import { financeService } from "../../services/financeService";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
@@ -152,8 +150,6 @@ export function AiSettingsSection() {
             ? liveOpenRouterModels
             : providerMeta.curatedModels;
     const isConfigured = savedKey.length > 0;
-    const isSyncedProvider =
-        provider === "gemini" || provider === "openrouter";
     const isDirty = apiKeyDraft.trim() !== savedKey;
     const showManualKeyInput =
         provider !== "openrouter" || showManualOpenRouterKey;
@@ -170,14 +166,7 @@ export function AiSettingsSection() {
         setShowKey(false);
         setShowManualOpenRouterKey(false);
         setFeedback(null);
-        void pushAiSettings(financeService);
         notifyAiConfigChanged();
-    };
-
-    const syncProviderSettings = (targetProvider: AiProviderId) => {
-        if (targetProvider === "gemini" || targetProvider === "openrouter") {
-            void pushAiSettings(financeService);
-        }
     };
 
     const handleSave = () => {
@@ -188,15 +177,12 @@ export function AiSettingsSection() {
         setSavedKey(trimmedKey);
         setApiKeyDraft(trimmedKey);
         setModel(effectiveModel);
-        syncProviderSettings(provider);
         notifyAiConfigChanged();
         delightFeedback.routine("save");
         setFeedback({
             variant: trimmedKey ? "success" : "info",
             message: trimmedKey
-                ? isSyncedProvider
-                    ? `${providerMeta.label} API key saved and synced.`
-                    : `${providerMeta.label} API key saved locally.`
+                ? `${providerMeta.label} API key saved locally.`
                 : `${providerMeta.label} API key removed.`,
         });
     };
@@ -205,14 +191,13 @@ export function AiSettingsSection() {
         clearProviderApiKey(provider);
         setSavedKey("");
         setApiKeyDraft("");
-        syncProviderSettings(provider);
         notifyAiConfigChanged();
         delightFeedback.routine("delete");
         setFeedback({
             variant: "info",
             message:
                 provider === "openrouter"
-                    ? "OpenRouter disconnected from your account."
+                    ? "OpenRouter disconnected from this device."
                     : `${providerMeta.label} API key cleared from this device.`,
         });
     };
@@ -243,7 +228,6 @@ export function AiSettingsSection() {
         setUseCustomModel(false);
         setModel(selectedValue);
         setProviderModel(provider, selectedValue);
-        syncProviderSettings(provider);
         notifyAiConfigChanged();
     };
 
@@ -306,9 +290,7 @@ export function AiSettingsSection() {
             title="Bubby AI"
             subtitle={
                 isConfigured
-                    ? `${providerMeta.label} · ${
-                          isSyncedProvider ? "Synced" : "Stored locally"
-                      }`
+                    ? `${providerMeta.label} · Stored locally`
                     : "Bring your own key"
             }
             badge={isConfigured ? providerMeta.label : "Not Set"}
@@ -319,8 +301,7 @@ export function AiSettingsSection() {
             <div className="space-y-4">
                 <p className="text-xs text-(--text-muted) leading-relaxed">
                     Connect OpenRouter with one click or bring your own API key.
-                    Gemini and OpenRouter sync to your private account across
-                    devices. Other providers stay on this device.
+                    Keys stay on this device only.
                 </p>
 
                 <Select
@@ -351,7 +332,7 @@ export function AiSettingsSection() {
                                         strokeWidth={2.5}
                                     />
                                     <span className="text-xs font-bold text-(--text-ink) truncate">
-                                        OpenRouter connected · Synced
+                                        OpenRouter connected · Stored locally
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
@@ -479,7 +460,6 @@ export function AiSettingsSection() {
                         onChange={(e) =>
                             handleCustomModelChange(e.target.value)
                         }
-                        onBlur={() => syncProviderSettings(provider)}
                         placeholder={providerMeta.defaultModel}
                         autoComplete="off"
                         spellCheck={false}

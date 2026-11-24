@@ -21,6 +21,7 @@ import {
     SkeletonStatCard,
     StatCard,
     TruncatedText,
+    QueryErrorAlert,
 } from "../ui";
 import { BonusAllocationCollapsible } from "../budget/BonusAllocationCollapsible";
 import { BonusRow } from "./BonusRow";
@@ -56,7 +57,13 @@ export interface BonusLogPanelProps {
 export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
     const mask = useMoneyMask();
     const { members, activeMember } = useHousehold();
-    const { data: bonusData, isLoading } = useBonusEventsQuery();
+    const {
+        data: bonusData,
+        isLoading,
+        isError: bonusError,
+        error: bonusErrorObj,
+        refetch: refetchBonus,
+    } = useBonusEventsQuery();
     const { data: profilesData } = useBaseProfilesQuery();
 
     const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
@@ -132,6 +139,17 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
         );
     }
 
+    if (bonusError && !bonusData) {
+        return (
+            <div className={`space-y-4 ${className}`}>
+                <QueryErrorAlert
+                    error={bonusErrorObj}
+                    onRetry={() => void refetchBonus()}
+                />
+            </div>
+        );
+    }
+
     if (!available) {
         return (
             <div className={`space-y-4 ${className}`}>
@@ -150,6 +168,12 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
 
     return (
         <div className={`space-y-4 ${className}`}>
+            {bonusError && (
+                <QueryErrorAlert
+                    error={bonusErrorObj}
+                    onRetry={() => void refetchBonus()}
+                />
+            )}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-black font-display tracking-tight text-(--text-ink)">
                     Bonuses

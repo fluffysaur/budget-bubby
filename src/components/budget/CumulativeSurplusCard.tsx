@@ -30,6 +30,7 @@ import { financeService } from "../../services/financeService";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Sparkline } from "../ui/Sparkline";
 import { Skeleton, SkeletonGroup } from "../ui/Skeleton";
+import { Alert } from "../ui/Alert";
 import type {
     CumulativeSurplusSummary,
     Expense,
@@ -62,6 +63,7 @@ export function CumulativeSurplusCard({
 }: CumulativeSurplusCardProps) {
     const mask = useMoneyMask();
     const [loading, setLoading] = useState<boolean>(!propSummary);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [fetchedExpenses, setFetchedExpenses] = useState<Expense[]>([]);
     const [fetchedCategories, setFetchedCategories] = useState<Category[]>([]);
     const [derivedMonthlyCap, setDerivedMonthlyCap] = useState<number>(1500);
@@ -75,6 +77,7 @@ export function CumulativeSurplusCard({
     useEffect(() => {
         if (propSummary) {
             setLoading(false);
+            setLoadError(null);
             return;
         }
 
@@ -82,16 +85,15 @@ export function CumulativeSurplusCard({
         async function loadData() {
             try {
                 setLoading(true);
+                setLoadError(null);
                 const [expList, catList, budgetDetail] = await Promise.all([
                     propExpenses
                         ? Promise.resolve(propExpenses)
-                        : financeService.getExpenses().catch(() => []),
+                        : financeService.getExpenses(),
                     propCategories
                         ? Promise.resolve(propCategories)
-                        : financeService.getCategories().catch(() => []),
-                    financeService
-                        .getMonthlyBudget(selectedMonth, memberId)
-                        .catch(() => null),
+                        : financeService.getCategories(),
+                    financeService.getMonthlyBudget(selectedMonth, memberId),
                 ]);
 
                 if (!isMounted) return;
@@ -120,9 +122,11 @@ export function CumulativeSurplusCard({
                     );
                 }
             } catch (err) {
-                console.error(
-                    "Failed to load data for CumulativeSurplusCard:",
-                    err,
+                if (!isMounted) return;
+                setLoadError(
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not load surplus history.",
                 );
             } finally {
                 if (isMounted) setLoading(false);
@@ -189,6 +193,19 @@ export function CumulativeSurplusCard({
                 </div>
                 <Skeleton className="mt-4 h-20 w-full rounded-xl" />
             </SkeletonGroup>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div
+                data-testid="cumulative-surplus-card"
+                className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-4 sm:p-5 shadow-cute ${className}`}
+            >
+                <Alert variant="danger" title="Couldn't load surplus">
+                    {loadError}
+                </Alert>
+            </div>
         );
     }
 

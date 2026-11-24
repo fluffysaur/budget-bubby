@@ -58,7 +58,7 @@ describe("AiSettingsSection", () => {
         expect(aiProviders.getProviderApiKey("gemini")).toBe("AIza-demo-key");
         expect(
             screen.getByTestId("ai-settings-feedback"),
-        ).toHaveTextContent(/saved and synced/i);
+        ).toHaveTextContent(/saved locally/i);
 
         fireEvent.click(screen.getByTestId("test-ai-connection-btn"));
         await waitFor(() => {
@@ -141,7 +141,7 @@ describe("AiSettingsSection", () => {
         openrouterAuth.setPendingOpenRouterFeedback({
             target: "settings",
             variant: "success",
-            message: "OpenRouter connected and synced.",
+            message: "OpenRouter connected on this device.",
         });
 
         const oauthSpy = vi
@@ -152,11 +152,11 @@ describe("AiSettingsSection", () => {
 
         // Section auto-expanded due to pending OAuth feedback
         expect(screen.getByTestId("ai-settings-feedback")).toHaveTextContent(
-            "OpenRouter connected and synced.",
+            "OpenRouter connected on this device.",
         );
         expect(
             screen.getByTestId("openrouter-connected-status"),
-        ).toBeInTheDocument();
+        ).toHaveTextContent(/OpenRouter connected · Stored locally/);
 
         fireEvent.click(screen.getByTestId("reconnect-openrouter-btn"));
         expect(oauthSpy).toHaveBeenCalledWith("settings", "/");
