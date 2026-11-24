@@ -25,7 +25,7 @@ import {
     useMerchantRulesQuery,
     useConfirmInboxItemMutation,
     useResolveInboxItemMutation,
-} from "../hooks/useInboxQueries";
+} from "../hooks/finance/inbox";
 import {
     guessInboxCategory,
     findLikelyDuplicate,

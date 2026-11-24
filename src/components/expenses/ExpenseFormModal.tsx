@@ -72,7 +72,7 @@ import {
 import {
     useConfirmInboxItemMutation,
     useInboxQuery,
-} from "../../hooks/useInboxQueries";
+} from "../../hooks/finance/inbox";
 import {
     buildExpenseInputFromDraft,
     storeRecentTags,

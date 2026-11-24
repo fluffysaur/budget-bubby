@@ -5,11 +5,11 @@
 
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { financeService } from "../services/financeService";
-import { afterInboxConfirmed } from "../lib/inbox/inboxConfirm";
-import { invalidateDomain, keys } from "../lib/queryKeys";
-import { useSafeQueryClient } from "./useFinanceQueries";
-import type { InboxEventMap } from "../lib/inbox/inboxEvents";
+import { financeService } from "../../services/financeService";
+import { afterInboxConfirmed } from "../../lib/inbox/inboxConfirm";
+import { invalidateDomain, keys } from "../../lib/queryKeys";
+import { useSafeQueryClient } from "./shared";
+import type { InboxEventMap } from "../../lib/inbox/inboxEvents";
 import type {
     CaptureTokensResult,
     CreateExpenseInput,
@@ -17,7 +17,7 @@ import type {
     InboxItemsResult,
     InboxSummary,
     MerchantRule,
-} from "../types/finance";
+} from "../../types/finance";
 
 const INBOX_STALE_MS = 30_000;
 

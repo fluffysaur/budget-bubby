@@ -12,7 +12,7 @@ import {
     isDemoModeActive,
 } from "../../services/financeService";
 import { isSupabaseConfigured } from "../../services/supabaseClient";
-import { useCaptureTokensQuery } from "../../hooks/useInboxQueries";
+import { useCaptureTokensQuery } from "../../hooks/finance/inbox";
 import { keys } from "../../lib/queryKeys";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import {

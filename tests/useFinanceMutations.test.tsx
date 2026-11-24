@@ -30,7 +30,7 @@ import {
 import {
     useConfirmInboxItemMutation,
     useResolveInboxItemMutation,
-} from "../src/hooks/useInboxQueries";
+} from "../src/hooks/finance/inbox";
 import { financeService } from "../src/services/financeService";
 import type {
     SavingsGoal,

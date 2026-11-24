@@ -7,7 +7,7 @@ import { Inbox } from "lucide-react";
 import { useInRouterContext, useNavigate } from "react-router-dom";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
-import { useInboxSummary } from "../../hooks/useInboxQueries";
+import { useInboxSummary } from "../../hooks/finance/inbox";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";

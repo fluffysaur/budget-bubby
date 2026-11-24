@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useInboxSummary } from "./useInboxQueries";
+import { useInboxSummary } from "./finance/inbox";
 import { noteInboxCount } from "../lib/inbox/inboxEvents";
 
 type BadgeNavigator = Navigator & {

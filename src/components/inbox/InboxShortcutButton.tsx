@@ -2,7 +2,7 @@
 
 import { Inbox } from "lucide-react";
 import { useInRouterContext, useNavigate } from "react-router-dom";
-import { useInboxSummary } from "../../hooks/useInboxQueries";
+import { useInboxSummary } from "../../hooks/finance/inbox";
 import { Button } from "../ui/Button";
 
 function InboxShortcutButtonInner() {
