@@ -16,6 +16,7 @@ import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 import {
     createSupabaseSendDeps,
+    isAuthorizedBearer,
     runSendReminders,
 } from "../_shared/dist/send-reminders.js";
 
@@ -29,7 +30,13 @@ Deno.serve(async (req: Request) => {
     if (req.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });
     }
-    if (req.headers.get("Authorization") !== `Bearer ${env("CRON_SECRET")}`) {
+    const cronSecret = env("CRON_SECRET");
+    if (
+        !(await isAuthorizedBearer(
+            req.headers.get("Authorization"),
+            cronSecret,
+        ))
+    ) {
         return new Response("Unauthorized", { status: 401 });
     }
 

@@ -69,6 +69,31 @@ export interface SendRemindersResult {
     members: MemberRunResult[];
 }
 
+/** Constant-time string equality via SHA-256 + fixed-length XOR. */
+export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
+    const encoder = new TextEncoder();
+    const [hashA, hashB] = await Promise.all([
+        crypto.subtle.digest("SHA-256", encoder.encode(a)),
+        crypto.subtle.digest("SHA-256", encoder.encode(b)),
+    ]);
+    const bytesA = new Uint8Array(hashA);
+    const bytesB = new Uint8Array(hashB);
+    let diff = 0;
+    for (let i = 0; i < bytesA.length; i += 1) {
+        diff |= bytesA[i] ^ bytesB[i];
+    }
+    return diff === 0;
+}
+
+/** Verifies `Authorization: Bearer <secret>` in constant time. */
+export async function isAuthorizedBearer(
+    authorization: string | null | undefined,
+    secret: string,
+): Promise<boolean> {
+    if (!authorization || !secret) return false;
+    return timingSafeEqual(authorization, `Bearer ${secret}`);
+}
+
 /** Date whose local fields hold Singapore wall-clock time. */
 export function toSingaporeWallClock(date: Date): Date {
     return new Date(
