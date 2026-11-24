@@ -59,7 +59,7 @@ import {
 import { formatTime12h } from "../../lib/dateUtils";
 import { playChaChingSound } from "../../lib/soundEffects";
 import { haptics } from "../../lib/haptics";
-import { getDefaultNotificationPreferences } from "../../data/mockSeedData";
+import { getDefaultNotificationPreferences } from "../../lib/notificationDefaults";
 import type {
     NotificationPreferences,
     UpdateNotificationPreferencesInput,

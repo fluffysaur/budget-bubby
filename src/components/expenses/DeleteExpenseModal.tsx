@@ -24,7 +24,7 @@ import { isMockModeActive } from "../../services/financeService";
 import { formatForeignAmount } from "../../lib/currencyConverter";
 import { formatDisplayDate } from "../../lib/dateUtils";
 import { feedback } from "../../lib/delight/feedback";
-import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { useDeleteExpenseMutation } from "../../hooks/useFinanceQueries";
 import type { Expense, Category, HouseholdMember } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
@@ -49,6 +49,8 @@ export function DeleteExpenseModal({
     deleteMutation: propDeleteMutation,
 }: DeleteExpenseModalProps) {
     const isMock = isMockModeActive();
+    const { categories: mockCategories, members: mockMembers } =
+        useLazyMockDefaults(isMock && (!propCategories || !propMembers));
     const categories = propCategories ?? (isMock ? mockCategories : []);
     const members = propMembers ?? (isMock ? mockMembers : []);
     const defaultDeleteMutation = useDeleteExpenseMutation();

@@ -21,6 +21,35 @@ function resolveGitSha(): string {
     }
 }
 
+function getNodeModulePackage(id: string): string | null {
+    const normalized = id.replaceAll("\\", "/");
+    const marker = "/node_modules/";
+    const lastIdx = normalized.lastIndexOf(marker);
+    if (lastIdx === -1) return null;
+    const rest = normalized.slice(lastIdx + marker.length);
+    if (rest.startsWith("@")) {
+        const parts = rest.split("/");
+        return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : null;
+    }
+    return rest.split("/")[0] || null;
+}
+
+const REACT_VENDOR_PACKAGES = new Set([
+    "react",
+    "react-dom",
+    "scheduler",
+    "react-router",
+    "react-router-dom",
+]);
+
+const MOTION_VENDOR_PACKAGES = new Set([
+    "motion",
+    "motion-dom",
+    "motion-utils",
+]);
+
+const UI_VENDOR_PACKAGES = new Set(["tailwind-merge", "clsx"]);
+
 // https://vite.dev/config/
 export default defineConfig({
     define: {
@@ -112,6 +141,35 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+        },
+    },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    const pkgName = getNodeModulePackage(id);
+                    if (!pkgName) return undefined;
+                    if (REACT_VENDOR_PACKAGES.has(pkgName)) {
+                        return "vendor-react";
+                    }
+                    if (pkgName.startsWith("@supabase/")) {
+                        return "vendor-supabase";
+                    }
+                    if (pkgName.startsWith("@tanstack/")) {
+                        return "vendor-query";
+                    }
+                    if (MOTION_VENDOR_PACKAGES.has(pkgName)) {
+                        return "vendor-motion";
+                    }
+                    if (
+                        pkgName.startsWith("@floating-ui/") ||
+                        UI_VENDOR_PACKAGES.has(pkgName)
+                    ) {
+                        return "vendor-ui";
+                    }
+                    return undefined;
+                },
+            },
         },
     },
     server: {

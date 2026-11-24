@@ -34,7 +34,7 @@ import {
 import { haptics } from "../../lib/haptics";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { financeService } from "../../services/financeService";
-import { getDefaultNotificationPreferences } from "../../data/mockSeedData";
+import { getDefaultNotificationPreferences } from "../../lib/notificationDefaults";
 import type {
     Expense,
     MonthlyBudgetCategoryDetail,

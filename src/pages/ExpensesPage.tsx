@@ -55,12 +55,7 @@ import {
     calculateSpendablePacing,
     detectUnspentMonthEndSurplus,
 } from "../lib/financialFormulas";
-import {
-    mockCategories,
-    mockMembers,
-    mockBaseProfiles,
-    mockBaseAllocations,
-} from "../data/mockSeedData";
+import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { ExpenseFormModal } from "../components/expenses/ExpenseFormModal";
 import { BulkAddExpenseModal } from "../components/expenses/BulkAddExpenseModal";
 import { ExpenseListTable } from "../components/expenses/ExpenseListTable";
@@ -97,6 +92,13 @@ export function ExpensesPage({
     const { isPending: isSettling, runWithLock: runSettleLock } =
         useSubmitLock();
 
+    const {
+        members: mockMembers,
+        categories: mockCategories,
+        baseProfiles: mockBaseProfiles,
+        baseAllocations: mockBaseAllocations,
+    } = useLazyMockDefaults(isMockMode);
+
     const members = useMemo(
         () =>
             ctxMembers && ctxMembers.length > 0
@@ -104,7 +106,7 @@ export function ExpensesPage({
                 : isMockMode
                   ? mockMembers
                   : [],
-        [ctxMembers, isMockMode],
+        [ctxMembers, isMockMode, mockMembers],
     );
 
     // Filter State
@@ -166,7 +168,7 @@ export function ExpensesPage({
                 : isMockMode
                   ? mockCategories
                   : [],
-        [categoriesData, isMockMode],
+        [categoriesData, isMockMode, mockCategories],
     );
     const goals = useMemo(() => goalsData || [], [goalsData]);
     const baseProfiles = useMemo(
@@ -176,7 +178,7 @@ export function ExpensesPage({
                 : isMockMode
                   ? mockBaseProfiles
                   : [],
-        [baseProfilesData, isMockMode],
+        [baseProfilesData, isMockMode, mockBaseProfiles],
     );
     const baseAllocations = useMemo(
         () =>
@@ -185,7 +187,7 @@ export function ExpensesPage({
                 : isMockMode
                   ? mockBaseAllocations
                   : [],
-        [baseAllocationsData, isMockMode],
+        [baseAllocationsData, isMockMode, mockBaseAllocations],
     );
     const isMembersPending = !isMockMode && members.length === 0;
     const isLoading = isMembersPending || (expensesPending && !expensesData);

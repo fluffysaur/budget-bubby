@@ -20,7 +20,7 @@ import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFxRates } from "../../hooks/useFxRates";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import {
     MAX_BULK_ROWS,
     parseAmount,
@@ -68,6 +68,13 @@ export function BulkAddExpenseModal({
     const { loggedInPartner, user } = useAuth();
     const isMockMode = household?.isMockMode ?? isMockModeActive();
     const ctxMembers = household?.members;
+    const needsMockFallback =
+        isMockMode &&
+        (!(propCategories && propCategories.length > 0) ||
+            (!(propMembers && propMembers.length > 0) &&
+                !(ctxMembers && ctxMembers.length > 0)));
+    const { categories: mockCategories, members: mockMembers } =
+        useLazyMockDefaults(needsMockFallback);
 
     const categories = useMemo(
         () =>
@@ -76,7 +83,7 @@ export function BulkAddExpenseModal({
                 : isMockMode
                   ? mockCategories
                   : [],
-        [propCategories, isMockMode],
+        [propCategories, isMockMode, mockCategories],
     );
     const members = useMemo(
         () =>
@@ -87,7 +94,7 @@ export function BulkAddExpenseModal({
                   : isMockMode
                     ? mockMembers
                     : [],
-        [propMembers, ctxMembers, isMockMode],
+        [propMembers, ctxMembers, isMockMode, mockMembers],
     );
 
     const perspective = household?.perspective ?? "household";

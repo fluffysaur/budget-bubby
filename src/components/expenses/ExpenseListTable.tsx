@@ -31,7 +31,7 @@ import {
     formatTime12h,
     extractTimeFromISO,
 } from "../../lib/dateUtils";
-import { mockCategories, mockMembers } from "../../data/mockSeedData";
+import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { ExpenseFormModal } from "./ExpenseFormModal";
 import { DeleteExpenseModal } from "./DeleteExpenseModal";
 import { TruncatedText } from "../ui/TruncatedText";
@@ -115,13 +115,15 @@ export function ExpenseListTable({
             : (household?.activeMember?.id ?? null);
     const isPersonalView =
         resolvedPerspective === "personal" && Boolean(resolvedActiveMemberId);
+    const { categories: mockCategories, members: mockMembers } =
+        useLazyMockDefaults(isMock && (!propCategories || !propMembers));
     const categories = useMemo(
         () => propCategories ?? (isMock ? mockCategories : []),
-        [propCategories, isMock],
+        [propCategories, isMock, mockCategories],
     );
     const members = useMemo(
         () => propMembers ?? (isMock ? mockMembers : []),
-        [propMembers, isMock],
+        [propMembers, isMock, mockMembers],
     );
     // Goals for Goal Spend badges
     const [internalGoals, setInternalGoals] = useState<SavingsGoal[]>(
@@ -276,6 +278,8 @@ export function ExpenseListTable({
         expenses,
         activeSortBy,
         activeSortOrder,
+        isPersonalView,
+        resolvedActiveMemberId,
         getCategory,
         getGoal,
         getMember,

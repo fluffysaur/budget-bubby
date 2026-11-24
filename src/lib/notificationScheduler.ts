@@ -9,7 +9,7 @@
  */
 
 import { financeService } from "../services/financeService";
-import { getDefaultNotificationPreferences } from "../data/mockSeedData";
+import { getDefaultNotificationPreferences } from "./notificationDefaults";
 import { isServerPushEnabled } from "./pushSubscription";
 import {
     currentMinutes,

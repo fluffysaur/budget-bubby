@@ -23,7 +23,7 @@ import {
     useBudgetDetailQuery,
 } from "../hooks/useFinanceQueries";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
-import { mockMembers } from "../data/mockSeedData";
+import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import {
     filterStatementsForPerspective,
     isSpendableCategory,
@@ -60,6 +60,9 @@ export function DashboardPage({
         isMockMode,
     } = useHousehold();
 
+    const { members: mockMembers } = useLazyMockDefaults(
+        isMockMode && !(ctxMembers && ctxMembers.length > 0),
+    );
     const members = useMemo(
         () =>
             ctxMembers && ctxMembers.length > 0
@@ -67,7 +70,7 @@ export function DashboardPage({
                 : isMockMode
                   ? mockMembers
                   : [],
-        [ctxMembers, isMockMode],
+        [ctxMembers, isMockMode, mockMembers],
     );
 
     const currentMonth = useCurrentMonth();

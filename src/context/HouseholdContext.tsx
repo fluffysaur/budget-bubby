@@ -19,10 +19,10 @@ import type {
     Perspective,
 } from "../types/finance";
 export type { Perspective, Perspective as PerspectiveType };
-import { mockMembers } from "../data/mockSeedData";
 import { isDemoModeActive } from "../services/financeService";
 import { isSupabaseConfigured } from "../services/supabaseClient";
 import { useHouseholdOverviewQuery } from "../hooks/useFinanceQueries";
+import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { useQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
 import { matchPartnerMember } from "../lib/members";
@@ -116,12 +116,18 @@ function HouseholdProviderInner({
     } = useHouseholdOverviewQuery();
 
     const overview = overviewData ?? null;
+    const hasOverviewMembers = Boolean(
+        overviewData?.members && overviewData.members.length > 0,
+    );
+    const { members: mockMembers } = useLazyMockDefaults(
+        isMockMode && !hasOverviewMembers,
+    );
     const members = useMemo(() => {
         if (overviewData?.members && overviewData.members.length > 0) {
             return overviewData.members;
         }
         return isMockMode ? mockMembers : [];
-    }, [overviewData, isMockMode]);
+    }, [overviewData, isMockMode, mockMembers]);
 
     // Global refresh function: invalidates all finance queries and refetches active ones
     const refreshData = useCallback(async () => {

@@ -56,7 +56,7 @@ import type {
     BonusSplitShare,
     SaveBonusEventInput,
 } from "../types/finance";
-import { getDefaultNotificationPreferences } from "../data/mockSeedData";
+import { getDefaultNotificationPreferences } from "../lib/notificationDefaults";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import {

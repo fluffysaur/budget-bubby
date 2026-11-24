@@ -19,7 +19,6 @@ import type {
     InboxResolveStatus,
 } from "../types/finance";
 import { isSupabaseConfigured } from "./supabaseClient";
-import { mockFinanceService } from "./mockFinanceService";
 import { supabaseFinanceService } from "./supabaseFinanceService";
 import type { FinanceService } from "./financeService";
 import { PartialBulkAddError } from "./bulkAddError";
@@ -313,11 +312,23 @@ export function enqueueMutation<T = any>(
     return mutation;
 }
 
-function getBackendService() {
-    if (isDemoModeActive()) {
-        return mockFinanceService;
+type BackendResolver = () => Promise<FinanceService>;
+let backendResolver: BackendResolver | null = null;
+
+export function registerBackendResolver(resolver: BackendResolver): void {
+    backendResolver = resolver;
+}
+
+async function getBackendService(): Promise<FinanceService> {
+    if (backendResolver) {
+        return backendResolver();
     }
-    return isSupabaseConfigured() ? supabaseFinanceService : mockFinanceService;
+    if (!isMockBackendActive()) {
+        return supabaseFinanceService;
+    }
+    // Fallback for standalone unit tests importing offlineSyncQueue without financeService
+    const { getActiveService } = await import("./financeService");
+    return getActiveService();
 }
 
 /** Fetch failures, as opposed to the server rejecting the request. */
@@ -468,7 +479,7 @@ export async function addExpense(input: CreateExpenseInput): Promise<Expense> {
 
     if (isOnline()) {
         try {
-            const backend = getBackendService();
+            const backend = await getBackendService();
             return await backend.addExpense(inputWithId);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
@@ -478,7 +489,7 @@ export async function addExpense(input: CreateExpenseInput): Promise<Expense> {
 
     // Offline / Network failure:
     const optimistic = isMockBackendActive()
-        ? await mockFinanceService.addExpense(inputWithId)
+        ? await (await getBackendService()).addExpense(inputWithId)
         : buildOptimisticExpense({ ...inputWithId, id });
     patchExpenseCacheOnAdd([optimistic]);
     enqueueMutation("addExpense", {
@@ -494,7 +505,7 @@ export async function updateExpense(
 ): Promise<Expense> {
     if (isOnline()) {
         try {
-            const backend = getBackendService();
+            const backend = await getBackendService();
             return await backend.updateExpense(id, updates);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
@@ -508,7 +519,10 @@ export async function updateExpense(
     let optimistic: Expense | undefined;
     if (isMockBackendActive()) {
         try {
-            optimistic = await mockFinanceService.updateExpense(id, updates);
+            optimistic = await (await getBackendService()).updateExpense(
+                id,
+                updates,
+            );
         } catch {
             // Row may be a server-side row or only in TanStack Query cache
         }
@@ -544,7 +558,7 @@ export async function updateExpense(
 export async function deleteExpense(id: string): Promise<void> {
     if (isOnline()) {
         try {
-            const backend = getBackendService();
+            const backend = await getBackendService();
             return await backend.deleteExpense(id);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
@@ -556,7 +570,7 @@ export async function deleteExpense(id: string): Promise<void> {
     }
 
     if (isMockBackendActive()) {
-        await mockFinanceService.deleteExpense(id);
+        await (await getBackendService()).deleteExpense(id);
     }
     patchExpenseCacheOnDelete(id);
     enqueueMutation("deleteExpense", { id });
@@ -573,7 +587,7 @@ export async function bulkAddExpenses(
 
     if (isOnline()) {
         try {
-            const backend = getBackendService();
+            const backend = await getBackendService();
             return await backend.bulkAddExpenses(expensesWithIds);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
@@ -590,7 +604,7 @@ export async function bulkAddExpenses(
     // Queue only the rows that were not saved, so replay cannot duplicate them
     const remaining = expensesWithIds.slice(alreadySaved.length);
     const optimistics = isMockBackendActive()
-        ? await mockFinanceService.bulkAddExpenses(remaining)
+        ? await (await getBackendService()).bulkAddExpenses(remaining)
         : remaining.map((e) =>
               buildOptimisticExpense(e as CreateExpenseInput & { id: string }),
           );
@@ -609,7 +623,7 @@ export async function recordDailyCheckin(
 ): Promise<DailyCheckin> {
     if (isOnline()) {
         try {
-            const backend = getBackendService();
+            const backend = await getBackendService();
             return await backend.recordDailyCheckin(memberId, date, type);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
@@ -621,7 +635,11 @@ export async function recordDailyCheckin(
     }
 
     const optimistic: DailyCheckin = isMockBackendActive()
-        ? await mockFinanceService.recordDailyCheckin(memberId, date, type)
+        ? await (await getBackendService()).recordDailyCheckin(
+              memberId,
+              date,
+              type,
+          )
         : {
               id: `chk-${Date.now()}`,
               household_id: "hh-offline",
@@ -648,7 +666,8 @@ export async function confirmInboxItem(
 ): Promise<string> {
     if (isOnline()) {
         try {
-            return await getBackendService().confirmInboxItem(itemId, expense);
+            const backend = await getBackendService();
+            return await backend.confirmInboxItem(itemId, expense);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
             console.warn(
@@ -667,7 +686,8 @@ export async function resolveInboxItem(
 ): Promise<void> {
     if (isOnline()) {
         try {
-            return await getBackendService().resolveInboxItem(itemId, status);
+            const backend = await getBackendService();
+            return await backend.resolveInboxItem(itemId, status);
         } catch (err) {
             if (!isNetworkError(err)) throw err;
             console.warn(
@@ -715,9 +735,9 @@ export async function flushOutbox(
         const resolvedIdMap = new Map<string, string>();
         const syncedIds = loadSyncedIds();
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const target = (customTargetService || getBackendService()) as any;
-        const isMockBackend = target === mockFinanceService;
+        const target = (customTargetService ??
+            (await getBackendService())) as FinanceService;
+        const isMockBackend = !customTargetService && isMockBackendActive();
 
         for (const mutation of actionableQueue) {
             // Deduplication check
