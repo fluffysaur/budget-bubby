@@ -12,6 +12,7 @@ import {
 } from "./currencyConverter";
 import { generateUuid } from "./uuid";
 import { getCurrentSingaporeTime } from "./dateUtils";
+import { normalizeExpenseTags } from "./expenseFormDraft";
 
 export const MAX_BULK_ROWS = 30;
 
@@ -175,7 +176,7 @@ export function rowToCreateInput(
         is_shared: row.isShared,
         // Matches the single-expense form: solo is 0.0, shared is 50/50.
         split_ratio: row.isShared ? 0.5 : 0.0,
-        tags: row.tags,
+        tags: normalizeExpenseTags(row.tags),
     };
 }
 

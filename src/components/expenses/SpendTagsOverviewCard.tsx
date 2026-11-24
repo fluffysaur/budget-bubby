@@ -12,6 +12,7 @@ import { Tag, Filter, Check, X, Layers } from "lucide-react";
 import { Card } from "../ui/Card";
 import type { Expense, Category } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
+import { normalizeExpenseTag } from "../../lib/expenseFormDraft";
 
 export interface TagAggregate {
     tag: string;
@@ -57,7 +58,7 @@ export function SpendTagsOverviewCard({
             if (!exp.tags || exp.tags.length === 0) continue;
 
             for (const rawTag of exp.tags) {
-                const trimmed = rawTag.trim();
+                const trimmed = normalizeExpenseTag(rawTag);
                 if (!trimmed) continue;
 
                 let entry = tagMap.get(trimmed);
@@ -156,7 +157,9 @@ export function SpendTagsOverviewCard({
                     <div className="flex items-center gap-2 self-start sm:self-auto">
                         <span className="text-xs font-bold text-(--text-ink) bg-(--pastel-lilac) border-2 border-(--border-ink) px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-cute-sm">
                             <Filter className="h-3 w-3" />
-                            <span>Filtering by #{activeTag}</span>
+                            <span>
+                                Filtering by #{normalizeExpenseTag(activeTag)}
+                            </span>
                         </span>
                         <button
                             type="button"
@@ -189,8 +192,9 @@ export function SpendTagsOverviewCard({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {tagAggregates.map((item) => {
                             const isSelected =
-                                activeTag?.toLowerCase() ===
-                                item.tag.toLowerCase();
+                                normalizeExpenseTag(
+                                    activeTag ?? "",
+                                ).toLowerCase() === item.tag.toLowerCase();
 
                             return (
                                 <div

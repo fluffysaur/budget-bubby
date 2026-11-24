@@ -5,6 +5,7 @@ import {
     buildExpenseFxFields,
 } from "../currencyConverter";
 import { toSgtDateTime } from "./sgTime";
+import { normalizeExpenseTags } from "../expenseFormDraft";
 import type {
     CreateExpenseInput,
     Expense,
@@ -79,7 +80,7 @@ export function inboxExpenseEventDetail(
         is_shared: input.is_shared,
         split_ratio: input.split_ratio ?? 0.5,
         settled: false,
-        tags: input.tags ?? [],
+        tags: normalizeExpenseTags(input.tags),
         goal_id: input.goal_id ?? null,
         original_amount: input.original_amount ?? null,
         original_currency: input.original_currency ?? "SGD",

@@ -13,6 +13,10 @@ import {
 import { cloneDeep } from "./context";
 import type { MockContext } from "./context";
 import type { FinanceService } from "../financeService";
+import {
+    normalizeExpenseTag,
+    normalizeExpenseTags,
+} from "../../lib/expenseFormDraft";
 
 export class ExpensesStore {
     constructor(
@@ -39,10 +43,14 @@ export class ExpensesStore {
             result = result.filter((e) => e.settled === filter.settled);
         }
         if (filter?.tag) {
-            const tagLower = filter.tag.toLowerCase();
+            const tagLower = normalizeExpenseTag(filter.tag).toLowerCase();
             result = result.filter(
                 (e) =>
-                    e.tags && e.tags.some((t) => t.toLowerCase() === tagLower),
+                    e.tags &&
+                    e.tags.some(
+                        (t) =>
+                            normalizeExpenseTag(t).toLowerCase() === tagLower,
+                    ),
             );
         }
         if (filter?.goalId) {
@@ -124,7 +132,7 @@ export class ExpensesStore {
             is_shared: input.is_shared,
             split_ratio: input.split_ratio ?? 0.5,
             settled: false,
-            tags: input.tags || [],
+            tags: normalizeExpenseTags(input.tags),
             goal_id: input.goal_id || null,
             original_amount:
                 input.original_amount !== undefined
@@ -157,7 +165,12 @@ export class ExpensesStore {
             throw new Error(`Expense with id "${id}" not found`);
         }
 
-        Object.assign(expense, updates);
+        Object.assign(expense, {
+            ...updates,
+            ...(updates.tags !== undefined
+                ? { tags: normalizeExpenseTags(updates.tags) }
+                : {}),
+        });
         if (!expense.is_shared) {
             expense.partner_category_id = null;
         }

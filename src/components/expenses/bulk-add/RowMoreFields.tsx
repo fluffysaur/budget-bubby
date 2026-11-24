@@ -5,6 +5,7 @@ import { Select } from "../../ui/Select";
 import { FxRateInput } from "../FxRateField";
 import { SUPPORTED_CURRENCIES } from "../../../lib/currencyConverter";
 import { sanitizeAmount } from "../../../lib/bulkAddRows";
+import { normalizeExpenseTag } from "../../../lib/expenseFormDraft";
 import type {
     BulkAction,
     BulkRow,
@@ -35,14 +36,14 @@ export function RowMoreFields({
     const [tagDraft, setTagDraft] = useState("");
 
     const addTag = () => {
-        const clean = tagDraft.trim().replace(/^#/, "");
+        const clean = normalizeExpenseTag(tagDraft);
         setTagDraft("");
         if (!clean) return;
-        const formatted = `#${clean}`;
         if (
             row.tags.some(
                 (t) =>
-                    t.replace(/^#/, "").toLowerCase() === clean.toLowerCase(),
+                    normalizeExpenseTag(t).toLowerCase() ===
+                    clean.toLowerCase(),
             )
         ) {
             return;
@@ -50,7 +51,7 @@ export function RowMoreFields({
         dispatch({
             type: "updateRow",
             id: row.id,
-            patch: { tags: [...row.tags, formatted] },
+            patch: { tags: [...row.tags, clean] },
         });
     };
 
@@ -157,7 +158,7 @@ export function RowMoreFields({
                                     className="flex min-h-8 max-w-full items-center gap-1 rounded-lg border-2 border-(--border-ink) bg-(--pastel-lilac-light) px-2 text-xs font-bold text-(--text-ink)"
                                 >
                                     <span className="min-w-0 truncate">
-                                        {tag}
+                                        #{normalizeExpenseTag(tag)}
                                     </span>
                                     <X
                                         className="h-3 w-3 shrink-0"

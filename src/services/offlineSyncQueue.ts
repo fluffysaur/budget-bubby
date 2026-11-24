@@ -23,6 +23,7 @@ import { supabaseFinanceService } from "./supabaseFinanceService";
 import type { FinanceService } from "./financeService";
 import { PartialBulkAddError } from "./bulkAddError";
 import { queryClient } from "../lib/queryClient";
+import { normalizeExpenseTags } from "../lib/expenseFormDraft";
 import { getCurrentSingaporeTime, getTodayDateString } from "../lib/dateUtils";
 
 export type MutationType =
@@ -371,7 +372,7 @@ function buildOptimisticExpense(
         is_shared: input.is_shared,
         split_ratio: input.split_ratio ?? 0.5,
         settled: false,
-        tags: input.tags || [],
+        tags: normalizeExpenseTags(input.tags),
         goal_id: input.goal_id || null,
         original_amount:
             input.original_amount !== undefined ? input.original_amount : null,
@@ -545,7 +546,7 @@ export async function updateExpense(
                 is_shared: updates.is_shared ?? false,
                 split_ratio: updates.split_ratio ?? 0.5,
                 settled: updates.settled ?? false,
-                tags: updates.tags || [],
+                tags: normalizeExpenseTags(updates.tags),
                 goal_id: updates.goal_id ?? null,
             };
         optimistic = { ...base, ...updates };

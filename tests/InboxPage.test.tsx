@@ -259,7 +259,7 @@ describe("InboxPage", () => {
         ).toMatchObject({
             amount: 24.5,
             remarks: "Late night",
-            tags: ["#Supper"],
+            tags: ["Supper"],
         });
     });
 
