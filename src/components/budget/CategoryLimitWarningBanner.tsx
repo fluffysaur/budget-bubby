@@ -102,9 +102,8 @@ export const CategoryLimitWarningBanner = React.memo(
         single = false,
     }: CategoryLimitWarningBannerProps) {
         const mask = useMoneyMask();
-        const { me, members } = useLoggedInMember();
-        const activeMemberId =
-            me?.id || members?.[0]?.id || "mem-00000000-0011";
+        const { me } = useLoggedInMember();
+        const activeMemberId = me?.id ?? "";
 
         const [toast, setToast] = useState<ToastAlert | null>(null);
         const [dismissedTypes, setDismissedTypes] = useState<
@@ -125,6 +124,7 @@ export const CategoryLimitWarningBanner = React.memo(
         }, [prefs]);
 
         const loadPreferences = useCallback(async () => {
+            if (!activeMemberId) return;
             try {
                 const data =
                     await financeService.getNotificationPreferences(

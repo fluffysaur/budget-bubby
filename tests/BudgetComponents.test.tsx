@@ -819,7 +819,7 @@ describe("BudgetPage", () => {
     it("renders budget page with month navigation, waterfall, and category meters", async () => {
         await act(async () => {
             render(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <BudgetPage />
                 </HouseholdProvider>,
             );
@@ -840,7 +840,7 @@ describe("BudgetPage", () => {
 
     it("renders in member and household perspectives without a perspective badge", async () => {
         const { rerender } = render(
-            <HouseholdProvider initialPerspective="partner1">
+            <HouseholdProvider initialPerspective="mem-00000000-0011">
                 <BudgetPage />
             </HouseholdProvider>,
         );
@@ -868,7 +868,7 @@ describe("BudgetPage", () => {
     it("opens BudgetEditorModal when clicking edit profile button", async () => {
         await act(async () => {
             render(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <BudgetPage />
                 </HouseholdProvider>,
             );
@@ -942,7 +942,7 @@ describe("BudgetPage", () => {
 
         await act(async () => {
             render(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <BudgetPage />
                 </HouseholdProvider>,
             );
@@ -1037,7 +1037,7 @@ describe("BudgetPage", () => {
 
         await act(async () => {
             render(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <BudgetPage />
                 </HouseholdProvider>,
             );

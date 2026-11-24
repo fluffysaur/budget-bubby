@@ -191,7 +191,8 @@ export function getCcDueReminderDays(prefs: NotificationPreferences): number[] {
 }
 
 export interface ComputeRemindersOptions {
-    memberId?: string;
+    /** The member whose reminders these are. Empty yields no reminders. */
+    memberId: string;
     currentHour?: number;
     referenceDate?: Date;
     /** Pending inbox items (wired by the inbox feature; 0 until then). */
@@ -205,10 +206,11 @@ export interface ComputeRemindersOptions {
  */
 export async function computeRemindersFrom(
     source: ReminderDataSource,
-    options?: ComputeRemindersOptions,
+    options: ComputeRemindersOptions,
 ): Promise<AppReminder[]> {
-    const memberId = options?.memberId || "mem-00000000-0011";
-    const referenceDate = options?.referenceDate;
+    const memberId = options.memberId;
+    if (!memberId) return [];
+    const referenceDate = options.referenceDate;
     const currentMonth = referenceDate
         ? formatMonth(referenceDate)
         : getCurrentMonth();
@@ -251,7 +253,7 @@ export async function computeRemindersFrom(
             candidates.push(
                 checkInboxReminder(
                     inboxSummary,
-                    options?.currentHour,
+                    options.currentHour,
                     memberId,
                     todayStr,
                     prefs.checkin_time,
@@ -263,11 +265,11 @@ export async function computeRemindersFrom(
                 checkBubbyReminder(
                     allCheckins,
                     expenses,
-                    options?.currentHour,
+                    options.currentHour,
                     memberId,
                     todayStr,
                     prefs.checkin_time,
-                    options?.inboxPending ?? inboxSummary.pendingCount,
+                    options.inboxPending ?? inboxSummary.pendingCount,
                 ),
             );
         }

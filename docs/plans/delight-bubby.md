@@ -57,7 +57,7 @@ Two gaps in today's semantics would make this wrong:
 
 **Fix (client-only, no migration):** add a `recordActivityCheckin()` helper (`src/lib/bubby/activity.ts`). After any successful add, bulk add, inbox confirm or inbox clear, it upserts a check-in for **the logged-in member on today's SGT date** (`getTodayDateString()`), type `expense`. The server-side payer/date check-in stays as it is, so backfilling a past day still fills that day.
 
-- The logged-in member comes from `useAuth().loggedInPartner` and is matched to a `HouseholdMember` using the logic now inlined at `BulkAddExpenseModal.tsx:108-112`. Extract that to `src/lib/members.ts` as `resolveLoggedInMember(members, loggedInPartner)`, falling back to `activeMember ?? members[0]` in demo mode.
+- The logged-in member comes from `useAuth().memberIdentity` (was `loggedInPartner`) and is matched to a `HouseholdMember` using the logic now inlined at `BulkAddExpenseModal.tsx:108-112`. Extract that to `src/lib/members.ts` as `resolveLoggedInMember(members, loggedInPartner)`, falling back to `activeMember ?? members[0]` in demo mode.
 - It is fire-and-forget (`void`). It goes through `financeService.recordDailyCheckin`, so it is already offline-queued (`offlineSyncQueue.ts:324`), and the upsert is idempotent.
 - **Inbox-confirmed purchases count.** Each confirm calls it, and reaching inbox zero calls it even if every item was dismissed. That is the "cleared their inbox" case in the couple-streak definition.
 - Upserting `expense` over an existing `no_spend` row for today is fine and more accurate.

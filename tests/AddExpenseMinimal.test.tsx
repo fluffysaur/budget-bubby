@@ -35,7 +35,7 @@ async function renderModal(
 ) {
     await act(async () => {
         render(
-            <HouseholdProvider initialPerspective="partner1">
+            <HouseholdProvider initialPerspective="mem-00000000-0011">
                 <ExpenseFormModal
                     isOpen
                     onClose={vi.fn()}
@@ -144,7 +144,8 @@ describe("Add Expense minimal layout", () => {
         vi.spyOn(AuthContextModule, "useAuth").mockReturnValue({
             user: null,
             session: null,
-            loggedInPartner: "partner2",
+            signedInEmail: "sam@example.com",
+            memberIdentity: { userId: null, email: "sam@example.com" },
             isAuthenticated: true,
             isDemoMode: true,
             authLoading: false,
@@ -182,7 +183,7 @@ describe("Add Expense minimal layout", () => {
         let rerenderUi!: (ui: React.ReactElement) => void;
         await act(async () => {
             const rendered = render(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <ExpenseFormModal
                         isOpen
                         onClose={vi.fn()}
@@ -208,7 +209,7 @@ describe("Add Expense minimal layout", () => {
 
         await act(async () => {
             rerenderUi(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <ExpenseFormModal
                         isOpen
                         onClose={vi.fn()}

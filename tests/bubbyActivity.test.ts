@@ -6,27 +6,8 @@ import {
     recordActivityCheckin,
     resetActivityCheckinState,
 } from "../src/lib/bubby/activity";
-import { matchPartnerMember, resolveLoggedInMember } from "../src/lib/members";
 import { onAppEvent, type AppEventMap } from "../src/lib/appEvents";
-import type { DailyCheckin, HouseholdMember } from "../src/types/finance";
-
-const members: HouseholdMember[] = [
-    {
-        id: "mem-yj",
-        household_id: "hh",
-        display_name: "Alex",
-        email: "alex@example.com",
-        role: "owner",
-    },
-    {
-        id: "mem-r",
-        household_id: "hh",
-        display_name: "Sam",
-        email: "Sam@Example.com",
-        user_id: "auth-sam",
-        role: "member",
-    },
-];
+import type { DailyCheckin } from "../src/types/finance";
 
 function checkin(member_id: string, checkin_date: string): DailyCheckin {
     return {
@@ -37,42 +18,6 @@ function checkin(member_id: string, checkin_date: string): DailyCheckin {
         type: "expense",
     };
 }
-
-describe("resolveLoggedInMember", () => {
-    it("matches partner slots by configured email, ignoring case", () => {
-        expect(matchPartnerMember(members, "partner1")?.id).toBe("mem-yj");
-        expect(matchPartnerMember(members, "partner2")?.id).toBe("mem-r");
-        expect(matchPartnerMember(members, null)).toBeNull();
-    });
-
-    it("matches member ids and the linked auth user", () => {
-        expect(matchPartnerMember(members, "mem-r")?.id).toBe("mem-r");
-        const unlinkedEmails = members.map((m) => ({ ...m, email: null }));
-        expect(
-            matchPartnerMember(unlinkedEmails, "partner2", "auth-sam")?.id,
-        ).toBe("mem-r");
-        expect(matchPartnerMember(unlinkedEmails, "partner2")).toBeNull();
-    });
-
-    it("never matches by display name", () => {
-        expect(matchPartnerMember(members, "alex")).toBeNull();
-        expect(matchPartnerMember(members, "Sam")).toBeNull();
-    });
-
-    it("falls back to the given member, then the first member (demo mode)", () => {
-        expect(resolveLoggedInMember(members, null, members[1])?.id).toBe(
-            "mem-r",
-        );
-        expect(resolveLoggedInMember(members, null)?.id).toBe("mem-yj");
-        expect(resolveLoggedInMember([], null)).toBeNull();
-    });
-
-    it("prefers the logged-in partner over the perspective member", () => {
-        expect(resolveLoggedInMember(members, "partner2", members[0])?.id).toBe(
-            "mem-r",
-        );
-    });
-});
 
 describe("recordActivityCheckin", () => {
     beforeEach(() => {

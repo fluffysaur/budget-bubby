@@ -1,6 +1,6 @@
 /** In-memory mock of the accounts domain. */
 
-import { matchPartnerMember } from "../../lib/members";
+import { findMemberById } from "../../lib/members";
 import type {
     Account,
     CreateAccountInput,
@@ -21,7 +21,7 @@ export class AccountsStore {
             return cloneDeep(this.ctx.state.accounts);
         }
 
-        const targetMember = matchPartnerMember(
+        const targetMember = findMemberById(
             this.ctx.state.members,
             perspective,
         );

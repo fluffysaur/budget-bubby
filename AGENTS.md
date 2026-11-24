@@ -8,7 +8,7 @@ Read the linked file before working in its area. Rules below are the always-on c
 - Quality gate before proposing a commit: `npm run check` (lint 0 warnings, build, test). Add `npm run test:e2e` when UI flows changed. Never use `--no-verify` or disable tests.
 - **PR screenshots are mandatory for any UI change** (components, pages, layouts, styles, copy, icons, badges, modals, themes, or user-visible flows). Capture demo-data before/after screenshots, push them to `chore/pr-screenshots`, and embed the table in the PR body per [docs/agent-workflow.md](docs/agent-workflow.md) §G before opening or updating the PR.
 - Don't install or upgrade dependencies without asking. Never commit `.env*` or build artifacts.
-- The repo is public: no real names, balances or emails in code, issues, PRs or screenshots.
+- The repo is private but kept publishable: no real names, balances or emails in code, issues, PRs or screenshots.
 
 Full git, PR, migration, screenshot and backlog rules: [docs/agent-workflow.md](docs/agent-workflow.md).
 

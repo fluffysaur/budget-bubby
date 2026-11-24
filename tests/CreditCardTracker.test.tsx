@@ -468,6 +468,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             fireEvent.change(screen.getByLabelText(/Credit Limit/i), {
                 target: { value: "8000" },
             });
+            fireEvent.change(screen.getByLabelText(/Cardholder/i), {
+                target: { value: testMembers[0].id },
+            });
 
             fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
 
@@ -481,6 +484,52 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(hsbc).toBeDefined();
             expect(hsbc?.last4).toBe("5566");
             expect(hsbc?.credit_limit).toBe(8000);
+        });
+
+        it("defaults the cardholder to the current member", async () => {
+            render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={[
+                        { ...testMembers[1], email: "alex@example.com" },
+                        testMembers[0],
+                    ]}
+                />,
+            );
+            expect(
+                (screen.getByLabelText(/Cardholder/i) as HTMLSelectElement)
+                    .value,
+            ).toBe(testMembers[1].id);
+        });
+
+        it("shows no cardholder and blocks saving when none is chosen", async () => {
+            const createSpy = vi.spyOn(financeService, "addCreditCard");
+            render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={testMembers}
+                />,
+            );
+
+            const owner = screen.getByLabelText(
+                /Cardholder/i,
+            ) as HTMLSelectElement;
+            expect(owner.value).toBe("");
+            expect(owner.selectedOptions[0]).toHaveTextContent(
+                "Choose cardholder",
+            );
+
+            fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
+                target: { value: "HSBC Revolution" },
+            });
+            fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
+
+            expect(
+                await screen.findByText("Please select a cardholder."),
+            ).toBeInTheDocument();
+            expect(createSpy).not.toHaveBeenCalled();
         });
 
         it("offers Delete only when editing a card and hands the card to onDelete", async () => {
@@ -551,6 +600,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             // Fill in required name and save
             fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
                 target: { value: "Custom Cycle Card" },
+            });
+            fireEvent.change(screen.getByLabelText(/Cardholder/i), {
+                target: { value: testMembers[0].id },
             });
 
             fireEvent.click(screen.getByRole("button", { name: "Add Card" }));

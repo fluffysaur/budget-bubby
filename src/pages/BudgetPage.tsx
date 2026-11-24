@@ -66,8 +66,14 @@ export function BudgetPage({
     embedded = false,
     onNavigateTab,
 }: BudgetPageProps) {
-    const { perspective, activeMember, members, overview, isMockMode } =
-        useHousehold();
+    const {
+        perspective,
+        activeMember,
+        currentMember,
+        members,
+        overview,
+        isMockMode,
+    } = useHousehold();
     const { invalidateBudget, invalidateCategories } = useInvalidateFinance();
 
     // State
@@ -138,7 +144,7 @@ export function BudgetPage({
     // Handle opening editor
     const handleOpenEditor = (memberId?: string) => {
         const targetId =
-            memberId || (activeMember ? activeMember.id : members[0]?.id);
+            memberId || activeMember?.id || currentMember?.id || null;
         setEditingProfileMemberId(targetId);
         setIsEditorOpen(true);
     };
@@ -148,7 +154,7 @@ export function BudgetPage({
         const targetMember =
             (editingProfileMemberId
                 ? members.find((m) => m.id === editingProfileMemberId)
-                : activeMember) || members[0];
+                : activeMember) || currentMember;
         const targetId = targetMember?.id || "";
         const targetHouseholdId =
             targetMember?.household_id || overview?.household?.id || "";
@@ -180,6 +186,7 @@ export function BudgetPage({
         baseProfiles,
         editingProfileMemberId,
         activeMember,
+        currentMember,
         members,
         overview,
         isMockMode,

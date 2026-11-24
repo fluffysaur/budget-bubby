@@ -7,6 +7,8 @@ import {
     executeProposedAction,
     isReadTool,
     isProposalTool,
+    ProposalUnavailableError,
+    UNKNOWN_PAYER_MESSAGE,
 } from "../aiTools";
 
 describe("aiTools", () => {
@@ -370,6 +372,45 @@ describe("aiTools", () => {
         expect(invalidateSpy).toHaveBeenCalledWith({
             queryKey: ["finance", "monthly-budget"],
         });
+    });
+
+    it("refuses to propose an expense when it can't tell who paid", async () => {
+        vi.spyOn(financeService, "getHouseholdOverview").mockResolvedValue({
+            household: { id: "hh-1", name: "Demo Home", currency: "SGD" },
+            members: [
+                {
+                    id: "mem-1",
+                    household_id: "hh-1",
+                    display_name: "Alex",
+                    role: "owner",
+                },
+            ],
+            totalAssets: 0,
+            trueNetWorth: 0,
+            settlementSummary: {
+                netBalance: 0,
+                debtorId: null,
+                creditorId: null,
+                settlementText: "All settled up",
+                member1OwesMember2: 0,
+                member2OwesMember1: 0,
+            },
+            activeGoals: [],
+            upcomingBills: [],
+        });
+        vi.spyOn(financeService, "getCategories").mockResolvedValue([]);
+
+        for (const activeMemberId of [undefined, "mem-unknown"]) {
+            const attempt = buildProposedAction(
+                "proposeExpense",
+                { item: "Laksa", amount: 8.5 },
+                { ...context, activeMemberId },
+            );
+            await expect(attempt).rejects.toBeInstanceOf(
+                ProposalUnavailableError,
+            );
+            await expect(attempt).rejects.toThrow(UNKNOWN_PAYER_MESSAGE);
+        }
     });
 
     it("executes confirmed balance update and budget adjustment", async () => {

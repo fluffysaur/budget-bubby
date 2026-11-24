@@ -402,7 +402,8 @@ describe("AccountsPage", () => {
         const getAccountsSpy = vi
             .spyOn(financeService, "getAccounts")
             .mockImplementation(async (perspective) => {
-                if (perspective === "partner1") return partnerOneAccounts;
+                if (perspective === "mem-00000000-0011")
+                    return partnerOneAccounts;
                 return sampleAccounts;
             });
 
@@ -418,14 +419,14 @@ describe("AccountsPage", () => {
 
         await act(async () => {
             rerender(
-                <HouseholdProvider initialPerspective="partner1">
+                <HouseholdProvider initialPerspective="mem-00000000-0011">
                     <AccountsPage />
                 </HouseholdProvider>,
             );
         });
 
         await waitFor(() => {
-            expect(getAccountsSpy).toHaveBeenCalledWith("partner1");
+            expect(getAccountsSpy).toHaveBeenCalledWith("mem-00000000-0011");
         });
     });
 
@@ -484,6 +485,26 @@ describe("AccountsPage", () => {
             ).toBeInTheDocument();
         });
 
+        it("shows no owner selected when the current member is unknown", () => {
+            render(
+                <AddAccountModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={[
+                        {
+                            id: "mem-1",
+                            household_id: "hh-1",
+                            display_name: "Alex",
+                            role: "owner",
+                        },
+                    ]}
+                />,
+            );
+            const owner = screen.getByLabelText(/owner/i) as HTMLSelectElement;
+            expect(owner.value).toBe("");
+            expect(owner.selectedOptions[0]).toHaveTextContent("Choose owner");
+        });
+
         it("submits and invokes financeService.createAccount with form data", async () => {
             const onAccountCreated = vi.fn();
             const onClose = vi.fn();
@@ -511,6 +532,7 @@ describe("AccountsPage", () => {
                             id: "mem-1",
                             household_id: "hh-1",
                             display_name: "Alex",
+                            email: "alex@example.com",
                             role: "owner",
                         },
                     ]}
