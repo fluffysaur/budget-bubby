@@ -87,7 +87,7 @@ describe("openrouterAuth", () => {
         await startOpenRouterOAuth("chat", "/accounts", navigate);
 
         const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-            new Response(JSON.stringify({ key: "sk-or-v1-oauth-key" }), {
+            new Response(JSON.stringify({ key: "test-openrouter-key" }), {
                 status: 200,
                 headers: { "Content-Type": "application/json" },
             }),
@@ -114,13 +114,13 @@ describe("openrouterAuth", () => {
                 headers: { "Content-Type": "application/json" },
             }),
         );
-        expect(getProviderApiKey("openrouter")).toBe("sk-or-v1-oauth-key");
+        expect(getProviderApiKey("openrouter")).toBe("test-openrouter-key");
         expect(getActiveAiProvider()).toBe("openrouter");
         expect(localStorage.getItem(OPENROUTER_PKCE_STORAGE_KEY)).toBeNull();
         expect(changedSpy).toHaveBeenCalledTimes(1);
         expect(store.saveAiSettings).toHaveBeenCalledWith(
             expect.objectContaining({
-                openrouter_api_key: "sk-or-v1-oauth-key",
+                openrouter_api_key: "test-openrouter-key",
                 active_provider: "openrouter",
             }),
         );
