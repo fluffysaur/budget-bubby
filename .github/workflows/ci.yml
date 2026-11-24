@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,6 +17,33 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      rls: ${{ steps.filter.outputs.rls }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rls:
+              - 'supabase/**'
+              - '.github/workflows/ci.yml'
+            e2e:
+              - 'src/**'
+              - 'e2e/**'
+              - 'public/**'
+              - 'index.html'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'playwright.config.ts'
+              - 'vite.config.ts'
+              - '.github/workflows/ci.yml'
+
   check:
     name: check
     runs-on: ubuntu-latest
@@ -44,6 +72,8 @@ jobs:
 
   e2e:
     name: e2e
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -59,8 +89,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium webkit
 
       - name: Run Playwright e2e tests
         run: pnpm run test:e2e
@@ -75,6 +117,8 @@ jobs:
 
   rls:
     name: rls
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.rls == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
