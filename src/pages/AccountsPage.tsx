@@ -131,15 +131,11 @@ export function AccountsPage({
     };
 
     // Handler for inline balance edit from AccountGroupList
-    const handleInlineUpdateBalance = async (
+    const handleInlineUpdateBalance = (
         accountId: string,
         newBalance: number,
     ) => {
-        try {
-            await updateBalanceMutation.mutateAsync({ accountId, newBalance });
-        } catch (err) {
-            console.error("Failed to update inline balance:", err);
-        }
+        updateBalanceMutation.mutate({ accountId, newBalance });
     };
 
     // Account type filter (empty = All)

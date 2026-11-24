@@ -360,14 +360,10 @@ export function CreditCardTrackerSection({
     };
 
     const handleDeleteCard = async (cardId: string) => {
-        try {
-            await financeService.deleteCreditCard(cardId);
-            feedback.routine("delete");
-            setCardToDelete(null);
-            invalidateCreditCards();
-        } catch (err) {
-            console.error("Failed to delete credit card:", err);
-        }
+        await financeService.deleteCreditCard(cardId);
+        feedback.routine("delete");
+        setCardToDelete(null);
+        invalidateCreditCards();
     };
 
     return (

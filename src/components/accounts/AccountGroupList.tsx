@@ -39,7 +39,7 @@ export interface AccountGroupListProps {
     onQuickSaveBalance?: (
         accountId: string,
         newBalance: number,
-    ) => Promise<void>;
+    ) => Promise<void> | void;
     onEditAccount?: (account: Account) => void;
     onAddAccount?: () => void;
     className?: string;

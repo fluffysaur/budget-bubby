@@ -33,7 +33,13 @@ export function NoSpendButton() {
                 firstForDate: true,
             });
         } catch (err) {
-            console.error("Failed to record no-spend day:", err);
+            emitAppEvent("app:error", {
+                title: "Check-in failed",
+                subtitle:
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Could not record no-spend day.",
+            });
         } finally {
             setIsSubmitting(false);
         }

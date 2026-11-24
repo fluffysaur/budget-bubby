@@ -310,19 +310,22 @@ export function InboxPage() {
         else void resolveView(error.view, error.reason);
     }, [error, confirmView, resolveView]);
 
-    const handleUndo = useCallback(async () => {
+    const handleUndo = useCallback(() => {
         if (!undoItem) return;
         const item = undoItem;
         setUndoItem(null);
         if (undoTimer.current) clearTimeout(undoTimer.current);
-        try {
-            await resolveInboxMutation.mutateAsync({
+        resolveInboxMutation.mutate(
+            {
                 id: item.id,
                 reason: "pending",
-            });
-        } catch (err) {
-            console.error("Failed to undo inbox resolution:", err);
-        }
+            },
+            {
+                onError: () => {
+                    setUndoItem(item);
+                },
+            },
+        );
     }, [undoItem, resolveInboxMutation]);
 
     const handleBatch = useCallback(async () => {

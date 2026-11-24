@@ -60,6 +60,11 @@ export interface MilestoneDetail {
     primary?: MilestoneToastAction;
 }
 
+export interface ErrorToastDetail {
+    title: string;
+    subtitle?: string;
+}
+
 export interface AppEventMap {
     expenseAdded: ExpenseAddedDetail;
     /** A reaction for one member's penguin, or every penguin if no memberId. */
@@ -72,6 +77,8 @@ export interface AppEventMap {
     /** Local Bubby state (petting, exercise, snacks) changed on this device. */
     "bubby:store-changed": Record<string, never>;
     "delight:milestone": MilestoneDetail;
+    /** Surface a failed save, delete, or background load to the user. */
+    "app:error": ErrorToastDetail;
     "inbox:items-arrived": { newCount: number; pendingCount: number };
     "inbox:item-confirmed": {
         itemId: string;

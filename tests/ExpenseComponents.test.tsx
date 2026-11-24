@@ -497,9 +497,11 @@ describe("ExpenseListTable", () => {
         expect(confirmBtn).toBeInTheDocument();
         expect(cancelBtn).toBeInTheDocument();
 
-        // Clicking Confirm executes onDeleteExpense
+        // Clicking Confirm executes onDeleteExpense after deletion succeeds
         fireEvent.click(confirmBtn);
-        expect(onDelete).toHaveBeenCalledTimes(1);
+        await waitFor(() => {
+            expect(onDelete).toHaveBeenCalledTimes(1);
+        });
         expect(onDelete).toHaveBeenCalledWith("exp-test-1");
     });
 
