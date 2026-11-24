@@ -398,6 +398,26 @@ export function PinLoginScreen({ onSuccess }: PinLoginScreenProps) {
                         Disable biometric unlock
                     </button>
                 ) : null}
+
+                {/* Legal links (public pages, reachable while logged out) */}
+                <nav
+                    aria-label="Legal"
+                    data-testid="login-legal-links"
+                    className="mt-6 flex items-center justify-center gap-4 text-xs font-bold text-(--text-muted)"
+                >
+                    <a
+                        href="/privacy"
+                        className="inline-flex min-h-11 items-center underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink)"
+                    >
+                        Privacy
+                    </a>
+                    <a
+                        href="/terms"
+                        className="inline-flex min-h-11 items-center underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink)"
+                    >
+                        Terms
+                    </a>
+                </nav>
             </div>
 
             {/* Biometrics Enrollment Dialog */}

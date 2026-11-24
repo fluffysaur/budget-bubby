@@ -26,6 +26,11 @@ import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import { useQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
 import { matchPartnerMember } from "../lib/members";
+import {
+    THEME_STORAGE_KEY,
+    applyThemeClass,
+    readStoredTheme,
+} from "../lib/theme";
 import { useOptionalAuth } from "./AuthContext";
 
 export interface HouseholdContextValue {
@@ -52,8 +57,6 @@ export interface HouseholdProviderProps {
     defaultPerspective?: Perspective;
 }
 
-const THEME_STORAGE_KEY = "budget_buddy_theme";
-
 function HouseholdProviderInner({
     children,
     initialPerspective = "household",
@@ -78,24 +81,13 @@ function HouseholdProviderInner({
     // Initialize theme from prop, localStorage, or fallback to 'light'
     const [theme, setTheme] = useState<"light" | "dark">(() => {
         if (initialTheme) return initialTheme;
-        if (typeof window !== "undefined" && window.localStorage) {
-            const stored = localStorage.getItem(THEME_STORAGE_KEY);
-            if (stored === "light" || stored === "dark") {
-                return stored;
-            }
-        }
-        return "light";
+        return readStoredTheme();
     });
 
     // Sync DOM with theme changes
     useEffect(() => {
         if (typeof document !== "undefined") {
-            const root = document.documentElement;
-            if (theme === "dark") {
-                root.classList.add("dark");
-            } else {
-                root.classList.remove("dark");
-            }
+            applyThemeClass(theme);
             try {
                 localStorage.setItem(THEME_STORAGE_KEY, theme);
             } catch {
