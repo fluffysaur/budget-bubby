@@ -69,9 +69,9 @@ Classify the issue strictly by priority guidelines:
   - Draft the exact SQL statement required in the `DB change:` field.
 - If no DB change is needed, set `DB change: none`.
 
-### 6. Public Repo Privacy Audit (Mandatory)
+### 6. Privacy Audit (Mandatory)
 > [!CAUTION]
-> This repository is public. Never include real personal names, real account balances, actual salaries, email addresses, API secrets, or private environment variables in the issue title or body. Use mock/placeholder examples only.
+> This repository is private but kept publishable. Never include real personal names, real account balances, actual salaries, email addresses, API secrets, or private environment variables in the issue title or body. Use mock/placeholder examples only.
 
 ---
 
