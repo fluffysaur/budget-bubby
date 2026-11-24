@@ -14,7 +14,11 @@
 import { RoadmapChip } from "../components/roadmap/RoadmapChip";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { useHousehold } from "../context/HouseholdContext";
-import { PageHeader, DashboardSkeleton } from "../components/ui";
+import {
+    PageHeader,
+    DashboardSkeleton,
+    QueryErrorAlert,
+} from "../components/ui";
 import {
     useRecurringItemsQuery,
     useCreditCardStatementsQuery,
@@ -83,6 +87,9 @@ export function DashboardPage({
         data: budgetData,
         isPending: budgetPending,
         isPlaceholderData: budgetPlaceholder,
+        isError: budgetError,
+        error: budgetErrorObj,
+        refetch: refetchBudget,
     } = useBudgetDetailQuery(
         currentMonth,
         perspective,
@@ -212,70 +219,83 @@ export function DashboardPage({
                 badge={<BubbyGreeting onOpenInbox={handleOpenInbox} />}
             />
 
+            {budgetError && (
+                <QueryErrorAlert
+                    error={budgetErrorObj}
+                    onRetry={() => void refetchBudget()}
+                />
+            )}
+
             {isLoading ? (
                 <DashboardSkeleton />
             ) : (
-                <div
-                    className={
-                        budgetPlaceholder
-                            ? "space-y-5 opacity-60 transition-opacity"
-                            : "space-y-5 transition-opacity"
-                    }
-                >
-                    {/* Left to Spend hero */}
-                    <LeftToSpendHero
-                        summary={spendableSummary}
-                        onNavigateBudget={
-                            onNavigateTab ? handleNavigateBudget : undefined
+                (!budgetError || Boolean(budgetData)) && (
+                    <div
+                        className={
+                            budgetPlaceholder
+                                ? "space-y-5 opacity-60 transition-opacity"
+                                : "space-y-5 transition-opacity"
                         }
-                    />
+                    >
+                        {/* Left to Spend hero */}
+                        <LeftToSpendHero
+                            summary={spendableSummary}
+                            onNavigateBudget={
+                                onNavigateTab ? handleNavigateBudget : undefined
+                            }
+                        />
 
-                    {/* Most urgent category limit alert (rendered below hero) */}
-                    <CategoryLimitWarningBanner
-                        single
-                        categories={categoriesList}
-                        onNavigateCategory={handleNavigateBudget}
-                    />
+                        {/* Most urgent category limit alert (rendered below hero) */}
+                        <CategoryLimitWarningBanner
+                            single
+                            categories={categoriesList}
+                            onNavigateCategory={handleNavigateBudget}
+                        />
 
-                    {/* Unsorted captures (rendered below hero) */}
-                    <InboxHomeCard />
+                        {/* Unsorted captures (rendered below hero) */}
+                        <InboxHomeCard />
 
-                    {/* Bubby's quests for today */}
-                    <QuestCard />
+                        {/* Bubby's quests for today */}
+                        <QuestCard />
 
-                    {/* Household plan verdict */}
-                    <RoadmapChip
-                        onOpen={onNavigateTab ? handleNavigateGoals : undefined}
-                    />
+                        {/* Household plan verdict */}
+                        <RoadmapChip
+                            onOpen={
+                                onNavigateTab ? handleNavigateGoals : undefined
+                            }
+                        />
 
-                    {/* Last week's recap (temporary, Mon-Wed) */}
-                    {recapWeek && (
-                        <Suspense fallback={null}>
-                            <WeeklyRecapCard
-                                week={recapWeek}
-                                weeklyBudget={weeklyBudget}
-                                onSeeSpend={handleNavigateExpenses}
-                            />
-                        </Suspense>
-                    )}
+                        {/* Last week's recap (temporary, Mon-Wed) */}
+                        {recapWeek && (
+                            <Suspense fallback={null}>
+                                <WeeklyRecapCard
+                                    week={recapWeek}
+                                    weeklyBudget={weeklyBudget}
+                                    onSeeSpend={handleNavigateExpenses}
+                                />
+                            </Suspense>
+                        )}
 
-                    {/* Credit card bills (hidden when nothing is unpaid) */}
-                    <CreditCardPaymentsWidget
-                        cards={creditCards}
-                        statements={creditCardStatements}
-                        memberId={cardMemberId}
-                        onViewAll={
-                            onNavigateTab ? handleNavigateAccounts : undefined
-                        }
-                        onPaid={invalidateCreditCards}
-                    />
+                        {/* Credit card bills (hidden when nothing is unpaid) */}
+                        <CreditCardPaymentsWidget
+                            cards={creditCards}
+                            statements={creditCardStatements}
+                            memberId={cardMemberId}
+                            onViewAll={
+                                onNavigateTab
+                                    ? handleNavigateAccounts
+                                    : undefined
+                            }
+                            onPaid={invalidateCreditCards}
+                        />
 
-                    {/* Upcoming bills */}
-                    <UpcomingBillsWidget
-                        recurringItems={recurringItems}
-                        onViewAll={handleNavigateRecurring}
-                    />
-                </div>
+                        {/* Upcoming bills */}
+                        <UpcomingBillsWidget
+                            recurringItems={recurringItems}
+                            onViewAll={handleNavigateRecurring}
+                        />
+                    </div>
+                )
             )}
         </div>
     );

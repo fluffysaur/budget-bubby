@@ -10,7 +10,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, AlertCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useHousehold } from "../context/HouseholdContext";
 import {
     PageHeader,
@@ -19,6 +19,7 @@ import {
     GoalsSkeleton,
     EmptyStateCard,
     SegmentedTabs,
+    QueryErrorAlert,
 } from "../components/ui";
 import {
     useGoalsQuery,
@@ -68,7 +69,9 @@ export function GoalsPage({
     const {
         data: goalsData,
         isLoading: goalsLoading,
+        isError: goalsIsError,
         error: goalsError,
+        refetch: refetchGoals,
     } = useGoalsQuery();
     const roadmap = useRoadmap();
     const updateGoalMutation = useUpdateGoalMutation();
@@ -83,7 +86,6 @@ export function GoalsPage({
     const expenses = useMemo(() => expensesData || [], [expensesData]);
     const categories = useMemo(() => categoriesData || [], [categoriesData]);
     const isLoading = goalsLoading && !goalsData;
-    const errorMessage = goalsError ? (goalsError as Error).message : null;
     const [activeTab, setActiveTab] = useState<GoalFilterTab>("in_progress");
     const [highlightedGoalId, setHighlightedGoalId] = useState<string | null>(
         null,
@@ -370,117 +372,128 @@ export function GoalsPage({
             )}
 
             {/* Error Alert */}
-            {errorMessage && (
-                <div className="flex items-center gap-2 rounded-2xl bg-rose-50 p-4 text-sm font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-                    <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-
-            {/* Household Roadmap */}
-            {!isLoading && (
-                <RoadmapCard
-                    roadmap={roadmap}
-                    onAddGoal={handleOpenCreateModal}
-                    onApplyDelay={handleApplyDelay}
-                    onApplyLowerTarget={handleApplyLowerTarget}
-                    onApplyTrim={handleApplyTrim}
+            {goalsIsError && (
+                <QueryErrorAlert
+                    error={goalsError}
+                    onRetry={() => void refetchGoals()}
                 />
             )}
 
-            {/* Filter Tabs */}
-            <div className="flex items-center justify-between border-b-2 border-(--border-subtle) pb-3">
-                <SegmentedTabs
-                    tabs={[
-                        {
-                            id: "in_progress",
-                            label: "Active",
-                            badge: (
-                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
-                                    {inProgressGoals.length}
-                                </span>
-                            ),
-                        },
-                        {
-                            id: "achieved",
-                            label: "Done",
-                            badge: (
-                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
-                                    {achievedGoals.length}
-                                </span>
-                            ),
-                        },
-                        {
-                            id: "all",
-                            label: "All",
-                            badge: (
-                                <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
-                                    {perspectiveGoals.length}
-                                </span>
-                            ),
-                        },
-                    ]}
-                    activeTab={activeTab}
-                    onChange={(tabId) => setActiveTab(tabId as GoalFilterTab)}
-                    accent="lilac"
-                    size="sm"
-                    ariaLabel="Goals status filter"
-                />
-            </div>
+            {(!goalsIsError || Boolean(goalsData)) && (
+                <>
+                    {/* Household Roadmap */}
+                    {!isLoading && (
+                        <RoadmapCard
+                            roadmap={roadmap}
+                            onAddGoal={handleOpenCreateModal}
+                            onApplyDelay={handleApplyDelay}
+                            onApplyLowerTarget={handleApplyLowerTarget}
+                            onApplyTrim={handleApplyTrim}
+                        />
+                    )}
 
-            {/* Content Area: Loader, Empty State, or Grid */}
-            {isLoading ? (
-                <GoalsSkeleton />
-            ) : displayedGoals.length === 0 ? (
-                <EmptyStateCard
-                    icon={<span className="text-2xl">🎯</span>}
-                    title="No Goals"
-                    description={
-                        perspectiveGoals.length === 0
-                            ? "Add a goal to start tracking savings progress."
-                            : "No goals found in this view."
-                    }
-                    action={
-                        <Button
-                            variant="primary"
-                            onClick={handleOpenCreateModal}
-                            leftIcon={<Plus className="h-4 w-4 stroke-3" />}
+                    {/* Filter Tabs */}
+                    <div className="flex items-center justify-between border-b-2 border-(--border-subtle) pb-3">
+                        <SegmentedTabs
+                            tabs={[
+                                {
+                                    id: "in_progress",
+                                    label: "Active",
+                                    badge: (
+                                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                            {inProgressGoals.length}
+                                        </span>
+                                    ),
+                                },
+                                {
+                                    id: "achieved",
+                                    label: "Done",
+                                    badge: (
+                                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                            {achievedGoals.length}
+                                        </span>
+                                    ),
+                                },
+                                {
+                                    id: "all",
+                                    label: "All",
+                                    badge: (
+                                        <span className="rounded-full bg-black/10 dark:bg-white/20 px-1.5 py-0.5 text-[10px] font-mono-num font-bold">
+                                            {perspectiveGoals.length}
+                                        </span>
+                                    ),
+                                },
+                            ]}
+                            activeTab={activeTab}
+                            onChange={(tabId) =>
+                                setActiveTab(tabId as GoalFilterTab)
+                            }
+                            accent="lilac"
+                            size="sm"
+                            ariaLabel="Goals status filter"
+                        />
+                    </div>
+
+                    {/* Content Area: Loader, Empty State, or Grid */}
+                    {isLoading ? (
+                        <GoalsSkeleton />
+                    ) : displayedGoals.length === 0 ? (
+                        <EmptyStateCard
+                            icon={<span className="text-2xl">🎯</span>}
+                            title="No Goals"
+                            description={
+                                perspectiveGoals.length === 0
+                                    ? "Add a goal to start tracking savings progress."
+                                    : "No goals found in this view."
+                            }
+                            action={
+                                <Button
+                                    variant="primary"
+                                    onClick={handleOpenCreateModal}
+                                    leftIcon={
+                                        <Plus className="h-4 w-4 stroke-3" />
+                                    }
+                                >
+                                    Add Goal
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <div
+                            id="goals-tabpanel"
+                            role="tabpanel"
+                            className="grid grid-cols-1 xl:grid-cols-2 gap-6"
                         >
-                            Add Goal
-                        </Button>
-                    }
-                />
-            ) : (
-                <div
-                    id="goals-tabpanel"
-                    role="tabpanel"
-                    className="grid grid-cols-1 xl:grid-cols-2 gap-6"
-                >
-                    <AnimatePresence initial={false}>
-                        {displayedGoals.map((goal) => (
-                            <m.div key={goal.id} {...listItem}>
-                                <GoalCard
-                                    goal={goal}
-                                    linkedExpenses={
-                                        goalExpensesMap.get(goal.id) || []
-                                    }
-                                    plan={roadmap.byGoalId.get(goal.id)}
-                                    onEdit={handleOpenEditModal}
-                                    onMarkDone={setDoneGoal}
-                                    onReopen={handleReopen}
-                                    onSpendFromGoal={handleOpenSpendModal}
-                                    isHighlighted={
-                                        highlightedGoalId === goal.id
-                                    }
-                                />
-                            </m.div>
-                        ))}
-                    </AnimatePresence>
-                </div>
-            )}
+                            <AnimatePresence initial={false}>
+                                {displayedGoals.map((goal) => (
+                                    <m.div key={goal.id} {...listItem}>
+                                        <GoalCard
+                                            goal={goal}
+                                            linkedExpenses={
+                                                goalExpensesMap.get(goal.id) ||
+                                                []
+                                            }
+                                            plan={roadmap.byGoalId.get(goal.id)}
+                                            onEdit={handleOpenEditModal}
+                                            onMarkDone={setDoneGoal}
+                                            onReopen={handleReopen}
+                                            onSpendFromGoal={
+                                                handleOpenSpendModal
+                                            }
+                                            isHighlighted={
+                                                highlightedGoalId === goal.id
+                                            }
+                                        />
+                                    </m.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+                    )}
 
-            {/* Net worth reality check: history and projection */}
-            {!isLoading && <ProjectionCard roadmap={roadmap} />}
+                    {/* Net worth reality check: history and projection */}
+                    {!isLoading && <ProjectionCard roadmap={roadmap} />}
+                </>
+            )}
 
             {/* Add / Edit Goal Modal */}
             <AddEditGoalModal
