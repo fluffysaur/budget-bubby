@@ -79,7 +79,7 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
                 if (hatched) pet();
                 emitAppEvent("bubby:open-sheet", {});
             }}
-            className={`relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 justify-center rounded-xl after:absolute after:-inset-1 sm:after:-inset-0.5 after:content-[''] items-end bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press ${className}`}
+            className={`relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 justify-center rounded-xl after:absolute after:-inset-1.5 sm:after:-inset-1 after:content-[''] items-end bg-(--accent-lilac) border-2 border-(--border-ink) shadow-cute-sm cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press ${className}`}
         >
             <span className="flex h-full w-full items-end justify-center overflow-hidden rounded-lg pt-0.5">
                 {isMemberLoading ? (
@@ -126,7 +126,7 @@ export function BubbyAvatarButton({ className = "" }: BubbyAvatarButtonProps) {
                 <span
                     key={pipKey}
                     aria-hidden="true"
-                    className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full border-2 border-(--border-ink) bg-(--pastel-butter) px-1 text-[10px] leading-4 animate-pip-float"
+                    className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full border-2 border-(--border-ink) bg-(--pastel-butter) px-1 text-2xs leading-4 animate-pip-float"
                 >
                     🍤
                 </span>

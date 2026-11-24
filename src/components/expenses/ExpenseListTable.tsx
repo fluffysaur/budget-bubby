@@ -525,7 +525,7 @@ export function ExpenseListTable({
                                                                 )}
                                                             </span>
                                                             {displayTime && (
-                                                                <span className="text-[10px] sm:text-[11px] font-mono-num font-normal text-(--text-muted)">
+                                                                <span className="text-2xs font-mono-num font-normal text-(--text-muted)">
                                                                     {formatTime12h(
                                                                         displayTime,
                                                                     )}
@@ -545,7 +545,7 @@ export function ExpenseListTable({
                                                             />
                                                         </div>
                                                         {hasForeignCurrency && (
-                                                            <div className="font-mono-num text-[10px] font-semibold text-(--text-muted)">
+                                                            <div className="font-mono-num text-2xs font-semibold text-(--text-muted)">
                                                                 {formatForeignAmount(
                                                                     expense.original_amount!,
                                                                     expense.original_currency!,
@@ -566,7 +566,7 @@ export function ExpenseListTable({
                                                                 expense.tags
                                                                     .length >
                                                                     0 && (
-                                                                    <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
+                                                                    <span className="text-2xs font-bold text-purple-700 dark:text-purple-300 bg-(--pastel-lilac-light) px-1.5 py-0.2 rounded border border-(--border-ink) shrink-0">
                                                                         #
                                                                         {
                                                                             expense
@@ -594,7 +594,7 @@ export function ExpenseListTable({
                                                                     );
                                                                 return (
                                                                     <span
-                                                                        className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-cute-sm"
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-2xs font-bold bg-(--pastel-lilac-light) text-purple-900 dark:text-purple-200 border border-(--border-ink) shadow-cute-sm"
                                                                         title={
                                                                             goal
                                                                                 ? `Goal Spend: ${goal.title}`
@@ -619,7 +619,7 @@ export function ExpenseListTable({
                                                         ) : category &&
                                                           partnerCategory ? (
                                                             <span
-                                                                className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)"
+                                                                className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-2xs font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)"
                                                                 title={`${category.name} · ${partnerCategory.name}`}
                                                             >
                                                                 <span
@@ -649,7 +649,7 @@ export function ExpenseListTable({
                                                                 />
                                                             </span>
                                                         ) : category ? (
-                                                            <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-3 py-0.5 sm:py-1 text-2xs font-bold bg-(--bg-canvas) text-(--text-ink) border border-(--border-ink)">
                                                                 <span
                                                                     className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0 border border-black/20"
                                                                     style={{
@@ -665,7 +665,7 @@ export function ExpenseListTable({
                                                                 </span>
                                                             </span>
                                                         ) : (
-                                                            <span className="text-(--text-muted) text-[10px] sm:text-[11px]">
+                                                            <span className="text-(--text-muted) text-2xs">
                                                                 Uncategorized
                                                             </span>
                                                         )}
@@ -685,7 +685,7 @@ export function ExpenseListTable({
                                                                 size="xs"
                                                                 decorative
                                                             />
-                                                            <span className="text-[10px] sm:text-xs">
+                                                            <span className="text-2xs sm:text-xs">
                                                                 {payer?.display_name ||
                                                                     "Unknown"}
                                                             </span>
@@ -695,7 +695,7 @@ export function ExpenseListTable({
                                                     {/* Split Status Badge */}
                                                     <td className="order-6 py-0 sm:py-4 px-0 sm:px-3 inline-flex items-center sm:table-cell whitespace-nowrap">
                                                         {expense.is_shared ? (
-                                                            <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-bold text-(--text-ink)">
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-(--pastel-lilac-light) border border-(--border-ink) px-2 sm:px-3 py-0.5 sm:py-0.8 text-2xs font-bold text-(--text-ink)">
                                                                 <ArrowRightLeft className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                                                 <span>
                                                                     {expense.split_ratio &&
@@ -706,7 +706,7 @@ export function ExpenseListTable({
                                                                 </span>
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-[10px] sm:text-[11px] font-medium text-(--text-muted)">
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-(--bg-canvas) border border-(--border-subtle) px-2 sm:px-3 py-0.5 sm:py-0.8 text-2xs font-medium text-(--text-muted)">
                                                                 <span>
                                                                     Personal
                                                                 </span>
@@ -716,7 +716,7 @@ export function ExpenseListTable({
 
                                                     {/* Edit & Delete Action Buttons */}
                                                     <td className="order-7 py-0 sm:py-4 pl-0 sm:pl-3 pr-0 sm:pr-6 ml-auto sm:ml-0 inline-flex items-center sm:table-cell text-right sm:text-center whitespace-nowrap">
-                                                        <div className="inline-flex items-center gap-1.5">
+                                                        <div className="inline-flex items-center gap-2.5">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => {
@@ -731,10 +731,10 @@ export function ExpenseListTable({
                                                                     );
                                                                 }}
                                                                 aria-label={`Edit ${expense.item}`}
-                                                                className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                                                className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter) shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                                                 title="Edit expense"
                                                             >
-                                                                <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                                <Pencil className="h-3.5 w-3.5" />
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -744,7 +744,7 @@ export function ExpenseListTable({
                                                                     )
                                                                 }
                                                                 aria-label={`Delete ${expense.item}`}
-                                                                className="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                                                className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-coral-light) hover:text-red-600 shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                                                 title="Delete expense"
                                                             >
                                                                 <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -808,7 +808,7 @@ export function ExpenseListTable({
                                         }
                                         disabled={validCurrentPage <= 1}
                                         aria-label="Previous page"
-                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                        className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                     >
                                         <ChevronLeft className="h-4 w-4" />
                                     </button>
@@ -843,7 +843,7 @@ export function ExpenseListTable({
                                                         onClick={() =>
                                                             handlePageChange(p)
                                                         }
-                                                        className={`h-8 w-8 rounded-lg text-xs font-mono-num font-bold transition-press cursor-pointer ${
+                                                        className={`relative h-8 w-8 rounded-lg after:absolute after:-inset-2 after:content-[''] text-xs font-mono-num font-bold transition-press cursor-pointer ${
                                                             p ===
                                                             validCurrentPage
                                                                 ? "bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm font-black"
@@ -867,7 +867,7 @@ export function ExpenseListTable({
                                             validCurrentPage >= totalPages
                                         }
                                         aria-label="Next page"
-                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                        className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                     >
                                         <ChevronRight className="h-4 w-4" />
                                     </button>

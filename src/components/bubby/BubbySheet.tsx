@@ -69,7 +69,7 @@ function Meter({
             </span>
             <div className="h-2.5 flex-1 overflow-hidden rounded-full border border-(--border-ink)/30 bg-(--bg-cream)">
                 <div
-                    className="h-full rounded-full bg-(--pastel-lilac) transition-all"
+                    className="h-full rounded-full bg-(--pastel-lilac) progress-fill"
                     style={{
                         width: `${Math.round(Math.max(0.04, value) * 100)}%`,
                     }}
@@ -171,7 +171,7 @@ function PenguinCard({
                 <span
                     aria-hidden="true"
                     data-fed={fed ? "true" : "false"}
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-(--border-ink) text-[9px] font-black leading-none ${
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-(--border-ink) text-2xs font-black leading-none ${
                         fed
                             ? "bg-(--pastel-mint) text-(--text-ink)"
                             : "bg-(--bg-cream) text-(--text-faint) opacity-60"

@@ -130,7 +130,7 @@ export function MonthPicker({
                 type="button"
                 onClick={handlePrevMonth}
                 aria-label="Previous month"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl after:absolute after:-inset-1.5 after:content-[''] border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
             >
                 <ChevronLeft className="h-4 w-4" />
             </button>
@@ -162,7 +162,7 @@ export function MonthPicker({
                 type="button"
                 onClick={handleNextMonth}
                 aria-label="Next month"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl after:absolute after:-inset-1.5 after:content-[''] border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
             >
                 <ChevronRight className="h-4 w-4" />
             </button>
@@ -189,7 +189,7 @@ export function MonthPicker({
                                         type="button"
                                         onClick={() => setNavYear((y) => y - 1)}
                                         aria-label="Previous year"
-                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                        className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                     >
                                         <ChevronLeft className="h-3.5 w-3.5" />
                                     </button>
@@ -200,7 +200,7 @@ export function MonthPicker({
                                         type="button"
                                         onClick={() => setNavYear((y) => y + 1)}
                                         aria-label="Next year"
-                                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                        className="relative flex h-7 w-7 items-center justify-center rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                                     >
                                         <ChevronRight className="h-3.5 w-3.5" />
                                     </button>
@@ -210,7 +210,7 @@ export function MonthPicker({
                                     type="button"
                                     onClick={() => setIsOpen(false)}
                                     aria-label="Close month picker"
-                                    className="p-1 rounded-lg text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) cursor-pointer"
+                                    className="relative p-1 rounded-lg after:absolute after:-inset-2.5 after:content-[''] text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) cursor-pointer"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>

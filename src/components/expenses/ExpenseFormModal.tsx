@@ -603,7 +603,7 @@ export function ExpenseFormModal({
                                                         ),
                                                     );
                                                 }}
-                                                className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-all active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
+                                                className={`flex min-h-10 max-w-full items-center gap-1.5 rounded-xl border-2 border-(--border-ink) px-2.5 py-1 text-xs font-bold transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                                                     isLinked
                                                         ? "bg-(--pastel-mint-light) shadow-cute-sm"
                                                         : "bg-(--bg-card) hover:bg-(--bg-cream)"

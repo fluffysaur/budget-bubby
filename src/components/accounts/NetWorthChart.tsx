@@ -232,7 +232,7 @@ export function NetWorthChart({
                                 tickLine={false}
                                 axisLine={false}
                                 tick={{
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fill: "var(--text-faint)",
                                 }}
                                 tickFormatter={(v) => {

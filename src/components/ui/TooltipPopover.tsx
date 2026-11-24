@@ -124,7 +124,7 @@ export function TooltipPopover({
                     ref={setReference}
                     type="button"
                     aria-label={effectiveAriaLabel}
-                    className={`inline-flex items-center justify-center p-1 rounded-md transition-colors cursor-pointer ${
+                    className={`relative inline-flex items-center justify-center p-1 rounded-md after:absolute after:-inset-3 after:content-[''] transition-colors cursor-pointer ${
                         isOpen
                             ? "bg-(--bg-cream) text-(--text-ink)"
                             : "text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream)"
@@ -168,7 +168,7 @@ export function TooltipPopover({
                                         type="button"
                                         onClick={() => setIsOpen(false)}
                                         aria-label="Close tooltip"
-                                        className="p-0.5 rounded text-(--text-muted) hover:text-(--text-ink) cursor-pointer ml-auto"
+                                        className="relative p-0.5 rounded after:absolute after:-inset-3.5 after:content-[''] text-(--text-muted) hover:text-(--text-ink) cursor-pointer ml-auto"
                                     >
                                         <X className="h-3.5 w-3.5" />
                                     </button>

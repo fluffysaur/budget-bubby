@@ -412,7 +412,7 @@ export function AddAccountModal({
                                 <div>
                                     <label
                                         htmlFor="account-institution-extra"
-                                        className="block text-[10px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
+                                        className="block text-2xs font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                                     >
                                         Institution
                                     </label>
@@ -430,7 +430,7 @@ export function AddAccountModal({
                                 <div>
                                     <label
                                         htmlFor="account-notes"
-                                        className="block text-[10px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
+                                        className="block text-2xs font-bold uppercase tracking-wider text-(--text-muted) mb-1"
                                     >
                                         Notes
                                     </label>

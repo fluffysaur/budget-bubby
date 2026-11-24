@@ -110,7 +110,7 @@ export function Alert({
                     type="button"
                     onClick={onClose}
                     aria-label="Dismiss alert"
-                    className="shrink-0 -mr-1 -mt-1 p-1 rounded-lg text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                    className="shrink-0 -mr-2 -mt-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 >
                     <X className="h-4 w-4" />
                 </button>

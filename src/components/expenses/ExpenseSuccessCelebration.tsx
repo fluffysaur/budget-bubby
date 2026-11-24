@@ -155,7 +155,7 @@ export function ExpenseSuccessCelebration({
                                 e.stopPropagation();
                                 handleDismiss();
                             }}
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors"
+                            className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md after:absolute after:-inset-3 after:content-[''] text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors"
                         >
                             <X className="h-3.5 w-3.5" />
                         </button>

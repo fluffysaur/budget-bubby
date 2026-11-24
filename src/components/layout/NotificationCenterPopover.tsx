@@ -456,7 +456,7 @@ export function NotificationCenterPopover({
                             type="button"
                             data-testid="enable-push-notifications-btn"
                             onClick={handleRequestPermission}
-                            className="px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-(--accent-mint-ink) border border-(--border-ink) text-[10px] font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer"
+                            className="relative after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-[''] px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-(--accent-mint-ink) border border-(--border-ink) text-2xs font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer"
                         >
                             Enable
                         </button>
@@ -506,7 +506,7 @@ export function NotificationCenterPopover({
                                     data-testid={`reminder-dismiss-${reminder.id}`}
                                     aria-label="Dismiss reminder"
                                     onClick={() => handleDismiss(reminder)}
-                                    className="shrink-0 text-(--text-muted) hover:text-(--text-ink) p-0.5 cursor-pointer"
+                                    className="relative shrink-0 after:absolute after:-inset-3 after:content-[''] text-(--text-muted) hover:text-(--text-ink) p-0.5 cursor-pointer"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -560,14 +560,14 @@ export function NotificationCenterPopover({
                 aria-label={`Notifications (${unreadCount} unread)`}
                 aria-expanded={isOpen}
                 onClick={handleToggleOpen}
-                className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1 sm:after:-inset-0.5 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
+                className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1.5 sm:after:-inset-1 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm transition-press hover:bg-(--bg-cream) active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus:outline-none cursor-pointer"
             >
                 <Bell className="h-4 w-4" strokeWidth={2.5} />
 
                 {unreadCount > 0 && (
                     <span
                         data-testid="notification-badge-count"
-                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-[10px] font-black text-white shadow-cute-sm animate-pop font-mono-num"
+                        className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--accent-coral) border border-(--border-ink) px-1 text-2xs font-black text-white shadow-cute-sm animate-pop font-mono-num"
                     >
                         {unreadCount}
                     </span>
@@ -601,7 +601,7 @@ export function NotificationCenterPopover({
                                 </h3>
 
                                 {count > 0 && (
-                                    <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
+                                    <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-2xs font-black text-(--text-ink) font-mono-num">
                                         {count}
                                     </span>
                                 )}
@@ -611,7 +611,7 @@ export function NotificationCenterPopover({
                                 type="button"
                                 aria-label="Close notification center"
                                 onClick={() => setIsOpen(false)}
-                                className="rounded-lg p-1 text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
+                                className="relative rounded-lg p-1 after:absolute after:-inset-2.5 after:content-[''] text-(--text-muted) hover:text-(--text-ink) hover:bg-(--bg-cream) transition-colors cursor-pointer"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -654,7 +654,7 @@ export function NotificationCenterPopover({
                                                 Notifications
                                             </h2>
                                             {count > 0 && (
-                                                <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-[10px] font-black text-(--text-ink) font-mono-num">
+                                                <span className="rounded-full bg-(--bg-cream) border border-(--border-ink) px-2 py-0.5 text-2xs font-black text-(--text-ink) font-mono-num">
                                                     {count}
                                                 </span>
                                             )}
@@ -666,7 +666,7 @@ export function NotificationCenterPopover({
                                         aria-label="Close notification center"
                                         data-testid="close-notification-overlay-btn"
                                         onClick={() => setIsOpen(false)}
-                                        className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                        className="relative flex h-8 w-8 items-center justify-center rounded-xl after:absolute after:-inset-2 after:content-[''] border-2 border-(--border-ink) bg-(--bg-cream) text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
                                     >
                                         <X
                                             className="h-4 w-4"

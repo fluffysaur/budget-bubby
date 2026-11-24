@@ -306,7 +306,7 @@ export function BulkBalanceUpdateModal({
                                                 {account.name}
                                             </span>
                                             {account.is_joint && (
-                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-(--pastel-lilac) text-(--text-ink)">
+                                                <span className="text-2xs font-bold px-1.5 py-0.2 rounded-full bg-(--pastel-lilac) text-(--text-ink)">
                                                     Joint
                                                 </span>
                                             )}
@@ -368,7 +368,7 @@ export function BulkBalanceUpdateModal({
                 <ModalFooter className="flex-col sm:flex-row sm:justify-between">
                     <div className="flex items-center gap-3 text-xs w-full sm:w-auto justify-between sm:justify-start">
                         <div>
-                            <span className="text-(--text-muted) block text-[10px]">
+                            <span className="text-(--text-muted) block text-2xs">
                                 New Total Assets
                             </span>
                             <span className="text-(--text-ink)">
@@ -380,7 +380,7 @@ export function BulkBalanceUpdateModal({
                         </div>
                         <div className="h-7 w-px bg-(--border-subtle)" />
                         <div>
-                            <span className="text-(--text-muted) block text-[10px]">
+                            <span className="text-(--text-muted) block text-2xs">
                                 Net Change
                             </span>
                             <span

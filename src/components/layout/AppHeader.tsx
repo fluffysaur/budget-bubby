@@ -270,7 +270,7 @@ export function AppHeader({
                                     {...pop}
                                     className="absolute left-0 mt-2 w-52 rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-1.5 shadow-cute-lg z-50"
                                 >
-                                    <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
+                                    <div className="px-2.5 py-1 text-2xs font-black uppercase tracking-wider text-(--text-muted)">
                                         Perspectives
                                     </div>
                                     {perspectiveOptions.map((opt) => {
@@ -305,7 +305,7 @@ export function AppHeader({
 
                                     {/* Mobile Settings & Utilities section */}
                                     <div className="mt-2 pt-2 border-t-2 border-(--border-subtle) space-y-1 lg:hidden">
-                                        <div className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-(--text-muted)">
+                                        <div className="px-2.5 py-0.5 text-2xs font-black uppercase tracking-wider text-(--text-muted)">
                                             Settings &amp; Tools
                                         </div>
                                         <button
@@ -373,7 +373,7 @@ export function AppHeader({
                                                 <span>Refresh</span>
                                             </div>
                                             {isRefreshing && (
-                                                <span className="text-[10px] text-(--text-muted) animate-pulse font-mono-num">
+                                                <span className="text-2xs text-(--text-muted) animate-pulse font-mono-num">
                                                     Refreshing...
                                                 </span>
                                             )}
@@ -492,7 +492,7 @@ export function AppHeader({
                             aria-label="Open Bubby AI"
                             title="Bubby AI"
                             data-testid="open-bubby-chat-btn"
-                            className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1 sm:after:-inset-0.5 after:content-[''] border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press"
+                            className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl after:absolute after:-inset-1.5 sm:after:-inset-1 after:content-[''] border-2 border-(--border-ink) bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-lilac) cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-press"
                         >
                             <Sparkles
                                 className="h-4.5 w-4.5"

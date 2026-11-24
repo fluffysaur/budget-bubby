@@ -262,7 +262,7 @@ export function CentsFirstAmountInput({
                             handleClear();
                         }}
                         aria-label="Clear amount"
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-(--text-muted) hover:bg-(--pastel-coral-light) hover:text-rose-600 transition-colors cursor-pointer"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex min-h-11 min-w-11 items-center justify-center rounded-full text-(--text-muted) hover:bg-(--pastel-coral-light) hover:text-rose-600 transition-colors cursor-pointer"
                     >
                         <Delete className="h-5 w-5" />
                     </button>

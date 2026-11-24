@@ -93,7 +93,7 @@ export function RenewalCalendar({
                     <div className="font-bold text-(--text-ink) min-w-0 flex-1">
                         <TruncatedText text={item.name} />
                         {dueLabel && (
-                            <span className="block text-[10px] font-semibold text-(--text-muted)">
+                            <span className="block text-2xs font-semibold text-(--text-muted)">
                                 {dueLabel}
                             </span>
                         )}
@@ -235,7 +235,7 @@ export function RenewalCalendar({
                         )}
                         {selected.monthlyItems.length > 0 && (
                             <div className="pt-2">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-(--text-muted)">
+                                <p className="text-2xs font-bold uppercase tracking-wider text-(--text-muted)">
                                     Monthly
                                 </p>
                                 <ul>{selected.monthlyItems.map(renderItem)}</ul>

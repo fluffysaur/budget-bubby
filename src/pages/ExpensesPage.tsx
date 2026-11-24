@@ -846,7 +846,7 @@ export function ExpensesPage({
                         title="Tags & Trips"
                         badge={
                             filter.tag ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                                <span className="px-2 py-0.5 rounded-full text-2xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                                     #{filter.tag}
                                 </span>
                             ) : undefined

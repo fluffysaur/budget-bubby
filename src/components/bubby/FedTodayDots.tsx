@@ -18,7 +18,7 @@ export function FedTodayDots({
     size = "sm",
     className = "",
 }: FedTodayDotsProps) {
-    const dot = size === "xs" ? "h-3 w-3 text-[7px]" : "h-6 w-6 text-[10px]";
+    const dot = size === "xs" ? "h-3 w-3" : "h-6 w-6 text-2xs";
     return (
         <span
             className={`inline-flex items-center gap-1 ${className}`}

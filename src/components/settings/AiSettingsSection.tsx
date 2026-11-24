@@ -434,7 +434,7 @@ export function AiSettingsSection() {
                                     showKey ? "Hide API key" : "Show API key"
                                 }
                                 data-testid="toggle-ai-key-visibility"
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                                className="relative flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-1.5 after:content-[''] text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
                             >
                                 {showKey ? (
                                     <EyeOff

@@ -261,7 +261,7 @@ export function EditAccountModal({
                             </span>
                         </label>
                         {type === "CPF" && (
-                            <span className="text-[10px] text-(--text-muted) block mt-0.5">
+                            <span className="text-2xs text-(--text-muted) block mt-0.5">
                                 CPF accounts cannot be joint in SG
                             </span>
                         )}

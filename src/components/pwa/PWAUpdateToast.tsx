@@ -77,7 +77,7 @@ export const PWAUpdateToast: React.FC = () => {
                         <button
                             type="button"
                             onClick={close}
-                            className="text-(--text-faint) hover:text-(--text-ink) p-1 rounded-md transition-colors cursor-pointer"
+                            className="relative text-(--text-faint) hover:text-(--text-ink) p-1 rounded-md after:absolute after:-inset-2.5 after:content-[''] transition-colors cursor-pointer"
                             aria-label="Dismiss"
                         >
                             <X className="w-4 h-4" />

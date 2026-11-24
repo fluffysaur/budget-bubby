@@ -580,7 +580,7 @@ export function ExpenseFormFields({
                             {moreSummary}
                         </span>
                         {moreOptionsActiveCount > 0 && (
-                            <span className="shrink-0 rounded-full border border-(--border-ink) bg-(--pastel-butter) px-2 py-0.5 text-[10px] font-bold text-(--text-ink)">
+                            <span className="shrink-0 rounded-full border border-(--border-ink) bg-(--pastel-butter) px-2 py-0.5 text-2xs font-bold text-(--text-ink)">
                                 {moreOptionsActiveCount} active
                             </span>
                         )}
@@ -767,7 +767,7 @@ export function ExpenseFormFields({
                                         }
                                         className="w-full cursor-pointer accent-(--pastel-lilac)"
                                     />
-                                    <div className="flex justify-between text-[10px] text-(--text-muted)">
+                                    <div className="flex justify-between text-2xs text-(--text-muted)">
                                         <span>0%</span>
                                         <button
                                             type="button"
@@ -906,7 +906,7 @@ export function ExpenseFormFields({
                                             type="button"
                                             onClick={() => handleRemoveTag(tag)}
                                             aria-label={`Remove tag ${tag}`}
-                                            className="ml-0.5 cursor-pointer text-(--text-muted) hover:text-rose-600"
+                                            className="relative ml-0.5 after:absolute after:-inset-3 after:content-[''] cursor-pointer text-(--text-muted) hover:text-rose-600"
                                         >
                                             ×
                                         </button>
@@ -946,7 +946,7 @@ export function ExpenseFormFields({
 
                         {availableRecentTags.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                                <span className="text-[10px] font-bold uppercase text-(--text-muted)">
+                                <span className="text-2xs font-bold uppercase text-(--text-muted)">
                                     Recent:
                                 </span>
                                 {availableRecentTags.map((rTag) => (

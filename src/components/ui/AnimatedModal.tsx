@@ -747,7 +747,7 @@ export function ModalHeader({
                     type="button"
                     onClick={handleClose}
                     aria-label={closeAriaLabel}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                    className="relative flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border border-(--border-ink) text-(--text-ink) hover:bg-(--pastel-coral-light) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                 >
                     <X className="h-4 w-4" />
                 </button>

@@ -88,7 +88,7 @@ export function PoolBar({
                         onClick={() =>
                             onSelect(selectedId === SPARE_ID ? null : SPARE_ID)
                         }
-                        className={`absolute inset-y-0 flex cursor-pointer items-center justify-center border-l-2 border-dashed border-(--border-subtle) text-[10px] font-bold uppercase tracking-wider text-(--text-muted) ${
+                        className={`absolute inset-y-0 flex cursor-pointer items-center justify-center border-l-2 border-dashed border-(--border-subtle) text-2xs font-bold uppercase tracking-wider text-(--text-muted) ${
                             selectedId === SPARE_ID
                                 ? "ring-2 ring-inset ring-(--border-ink)"
                                 : ""

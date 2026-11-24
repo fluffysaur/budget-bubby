@@ -19,7 +19,7 @@ export function CategoryBadge({
 }: CategoryBadgeProps) {
     const sizeStyles =
         size === "sm"
-            ? "px-2 py-0.5 text-[10px] sm:text-[11px] gap-1.5"
+            ? "px-2 py-0.5 text-2xs gap-1.5"
             : "px-2.5 py-1 text-xs gap-2";
 
     const dotSize = size === "sm" ? "h-2 w-2" : "h-2.5 w-2.5";
