@@ -77,12 +77,11 @@ export function AuthProvider({
     const [authError, setAuthError] = useState<string | null>(null);
 
     // Link authenticated user to household_members table via RPC
-    const linkMemberProfile = useCallback(async (email: string) => {
+    const linkMemberProfile = useCallback(async () => {
         if (!supabase) return;
         try {
-            await supabase.rpc("claim_household_member_profile", {
-                user_email: email,
-            });
+            // Identity is read server-side from the verified JWT.
+            await supabase.rpc("claim_household_member_profile");
         } catch (err) {
             console.warn("Could not auto-link member profile:", err);
         }
@@ -109,7 +108,7 @@ export function AuthProvider({
                     const partner = partnerFromEmail(currentSession.user.email);
                     setLoggedInPartner(partner);
                     if (currentSession.user.email) {
-                        linkMemberProfile(currentSession.user.email);
+                        linkMemberProfile();
                     }
                 } else {
                     setSession(null);
@@ -139,7 +138,7 @@ export function AuthProvider({
                 const partner = partnerFromEmail(newSession.user.email);
                 setLoggedInPartner(partner);
                 if (newSession.user.email) {
-                    linkMemberProfile(newSession.user.email);
+                    linkMemberProfile();
                 }
             } else {
                 setLoggedInPartner(null);
@@ -213,7 +212,7 @@ export function AuthProvider({
                             );
                         }
                         syncPersistedCacheUser(res.data.user.id, queryClient);
-                        await linkMemberProfile(email);
+                        await linkMemberProfile();
                         setAuthLoading(false);
                         return true;
                     }
