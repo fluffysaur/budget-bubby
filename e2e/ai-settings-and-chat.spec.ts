@@ -20,6 +20,9 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
         const drawer = page.getByTestId("bubby-chat-drawer");
         await expect(drawer).toBeVisible();
         await expect(drawer.getByTestId("bubby-no-key-state")).toBeVisible();
+        await expect(
+            drawer.getByTestId("bubby-connect-openrouter-btn"),
+        ).toBeVisible();
 
         // Click Open Settings CTA inside drawer
         await drawer.getByTestId("bubby-setup-key-cta").click();
@@ -35,6 +38,7 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
         await page
             .getByTestId("ai-provider-select")
             .selectOption("openrouter");
+        await page.getByTestId("toggle-manual-openrouter-key").click();
         await page
             .getByTestId("ai-model-select")
             .selectOption("__custom__");
@@ -45,7 +49,7 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
         await page.getByTestId("save-ai-key-btn").click();
 
         await expect(page.getByTestId("ai-settings-feedback")).toContainText(
-            /OpenRouter API key saved locally/i,
+            /OpenRouter API key saved and synced/i,
         );
 
         // Close Settings modal and reopen Bubby chat drawer

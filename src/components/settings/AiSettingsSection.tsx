@@ -3,7 +3,7 @@
  * API keys and model preferences are stored per provider in browser localStorage.
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Sparkles,
     Eye,
@@ -11,6 +11,7 @@ import {
     Check,
     Trash2,
     Plug,
+    ExternalLink,
 } from "lucide-react";
 import {
     AI_CONFIG_CHANGED_EVENT,
@@ -26,10 +27,17 @@ import {
     setProviderApiKey,
     setProviderModel,
     testAiConnection,
+    type AiModelOption,
     type AiProviderId,
     type AiReasoningEffort,
 } from "../../services/ai/providers";
-import { pushGeminiSettings } from "../../services/ai/aiSettingsSync";
+import { pushAiSettings } from "../../services/ai/aiSettingsSync";
+import { fetchOpenRouterFreeModels } from "../../services/ai/openrouterModels";
+import {
+    consumePendingOpenRouterFeedback,
+    hasPendingOpenRouterFeedback,
+    startOpenRouterOAuth,
+} from "../../services/ai/openrouterAuth";
 import { financeService } from "../../services/financeService";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
@@ -74,15 +82,81 @@ export function AiSettingsSection() {
         () => getAiReasoningEffort(),
     );
     const [showKey, setShowKey] = useState(false);
+    const [showManualOpenRouterKey, setShowManualOpenRouterKey] =
+        useState(false);
+    const [isConnectingOpenRouter, setIsConnectingOpenRouter] = useState(false);
+    const [liveOpenRouterModels, setLiveOpenRouterModels] = useState<
+        AiModelOption[] | null
+    >(null);
     const [isTesting, setIsTesting] = useState(false);
     const [feedback, setFeedback] = useState<{
         variant: "success" | "danger" | "info";
         message: string;
     } | null>(null);
+    const [defaultOpen] = useState(() =>
+        hasPendingOpenRouterFeedback("settings"),
+    );
+
+    const refreshFromStorage = useCallback(() => {
+        const nextProvider = getActiveAiProvider();
+        const nextKey = getProviderApiKey(nextProvider);
+        const nextModel = getProviderModel(nextProvider);
+        setProvider(nextProvider);
+        setSavedKey(nextKey);
+        setApiKeyDraft(nextKey);
+        setModel(nextModel);
+        setUseCustomModel(!isCuratedModel(nextProvider, nextModel));
+        const pending = consumePendingOpenRouterFeedback("settings");
+        if (pending) {
+            setFeedback({
+                variant: pending.variant,
+                message: pending.message,
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        const pending = consumePendingOpenRouterFeedback("settings");
+        if (pending) {
+            setFeedback({
+                variant: pending.variant,
+                message: pending.message,
+            });
+        }
+        if (typeof window === "undefined") return;
+        window.addEventListener(AI_CONFIG_CHANGED_EVENT, refreshFromStorage);
+        return () => {
+            window.removeEventListener(
+                AI_CONFIG_CHANGED_EVENT,
+                refreshFromStorage,
+            );
+        };
+    }, [refreshFromStorage]);
+
+    useEffect(() => {
+        if (provider !== "openrouter") return;
+        let active = true;
+        void fetchOpenRouterFreeModels().then((models) => {
+            if (active) {
+                setLiveOpenRouterModels(models);
+            }
+        });
+        return () => {
+            active = false;
+        };
+    }, [provider]);
 
     const providerMeta = AI_PROVIDER_META[provider];
+    const modelOptions =
+        provider === "openrouter" && liveOpenRouterModels
+            ? liveOpenRouterModels
+            : providerMeta.curatedModels;
     const isConfigured = savedKey.length > 0;
+    const isSyncedProvider =
+        provider === "gemini" || provider === "openrouter";
     const isDirty = apiKeyDraft.trim() !== savedKey;
+    const showManualKeyInput =
+        provider !== "openrouter" || showManualOpenRouterKey;
 
     const handleProviderChange = (nextProvider: AiProviderId) => {
         setActiveAiProvider(nextProvider);
@@ -94,13 +168,15 @@ export function AiSettingsSection() {
         setModel(nextModel);
         setUseCustomModel(!isCuratedModel(nextProvider, nextModel));
         setShowKey(false);
+        setShowManualOpenRouterKey(false);
         setFeedback(null);
+        void pushAiSettings(financeService);
         notifyAiConfigChanged();
     };
 
-    const syncGemini = (targetProvider: AiProviderId) => {
-        if (targetProvider === "gemini") {
-            void pushGeminiSettings(financeService);
+    const syncProviderSettings = (targetProvider: AiProviderId) => {
+        if (targetProvider === "gemini" || targetProvider === "openrouter") {
+            void pushAiSettings(financeService);
         }
     };
 
@@ -112,13 +188,13 @@ export function AiSettingsSection() {
         setSavedKey(trimmedKey);
         setApiKeyDraft(trimmedKey);
         setModel(effectiveModel);
-        syncGemini(provider);
+        syncProviderSettings(provider);
         notifyAiConfigChanged();
         delightFeedback.routine("save");
         setFeedback({
             variant: trimmedKey ? "success" : "info",
             message: trimmedKey
-                ? provider === "gemini"
+                ? isSyncedProvider
                     ? `${providerMeta.label} API key saved and synced.`
                     : `${providerMeta.label} API key saved locally.`
                 : `${providerMeta.label} API key removed.`,
@@ -129,12 +205,33 @@ export function AiSettingsSection() {
         clearProviderApiKey(provider);
         setSavedKey("");
         setApiKeyDraft("");
-        syncGemini(provider);
+        syncProviderSettings(provider);
         notifyAiConfigChanged();
         delightFeedback.routine("delete");
         setFeedback({
             variant: "info",
-            message: `${providerMeta.label} API key cleared from this device.`,
+            message:
+                provider === "openrouter"
+                    ? "OpenRouter disconnected from your account."
+                    : `${providerMeta.label} API key cleared from this device.`,
+        });
+    };
+
+    const handleConnectOpenRouter = () => {
+        setIsConnectingOpenRouter(true);
+        const currentPath =
+            typeof window !== "undefined"
+                ? `${window.location.pathname}${window.location.search}`
+                : "/";
+        void startOpenRouterOAuth("settings", currentPath).catch((err) => {
+            setIsConnectingOpenRouter(false);
+            setFeedback({
+                variant: "danger",
+                message:
+                    err instanceof Error
+                        ? err.message
+                        : "Could not start OpenRouter sign-in.",
+            });
         });
     };
 
@@ -146,7 +243,7 @@ export function AiSettingsSection() {
         setUseCustomModel(false);
         setModel(selectedValue);
         setProviderModel(provider, selectedValue);
-        syncGemini(provider);
+        syncProviderSettings(provider);
         notifyAiConfigChanged();
     };
 
@@ -200,7 +297,7 @@ export function AiSettingsSection() {
     };
 
     const selectValue =
-        useCustomModel || !isCuratedModel(provider, model)
+        useCustomModel || !modelOptions.some((opt) => opt.value === model)
             ? CUSTOM_MODEL_SENTINEL
             : model;
 
@@ -210,19 +307,20 @@ export function AiSettingsSection() {
             subtitle={
                 isConfigured
                     ? `${providerMeta.label} · ${
-                          provider === "gemini" ? "Synced" : "Stored locally"
+                          isSyncedProvider ? "Synced" : "Stored locally"
                       }`
                     : "Bring your own key"
             }
             badge={isConfigured ? providerMeta.label : "Not Set"}
             badgeVariant={isConfigured ? "mint" : "slate"}
             icon={<Sparkles className="h-4 w-4" strokeWidth={2.5} />}
+            defaultOpen={defaultOpen}
         >
             <div className="space-y-4">
                 <p className="text-xs text-(--text-muted) leading-relaxed">
-                    Bring your own AI API key. Your Gemini key syncs to your
-                    private account so it works on every device. Other
-                    providers stay on this device.
+                    Connect OpenRouter with one click or bring your own API key.
+                    Gemini and OpenRouter sync to your private account across
+                    devices. Other providers stay on this device.
                 </p>
 
                 <Select
@@ -240,40 +338,119 @@ export function AiSettingsSection() {
                     }))}
                 />
 
-                <Input
-                    id="ai-api-key-input"
-                    label={providerMeta.keyLabel}
-                    type={showKey ? "text" : "password"}
-                    value={apiKeyDraft}
-                    onChange={(e) => {
-                        setApiKeyDraft(e.target.value);
-                        if (feedback) setFeedback(null);
-                    }}
-                    placeholder={providerMeta.placeholder}
-                    autoComplete="off"
-                    spellCheck={false}
-                    data-testid="ai-api-key-input"
-                    rightElement={
+                {provider === "openrouter" && (
+                    <div className="space-y-2">
+                        {isConfigured ? (
+                            <div
+                                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-(--border-ink) bg-(--pastel-mint-light) px-3 py-2.5 shadow-cute-sm"
+                                data-testid="openrouter-connected-status"
+                            >
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Check
+                                        className="h-4 w-4 shrink-0 text-(--text-ink)"
+                                        strokeWidth={2.5}
+                                    />
+                                    <span className="text-xs font-bold text-(--text-ink) truncate">
+                                        OpenRouter connected · Synced
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        isLoading={isConnectingOpenRouter}
+                                        onClick={handleConnectOpenRouter}
+                                        data-testid="reconnect-openrouter-btn"
+                                    >
+                                        Reconnect
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleClear}
+                                        data-testid="disconnect-openrouter-btn"
+                                    >
+                                        Disconnect
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="sm"
+                                    isLoading={isConnectingOpenRouter}
+                                    onClick={handleConnectOpenRouter}
+                                    data-testid="connect-openrouter-btn"
+                                    leftIcon={
+                                        <ExternalLink
+                                            className="h-3.5 w-3.5"
+                                            strokeWidth={2.5}
+                                        />
+                                    }
+                                >
+                                    Connect OpenRouter
+                                </Button>
+                            </div>
+                        )}
+
                         <button
                             type="button"
-                            onClick={() => setShowKey((prev) => !prev)}
-                            aria-label={
-                                showKey ? "Hide API key" : "Show API key"
+                            onClick={() =>
+                                setShowManualOpenRouterKey((prev) => !prev)
                             }
-                            data-testid="toggle-ai-key-visibility"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                            data-testid="toggle-manual-openrouter-key"
+                            className="text-xs font-bold text-(--text-muted) hover:text-(--text-ink) underline underline-offset-2 transition-colors cursor-pointer"
                         >
-                            {showKey ? (
-                                <EyeOff
-                                    className="h-4 w-4"
-                                    strokeWidth={2.5}
-                                />
-                            ) : (
-                                <Eye className="h-4 w-4" strokeWidth={2.5} />
-                            )}
+                            {showManualOpenRouterKey
+                                ? "Hide manual key"
+                                : "Paste key manually"}
                         </button>
-                    }
-                />
+                    </div>
+                )}
+
+                {showManualKeyInput && (
+                    <Input
+                        id="ai-api-key-input"
+                        label={providerMeta.keyLabel}
+                        type={showKey ? "text" : "password"}
+                        value={apiKeyDraft}
+                        onChange={(e) => {
+                            setApiKeyDraft(e.target.value);
+                            if (feedback) setFeedback(null);
+                        }}
+                        placeholder={providerMeta.placeholder}
+                        autoComplete="off"
+                        spellCheck={false}
+                        data-testid="ai-api-key-input"
+                        rightElement={
+                            <button
+                                type="button"
+                                onClick={() => setShowKey((prev) => !prev)}
+                                aria-label={
+                                    showKey ? "Hide API key" : "Show API key"
+                                }
+                                data-testid="toggle-ai-key-visibility"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                            >
+                                {showKey ? (
+                                    <EyeOff
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                ) : (
+                                    <Eye
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                )}
+                            </button>
+                        }
+                    />
+                )}
 
                 <Select
                     id="ai-model-select"
@@ -283,7 +460,7 @@ export function AiSettingsSection() {
                     onChange={(e) => handleModelSelectChange(e.target.value)}
                     data-testid="ai-model-select"
                     options={[
-                        ...providerMeta.curatedModels.map((opt) => ({
+                        ...modelOptions.map((opt) => ({
                             value: opt.value,
                             label: opt.label,
                         })),
@@ -302,7 +479,7 @@ export function AiSettingsSection() {
                         onChange={(e) =>
                             handleCustomModelChange(e.target.value)
                         }
-                        onBlur={() => syncGemini(provider)}
+                        onBlur={() => syncProviderSettings(provider)}
                         placeholder={providerMeta.defaultModel}
                         autoComplete="off"
                         spellCheck={false}
@@ -329,17 +506,19 @@ export function AiSettingsSection() {
                 />
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSave}
-                        disabled={!isDirty && isConfigured}
-                        data-testid="save-ai-key-btn"
-                        leftIcon={<Check className="h-3.5 w-3.5 stroke-3" />}
-                    >
-                        Save Key
-                    </Button>
+                    {showManualKeyInput && (
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={handleSave}
+                            disabled={!isDirty && isConfigured}
+                            data-testid="save-ai-key-btn"
+                            leftIcon={<Check className="h-3.5 w-3.5 stroke-3" />}
+                        >
+                            Save Key
+                        </Button>
+                    )}
 
                     <Button
                         type="button"
@@ -356,7 +535,7 @@ export function AiSettingsSection() {
                         Test
                     </Button>
 
-                    {isConfigured && (
+                    {isConfigured && showManualKeyInput && (
                         <Button
                             type="button"
                             variant="ghost"

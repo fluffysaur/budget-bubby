@@ -44,12 +44,15 @@ describe("BubbyChatDrawer", () => {
         vi.restoreAllMocks();
     });
 
-    it("shows the Add Key empty state with neutral copy when no AI key is configured", () => {
+    it("shows the Connect AI empty state with OpenRouter OAuth and Settings CTAs when no AI key is configured", () => {
         renderDrawer(true);
         const noKey = screen.getByTestId("bubby-no-key-state");
         expect(noKey).toBeInTheDocument();
-        expect(screen.getByText("Add Key")).toBeInTheDocument();
+        expect(screen.getByText("Connect AI")).toBeInTheDocument();
         expect(noKey).not.toHaveTextContent(/gemini/i);
+        expect(
+            screen.getByTestId("bubby-connect-openrouter-btn"),
+        ).toBeInTheDocument();
         expect(screen.getByTestId("bubby-setup-key-cta")).toBeInTheDocument();
     });
 

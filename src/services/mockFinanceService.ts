@@ -1625,6 +1625,9 @@ class MockFinanceServiceImpl implements FinanceService {
         const empty: MemberAiSettings = {
             gemini_api_key: null,
             gemini_model: null,
+            openrouter_api_key: null,
+            openrouter_model: null,
+            active_provider: null,
         };
         if (typeof window === "undefined" || !window.localStorage) {
             return empty;
@@ -1636,6 +1639,9 @@ class MockFinanceServiceImpl implements FinanceService {
             return {
                 gemini_api_key: parsed.gemini_api_key ?? null,
                 gemini_model: parsed.gemini_model ?? null,
+                openrouter_api_key: parsed.openrouter_api_key ?? null,
+                openrouter_model: parsed.openrouter_model ?? null,
+                active_provider: parsed.active_provider ?? null,
             };
         } catch {
             return empty;
@@ -1649,6 +1655,9 @@ class MockFinanceServiceImpl implements FinanceService {
             JSON.stringify({
                 gemini_api_key: settings.gemini_api_key,
                 gemini_model: settings.gemini_model,
+                openrouter_api_key: settings.openrouter_api_key,
+                openrouter_model: settings.openrouter_model,
+                active_provider: settings.active_provider,
             }),
         );
     }

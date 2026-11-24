@@ -99,14 +99,20 @@ export const AI_PROVIDER_META: Record<AiProviderId, AiProviderMeta> = {
         defaultModel: DEFAULT_OPENROUTER_MODEL,
         curatedModels: [
             {
-                value: "anthropic/claude-sonnet-4.5",
-                label: "Claude Sonnet 4.5 (Recommended)",
+                value: "openrouter/free",
+                label: "Free Models Router (Recommended)",
             },
-            { value: "openai/gpt-4o-mini", label: "GPT-4o mini" },
-            { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
             {
-                value: "meta-llama/llama-3.3-70b-instruct",
-                label: "Llama 3.3 70B Instruct",
+                value: "google/gemma-4-31b-it:free",
+                label: "Google: Gemma 4 31B (free)",
+            },
+            {
+                value: "google/gemma-4-26b-a4b-it:free",
+                label: "Google: Gemma 4 26B A4B (free)",
+            },
+            {
+                value: "nvidia/nemotron-3-ultra-550b-a55b:free",
+                label: "NVIDIA: Nemotron 3 Ultra (free)",
             },
         ],
     },
@@ -126,7 +132,9 @@ const ADAPTERS: Record<AiProviderId, AiProviderAdapter> = {
     openrouter: openrouterAdapter,
 };
 
-function isValidProviderId(value: string | null): value is AiProviderId {
+export function isValidProviderId(
+    value: string | null | undefined,
+): value is AiProviderId {
     return (
         value === "gemini" ||
         value === "anthropic" ||

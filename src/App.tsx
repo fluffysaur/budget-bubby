@@ -37,12 +37,17 @@ import {
     useOptionalHousehold,
 } from "./context/HouseholdContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { SettingsProvider } from "./context/SettingsContext";
+import { SettingsProvider, useSettings } from "./context/SettingsContext";
 import { PrivacyProvider } from "./context/PrivacyContext";
 import { PinLoginScreen } from "./components/auth/PinLoginScreen";
 import { isSupabaseConfigured } from "./services/supabaseClient";
 import { financeService } from "./services/financeService";
 import { hydrateAiSettings } from "./services/ai/aiSettingsSync";
+import {
+    OPENROUTER_CALLBACK_PATH,
+    completeOpenRouterOAuthCallback,
+    setPendingOpenRouterFeedback,
+} from "./services/ai/openrouterAuth";
 import {
     useCategoriesQuery,
     useInvalidateFinance,
@@ -123,16 +128,30 @@ function AppLayoutInner() {
     const navigate = useNavigate();
     const navType = useNavigationType();
     const { refreshData, members } = useHousehold();
+    const { openSettings } = useSettings();
     const { me } = useLoggedInMember();
     const scrollPositions = useRef<Map<string, number>>(new Map());
+    const hasHydratedAiRef = useRef(false);
+    const processedOAuthCallbackRef = useRef<string | null>(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     // Live sync partner changes (expenses, inbox items) when Supabase is configured
     usePartnerRealtimeSync();
 
     // Hydrate the local AI key/model cache from the synced remote settings
     useEffect(() => {
+        if (location.pathname === OPENROUTER_CALLBACK_PATH) return;
+        if (hasHydratedAiRef.current) return;
+        hasHydratedAiRef.current = true;
         void hydrateAiSettings(financeService);
-    }, []);
+    }, [location.pathname]);
 
     // Track main scroller position
     useEffect(() => {
@@ -333,6 +352,35 @@ function AppLayoutInner() {
         [],
     );
 
+    // Handle OpenRouter OAuth PKCE redirect callback once per search payload
+    useEffect(() => {
+        if (location.pathname !== OPENROUTER_CALLBACK_PATH) return;
+        const callbackKey = `${location.pathname}${location.search}`;
+        if (processedOAuthCallbackRef.current === callbackKey) return;
+        processedOAuthCallbackRef.current = callbackKey;
+
+        void (async () => {
+            const result = await completeOpenRouterOAuthCallback(
+                location.search,
+                financeService,
+            );
+            setPendingOpenRouterFeedback({
+                target: result.returnTo,
+                variant: result.ok ? "success" : "danger",
+                message: result.ok
+                    ? "OpenRouter connected and synced."
+                    : result.error || "Failed to connect OpenRouter.",
+            });
+            if (!isMountedRef.current) return;
+            navigate(result.returnPath, { replace: true });
+            if (result.returnTo === "chat") {
+                setIsBubbyChatOpen(true);
+            } else {
+                openSettings();
+            }
+        })();
+    }, [location.pathname, location.search, navigate, openSettings]);
+
     // Auto-complete visit-based starter quests per member as user explores Budget / Plan
     const meId = me?.id;
     useEffect(() => {
@@ -482,6 +530,10 @@ function AppLayoutInner() {
                                                 onNavigateTab={handleSelectTab}
                                             />
                                         }
+                                    />
+                                    <Route
+                                        path={OPENROUTER_CALLBACK_PATH}
+                                        element={<RouteSkeletonLoader />}
                                     />
                                     <Route
                                         path="*"

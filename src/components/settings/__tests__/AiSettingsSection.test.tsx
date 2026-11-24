@@ -4,6 +4,8 @@ import { LazyMotion, domAnimation } from "motion/react";
 import { PrivacyProvider } from "../../../context/PrivacyContext";
 import { AiSettingsSection } from "../AiSettingsSection";
 import * as aiProviders from "../../../services/ai/providers";
+import * as openrouterAuth from "../../../services/ai/openrouterAuth";
+import * as openrouterModels from "../../../services/ai/openrouterModels";
 
 function renderSection() {
     return render(
@@ -18,6 +20,7 @@ function renderSection() {
 describe("AiSettingsSection", () => {
     beforeEach(() => {
         localStorage.clear();
+        sessionStorage.clear();
         vi.restoreAllMocks();
     });
 
@@ -83,6 +86,15 @@ describe("AiSettingsSection", () => {
 
         expect(aiProviders.getActiveAiProvider()).toBe("openrouter");
         expect(
+            screen.getByTestId("connect-openrouter-btn"),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByTestId("ai-api-key-input"),
+        ).not.toBeInTheDocument();
+
+        // Reveal manual key input via toggle
+        fireEvent.click(screen.getByTestId("toggle-manual-openrouter-key"));
+        expect(
             (screen.getByTestId("ai-api-key-input") as HTMLInputElement).value,
         ).toBe("");
 
@@ -110,6 +122,66 @@ describe("AiSettingsSection", () => {
         );
         // Gemini key is still preserved
         expect(aiProviders.getProviderApiKey("gemini")).toBe("AIza-gem-1");
+    });
+
+    it("shows OpenRouter connected status, supports disconnect, and displays pending OAuth feedback", () => {
+        aiProviders.setActiveAiProvider("openrouter");
+        aiProviders.setProviderApiKey("openrouter", "sk-or-v1-oauth");
+        openrouterAuth.setPendingOpenRouterFeedback({
+            target: "settings",
+            variant: "success",
+            message: "OpenRouter connected and synced.",
+        });
+
+        const oauthSpy = vi
+            .spyOn(openrouterAuth, "startOpenRouterOAuth")
+            .mockResolvedValue();
+
+        renderSection();
+
+        // Section auto-expanded due to pending OAuth feedback
+        expect(screen.getByTestId("ai-settings-feedback")).toHaveTextContent(
+            "OpenRouter connected and synced.",
+        );
+        expect(
+            screen.getByTestId("openrouter-connected-status"),
+        ).toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId("reconnect-openrouter-btn"));
+        expect(oauthSpy).toHaveBeenCalledWith("settings", "/");
+
+        fireEvent.click(screen.getByTestId("disconnect-openrouter-btn"));
+        expect(aiProviders.getProviderApiKey("openrouter")).toBe("");
+        expect(
+            screen.getByTestId("connect-openrouter-btn"),
+        ).toBeInTheDocument();
+    });
+
+    it("populates live free OpenRouter models when OpenRouter is selected", async () => {
+        vi.spyOn(openrouterModels, "fetchOpenRouterFreeModels").mockResolvedValue([
+            {
+                value: "openrouter/free",
+                label: "Free Models Router (Recommended)",
+            },
+            {
+                value: "nvidia/nemotron-3.5-lightning:free",
+                label: "NVIDIA: Nemotron 3.5 Lightning (free)",
+            },
+        ]);
+
+        renderSection();
+        fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
+        fireEvent.change(screen.getByTestId("ai-provider-select"), {
+            target: { value: "openrouter" },
+        });
+
+        await waitFor(() => {
+            expect(
+                screen.getByRole("option", {
+                    name: "NVIDIA: Nemotron 3.5 Lightning (free)",
+                }),
+            ).toBeInTheDocument();
+        });
     });
 
     it("defaults reasoning effort to low and allows customizing it", () => {
