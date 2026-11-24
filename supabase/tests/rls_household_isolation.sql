@@ -26,8 +26,13 @@ select no_plan();
 create temp table fx (side text not null, tbl text not null, body jsonb not null, primary key (side, tbl));
 create temp table res (n serial, name text not null, pass boolean not null, detail text);
 
--- Optional per-table column values.
-create temp table fixture_overrides (tbl text, col text, val jsonb);
+-- Optional per-table column values. `side` null applies to both households;
+-- set it ('a' or 'b') for columns that must differ, e.g. unique ones.
+create temp table fixture_overrides (tbl text, col text, val jsonb, side text);
+insert into fixture_overrides (tbl, col, val, side) values
+  ('capture_tokens', 'token_hash', to_jsonb(repeat('a', 64)), 'a'),
+  ('capture_tokens', 'token_hash', to_jsonb(repeat('b', 64)), 'b'),
+  ('capture_tokens', 'token_hint', to_jsonb('abcd'::text), null);
 
 -- Identities ----------------------------------------------------------------
 insert into auth.users (id, email, email_confirmed_at, aud, role) values
@@ -63,7 +68,9 @@ begin
      order by a.attnum
   loop
     v := null;
-    select o.val into v from fixture_overrides o where o.tbl = p_tbl and o.col = r.attname;
+    select o.val into v from fixture_overrides o
+     where o.tbl = p_tbl and o.col = r.attname and (o.side is null or o.side = p_side)
+     order by o.side nulls last limit 1;
     if v is null then
       select c.confrelid::regclass::text as ref, af.attname as refcol into fk
         from pg_constraint c
