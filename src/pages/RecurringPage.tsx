@@ -18,6 +18,7 @@ import {
     Card,
     RecurringContentSkeleton,
     TruncatedText,
+    QueryErrorAlert,
 } from "../components/ui";
 import { Alert } from "../components/ui/Alert";
 import {
@@ -71,7 +72,9 @@ export function RecurringPage({
     const {
         data: recurringItemsData,
         isLoading: recurringItemsLoading,
+        isError: recurringItemsIsError,
         error: recurringItemsError,
+        refetch: refetchRecurringItems,
     } = useRecurringItemsQuery();
     const recurringItems = useMemo(
         () => recurringItemsData || [],
@@ -83,9 +86,6 @@ export function RecurringPage({
     const goals = useMemo(() => goalsData || [], [goalsData]);
     const isLoading = recurringItemsLoading && !recurringItemsData;
     const [actionError, setActionError] = useState<string | null>(null);
-    const errorMessage =
-        actionError ||
-        (recurringItemsError ? (recurringItemsError as Error).message : null);
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -257,56 +257,76 @@ export function RecurringPage({
                 </div>
             )}
 
-            {/* Error Banner */}
-            {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
+            {/* Error Banners */}
+            {recurringItemsIsError && (
+                <QueryErrorAlert
+                    error={recurringItemsError}
+                    onRetry={() => void refetchRecurringItems()}
+                />
+            )}
+            {actionError && (
+                <Alert
+                    variant="danger"
+                    title="Couldn't delete"
+                    onClose={() => setActionError(null)}
+                >
+                    {actionError}
+                </Alert>
+            )}
 
             {/* Summary Cards (as of today) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <StatCard
-                    title="Annual Outflow"
-                    loading={isLoading}
-                    value={formatSGD(totalAnnualOutflow)}
-                    subtitle={`${formatSGD(monthlyAmortizedOutflow)}/mo`}
-                    tooltip="Insurance and tax active today."
-                    icon={<DollarSign className="w-4 h-4" />}
-                    iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
-                />
-
-                <StatCard
-                    title="Next Renewal"
-                    loading={isLoading}
-                    value={
-                        <TruncatedText
-                            as="div"
-                            className="font-display font-black tracking-tight text-base sm:text-lg"
-                            text={nextRenewal?.item.name ?? "None"}
-                        />
-                    }
-                    subtitle={nextRenewalSub}
-                    icon={<CalendarCheck className="w-4 h-4" />}
-                    iconBg="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-                />
-            </div>
-
-            {isLoading ? (
-                <RecurringContentSkeleton />
-            ) : (
+            {(!recurringItemsIsError || Boolean(recurringItemsData)) && (
                 <>
-                    {/* 12-Month Renewal Calendar */}
-                    <Card variant="white" padding="md">
-                        <RenewalCalendar recurringItems={inScopeItems} />
-                    </Card>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <StatCard
+                            title="Annual Outflow"
+                            loading={isLoading}
+                            value={formatSGD(totalAnnualOutflow)}
+                            subtitle={`${formatSGD(monthlyAmortizedOutflow)}/mo`}
+                            tooltip="Insurance and tax active today."
+                            icon={<DollarSign className="w-4 h-4" />}
+                            iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+                        />
 
-                    {/* Recurring Table */}
-                    <RecurringTable
-                        title="All Recurring"
-                        recurringItems={inScopeItems}
-                        goals={goals}
-                        onEdit={handleEditItem}
-                        onDelete={handleDeleteItem}
-                        isDeleting={isDeletingRecurring}
-                        onAdd={handleOpenAddModal}
-                    />
+                        <StatCard
+                            title="Next Renewal"
+                            loading={isLoading}
+                            value={
+                                <TruncatedText
+                                    as="div"
+                                    className="font-display font-black tracking-tight text-base sm:text-lg"
+                                    text={nextRenewal?.item.name ?? "None"}
+                                />
+                            }
+                            subtitle={nextRenewalSub}
+                            icon={<CalendarCheck className="w-4 h-4" />}
+                            iconBg="bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
+                        />
+                    </div>
+
+                    {isLoading ? (
+                        <RecurringContentSkeleton />
+                    ) : (
+                        <>
+                            {/* 12-Month Renewal Calendar */}
+                            <Card variant="white" padding="md">
+                                <RenewalCalendar
+                                    recurringItems={inScopeItems}
+                                />
+                            </Card>
+
+                            {/* Recurring Table */}
+                            <RecurringTable
+                                title="All Recurring"
+                                recurringItems={inScopeItems}
+                                goals={goals}
+                                onEdit={handleEditItem}
+                                onDelete={handleDeleteItem}
+                                isDeleting={isDeletingRecurring}
+                                onAdd={handleOpenAddModal}
+                            />
+                        </>
+                    )}
                 </>
             )}
 

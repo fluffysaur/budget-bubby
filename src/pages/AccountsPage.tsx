@@ -26,6 +26,7 @@ import {
     StatCard,
     SegmentedTabs,
     AccountsContentSkeleton,
+    QueryErrorAlert,
 } from "../components/ui";
 import {
     useAccountsQuery,
@@ -80,8 +81,13 @@ export function AccountsPage({
     const currentMonth = useCurrentMonth();
 
     // TanStack Query Cached Data Hooks
-    const { data: accountsData, isLoading: accountsLoading } =
-        useAccountsQuery(perspective);
+    const {
+        data: accountsData,
+        isLoading: accountsLoading,
+        isError: accountsError,
+        error: accountsErrorObj,
+        refetch: refetchAccounts,
+    } = useAccountsQuery(perspective);
     const { data: snapshots } = useAccountSnapshotsQuery(perspective);
     const { data: statementsData } = useCreditCardStatementsQuery();
 
@@ -210,6 +216,12 @@ export function AccountsPage({
                     />
                 ) : (
                     <div className="space-y-5">
+                        {accountsError && (
+                            <QueryErrorAlert
+                                error={accountsErrorObj}
+                                onRetry={() => void refetchAccounts()}
+                            />
+                        )}
                         {unmatchedCpf.length > 0 && (
                             <Alert variant="warning" title="Match CPF">
                                 <p>
@@ -277,67 +289,78 @@ export function AccountsPage({
                                 Update Balances
                             </Button>
                         </div>
-                        {/* Shared account type filter */}
-                        <AccountTypeFilterBar
-                            selected={activeTypes}
-                            availableTypes={availableTypes}
-                            onToggle={(type) =>
-                                setTypeFilter(
-                                    toggleAccountType(activeTypes, type),
-                                )
-                            }
-                            onClear={() => setTypeFilter([])}
-                        />
-
-                        {/* Net Worth */}
-                        <StatCard
-                            title={<TruncatedText text={filterLabel} />}
-                            loading={isLoading}
-                            value={formatSGD(netWorth)}
-                            subtitle={
-                                debtApplies && cardDebt > 0
-                                    ? `${formatSGD(cardDebt)} card debt`
-                                    : `${filteredAccounts.length} account${filteredAccounts.length === 1 ? "" : "s"}`
-                            }
-                            tooltip={
-                                debtApplies
-                                    ? "Account balances minus unpaid card statements."
-                                    : "Account balances for the selected types."
-                            }
-                            icon={<TrendingUp className="h-4 w-4" />}
-                            iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
-                        />
-
-                        {/* Loading Indicator */}
-                        {isLoading ? (
-                            <AccountsContentSkeleton />
-                        ) : (
+                        {(!accountsError || Boolean(accountsData)) && (
                             <>
-                                {/* Net Worth Progression Area Chart */}
-                                <NetWorthChart
-                                    accounts={filteredAccounts}
-                                    snapshots={snapshots}
-                                    statements={chartStatements}
-                                    title={filterLabel}
-                                    onUpdateBalances={() => {
-                                        setSelectedAccount(null);
-                                        setIsUpdateModalOpen(true);
-                                    }}
+                                {/* Shared account type filter */}
+                                <AccountTypeFilterBar
+                                    selected={activeTypes}
+                                    availableTypes={availableTypes}
+                                    onToggle={(type) =>
+                                        setTypeFilter(
+                                            toggleAccountType(
+                                                activeTypes,
+                                                type,
+                                            ),
+                                        )
+                                    }
+                                    onClear={() => setTypeFilter([])}
                                 />
 
-                                {/* Grouped Accounts Listing with Table / Card view */}
-                                <AccountGroupList
-                                    accounts={filteredAccounts}
-                                    onUpdateBalance={handleOpenUpdateModal}
-                                    onQuickSaveBalance={
-                                        handleInlineUpdateBalance
+                                {/* Net Worth */}
+                                <StatCard
+                                    title={<TruncatedText text={filterLabel} />}
+                                    loading={isLoading}
+                                    value={formatSGD(netWorth)}
+                                    subtitle={
+                                        debtApplies && cardDebt > 0
+                                            ? `${formatSGD(cardDebt)} card debt`
+                                            : `${filteredAccounts.length} account${filteredAccounts.length === 1 ? "" : "s"}`
                                     }
-                                    onEditAccount={(acc) => {
-                                        setAccountToEdit(acc);
-                                        setIsEditModalOpen(true);
-                                    }}
-                                    onAddAccount={() => setIsAddModalOpen(true)}
+                                    tooltip={
+                                        debtApplies
+                                            ? "Account balances minus unpaid card statements."
+                                            : "Account balances for the selected types."
+                                    }
+                                    icon={<TrendingUp className="h-4 w-4" />}
+                                    iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
                                 />
+
+                                {/* Loading Indicator */}
+                                {isLoading ? (
+                                    <AccountsContentSkeleton />
+                                ) : (
+                                    <>
+                                        {/* Net Worth Progression Area Chart */}
+                                        <NetWorthChart
+                                            accounts={filteredAccounts}
+                                            snapshots={snapshots}
+                                            statements={chartStatements}
+                                            title={filterLabel}
+                                            onUpdateBalances={() => {
+                                                setSelectedAccount(null);
+                                                setIsUpdateModalOpen(true);
+                                            }}
+                                        />
+
+                                        {/* Grouped Accounts Listing with Table / Card view */}
+                                        <AccountGroupList
+                                            accounts={filteredAccounts}
+                                            onUpdateBalance={
+                                                handleOpenUpdateModal
+                                            }
+                                            onQuickSaveBalance={
+                                                handleInlineUpdateBalance
+                                            }
+                                            onEditAccount={(acc) => {
+                                                setAccountToEdit(acc);
+                                                setIsEditModalOpen(true);
+                                            }}
+                                            onAddAccount={() =>
+                                                setIsAddModalOpen(true)
+                                            }
+                                        />
+                                    </>
+                                )}
                             </>
                         )}
                     </div>
