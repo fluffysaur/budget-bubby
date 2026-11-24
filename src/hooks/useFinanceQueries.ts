@@ -15,6 +15,7 @@ import { queryClient as defaultQueryClient } from "../lib/queryClient";
 import { financeService } from "../services/financeService";
 import { isOnline } from "../services/offlineSyncQueue";
 import { invalidateDomain, keys, ALL_FINANCE_KEY } from "../lib/queryKeys";
+import { createOptimisticMutation } from "../lib/optimisticMutation";
 import { combineMonthlyBudgets } from "../lib/combineMonthlyBudgets";
 import { generateUuid } from "../lib/uuid";
 import type {
@@ -530,20 +531,14 @@ export function useAddGoalMutation() {
     const queryClient = useSafeQueryClient();
     const { invalidateGoals } = useInvalidateFinance();
 
-    return useMutation<
-        SavingsGoal,
-        Error,
-        CreateGoalInput & { id?: string },
-        { previousGoals: SavingsGoal[] | undefined }
-    >(
-        {
-            networkMode: "always",
+    return useMutation(
+        createOptimisticMutation<
+            SavingsGoal,
+            CreateGoalInput & { id?: string }
+        >(queryClient, {
             mutationFn: (input) => financeService.addGoal(input),
-            onMutate: async (input) => {
-                await queryClient.cancelQueries({ queryKey: keys.goals.all });
-                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(
-                    keys.goals.all,
-                );
+            keys: () => [keys.goals.all],
+            apply: (qc, input) => {
                 const optimisticGoal: SavingsGoal = {
                     id: input.id || generateUuid(),
                     household_id: input.household_id || "",
@@ -554,25 +549,12 @@ export function useAddGoalMutation() {
                     status: "on_track",
                     created_at: new Date().toISOString(),
                 };
-                queryClient.setQueryData<SavingsGoal[]>(
-                    keys.goals.all,
-                    (old) =>
-                        old ? [...old, optimisticGoal] : [optimisticGoal],
+                qc.setQueryData<SavingsGoal[]>(keys.goals.all, (old) =>
+                    old ? [...old, optimisticGoal] : [optimisticGoal],
                 );
-                return { previousGoals };
             },
-            onError: (_err, _input, context) => {
-                if (context?.previousGoals) {
-                    queryClient.setQueryData(
-                        keys.goals.all,
-                        context.previousGoals,
-                    );
-                }
-            },
-            onSettled: () => {
-                invalidateGoals();
-            },
-        },
+            settle: () => invalidateGoals(),
+        }),
         queryClient,
     );
 }
@@ -601,47 +583,30 @@ export function useUpdateGoalMutation() {
     const queryClient = useSafeQueryClient();
     const { invalidateGoals, invalidateRecurring } = useInvalidateFinance();
 
-    return useMutation<
-        SavingsGoal,
-        Error,
-        { id: string; updates: Partial<SavingsGoal> },
-        { previousGoals: SavingsGoal[] | undefined }
-    >(
-        {
-            networkMode: "always",
+    return useMutation(
+        createOptimisticMutation<
+            SavingsGoal,
+            { id: string; updates: Partial<SavingsGoal> }
+        >(queryClient, {
             mutationFn: ({ id, updates }) =>
                 financeService.updateGoal(id, updates),
-            onMutate: async ({ id, updates }) => {
-                await queryClient.cancelQueries({ queryKey: keys.goals.all });
-                const previousGoals = queryClient.getQueryData<SavingsGoal[]>(
-                    keys.goals.all,
+            keys: () => [keys.goals.all],
+            apply: (qc, { id, updates }) => {
+                qc.setQueryData<SavingsGoal[]>(keys.goals.all, (old) =>
+                    old
+                        ? old.map((g) =>
+                              g.id === id ? { ...g, ...updates } : g,
+                          )
+                        : old,
                 );
-                queryClient.setQueryData<SavingsGoal[]>(
-                    keys.goals.all,
-                    (old) =>
-                        old
-                            ? old.map((g) =>
-                                  g.id === id ? { ...g, ...updates } : g,
-                              )
-                            : old,
-                );
-                return { previousGoals };
             },
-            onError: (_err, _vars, context) => {
-                if (context?.previousGoals) {
-                    queryClient.setQueryData(
-                        keys.goals.all,
-                        context.previousGoals,
-                    );
-                }
-            },
-            onSettled: (_data, _err, vars) => {
+            settle: (vars) => {
                 invalidateGoals();
                 if (vars.updates.target_date !== undefined) {
                     invalidateRecurring();
                 }
             },
-        },
+        }),
         queryClient,
     );
 }
@@ -1225,40 +1190,17 @@ export function useDeleteCategoryMutation() {
     const queryClient = useSafeQueryClient();
     const { invalidateCategories } = useInvalidateFinance();
 
-    return useMutation<
-        void,
-        Error,
-        string,
-        { previousCategories: Category[] | undefined }
-    >(
-        {
-            networkMode: "always",
+    return useMutation(
+        createOptimisticMutation<void, string>(queryClient, {
             mutationFn: (id) => financeService.deleteCategory(id),
-            onMutate: async (id) => {
-                await queryClient.cancelQueries({
-                    queryKey: keys.categories.all,
-                });
-                const previousCategories = queryClient.getQueryData<Category[]>(
-                    keys.categories.all,
+            keys: () => [keys.categories.all],
+            apply: (qc, id) => {
+                qc.setQueryData<Category[]>(keys.categories.all, (old) =>
+                    old ? old.filter((c) => c.id !== id) : old,
                 );
-                queryClient.setQueryData<Category[]>(
-                    keys.categories.all,
-                    (old) => (old ? old.filter((c) => c.id !== id) : old),
-                );
-                return { previousCategories };
             },
-            onError: (_err, _id, context) => {
-                if (context?.previousCategories) {
-                    queryClient.setQueryData(
-                        keys.categories.all,
-                        context.previousCategories,
-                    );
-                }
-            },
-            onSettled: () => {
-                invalidateCategories();
-            },
-        },
+            settle: () => invalidateCategories(),
+        }),
         queryClient,
     );
 }
