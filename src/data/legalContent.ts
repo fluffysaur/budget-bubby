@@ -1,9 +1,9 @@
 /**
  * Legal page copy for Budget Bubby (privacy policy and terms).
  *
- * DRAFT: this text is a plain-language starting point and has NOT been
- * reviewed by the owner or a lawyer. Replace every [placeholder] and review
- * each claim against what the app does before launch (issue #234).
+ * Plain-language copy approved by the owner. It is not lawyer-reviewed.
+ * Re-check each claim against what the app does whenever features change
+ * (issue #234).
  */
 
 export interface LegalSection {
@@ -18,14 +18,11 @@ export interface LegalDocument {
     sections: LegalSection[];
 }
 
-export const LEGAL_DRAFT_NOTICE =
-    "Draft. Not yet reviewed by the owner. Do not rely on this text until it is approved.";
-
-export const LEGAL_LAST_UPDATED = "[Date of last update]";
+export const LEGAL_LAST_UPDATED = "24th November 2026";
 
 export const LEGAL_CONTACT = {
-    owner: "[Owner name]",
-    email: "[contact email]",
+    owner: "Tan Yi Jia",
+    email: "tanyijia@gmail.com",
 };
 
 export const PRIVACY_POLICY: LegalDocument = {
@@ -71,20 +68,20 @@ export const PRIVACY_POLICY: LegalDocument = {
             heading: "Who Sees It",
             paragraphs: [
                 "Members of your household can see the shared data of that household. Other households cannot. Our database enforces this with row-level access rules.",
-                "[Owner: confirm who, if anyone, on the team can access production data for support.]",
+                "Only the owner can access production data, and only to fix a problem you report.",
             ],
         },
         {
             heading: "Third Parties",
             bullets: [
                 "Supabase: hosts the database and sign-in.",
-                "Vercel: hosts the app. [Owner: confirm hosting provider.]",
+                "Vercel: hosts the app.",
                 "Exchange rate service (open.er-api.com): the app requests public currency rates. No personal data is sent beyond the IP address that any web request carries.",
                 "Browser push services (Google, Apple, Mozilla): they deliver encrypted reminder notifications to your device if you turn them on.",
                 "AI providers (optional): Google Gemini, Anthropic, OpenAI and OpenRouter are used only if you add your own key. Requests go directly from your browser to the provider you pick, and include your question and the finance context needed to answer it. Their terms and privacy policies apply.",
             ],
             paragraphs: [
-                "We do not currently use analytics or advertising trackers. [Owner: re-check before launch.]",
+                "We do not currently use analytics or advertising trackers.",
             ],
         },
         {
@@ -96,13 +93,13 @@ export const PRIVACY_POLICY: LegalDocument = {
         {
             heading: "Retention",
             paragraphs: [
-                "We keep your data while your household is active. Self-service export and account deletion are planned but not available yet. Until then, email us and we will export or delete your data. [Owner: confirm response time.]",
+                "We keep your data while your household is active. Self-service export and account deletion are planned but not available yet. Until then, email us and we will export or delete your data within 30 days.",
             ],
         },
         {
             heading: "Your Choices",
             paragraphs: [
-                `You can ask to see, correct, export or delete your data at ${LEGAL_CONTACT.email}. [Owner: add region-specific rights, for example Singapore PDPA, if needed.]`,
+                `You can ask to see, correct, export or delete your data at ${LEGAL_CONTACT.email}.`,
             ],
         },
         {
@@ -122,7 +119,7 @@ export const TERMS_OF_USE: LegalDocument = {
             heading: "Using Bubby",
             paragraphs: [
                 "By using Budget Bubby you agree to these terms. If you do not agree, please do not use it.",
-                "You must be old enough to enter a contract where you live. [Owner: set minimum age.]",
+                "You must be at least 16 years old, and old enough to enter a contract where you live.",
             ],
         },
         {
@@ -156,13 +153,13 @@ export const TERMS_OF_USE: LegalDocument = {
         {
             heading: "Availability",
             paragraphs: [
-                "We try to keep the app running but do not promise it will always be available or error free. Features may change or end. [Owner: add notice period if wanted.]",
+                "We try to keep the app running but do not promise it will always be available or error free. Features may change or end, and we will try to give reasonable notice of major changes.",
             ],
         },
         {
             heading: "Liability",
             paragraphs: [
-                'The app is provided "as is". To the extent the law allows, we are not liable for losses from using it. [Owner: have this section reviewed for your jurisdiction.]',
+                'The app is provided "as is". To the extent the law allows, we are not liable for losses from using it.',
             ],
         },
         {
@@ -174,7 +171,7 @@ export const TERMS_OF_USE: LegalDocument = {
         {
             heading: "Law & Contact",
             paragraphs: [
-                `These terms are governed by the laws of [Jurisdiction]. Questions: ${LEGAL_CONTACT.email}.`,
+                `These terms are governed by the laws of Singapore. Questions: ${LEGAL_CONTACT.email}.`,
             ],
         },
     ],

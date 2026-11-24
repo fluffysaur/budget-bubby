@@ -5,12 +5,10 @@
 
 import { useEffect } from "react";
 import { applyThemeClass, readStoredTheme } from "../lib/theme";
-import { Alert } from "../components/ui/Alert";
 import { Card } from "../components/ui/Card";
 import { BubbyIcon } from "../components/ui/BubbyIcon";
 import {
     LEGAL_DOCS,
-    LEGAL_DRAFT_NOTICE,
     LEGAL_LAST_UPDATED,
     LEGAL_PATHS,
     type LegalDocKey,
@@ -49,10 +47,6 @@ export function LegalPage({ doc }: LegalPageProps) {
                 <h1 className="text-2xl font-black tracking-tight font-display">
                     {content.title}
                 </h1>
-
-                <Alert variant="warning" title="Draft">
-                    {LEGAL_DRAFT_NOTICE}
-                </Alert>
 
                 <p className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                     Updated {LEGAL_LAST_UPDATED}

@@ -40,8 +40,9 @@ describe("Legal pages", () => {
             }),
         ).toBeInTheDocument();
         expect(
-            screen.getByText(/Not yet reviewed by the owner/i),
-        ).toBeInTheDocument();
+            screen.queryByText(/Not yet reviewed by the owner/i),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText(/\[Owner:/)).not.toBeInTheDocument();
         expect(
             screen.getByRole("link", { name: TERMS_OF_USE.title }),
         ).toHaveAttribute("href", "/terms");

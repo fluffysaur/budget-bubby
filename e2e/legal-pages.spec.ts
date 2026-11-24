@@ -5,14 +5,14 @@ test.describe("Legal pages", () => {
         ["/privacy", "Privacy Policy"],
         ["/terms", "Terms of Use"],
     ] as const) {
-        test(`${path} is public and shows the draft notice`, async ({
+        test(`${path} is public and shows no draft notice`, async ({
             page,
         }) => {
             await page.goto(path);
             await expect(
                 page.getByRole("heading", { level: 1, name: title }),
             ).toBeVisible();
-            await expect(page.getByText(/Not yet reviewed/i)).toBeVisible();
+            await expect(page.getByText(/Not yet reviewed/i)).toHaveCount(0);
         });
     }
 });
