@@ -18,6 +18,7 @@
     "test:changed": "vitest run --changed",
     "test:e2e": "playwright test",
     "check": "bash scripts/check.sh",
+    "cleanup:branches": "bash scripts/cleanup-branches.sh",
     "deploy:functions": "pnpm run build:functions && pnpm dlx supabase functions deploy send-reminders --no-verify-jwt && pnpm dlx supabase functions deploy capture-expense --no-verify-jwt"
   },
   "dependencies": {

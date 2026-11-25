@@ -26,6 +26,7 @@ Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, 
 - Work on a branch cut from an up-to-date `main`, named `feat/<slug>`, `fix/<slug>`, `refactor/<slug>`, `docs/<slug>`, or `chore/<slug>`.
 - Changes reach `main` only through a pull request. Agents never merge PRs.
 - Do not create `subagent-*` branches. Remove any worktree you create once finished.
+- **Squash-merged branch cleanup:** PRs are squash-merged into `main` for Release Please, so `git branch --merged` will not detect them. Run `pnpm run cleanup:branches` to inspect local branches against GitHub PR status (dry-run), and `pnpm run cleanup:branches -- --yes` (with user approval) to delete verified merged branches.
 
 ### C. Quality Gate (before proposing a commit or PR)
 
