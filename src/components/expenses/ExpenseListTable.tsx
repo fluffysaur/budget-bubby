@@ -37,7 +37,7 @@ import { ExpenseFormModal } from "./ExpenseFormModal";
 import { DeleteExpenseModal } from "./DeleteExpenseModal";
 import { TruncatedText } from "../ui/TruncatedText";
 import { ExpenseRowsSkeleton } from "../ui/PageSkeletons";
-import { Select } from "../ui/Select";
+import { Select, type SelectOption } from "../ui/dropdown";
 import { AvatarDot } from "../ui/AvatarDot";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
@@ -61,6 +61,21 @@ import { useOptionalHousehold } from "../../context/HouseholdContext";
 import { getExpenseCategoryForMember } from "../../lib/financialFormulas";
 
 const EMPTY_GOALS: SavingsGoal[] = [];
+
+const SORT_OPTIONS: SelectOption[] = [
+    { value: "date-desc", label: "Newest" },
+    { value: "date-asc", label: "Oldest" },
+    { value: "amount-desc", label: "Highest" },
+    { value: "amount-asc", label: "Lowest" },
+    { value: "category-asc", label: "Category (A-Z)" },
+    { value: "payer-asc", label: "Payer (A-Z)" },
+];
+
+const PAGE_SIZE_OPTIONS: SelectOption[] = [
+    { value: "20", label: "20" },
+    { value: "50", label: "50" },
+    { value: "100", label: "100" },
+];
 
 export interface ExpenseListTableProps {
     expenses: Expense[];
@@ -350,14 +365,15 @@ export function ExpenseListTable({
                                     ? `${activeSortBy}-${activeSortOrder}`
                                     : ""
                             }
-                            onChange={(e) => {
-                                if (!e.target.value) {
+                            onValueChange={(value) => {
+                                if (!value) {
                                     if (!onSortChange) setInternalSortBy(null);
                                     return;
                                 }
-                                const [field, order] = e.target.value.split(
-                                    "-",
-                                ) as [ExpenseSortField, SortDirection];
+                                const [field, order] = value.split("-") as [
+                                    ExpenseSortField,
+                                    SortDirection,
+                                ];
                                 if (onSortChange) {
                                     onSortChange(field, order);
                                 } else {
@@ -365,18 +381,13 @@ export function ExpenseListTable({
                                     setInternalSortOrder(order);
                                 }
                             }}
+                            options={SORT_OPTIONS}
+                            placeholder="Default order"
+                            clearable
                             sizeVariant="sm"
                             containerClassName="w-auto"
                             className="bg-(--bg-canvas) font-bold text-xs py-1"
-                        >
-                            <option value="">Default order</option>
-                            <option value="date-desc">Newest</option>
-                            <option value="date-asc">Oldest</option>
-                            <option value="amount-desc">Highest</option>
-                            <option value="amount-asc">Lowest</option>
-                            <option value="category-asc">Category (A-Z)</option>
-                            <option value="payer-asc">Payer (A-Z)</option>
-                        </Select>
+                        />
                     </div>
                 )}
 
@@ -779,20 +790,17 @@ export function ExpenseListTable({
                                     </span>
                                     <Select
                                         aria-label="Select page size"
-                                        value={activePageSize}
-                                        onChange={(e) =>
+                                        value={String(activePageSize)}
+                                        onValueChange={(v) =>
                                             handlePageSizeChange(
-                                                parseInt(e.target.value, 10),
+                                                parseInt(v, 10),
                                             )
                                         }
+                                        options={PAGE_SIZE_OPTIONS}
                                         sizeVariant="sm"
                                         containerClassName="w-auto"
                                         className="bg-(--bg-card) font-bold text-xs py-1 shadow-cute-sm"
-                                    >
-                                        <option value={20}>20</option>
-                                        <option value={50}>50</option>
-                                        <option value={100}>100</option>
-                                    </Select>
+                                    />
                                 </div>
 
                                 {/* Prev / Next & Page Numbers */}

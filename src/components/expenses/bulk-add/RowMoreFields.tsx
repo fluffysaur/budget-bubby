@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Input } from "../../ui/Input";
-import { Select } from "../../ui/Select";
+import { Select } from "../../ui/dropdown";
 import { FxRateInput } from "../FxRateField";
 import { SUPPORTED_CURRENCIES } from "../../../lib/currencyConverter";
 import { sanitizeAmount } from "../../../lib/bulkAddRows";
@@ -85,16 +85,13 @@ export function RowMoreFields({
                         disabled={disabled}
                         options={CURRENCY_OPTIONS}
                         className="min-h-11 text-base! sm:text-sm!"
-                        onChange={(e) =>
+                        onValueChange={(v) =>
                             dispatch({
                                 type: "updateRow",
                                 id: row.id,
                                 patch: {
-                                    currency: e.target.value,
-                                    amount: sanitizeAmount(
-                                        row.amount,
-                                        e.target.value,
-                                    ),
+                                    currency: v,
+                                    amount: sanitizeAmount(row.amount, v),
                                 },
                             })
                         }

@@ -12,7 +12,11 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
-import { Select } from "../ui/Select";
+import {
+    Select,
+    memberToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { Button } from "../ui/Button";
 import type {
     Account,
@@ -24,6 +28,17 @@ import { CPF_KINDS } from "../../lib/cpfAccounts";
 import { useUpdateAccountMutation } from "../../hooks/finance/accounts";
 import { feedback } from "../../lib/delight/feedback";
 import { AccountOriginChoice } from "./AccountOriginChoice";
+
+const ACCOUNT_TYPE_OPTIONS: SelectOption[] = [
+    { value: "Cash", label: "Cash" },
+    { value: "Investment", label: "Investment" },
+    { value: "Other", label: "Other Asset" },
+];
+
+const CPF_KIND_OPTIONS: SelectOption[] = CPF_KINDS.map((kind) => ({
+    value: kind,
+    label: kind,
+}));
 
 export interface EditAccountModalProps {
     isOpen: boolean;
@@ -125,6 +140,8 @@ export function EditAccountModal({
         }
     };
 
+    const ownerOptions = members.map(memberToSelectOption);
+
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
             <form
@@ -192,37 +209,25 @@ export function EditAccountModal({
                                     id="edit-account-cpf-kind"
                                     label="CPF account"
                                     value={cpfKind}
-                                    onChange={(e) =>
-                                        setCpfKind(e.target.value as CpfKind)
+                                    onValueChange={(v) =>
+                                        setCpfKind(v as CpfKind)
                                     }
+                                    options={CPF_KIND_OPTIONS}
+                                    placeholder="Pick one"
                                     disabled={isMatchedCpf}
                                     className="bg-(--bg-canvas)"
-                                >
-                                    {!isMatchedCpf && (
-                                        <option value="">Pick one</option>
-                                    )}
-                                    {CPF_KINDS.map((kind) => (
-                                        <option key={kind} value={kind}>
-                                            {kind}
-                                        </option>
-                                    ))}
-                                </Select>
+                                />
                             ) : (
                                 <Select
                                     id="edit-account-type"
                                     label="Type"
                                     value={type}
-                                    onChange={(e) =>
-                                        setType(e.target.value as AccountType)
+                                    onValueChange={(v) =>
+                                        setType(v as AccountType)
                                     }
+                                    options={ACCOUNT_TYPE_OPTIONS}
                                     className="bg-(--bg-canvas)"
-                                >
-                                    <option value="Cash">Cash</option>
-                                    <option value="Investment">
-                                        Investment
-                                    </option>
-                                    <option value="Other">Other Asset</option>
-                                </Select>
+                                />
                             )}
                         </div>
 
@@ -231,16 +236,11 @@ export function EditAccountModal({
                                 id="edit-account-owner"
                                 label="Primary Owner *"
                                 value={ownerId}
-                                onChange={(e) => setOwnerId(e.target.value)}
+                                onValueChange={setOwnerId}
+                                options={ownerOptions}
                                 disabled={isMatchedCpf}
                                 className="bg-(--bg-canvas)"
-                            >
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.display_name}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                         </div>
                     </div>
 

@@ -2,7 +2,7 @@ export * from "./Button";
 export * from "./Badge";
 export * from "./Card";
 export * from "./Input";
-export * from "./Select";
+export * from "./dropdown";
 export * from "./Textarea";
 export * from "./SegmentedTabs";
 export * from "./CurrencyText";

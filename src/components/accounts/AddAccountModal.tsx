@@ -27,7 +27,11 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
-import { Select } from "../ui/Select";
+import {
+    Select,
+    memberToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { Button } from "../ui/Button";
 import { feedback } from "../../lib/delight/feedback";
 import { AccountOriginChoice } from "./AccountOriginChoice";
@@ -62,6 +66,17 @@ const ALL_PRESETS: SingaporePreset[] = [
     { name: "Endowus Portfolio", institution: "Endowus", type: "Investment" },
     { name: "Syfe Cash+/Equity", institution: "Syfe", type: "Investment" },
 ];
+
+const ACCOUNT_TYPE_OPTIONS: SelectOption[] = [
+    { value: "Cash", label: "Cash" },
+    { value: "Investment", label: "Investment" },
+    { value: "Other", label: "Other Asset" },
+];
+
+const PRESET_OPTIONS: SelectOption[] = ALL_PRESETS.map((p) => ({
+    value: p.name,
+    label: `${p.name} (${p.type})`,
+}));
 
 export function AddAccountModal({
     isOpen,
@@ -168,6 +183,8 @@ export function AddAccountModal({
         }
     };
 
+    const ownerOptions = members.map(memberToSelectOption);
+
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
             <form
@@ -213,32 +230,19 @@ export function AddAccountModal({
                             <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                                 Quick Preset
                             </span>
-                            <div className="relative flex items-center">
-                                <select
-                                    aria-label="More presets"
-                                    onChange={(e) => {
-                                        const found = ALL_PRESETS.find(
-                                            (p) => p.name === e.target.value,
-                                        );
-                                        if (found) handleSelectPreset(found);
-                                    }}
-                                    defaultValue=""
-                                    className="appearance-none text-base sm:text-[11px] font-bold text-(--text-ink) bg-(--bg-canvas) pl-2 pr-6 py-0.5 rounded-lg border border-(--border-subtle) hover:border-(--border-ink) cursor-pointer focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
-                                >
-                                    <option value="" disabled>
-                                        More
-                                    </option>
-                                    {ALL_PRESETS.map((p) => (
-                                        <option key={p.name} value={p.name}>
-                                            {p.name} ({p.type})
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown
-                                    className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-(--text-muted)"
-                                    strokeWidth={2.5}
-                                />
-                            </div>
+                            <Select
+                                variant="pill"
+                                aria-label="More presets"
+                                value=""
+                                placeholder="More"
+                                options={PRESET_OPTIONS}
+                                onValueChange={(v) => {
+                                    const found = ALL_PRESETS.find(
+                                        (p) => p.name === v,
+                                    );
+                                    if (found) handleSelectPreset(found);
+                                }}
+                            />
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                             {POPULAR_PRESETS.map((preset) => {
@@ -308,16 +312,11 @@ export function AddAccountModal({
                                 label="Type *"
                                 labelClassName="text-[11px] mb-1"
                                 value={type}
-                                onChange={(e) =>
-                                    setType(e.target.value as AccountType)
-                                }
+                                onValueChange={(v) => setType(v as AccountType)}
+                                options={ACCOUNT_TYPE_OPTIONS}
                                 sizeVariant="sm"
                                 className="bg-(--bg-canvas)"
-                            >
-                                <option value="Cash">Cash</option>
-                                <option value="Investment">Investment</option>
-                                <option value="Other">Other Asset</option>
-                            </Select>
+                            />
                         </div>
 
                         <div>
@@ -360,19 +359,12 @@ export function AddAccountModal({
                                 label="Owner *"
                                 labelClassName="text-[11px] mb-1"
                                 value={ownerId}
-                                onChange={(e) => setOwnerId(e.target.value)}
+                                onValueChange={setOwnerId}
+                                options={ownerOptions}
+                                placeholder="Choose owner"
                                 sizeVariant="sm"
                                 className="bg-(--bg-canvas)"
-                            >
-                                <option value="" disabled>
-                                    Choose owner
-                                </option>
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.display_name}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                         </div>
 
                         <div className="flex items-center pt-5">

@@ -38,7 +38,11 @@ import { FxRateField } from "./FxRateField";
 import { CentsFirstAmountInput } from "./CentsFirstAmountInput";
 import { RangeSlider } from "../ui/RangeSlider";
 import { SegmentedTabs } from "../ui/SegmentedTabs";
-import { Select } from "../ui/Select";
+import {
+    Select,
+    categoryToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { CurrencyText } from "../ui/CurrencyText";
 
@@ -118,13 +122,17 @@ export function ExpenseFormFields({
             ).filter((c) => isLoggableCategory(c)),
         [categories, activeMemberId, draft.payerId, partnerMember?.id],
     );
+    const partnerCategoryOptions = useMemo<SelectOption[]>(
+        () => partnerLoggableCategories.map(categoryToSelectOption),
+        [partnerLoggableCategories],
+    );
     const isNonPayingPartnerEdit = Boolean(
         isEditMode &&
-            draft.isShared &&
-            !draft.isGoalSpend &&
-            activeMemberId &&
-            draft.payerId &&
-            activeMemberId !== draft.payerId,
+        draft.isShared &&
+        !draft.isGoalSpend &&
+        activeMemberId &&
+        draft.payerId &&
+        activeMemberId !== draft.payerId,
     );
     const spendableCategories = useMemo(
         () => loggableCategories.filter((c) => isSpendableCategory(c)),
@@ -148,9 +156,19 @@ export function ExpenseFormFields({
         [draft.currencyCode],
     );
 
-    const isKnownCurrency = SUPPORTED_CURRENCIES.some(
-        (c) => c.code === draft.currencyCode,
-    );
+    const currencyOptions = useMemo<SelectOption[]>(() => {
+        const supported = SUPPORTED_CURRENCIES.map((c) => ({
+            value: c.code,
+            label: `${c.flag} ${c.code} (${c.symbol})`,
+        }));
+        // Keep an unrecognised code selectable so the pill still shows it.
+        return supported.some((o) => o.value === draft.currencyCode)
+            ? supported
+            : [
+                  { value: draft.currencyCode, label: draft.currencyCode },
+                  ...supported,
+              ];
+    }, [draft.currencyCode]);
 
     const handleItemTextChange = (text: string) => {
         const patch: Partial<ExpenseFormDraft> = { item: text };
@@ -165,8 +183,7 @@ export function ExpenseFormFields({
         const clean = normalizeExpenseTag(rawTag);
         if (!clean) return;
         const alreadyTagged = draft.tags.some(
-            (t) =>
-                normalizeExpenseTag(t).toLowerCase() === clean.toLowerCase(),
+            (t) => normalizeExpenseTag(t).toLowerCase() === clean.toLowerCase(),
         );
         if (!alreadyTagged) {
             onChange({ tags: [...draft.tags, clean] });
@@ -479,23 +496,17 @@ export function ExpenseFormFields({
                         id={`${idPrefix}-my-category`}
                         label="My Category"
                         value={draft.partnerCategoryId || ""}
-                        onChange={(e) =>
-                            onChange({ partnerCategoryId: e.target.value })
+                        onValueChange={(v) =>
+                            onChange({ partnerCategoryId: v })
                         }
+                        options={partnerCategoryOptions}
+                        placeholder={`Same as payer (${
+                            categories.find((c) => c.id === draft.categoryId)
+                                ?.name || "Default"
+                        })`}
+                        clearable
                         className="bg-(--bg-canvas)"
-                    >
-                        <option value="">
-                            Same as payer (
-                            {categories.find((c) => c.id === draft.categoryId)
-                                ?.name || "Default"}
-                            )
-                        </option>
-                        {partnerLoggableCategories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </Select>
+                    />
                 </div>
             )}
 
@@ -793,28 +804,16 @@ export function ExpenseFormFields({
                                             value={
                                                 draft.partnerCategoryId || ""
                                             }
-                                            onChange={(e) =>
+                                            onValueChange={(v) =>
                                                 onChange({
-                                                    partnerCategoryId:
-                                                        e.target.value,
+                                                    partnerCategoryId: v,
                                                 })
                                             }
+                                            options={partnerCategoryOptions}
+                                            placeholder="Same as payer"
+                                            clearable
                                             className="bg-(--bg-canvas)"
-                                        >
-                                            <option value="">
-                                                Same as payer
-                                            </option>
-                                            {partnerLoggableCategories.map(
-                                                (cat) => (
-                                                    <option
-                                                        key={cat.id}
-                                                        value={cat.id}
-                                                    >
-                                                        {cat.name}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </Select>
+                                        />
                                     </div>
                                 )}
                         </div>
@@ -825,34 +824,18 @@ export function ExpenseFormFields({
                         <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
                             Currency
                         </span>
-                        <div className="relative flex w-fit items-center">
-                            <select
-                                aria-label="Select currency"
-                                value={draft.currencyCode}
-                                onChange={(e) =>
-                                    onChange({
-                                        currencyCode: e.target.value,
-                                        customExchangeRate: undefined,
-                                    })
-                                }
-                                className="cursor-pointer appearance-none rounded-full border border-(--border-subtle) bg-(--bg-canvas) py-1 pl-3 pr-8 text-base font-bold text-(--text-ink) hover:border-(--border-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) sm:text-xs"
-                            >
-                                {!isKnownCurrency && (
-                                    <option value={draft.currencyCode}>
-                                        {draft.currencyCode}
-                                    </option>
-                                )}
-                                {SUPPORTED_CURRENCIES.map((c) => (
-                                    <option key={c.code} value={c.code}>
-                                        {c.flag} {c.code} ({c.symbol})
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown
-                                className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-(--text-muted)"
-                                strokeWidth={2.5}
-                            />
-                        </div>
+                        <Select
+                            variant="pill"
+                            aria-label="Select currency"
+                            value={draft.currencyCode}
+                            onValueChange={(v) =>
+                                onChange({
+                                    currencyCode: v,
+                                    customExchangeRate: undefined,
+                                })
+                            }
+                            options={currencyOptions}
+                        />
                         {draft.currencyCode !== "SGD" && (
                             <FxRateField
                                 currencyCode={draft.currencyCode}
@@ -957,7 +940,9 @@ export function ExpenseFormFields({
                                         onClick={() => handleAddTag(rTag)}
                                         className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-(--border-subtle) bg-(--bg-canvas) px-2 py-0.5 text-[11px] font-bold text-(--text-ink) shadow-cute-sm transition-colors hover:border-(--border-ink) hover:bg-(--pastel-butter-light)"
                                     >
-                                        <span>+ #{normalizeExpenseTag(rTag)}</span>
+                                        <span>
+                                            + #{normalizeExpenseTag(rTag)}
+                                        </span>
                                     </button>
                                 ))}
                             </div>

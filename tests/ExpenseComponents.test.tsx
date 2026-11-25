@@ -14,6 +14,7 @@ import {
     act,
     within,
 } from "@testing-library/react";
+import { selectOption } from "./helpers/select";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
@@ -378,26 +379,25 @@ describe("ExpenseFilterBar", () => {
         });
 
         // Change category dropdown
-        const categorySelect = screen.getByLabelText(/category/i);
-        fireEvent.change(categorySelect, {
-            target: { value: "cat-00000000-0101" },
-        });
+        await selectOption(
+            /category/i,
+            mockCategories.find((c) => c.id === "cat-00000000-0101")!.name,
+        );
         expect(onFilterChange).toHaveBeenCalledWith(
             expect.objectContaining({ categoryId: "cat-00000000-0101" }),
         );
 
         // Change payer dropdown
-        const payerSelect = screen.getByLabelText(/payer/i);
-        fireEvent.change(payerSelect, {
-            target: { value: "mem-00000000-0011" },
-        });
+        await selectOption(
+            /payer/i,
+            mockMembers.find((m) => m.id === "mem-00000000-0011")!.display_name,
+        );
         expect(onFilterChange).toHaveBeenCalledWith(
             expect.objectContaining({ payerId: "mem-00000000-0011" }),
         );
 
         // Change shared status dropdown
-        const sharedSelect = screen.getByLabelText(/type|shared/i);
-        fireEvent.change(sharedSelect, { target: { value: "shared" } });
+        await selectOption(/type|shared/i, "Shared (50/50)");
         expect(onFilterChange).toHaveBeenCalledWith(
             expect.objectContaining({ isShared: true }),
         );

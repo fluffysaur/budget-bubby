@@ -13,6 +13,7 @@ import {
     act,
     within,
 } from "@testing-library/react";
+import { selectOption } from "./helpers/select";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
@@ -87,9 +88,7 @@ describe("Add Expense minimal layout", () => {
 
     it("opens More on its own when a foreign currency is chosen", async () => {
         await renderModal();
-        fireEvent.change(screen.getByLabelText("Select currency"), {
-            target: { value: "JPY" },
-        });
+        await selectOption("Select currency", /JPY/);
         expect(moreToggle()).toHaveAttribute("aria-expanded", "true");
         expect(screen.getByTestId("expense-more-summary")).toHaveTextContent(
             "JPY",

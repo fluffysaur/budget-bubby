@@ -11,7 +11,7 @@ async function openAddRecurring(page: Page) {
         .getByRole("dialog")
         .filter({ hasText: "Insurance, tax, subscriptions & bills" });
     await expect(modal).toBeVisible();
-    await modal.getByLabel("Type").selectOption("bill");
+    await pickOption(modal, "Type", /Bill/);
     return modal;
 }
 

@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    within,
+} from "@testing-library/react";
+import { selectOption, openSelect } from "../../../../tests/helpers/select";
 import { LazyMotion, domAnimation } from "motion/react";
 import { PrivacyProvider } from "../../../context/PrivacyContext";
 import { AiSettingsSection } from "../AiSettingsSection";
@@ -40,9 +47,7 @@ describe("AiSettingsSection", () => {
         ).toBeInTheDocument();
 
         // Switch to Gemini to test manual API key input flow
-        fireEvent.change(screen.getByTestId("ai-provider-select"), {
-            target: { value: "gemini" },
-        });
+        await selectOption(screen.getByTestId("ai-provider-select"), "Gemini");
 
         const input = screen.getByTestId(
             "ai-api-key-input",
@@ -56,9 +61,9 @@ describe("AiSettingsSection", () => {
         fireEvent.click(screen.getByTestId("save-ai-key-btn"));
 
         expect(aiProviders.getProviderApiKey("gemini")).toBe("AIza-demo-key");
-        expect(
-            screen.getByTestId("ai-settings-feedback"),
-        ).toHaveTextContent(/saved locally/i);
+        expect(screen.getByTestId("ai-settings-feedback")).toHaveTextContent(
+            /saved locally/i,
+        );
 
         fireEvent.click(screen.getByTestId("test-ai-connection-btn"));
         await waitFor(() => {
@@ -76,24 +81,23 @@ describe("AiSettingsSection", () => {
         expect(aiProviders.getProviderApiKey("gemini")).toBe("");
     });
 
-    it("switches providers while preserving saved keys and supports custom model IDs", () => {
+    it("switches providers while preserving saved keys and supports custom model IDs", async () => {
         renderSection();
 
         fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
 
         // Switch to Gemini and save Gemini key
-        fireEvent.change(screen.getByTestId("ai-provider-select"), {
-            target: { value: "gemini" },
-        });
+        await selectOption(screen.getByTestId("ai-provider-select"), "Gemini");
         fireEvent.change(screen.getByTestId("ai-api-key-input"), {
             target: { value: "AIza-gem-1" },
         });
         fireEvent.click(screen.getByTestId("save-ai-key-btn"));
 
         // Switch to OpenRouter
-        fireEvent.change(screen.getByTestId("ai-provider-select"), {
-            target: { value: "openrouter" },
-        });
+        await selectOption(
+            screen.getByTestId("ai-provider-select"),
+            "OpenRouter",
+        );
 
         expect(aiProviders.getActiveAiProvider()).toBe("openrouter");
         expect(
@@ -110,9 +114,10 @@ describe("AiSettingsSection", () => {
         ).toBe("");
 
         // Select custom model ID and type a custom OpenRouter model
-        fireEvent.change(screen.getByTestId("ai-model-select"), {
-            target: { value: "__custom__" },
-        });
+        await selectOption(
+            screen.getByTestId("ai-model-select"),
+            "Custom model ID...",
+        );
         const customInput = screen.getByTestId(
             "ai-custom-model-input",
         ) as HTMLInputElement;
@@ -169,7 +174,10 @@ describe("AiSettingsSection", () => {
     });
 
     it("populates live free OpenRouter models when OpenRouter is selected", async () => {
-        vi.spyOn(openrouterModels, "fetchOpenRouterFreeModels").mockResolvedValue([
+        vi.spyOn(
+            openrouterModels,
+            "fetchOpenRouterFreeModels",
+        ).mockResolvedValue([
             {
                 value: "openrouter/free",
                 label: "Free Models Router (Recommended)",
@@ -182,32 +190,32 @@ describe("AiSettingsSection", () => {
 
         renderSection();
         fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
-        fireEvent.change(screen.getByTestId("ai-provider-select"), {
-            target: { value: "openrouter" },
-        });
+        await selectOption(
+            screen.getByTestId("ai-provider-select"),
+            "OpenRouter",
+        );
 
+        const listbox = await openSelect(screen.getByTestId("ai-model-select"));
         await waitFor(() => {
             expect(
-                screen.getByRole("option", {
+                within(listbox).getByRole("option", {
                     name: "NVIDIA: Nemotron 3.5 Lightning (free)",
                 }),
             ).toBeInTheDocument();
         });
     });
 
-    it("defaults reasoning effort to low and allows customizing it", () => {
+    it("defaults reasoning effort to low and allows customizing it", async () => {
         renderSection();
 
         fireEvent.click(screen.getByRole("button", { name: /Bubby AI/i }));
 
-        const effortSelect = screen.getByTestId(
-            "ai-reasoning-effort-select",
-        ) as HTMLSelectElement;
-        expect(effortSelect.value).toBe("low");
+        const effortSelect = screen.getByTestId("ai-reasoning-effort-select");
+        expect(effortSelect).toHaveTextContent("Low (Recommended)");
         expect(aiProviders.getAiReasoningEffort()).toBe("low");
 
-        fireEvent.change(effortSelect, { target: { value: "high" } });
-        expect(effortSelect.value).toBe("high");
+        await selectOption(effortSelect, "High");
+        expect(effortSelect).toHaveTextContent("High");
         expect(aiProviders.getAiReasoningEffort()).toBe("high");
     });
 });

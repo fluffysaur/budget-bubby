@@ -10,6 +10,7 @@ import {
     waitFor,
     within,
 } from "@testing-library/react";
+import { getSelectTrigger, selectOption } from "./helpers/select";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
@@ -535,8 +536,8 @@ describe("Ledger Power Tools, Fast Log & Bulk Add", () => {
                 defaultPayerId: mockMembers[0].id,
             });
             expect(
-                screen.getByLabelText(/Payer for all expenses/i),
-            ).toHaveValue(mockMembers[0].id);
+                getSelectTrigger(/Payer for all expenses/i),
+            ).toHaveTextContent(mockMembers[0].display_name);
             fireEvent.click(
                 rowOf(1).getByRole("button", { name: /More options/ }),
             );
@@ -550,8 +551,8 @@ describe("Ledger Power Tools, Fast Log & Bulk Add", () => {
                 defaultPayerId: mockMembers[1].id,
             });
             expect(
-                screen.getByLabelText(/Payer for all expenses/i),
-            ).toHaveValue(mockMembers[1].id);
+                getSelectTrigger(/Payer for all expenses/i),
+            ).toHaveTextContent(mockMembers[1].display_name);
             fireEvent.click(
                 rowOf(1).getByRole("button", { name: /More options/ }),
             );
@@ -620,9 +621,7 @@ describe("Ledger Power Tools, Fast Log & Bulk Add", () => {
             fireEvent.click(
                 rowOf(1).getByRole("button", { name: /More options/ }),
             );
-            fireEvent.change(rowOf(1).getByLabelText("Currency for row 1"), {
-                target: { value: "JPY" },
-            });
+            await selectOption("Currency for row 1", "JPY");
             fireEvent.change(rowOf(1).getByLabelText("Exchange rate JPY"), {
                 target: { value: "100" },
             });

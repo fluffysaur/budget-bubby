@@ -41,7 +41,7 @@ import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { Input } from "../ui/Input";
-import { Select } from "../ui/Select";
+import { Select } from "../ui/dropdown";
 import { feedback as delightFeedback } from "../../lib/delight/feedback";
 
 const CUSTOM_MODEL_SENTINEL = "__custom__";
@@ -309,8 +309,8 @@ export function AiSettingsSection() {
                     label="Provider"
                     sizeVariant="sm"
                     value={provider}
-                    onChange={(e) =>
-                        handleProviderChange(e.target.value as AiProviderId)
+                    onValueChange={(v) =>
+                        handleProviderChange(v as AiProviderId)
                     }
                     data-testid="ai-provider-select"
                     options={AI_PROVIDER_LIST.map((p) => ({
@@ -438,7 +438,7 @@ export function AiSettingsSection() {
                     label="Model"
                     sizeVariant="sm"
                     value={selectValue}
-                    onChange={(e) => handleModelSelectChange(e.target.value)}
+                    onValueChange={handleModelSelectChange}
                     data-testid="ai-model-select"
                     options={[
                         ...modelOptions.map((opt) => ({
@@ -472,10 +472,8 @@ export function AiSettingsSection() {
                     label="Reasoning Effort"
                     sizeVariant="sm"
                     value={reasoningEffort}
-                    onChange={(e) =>
-                        handleReasoningEffortChange(
-                            e.target.value as AiReasoningEffort,
-                        )
+                    onValueChange={(v) =>
+                        handleReasoningEffortChange(v as AiReasoningEffort)
                     }
                     data-testid="ai-reasoning-effort-select"
                     options={[
@@ -494,7 +492,9 @@ export function AiSettingsSection() {
                             onClick={handleSave}
                             disabled={!isDirty && isConfigured}
                             data-testid="save-ai-key-btn"
-                            leftIcon={<Check className="h-3.5 w-3.5 stroke-3" />}
+                            leftIcon={
+                                <Check className="h-3.5 w-3.5 stroke-3" />
+                            }
                         >
                             Save Key
                         </Button>

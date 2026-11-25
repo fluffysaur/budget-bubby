@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { pickOption } from "./helpers/select";
 
 test.describe("Bubby AI provider settings & chat drawer", () => {
     test.beforeEach(async ({ page }) => {
@@ -35,13 +36,13 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
             .click();
 
         // Switch provider to OpenRouter and set a custom model ID
-        await page
-            .getByTestId("ai-provider-select")
-            .selectOption("openrouter");
+        await pickOption(page.getByRole("dialog"), "Provider", "OpenRouter");
         await page.getByTestId("toggle-manual-openrouter-key").click();
-        await page
-            .getByTestId("ai-model-select")
-            .selectOption("__custom__");
+        await pickOption(
+            page.getByRole("dialog"),
+            "Model",
+            "Custom model ID...",
+        );
         await page
             .getByTestId("ai-custom-model-input")
             .fill("deepseek/deepseek-r1");

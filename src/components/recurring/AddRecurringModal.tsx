@@ -30,12 +30,15 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
-import { Select } from "../ui/Select";
-import { Select as CustomSelect, type SelectOption } from "../ui/dropdown";
+import {
+    Select,
+    categoryToSelectOption,
+    memberToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
-import { getCategoryIconComponent } from "../../lib/categoryPresets";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { feedback } from "../../lib/delight/feedback";
 import { filterCategoriesForMember } from "../../lib/financialFormulas";
@@ -85,9 +88,22 @@ const EMPTY_CATEGORIES: Category[] = [];
 const EMPTY_GOALS: SavingsGoal[] = [];
 const GOAL_OFFSET_OPTIONS = [0, 3, 6, 9, 12, 18, 24] as const;
 
-const MONTH_OPTIONS = MONTH_NAMES_FULL.map((label, idx) => ({
-    value: idx + 1,
-    label,
+const TYPE_OPTIONS: SelectOption[] = [
+    { value: "insurance", label: "🛡️ Insurance" },
+    { value: "tax", label: "🏛️ Tax" },
+    { value: "subscription", label: "📱 Subscription" },
+    { value: "bill", label: "🧾 Bill" },
+    { value: "other", label: "📦 Other" },
+];
+
+const FREQUENCY_OPTIONS: SelectOption[] = [
+    { value: "annually", label: "Yearly" },
+    { value: "monthly", label: "Monthly" },
+];
+
+const MONTH_OPTIONS: SelectOption[] = MONTH_NAMES_FULL.map((label, idx) => ({
+    value: String(idx + 1),
+    label: `📅 ${label}`,
 }));
 
 export function AddRecurringModal({
@@ -190,25 +206,35 @@ export function AddRecurringModal({
     );
 
     const categoryOptions = useMemo<SelectOption[]>(
-        () =>
-            scopedCategories.map((c) => {
-                const Icon = getCategoryIconComponent(c.icon);
-                return {
-                    value: c.id,
-                    label: c.name,
-                    icon: (
-                        <span className="flex h-6 w-6 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas)">
-                            <Icon
-                                className="h-3.5 w-3.5"
-                                style={{ color: c.color }}
-                                strokeWidth={2.5}
-                            />
-                        </span>
-                    ),
-                };
-            }),
+        () => scopedCategories.map(categoryToSelectOption),
         [scopedCategories],
     );
+
+    const ownerOptions = useMemo<SelectOption[]>(
+        () => members.map(memberToSelectOption),
+        [members],
+    );
+
+    const goalOptions = useMemo<SelectOption[]>(
+        () =>
+            linkableGoals.map((g) => ({
+                value: g.id,
+                label: `${g.emoji} ${g.title} (${formatShortMonth(g.target_date)})`,
+            })),
+        [linkableGoals],
+    );
+
+    const offsetOptions = useMemo<SelectOption[]>(() => {
+        const choices = GOAL_OFFSET_OPTIONS.includes(
+            goalOffsetMonths as (typeof GOAL_OFFSET_OPTIONS)[number],
+        )
+            ? [...GOAL_OFFSET_OPTIONS]
+            : [...GOAL_OFFSET_OPTIONS, goalOffsetMonths].sort((a, b) => a - b);
+        return choices.map((m) => ({
+            value: String(m),
+            label: m === 0 ? "At goal date" : `+${m} months`,
+        }));
+    }, [goalOffsetMonths]);
 
     if (!isOpen) return null;
 
@@ -221,11 +247,6 @@ export function AddRecurringModal({
     const effectiveStartDate = linkedGoal?.target_date
         ? resolveGoalLinkedStartDate(linkedGoal.target_date, goalOffsetMonths)
         : startDate;
-    const offsetChoices = GOAL_OFFSET_OPTIONS.includes(
-        goalOffsetMonths as (typeof GOAL_OFFSET_OPTIONS)[number],
-    )
-        ? GOAL_OFFSET_OPTIONS
-        : [...GOAL_OFFSET_OPTIONS, goalOffsetMonths].sort((a, b) => a - b);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -354,19 +375,12 @@ export function AddRecurringModal({
                                 id="recurring-type"
                                 label="Type"
                                 value={type}
-                                onChange={(e) =>
-                                    setType(e.target.value as RecurringItemType)
+                                onValueChange={(v) =>
+                                    setType(v as RecurringItemType)
                                 }
+                                options={TYPE_OPTIONS}
                                 className="bg-(--bg-canvas)"
-                            >
-                                <option value="insurance">🛡️ Insurance</option>
-                                <option value="tax">🏛️ Tax</option>
-                                <option value="subscription">
-                                    📱 Subscription
-                                </option>
-                                <option value="bill">🧾 Bill</option>
-                                <option value="other">📦 Other</option>
-                            </Select>
+                            />
                         </div>
 
                         {members.length > 0 && (
@@ -375,15 +389,10 @@ export function AddRecurringModal({
                                     id="recurring-owner"
                                     label="Owner"
                                     value={ownerId}
-                                    onChange={(e) => setOwnerId(e.target.value)}
+                                    onValueChange={setOwnerId}
+                                    options={ownerOptions}
                                     className="bg-(--bg-canvas)"
-                                >
-                                    {members.map((m) => (
-                                        <option key={m.id} value={m.id}>
-                                            👤 {m.display_name}
-                                        </option>
-                                    ))}
-                                </Select>
+                                />
                             </div>
                         )}
                     </div>
@@ -391,7 +400,7 @@ export function AddRecurringModal({
                     {/* Spend category (subscription / bill / other only) */}
                     {showCategory && (
                         <div>
-                            <CustomSelect
+                            <Select
                                 id="recurring-category"
                                 label="Category"
                                 value={selectedCategoryId}
@@ -435,16 +444,12 @@ export function AddRecurringModal({
                                 id="recurring-frequency"
                                 label="Frequency"
                                 value={frequency}
-                                onChange={(e) =>
-                                    setFrequency(
-                                        e.target.value as RecurringFrequency,
-                                    )
+                                onValueChange={(v) =>
+                                    setFrequency(v as RecurringFrequency)
                                 }
+                                options={FREQUENCY_OPTIONS}
                                 className="bg-(--bg-canvas)"
-                            >
-                                <option value="annually">Yearly</option>
-                                <option value="monthly">Monthly</option>
-                            </Select>
+                            />
                         </div>
                     </div>
 
@@ -455,18 +460,13 @@ export function AddRecurringModal({
                                 <Select
                                     id="recurring-month"
                                     label="Renewal Month"
-                                    value={paymentMonth}
-                                    onChange={(e) =>
-                                        setPaymentMonth(Number(e.target.value))
+                                    value={String(paymentMonth)}
+                                    onValueChange={(v) =>
+                                        setPaymentMonth(Number(v))
                                     }
+                                    options={MONTH_OPTIONS}
                                     className="bg-(--bg-canvas)"
-                                >
-                                    {MONTH_OPTIONS.map((m) => (
-                                        <option key={m.value} value={m.value}>
-                                            📅 {m.label}
-                                        </option>
-                                    ))}
-                                </Select>
+                                />
                             </div>
                         )}
                         <div>
@@ -505,37 +505,23 @@ export function AddRecurringModal({
                                     id="recurring-goal-link"
                                     label="Link to goal"
                                     value={goalId}
-                                    onChange={(e) => setGoalId(e.target.value)}
+                                    onValueChange={setGoalId}
+                                    options={goalOptions}
+                                    placeholder="None (manual date)"
+                                    clearable
                                     className="bg-(--bg-canvas)"
-                                >
-                                    <option value="">None (manual date)</option>
-                                    {linkableGoals.map((g) => (
-                                        <option key={g.id} value={g.id}>
-                                            {g.emoji} {g.title} (
-                                            {formatShortMonth(g.target_date)})
-                                        </option>
-                                    ))}
-                                </Select>
+                                />
                                 {goalId && (
                                     <Select
                                         id="recurring-goal-offset"
                                         label="Offset"
-                                        value={goalOffsetMonths}
-                                        onChange={(e) =>
-                                            setGoalOffsetMonths(
-                                                Number(e.target.value),
-                                            )
+                                        value={String(goalOffsetMonths)}
+                                        onValueChange={(v) =>
+                                            setGoalOffsetMonths(Number(v))
                                         }
+                                        options={offsetOptions}
                                         className="bg-(--bg-canvas)"
-                                    >
-                                        {offsetChoices.map((m) => (
-                                            <option key={m} value={m}>
-                                                {m === 0
-                                                    ? "At goal date"
-                                                    : `+${m} months`}
-                                            </option>
-                                        ))}
-                                    </Select>
+                                    />
                                 )}
                             </div>
                             {linkedGoal && effectiveStartDate && (

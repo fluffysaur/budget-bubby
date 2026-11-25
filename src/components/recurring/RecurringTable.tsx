@@ -19,7 +19,7 @@ import {
     getSingaporeDate,
     MONTH_NAMES_SHORT as MONTH_NAMES,
 } from "../../lib/dateUtils";
-import { Select } from "../ui/Select";
+import { Select, type SelectOption } from "../ui/dropdown";
 import { TruncatedText } from "../ui/TruncatedText";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -61,6 +61,20 @@ export interface RecurringTableProps {
 const EMPTY_GOALS: SavingsGoal[] = [];
 
 type StatusFilter = "active" | "ended" | "all";
+
+const TYPE_FILTER_OPTIONS: SelectOption[] = [
+    { value: "all", label: "All types" },
+    ...RECURRING_ITEM_TYPES.map((t) => ({
+        value: t,
+        label: RECURRING_TYPE_LABELS[t],
+    })),
+];
+
+const STATUS_FILTER_OPTIONS: SelectOption[] = [
+    { value: "active", label: "Active" },
+    { value: "ended", label: "Ended" },
+    { value: "all", label: "All" },
+];
 
 function formatStartsLabel(startDate: string): string {
     const [y, m] = formatMonth(startDate).split("-");
@@ -195,32 +209,21 @@ export function RecurringTable({
                         sizeVariant="sm"
                         containerClassName="sm:w-40"
                         value={selectedType}
-                        onChange={(e) =>
-                            setSelectedType(
-                                e.target.value as "all" | RecurringItemType,
-                            )
+                        onValueChange={(v) =>
+                            setSelectedType(v as "all" | RecurringItemType)
                         }
-                    >
-                        <option value="all">All types</option>
-                        {RECURRING_ITEM_TYPES.map((t) => (
-                            <option key={t} value={t}>
-                                {RECURRING_TYPE_LABELS[t]}
-                            </option>
-                        ))}
-                    </Select>
+                        options={TYPE_FILTER_OPTIONS}
+                    />
                     <Select
                         aria-label="Status filter"
                         sizeVariant="sm"
                         containerClassName="sm:w-32"
                         value={selectedStatus}
-                        onChange={(e) =>
-                            setSelectedStatus(e.target.value as StatusFilter)
+                        onValueChange={(v) =>
+                            setSelectedStatus(v as StatusFilter)
                         }
-                    >
-                        <option value="active">Active</option>
-                        <option value="ended">Ended</option>
-                        <option value="all">All</option>
-                    </Select>
+                        options={STATUS_FILTER_OPTIONS}
+                    />
                 </div>
             </div>
 

@@ -26,7 +26,11 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
-import { Select } from "../ui/Select";
+import {
+    Select,
+    memberToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
@@ -71,6 +75,11 @@ const PRESET_BANKS = [
     "Maybank",
     "Other",
 ];
+
+const BANK_OPTIONS: SelectOption[] = PRESET_BANKS.map((b) => ({
+    value: b,
+    label: b,
+}));
 
 export function AddEditCreditCardModal({
     isOpen,
@@ -229,6 +238,8 @@ export function AddEditCreditCardModal({
         }
     };
 
+    const ownerOptions = members.map(memberToSelectOption);
+
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
             <form
@@ -281,15 +292,10 @@ export function AddEditCreditCardModal({
                             <Select
                                 id="card-bank"
                                 value={bank}
-                                onChange={(e) => setBank(e.target.value)}
+                                onValueChange={setBank}
+                                options={BANK_OPTIONS}
                                 className="bg-(--bg-canvas)"
-                            >
-                                {PRESET_BANKS.map((b) => (
-                                    <option key={b} value={b}>
-                                        {b}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                             {bank === "Other" && (
                                 <input
                                     type="text"
@@ -423,18 +429,11 @@ export function AddEditCreditCardModal({
                             <Select
                                 id="card-owner"
                                 value={ownerId}
-                                onChange={(e) => setOwnerId(e.target.value)}
+                                onValueChange={setOwnerId}
+                                options={ownerOptions}
+                                placeholder="Choose cardholder"
                                 className="bg-(--bg-canvas)"
-                            >
-                                <option value="" disabled>
-                                    Choose cardholder
-                                </option>
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.display_name}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                         </div>
                     </div>
 
