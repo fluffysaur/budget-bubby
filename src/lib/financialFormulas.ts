@@ -559,6 +559,83 @@ export function computeBufferAbsorption<
     };
 }
 
+export type SpendableCategoryStatus =
+    | CategoryCoverageStatus
+    | "buffer"
+    | "buffer_depleted";
+
+export interface SpendableCategoryView {
+    categoryId: string;
+    isBuffer: boolean;
+    /** Allocated minus spent; for Buffer, what is left after covering overspends. */
+    remaining: number;
+    /** Meter fill; for Buffer, direct spend plus what it covered. */
+    meterValue: number;
+    absorbed: number;
+    uncovered: number;
+    status: SpendableCategoryStatus;
+}
+
+export interface SpendableCategoryViews {
+    absorption: BufferAbsorptionResult;
+    /** Keyed by category id; spendable categories only. */
+    views: Record<string, SpendableCategoryView>;
+}
+
+/**
+ * Per-category display figures after Buffer absorption, shared by the
+ * Budget page and Home so both show the same numbers.
+ */
+export function computeSpendableCategoryViews<
+    T extends {
+        category?: Category | null;
+        category_id?: string;
+        allocated_amount?: number;
+        actualSpent?: number;
+        remaining?: number;
+    },
+>(categories: T[] = []): SpendableCategoryViews {
+    const absorption = computeBufferAbsorption(categories);
+    const views: Record<string, SpendableCategoryView> = {};
+
+    categories.forEach((c) => {
+        const ref = c.category ?? c.category_id;
+        if (!isSpendableCategory(ref)) return;
+        const categoryId = c.category_id || c.category?.id || "";
+        const allocated = c.allocated_amount || 0;
+        const actual = c.actualSpent || 0;
+        const isBuffer =
+            absorption.hasBuffer && categoryId === absorption.bufferCategoryId;
+
+        if (isBuffer) {
+            views[categoryId] = {
+                categoryId,
+                isBuffer,
+                remaining: absorption.bufferRemaining,
+                meterValue: actual + absorption.totalAbsorbed,
+                absorbed: absorption.totalAbsorbed,
+                uncovered: 0,
+                status: absorption.isDepleted ? "buffer_depleted" : "buffer",
+            };
+            return;
+        }
+
+        const coverage = absorption.categoryBreakdown[categoryId];
+        views[categoryId] = {
+            categoryId,
+            isBuffer,
+            remaining:
+                c.remaining !== undefined ? c.remaining : allocated - actual,
+            meterValue: actual,
+            absorbed: coverage?.absorbed ?? 0,
+            uncovered: coverage?.uncovered ?? 0,
+            status: coverage?.status ?? "normal",
+        };
+    });
+
+    return { absorption, views };
+}
+
 /**
  * 8. Computes a member's effective share of an expense based on perspective and 50/50 split.
  * - In 'household' perspective: returns full expense amount.
