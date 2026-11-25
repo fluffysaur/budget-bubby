@@ -29,7 +29,7 @@ import { useSettingsStatuses } from "../components/settings/useSettingsStatuses"
 const DESKTOP_QUERY = "(min-width: 768px)";
 
 const MOBILE_HEADER_CLASS =
-    "sticky top-0 z-30 -mx-4 -mt-6 mb-4 border-b-2 border-(--border-subtle) bg-(--bg-canvas) px-4 py-1 sm:-mx-6 sm:px-6";
+    "sticky -top-6 z-30 -mx-4 -mt-6 mb-4 border-b-2 border-(--border-subtle) bg-(--bg-canvas) px-4 py-1 sm:-mx-6 sm:px-6";
 
 export default function SettingsPage() {
     const location = useLocation();
