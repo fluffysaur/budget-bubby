@@ -208,7 +208,7 @@ export function CategoryProgressList({
                         >
                             {/* Card Header: Icon, Name & Status Badge (Over or Set aside only) */}
                             <div className="flex items-center justify-between gap-2 mb-2.5">
-                                <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                     <div
                                         className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-cute-sm border border-(--border-ink)"
                                         style={{
@@ -217,31 +217,427 @@ export function CategoryProgressList({
                                     >
                                         <Icon className="h-4 w-4" />
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                            <TruncatedText
-                                                text={categoryName}
-                                                className="font-display font-black text-sm text-(--text-ink)"
-                                            />
-                                            {catDetail.category?.member_id && (
-                                                <Badge
-                                                    variant="lilac"
-                                                    size="sm"
-                                                    className="shrink-0"
+                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                        <TruncatedText
+                                            text={categoryName}
+                                            className="font-display font-black text-sm text-(--text-ink)"
+                                        />
+                                        {tracksCap && (
+                                            <span
+                                                className="inline-flex shrink-0"
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
+                                            >
+                                                <TooltipPopover
+                                                    title={
+                                                        isBuffer
+                                                            ? "Buffer Details"
+                                                            : `${categoryName} Details`
+                                                    }
+                                                    ariaLabel={`${categoryName} budget breakdown`}
+                                                    align="left"
                                                 >
-                                                    {members.find(
-                                                        (m) =>
-                                                            m.id ===
-                                                            catDetail.category
-                                                                ?.member_id,
-                                                    )?.display_name ??
-                                                        "Personal"}
-                                                </Badge>
+                                                    <div className="space-y-1.5 text-xs">
+                                                        <div>
+                                                            {isBuffer
+                                                                ? "Direct spent:"
+                                                                : "Spent:"}{" "}
+                                                            <strong>
+                                                                <CurrencyText
+                                                                    amount={
+                                                                        actual
+                                                                    }
+                                                                />
+                                                            </strong>
+                                                        </div>
+                                                        <div>
+                                                            Budget:{" "}
+                                                            <strong>
+                                                                <CurrencyText
+                                                                    amount={
+                                                                        allocated
+                                                                    }
+                                                                />
+                                                            </strong>
+                                                        </div>
+                                                        <div className="text-(--text-muted)">
+                                                            {roundedPercentage}%
+                                                            of cap
+                                                        </div>
+                                                        {isBuffer &&
+                                                            absorption.totalAbsorbed >
+                                                                0 && (
+                                                                <div className="pt-1.5 border-t border-(--border-ink)/20 space-y-1">
+                                                                    <div className="font-bold flex items-center justify-between">
+                                                                        <span>
+                                                                            Absorbed
+                                                                            overages:
+                                                                        </span>
+                                                                        <span>
+                                                                            <CurrencyText
+                                                                                amount={
+                                                                                    absorption.totalAbsorbed
+                                                                                }
+                                                                            />
+                                                                        </span>
+                                                                    </div>
+                                                                    {absorption
+                                                                        .cushionBreakdown
+                                                                        .length >
+                                                                        0 && (
+                                                                        <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-(--text-muted)">
+                                                                            {absorption.cushionBreakdown.map(
+                                                                                (
+                                                                                    item,
+                                                                                ) => (
+                                                                                    <li
+                                                                                        key={
+                                                                                            item.categoryId
+                                                                                        }
+                                                                                    >
+                                                                                        {
+                                                                                            item.categoryName
+                                                                                        }
+                                                                                        :{" "}
+                                                                                        <strong className="text-(--text-ink)">
+                                                                                            <CurrencyText
+                                                                                                amount={
+                                                                                                    item.absorbedAmount
+                                                                                                }
+                                                                                            />
+                                                                                        </strong>
+                                                                                    </li>
+                                                                                ),
+                                                                            )}
+                                                                        </ul>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        {isBuffer && (
+                                                            <div className="pt-1.5 border-t border-(--border-ink)/20 font-bold flex items-center justify-between">
+                                                                <span>
+                                                                    Remaining
+                                                                    cushion:
+                                                                </span>
+                                                                <span
+                                                                    className={
+                                                                        absorption.isDepleted
+                                                                            ? "text-rose-600 dark:text-rose-400"
+                                                                            : ""
+                                                                    }
+                                                                >
+                                                                    <CurrencyText
+                                                                        amount={
+                                                                            remaining
+                                                                        }
+                                                                    />
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {!isBuffer &&
+                                                            coverage &&
+                                                            coverage.absorbed >
+                                                                0 && (
+                                                                <div className="pt-1 border-t border-(--border-ink)/20 text-emerald-700 dark:text-emerald-300 font-medium">
+                                                                    Covered by
+                                                                    Buffer:{" "}
+                                                                    <CurrencyText
+                                                                        amount={
+                                                                            coverage.absorbed
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        {!isBuffer &&
+                                                            coverage &&
+                                                            coverage.uncovered >
+                                                                0 && (
+                                                                <div className="text-rose-600 dark:text-rose-400 font-medium">
+                                                                    Uncovered:{" "}
+                                                                    <CurrencyText
+                                                                        amount={
+                                                                            coverage.uncovered
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                    </div>
+                                                </TooltipPopover>
+                                            </span>
+                                        )}
+                                        {catDetail.category?.member_id && (
+                                            <Badge
+                                                variant="lilac"
+                                                size="sm"
+                                                className="shrink-0"
+                                            >
+                                                {members.find(
+                                                    (m) =>
+                                                        m.id ===
+                                                        catDetail.category
+                                                            ?.member_id,
+                                                )?.display_name ?? "Personal"}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Status Indicator Icon (tap/hover for details) */}
+                                <div
+                                    className="shrink-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {!tracksCap ? (
+                                        <TooltipPopover
+                                            title="Set aside"
+                                            ariaLabel="Set aside"
+                                            renderTrigger={(triggerProps) => (
+                                                <button
+                                                    type="button"
+                                                    {...triggerProps}
+                                                    className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-(--accent-lilac)/30 text-(--text-ink) p-1.5 shadow-cute-sm cursor-pointer"
+                                                >
+                                                    <PiggyBank className="h-3.5 w-3.5" />
+                                                </button>
                                             )}
+                                        >
+                                            Funds set aside each month without a
+                                            spending cap.
+                                        </TooltipPopover>
+                                    ) : isBuffer ? (
+                                        absorption.isDepleted ? (
+                                            <TooltipPopover
+                                                title="Buffer depleted"
+                                                ariaLabel="Buffer depleted"
+                                                renderTrigger={(
+                                                    triggerProps,
+                                                ) => (
+                                                    <button
+                                                        type="button"
+                                                        {...triggerProps}
+                                                        data-testid={`badge-depleted-${catDetail.category_id}`}
+                                                        className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 p-1.5 shadow-cute-sm cursor-pointer"
+                                                    >
+                                                        <AlertCircle className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            >
+                                                All buffer funds have been used
+                                                or absorbed by overages.
+                                            </TooltipPopover>
+                                        ) : absorption.totalAbsorbed > 0 ? (
+                                            <TooltipPopover
+                                                title="Cushioning"
+                                                ariaLabel="Cushioning"
+                                                renderTrigger={(
+                                                    triggerProps,
+                                                ) => (
+                                                    <button
+                                                        type="button"
+                                                        {...triggerProps}
+                                                        data-testid={`badge-cushioning-${catDetail.category_id}`}
+                                                        className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 p-1.5 shadow-cute-sm cursor-pointer"
+                                                    >
+                                                        <Shield className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            >
+                                                Absorbing{" "}
+                                                <CurrencyText
+                                                    amount={
+                                                        absorption.totalAbsorbed
+                                                    }
+                                                />{" "}
+                                                in category overages.
+                                            </TooltipPopover>
+                                        ) : null
+                                    ) : isOverBudget ? (
+                                        coverage?.status === "covered" ? (
+                                            <TooltipPopover
+                                                title="Covered by Buffer"
+                                                ariaLabel="Covered by Buffer"
+                                                renderTrigger={(
+                                                    triggerProps,
+                                                ) => (
+                                                    <button
+                                                        type="button"
+                                                        {...triggerProps}
+                                                        data-testid={`badge-covered-${catDetail.category_id}`}
+                                                        className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 p-1.5 shadow-cute-sm cursor-pointer"
+                                                    >
+                                                        <Shield className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            >
+                                                Overage of{" "}
+                                                <CurrencyText
+                                                    amount={coverage.absorbed}
+                                                />{" "}
+                                                is fully absorbed by your
+                                                Buffer.
+                                            </TooltipPopover>
+                                        ) : coverage?.status ===
+                                          "partially_covered" ? (
+                                            <TooltipPopover
+                                                title="Partially covered"
+                                                ariaLabel="Partially covered"
+                                                renderTrigger={(
+                                                    triggerProps,
+                                                ) => (
+                                                    <button
+                                                        type="button"
+                                                        {...triggerProps}
+                                                        data-testid={`badge-partially-covered-${catDetail.category_id}`}
+                                                        className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 p-1.5 shadow-cute-sm cursor-pointer"
+                                                    >
+                                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            >
+                                                Buffer absorbs{" "}
+                                                <CurrencyText
+                                                    amount={coverage.absorbed}
+                                                />{" "}
+                                                of this overage;{" "}
+                                                <CurrencyText
+                                                    amount={coverage.uncovered}
+                                                />{" "}
+                                                remains uncovered.
+                                            </TooltipPopover>
+                                        ) : coverage?.status === "uncovered" &&
+                                          absorption.hasBuffer ? (
+                                            <TooltipPopover
+                                                title="Uncovered"
+                                                ariaLabel="Uncovered"
+                                                renderTrigger={(
+                                                    triggerProps,
+                                                ) => (
+                                                    <button
+                                                        type="button"
+                                                        {...triggerProps}
+                                                        data-testid={`badge-uncovered-${catDetail.category_id}`}
+                                                        className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 p-1.5 shadow-cute-sm cursor-pointer"
+                                                    >
+                                                        <AlertCircle className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            >
+                                                Uncovered by{" "}
+                                                <CurrencyText
+                                                    amount={coverage.uncovered}
+                                                />{" "}
+                                                — Buffer is depleted.
+                                            </TooltipPopover>
+                                        ) : (
+                                            <TooltipPopover
+                                                title="Over budget"
+                                                ariaLabel="Over budget"
+                                                renderTrigger={(
+                                                    triggerProps,
+                                                ) => (
+                                                    <button
+                                                        type="button"
+                                                        {...triggerProps}
+                                                        data-testid={`badge-rose-${catDetail.category_id}`}
+                                                        className="inline-flex items-center justify-center rounded-full border-2 border-(--border-ink) bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 p-1.5 shadow-cute-sm cursor-pointer"
+                                                    >
+                                                        <AlertCircle className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            >
+                                                Spent{" "}
+                                                <CurrencyText
+                                                    amount={Math.abs(remaining)}
+                                                />{" "}
+                                                over cap.
+                                            </TooltipPopover>
+                                        )
+                                    ) : null}
+                                </div>
+                            </div>
+
+                            {/* Primary Amount: Left / Over for spendable, Set aside / Funded for allocations */}
+                            {!tracksCap ? (
+                                <div className="flex items-center justify-between text-left my-2">
+                                    <div>
+                                        <span className="block text-2xs uppercase font-bold text-(--text-muted)">
+                                            Set aside
+                                        </span>
+                                        <span className="text-(--text-ink)">
+                                            <CurrencyText
+                                                amount={allocated}
+                                                size="md"
+                                            />
+                                        </span>
+                                    </div>
+                                    {actual > 0 && (
+                                        <div className="text-right">
+                                            <span className="block text-2xs uppercase font-bold text-(--text-muted)">
+                                                Funded
+                                            </span>
+                                            <span className="text-(--text-ink)">
+                                                <CurrencyText
+                                                    amount={actual}
+                                                    size="md"
+                                                />
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="my-2 space-y-1.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                            {remaining < 0 ? (
+                                                <span className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono-num">
+                                                    <CurrencyText
+                                                        amount={Math.abs(remaining)}
+                                                    />{" "}
+                                                    over
+                                                </span>
+                                            ) : (
+                                                <span className="text-sm font-bold text-(--text-ink) font-mono-num">
+                                                    <CurrencyText
+                                                        amount={remaining}
+                                                    />{" "}
+                                                    left
+                                                </span>
+                                            )}
+                                            {coverage?.status === "partially_covered" && (
+                                                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                                                    (Uncovered by{" "}
+                                                    <CurrencyText
+                                                        amount={coverage.uncovered}
+                                                    />)
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div
+                                            className="flex items-center gap-1.5 shrink-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             {subSpent > 0 && (
                                                 <TooltipPopover
                                                     label={`${categoryName} Recurring Breakdown`}
                                                     title="Recurring"
+                                                    renderTrigger={(
+                                                        triggerProps,
+                                                    ) => (
+                                                        <button
+                                                            type="button"
+                                                            {...triggerProps}
+                                                            className="inline-flex items-center gap-1 rounded-lg bg-(--bg-cream) px-1.5 py-0.5 text-2xs font-semibold text-(--text-muted) hover:text-(--text-ink) transition-colors cursor-pointer"
+                                                        >
+                                                            <Repeat className="h-3 w-3 shrink-0 text-purple-600 dark:text-purple-400" />
+                                                            <CurrencyText
+                                                                amount={
+                                                                    subSpent
+                                                                }
+                                                            />
+                                                        </button>
+                                                    )}
                                                 >
                                                     <div className="space-y-1">
                                                         <p>
@@ -285,304 +681,7 @@ export function CategoryProgressList({
                                                 </TooltipPopover>
                                             )}
                                         </div>
-                                        {subSpent > 0 && (
-                                            <div className="flex items-center gap-1 text-2xs font-medium text-(--text-muted)">
-                                                <Repeat className="h-2.5 w-2.5 text-purple-600 dark:text-purple-400" />
-                                                <span>
-                                                    Includes{" "}
-                                                    <CurrencyText
-                                                        amount={subSpent}
-                                                    />{" "}
-                                                    recurring
-                                                </span>
-                                            </div>
-                                        )}
                                     </div>
-                                </div>
-
-                                {/* Status Indicator Badge */}
-                                {!tracksCap ? (
-                                    <Badge
-                                        variant="lilac"
-                                        size="sm"
-                                        icon={<PiggyBank className="h-3 w-3" />}
-                                    >
-                                        Set aside
-                                    </Badge>
-                                ) : isBuffer ? (
-                                    absorption.isDepleted ? (
-                                        <Badge
-                                            variant="over"
-                                            size="sm"
-                                            icon={
-                                                <AlertCircle className="h-3 w-3" />
-                                            }
-                                            data-testid={`badge-depleted-${catDetail.category_id}`}
-                                        >
-                                            Depleted
-                                        </Badge>
-                                    ) : absorption.totalAbsorbed > 0 ? (
-                                        <Badge
-                                            variant="mint"
-                                            size="sm"
-                                            icon={
-                                                <Shield className="h-3 w-3" />
-                                            }
-                                            data-testid={`badge-cushioning-${catDetail.category_id}`}
-                                        >
-                                            Cushioning
-                                        </Badge>
-                                    ) : null
-                                ) : isOverBudget ? (
-                                    coverage?.status === "covered" ? (
-                                        <Badge
-                                            variant="mint"
-                                            size="sm"
-                                            icon={
-                                                <Shield className="h-3 w-3" />
-                                            }
-                                            data-testid={`badge-covered-${catDetail.category_id}`}
-                                        >
-                                            Covered by Buffer
-                                        </Badge>
-                                    ) : coverage?.status === "partially_covered" ? (
-                                        <Badge
-                                            variant="amber"
-                                            size="sm"
-                                            icon={
-                                                <AlertTriangle className="h-3 w-3" />
-                                            }
-                                            data-testid={`badge-partially-covered-${catDetail.category_id}`}
-                                        >
-                                            Partially covered
-                                        </Badge>
-                                    ) : coverage?.status === "uncovered" &&
-                                      absorption.hasBuffer ? (
-                                        <Badge
-                                            variant="over"
-                                            size="sm"
-                                            icon={
-                                                <AlertCircle className="h-3 w-3" />
-                                            }
-                                            data-testid={`badge-uncovered-${catDetail.category_id}`}
-                                        >
-                                            Uncovered by{" "}
-                                            <CurrencyText
-                                                amount={coverage.uncovered}
-                                            />
-                                        </Badge>
-                                    ) : (
-                                        <Badge
-                                            variant="over"
-                                            size="sm"
-                                            data-testid={`badge-rose-${catDetail.category_id}`}
-                                        >
-                                            Over
-                                        </Badge>
-                                    )
-                                ) : null}
-                            </div>
-
-                            {/* Primary Amount: Left / Over for spendable, Set aside / Funded for allocations */}
-                            {!tracksCap ? (
-                                <div className="flex items-center justify-between text-left my-2">
-                                    <div>
-                                        <span className="block text-2xs uppercase font-bold text-(--text-muted)">
-                                            Set aside
-                                        </span>
-                                        <span className="text-(--text-ink)">
-                                            <CurrencyText
-                                                amount={allocated}
-                                                size="md"
-                                            />
-                                        </span>
-                                    </div>
-                                    {actual > 0 && (
-                                        <div className="text-right">
-                                            <span className="block text-2xs uppercase font-bold text-(--text-muted)">
-                                                Funded
-                                            </span>
-                                            <span className="text-(--text-ink)">
-                                                <CurrencyText
-                                                    amount={actual}
-                                                    size="md"
-                                                />
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="my-2 space-y-1.5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                            {remaining < 0 ? (
-                                                <span className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono-num">
-                                                    <CurrencyText
-                                                        amount={Math.abs(remaining)}
-                                                    />{" "}
-                                                    over
-                                                </span>
-                                            ) : (
-                                                <span className="text-sm font-bold text-(--text-ink) font-mono-num">
-                                                    <CurrencyText
-                                                        amount={remaining}
-                                                    />{" "}
-                                                    left
-                                                </span>
-                                            )}
-                                            {coverage?.status === "partially_covered" && (
-                                                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                                                    (Uncovered by{" "}
-                                                    <CurrencyText
-                                                        amount={coverage.uncovered}
-                                                    />)
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Secondary Figures in TooltipPopover */}
-                                        <TooltipPopover
-                                            title={
-                                                isBuffer
-                                                    ? "Buffer Details"
-                                                    : `${categoryName} Details`
-                                            }
-                                            ariaLabel={`${categoryName} budget breakdown`}
-                                        >
-                                            <div className="space-y-1.5 text-xs">
-                                                <div>
-                                                    {isBuffer
-                                                        ? "Direct spent:"
-                                                        : "Spent:"}{" "}
-                                                    <strong>
-                                                        <CurrencyText
-                                                            amount={actual}
-                                                        />
-                                                    </strong>
-                                                </div>
-                                                <div>
-                                                    Budget:{" "}
-                                                    <strong>
-                                                        <CurrencyText
-                                                            amount={allocated}
-                                                        />
-                                                    </strong>
-                                                </div>
-                                                <div className="text-(--text-muted)">
-                                                    {roundedPercentage}% of cap
-                                                </div>
-                                                {isBuffer &&
-                                                    absorption.totalAbsorbed > 0 && (
-                                                        <div className="pt-1.5 border-t border-(--border-ink)/20 space-y-1">
-                                                            <div className="font-bold flex items-center justify-between">
-                                                                <span>
-                                                                    Absorbed overages:
-                                                                </span>
-                                                                <span>
-                                                                    <CurrencyText
-                                                                        amount={
-                                                                            absorption.totalAbsorbed
-                                                                        }
-                                                                    />
-                                                                </span>
-                                                            </div>
-                                                            {absorption.cushionBreakdown
-                                                                .length > 0 && (
-                                                                <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-(--text-muted)">
-                                                                    {absorption.cushionBreakdown.map(
-                                                                        (item) => (
-                                                                            <li
-                                                                                key={
-                                                                                    item.categoryId
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    item.categoryName
-                                                                                }
-                                                                                :{" "}
-                                                                                <strong className="text-(--text-ink)">
-                                                                                    <CurrencyText
-                                                                                        amount={
-                                                                                            item.absorbedAmount
-                                                                                        }
-                                                                                    />
-                                                                                </strong>
-                                                                            </li>
-                                                                        ),
-                                                                    )}
-                                                                </ul>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                {isBuffer && (
-                                                    <div className="pt-1.5 border-t border-(--border-ink)/20 font-bold flex items-center justify-between">
-                                                        <span>
-                                                            Remaining cushion:
-                                                        </span>
-                                                        <span
-                                                            className={
-                                                                absorption.isDepleted
-                                                                    ? "text-rose-600 dark:text-rose-400"
-                                                                    : ""
-                                                            }
-                                                        >
-                                                            <CurrencyText
-                                                                amount={remaining}
-                                                            />
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {!isBuffer &&
-                                                    coverage &&
-                                                    coverage.absorbed > 0 && (
-                                                        <div className="pt-1 border-t border-(--border-ink)/20 text-emerald-700 dark:text-emerald-300 font-medium">
-                                                            Covered by Buffer:{" "}
-                                                            <CurrencyText
-                                                                amount={
-                                                                    coverage.absorbed
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
-                                                {!isBuffer &&
-                                                    coverage &&
-                                                    coverage.uncovered > 0 && (
-                                                        <div className="text-rose-600 dark:text-rose-400 font-medium">
-                                                            Uncovered:{" "}
-                                                            <CurrencyText
-                                                                amount={
-                                                                    coverage.uncovered
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
-                                            </div>
-                                        </TooltipPopover>
-                                    </div>
-
-                                    {/* Buffer breakdown note: direct spending alongside absorbed overages */}
-                                    {isBuffer && (
-                                        <div className="flex items-center justify-between text-[11px] text-(--text-muted) pt-0.5 flex-wrap gap-1">
-                                            <span>
-                                                Direct:{" "}
-                                                <strong className="text-(--text-ink)">
-                                                    <CurrencyText amount={actual} />
-                                                </strong>
-                                            </span>
-                                            {absorption.totalAbsorbed > 0 && (
-                                                <span className="flex items-center gap-1 font-semibold text-purple-700 dark:text-purple-300">
-                                                    <span>Absorbed overages:</span>
-                                                    <strong className="text-(--text-ink)">
-                                                        <CurrencyText
-                                                            amount={
-                                                                absorption.totalAbsorbed
-                                                            }
-                                                        />
-                                                    </strong>
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             )}
 

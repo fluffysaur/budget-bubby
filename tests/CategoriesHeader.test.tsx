@@ -3,11 +3,16 @@ import { describe, it, expect } from "vitest";
 import { CategoriesHeader } from "../src/components/budget/CategoriesHeader";
 
 describe("CategoriesHeader", () => {
-    it("shows remaining under the cap with an ok tone bar", () => {
+    it("shows spent / allocated under the cap with an ok tone bar", () => {
         render(
             <CategoriesHeader remaining={500} allocated={1000} spent={500} />,
         );
-        expect(screen.getByText(/left/)).toHaveTextContent("S$500.00 left");
+        const spentEl = screen.getByText("S$500.00");
+        expect(spentEl.parentElement?.className).toContain("text-(--text-ink)");
+        expect(
+            spentEl.closest("p")?.textContent?.replace(/\s+/g, " ").trim(),
+        ).toBe("S$500.00 / S$1,000.00");
+        expect(screen.queryByText(/left|over cap/i)).not.toBeInTheDocument();
         const bar = screen.getByRole("progressbar");
         expect(bar).toHaveAttribute("aria-valuenow", "50");
         expect(bar.firstElementChild?.className).toContain("bg-(--tone-ok)");
@@ -22,12 +27,18 @@ describe("CategoriesHeader", () => {
         expect(bar.firstElementChild?.className).toContain("bg-(--tone-near)");
     });
 
-    it("shows over amount in rose and clamps the bar when over cap", () => {
+    it("colours spent in coral and clamps the bar when over cap", () => {
         render(
             <CategoriesHeader remaining={-200} allocated={1000} spent={1200} />,
         );
-        expect(screen.getByText(/over/)).toHaveTextContent("S$200.00 over");
-        expect(screen.queryByText(/left/)).not.toBeInTheDocument();
+        const spentEl = screen.getByText("S$1,200.00");
+        expect(spentEl.parentElement?.className).toContain(
+            "text-(--accent-coral-ink)",
+        );
+        expect(
+            spentEl.closest("p")?.textContent?.replace(/\s+/g, " ").trim(),
+        ).toBe("S$1,200.00 / S$1,000.00");
+        expect(screen.queryByText(/left|over cap/i)).not.toBeInTheDocument();
         const bar = screen.getByRole("progressbar");
         expect(bar).toHaveAttribute("aria-valuenow", "120");
         expect(bar.firstElementChild?.className).toContain("bg-(--tone-over)");

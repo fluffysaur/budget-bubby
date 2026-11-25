@@ -18,7 +18,7 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
     ownerName,
 }: CategoryMeterCardProps) {
     return (
-        <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-cute-sm flex items-center gap-2.5">
+        <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-2 sm:p-2.5 shadow-cute-sm flex items-center gap-2 sm:gap-2.5">
             <ProgressRing
                 value={pct}
                 size={36}
@@ -33,7 +33,7 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
                     />
                 }
             />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex items-center gap-1 min-w-0">
                     <div className="text-xs font-bold text-(--text-ink) truncate font-display min-w-0 flex-1">
                         <TruncatedText text={name} />
@@ -45,13 +45,17 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
                     )}
                 </div>
                 <div
-                    className={`text-xs font-extrabold font-mono-num ${
+                    className={
                         remaining < 0
                             ? "text-(--accent-coral-ink) dark:text-rose-400"
                             : "text-(--text-ink)"
-                    }`}
+                    }
                 >
-                    <CurrencyText amount={remaining} />
+                    <CurrencyText
+                        amount={remaining}
+                        size="sm"
+                        className="block truncate"
+                    />
                 </div>
             </div>
         </div>

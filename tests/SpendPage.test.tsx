@@ -78,7 +78,14 @@ describe("SpendPage Component & Sub-Tab Navigation", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText(/^Income Flow$/i)).toBeInTheDocument();
+            expect(
+                screen.getByRole("button", { name: /income flow/i }),
+            ).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /income flow/i }));
+
+        await waitFor(() => {
             expect(screen.getAllByText(/^Gross$/i)[0]).toBeInTheDocument();
             expect(screen.getAllByText(/^Take-home$/i)[0]).toBeInTheDocument();
         });

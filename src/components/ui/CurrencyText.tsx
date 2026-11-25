@@ -4,7 +4,7 @@ import { usePrivacy, PRIVACY_MASK } from "../../context/PrivacyContext";
 import { useTweenedNumber } from "../../hooks/useTweenedNumber";
 import {
     MONEY_BASE_CLASSES,
-    MONEY_SIZE_CLASSES,
+    getMoneySizeClass,
     type MoneySize,
 } from "../../lib/moneyStyles";
 
@@ -21,6 +21,8 @@ export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement>
     tone?: CurrencyTone;
     /** Whether to smoothly count up or down when amount changes. */
     animate?: boolean;
+    /** Step down font size for long formatted amounts. Defaults to true for sized variants, false for inline. */
+    autoShrink?: boolean;
 }
 
 const toneMap: Record<CurrencyTone, string> = {
@@ -38,6 +40,7 @@ export function CurrencyText({
     size = "inline",
     tone = "inherit",
     animate = false,
+    autoShrink,
     className = "",
     ...props
 }: CurrencyTextProps) {
@@ -50,9 +53,10 @@ export function CurrencyText({
     const displayValue = isPrivacyMode
         ? PRIVACY_MASK
         : (formatted ?? formatSGD(finalAmount ?? 0));
+    const shouldShrink = autoShrink ?? size !== "inline";
     const classes = [
         MONEY_BASE_CLASSES,
-        MONEY_SIZE_CLASSES[size],
+        getMoneySizeClass(size, displayValue.length, shouldShrink),
         toneMap[tone],
         className,
     ]

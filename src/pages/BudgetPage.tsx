@@ -503,7 +503,7 @@ export function BudgetPage({
                                     icon={
                                         <DollarSign className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
                                     }
-                                    defaultOpen={true}
+                                    defaultOpen={false}
                                 >
                                     <BudgetWaterfall
                                         budget={budgetDetail?.budget}

@@ -333,7 +333,7 @@ export function CumulativeSurplusCard({
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                         {summary.monthlyHistory.map((point) => {
                             const isPos = point.delta >= 0;
                             const isSelected = point.month === selectedMonth;
@@ -341,7 +341,7 @@ export function CumulativeSurplusCard({
                             return (
                                 <div
                                     key={point.month}
-                                    className={`p-3 rounded-xl border-2 flex flex-col justify-between transition-colors ${
+                                    className={`min-w-0 overflow-hidden p-2.5 sm:p-3 rounded-xl border-2 flex flex-col justify-between transition-colors ${
                                         isSelected
                                             ? "border-(--border-ink) bg-(--pastel-butter-light) shadow-cute-sm"
                                             : "border-(--border-subtle) bg-(--bg-canvas)"
@@ -365,15 +365,16 @@ export function CumulativeSurplusCard({
                                         </div>
 
                                         <div
-                                            className={`font-mono-num text-sm font-black tracking-tight mt-1.5 ${
+                                            className={`mt-1.5 ${
                                                 isPos
                                                     ? "text-emerald-700 dark:text-emerald-400"
                                                     : "text-rose-600 dark:text-rose-400"
                                             }`}
                                         >
-                                            {isPos ? "+" : "-"}
                                             <CurrencyText
-                                                amount={Math.abs(point.delta)}
+                                                formatted={`${isPos ? "+" : "-"}${formatSGD(Math.abs(point.delta))}`}
+                                                size="md"
+                                                className="block truncate font-black"
                                             />
                                         </div>
                                     </div>
