@@ -528,7 +528,7 @@ export function NotificationSettingsModal({
                                             onClick={() => {
                                                 void requestPermission();
                                             }}
-                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) text-(--accent-mint-ink) border-2 border-(--border-ink) text-[11px] font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) text-emerald-950 border-2 border-(--border-ink) text-[11px] font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             <span>
                                                 {isRequesting

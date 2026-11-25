@@ -483,7 +483,7 @@ export function NotificationCenterPopover({
                             data-testid="enable-push-notifications-btn"
                             disabled={isRequesting}
                             onClick={handleRequestPermission}
-                            className="relative after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-[''] px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-(--accent-mint-ink) border border-(--border-ink) text-2xs font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="relative after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-[''] px-2.5 py-1 rounded-lg bg-(--pastel-mint) text-emerald-950 border border-(--border-ink) text-2xs font-black hover:bg-(--pastel-mint-dark) transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {isRequesting ? "Enabling..." : "Enable"}
                         </button>
