@@ -31,7 +31,6 @@ import {
 import {
     useAccountsQuery,
     useAccountSnapshotsQuery,
-    useUpdateAccountBalanceMutation,
 } from "../hooks/finance/accounts";
 import { useCreditCardStatementsQuery } from "../hooks/finance/cards";
 import { useInvalidateFinance } from "../hooks/finance/shared";
@@ -106,7 +105,6 @@ export function AccountsPage({
         () => unmatchedCpfAccounts(accounts),
         [accounts],
     );
-    const updateBalanceMutation = useUpdateAccountBalanceMutation();
 
     // Modal States
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
@@ -129,19 +127,10 @@ export function AccountsPage({
 
     const handleCloseModal = () => {
         setIsUpdateModalOpen(false);
-        setSelectedAccount(null);
     };
 
     const handleBalanceUpdated = async () => {
         invalidateAccounts();
-    };
-
-    // Handler for inline balance edit from AccountGroupList
-    const handleInlineUpdateBalance = (
-        accountId: string,
-        newBalance: number,
-    ) => {
-        updateBalanceMutation.mutate({ accountId, newBalance });
     };
 
     // Account type filter (empty = All)
@@ -345,11 +334,9 @@ export function AccountsPage({
                                         {/* Grouped Accounts Listing with Table / Card view */}
                                         <AccountGroupList
                                             accounts={filteredAccounts}
+                                            snapshots={snapshots}
                                             onUpdateBalance={
                                                 handleOpenUpdateModal
-                                            }
-                                            onQuickSaveBalance={
-                                                handleInlineUpdateBalance
                                             }
                                             onEditAccount={(acc) => {
                                                 setAccountToEdit(acc);

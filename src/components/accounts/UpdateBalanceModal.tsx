@@ -8,7 +8,7 @@
  * - Smooth entry/exit animations via AnimatedModal
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
     Search,
     CheckCircle2,
@@ -76,6 +76,7 @@ export function UpdateBalanceModal({
         "All" | "Cash" | "Investment" | "CPF"
     >("All");
 
+    const singleBalanceRef = useRef<HTMLInputElement>(null);
     const isMultiMode = !account;
 
     // Initialize state when modal opens or target changes
@@ -269,6 +270,7 @@ export function UpdateBalanceModal({
                 isOpen={isOpen}
                 onClose={onClose}
                 maxWidth="max-w-md"
+                initialFocusRef={singleBalanceRef}
             >
                 <form
                     onSubmit={handleSingleSubmit}
@@ -309,6 +311,7 @@ export function UpdateBalanceModal({
                                 </span>
                                 <input
                                     id="single-balance-input"
+                                    ref={singleBalanceRef}
                                     type="number"
                                     step="0.01"
                                     value={singleBalance}
@@ -317,7 +320,6 @@ export function UpdateBalanceModal({
                                     }
                                     placeholder="0.00"
                                     required
-                                    autoFocus
                                     className="w-full pl-11 pr-3.5 py-2.5 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) text-base font-bold font-mono-num focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                                 />
                             </div>
@@ -340,6 +342,7 @@ export function UpdateBalanceModal({
                                 <input
                                     id="single-date-input"
                                     type="date"
+                                    max={getTodayDateString()}
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
                                     className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
@@ -450,6 +453,7 @@ export function UpdateBalanceModal({
                         </span>
                         <input
                             type="date"
+                            max={getTodayDateString()}
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             className="px-2 py-1 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"

@@ -7,7 +7,7 @@
  * - Other Assets
  * Supports:
  * - Compact Notion-inspired row view (default) or Card view
- * - Inline quick balance editing + modal Update Balance trigger
+ * - Tap balance (or pencil) opens the Update Balance modal
  */
 
 import { useState, useMemo } from "react";
@@ -18,8 +18,6 @@ import {
     Layers,
     PiggyBank,
     Pencil,
-    Check,
-    X,
     LayoutGrid,
     List,
     Settings,
@@ -31,15 +29,16 @@ import { listItem } from "../../lib/motion";
 import { Card, EmptyStateCard, Button } from "../ui";
 import { TruncatedText } from "../ui/TruncatedText";
 import { AccountCard } from "./AccountCard";
+import { AccountTrendSpark } from "./AccountTrendSpark";
+import { buildAccountTrends } from "../../lib/accountTrend";
+import { getTodayDateString } from "../../lib/dateUtils";
+import type { AccountSnapshot } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
 
 export interface AccountGroupListProps {
     accounts: Account[];
+    snapshots?: AccountSnapshot[];
     onUpdateBalance?: (account: Account) => void;
-    onQuickSaveBalance?: (
-        accountId: string,
-        newBalance: number,
-    ) => Promise<void> | void;
     onEditAccount?: (account: Account) => void;
     onAddAccount?: () => void;
     className?: string;
@@ -89,16 +88,18 @@ const GROUP_CONFIGS: GroupConfig[] = [
 
 export function AccountGroupList({
     accounts,
+    snapshots,
     onUpdateBalance,
-    onQuickSaveBalance,
     onEditAccount,
     onAddAccount,
     className = "",
 }: AccountGroupListProps) {
     const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-    const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
-    const [inlineValue, setInlineValue] = useState<string>("");
-    const [isSavingInline, setIsSavingInline] = useState<boolean>(false);
+
+    const trends = useMemo(
+        () => buildAccountTrends(snapshots, getTodayDateString()),
+        [snapshots],
+    );
 
     // Accounts arrive already filtered by the shared account type filter
     const filteredAccounts = accounts;
@@ -133,28 +134,6 @@ export function AccountGroupList({
             };
         }).filter((g) => g.accounts.length > 0);
     }, [filteredAccounts, totalAssets]);
-
-    const handleStartInlineEdit = (account: Account) => {
-        setInlineEditingId(account.id);
-        setInlineValue(String(account.balance));
-    };
-
-    const handleCommitInlineEdit = async (account: Account) => {
-        const parsed = parseFloat(inlineValue);
-        if (isNaN(parsed) || parsed < 0) {
-            setInlineEditingId(null);
-            return;
-        }
-        if (onQuickSaveBalance && Math.abs(parsed - account.balance) >= 0.01) {
-            try {
-                setIsSavingInline(true);
-                await onQuickSaveBalance(account.id, parsed);
-            } finally {
-                setIsSavingInline(false);
-            }
-        }
-        setInlineEditingId(null);
-    };
 
     // Empty state if no accounts
     if (accounts.length === 0) {
@@ -298,6 +277,9 @@ export function AccountGroupList({
                                             >
                                                 <AccountCard
                                                     account={account}
+                                                    trend={trends.get(
+                                                        account.id,
+                                                    )}
                                                     onUpdateBalance={
                                                         onUpdateBalance
                                                     }
@@ -314,8 +296,6 @@ export function AccountGroupList({
                                 <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) divide-y-2 divide-(--border-ink) overflow-hidden shadow-cute">
                                     <AnimatePresence initial={false}>
                                         {group.accounts.map((account) => {
-                                            const isEditing =
-                                                inlineEditingId === account.id;
                                             return (
                                                 <m.div
                                                     key={account.id}
@@ -351,128 +331,72 @@ export function AccountGroupList({
                                                         )}
                                                     </div>
 
+                                                    <AccountTrendSpark
+                                                        trend={trends.get(
+                                                            account.id,
+                                                        )}
+                                                        variant="row"
+                                                        accountName={
+                                                            account.name
+                                                        }
+                                                    />
+
                                                     <div className="flex items-center gap-2 shrink-0">
-                                                        {isEditing ? (
-                                                            <div className="flex items-center gap-1">
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.01"
-                                                                    min="0"
-                                                                    value={
-                                                                        inlineValue
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setInlineValue(
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                    onKeyDown={(
-                                                                        e,
-                                                                    ) => {
-                                                                        if (
-                                                                            e.key ===
-                                                                            "Enter"
-                                                                        )
-                                                                            handleCommitInlineEdit(
-                                                                                account,
-                                                                            );
-                                                                        if (
-                                                                            e.key ===
-                                                                            "Escape"
-                                                                        )
-                                                                            setInlineEditingId(
-                                                                                null,
-                                                                            );
-                                                                    }}
-                                                                    autoFocus
-                                                                    className="w-28 rounded-lg border border-emerald-500 bg-white dark:bg-slate-800 px-2 py-1 text-right text-base sm:text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    disabled={
-                                                                        isSavingInline
-                                                                    }
-                                                                    onClick={() =>
-                                                                        handleCommitInlineEdit(
-                                                                            account,
-                                                                        )
-                                                                    }
-                                                                    aria-label="Save inline balance"
-                                                                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
-                                                                >
-                                                                    <Check className="h-4 w-4" />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        setInlineEditingId(
-                                                                            null,
-                                                                        )
-                                                                    }
-                                                                    aria-label="Cancel inline edit"
-                                                                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-(--text-faint) cursor-pointer"
-                                                                >
-                                                                    <X className="h-4 w-4" />
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        onQuickSaveBalance
-                                                                            ? handleStartInlineEdit(
-                                                                                  account,
-                                                                              )
-                                                                            : onUpdateBalance?.(
-                                                                                  account,
-                                                                              )
-                                                                    }
-                                                                    title="Edit balance"
-                                                                    className="text-(--text-ink) font-display hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-                                                                >
-                                                                    <CurrencyText
-                                                                        amount={
-                                                                            account.balance
-                                                                        }
-                                                                        size="md"
-                                                                    />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        onUpdateBalance?.(
-                                                                            account,
-                                                                        )
-                                                                    }
-                                                                    aria-label="Update Balance"
-                                                                    className="inline-flex items-center gap-1 rounded-lg border border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-[11px] font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) transition-colors cursor-pointer"
-                                                                >
-                                                                    <Pencil className="h-3 w-3" />
-                                                                    <span>
-                                                                        Update
-                                                                    </span>
-                                                                </button>
-                                                                {onEditAccount && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            onEditAccount(
-                                                                                account,
-                                                                            )
-                                                                        }
-                                                                        aria-label={`Edit ${account.name}`}
-                                                                        title="Edit"
-                                                                        className="relative inline-flex items-center justify-center p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
-                                                                    >
-                                                                        <Settings className="h-3 w-3" />
-                                                                    </button>
-                                                                )}
-                                                            </>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                onUpdateBalance?.(
+                                                                    account,
+                                                                )
+                                                            }
+                                                            aria-label={`Update balance for ${account.name}`}
+                                                            title="Update balance"
+                                                            className="inline-flex min-h-11 items-center gap-1.5 text-(--text-ink) font-display hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                                                        >
+                                                            <CurrencyText
+                                                                amount={
+                                                                    account.balance
+                                                                }
+                                                                size="md"
+                                                            />
+                                                            <Pencil
+                                                                className="h-3.5 w-3.5 shrink-0 text-(--text-muted) sm:hidden"
+                                                                strokeWidth={
+                                                                    2.5
+                                                                }
+                                                                aria-hidden="true"
+                                                            />
+                                                        </button>
+                                                        {/* Desktop only: mobile uses the pencil beside the amount */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                onUpdateBalance?.(
+                                                                    account,
+                                                                )
+                                                            }
+                                                            aria-label={`Edit balance for ${account.name}`}
+                                                            title="Update balance"
+                                                            className="relative hidden min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer sm:inline-flex"
+                                                        >
+                                                            <span className="inline-flex rounded-lg border border-(--border-ink) bg-(--bg-cream) p-1.5 shadow-cute-sm">
+                                                                <Pencil className="h-3 w-3" />
+                                                            </span>
+                                                        </button>
+                                                        {onEditAccount && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    onEditAccount(
+                                                                        account,
+                                                                    )
+                                                                }
+                                                                aria-label={`Edit ${account.name}`}
+                                                                title="Edit"
+                                                                className="relative inline-flex items-center justify-center p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
+                                                            >
+                                                                <Settings className="h-3 w-3" />
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </m.div>
