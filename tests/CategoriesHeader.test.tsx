@@ -22,11 +22,13 @@ describe("CategoriesHeader", () => {
         expect(bar.firstElementChild?.className).toContain("bg-(--tone-near)");
     });
 
-    it("shows over amount in rose and clamps the bar when over cap", () => {
+    it("shows over cap amount in coral and clamps the bar when over cap", () => {
         render(
             <CategoriesHeader remaining={-200} allocated={1000} spent={1200} />,
         );
-        expect(screen.getByText(/over/)).toHaveTextContent("S$200.00 over");
+        expect(screen.getByText(/over cap/)).toHaveTextContent(
+            "S$200.00 over cap",
+        );
         expect(screen.queryByText(/left/)).not.toBeInTheDocument();
         const bar = screen.getByRole("progressbar");
         expect(bar).toHaveAttribute("aria-valuenow", "120");

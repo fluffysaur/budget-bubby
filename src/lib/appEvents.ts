@@ -43,7 +43,8 @@ export type MilestoneKind =
     | "reunion"
     | "goal-complete"
     | "sweep"
-    | "bill-paid";
+    | "bill-paid"
+    | "honest-log";
 
 export interface MilestoneToastAction {
     label: string;

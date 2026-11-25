@@ -29,8 +29,9 @@ export function CategoriesHeader({
                 </h2>
                 <p className="min-w-0 text-sm wrap-break-word">
                     {isOver ? (
-                        <span className="font-black font-display text-rose-600 dark:text-rose-400">
+                        <span className="font-black font-display text-(--accent-coral-ink) dark:text-rose-400">
                             <CurrencyText amount={Math.abs(remaining)} /> over
+                            cap
                         </span>
                     ) : (
                         <span className="font-black font-display text-(--text-ink)">

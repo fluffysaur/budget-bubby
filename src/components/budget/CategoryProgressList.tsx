@@ -114,9 +114,9 @@ export function CategoryProgressList({
 
     return (
         <div className={`space-y-4 ${className}`}>
-            {/* Over Budget Alert Banner */}
+            {/* Over Cap Alert Banner */}
             {overBudgetCategories.length > 0 && (
-                <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-cute-sm">
+                <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm">
                     <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border-2 border-(--border-ink) shrink-0 shadow-cute-sm">
                         <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
                     </div>
@@ -124,9 +124,9 @@ export function CategoryProgressList({
                         <span className="font-bold font-display">
                             {overBudgetCategories.length}{" "}
                             {overBudgetCategories.length === 1
-                                ? "category has"
-                                : "categories have"}{" "}
-                            exceeded budget:
+                                ? "category"
+                                : "categories"}{" "}
+                            over cap:
                         </span>{" "}
                         <span className="font-medium opacity-90">
                             {overBudgetCategories
@@ -345,7 +345,8 @@ export function CategoryProgressList({
                                         >
                                             Covered by Buffer
                                         </Badge>
-                                    ) : coverage?.status === "partially_covered" ? (
+                                    ) : coverage?.status ===
+                                      "partially_covered" ? (
                                         <Badge
                                             variant="amber"
                                             size="sm"
@@ -418,7 +419,9 @@ export function CategoryProgressList({
                                             {remaining < 0 ? (
                                                 <span className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono-num">
                                                     <CurrencyText
-                                                        amount={Math.abs(remaining)}
+                                                        amount={Math.abs(
+                                                            remaining,
+                                                        )}
                                                     />{" "}
                                                     over
                                                 </span>
@@ -430,12 +433,16 @@ export function CategoryProgressList({
                                                     left
                                                 </span>
                                             )}
-                                            {coverage?.status === "partially_covered" && (
+                                            {coverage?.status ===
+                                                "partially_covered" && (
                                                 <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
                                                     (Uncovered by{" "}
                                                     <CurrencyText
-                                                        amount={coverage.uncovered}
-                                                    />)
+                                                        amount={
+                                                            coverage.uncovered
+                                                        }
+                                                    />
+                                                    )
                                                 </span>
                                             )}
                                         </div>
@@ -472,11 +479,13 @@ export function CategoryProgressList({
                                                     {roundedPercentage}% of cap
                                                 </div>
                                                 {isBuffer &&
-                                                    absorption.totalAbsorbed > 0 && (
+                                                    absorption.totalAbsorbed >
+                                                        0 && (
                                                         <div className="pt-1.5 border-t border-(--border-ink)/20 space-y-1">
                                                             <div className="font-bold flex items-center justify-between">
                                                                 <span>
-                                                                    Absorbed overages:
+                                                                    Absorbed
+                                                                    overages:
                                                                 </span>
                                                                 <span>
                                                                     <CurrencyText
@@ -486,11 +495,14 @@ export function CategoryProgressList({
                                                                     />
                                                                 </span>
                                                             </div>
-                                                            {absorption.cushionBreakdown
+                                                            {absorption
+                                                                .cushionBreakdown
                                                                 .length > 0 && (
                                                                 <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-(--text-muted)">
                                                                     {absorption.cushionBreakdown.map(
-                                                                        (item) => (
+                                                                        (
+                                                                            item,
+                                                                        ) => (
                                                                             <li
                                                                                 key={
                                                                                     item.categoryId
@@ -499,6 +511,7 @@ export function CategoryProgressList({
                                                                                 {
                                                                                     item.categoryName
                                                                                 }
+
                                                                                 :{" "}
                                                                                 <strong className="text-(--text-ink)">
                                                                                     <CurrencyText
@@ -527,7 +540,9 @@ export function CategoryProgressList({
                                                             }
                                                         >
                                                             <CurrencyText
-                                                                amount={remaining}
+                                                                amount={
+                                                                    remaining
+                                                                }
                                                             />
                                                         </span>
                                                     </div>
@@ -566,12 +581,16 @@ export function CategoryProgressList({
                                             <span>
                                                 Direct:{" "}
                                                 <strong className="text-(--text-ink)">
-                                                    <CurrencyText amount={actual} />
+                                                    <CurrencyText
+                                                        amount={actual}
+                                                    />
                                                 </strong>
                                             </span>
                                             {absorption.totalAbsorbed > 0 && (
                                                 <span className="flex items-center gap-1 font-semibold text-purple-700 dark:text-purple-300">
-                                                    <span>Absorbed overages:</span>
+                                                    <span>
+                                                        Absorbed overages:
+                                                    </span>
                                                     <strong className="text-(--text-ink)">
                                                         <CurrencyText
                                                             amount={

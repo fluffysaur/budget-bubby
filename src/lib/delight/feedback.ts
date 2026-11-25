@@ -141,6 +141,12 @@ const MILESTONE_CUES: Record<MilestoneKind, MilestoneCue> = {
         react: "celebrate",
         big: true,
     },
+    "honest-log": {
+        haptic: "success",
+        sound: "softPop",
+        react: "cheer",
+        big: false,
+    },
 };
 
 export const BIG_CELEBRATION_COOLDOWN_MS = 8000;

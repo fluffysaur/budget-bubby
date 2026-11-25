@@ -32,10 +32,13 @@ import {
     useBudgetDetailQuery,
 } from "../hooks/finance/budget";
 import { useCategoriesQuery } from "../hooks/finance/categories";
+import { useDailyCheckinsQuery } from "../hooks/finance/cards";
 import { useInvalidateFinance } from "../hooks/finance/shared";
 import { financeService } from "../services/financeService";
 import { formatSGD } from "../lib/currency";
 import { getCurrentMonth } from "../lib/dateUtils";
+import { toSgtDateString } from "../lib/bubby/dates";
+import { countConsecutiveLoggedDays } from "../lib/honestLog";
 import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
 import { isValidUuid } from "../lib/uuid";
 import {
@@ -52,8 +55,10 @@ import { CategoryLimitWarningBanner } from "../components/budget/CategoryLimitWa
 import { SavingsBreakdownCard } from "../components/budget/SavingsBreakdownCard";
 import { CumulativeSurplusCard } from "../components/budget/CumulativeSurplusCard";
 import { UncategorizedRecurringRow } from "../components/budget/UncategorizedRecurringRow";
-import type { BaseBudgetProfile } from "../types/finance";
+import type { BaseBudgetProfile, DailyCheckin } from "../types/finance";
 import { CurrencyText } from "../components/ui/CurrencyText";
+
+const EMPTY_CHECKINS: DailyCheckin[] = [];
 
 export interface BudgetPageProps {
     className?: string;
@@ -85,6 +90,8 @@ export function BudgetPage({
     const { data: baseProfilesData } = useBaseProfilesQuery();
     const { data: baseAllocationsData } = useBaseAllocationsQuery();
     const { data: recurringItemsData } = useRecurringItemsQuery();
+    const { data: checkinsData } = useDailyCheckinsQuery();
+    const checkins = checkinsData ?? EMPTY_CHECKINS;
 
     const needsMockFallback =
         isMockMode &&
@@ -260,6 +267,15 @@ export function BudgetPage({
         isSavingsCategory(c.category),
     );
     const baseSavings = savingsCats.reduce((s, c) => s + c.allocated_amount, 0);
+    const logStreak = useMemo(
+        () =>
+            countConsecutiveLoggedDays(
+                checkins,
+                activeMember?.id ?? currentMember?.id,
+                toSgtDateString(),
+            ),
+        [checkins, activeMember?.id, currentMember?.id],
+    );
 
     return (
         <div
@@ -350,7 +366,7 @@ export function BudgetPage({
                         }
                     >
                         <StatCard
-                            title={spendableRemaining < 0 ? "Over" : "Left"}
+                            title={spendableRemaining < 0 ? "Over Cap" : "Left"}
                             loading={isLoading}
                             value={
                                 <CurrencyText
@@ -362,6 +378,11 @@ export function BudgetPage({
                                     )}
                                 />
                             }
+                            subtitle={
+                                spendableRemaining < 0 && logStreak > 0
+                                    ? `${logStreak}-day log streak`
+                                    : undefined
+                            }
                             badge={
                                 spendableRemaining < 0 ? (
                                     <Badge variant="over">Over</Badge>
@@ -369,7 +390,11 @@ export function BudgetPage({
                                     <Badge variant="ok">On Track</Badge>
                                 )
                             }
-                            tooltip={`Spendable budget of ${formatSGD(spendableAllocated)} minus ${formatSGD(spendableSpent)} spent.`}
+                            tooltip={
+                                spendableRemaining < 0
+                                    ? `${formatSGD(Math.abs(spendableRemaining))} over ${formatSGD(spendableAllocated)} spendable — can be offset by saving in past or future months.`
+                                    : `Spendable budget of ${formatSGD(spendableAllocated)} minus ${formatSGD(spendableSpent)} spent.`
+                            }
                             icon={<Wallet className="h-4 w-4" />}
                             iconBg="bg-(--pastel-mint-light) text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                             footer={
