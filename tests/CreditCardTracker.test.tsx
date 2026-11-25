@@ -671,7 +671,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                 /Issuing Bank/i,
             ) as HTMLInputElement;
             expect(addBank.tagName).toBe("INPUT");
-            expect(addBank).toHaveAttribute("placeholder", "e.g. DBS, OCBC, UOB");
+            expect(addBank).toHaveAttribute("placeholder", "e.g. DBS");
             expect(addBank.value).toBe("");
 
             rerender(

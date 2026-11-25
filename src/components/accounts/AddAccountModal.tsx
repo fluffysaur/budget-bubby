@@ -261,7 +261,7 @@ export function AddAccountModal({
                                     type="text"
                                     value={institution}
                                     onChange={(e) => setInstitution(e.target.value)}
-                                    placeholder="e.g. DBS, OCBC, UOB"
+                                    placeholder="e.g. DBS"
                                 />
                                 <Textarea
                                     id="account-notes"

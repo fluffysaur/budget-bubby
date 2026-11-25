@@ -252,7 +252,7 @@ export function AddEditCreditCardModal({
                                 required
                                 value={bank}
                                 onChange={(e) => setBank(e.target.value)}
-                                placeholder="e.g. DBS, OCBC, UOB"
+                                placeholder="e.g. DBS"
                                 leftIcon={
                                     <Building
                                         className="h-4 w-4"
