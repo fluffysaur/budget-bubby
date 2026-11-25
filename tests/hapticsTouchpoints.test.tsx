@@ -5,9 +5,12 @@ import { PullToRefresh } from "../src/components/ui/PullToRefresh";
 import { BubbySheet } from "../src/components/bubby/BubbySheet";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
-import { NotificationSettingsModal } from "../src/components/layout/NotificationSettingsModal";
+import SettingsPage from "../src/pages/SettingsPage";
 import { CategoryLimitWarningBanner } from "../src/components/budget/CategoryLimitWarningBanner";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
+import { AuthProvider } from "../src/context/AuthContext";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { financeService } from "../src/services/financeService";
 import type {
     Expense,
@@ -197,7 +200,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         expect(alertSpy).not.toHaveBeenCalled();
     });
 
-    it("allows toggling and testing haptics in NotificationSettingsModal", async () => {
+    it("allows toggling and testing haptics on the General settings page", async () => {
         Object.defineProperty(window.navigator, "vibrate", {
             value: vi.fn().mockReturnValue(true),
             configurable: true,
@@ -210,13 +213,29 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         );
 
         render(
-            <HouseholdProvider>
-                <NotificationSettingsModal
-                    isOpen={true}
-                    onClose={vi.fn()}
-                    memberId="mem-1"
-                />
-            </HouseholdProvider>,
+            <QueryClientProvider
+                client={
+                    new QueryClient({
+                        defaultOptions: { queries: { retry: false } },
+                    })
+                }
+            >
+                <MemoryRouter initialEntries={["/settings/general"]}>
+                    <AuthProvider
+                        initialAuthenticated={true}
+                        initialMemberEmail="alex@example.com"
+                    >
+                        <HouseholdProvider>
+                            <Routes>
+                                <Route
+                                    path="/settings/*"
+                                    element={<SettingsPage />}
+                                />
+                            </Routes>
+                        </HouseholdProvider>
+                    </AuthProvider>
+                </MemoryRouter>
+            </QueryClientProvider>,
         );
 
         // Vibrate test button exists
@@ -235,7 +254,7 @@ describe("Haptic Feedback Touchpoints Integration", () => {
         });
 
         expect(updateSpy).toHaveBeenCalledWith(
-            "mem-1",
+            expect.any(String),
             expect.objectContaining({ haptics_enabled: false }),
         );
     });

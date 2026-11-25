@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { LazyMotion, domAnimation } from "motion/react";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { SettingsProvider } from "../src/context/SettingsContext";
 import { AuthProvider } from "../src/context/AuthContext";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { BudgetPage } from "../src/pages/BudgetPage";
@@ -23,9 +22,7 @@ function renderWithProviders(ui: React.ReactElement) {
         <LazyMotion features={domAnimation} strict>
             <AuthProvider initialAuthenticated>
                 <HouseholdProvider>
-                    <SettingsProvider>
-                        <MemoryRouter>{ui}</MemoryRouter>
-                    </SettingsProvider>
+                    <MemoryRouter>{ui}</MemoryRouter>
                 </HouseholdProvider>
             </AuthProvider>
         </LazyMotion>,

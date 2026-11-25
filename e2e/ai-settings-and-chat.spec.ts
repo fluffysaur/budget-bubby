@@ -28,11 +28,9 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
         await drawer.getByTestId("bubby-setup-key-cta").click();
         await expect(drawer).not.toBeVisible();
 
-        // Expand Bubby AI section in Settings
-        await page
-            .getByRole("dialog")
-            .getByRole("button", { name: /Bubby AI/i })
-            .click();
+        // The CTA deep-links to the Bubby AI settings page, which opens expanded
+        await expect(page).toHaveURL(/\/settings\/ai$/);
+        await expect(page.getByTestId("ai-provider-select")).toBeVisible();
 
         // Switch provider to OpenRouter and set a custom model ID
         await page
@@ -52,15 +50,8 @@ test.describe("Bubby AI provider settings & chat drawer", () => {
             /OpenRouter API key saved locally/i,
         );
 
-        // Close Settings modal and reopen Bubby chat drawer
-        await page.keyboard.press("Escape");
-        const discardBtn = page
-            .locator('[data-discard-dialog="true"]')
-            .getByRole("button", { name: /Discard/i });
-        if (await discardBtn.isVisible({ timeout: 500 }).catch(() => false)) {
-            await discardBtn.click();
-        }
-        await expect(page.getByRole("dialog")).not.toBeVisible();
+        // Leave Settings (the app header is hidden there on phones) and reopen chat
+        await page.goBack();
         await page.getByTestId("open-bubby-chat-btn").click();
         await expect(drawer).toBeVisible();
         await expect(

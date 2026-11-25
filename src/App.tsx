@@ -37,7 +37,6 @@ import {
     useOptionalHousehold,
 } from "./context/HouseholdContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { SettingsProvider, useSettings } from "./context/SettingsContext";
 import { PrivacyProvider } from "./context/PrivacyContext";
 import { PinLoginScreen } from "./components/auth/PinLoginScreen";
 import { isSupabaseConfigured } from "./services/supabaseClient";
@@ -76,6 +75,7 @@ import {
 } from "./lib/onboarding";
 import { useLoggedInMember } from "./hooks/useLoggedInMember";
 import { LEGAL_PATHS } from "./data/legalContent";
+import { isSettingsPath, settingsPath } from "./lib/settingsRoutes";
 import type { Expense } from "./types/finance";
 
 // Route-level code-splitting for fast initial boot (<50ms first paint)
@@ -86,6 +86,7 @@ const PlanPage = lazy(() => import("./pages/PlanPage"));
 const FastLogPage = lazy(() => import("./pages/FastLogPage"));
 const InboxPage = lazy(() => import("./pages/InboxPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const OnboardingModal = lazy(
     () => import("./components/onboarding/OnboardingModal"),
 );
@@ -127,7 +128,6 @@ function AppLayoutInner() {
     const navigate = useNavigate();
     const navType = useNavigationType();
     const { refreshData, members } = useHousehold();
-    const { openSettings } = useSettings();
     const { me } = useLoggedInMember();
     const scrollPositions = useRef<Map<string, number>>(new Map());
     const processedOAuthCallbackRef = useRef<string | null>(null);
@@ -216,6 +216,9 @@ function AppLayoutInner() {
     >(undefined);
     const { data: categoriesData } = useCategoriesQuery();
     const categories = categoriesData || [];
+
+    // Settings screens carry their own slim header on mobile
+    const isSettingsRoute = isSettingsPath(location.pathname);
 
     // Extract active tab id from route path
     const activeTab = useMemo(() => {
@@ -361,14 +364,19 @@ function AppLayoutInner() {
                     : result.error || "Failed to connect OpenRouter.",
             });
             if (!isMountedRef.current) return;
-            navigate(result.returnPath, { replace: true });
+            // Settings returns land on the Bubby AI screen they started from
+            const target =
+                result.returnTo === "settings"
+                    ? isSettingsPath(result.returnPath)
+                        ? result.returnPath
+                        : settingsPath("ai")
+                    : result.returnPath;
+            navigate(target, { replace: true });
             if (result.returnTo === "chat") {
                 setIsBubbyChatOpen(true);
-            } else {
-                openSettings();
             }
         })();
-    }, [location.pathname, location.search, navigate, openSettings]);
+    }, [location.pathname, location.search, navigate]);
 
     // Auto-complete visit-based starter quests per member as user explores Budget / Plan
     const meId = me?.id;
@@ -402,6 +410,7 @@ function AppLayoutInner() {
 
                 {/* Responsive Header */}
                 <AppHeader
+                    className={isSettingsRoute ? "max-md:hidden" : ""}
                     onOpenQuickAdd={handleOpenQuickAdd}
                     onNavigateTab={handleSelectTab}
                     onOpenBubbyChat={() => setIsBubbyChatOpen(true)}
@@ -413,7 +422,9 @@ function AppLayoutInner() {
                 <PullToRefresh
                     as="main"
                     onRefresh={refreshData}
-                    className="px-4 sm:px-6 py-6 pb-24 md:pb-10 [scrollbar-gutter:stable]"
+                    className={`px-4 sm:px-6 py-6 md:pb-10 [scrollbar-gutter:stable] ${
+                        isSettingsRoute ? "pb-10" : "pb-24"
+                    }`}
                 >
                     <div className="mx-auto w-full max-w-5xl">
                         <Suspense fallback={<RouteSkeletonLoader />}>
@@ -521,6 +532,10 @@ function AppLayoutInner() {
                                         }
                                     />
                                     <Route
+                                        path="/settings/*"
+                                        element={<SettingsPage />}
+                                    />
+                                    <Route
                                         path={OPENROUTER_CALLBACK_PATH}
                                         element={<RouteSkeletonLoader />}
                                     />
@@ -536,12 +551,14 @@ function AppLayoutInner() {
             </div>
 
             {/* Mobile Fixed Bottom Navigation */}
-            <MobileBottomNav
-                activeTab={activeTab}
-                onSelectTab={handleSelectTab}
-                onQuickAdd={handleOpenQuickAdd}
-                spendBadgeCount={inboxCount}
-            />
+            {!isSettingsRoute && (
+                <MobileBottomNav
+                    activeTab={activeTab}
+                    onSelectTab={handleSelectTab}
+                    onQuickAdd={handleOpenQuickAdd}
+                    spendBadgeCount={inboxCount}
+                />
+            )}
 
             {/* Global Quick Add Expense Modal */}
             <ExpenseFormModal
@@ -609,20 +626,16 @@ export function AppShell() {
     if (!optionalContext) {
         return (
             <HouseholdProvider followCurrentMember={followCurrentMember}>
-                <SettingsProvider>
-                    <PrivacyProvider>
-                        <AppLayoutInner />
-                    </PrivacyProvider>
-                </SettingsProvider>
+                <PrivacyProvider>
+                    <AppLayoutInner />
+                </PrivacyProvider>
             </HouseholdProvider>
         );
     }
     return (
-        <SettingsProvider>
-            <PrivacyProvider>
-                <AppLayoutInner />
-            </PrivacyProvider>
-        </SettingsProvider>
+        <PrivacyProvider>
+            <AppLayoutInner />
+        </PrivacyProvider>
     );
 }
 

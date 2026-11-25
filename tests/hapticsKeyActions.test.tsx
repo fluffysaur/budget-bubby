@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { haptics } from "../src/lib/haptics";
 import { feedback } from "../src/lib/delight/feedback";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { SettingsProvider } from "../src/context/SettingsContext";
 import { MobileBottomNav } from "../src/components/layout/MobileBottomNav";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
 import { SpendPage } from "../src/pages/SpendPage";
@@ -24,7 +23,7 @@ import { BonusLogPanel } from "../src/components/bonus/BonusLogPanel";
 import { AddEditCreditCardModal } from "../src/components/accounts/AddEditCreditCardModal";
 import { CreditCardTrackerSection } from "../src/components/accounts/CreditCardTrackerSection";
 import { MarkCardPaidModal } from "../src/components/accounts/MarkCardPaidModal";
-import { NotificationSettingsModal } from "../src/components/layout/NotificationSettingsModal";
+import SettingsPage from "../src/pages/SettingsPage";
 import { AiSettingsSection } from "../src/components/settings/AiSettingsSection";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
@@ -83,13 +82,11 @@ function renderWithProviders(
     return render(
         <QueryClientProvider client={queryClient}>
             <HouseholdProvider>
-                <SettingsProvider>
-                    <MemoryRouter initialEntries={[initialEntry]}>
-                        <Routes>
-                            <Route path={path} element={ui} />
-                        </Routes>
-                    </MemoryRouter>
-                </SettingsProvider>
+                <MemoryRouter initialEntries={[initialEntry]}>
+                    <Routes>
+                        <Route path={path} element={ui} />
+                    </Routes>
+                </MemoryRouter>
             </HouseholdProvider>
         </QueryClientProvider>,
     );
@@ -753,7 +750,7 @@ describe("Haptics on Key Actions (Issue #49)", () => {
         });
 
         describe("Settings", () => {
-            it("NotificationSettingsModal triggers feedback.routine('save') on updating preference", async () => {
+            it("Settings page triggers feedback.routine('save') on updating preference", async () => {
                 const saveSpy = vi.spyOn(feedback, "routine");
                 const mockPrefs: NotificationPreferences = {
                     household_id: "hh-1",
@@ -777,13 +774,10 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 vi.spyOn(financeService, "getNotificationPreferences").mockResolvedValue(mockPrefs);
                 vi.spyOn(financeService, "updateNotificationPreferences").mockResolvedValue(mockPrefs);
 
-                renderWithProviders(
-                    <NotificationSettingsModal
-                        isOpen={true}
-                        onClose={vi.fn()}
-                        memberId="mem-1"
-                    />,
-                );
+                renderWithProviders(<SettingsPage />, {
+                    initialEntry: "/settings/general",
+                    path: "/settings/*",
+                });
 
                 const soundToggle = await screen.findByTestId("toggle-sound-enabled");
                 await act(async () => {
