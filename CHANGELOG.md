@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.6.0](https://github.com/fluffysaur/budget-bubby/compare/v0.5.1...v0.6.0) (2026-11-25)
+
+
+### Features
+
+* **accounts:** add balance sparklines and standardise balance updates ([#280](https://github.com/fluffysaur/budget-bubby/issues/280)) ([19fa5ce](https://github.com/fluffysaur/budget-bubby/commit/19fa5ce183b0bf6c465b793b94860358780087c4)), closes [#279](https://github.com/fluffysaur/budget-bubby/issues/279)
+* **ai:** add OpenRouter OAuth PKCE and live free models ([#248](https://github.com/fluffysaur/budget-bubby/issues/248)) ([539fb05](https://github.com/fluffysaur/budget-bubby/commit/539fb0512fb983de4abd15234869e703565ddba2))
+* **auth:** verify member linking server-side and split household_members RLS ([#262](https://github.com/fluffysaur/budget-bubby/issues/262)) ([a3a6bf9](https://github.com/fluffysaur/budget-bubby/commit/a3a6bf9a17ad63e1a582e0653e79683d3fa777fc))
+* **budget:** add honest-log celebration and calm overage framing ([#277](https://github.com/fluffysaur/budget-bubby/issues/277)) ([3230990](https://github.com/fluffysaur/budget-bubby/commit/3230990f2b6e249d0a1ab428ca4a52e424700e47))
+* **legal:** add privacy policy and terms pages ([#268](https://github.com/fluffysaur/budget-bubby/issues/268)) ([3ab71ba](https://github.com/fluffysaur/budget-bubby/commit/3ab71ba199ff06974faa15a802f699ec5748a0ce))
+* **whats-new:** show friendly release notes after updates and in Settings ([#283](https://github.com/fluffysaur/budget-bubby/issues/283)) ([7801f8f](https://github.com/fluffysaur/budget-bubby/commit/7801f8f4745bae68a64e7ebc2432a285b31eb8b9))
+
+
+### Bug Fixes
+
+* **a11y:** trap and restore focus in modals and drawers ([#261](https://github.com/fluffysaur/budget-bubby/issues/261)) ([8dd0756](https://github.com/fluffysaur/budget-bubby/commit/8dd075683b6627b13e8ceb155162a8e5ce19b3ae))
+* **budget:** refine category cards, header, and currency auto-shrink ([#278](https://github.com/fluffysaur/budget-bubby/issues/278)) ([58dd0e7](https://github.com/fluffysaur/budget-bubby/commit/58dd0e79b2d790809126077656f384266ebb442c))
+* **errors:** surface failed saves and silent load failures ([#257](https://github.com/fluffysaur/budget-bubby/issues/257)) ([100d5b4](https://github.com/fluffysaur/budget-bubby/commit/100d5b4b23dacc6ca3a81b918e5ef7d00b21bb53))
+* **expenses:** normalize expense tags to prevent double ## ([#275](https://github.com/fluffysaur/budget-bubby/issues/275)) ([2204b3f](https://github.com/fluffysaur/budget-bubby/commit/2204b3f5efd999ea6bed02e60c614fe8aa033d73))
+* **notifications:** handle stalled PWA permission requests and expose mobile controls ([#281](https://github.com/fluffysaur/budget-bubby/issues/281)) ([1e5a55a](https://github.com/fluffysaur/budget-bubby/commit/1e5a55aee88c539dfab379de632d5cddec98bde5))
+* **reminders:** send reminders for every household ([#266](https://github.com/fluffysaur/budget-bubby/issues/266)) ([0a24490](https://github.com/fluffysaur/budget-bubby/commit/0a24490cf8e6451d5e637824fbb7ee6b7b258d59))
+* **rls:** close anonymous access on cards, statements, check-ins and prefs ([#271](https://github.com/fluffysaur/budget-bubby/issues/271)) ([f36de07](https://github.com/fluffysaur/budget-bubby/commit/f36de0745b64fe28b219056310e0551442b964b8))
+* **ui:** error state with retry on Home and Budget ([#258](https://github.com/fluffysaur/budget-bubby/issues/258)) ([1c61749](https://github.com/fluffysaur/budget-bubby/commit/1c6174986dfda042be83e812ba193214eaf321a8))
+* **ui:** set 11px text floor and 44px touch targets ([#260](https://github.com/fluffysaur/budget-bubby/issues/260)) ([4f81e6c](https://github.com/fluffysaur/budget-bubby/commit/4f81e6c93eeb0de435be502759c5a9dd2e42b9ed))
+
+
+### Performance
+
+* **bundle:** load demo mode and seed data on demand ([#259](https://github.com/fluffysaur/budget-bubby/issues/259)) ([ea312ba](https://github.com/fluffysaur/budget-bubby/commit/ea312baf085cd8392224d3fc12f94cedf95c3f06))
+
 ## [0.5.1](https://github.com/fluffysaur/budget-bubby/compare/v0.5.0...v0.5.1) (2026-11-23)
 
 
