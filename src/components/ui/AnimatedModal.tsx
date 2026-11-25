@@ -21,6 +21,9 @@ import { prefersReducedMotion } from "../../lib/motion";
 import { usePrivacy } from "../../context/PrivacyContext";
 import { maskMoneyNode } from "../../lib/maskMoney";
 
+/** Matches --duration-base used by the mobile drawer slide-up. */
+const DRAWER_ENTER_MS = 240;
+
 const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -36,11 +39,7 @@ let savedBodyOverflow: string | null = null;
 let savedMainOverflow: string | null = null;
 
 export type AnimatedModalVariant =
-    | "modal"
-    | "side-sheet"
-    | "popover"
-    | "fullscreen"
-    | "spotlight";
+    "modal" | "side-sheet" | "popover" | "fullscreen" | "spotlight";
 
 export interface AnimatedModalProps {
     isOpen: boolean;
@@ -623,7 +622,8 @@ export function AnimatedModal({
         if (!isActive) return;
 
         const container = drawerRef.current;
-        if (container && typeof document !== "undefined") {
+        const moveInitialFocus = () => {
+            if (!container || typeof document === "undefined") return;
             const preferred = initialFocusRef?.current;
             if (preferred && container.contains(preferred)) {
                 preferred.focus({ preventScroll: true });
@@ -631,9 +631,26 @@ export function AnimatedModal({
                 const focusables = getFocusableElements(container);
                 (focusables[0] ?? container).focus({ preventScroll: true });
             }
+        };
+
+        // On mobile the drawer slides up from below the screen. Focusing an
+        // input mid-slide makes WebKit scroll the backdrop, so the sheet
+        // appears to fly in from the top. Wait for the slide to finish.
+        const slidesIn =
+            isDrawerOnMobile &&
+            typeof window !== "undefined" &&
+            typeof window.matchMedia === "function" &&
+            window.matchMedia("(max-width: 639.98px)").matches &&
+            !prefersReducedMotion();
+        let focusTimer: ReturnType<typeof setTimeout> | null = null;
+        if (slidesIn) {
+            focusTimer = setTimeout(moveInitialFocus, DRAWER_ENTER_MS);
+        } else {
+            moveInitialFocus();
         }
 
         return () => {
+            if (focusTimer) clearTimeout(focusTimer);
             const prev = previousFocusRef.current;
             if (typeof document !== "undefined") {
                 const topEntry = openModalStack[openModalStack.length - 1];
@@ -650,7 +667,7 @@ export function AnimatedModal({
                 }
             }
         };
-    }, [isActive, initialFocusRef]);
+    }, [isActive, initialFocusRef, isDrawerOnMobile]);
 
     // Clear captured trigger only after focus restoration cleanup has run
     useEffect(() => {

@@ -3,7 +3,8 @@
  * Displays individual account details:
  * - Compact vertical padding
  * - Consistent text-2xl font-extrabold balance
- * - Quick "Update Balance" action button
+ * - Tap balance/sparkline or pencil to update balance
+ * - 6-month balance sparkline with calm change chip
  */
 
 import {
@@ -21,9 +22,12 @@ import { formatDisplayDate } from "../../lib/dateUtils";
 import { TruncatedText } from "../ui/TruncatedText";
 import { CurrencyText } from "../ui/CurrencyText";
 import { AvatarDot } from "../ui/AvatarDot";
+import { AccountTrendSpark } from "./AccountTrendSpark";
+import { daysSince, isStale, type AccountTrend } from "../../lib/accountTrend";
 
 export interface AccountCardProps {
     account: Account;
+    trend?: AccountTrend;
     onUpdateBalance?: (account: Account) => void;
     onEditAccount?: (account: Account) => void;
     className?: string;
@@ -61,12 +65,14 @@ function getTypeBadgeStyles(type: AccountType) {
 
 export function AccountCard({
     account,
+    trend,
     onUpdateBalance,
     onEditAccount,
     className = "",
 }: AccountCardProps) {
     const typeStyle = getTypeBadgeStyles(account.type);
     const TypeIcon = typeStyle.icon;
+    const stale = isStale(daysSince(account.updated_at, new Date()));
 
     return (
         <div
@@ -130,16 +136,33 @@ export function AccountCard({
                     </div>
                 </div>
 
-                {/* Balance Display */}
-                <div className="mt-2.5">
-                    <span className="text-(--text-ink)">
-                        <CurrencyText amount={account.balance} size="lg" />
-                    </span>
-                    {account.currency && account.currency !== "SGD" && (
-                        <span className="ml-1.5 text-xs text-(--text-muted) font-mono-num font-bold">
-                            {account.currency}
+                {/* Balance + trend: whole area opens the update modal */}
+                <div className="mt-2.5 flex items-center justify-between gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onUpdateBalance?.(account)}
+                        aria-label={`Update balance for ${account.name}`}
+                        className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left cursor-pointer"
+                    >
+                        <span className="min-w-0 text-(--text-ink)">
+                            <CurrencyText amount={account.balance} size="lg" />
                         </span>
-                    )}
+                        {account.currency && account.currency !== "SGD" && (
+                            <span className="shrink-0 text-xs text-(--text-muted) font-mono-num font-bold">
+                                {account.currency}
+                            </span>
+                        )}
+                        <Pencil
+                            className="h-3.5 w-3.5 shrink-0 text-(--text-muted)"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                        />
+                    </button>
+                    <AccountTrendSpark
+                        trend={trend}
+                        variant="card"
+                        accountName={account.name}
+                    />
                 </div>
 
                 {/* Optional Notes */}
@@ -150,9 +173,16 @@ export function AccountCard({
                 )}
             </div>
 
-            {/* Footer: Last Updated & Update Balance Action */}
-            <div className="mt-3 pt-2.5 border-t border-(--border-subtle) flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1 text-2xs font-mono-num text-(--text-muted) truncate">
+            {/* Footer: Last Updated (amber when stale) */}
+            <div className="mt-3 pt-2.5 border-t border-(--border-subtle)">
+                <div
+                    data-stale={stale}
+                    className={`flex items-center gap-1 text-2xs font-mono-num truncate ${
+                        stale
+                            ? "text-amber-700 dark:text-amber-400"
+                            : "text-(--text-muted)"
+                    }`}
+                >
                     <Clock className="h-3 w-3 shrink-0" />
                     <span className="truncate">
                         {account.updated_at
@@ -160,16 +190,6 @@ export function AccountCard({
                             : "Up to date"}
                     </span>
                 </div>
-
-                <button
-                    type="button"
-                    aria-label="Update Balance"
-                    onClick={() => onUpdateBalance?.(account)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-(--text-ink) bg-(--pastel-lilac-light) border border-(--border-ink) shadow-cute-sm hover:bg-(--pastel-lilac) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer shrink-0"
-                >
-                    <Pencil className="h-3 w-3" strokeWidth={2.5} />
-                    <span>Update</span>
-                </button>
             </div>
         </div>
     );
