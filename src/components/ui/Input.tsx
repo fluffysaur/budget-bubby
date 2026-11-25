@@ -1,23 +1,38 @@
 import React, { forwardRef } from "react";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
+import {
+    FIELD_ERROR_TEXT_CLASS,
+    FIELD_LABEL_CLASS,
+    FIELD_LEFT_SLOT_PADDING,
+    fieldClass,
+    fieldIdFromLabel,
+    type FieldSize,
+} from "./fieldStyles";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    label?: string;
+    label?: React.ReactNode;
+    labelClassName?: string;
+    containerClassName?: string;
     error?: string;
     leftIcon?: React.ReactNode;
     rightElement?: React.ReactNode;
     mono?: boolean;
+    /** `md` for forms (default), `sm` for dense rows. Mobile text stays 16px. */
+    sizeVariant?: FieldSize;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
         {
             label,
+            labelClassName = "",
+            containerClassName = "",
             error,
             leftIcon,
             rightElement,
             mono = false,
+            sizeVariant = "md",
             className = "",
             id,
             disabled,
@@ -27,14 +42,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     ) => {
         const inputId =
             id ||
-            (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
+            (typeof label === "string" ? fieldIdFromLabel(label) : undefined);
 
         return (
-            <div className="w-full space-y-1.5">
+            <div
+                className={`w-full min-w-0 ${label ? "space-y-1.5" : ""} ${containerClassName}`}
+            >
                 {label && (
                     <label
                         htmlFor={inputId}
-                        className="block text-xs font-bold uppercase tracking-wider text-(--text-muted)"
+                        className={`${FIELD_LABEL_CLASS} ${labelClassName}`}
                     >
                         {label}
                     </label>
@@ -49,11 +66,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         ref={ref}
                         id={inputId}
                         disabled={disabled}
-                        className={`w-full rounded-xl border-2 bg-(--bg-card) px-3.5 py-2.5 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-faint) transition-colors outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) ${
-                            error
-                                ? "border-(--accent-coral) focus:border-(--accent-coral)"
-                                : "border-(--border-ink) focus:border-(--border-ink)"
-                        } ${leftIcon ? "pl-10" : ""} ${rightElement ? "pr-11" : ""} ${
+                        aria-invalid={error ? true : undefined}
+                        className={`${fieldClass(sizeVariant, Boolean(error))} ${
+                            leftIcon ? FIELD_LEFT_SLOT_PADDING[sizeVariant] : ""
+                        } ${rightElement ? "pr-11" : ""} ${
                             mono ? "font-mono-num font-bold" : ""
                         } ${className}`}
                         {...props}
@@ -67,9 +83,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 <AnimatePresence initial={false}>
                     {error && (
                         <m.div key="input-error" {...collapse}>
-                            <p className="text-xs font-bold text-(--accent-coral)">
-                                {error}
-                            </p>
+                            <p className={FIELD_ERROR_TEXT_CLASS}>{error}</p>
                         </m.div>
                     )}
                 </AnimatePresence>

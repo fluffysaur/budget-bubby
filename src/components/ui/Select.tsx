@@ -2,6 +2,13 @@ import React, { forwardRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { m, AnimatePresence } from "motion/react";
 import { collapse } from "../../lib/motion";
+import {
+    FIELD_ERROR_TEXT_CLASS,
+    FIELD_LABEL_CLASS,
+    fieldClass,
+    fieldIdFromLabel,
+    type FieldSize,
+} from "./fieldStyles";
 
 export interface SelectOption {
     value: string;
@@ -10,11 +17,11 @@ export interface SelectOption {
 }
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-    label?: string;
+    label?: React.ReactNode;
     labelClassName?: string;
     error?: string;
     options?: SelectOption[];
-    sizeVariant?: "sm" | "md";
+    sizeVariant?: FieldSize;
     containerClassName?: string;
     iconClassName?: string;
 }
@@ -39,12 +46,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     ) => {
         const selectId =
             id ||
-            (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
+            (typeof label === "string" ? fieldIdFromLabel(label) : undefined);
 
-        const sizeClasses =
-            sizeVariant === "sm"
-                ? "px-3 py-2 text-base sm:text-xs pr-9"
-                : "px-3.5 py-2.5 text-base sm:text-sm pr-10";
+        const chevronPadding = sizeVariant === "sm" ? "pr-9" : "pr-10";
 
         return (
             <div
@@ -53,7 +57,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 {label && (
                     <label
                         htmlFor={selectId}
-                        className={`block text-xs font-bold uppercase tracking-wider text-(--text-muted) ${labelClassName}`}
+                        className={`${FIELD_LABEL_CLASS} ${labelClassName}`}
                     >
                         {label}
                     </label>
@@ -63,11 +67,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         ref={ref}
                         id={selectId}
                         disabled={disabled}
-                        className={`w-full min-w-0 appearance-none rounded-xl border-2 bg-(--bg-card) font-semibold text-(--text-ink) transition-colors outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:opacity-50 disabled:bg-(--bg-cream) cursor-pointer truncate ${sizeClasses} ${
-                            error
-                                ? "border-(--accent-coral) focus:border-(--accent-coral)"
-                                : "border-(--border-ink) focus:border-(--border-ink)"
-                        } ${className}`}
+                        aria-invalid={error ? true : undefined}
+                        className={`appearance-none cursor-pointer truncate ${fieldClass(
+                            sizeVariant,
+                            Boolean(error),
+                        )} ${chevronPadding} ${className}`}
                         {...props}
                     >
                         {options
@@ -90,9 +94,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 <AnimatePresence initial={false}>
                     {error && (
                         <m.div key="select-error" {...collapse}>
-                            <p className="text-xs font-bold text-(--accent-coral)">
-                                {error}
-                            </p>
+                            <p className={FIELD_ERROR_TEXT_CLASS}>{error}</p>
                         </m.div>
                     )}
                 </AnimatePresence>

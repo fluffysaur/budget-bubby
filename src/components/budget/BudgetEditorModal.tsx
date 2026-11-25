@@ -50,6 +50,8 @@ import { Button } from "../ui/Button";
 import { RangeSlider } from "../ui/RangeSlider";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Alert } from "../ui/Alert";
+import { Input } from "../ui/Input";
+import { CurrencyInput } from "../ui/CurrencyInput";
 import { CategoryModeToggle } from "../categories/CategoryModeToggle";
 import { feedback } from "../../lib/delight/feedback";
 import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
@@ -836,60 +838,37 @@ export function BudgetEditorModal({
                                 Income &amp; CPF
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label
-                                        htmlFor="gross-salary-input"
-                                        className="block text-xs font-bold text-(--text-ink) mb-1"
-                                    >
-                                        Gross
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-2.5 text-xs font-bold text-(--text-muted)">
-                                            S$
-                                        </span>
-                                        <input
-                                            id="gross-salary-input"
-                                            type="number"
-                                            step="any"
-                                            min="0"
-                                            required
-                                            value={grossSalary}
-                                            onChange={(e) =>
-                                                setGrossSalary(e.target.value)
-                                            }
-                                            aria-label="Gross Salary"
-                                            className="w-full pl-8 pr-3 py-2 text-base sm:text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
-                                        />
-                                    </div>
-                                </div>
+                                <CurrencyInput
+                                    id="gross-salary-input"
+                                    label="Gross"
+                                    step="any"
+                                    min="0"
+                                    required
+                                    value={grossSalary}
+                                    onChange={(e) =>
+                                        setGrossSalary(e.target.value)
+                                    }
+                                    aria-label="Gross Salary"
+                                    placeholder=""
+                                />
 
-                                <div>
-                                    <label
-                                        htmlFor="cpf-rate-input"
-                                        className="block text-xs font-bold text-(--text-ink) mb-1"
-                                    >
-                                        CPF Rate
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            id="cpf-rate-input"
-                                            type="number"
-                                            step="any"
-                                            min="0"
-                                            max="100"
-                                            required
-                                            value={cpfRate}
-                                            onChange={(e) =>
-                                                setCpfRate(e.target.value)
-                                            }
-                                            aria-label="CPF Employee Rate"
-                                            className="w-full pl-3 pr-8 py-2 text-base sm:text-sm font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
-                                        />
-                                        <span className="absolute right-3 top-2.5 text-xs font-bold text-(--text-muted)">
+                                <Input
+                                    id="cpf-rate-input"
+                                    label="CPF Rate"
+                                    type="number"
+                                    step="any"
+                                    min="0"
+                                    max="100"
+                                    required
+                                    value={cpfRate}
+                                    onChange={(e) => setCpfRate(e.target.value)}
+                                    aria-label="CPF Employee Rate"
+                                    rightElement={
+                                        <span className="text-xs font-bold text-(--text-muted)">
                                             %
                                         </span>
-                                    </div>
-                                </div>
+                                    }
+                                />
                             </div>
                         </div>
 
@@ -1027,20 +1006,16 @@ export function BudgetEditorModal({
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-(--text-muted) mb-1">
-                                                Category Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={catName}
-                                                onChange={(e) =>
-                                                    setCatName(e.target.value)
-                                                }
-                                                placeholder="e.g. Groceries, Pet, Gym"
-                                                className="w-full px-3 py-1.5 text-base sm:text-xs font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
-                                            />
-                                        </div>
+                                        <Input
+                                            label="Category Name"
+                                            sizeVariant="sm"
+                                            type="text"
+                                            value={catName}
+                                            onChange={(e) =>
+                                                setCatName(e.target.value)
+                                            }
+                                            placeholder="e.g. Groceries, Pet, Gym"
+                                        />
 
                                         <CategoryModeToggle
                                             value={effectiveCatGroup}
@@ -1314,15 +1289,12 @@ export function BudgetEditorModal({
                                                         {/* Editable Dollar Input */}
                                                         <div
                                                             data-testid={`cat-dollar-${cat.id}`}
-                                                            className="flex items-center gap-0.5 rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas) px-1.5 py-0.5 shadow-cute-sm"
+                                                            className="w-36 shrink-0"
                                                         >
-                                                            <span className="text-[11px] font-bold text-(--text-muted)">
-                                                                S$
-                                                            </span>
-                                                            <input
+                                                            <CurrencyInput
                                                                 id={`cat-dollar-input-${cat.id}`}
                                                                 data-testid={`cat-dollar-input-${cat.id}`}
-                                                                type="number"
+                                                                sizeVariant="sm"
                                                                 step="any"
                                                                 min="0"
                                                                 placeholder="0"
@@ -1354,17 +1326,20 @@ export function BudgetEditorModal({
                                                                     isBuffer
                                                                 }
                                                                 title={`Monthly dollar amount for ${cat.name}`}
-                                                                className="w-16 text-right text-base sm:text-xs font-bold font-mono-num bg-transparent text-(--text-ink) outline-hidden"
+                                                                rightElement={
+                                                                    <span className="text-2xs font-bold text-(--text-muted)">
+                                                                        /mo
+                                                                    </span>
+                                                                }
                                                             />
-                                                            <span className="text-2xs font-bold text-(--text-muted)">
-                                                                /mo
-                                                            </span>
                                                         </div>
 
                                                         {/* Smart Percentage Input (Supports "$300" or "15%") */}
-                                                        <div className="relative w-20">
-                                                            <input
+                                                        <div className="w-24 shrink-0">
+                                                            <Input
                                                                 id={`cat-alloc-${cat.id}`}
+                                                                sizeVariant="sm"
+                                                                mono
                                                                 disabled={
                                                                     isBuffer
                                                                 }
@@ -1433,11 +1408,13 @@ export function BudgetEditorModal({
                                                                         );
                                                                     }
                                                                 }}
-                                                                className="w-full pr-5 pl-2 py-1 text-right text-base sm:text-xs font-bold font-mono-num rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-hidden focus:ring-2 focus:ring-(--pastel-mint)"
+                                                                className="text-right"
+                                                                rightElement={
+                                                                    <span className="text-[11px] font-bold text-(--text-muted)">
+                                                                        %
+                                                                    </span>
+                                                                }
                                                             />
-                                                            <span className="absolute right-1.5 top-1 text-[11px] font-bold text-(--text-muted)">
-                                                                %
-                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>

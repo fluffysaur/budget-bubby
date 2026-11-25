@@ -14,6 +14,7 @@ import {
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
+import { CurrencyInput } from "../ui/CurrencyInput";
 import { TruncatedText } from "../ui/TruncatedText";
 import { financeService } from "../../services/financeService";
 import { feedback } from "../../lib/delight/feedback";
@@ -193,30 +194,22 @@ function BulkSettleOverdueForm({
                                         Overdue by {Math.abs(cycle.daysUntilDue)} days
                                     </span>
                                 </div>
-                                <div className="w-24 shrink-0">
-                                    <label htmlFor={inputId} className="sr-only">
-                                        Amount for {cycle.card.name}
-                                    </label>
-                                    <div className="relative flex items-center">
-                                        <span className="absolute left-2 text-xs font-bold text-(--text-muted)">
-                                            $
-                                        </span>
-                                        <input
-                                            id={inputId}
-                                            type="number"
-                                            inputMode="decimal"
-                                            step="0.01"
-                                            min="0"
-                                            value={val}
-                                            onChange={(e) =>
-                                                handleAmountChange(
-                                                    cycle.key,
-                                                    e.target.value,
-                                                )
-                                            }
-                                            className="w-full h-8 pl-5 pr-2 text-right text-base sm:text-xs font-mono font-bold rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm focus:outline-none focus:ring-2 focus:ring-(--accent-lilac)"
-                                        />
-                                    </div>
+                                <div className="w-28 shrink-0">
+                                    <CurrencyInput
+                                        id={inputId}
+                                        aria-label={`Amount for ${cycle.card.name}`}
+                                        sizeVariant="sm"
+                                        currencySymbol="$"
+                                        placeholder=""
+                                        min="0"
+                                        value={val}
+                                        onChange={(e) =>
+                                            handleAmountChange(
+                                                cycle.key,
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
                                 </div>
                             </div>
                         );

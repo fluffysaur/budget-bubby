@@ -35,6 +35,7 @@ import type {
 import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { isMockModeActive } from "../../services/financeService";
 import { Select } from "../ui/Select";
+import { Input } from "../ui/Input";
 import { formatShortMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
@@ -269,26 +270,28 @@ export function ExpenseFilterBar({
                 {/* Row 1: Search Input (Full width on mobile with Reset icon, flex-1 on desktop) */}
                 <div className="flex items-center gap-2">
                     {/* Search Input */}
-                    <div className="relative flex-1 min-w-0">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--text-muted) pointer-events-none" />
-                        <input
+                    <div className="min-w-0 flex-1">
+                        <Input
                             id="filter-search"
                             type="text"
+                            sizeVariant="sm"
+                            leftIcon={<Search className="h-4 w-4" />}
                             placeholder="Search merchant, item, note..."
                             value={searchText}
                             onChange={handleSearchChange}
-                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-8 py-2 text-base sm:text-xs font-medium text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
+                            rightElement={
+                                searchText || filter.search ? (
+                                    <button
+                                        type="button"
+                                        aria-label="Dismiss search"
+                                        onClick={handleClearSearch}
+                                        className="relative flex h-5 w-5 items-center justify-center rounded-full after:absolute after:-inset-3 after:content-[''] bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-(--text-muted) hover:text-(--text-ink) text-xs font-bold cursor-pointer transition-colors"
+                                    >
+                                        <X className="h-3 w-3 stroke-3" />
+                                    </button>
+                                ) : undefined
+                            }
                         />
-                        {(searchText || filter.search) && (
-                            <button
-                                type="button"
-                                aria-label="Dismiss search"
-                                onClick={handleClearSearch}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full after:absolute after:-inset-3 after:content-[''] bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-(--text-muted) hover:text-(--text-ink) text-xs font-bold cursor-pointer transition-colors"
-                            >
-                                <X className="h-3 w-3 stroke-3" />
-                            </button>
-                        )}
                     </div>
 
                     {/* Desktop Sort Dropdown */}
@@ -311,7 +314,6 @@ export function ExpenseFilterBar({
                             }}
                             sizeVariant="sm"
                             containerClassName="w-48"
-                            className="bg-(--bg-canvas) font-bold text-xs py-1.5"
                         >
                             <option value="">Default order</option>
                             <option value="date-desc">Newest</option>
@@ -395,7 +397,7 @@ export function ExpenseFilterBar({
                                 onSortChange?.(field, order);
                             }}
                             sizeVariant="sm"
-                            className="bg-(--bg-canvas) font-bold text-xs py-2 w-full"
+                            containerClassName="w-full"
                         >
                             <option value="">Default order</option>
                             <option value="date-desc">Date (Newest)</option>
@@ -420,11 +422,9 @@ export function ExpenseFilterBar({
                             <Select
                                 id="filter-category"
                                 label="Category"
-                                labelClassName="text-[11px] mb-1 tracking-wider"
                                 value={filter.categoryId || ""}
                                 onChange={handleCategoryChange}
                                 sizeVariant="sm"
-                                className="bg-(--bg-canvas)"
                             >
                                 <option value="">All Categories</option>
                                 {categories.map((cat) => (
@@ -441,11 +441,9 @@ export function ExpenseFilterBar({
                                 <Select
                                     id="filter-payer"
                                     label="Payer"
-                                    labelClassName="text-[11px] mb-1 tracking-wider"
                                     value={filter.payerId || ""}
                                     onChange={handlePayerChange}
                                     sizeVariant="sm"
-                                    className="bg-(--bg-canvas)"
                                 >
                                     <option value="">All Payers</option>
                                     {members.map((member) => (
@@ -465,7 +463,6 @@ export function ExpenseFilterBar({
                             <Select
                                 id="filter-shared"
                                 label="Type / Split"
-                                labelClassName="text-[11px] mb-1 tracking-wider"
                                 value={
                                     filter.isShared === undefined
                                         ? "all"
@@ -475,7 +472,6 @@ export function ExpenseFilterBar({
                                 }
                                 onChange={handleSharedChange}
                                 sizeVariant="sm"
-                                className="bg-(--bg-canvas)"
                             >
                                 <option value="all">All Expenses</option>
                                 <option value="shared">Shared (50/50)</option>
@@ -485,18 +481,15 @@ export function ExpenseFilterBar({
 
                         {/* Month Selector */}
                         <div className="min-w-0">
-                            <label
-                                htmlFor="filter-month"
-                                className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-                            >
-                                Month
-                            </label>
-                            <input
+                            <Input
                                 id="filter-month"
+                                label="Month"
                                 type="month"
+                                sizeVariant="sm"
+                                mono
                                 value={filter.month || ""}
                                 onChange={handleMonthChange}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 pr-3.5 py-1.5 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
+                                className="cursor-pointer"
                             />
                         </div>
                     </div>
