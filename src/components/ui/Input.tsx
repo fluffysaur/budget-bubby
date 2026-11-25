@@ -6,6 +6,7 @@ import {
     FIELD_LABEL_CLASS,
     FIELD_LEFT_SLOT_PADDING,
     fieldClass,
+    fieldContainerClass,
     fieldIdFromLabel,
     type FieldSize,
 } from "./fieldStyles";
@@ -46,7 +47,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         return (
             <div
-                className={`w-full min-w-0 ${label ? "space-y-1.5" : ""} ${containerClassName}`}
+                className={fieldContainerClass(
+                    containerClassName,
+                    Boolean(label),
+                )}
             >
                 {label && (
                     <label

@@ -35,6 +35,23 @@ export function fieldClass(size: FieldSize = "md", error = false): string {
     return `${FIELD_BASE_CLASS} ${FIELD_SIZE_CLASS[size]} ${border}`;
 }
 
+/**
+ * Wrapper classes for a labelled field. Full width by default; a caller's
+ * unprefixed width (`w-16`, `flex-1`, `basis-*`) replaces `w-full` instead of
+ * fighting it. Responsive widths (`sm:w-40`) keep `w-full` on mobile.
+ */
+export function fieldContainerClass(
+    containerClassName = "",
+    hasLabel = false,
+): string {
+    const callerSetsWidth = /(^|\s)(w-|flex-1|flex-auto|basis-)/.test(
+        containerClassName,
+    );
+    return `${callerSetsWidth ? "" : "w-full"} min-w-0 ${
+        hasLabel ? "space-y-1.5" : ""
+    } ${containerClassName}`;
+}
+
 /** Stable id from a label when the caller does not pass one. */
 export function fieldIdFromLabel(label?: string): string | undefined {
     return label ? label.toLowerCase().replace(/\s+/g, "-") : undefined;

@@ -635,7 +635,6 @@ export function ExpenseFormFields({
                                     type="date"
                                     aria-label="Custom Date"
                                     sizeVariant="sm"
-                                    mono
                                     value={draft.date}
                                     onChange={(e) =>
                                         onChange({ date: e.target.value })
@@ -645,13 +644,12 @@ export function ExpenseFormFields({
                                 />
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <div className="w-32 shrink-0">
+                                <div className="w-36 shrink-0">
                                     <Input
                                         id={timeId}
                                         type="time"
                                         aria-label="Expense Time"
                                         sizeVariant="sm"
-                                        mono
                                         value={draft.time}
                                         onChange={(e) =>
                                             onChange({ time: e.target.value })

@@ -6,6 +6,7 @@ import {
     FIELD_ERROR_TEXT_CLASS,
     FIELD_LABEL_CLASS,
     fieldClass,
+    fieldContainerClass,
     fieldIdFromLabel,
     type FieldSize,
 } from "./fieldStyles";
@@ -52,7 +53,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
         return (
             <div
-                className={`w-full min-w-0 ${label ? "space-y-1.5" : ""} ${containerClassName}`}
+                className={fieldContainerClass(
+                    containerClassName,
+                    Boolean(label),
+                )}
             >
                 {label && (
                     <label
