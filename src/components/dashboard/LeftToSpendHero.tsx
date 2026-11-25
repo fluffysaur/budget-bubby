@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Card, MeterBar } from "../ui";
+import { Card, MeterBar, TooltipPopover } from "../ui";
 import { CurrencyText } from "../ui/CurrencyText";
 import { CategoryMeterCard } from "./CategoryMeterCard";
+import { formatSGD } from "../../lib/currency";
+import { useMoneyMask } from "../../hooks/useMoneyMask";
 
 export interface SpendableCategoryItem {
     id: string;
@@ -32,7 +34,12 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
     onNavigateBudget,
 }: LeftToSpendHeroProps) {
     const [showAllCategories, setShowAllCategories] = useState(false);
+    const mask = useMoneyMask();
     const isOverspent = summary.totalRemaining < 0;
+    const heroLabel = isOverspent ? "Over Cap" : "Left to Spend";
+    const heroTooltip = isOverspent
+        ? `${formatSGD(Math.abs(summary.totalRemaining))} over ${formatSGD(summary.totalAllocated)} spendable — can be offset by saving in past or future months.`
+        : `Spendable budget of ${formatSGD(summary.totalAllocated)} minus ${formatSGD(summary.totalSpent)} spent.`;
 
     const displayedCategories = showAllCategories
         ? summary.categories
@@ -43,9 +50,18 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
         <Card role="region" aria-label="Left to Spend" padding="lg">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                        Left to Spend
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                            {heroLabel}
+                        </span>
+                        <TooltipPopover
+                            title={heroLabel}
+                            ariaLabel={`${heroLabel} info`}
+                            align="left"
+                        >
+                            {mask(heroTooltip)}
+                        </TooltipPopover>
+                    </div>
                     <div
                         data-testid="left-to-spend-amount"
                         className={`mt-1 ${
@@ -55,7 +71,11 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
                         }`}
                     >
                         <CurrencyText
-                            amount={summary.totalRemaining}
+                            amount={
+                                isOverspent
+                                    ? Math.abs(summary.totalRemaining)
+                                    : summary.totalRemaining
+                            }
                             size="hero"
                             animate
                         />

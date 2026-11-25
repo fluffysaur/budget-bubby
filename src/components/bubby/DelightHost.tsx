@@ -20,7 +20,11 @@ import {
 } from "react";
 import { useBubby } from "../../hooks/useBubby";
 import { useActivityCheckins } from "../../hooks/useActivityCheckins";
+import { useSafeQueryClient } from "../../hooks/finance/shared";
 import { setExerciseActor } from "../../lib/bubby/activity";
+import { keys } from "../../lib/queryKeys";
+import { evaluateSpendablePostLog } from "../../lib/honestLog";
+import type { MonthlyBudgetDetail } from "../../types/finance";
 import {
     emitAppEvent,
     onAppEvent,
@@ -78,6 +82,7 @@ function bodyTitle(body: Exclude<BubbyBody, "regular">, whose?: string) {
 
 export function DelightHost() {
     useActivityCheckins();
+    const queryClient = useSafeQueryClient();
     const bubby = useBubby();
     const {
         isReady,
@@ -213,9 +218,17 @@ export function DelightHost() {
         const week = mondayOf(today);
         const month = today.slice(0, 7);
         const tiers = [
-            { periodKey: `${today}:${meId ?? "me"}`, quests: dailyQuests, ready: true },
+            {
+                periodKey: `${today}:${meId ?? "me"}`,
+                quests: dailyQuests,
+                ready: true,
+            },
             { periodKey: week, quests: weeklyQuests, ready: weeklyQuestsReady },
-            { periodKey: month, quests: monthlyQuests, ready: monthlyQuestsReady },
+            {
+                periodKey: month,
+                quests: monthlyQuests,
+                ready: monthlyQuestsReady,
+            },
         ];
         const next = new Map<string, boolean>();
         for (const tier of tiers) {
@@ -316,6 +329,45 @@ export function DelightHost() {
     useEffect(() => {
         meIdRef.current = meId ?? "me";
     }, [meId]);
+
+    // Honest log: celebrate logging an expense during the end-of-month crunch
+    useEffect(() => {
+        return onAppEvent("expenseAdded", (detail) => {
+            if (!detail) return;
+            const currentMonth = toSgtDateString().slice(0, 7);
+            const detailEntries =
+                queryClient.getQueriesData<MonthlyBudgetDetail | null>({
+                    queryKey: keys.budget.detailAll,
+                });
+            const monthlyEntries =
+                queryClient.getQueriesData<MonthlyBudgetDetail>({
+                    queryKey: keys.budget.monthlyAll,
+                });
+            const budget =
+                detailEntries.find(
+                    ([key, data]) =>
+                        key.includes(currentMonth) &&
+                        Boolean(data?.categories?.length),
+                )?.[1] ??
+                monthlyEntries.find(
+                    ([key, data]) =>
+                        key.includes(currentMonth) &&
+                        Boolean(data?.categories?.length),
+                )?.[1];
+            if (!budget?.categories?.length) return;
+
+            const result = evaluateSpendablePostLog(budget.categories, detail);
+            if (!result.isHonestLog) return;
+
+            feedback.milestone("honest-log", {
+                dedupeKey: `honest-log:${toSgtDateString()}:${meIdRef.current}`,
+                title: "Honest log! 🐧",
+                subtitle: result.isTotalOver
+                    ? "Logged over budget — streak intact"
+                    : "Logging through the crunch",
+            });
+        });
+    }, [queryClient]);
 
     useEffect(() => {
         let triaged = 0;

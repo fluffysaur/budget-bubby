@@ -24,6 +24,7 @@ import { AuthProvider } from "../src/context/AuthContext";
 import { financeService } from "../src/services/financeService";
 import { mockMembers } from "../src/data/mockSeedData";
 import { toSgtDateString } from "../src/lib/bubby/dates";
+import { withText } from "./helpers/textContent";
 import type {
     HouseholdOverview,
     MonthlyBudgetCategoryDetail,
@@ -82,10 +83,10 @@ describe("CategoryLimitWarningBanner single mode", () => {
         });
 
         expect(
-            screen.getByText(/Lifestyle has exceeded cap/),
+            screen.getByText(withText(/Lifestyle is S\$300\.00 over/)),
         ).toBeInTheDocument();
         expect(
-            screen.queryByText(/Food has exceeded cap/),
+            screen.queryByText(withText(/Food is S\$100\.00 over/)),
         ).not.toBeInTheDocument();
         expect(
             screen.queryByTestId("category-limit-nearing-banner"),
@@ -102,9 +103,11 @@ describe("CategoryLimitWarningBanner single mode", () => {
         });
 
         expect(
-            screen.getByText(/Lifestyle has exceeded cap/),
+            screen.getByText(withText(/Lifestyle is S\$300\.00 over/)),
         ).toBeInTheDocument();
-        expect(screen.getByText(/Food has exceeded cap/)).toBeInTheDocument();
+        expect(
+            screen.getByText(withText(/Food is S\$100\.00 over/)),
+        ).toBeInTheDocument();
         expect(
             screen.getByTestId("category-limit-nearing-banner"),
         ).toBeInTheDocument();
