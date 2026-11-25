@@ -494,7 +494,7 @@ export function NotificationSettingsModal({
                             Notifications
                         </h4>
 
-                        <div className="flex items-center justify-between p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
+                        <div className="p-3.5 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) shadow-cute-sm">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--pastel-mint) text-(--accent-mint-ink) border-2 border-(--border-ink) shadow-cute-sm shrink-0">
                                     <Bell
@@ -502,72 +502,9 @@ export function NotificationSettingsModal({
                                         strokeWidth={2.5}
                                     />
                                 </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-(--text-ink)">
-                                            Push Notifications
-                                        </span>
-                                        <span
-                                            className={`px-1.5 py-0.5 rounded-full text-2xs font-black uppercase tracking-wider border ${
-                                                permission === "granted"
-                                                    ? "bg-(--pastel-mint) text-(--accent-mint-ink) border-(--accent-mint-ink)/40"
-                                                    : permission === "denied"
-                                                      ? "bg-(--pastel-coral-light) text-(--accent-coral-ink) border-(--accent-coral-ink)/40"
-                                                      : "bg-(--pastel-butter) text-amber-900 border-amber-900/40"
-                                            }`}
-                                        >
-                                            {permission}
-                                        </span>
-                                    </div>
-                                    <p
-                                        data-testid="device-push-status"
-                                        className="text-[11px] text-(--text-muted) font-medium mt-0.5"
-                                    >
-                                        {devicePushStatus
-                                            ? `This device: ${DEVICE_PUSH_LABELS[devicePushStatus]}`
-                                            : "System alerts on this device"}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                                {permission === "default" &&
-                                    !needsSystemSettings && (
-                                        <button
-                                            type="button"
-                                            data-testid="settings-enable-push-btn"
-                                            disabled={isRequesting}
-                                            onClick={() => {
-                                                void requestPermission();
-                                            }}
-                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) text-emerald-950 border-2 border-(--border-ink) text-[11px] font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                                        >
-                                            <span>
-                                                {isRequesting
-                                                    ? "Enabling..."
-                                                    : "Enable"}
-                                            </span>
-                                        </button>
-                                    )}
-
-                                {permission === "granted" && (
-                                    <button
-                                        type="button"
-                                        data-testid="settings-test-push-btn"
-                                        onClick={handleTestPush}
-                                        title="Send test push notification"
-                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                    >
-                                        <Send
-                                            className="h-3 w-3"
-                                            strokeWidth={2.5}
-                                        />
-                                        <span>
-                                            {testPushSent ? "Sent!" : "Test"}
-                                        </span>
-                                    </button>
-                                )}
-
+                                <span className="min-w-0 flex-1 text-xs font-bold text-(--text-ink)">
+                                    Push Notifications
+                                </span>
                                 <button
                                     type="button"
                                     role="switch"
@@ -601,6 +538,71 @@ export function NotificationSettingsModal({
                                     />
                                 </button>
                             </div>
+                            <div className="mt-2 pl-12 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span
+                                    className={`px-1.5 py-0.5 rounded-full text-2xs font-black uppercase tracking-wider border ${
+                                        permission === "granted"
+                                            ? "bg-(--pastel-mint) text-(--accent-mint-ink) border-(--accent-mint-ink)/40"
+                                            : permission === "denied"
+                                              ? "bg-(--pastel-coral-light) text-(--accent-coral-ink) border-(--accent-coral-ink)/40"
+                                              : "bg-(--pastel-butter) text-amber-900 border-amber-900/40"
+                                    }`}
+                                >
+                                    {permission}
+                                </span>
+                                <p
+                                    data-testid="device-push-status"
+                                    className="text-[11px] text-(--text-muted) font-medium"
+                                >
+                                    {devicePushStatus
+                                        ? `This device: ${DEVICE_PUSH_LABELS[devicePushStatus]}`
+                                        : "System alerts on this device"}
+                                </p>
+                            </div>
+                            {((permission === "default" &&
+                                !needsSystemSettings) ||
+                                permission === "granted") && (
+                                <div className="mt-2.5 pl-12">
+                                    {permission === "default" &&
+                                        !needsSystemSettings && (
+                                            <button
+                                                type="button"
+                                                data-testid="settings-enable-push-btn"
+                                                disabled={isRequesting}
+                                                onClick={() => {
+                                                    void requestPermission();
+                                                }}
+                                                className="inline-flex min-h-11 items-center gap-1 px-3.5 py-1 rounded-xl bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) text-emerald-950 border-2 border-(--border-ink) text-[11px] font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                <span>
+                                                    {isRequesting
+                                                        ? "Enabling..."
+                                                        : "Enable"}
+                                                </span>
+                                            </button>
+                                        )}
+
+                                    {permission === "granted" && (
+                                        <button
+                                            type="button"
+                                            data-testid="settings-test-push-btn"
+                                            onClick={handleTestPush}
+                                            title="Send test push notification"
+                                            className="inline-flex min-h-11 items-center gap-1 px-3.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                        >
+                                            <Send
+                                                className="h-3 w-3"
+                                                strokeWidth={2.5}
+                                            />
+                                            <span>
+                                                {testPushSent
+                                                    ? "Sent!"
+                                                    : "Test"}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {(needsSystemSettings || permission === "denied") && (
