@@ -43,6 +43,7 @@ test.describe("Bonus Log", () => {
 
         // Budget: Income Flow shows the bonus outside caps
         await page.goto("/spend?tab=budget");
+        await page.getByRole("button", { name: "Income Flow" }).click();
         const strip = page.getByTestId("waterfall-bonus-strip");
         await expect(strip).toBeVisible();
         await expect(strip).toContainText("Outside caps");
