@@ -139,6 +139,18 @@ describe("Settings index", () => {
         );
     });
 
+    it("does not loop back to a deep-linked sub-page", async () => {
+        render(<App initialEntries={["/dashboard", "/settings/ai"]} />);
+        // Sub-page back replaces the deep link with the index
+        fireEvent.click(await screen.findByTestId("settings-back-btn"));
+        expect(await screen.findByTestId("settings-row-ai")).toBeInTheDocument();
+        // Index back then leaves Settings instead of returning to /settings/ai
+        fireEvent.click(screen.getByTestId("settings-back-btn"));
+        await waitFor(() =>
+            expect(screen.queryByTestId("settings-page")).toBeNull(),
+        );
+    });
+
     it("redirects unknown sections to the index", async () => {
         render(<App initialEntries={["/settings/nope"]} />);
         expect(await screen.findByTestId("settings-row-general")).toBeInTheDocument();

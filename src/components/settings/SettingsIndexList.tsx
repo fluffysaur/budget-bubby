@@ -50,6 +50,8 @@ export function SettingsIndexList({
                     <Link
                         key={id}
                         to={settingsPath(id)}
+                        state={{ fromIndex: true }}
+                        replace={activeSection !== null}
                         data-testid={`settings-row-${id}`}
                         aria-current={isActive ? "page" : undefined}
                         className={`flex min-h-14 items-center gap-3 rounded-2xl border-2 border-(--border-ink) p-3 shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${

@@ -41,15 +41,30 @@ export default function SettingsPage() {
     const statuses = useSettingsStatuses(notif.prefs.push_enabled, memberId);
     const section = parseSettingsSection(location.pathname);
 
-    // Index back: previous in-app page when there is one, else the dashboard
+    // Index back: previous in-app page when there is one, else the dashboard.
+    // BrowserRouter stores the history index in `history.state.idx`; fall back
+    // to the location key under MemoryRouter.
     const goBackFromIndex = useCallback(() => {
-        if (location.key !== "default") {
+        const idx = (window.history.state as { idx?: number } | null)?.idx;
+        const hasHistory =
+            typeof idx === "number" ? idx > 0 : location.key !== "default";
+        if (hasHistory) {
             navigate(-1);
         } else {
             navigate("/dashboard");
         }
     }, [location.key, navigate]);
-    const goToIndex = useCallback(() => navigate(settingsPath()), [navigate]);
+    // Sub-page back: pop when opened from the index, else replace the
+    // deep-linked entry so index back doesn't return here.
+    const cameFromIndex =
+        (location.state as { fromIndex?: boolean } | null)?.fromIndex === true;
+    const goToIndex = useCallback(() => {
+        if (cameFromIndex) {
+            navigate(-1);
+        } else {
+            navigate(settingsPath(), { replace: true });
+        }
+    }, [cameFromIndex, navigate]);
 
     if (section === "unknown") {
         return <Navigate to={settingsPath()} replace />;
