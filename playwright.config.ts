@@ -26,6 +26,8 @@ export default defineConfig({
                                 hatched: true,
                             }),
                         },
+                        // Keep the "What's new" popup out of unrelated specs.
+                        { name: "bb_whats_new_v1", value: "999.0.0" },
                     ],
                 },
             ],
