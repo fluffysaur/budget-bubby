@@ -367,7 +367,6 @@ export function ExpenseListTable({
                             }}
                             sizeVariant="sm"
                             containerClassName="w-auto"
-                            className="bg-(--bg-canvas) font-bold text-xs py-1"
                         >
                             <option value="">Default order</option>
                             <option value="date-desc">Newest</option>
