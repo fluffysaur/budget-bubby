@@ -4,6 +4,7 @@ import { CurrencyText } from "../ui/CurrencyText";
 import { CategoryMeterCard } from "./CategoryMeterCard";
 import { formatSGD } from "../../lib/currency";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
+import type { SpendableCategoryStatus } from "../../lib/financialFormulas";
 
 export interface SpendableCategoryItem {
     id: string;
@@ -13,6 +14,7 @@ export interface SpendableCategoryItem {
     allocated: number;
     remaining: number;
     pct: number;
+    status?: SpendableCategoryStatus;
     ownerName?: string;
 }
 
@@ -117,6 +119,7 @@ export const LeftToSpendHero = React.memo(function LeftToSpendHero({
                                 color={cat.color}
                                 remaining={cat.remaining}
                                 pct={cat.pct}
+                                status={cat.status}
                                 ownerName={cat.ownerName}
                             />
                         ))}

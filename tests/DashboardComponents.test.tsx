@@ -637,6 +637,55 @@ describe("DashboardPage", () => {
             expect(screen.getByText("Coffee")).toBeInTheDocument();
             expect(screen.getByText("-S$15.00")).toBeInTheDocument();
         });
+
+        it("shows a covered overspend in neutral ink with a Buffer shield", () => {
+            render(
+                <CategoryMeterCard
+                    name="Lifestyle"
+                    color="#f59e0b"
+                    remaining={-50}
+                    pct={100}
+                    status="covered"
+                />,
+            );
+            const amount = screen.getByText("-S$50.00");
+            expect(amount.closest(".mt-1")).toHaveClass("text-(--text-ink)");
+            expect(
+                screen.getByLabelText("Covered by Buffer"),
+            ).toBeInTheDocument();
+        });
+
+        it("keeps partly covered and depleted Buffer cards in coral", () => {
+            const { rerender } = render(
+                <CategoryMeterCard
+                    name="Lifestyle"
+                    color="#f59e0b"
+                    remaining={-60}
+                    pct={100}
+                    status="partially_covered"
+                />,
+            );
+            expect(screen.getByText("-S$60.00").closest(".mt-1")).toHaveClass(
+                "text-(--accent-coral-ink)",
+            );
+            expect(
+                screen.getByLabelText("Partly covered by Buffer"),
+            ).toBeInTheDocument();
+
+            rerender(
+                <CategoryMeterCard
+                    name="Buffer"
+                    color="#10b981"
+                    remaining={0}
+                    pct={100}
+                    status="buffer_depleted"
+                />,
+            );
+            expect(screen.getByText("S$0.00").closest(".mt-1")).toHaveClass(
+                "text-(--accent-coral-ink)",
+            );
+            expect(screen.queryByTestId("covered-by-buffer")).toBeNull();
+        });
     });
 
     describe("UpcomingBillRow", () => {
