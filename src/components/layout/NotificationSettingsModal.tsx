@@ -32,7 +32,11 @@ import {
     Settings,
     Clock,
     Moon,
+    Sparkles,
 } from "lucide-react";
+import { WhatsNewModal } from "../whatsNew/WhatsNewModal";
+import { RELEASE_NOTES } from "../../data/releaseNotes";
+import { getVisibleReleaseNotes } from "../../lib/releaseNotes";
 import {
     AnimatedModal,
     ModalHeader,
@@ -81,6 +85,8 @@ const CC_DUE_DAY_OPTIONS: { day: number; label: string }[] = [
     { day: 0, label: "Due day" },
 ];
 
+const releaseHistory = getVisibleReleaseNotes(RELEASE_NOTES);
+
 export interface NotificationSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -94,6 +100,12 @@ export function NotificationSettingsModal({
 }: NotificationSettingsModalProps) {
     const { me } = useLoggedInMember();
     const activeMemberId = propMemberId || me?.id || "";
+    const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+    const [hasOpenedWhatsNew, setHasOpenedWhatsNew] = useState(false);
+    const openWhatsNew = useCallback(() => {
+        setHasOpenedWhatsNew(true);
+        setIsWhatsNewOpen(true);
+    }, []);
 
     const [prefs, setPrefs] = useState<NotificationPreferences>(() =>
         getDefaultNotificationPreferences(activeMemberId),
@@ -1008,6 +1020,19 @@ export function NotificationSettingsModal({
                         >
                             Terms
                         </a>
+                        <button
+                            type="button"
+                            onClick={openWhatsNew}
+                            data-testid="settings-whats-new-btn"
+                            className="inline-flex min-h-11 items-center gap-1 underline decoration-(--pastel-lilac) decoration-2 underline-offset-2 hover:text-(--text-ink) cursor-pointer"
+                        >
+                            <Sparkles
+                                className="h-3.5 w-3.5"
+                                strokeWidth={2.5}
+                                aria-hidden="true"
+                            />
+                            What's New
+                        </button>
                     </nav>
                     <div
                         data-testid="app-version-label"
@@ -1017,6 +1042,15 @@ export function NotificationSettingsModal({
                     </div>
                 </ModalFooter>
             </div>
+            {/* Mounted on first open so Settings renders without a Router (tests) */}
+            {hasOpenedWhatsNew && (
+                <WhatsNewModal
+                    isOpen={isWhatsNewOpen}
+                    onClose={() => setIsWhatsNewOpen(false)}
+                    notes={releaseHistory}
+                    onNavigate={onClose}
+                />
+            )}
         </AnimatedModal>
     );
 }

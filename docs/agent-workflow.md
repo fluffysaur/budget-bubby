@@ -107,6 +107,11 @@ Releases are automated via **Release Please** (`.github/workflows/release-please
     - `fix:` / `perf:` bumps patch (`0.1.0` → `0.1.1`).
     - Breaking changes stay pre-`1.0` until explicitly promoted.
 - **Flow:** PRs merge into `main` (PR previews still deploy on Vercel), and Release Please updates a single open Release PR (`chore(main): release X.Y.Z`) that bumps `package.json`, `.release-please-manifest.json`, and `CHANGELOG.md`. Production deploys on Vercel are gated via `vercel.json` (`ignoreCommand` → `scripts/vercel-ignore.sh`): non-release merges to `main` are skipped, and merging the Release PR creates the `vX.Y.Z` git tag, GitHub Release, and triggers the production deploy.
+- **Release notes ("What's new"):** Every Release PR adds an entry for its version to `src/data/releaseNotes.ts`, newest first. The agent drafts it from the user-facing `feat`/`fix`/`perf` lines in the Release PR's changelog and the user edits it.
+    - One friendly sentence per item (≤120 chars), a `new` / `better` / `fixed` tag, a lucide icon, and an optional in-app `to` route for "Try it".
+    - Skip internal changes (tests, CI, refactors, docs). Use `items: []` for a release with nothing user-facing: no popup.
+    - `src/lib/__tests__/releaseNotes.test.ts` fails when the `package.json` version (from `FIRST_NOTED_VERSION` on) has no entry, so the Release PR stays red until notes are added.
+    - Each device shows unseen notes once after an update (`bb_whats_new_v1` in localStorage); full history is under Settings → What's New.
 - **Promoting to `1.0.0`:** Include a commit footer `Release-As: 1.0.0` when ready for public launch.
 - **In-app visibility:** The Settings modal footer displays `vX.Y.Z (<short-sha>)` (injected at build time via `vite.config.ts`) to verify PWA updates on devices even between releases.
 - **GitHub repo setting:** Requires `Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests`.

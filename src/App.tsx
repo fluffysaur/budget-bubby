@@ -62,6 +62,7 @@ import { usePartnerRealtimeSync } from "./hooks/usePartnerRealtimeSync";
 import { ExpenseSuccessCelebration } from "./components/expenses/ExpenseSuccessCelebration";
 import { OfflineBanner } from "./components/pwa/OfflineBanner";
 import { PWAUpdateToast } from "./components/pwa/PWAUpdateToast";
+import { WhatsNewHost } from "./components/whatsNew/WhatsNewHost";
 import { PullToRefresh } from "./components/ui/PullToRefresh";
 import { DelightHost } from "./components/bubby/DelightHost";
 import { BubbyLoadingScreen } from "./components/bubby/BubbyLoadingScreen";
@@ -574,6 +575,9 @@ function AppLayoutInner() {
                     hatched={isMemberBubbyHatched(me?.id, me?.bubby_hatched_at)}
                 />
             </Suspense>
+
+            {/* Friendly release notes, once per device after an update */}
+            <WhatsNewHost blocked={isOnboardingOpen} />
 
             {/* PWA Update & Offline Ready Toast */}
             <PWAUpdateToast />
