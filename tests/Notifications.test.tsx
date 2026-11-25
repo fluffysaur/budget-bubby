@@ -1795,6 +1795,54 @@ describe("Notifications Engine", () => {
                 });
             }
         });
+
+        it("shows Enable when permission is default, falls back to hint on default result, and shows Test when granted", async () => {
+            const notif = {
+                permission: "default" as NotificationPermission,
+                requestPermission: vi.fn().mockResolvedValue("default"),
+            };
+            Object.defineProperty(window, "Notification", {
+                value: notif,
+                configurable: true,
+                writable: true,
+            });
+
+            renderWithProviders(
+                <NotificationSettingsModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    memberId="mem-00000000-0011"
+                />,
+            );
+
+            const enableBtn = await screen.findByTestId(
+                "settings-enable-push-btn",
+            );
+            expect(
+                screen.queryByTestId("settings-test-push-btn"),
+            ).not.toBeInTheDocument();
+
+            await act(async () => {
+                fireEvent.click(enableBtn);
+            });
+
+            expect(notif.requestPermission).toHaveBeenCalledTimes(1);
+            expect(
+                await screen.findByTestId("settings-push-permission-hint"),
+            ).toHaveTextContent(/site settings/i);
+
+            notif.permission = "granted";
+            await act(async () => {
+                window.dispatchEvent(new Event("focus"));
+            });
+
+            expect(
+                screen.queryByTestId("settings-push-permission-hint"),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.getByTestId("settings-test-push-btn"),
+            ).toBeInTheDocument();
+        });
     });
 
     // =========================================================================

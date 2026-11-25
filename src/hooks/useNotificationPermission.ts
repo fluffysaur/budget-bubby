@@ -33,19 +33,32 @@ function readPermission(queried: QueriedState): NotificationPermissionState {
 
 export interface UseNotificationPermissionResult {
     permission: NotificationPermissionState;
-    /** True after a request resolved "default" without granting: the user must allow it in system settings. */
+    /** True after a request resolved "default" or stalled without granting: the user must allow it in browser or system settings. */
     needsSystemSettings: boolean;
+    /** True while waiting for the browser's permission prompt to resolve (up to the stall timeout). */
+    isRequesting: boolean;
     request: () => Promise<NotificationPermissionState>;
     refresh: () => void;
 }
 
+const PERMISSION_REQUEST_TIMEOUT_MS = 2500;
+
 export function useNotificationPermission(): UseNotificationPermissionResult {
     const queriedRef = useRef<QueriedState>(null);
+    const mountedRef = useRef<boolean>(true);
     const [permission, setPermission] = useState<NotificationPermissionState>(
         () => readPermission(null),
     );
     const [needsSystemSettings, setNeedsSystemSettings] =
         useState<boolean>(false);
+    const [isRequesting, setIsRequesting] = useState<boolean>(false);
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
 
     const refresh = useCallback(() => {
         const next = readPermission(queriedRef.current);
@@ -101,13 +114,50 @@ export function useNotificationPermission(): UseNotificationPermissionResult {
         if (readPermission(queriedRef.current) === "unsupported") {
             return "unsupported" as const;
         }
-        const result = await requestNotificationPermission();
-        const next =
-            result === "default" ? readPermission(queriedRef.current) : result;
-        setPermission(next);
-        setNeedsSystemSettings(next === "default");
-        return next;
+        setIsRequesting(true);
+        let timerId: ReturnType<typeof setTimeout> | undefined;
+        let settled = false;
+
+        const permissionPromise = requestNotificationPermission().then(
+            (result) => {
+                settled = true;
+                if (timerId !== undefined) clearTimeout(timerId);
+                const next =
+                    result === "default"
+                        ? readPermission(queriedRef.current)
+                        : result;
+                if (mountedRef.current) {
+                    setPermission(next);
+                    setNeedsSystemSettings(next === "default");
+                    setIsRequesting(false);
+                }
+                return next;
+            },
+        );
+
+        const timeoutPromise = new Promise<NotificationPermissionState>(
+            (resolve) => {
+                timerId = setTimeout(() => {
+                    if (settled) return;
+                    const current = readPermission(queriedRef.current);
+                    if (mountedRef.current) {
+                        setPermission(current);
+                        setNeedsSystemSettings(current === "default");
+                        setIsRequesting(false);
+                    }
+                    resolve(current);
+                }, PERMISSION_REQUEST_TIMEOUT_MS);
+            },
+        );
+
+        return Promise.race([permissionPromise, timeoutPromise]);
     }, []);
 
-    return { permission, needsSystemSettings, request, refresh };
+    return {
+        permission,
+        needsSystemSettings,
+        isRequesting,
+        request,
+        refresh,
+    };
 }

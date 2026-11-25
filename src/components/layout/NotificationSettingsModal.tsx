@@ -115,6 +115,8 @@ export function NotificationSettingsModal({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const {
         permission,
+        needsSystemSettings,
+        isRequesting,
         refresh: refreshPermission,
         request: requestPermission,
     } = useNotificationPermission();
@@ -516,21 +518,43 @@ export function NotificationSettingsModal({
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleTestPush}
-                                    title="Send test push notification"
-                                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                >
-                                    <Send
-                                        className="h-3 w-3"
-                                        strokeWidth={2.5}
-                                    />
-                                    <span>
-                                        {testPushSent ? "Sent!" : "Test"}
-                                    </span>
-                                </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                {permission === "default" &&
+                                    !needsSystemSettings && (
+                                        <button
+                                            type="button"
+                                            data-testid="settings-enable-push-btn"
+                                            disabled={isRequesting}
+                                            onClick={() => {
+                                                void requestPermission();
+                                            }}
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--pastel-mint) hover:bg-(--pastel-mint-dark) text-emerald-950 border-2 border-(--border-ink) text-[11px] font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            <span>
+                                                {isRequesting
+                                                    ? "Enabling..."
+                                                    : "Enable"}
+                                            </span>
+                                        </button>
+                                    )}
+
+                                {permission === "granted" && (
+                                    <button
+                                        type="button"
+                                        data-testid="settings-test-push-btn"
+                                        onClick={handleTestPush}
+                                        title="Send test push notification"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-(--bg-card) hover:bg-(--bg-canvas) text-(--text-ink) border-2 border-(--border-ink) text-[11px] font-bold shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                                    >
+                                        <Send
+                                            className="h-3 w-3"
+                                            strokeWidth={2.5}
+                                        />
+                                        <span>
+                                            {testPushSent ? "Sent!" : "Test"}
+                                        </span>
+                                    </button>
+                                )}
 
                                 <button
                                     type="button"
@@ -538,11 +562,18 @@ export function NotificationSettingsModal({
                                     aria-checked={prefs.push_enabled}
                                     aria-label="Toggle push notifications"
                                     data-testid="toggle-push-enabled"
-                                    onClick={() =>
-                                        handleUpdate({
-                                            push_enabled: !prefs.push_enabled,
-                                        })
-                                    }
+                                    onClick={() => {
+                                        const nextEnabled = !prefs.push_enabled;
+                                        if (
+                                            nextEnabled &&
+                                            permission === "default"
+                                        ) {
+                                            void requestPermission();
+                                        }
+                                        void handleUpdate({
+                                            push_enabled: nextEnabled,
+                                        });
+                                    }}
                                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-(--border-ink) transition-colors duration-200 ease-in-out focus:outline-none ${
                                         prefs.push_enabled
                                             ? "bg-(--pastel-mint)"
@@ -559,6 +590,19 @@ export function NotificationSettingsModal({
                                 </button>
                             </div>
                         </div>
+
+                        {(needsSystemSettings || permission === "denied") && (
+                            <div
+                                className="mt-2.5"
+                                data-testid="settings-push-permission-hint"
+                            >
+                                <Alert variant="warning">
+                                    {permission === "denied"
+                                        ? "Alerts are blocked on this device. Allow notifications in browser or system settings, then reopen."
+                                        : "No prompt appeared? Allow notifications in your browser's site settings (or open in a browser tab), then reopen."}
+                                </Alert>
+                            </div>
+                        )}
                     </div>
 
                     {/* Conditional Notification Categories & Custom Thresholds Section */}

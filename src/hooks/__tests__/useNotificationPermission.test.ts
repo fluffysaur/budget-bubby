@@ -103,4 +103,52 @@ describe("useNotificationPermission", () => {
         expect(result.current.permission).toBe("granted");
         expect(result.current.needsSystemSettings).toBe(false);
     });
+
+    it("surfaces needsSystemSettings when requestPermission stalls, and still accepts a late grant", async () => {
+        vi.useFakeTimers();
+        try {
+            let resolveLate!: (perm: NotificationPermission) => void;
+            const pending = new Promise<NotificationPermission>((resolve) => {
+                resolveLate = resolve;
+            });
+            const mock = {
+                permission: "default" as NotificationPermission,
+                requestPermission: vi.fn(() => pending),
+            };
+            Object.defineProperty(window, "Notification", {
+                configurable: true,
+                writable: true,
+                value: mock,
+            });
+
+            const { result } = renderHook(() => useNotificationPermission());
+
+            let reqPromise!: Promise<unknown>;
+            act(() => {
+                reqPromise = result.current.request();
+            });
+            expect(result.current.isRequesting).toBe(true);
+
+            await act(async () => {
+                vi.advanceTimersByTime(2500);
+                await reqPromise;
+            });
+
+            expect(result.current.isRequesting).toBe(false);
+            expect(result.current.permission).toBe("default");
+            expect(result.current.needsSystemSettings).toBe(true);
+
+            // A slow user who taps Allow after the timeout still grants it
+            mock.permission = "granted";
+            await act(async () => {
+                resolveLate("granted");
+                await pending;
+            });
+
+            expect(result.current.permission).toBe("granted");
+            expect(result.current.needsSystemSettings).toBe(false);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });
