@@ -77,7 +77,7 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
 
         // Alarming top over-budget alert banner should NOT be displayed
         expect(
-            screen.queryByText(/categories have exceeded budget|category has exceeded budget/i),
+            screen.queryByText(/categories over cap|category over cap/i),
         ).not.toBeInTheDocument();
 
         // Buffer category card deducts absorbed overages from remaining balance
@@ -197,7 +197,7 @@ describe("Buffer Overspending Auto-Absorption (Issue #141)", () => {
         );
 
         // Over-budget alert banner shows categories exceeding buffer cushion
-        expect(screen.getByText(/2 categories have exceeded budget/i)).toBeInTheDocument();
+        expect(screen.getByText(/2 categories over cap/i)).toBeInTheDocument();
     });
 
     it("displays 'Uncovered by $X' when Buffer has $0 available capacity", () => {

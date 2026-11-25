@@ -124,9 +124,9 @@ export function CategoryProgressList({
                         <span className="font-bold font-display">
                             {overBudgetCategories.length}{" "}
                             {overBudgetCategories.length === 1
-                                ? "category has"
-                                : "categories have"}{" "}
-                            exceeded budget:
+                                ? "category"
+                                : "categories"}{" "}
+                            over cap:
                         </span>{" "}
                         <span className="font-medium opacity-90">
                             {overBudgetCategories
