@@ -215,7 +215,7 @@ describe("CategoryLimitWarningBanner calm framing", () => {
         ).toBeGreaterThanOrEqual(1);
     });
 
-    it("renders soft-amber Honest log toast and From Next Month banner when total spendable goes negative", () => {
+    it("renders Honest log toast and Over Cap banner when total spendable goes negative", () => {
         const cats = [
             makeCategory("cat-food", "Food", 500, 490),
             makeCategory("cat-transport", "Transport", 100, 95),
@@ -246,9 +246,7 @@ describe("CategoryLimitWarningBanner calm framing", () => {
 
         expect(soundEffects.playBudgetExceededSound).not.toHaveBeenCalled();
         expect(screen.getByText("Honest log")).toBeInTheDocument();
-        expect(
-            screen.getByText(/S\$5\.00 into next month/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/S\$5\.00 over cap/i)).toBeInTheDocument();
 
         const overCats = [
             makeCategory("cat-food", "Food", 500, 510),
@@ -258,7 +256,7 @@ describe("CategoryLimitWarningBanner calm framing", () => {
         expect(
             screen.getByTestId("category-limit-exceeded-banner"),
         ).toBeInTheDocument();
-        expect(screen.getByText(/From Next Month \(1\)/i)).toBeInTheDocument();
+        expect(screen.getByText(/Over Cap \(1\)/i)).toBeInTheDocument();
     });
 });
 

@@ -288,9 +288,7 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
         expect(soundEffects.playBudgetExceededSound).not.toHaveBeenCalled();
         expect(screen.getByRole("alert")).toBeInTheDocument();
         expect(screen.getByText(/Honest log/i)).toBeInTheDocument();
-        expect(
-            screen.getByText(/S\$20\.00 into next month/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/S\$20\.00 over cap/i)).toBeInTheDocument();
     });
 
     it("dismisses Over Cap and Near Limit independently and persists in sessionStorage across remounts", () => {
@@ -390,9 +388,7 @@ describe("Budget Guardrails & CategoryLimitWarningBanner", () => {
         expect(soundEffects.playBudgetExceededSound).not.toHaveBeenCalled();
         expect(screen.getByRole("alert")).toBeInTheDocument();
         expect(screen.getByText(/Honest log/i)).toBeInTheDocument();
-        expect(
-            screen.getByText(/S\$65\.00 into next month/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/S\$65\.00 over cap/i)).toBeInTheDocument();
     });
 });
 

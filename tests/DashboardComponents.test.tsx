@@ -600,9 +600,9 @@ describe("DashboardPage", () => {
                 totalRemaining: -50,
             };
             render(<LeftToSpendHero summary={overspentSummary} />);
-            expect(screen.getByText("From Next Month")).toBeInTheDocument();
+            expect(screen.getByText("Over Cap")).toBeInTheDocument();
             expect(screen.getByTestId("left-to-spend-amount")).toHaveClass(
-                "text-amber-800",
+                "text-(--accent-coral-ink)",
             );
             expect(
                 screen.getByTestId("left-to-spend-amount"),

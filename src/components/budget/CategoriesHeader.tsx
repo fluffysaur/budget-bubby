@@ -29,9 +29,9 @@ export function CategoriesHeader({
                 </h2>
                 <p className="min-w-0 text-sm wrap-break-word">
                     {isOver ? (
-                        <span className="font-black font-display text-amber-700 dark:text-amber-300">
-                            <CurrencyText amount={Math.abs(remaining)} /> from
-                            next month
+                        <span className="font-black font-display text-(--accent-coral-ink) dark:text-rose-400">
+                            <CurrencyText amount={Math.abs(remaining)} /> over
+                            cap
                         </span>
                     ) : (
                         <span className="font-black font-display text-(--text-ink)">
@@ -49,7 +49,6 @@ export function CategoriesHeader({
                     value={spent}
                     max={allocated}
                     size="sm"
-                    tone={isOver ? "near" : undefined}
                     aria-label="Categories spent"
                 />
             )}

@@ -20,7 +20,14 @@ import React, {
     useRef,
     useCallback,
 } from "react";
-import { AlertTriangle, X, ArrowUpRight, Shield, Sparkles } from "lucide-react";
+import {
+    AlertCircle,
+    AlertTriangle,
+    X,
+    ArrowUpRight,
+    Shield,
+    Sparkles,
+} from "lucide-react";
 import { formatSGD } from "../../lib/currency";
 import {
     computeBufferAbsorption,
@@ -214,7 +221,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                 id: String(Date.now()),
                                 type: "total-over",
                                 title: "Honest log",
-                                message: `${formatSGD(evalResult.totalOverAmount)} into next month`,
+                                message: `${formatSGD(evalResult.totalOverAmount)} over cap`,
                             });
                         } else {
                             setToast({
@@ -265,12 +272,7 @@ export const CategoryLimitWarningBanner = React.memo(
         }, [toast]);
 
         // Derived persistent banner alerts
-        const {
-            exceededAlerts,
-            coveredAlerts,
-            warningAlerts,
-            totalSpendableRemaining,
-        } = useMemo(() => {
+        const { exceededAlerts, coveredAlerts, warningAlerts } = useMemo(() => {
             const absorption = computeBufferAbsorption(categories);
             const exceeded: Array<{
                 id: string;
@@ -302,13 +304,10 @@ export const CategoryLimitWarningBanner = React.memo(
                 color?: string;
             }> = [];
 
-            let remainingSum = 0;
-
             for (const c of categories) {
                 if (!isSpendableCategory(c.category || c.category_id)) continue;
                 const allocated = c.allocated_amount || 0;
                 const spent = c.actualSpent || 0;
-                remainingSum += allocated - spent;
                 if (allocated <= 0) continue;
 
                 const percentage = (spent / allocated) * 100;
@@ -354,7 +353,6 @@ export const CategoryLimitWarningBanner = React.memo(
                 exceededAlerts: exceeded,
                 coveredAlerts: covered,
                 warningAlerts: warning,
-                totalSpendableRemaining: remainingSum,
             };
         }, [categories, prefs.budget_warning_pct]);
 
@@ -539,26 +537,27 @@ export const CategoryLimitWarningBanner = React.memo(
                                 aria-label="Category Budget Guardrails"
                                 className="space-y-2.5"
                             >
-                                {/* Over Cap / From Next Month Alert (Soft Amber) */}
+                                {/* Over Cap Alert (Coral tone for distinctness from Near) */}
                                 {shownExceeded.length > 0 && (
                                     <div
                                         data-testid="category-limit-exceeded-banner"
-                                        className="p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-cute-sm transition-colors"
+                                        className="p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm transition-colors"
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border border-(--border-ink) shrink-0 mt-0.5">
-                                                <AlertTriangle
+                                            <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border border-(--border-ink) shrink-0 mt-0.5">
+                                                <AlertCircle
                                                     className="h-4 w-4"
                                                     strokeWidth={2.5}
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-200 font-display">
-                                                        {totalSpendableRemaining <
-                                                        0
-                                                            ? `From Next Month (${visibleExceededAlerts.length})`
-                                                            : `Over Cap (${visibleExceededAlerts.length})`}
+                                                    <span className="text-xs font-black uppercase tracking-wider text-(--accent-coral-ink) dark:text-rose-300 font-display">
+                                                        Over Cap (
+                                                        {
+                                                            visibleExceededAlerts.length
+                                                        }
+                                                        )
                                                     </span>
                                                 </div>
                                                 <div className="space-y-1">
@@ -566,7 +565,7 @@ export const CategoryLimitWarningBanner = React.memo(
                                                         (item) => (
                                                             <div
                                                                 key={item.id}
-                                                                className="flex items-center justify-between gap-2 text-xs font-bold text-amber-900 dark:text-amber-200 flex-wrap"
+                                                                className="flex items-center justify-between gap-2 text-xs font-bold text-(--accent-coral-ink) dark:text-rose-300 flex-wrap"
                                                             >
                                                                 <span>
                                                                     {item.name}{" "}

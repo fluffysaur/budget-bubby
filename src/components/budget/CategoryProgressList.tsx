@@ -116,9 +116,9 @@ export function CategoryProgressList({
         <div className={`space-y-4 ${className}`}>
             {/* Over Cap Alert Banner */}
             {overBudgetCategories.length > 0 && (
-                <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-cute-sm">
-                    <div className="p-1.5 rounded-xl bg-(--pastel-butter) text-(--text-ink) border-2 border-(--border-ink) shrink-0 shadow-cute-sm">
-                        <AlertTriangle className="h-4 w-4" strokeWidth={2.5} />
+                <div className="flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl border-2 border-(--border-ink) bg-(--accent-coral-subtle) dark:bg-rose-950/40 text-(--accent-coral-ink) dark:text-rose-300 shadow-cute-sm">
+                    <div className="p-1.5 rounded-xl bg-(--accent-coral) text-white border-2 border-(--border-ink) shrink-0 shadow-cute-sm">
+                        <AlertCircle className="h-4 w-4" strokeWidth={2.5} />
                     </div>
                     <div className="text-xs sm:text-sm min-w-0 flex-1">
                         <span className="font-bold font-display">

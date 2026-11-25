@@ -366,11 +366,7 @@ export function BudgetPage({
                         }
                     >
                         <StatCard
-                            title={
-                                spendableRemaining < 0
-                                    ? "From next month"
-                                    : "Left"
-                            }
+                            title={spendableRemaining < 0 ? "Over Cap" : "Left"}
                             loading={isLoading}
                             value={
                                 <CurrencyText
@@ -389,16 +385,14 @@ export function BudgetPage({
                             }
                             badge={
                                 spendableRemaining < 0 ? (
-                                    <Badge variant="amber">
-                                        Over · Surplus
-                                    </Badge>
+                                    <Badge variant="over">Over</Badge>
                                 ) : (
                                     <Badge variant="ok">On Track</Badge>
                                 )
                             }
                             tooltip={
                                 spendableRemaining < 0
-                                    ? `${formatSGD(Math.abs(spendableRemaining))} over ${formatSGD(spendableAllocated)} spendable — borrows from surplus or next month.`
+                                    ? `${formatSGD(Math.abs(spendableRemaining))} over ${formatSGD(spendableAllocated)} spendable — can be offset by saving in past or future months.`
                                     : `Spendable budget of ${formatSGD(spendableAllocated)} minus ${formatSGD(spendableSpent)} spent.`
                             }
                             icon={<Wallet className="h-4 w-4" />}
@@ -409,11 +403,6 @@ export function BudgetPage({
                                         value={spendableSpent}
                                         max={spendableAllocated}
                                         size="md"
-                                        tone={
-                                            spendableRemaining < 0
-                                                ? "near"
-                                                : undefined
-                                        }
                                         aria-label="Monthly budget spent"
                                     />
                                 ) : undefined
