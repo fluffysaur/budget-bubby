@@ -47,6 +47,7 @@ import { AddRecurringModal } from "../src/components/recurring/AddRecurringModal
 import { RecurringPage } from "../src/pages/RecurringPage";
 import { financeService } from "../src/services/financeService";
 import { mockFinanceService } from "../src/services/mockFinanceService";
+import { selectOption } from "./helpers/select";
 import { formatSGD } from "../src/lib/currency";
 import {
     buildYearOutlay,
@@ -823,12 +824,13 @@ describe("AddRecurringModal Component", () => {
         fireEvent.change(screen.getByLabelText(/Type/i), {
             target: { value: "bill" },
         });
-        const categorySelect = screen.getByLabelText(
-            /^Category$/i,
-        ) as HTMLSelectElement;
-        expect(categorySelect.value).toBe("cat-life");
+        const categorySelect = screen.getByRole("combobox", {
+            name: /^Category$/i,
+        });
+        expect(categorySelect).toHaveTextContent("Lifestyle");
 
-        fireEvent.change(categorySelect, { target: { value: "cat-food" } });
+        await selectOption(categorySelect, "Food");
+        expect(categorySelect).toHaveTextContent("Food");
         fireEvent.change(screen.getByLabelText(/^Name/i), {
             target: { value: "Meal Plan" },
         });
