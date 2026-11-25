@@ -431,7 +431,7 @@ describe("AccountsPage", () => {
     });
 
     describe("AddAccountModal", () => {
-        it("renders Singapore presets and populates inputs upon clicking a preset", () => {
+        it("has no preset UI and offers Cash, Investment and Other types", () => {
             render(
                 <AddAccountModal
                     isOpen={true}
@@ -449,18 +449,16 @@ describe("AccountsPage", () => {
 
             expect(screen.getByRole("dialog")).toBeInTheDocument();
             expect(screen.getByText(/Add New Account/i)).toBeInTheDocument();
-            expect(screen.getByText("DBS Multiplier")).toBeInTheDocument();
-            expect(screen.getByText("OCBC 360")).toBeInTheDocument();
+            expect(screen.queryByText(/quick preset/i)).not.toBeInTheDocument();
+            expect(screen.queryByText("DBS Multiplier")).not.toBeInTheDocument();
+            expect(
+                screen.queryByLabelText(/more presets/i),
+            ).not.toBeInTheDocument();
 
-            // Click preset
-            fireEvent.click(screen.getByText("DBS Multiplier"));
-            expect(
-                (screen.getByLabelText(/account name/i) as HTMLInputElement)
-                    .value,
-            ).toBe("DBS Multiplier");
-            expect(
-                (screen.getByLabelText(/bank/i) as HTMLInputElement).value,
-            ).toBe("DBS");
+            const tabs = screen
+                .getAllByRole("tab")
+                .map((t) => t.textContent);
+            expect(tabs).toEqual(["Cash", "Investment", "Other"]);
         });
 
         it("displays the 0-accounts welcome banner when isInitialSetup is true", () => {
@@ -542,6 +540,9 @@ describe("AccountsPage", () => {
             fireEvent.change(screen.getByLabelText(/account name/i), {
                 target: { value: "DBS Multiplier" },
             });
+            fireEvent.click(
+                screen.getByRole("button", { name: /more details/i }),
+            );
             fireEvent.change(screen.getByLabelText(/bank/i), {
                 target: { value: "DBS" },
             });
@@ -809,13 +810,11 @@ describe("AccountsPage", () => {
             const balanceInputs = screen.getAllByPlaceholderText("0.00");
             fireEvent.change(balanceInputs[0], { target: { value: "15000" } });
 
-            expect(screen.getAllByText(/1 changed/i).length).toBeGreaterThan(0);
+            expect(
+                screen.getByRole("button", { name: /^save 1$/i }),
+            ).toBeEnabled();
 
-            fireEvent.click(
-                screen.getByRole("button", {
-                    name: /save 1 modified account/i,
-                }),
-            );
+            fireEvent.click(screen.getByRole("button", { name: /^save 1$/i }));
 
             await waitFor(() => {
                 expect(bulkSpy).toHaveBeenCalledWith(
@@ -831,6 +830,37 @@ describe("AccountsPage", () => {
 
             expect(onBalancesUpdated).toHaveBeenCalled();
             expect(onClose).toHaveBeenCalled();
+        });
+
+        it("shows Save when nothing changed, Save 2 after two edits, and a delta per edited row", () => {
+            render(
+                <UpdateBalanceModal
+                    isOpen={true}
+                    accounts={sampleAccounts}
+                    onClose={vi.fn()}
+                />,
+            );
+
+            const saveBtn = screen.getByRole("button", { name: /^save$/i });
+            expect(saveBtn).toBeDisabled();
+            expect(screen.queryByText(/no changes to save/i)).toBeNull();
+            expect(screen.queryByText(/changed/i)).toBeNull();
+
+            const inputs = screen.getAllByPlaceholderText("0.00");
+            const before = screen.getAllByText(/^Prev/i).length;
+            fireEvent.change(inputs[0], {
+                target: { value: String(sampleAccounts[0].balance + 100) },
+            });
+            fireEvent.change(inputs[1], {
+                target: { value: String(sampleAccounts[1].balance + 50) },
+            });
+
+            expect(
+                screen.getByRole("button", { name: /^save 2$/i }),
+            ).toBeEnabled();
+            expect(screen.getAllByText(/^Prev/i).length).toBe(before - 2);
+            expect(screen.getByText("S$100.00")).toBeInTheDocument();
+            expect(screen.getByText("S$50.00")).toBeInTheDocument();
         });
     });
 });

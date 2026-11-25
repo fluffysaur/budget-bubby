@@ -462,6 +462,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
                 target: { value: "HSBC Revolution" },
             });
+            fireEvent.change(screen.getByLabelText(/Issuing Bank/i), {
+                target: { value: "HSBC" },
+            });
             fireEvent.change(screen.getByLabelText(/Last 4 Digits/i), {
                 target: { value: "5566" },
             });
@@ -523,6 +526,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
 
             fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
                 target: { value: "HSBC Revolution" },
+            });
+            fireEvent.change(screen.getByLabelText(/Issuing Bank/i), {
+                target: { value: "HSBC" },
             });
             fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
 
@@ -601,6 +607,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
                 target: { value: "Custom Cycle Card" },
             });
+            fireEvent.change(screen.getByLabelText(/Issuing Bank/i), {
+                target: { value: "HSBC" },
+            });
             fireEvent.change(screen.getByLabelText(/Cardholder/i), {
                 target: { value: testMembers[0].id },
             });
@@ -631,6 +640,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             fireEvent.change(screen.getByLabelText(/Card Name \*/i), {
                 target: { value: "Invalid Day Card" },
             });
+            fireEvent.change(screen.getByLabelText(/Issuing Bank/i), {
+                target: { value: "HSBC" },
+            });
 
             // Clear billing day
             fireEvent.change(screen.getByLabelText(/Statement Day/i), {
@@ -642,6 +654,38 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             expect(
                 await screen.findByText("Day must be 1-31"),
             ).toBeInTheDocument();
+        });
+
+        it("uses a free-text bank input that prefills when editing", async () => {
+            const cards = await financeService.getCreditCards();
+            const card = { ...cards[0], bank: "Bank of Somewhere" };
+
+            const { rerender } = render(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    members={testMembers}
+                />,
+            );
+            const addBank = screen.getByLabelText(
+                /Issuing Bank/i,
+            ) as HTMLInputElement;
+            expect(addBank.tagName).toBe("INPUT");
+            expect(addBank).toHaveAttribute("placeholder", "e.g. DBS, OCBC, UOB");
+            expect(addBank.value).toBe("");
+
+            rerender(
+                <AddEditCreditCardModal
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    card={card}
+                    members={testMembers}
+                />,
+            );
+            expect(
+                (screen.getByLabelText(/Issuing Bank/i) as HTMLInputElement)
+                    .value,
+            ).toBe("Bank of Somewhere");
         });
     });
 });

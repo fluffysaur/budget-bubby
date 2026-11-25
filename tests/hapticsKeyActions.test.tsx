@@ -12,7 +12,6 @@ import { SpendPage } from "../src/pages/SpendPage";
 import { PlanPage } from "../src/pages/PlanPage";
 import { AddAccountModal } from "../src/components/accounts/AddAccountModal";
 import { EditAccountModal } from "../src/components/accounts/EditAccountModal";
-import { BulkBalanceUpdateModal } from "../src/components/accounts/BulkBalanceUpdateModal";
 import { DeleteAccountModal } from "../src/components/accounts/DeleteAccountModal";
 import { AddEditGoalModal } from "../src/components/goals/AddEditGoalModal";
 import { AddRecurringModal } from "../src/components/recurring/AddRecurringModal";
@@ -356,29 +355,6 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 expect(saveSpy).toHaveBeenCalledWith("save");
             });
 
-            it("BulkBalanceUpdateModal triggers feedback.routine('save') on bulk update", async () => {
-                const saveSpy = vi.spyOn(feedback, "routine");
-                vi.spyOn(financeService, "bulkUpdateAccountBalances").mockResolvedValue([mockAccount]);
-
-                renderWithProviders(
-                    <BulkBalanceUpdateModal
-                        isOpen={true}
-                        onClose={vi.fn()}
-                        accounts={[mockAccount]}
-                    />,
-                );
-
-                const input = screen.getByDisplayValue("1500");
-                fireEvent.change(input, { target: { value: "1600" } });
-
-                const saveBtn = screen.getByRole("button", { name: /save snapshot/i });
-                await act(async () => {
-                    fireEvent.click(saveBtn);
-                });
-
-                expect(saveSpy).toHaveBeenCalledWith("save");
-            });
-
             it("DeleteAccountModal triggers feedback.routine('delete') on account deletion", async () => {
                 const deleteSpy = vi.spyOn(feedback, "routine");
                 vi.spyOn(financeService, "deleteAccount").mockResolvedValue(undefined);
@@ -666,6 +642,9 @@ describe("Haptics on Key Actions (Issue #49)", () => {
 
                 fireEvent.change(screen.getByLabelText(/card name/i), {
                     target: { value: "Citi Cash Back" },
+                });
+                fireEvent.change(screen.getByLabelText(/issuing bank/i), {
+                    target: { value: "Citi" },
                 });
 
                 const saveBtn = screen.getByRole("button", { name: /add card/i });
