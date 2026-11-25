@@ -726,10 +726,12 @@ describe("CategoryProgressList Warning Badges", () => {
         ).toBeInTheDocument();
         expect(screen.queryByText("Amber Guardrail")).not.toBeInTheDocument();
 
-        // Rose cap exceeded badge on progress bar
+        // Rose cap exceeded icon trigger on progress card
         expect(
             screen.getByTestId("badge-rose-cat-lifestyle"),
         ).toBeInTheDocument();
-        expect(screen.getByText("Over")).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Over budget" }),
+        ).toBeInTheDocument();
     });
 });

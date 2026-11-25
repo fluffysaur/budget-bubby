@@ -28,19 +28,18 @@ export function CategoriesHeader({
                     Categories
                 </h2>
                 <p className="min-w-0 text-sm wrap-break-word">
-                    {isOver ? (
-                        <span className="font-black font-display text-(--accent-coral-ink) dark:text-rose-400">
-                            <CurrencyText amount={Math.abs(remaining)} /> over
-                            cap
-                        </span>
-                    ) : (
-                        <span className="font-black font-display text-(--text-ink)">
-                            <CurrencyText amount={remaining} /> left
-                        </span>
-                    )}
+                    <span
+                        className={`font-black font-display ${
+                            isOver
+                                ? "text-(--accent-coral-ink) dark:text-rose-400"
+                                : "text-(--text-ink)"
+                        }`}
+                    >
+                        <CurrencyText amount={spent} />
+                    </span>
                     <span className="text-(--text-muted)">
-                        {" "}
-                        of <CurrencyText amount={allocated} />
+                        {" / "}
+                        <CurrencyText amount={allocated} />
                     </span>
                 </p>
             </div>

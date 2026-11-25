@@ -435,8 +435,10 @@ describe("CategoryProgressList", () => {
     it("applies red status and shows over-budget warning when spend > 100%", () => {
         render(<CategoryProgressList categories={[sampleCategories[2]]} />);
 
-        // Transport is 120.7% spent (>100%): shows over banner and Over badge
-        expect(screen.getByText("Over")).toBeInTheDocument();
+        // Transport is 120.7% spent (>100%): shows over banner and Over budget icon trigger
+        expect(
+            screen.getByRole("button", { name: "Over budget" }),
+        ).toBeInTheDocument();
         expect(screen.getAllByText(/over/i).length).toBeGreaterThan(0);
         const meter = screen.getByRole("progressbar");
         expect(meter.firstElementChild?.className).toContain(
@@ -830,6 +832,14 @@ describe("BudgetPage", () => {
                 screen.getByRole("heading", { name: /^budget$/i }),
             ).toBeInTheDocument();
             expect(
+                screen.getByRole("button", { name: /income flow/i }),
+            ).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: /income flow/i }));
+
+        await waitFor(() => {
+            expect(
                 screen.getAllByText(/^gross$|gross salary/i).length,
             ).toBeGreaterThan(0);
             expect(
@@ -1047,8 +1057,9 @@ describe("BudgetPage", () => {
             expect(
                 screen.getByText(
                     (_content, node) =>
-                        node?.tagName === "SPAN" &&
-                        node?.textContent?.trim() === "S$367.92 left",
+                        node?.tagName === "P" &&
+                        node?.textContent?.replace(/\s+/g, " ").trim() ===
+                            "S$1,140.00 / S$1,507.92",
                 ),
             ).toBeInTheDocument();
         });
