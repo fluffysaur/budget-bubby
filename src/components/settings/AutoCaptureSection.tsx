@@ -36,6 +36,8 @@ import { TruncatedText } from "../ui/TruncatedText";
 
 export interface AutoCaptureSectionProps {
     memberId?: string;
+    /** Hide the "Auto Capture" heading when the page already titles it. */
+    hideHeading?: boolean;
 }
 
 const EMPTY_TOKENS: CaptureToken[] = [];
@@ -271,7 +273,10 @@ function SetupSteps() {
     );
 }
 
-export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
+export function AutoCaptureSection({
+    memberId,
+    hideHeading = false,
+}: AutoCaptureSectionProps) {
     const queryClient = useQueryClient();
     const { me } = useLoggedInMember();
     const targetMemberId = memberId || me?.id;
@@ -342,9 +347,11 @@ export function AutoCaptureSection({ memberId }: AutoCaptureSectionProps) {
 
     return (
         <div data-testid="auto-capture-section">
-            <h4 className="mb-3 font-display text-xs font-black uppercase tracking-wider text-(--text-muted)">
-                Auto Capture
-            </h4>
+            {!hideHeading && (
+                <h4 className="mb-3 font-display text-xs font-black uppercase tracking-wider text-(--text-muted)">
+                    Auto Capture
+                </h4>
+            )}
 
             <div className="space-y-3 rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-3.5 shadow-cute-sm">
                 <div className="flex items-center gap-3">

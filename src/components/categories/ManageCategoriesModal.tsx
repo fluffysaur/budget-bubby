@@ -697,11 +697,11 @@ export function ManageCategoriesModal({
                                                 </div>
 
                                                 <div className="flex items-center gap-2.5 shrink-0">
-                                                    <div className="relative w-28">
-                                                        <span className="absolute left-2 top-1.5 text-xs text-(--text-faint) font-mono pointer-events-none">
-                                                            S$
-                                                        </span>
-                                                        <input
+                                                    <div className="w-32 shrink-0">
+                                                        <Input
+                                                            sizeVariant="sm"
+                                                            mono
+                                                            leftIcon={<span className="text-xs font-bold">S$</span>}
                                                             id={`manage-cat-dollar-input-${cat.id}`}
                                                             data-testid={`manage-cat-dollar-${cat.id}`}
                                                             type="text"
@@ -728,12 +728,15 @@ export function ManageCategoriesModal({
                                                                         .value,
                                                                 )
                                                             }
-                                                            className="w-full pl-7 pr-2 py-1 text-right text-base sm:text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden font-mono"
+                                                            className="text-right"
                                                             title="Set fixed monthly dollar amount (auto-converts to %)"
                                                         />
                                                     </div>
-                                                    <div className="relative w-20">
-                                                        <input
+                                                    <div className="w-24 shrink-0">
+                                                        <Input
+ sizeVariant="sm"
+ mono
+ rightElement={<span className="text-[11px] text-(--text-faint)">%</span>}
                                                             id={`manage-cat-alloc-${cat.id}`}
                                                             type="text"
                                                             inputMode="decimal"
@@ -760,11 +763,8 @@ export function ManageCategoriesModal({
                                                                     cat.id,
                                                                 )
                                                             }
-                                                            className="w-full pr-5 pl-2 py-1 text-right text-base sm:text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/50 outline-hidden"
+                                                            className="text-right"
                                                         />
-                                                        <span className="absolute right-1.5 top-1.5 text-[11px] text-(--text-faint)">
-                                                            %
-                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>

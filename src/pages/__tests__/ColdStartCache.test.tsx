@@ -8,7 +8,6 @@ import {
     PRIVACY_MASK,
     PRIVACY_STORAGE_KEY,
 } from "../../context/PrivacyContext";
-import { SettingsProvider } from "../../context/SettingsContext";
 import { BubbyAvatarButton } from "../../components/bubby/BubbyAvatarButton";
 import { DashboardPage } from "../DashboardPage";
 import { ExpensesPage } from "../ExpensesPage";
@@ -78,9 +77,7 @@ function renderWithProviders(ui: React.ReactElement) {
         <LazyMotion features={domAnimation} strict>
             <QueryClientProvider client={qc}>
                 <AuthProvider initialAuthenticated>
-                    <SettingsProvider>
-                        <PrivacyProvider>{ui}</PrivacyProvider>
-                    </SettingsProvider>
+                    <PrivacyProvider>{ui}</PrivacyProvider>
                 </AuthProvider>
             </QueryClientProvider>
         </LazyMotion>,

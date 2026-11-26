@@ -13,6 +13,7 @@ import {
     computeBufferRemainder,
     computeSavingsBreakdown,
     computeBufferAbsorption,
+    computeSpendableCategoryViews,
 } from "../src/lib/financialFormulas";
 import type { Expense, Category, SavingsGoal } from "../src/types/finance";
 
@@ -1065,5 +1066,79 @@ describe("buffer and savings helpers", () => {
             expect(result.bufferRemaining).toBe(200);
             expect(result.isDepleted).toBe(false);
         });
+    });
+});
+
+describe("computeSpendableCategoryViews", () => {
+    const cat = (id: string, name: string, allocated: number, spent: number) => ({
+        category_id: id,
+        category: { id, name, group: "spendable" } as Category,
+        allocated_amount: allocated,
+        actualSpent: spent,
+    });
+
+    it("subtracts covered overspend from Buffer and marks the category covered", () => {
+        const { views } = computeSpendableCategoryViews([
+            cat("c-food", "Food", 400, 300),
+            cat("c-life", "Lifestyle", 200, 250),
+            cat("c-buf", "Buffer", 100, 0),
+        ]);
+        expect(views["c-buf"]).toMatchObject({
+            isBuffer: true,
+            remaining: 50,
+            meterValue: 50,
+            absorbed: 50,
+            status: "buffer",
+        });
+        expect(views["c-life"]).toMatchObject({
+            remaining: -50,
+            absorbed: 50,
+            uncovered: 0,
+            status: "covered",
+        });
+        expect(views["c-food"]).toMatchObject({
+            remaining: 100,
+            status: "normal",
+        });
+    });
+
+    it("reports the uncovered part and a depleted Buffer when overspend exceeds it", () => {
+        const { views } = computeSpendableCategoryViews([
+            cat("c-life", "Lifestyle", 200, 300),
+            cat("c-buf", "Buffer", 50, 10),
+        ]);
+        expect(views["c-life"]).toMatchObject({
+            remaining: -100,
+            absorbed: 40,
+            uncovered: 60,
+            status: "partially_covered",
+        });
+        expect(views["c-buf"]).toMatchObject({
+            remaining: 0,
+            meterValue: 50,
+            status: "buffer_depleted",
+        });
+    });
+
+    it("leaves overspend uncovered when there is no Buffer and skips set-aside groups", () => {
+        const { views } = computeSpendableCategoryViews([
+            cat("c-life", "Lifestyle", 200, 260),
+            {
+                category_id: "c-save",
+                category: {
+                    id: "c-save",
+                    name: "Savings",
+                    group: "allocation",
+                } as Category,
+                allocated_amount: 500,
+                actualSpent: 0,
+            },
+        ]);
+        expect(views["c-life"]).toMatchObject({
+            remaining: -60,
+            uncovered: 60,
+            status: "uncovered",
+        });
+        expect(views["c-save"]).toBeUndefined();
     });
 });

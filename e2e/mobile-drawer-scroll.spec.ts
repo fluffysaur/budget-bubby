@@ -40,9 +40,9 @@ test.describe("Mobile Drawer Scrolling & Viewport Layout", () => {
         const scrollContainer = dialog.locator("form > div.overflow-y-auto");
         await expect(scrollContainer).toBeVisible();
 
-        // Expand the "+ More details" collapsible to make the form even taller
+        // Expand the "More details" collapsible to make the form even taller
         const moreDetailsBtn = dialog.getByRole("button", {
-            name: /\+ More details/i,
+            name: /More details/i,
         });
         await moreDetailsBtn.click();
 

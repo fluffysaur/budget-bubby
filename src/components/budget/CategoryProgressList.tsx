@@ -26,7 +26,7 @@ import {
 import {
     isSpendableCategory,
     isBufferCategory,
-    computeBufferAbsorption,
+    computeSpendableCategoryViews,
 } from "../../lib/financialFormulas";
 import { getRecurringMonthlyAmount } from "../../lib/recurringItems";
 import { TooltipPopover } from "../ui/TooltipPopover";
@@ -71,8 +71,8 @@ export function CategoryProgressList({
 }: CategoryProgressListProps) {
     const household = useOptionalHousehold();
     const members = household?.members ?? [];
-    const absorption = useMemo(
-        () => computeBufferAbsorption(categories),
+    const { absorption, views } = useMemo(
+        () => computeSpendableCategoryViews(categories),
         [categories],
     );
 
@@ -151,20 +151,18 @@ export function CategoryProgressList({
                         catDetail.category ?? catDetail.category_id,
                     );
                     const coverage = absorption.categoryBreakdown[catId];
+                    const view = views[catId];
 
                     const allocated = catDetail.allocated_amount || 0;
                     const actual = catDetail.actualSpent || 0;
                     const subSpent = catDetail.recurringSpent || 0;
                     const subItems = catDetail.recurringItems || [];
 
-                    let remaining =
-                        catDetail.remaining !== undefined
+                    const remaining =
+                        view?.remaining ??
+                        (catDetail.remaining !== undefined
                             ? catDetail.remaining
-                            : allocated - actual;
-
-                    if (isBuffer) {
-                        remaining = absorption.bufferRemaining;
-                    }
+                            : allocated - actual);
 
                     const spentPercentage =
                         allocated > 0
@@ -689,12 +687,7 @@ export function CategoryProgressList({
                             {(tracksCap || allocated > 0) && (
                                 <div className="mt-2.5">
                                     <MeterBar
-                                        value={
-                                            isBuffer
-                                                ? actual +
-                                                  absorption.totalAbsorbed
-                                                : actual
-                                        }
+                                        value={view?.meterValue ?? actual}
                                         max={allocated}
                                         tone={!tracksCap ? "ok" : undefined}
                                         size="md"

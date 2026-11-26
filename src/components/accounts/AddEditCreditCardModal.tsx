@@ -2,7 +2,7 @@
  * Add / Edit Credit Card Modal
  * Configures credit cards with:
  * - AnimatedModal wrapper + ModalHeader / ModalBody / ModalFooter
- * - Card Name, Bank, Last 4 Digits
+ * - Card Name, Bank (free text), Last 4 Digits
  * - Statement / Billing Day of Month (1 - 31)
  * - Due Day of Month (1 - 31)
  * - Credit Limit (SGD)
@@ -15,10 +15,8 @@ import {
     CreditCard,
     Building,
     Calendar,
-    DollarSign,
     Palette,
     Trash2,
-    User,
 } from "lucide-react";
 import {
     AnimatedModal,
@@ -26,7 +24,9 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
+import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+import { CurrencyInput } from "../ui/CurrencyInput";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { financeService } from "../../services/financeService";
@@ -60,18 +60,6 @@ const PRESET_COLORS = [
     { label: "Pink Fuchsia", hex: "#c026d3" },
 ];
 
-const PRESET_BANKS = [
-    "DBS",
-    "OCBC",
-    "UOB",
-    "Citibank",
-    "Standard Chartered",
-    "HSBC",
-    "AMEX",
-    "Maybank",
-    "Other",
-];
-
 export function AddEditCreditCardModal({
     isOpen,
     onClose,
@@ -86,8 +74,7 @@ export function AddEditCreditCardModal({
     const initialOwnerId = defaultOwnerId || me?.id || "";
 
     const [name, setName] = useState<string>("");
-    const [bank, setBank] = useState<string>("DBS");
-    const [customBank, setCustomBank] = useState<string>("");
+    const [bank, setBank] = useState<string>("");
     const [last4, setLast4] = useState<string>("");
     const [billingDay, setBillingDay] = useState<number | string>(15);
     const [dueDay, setDueDay] = useState<number | string>(5);
@@ -101,9 +88,7 @@ export function AddEditCreditCardModal({
         if (isOpen) {
             if (card) {
                 setName(card.name);
-                const isPresetBank = PRESET_BANKS.includes(card.bank);
-                setBank(isPresetBank ? card.bank : "Other");
-                setCustomBank(isPresetBank ? "" : card.bank);
+                setBank(card.bank);
                 setLast4(card.last4 || "");
                 setBillingDay(card.billing_day || 15);
                 setDueDay(card.due_day || 5);
@@ -114,8 +99,7 @@ export function AddEditCreditCardModal({
                 setOwnerId(card.owner_id || initialOwnerId);
             } else {
                 setName("");
-                setBank("DBS");
-                setCustomBank("");
+                setBank("");
                 setLast4("");
                 setBillingDay(15);
                 setDueDay(5);
@@ -139,9 +123,9 @@ export function AddEditCreditCardModal({
             return;
         }
 
-        const effectiveBank = bank === "Other" ? customBank.trim() : bank;
+        const effectiveBank = bank.trim();
         if (!effectiveBank) {
-            setErrorMessage("Pick a bank");
+            setErrorMessage("Enter a bank");
             return;
         }
 
@@ -249,182 +233,98 @@ export function AddEditCreditCardModal({
                         <Alert variant="danger">{errorMessage}</Alert>
                     )}
 
-                    {/* Card Name */}
-                    <div>
-                        <label
-                            htmlFor="card-name"
-                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                        >
-                            Card Name *
-                        </label>
-                        <input
+                    <div className="space-y-3">
+                        <Input
                             id="card-name"
+                            label="Card Name *"
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="e.g. DBS Altitude Visa, UOB One Card"
-                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             required
                         />
-                    </div>
 
-                    {/* Bank & Last 4 Digits */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                htmlFor="card-bank"
-                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                <Building className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Issuing Bank *</span>
-                            </label>
-                            <Select
+                        <div className="grid grid-cols-2 gap-3">
+                            <Input
                                 id="card-bank"
+                                label="Issuing Bank"
+                                type="text"
+                                required
                                 value={bank}
                                 onChange={(e) => setBank(e.target.value)}
-                                className="bg-(--bg-canvas)"
-                            >
-                                {PRESET_BANKS.map((b) => (
-                                    <option key={b} value={b}>
-                                        {b}
-                                    </option>
-                                ))}
-                            </Select>
-                            {bank === "Other" && (
-                                <input
-                                    type="text"
-                                    value={customBank}
-                                    onChange={(e) =>
-                                        setCustomBank(e.target.value)
-                                    }
-                                    placeholder="Enter bank name"
-                                    className="mt-2 w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-1.5 text-base sm:text-xs text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            )}
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="card-last4"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Last 4 Digits
-                            </label>
-                            <input
+                                placeholder="e.g. DBS"
+                                leftIcon={
+                                    <Building
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
+                            />
+                            <Input
                                 id="card-last4"
+                                label="Last 4 Digits"
                                 type="text"
+                                inputMode="numeric"
                                 maxLength={4}
+                                mono
                                 value={last4}
                                 onChange={(e) =>
                                     setLast4(e.target.value.replace(/\D/g, ""))
                                 }
                                 placeholder="1234"
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm font-mono-num text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                             />
                         </div>
-                    </div>
 
-                    {/* Statement Date & Due Date */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                htmlFor="card-billing-day"
-                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Statement Day</span>
-                            </label>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-(--text-muted)">
-                                    Day
-                                </span>
-                                <input
-                                    id="card-billing-day"
-                                    type="number"
-                                    min={1}
-                                    max={31}
-                                    value={billingDay}
-                                    onChange={(e) =>
-                                        setBillingDay(e.target.value)
-                                    }
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                                <span className="text-xs text-(--text-muted)">
-                                    of month
-                                </span>
-                            </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Input
+                                id="card-billing-day"
+                                label="Statement Day"
+                                type="number"
+                                min={1}
+                                max={31}
+                                mono
+                                value={billingDay}
+                                onChange={(e) => setBillingDay(e.target.value)}
+                                leftIcon={
+                                    <Calendar
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
+                            />
+                            <Input
+                                id="card-due-day"
+                                label="Payment Due Day"
+                                type="number"
+                                min={1}
+                                max={31}
+                                mono
+                                value={dueDay}
+                                onChange={(e) => setDueDay(e.target.value)}
+                                leftIcon={
+                                    <Calendar
+                                        className="h-4 w-4"
+                                        strokeWidth={2.5}
+                                    />
+                                }
+                            />
                         </div>
 
-                        <div>
-                            <label
-                                htmlFor="card-due-day"
-                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Payment Due Day</span>
-                            </label>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-(--text-muted)">
-                                    Day
-                                </span>
-                                <input
-                                    id="card-due-day"
-                                    type="number"
-                                    min={1}
-                                    max={31}
-                                    value={dueDay}
-                                    onChange={(e) => setDueDay(e.target.value)}
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm font-mono-num font-bold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                                <span className="text-xs text-(--text-muted)">
-                                    of month
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Credit Limit & Card Owner */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                htmlFor="card-limit"
-                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                <DollarSign className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Credit Limit</span>
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
-                                    S$
-                                </span>
-                                <input
-                                    id="card-limit"
-                                    type="number"
-                                    step="100"
-                                    min="0"
-                                    value={creditLimit}
-                                    onChange={(e) =>
-                                        setCreditLimit(e.target.value)
-                                    }
-                                    placeholder="e.g. 10000"
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="card-owner"
-                                className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                <User className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Cardholder</span>
-                            </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <CurrencyInput
+                                id="card-limit"
+                                label="Credit Limit"
+                                step="100"
+                                min="0"
+                                value={creditLimit}
+                                onChange={(e) => setCreditLimit(e.target.value)}
+                                placeholder="e.g. 10000"
+                            />
                             <Select
                                 id="card-owner"
+                                label="Cardholder"
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
-                                className="bg-(--bg-canvas)"
                             >
                                 <option value="" disabled>
                                     Choose cardholder

@@ -113,6 +113,6 @@ Releases are automated via **Release Please** (`.github/workflows/release-please
     - `src/lib/__tests__/releaseNotes.test.ts` fails when the `package.json` version (from `FIRST_NOTED_VERSION` on) has no entry, so the Release PR stays red until notes are added.
     - Each device shows unseen notes once after an update (`bb_whats_new_v1` in localStorage); full history is under Settings → What's New.
 - **Promoting to `1.0.0`:** Include a commit footer `Release-As: 1.0.0` when ready for public launch.
-- **In-app visibility:** The Settings modal footer displays `vX.Y.Z (<short-sha>)` (injected at build time via `vite.config.ts`) to verify PWA updates on devices even between releases.
+- **In-app visibility:** The Settings page footer (index) displays `vX.Y.Z (<short-sha>)` (injected at build time via `vite.config.ts`) to verify PWA updates on devices even between releases.
 - **GitHub repo setting:** Requires `Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests`.
 

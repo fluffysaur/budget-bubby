@@ -12,18 +12,16 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
     Search,
     CheckCircle2,
-    AlertCircle,
+    Calendar,
     Landmark,
     Plus,
-    ArrowUpRight,
-    ArrowDownRight,
 } from "lucide-react";
 import type { Account, BulkBalanceUpdateItem } from "../../types/finance";
 import {
     useUpdateAccountBalanceMutation,
     useBulkUpdateAccountBalancesMutation,
 } from "../../hooks/finance/accounts";
-import { getTodayDateString } from "../../lib/dateUtils";
+import { getTodayDateString, MONTH_NAMES_SHORT } from "../../lib/dateUtils";
 import {
     AnimatedModal,
     ModalHeader,
@@ -31,8 +29,13 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { TruncatedText } from "../ui/TruncatedText";
+import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { CurrencyText } from "../ui/CurrencyText";
+import { CurrencyInput } from "../ui/CurrencyInput";
+import { Input } from "../ui/Input";
+import { FilterChip } from "../ui/FilterChip";
+import { DeltaBadge } from "../ui/DeltaBadge";
 import { recordExercise } from "../../lib/bubby/activity";
 import { feedback } from "../../lib/delight/feedback";
 
@@ -44,6 +47,17 @@ export interface UpdateBalanceModalProps {
     onBalanceUpdated?: (updatedAccount: Account) => void;
     onBalancesUpdated?: (updatedAccounts: Account[]) => void;
     onOpenAddAccount?: () => void;
+}
+
+const TYPE_FILTERS = ["All", "Cash", "Investment", "CPF"] as const;
+
+/** "Today" for the current date, else a short "25 Nov" label. */
+function formatChipDate(dateStr: string): string {
+    if (!dateStr || dateStr === getTodayDateString()) return "Today";
+    const [, month, day] = dateStr.split("-");
+    const monthName = MONTH_NAMES_SHORT[parseInt(month, 10) - 1];
+    if (!monthName) return dateStr;
+    return `${parseInt(day, 10)} ${monthName}`;
 }
 
 export function UpdateBalanceModal({
@@ -131,6 +145,16 @@ export function UpdateBalanceModal({
             return balanceChanged || notesChanged;
         });
     }, [accountsList, balancesMap, notesMap]);
+
+    // The date input overlays the chip, so taps reach it natively (iOS opens
+    // its picker); desktop browsers also get showPicker() where supported.
+    const openDatePicker = (e: React.MouseEvent<HTMLInputElement>) => {
+        try {
+            e.currentTarget.showPicker?.();
+        } catch {
+            // Native focus/picker behaviour still applies.
+        }
+    };
 
     // --- Handlers for Single Mode ---
     const handleSingleSubmit = async (e: React.FormEvent) => {
@@ -291,39 +315,20 @@ export function UpdateBalanceModal({
                     />
 
                     <ModalBody>
-                        {error && (
-                            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
-                                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                                <span>{error}</span>
-                            </div>
-                        )}
+                        {error && <Alert variant="danger">{error}</Alert>}
 
-                        <div>
-                            <label
-                                htmlFor="single-balance-input"
-                                className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-                            >
-                                Balance
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-(--text-muted) select-none">
-                                    S$
-                                </span>
-                                <input
-                                    id="single-balance-input"
-                                    ref={singleBalanceRef}
-                                    type="number"
-                                    step="0.01"
-                                    value={singleBalance}
-                                    onChange={(e) =>
-                                        setSingleBalance(e.target.value)
-                                    }
-                                    placeholder="0.00"
-                                    required
-                                    className="w-full pl-11 pr-3.5 py-2.5 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) text-base font-bold font-mono-num focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                            <p className="text-[11px] text-(--text-muted) mt-1.5">
+                        <div className="space-y-1.5">
+                            <CurrencyInput
+                                id="single-balance-input"
+                                ref={singleBalanceRef}
+                                label="Balance"
+                                value={singleBalance}
+                                onChange={(e) =>
+                                    setSingleBalance(e.target.value)
+                                }
+                                required
+                            />
+                            <p className="text-xs text-(--text-muted)">
                                 Previous:{" "}
                                 <span className="text-(--text-ink)">
                                     <CurrencyText amount={account.balance} />
@@ -332,40 +337,24 @@ export function UpdateBalanceModal({
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label
-                                    htmlFor="single-date-input"
-                                    className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-                                >
-                                    Snapshot Date
-                                </label>
-                                <input
-                                    id="single-date-input"
-                                    type="date"
-                                    max={getTodayDateString()}
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    htmlFor="single-notes-input"
-                                    className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-                                >
-                                    Notes
-                                </label>
-                                <input
-                                    id="single-notes-input"
-                                    type="text"
-                                    value={singleNotes}
-                                    onChange={(e) =>
-                                        setSingleNotes(e.target.value)
-                                    }
-                                    placeholder="e.g. Salary credited"
-                                    className="w-full px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
+                            <Input
+                                id="single-date-input"
+                                label="Snapshot Date"
+                                type="date"
+                                max={getTodayDateString()}
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                            />
+                            <Input
+                                id="single-notes-input"
+                                label="Notes"
+                                type="text"
+                                value={singleNotes}
+                                onChange={(e) =>
+                                    setSingleNotes(e.target.value)
+                                }
+                                placeholder="e.g. Salary credited"
+                            />
                         </div>
                     </ModalBody>
 
@@ -412,99 +401,88 @@ export function UpdateBalanceModal({
                     onClose={onClose}
                 />
 
-                {/* Search, Filter Pills & Date */}
-                <div className="px-4 sm:px-5 py-2.5 bg-(--bg-card) border-b border-(--border-subtle) flex flex-wrap items-center justify-between gap-2.5 shrink-0">
-                    {/* Search bar */}
-                    <div className="relative flex-1 min-w-40 max-w-xs">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-(--text-muted)" />
-                        <input
+                {/* Search + date, then type filters */}
+                <div className="px-4 sm:px-5 py-2.5 bg-(--bg-card) border-b border-(--border-subtle) space-y-2 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <Input
                             type="text"
+                            aria-label="Search accounts"
                             placeholder="Search accounts..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 text-base sm:text-xs rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
+                            sizeVariant="sm"
+                            leftIcon={
+                                <Search
+                                    className="h-3.5 w-3.5"
+                                    strokeWidth={2.5}
+                                />
+                            }
+                            containerClassName="flex-1"
                         />
+                        <label className="relative inline-flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-2.5 text-xs font-bold text-(--text-ink) transition-press active:translate-x-0.5 active:translate-y-0.5 focus-within:ring-2 focus-within:ring-(--pastel-lilac)"
+                        >
+                            <Calendar
+                                className="h-3.5 w-3.5 shrink-0"
+                                strokeWidth={2.5}
+                            />
+                            <span>{formatChipDate(date)}</span>
+                            <input
+                                type="date"
+                                aria-label="Balance date"
+                                max={getTodayDateString()}
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                onClick={openDatePicker}
+                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0 text-base"
+                            />
+                        </label>
                     </div>
 
-                    {/* Type Filters */}
-                    <div className="flex items-center gap-1">
-                        {(["All", "Cash", "Investment", "CPF"] as const).map(
-                            (cat) => (
-                                <button
-                                    key={cat}
-                                    type="button"
-                                    onClick={() => setTypeFilter(cat)}
-                                    className={`px-2.5 py-1 rounded-xl text-[11px] border transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
-                                        typeFilter === cat
-                                            ? "bg-(--pastel-lilac) text-(--text-ink) border-(--border-ink) shadow-cute-sm font-bold"
-                                            : "bg-(--bg-canvas) text-(--text-muted) border-(--border-subtle) hover:border-(--border-ink) hover:text-(--text-ink) font-semibold"
-                                    }`}
-                                >
-                                    {cat}
-                                </button>
-                            ),
-                        )}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar touch-pan-x">
+                        {TYPE_FILTERS.map((cat) => (
+                            <FilterChip
+                                key={cat}
+                                sizeVariant="sm"
+                                selected={typeFilter === cat}
+                                onClick={() => setTypeFilter(cat)}
+                            >
+                                {cat}
+                            </FilterChip>
+                        ))}
                     </div>
-
-                    {/* Date Picker */}
-                    <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted)">
-                            Date:
-                        </span>
-                        <input
-                            type="date"
-                            max={getTodayDateString()}
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="px-2 py-1 rounded-xl border border-(--border-subtle) hover:border-(--border-ink) focus:border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs font-medium text-(--text-ink) focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac)"
-                        />
-                    </div>
-                </div>
-
-                {/* Change Counter Banner */}
-                <div className="px-4 sm:px-5 py-1.5 bg-(--bg-canvas) border-b border-(--border-subtle) flex items-center justify-end text-xs shrink-0">
-                    <span className="text-[11px] font-black text-(--text-ink) bg-(--pastel-butter-light) px-2 py-0.5 rounded-full border border-(--border-ink)">
-                        {modifiedAccounts.length} changed
-                    </span>
                 </div>
 
                 {/* Accounts List */}
-                <ModalBody className="p-4 sm:p-5 space-y-2">
-                    {error && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 font-medium">
-                            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                            <span>{error}</span>
-                        </div>
-                    )}
+                <ModalBody>
+                    {error && <Alert variant="danger">{error}</Alert>}
 
                     {filteredAccounts.length === 0 ? (
                         <div className="text-center py-8 text-xs text-(--text-muted)">
                             No Matches
                         </div>
                     ) : (
-                        filteredAccounts.map((acc) => {
-                            const currentVal = acc.balance;
-                            const enteredVal = parseFloat(
-                                balancesMap[acc.id] || "0",
-                            );
-                            const isModified =
-                                !isNaN(enteredVal) &&
-                                Math.abs(enteredVal - currentVal) >= 0.01;
-                            const diff = !isNaN(enteredVal)
-                                ? enteredVal - currentVal
-                                : 0;
+                        <ul className="-mx-4 -my-2 sm:-mx-5 divide-y divide-(--border-subtle)">
+                            {filteredAccounts.map((acc) => {
+                                const currentVal = acc.balance;
+                                const enteredVal = parseFloat(
+                                    balancesMap[acc.id] || "0",
+                                );
+                                const isModified =
+                                    !isNaN(enteredVal) &&
+                                    Math.abs(enteredVal - currentVal) >= 0.01;
+                                const diff = !isNaN(enteredVal)
+                                    ? enteredVal - currentVal
+                                    : 0;
 
-                            return (
-                                <div
-                                    key={acc.id}
-                                    className={`p-2.5 sm:p-3 rounded-2xl border transition-colors flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 ${
-                                        isModified
-                                            ? "border-2 border-(--border-ink) bg-(--pastel-butter-light)/40 shadow-cute-sm"
-                                            : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-card)"
-                                    }`}
-                                >
-                                    {/* Account Name & Info */}
-                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                return (
+                                    <li
+                                        key={acc.id}
+                                        className={`flex items-center gap-2.5 px-4 sm:px-5 py-2 transition-colors ${
+                                            isModified
+                                                ? "bg-(--pastel-lilac-light)"
+                                                : ""
+                                        }`}
+                                    >
                                         <div className="h-7 w-7 rounded-xl bg-(--bg-canvas) border border-(--border-subtle) flex items-center justify-center text-xs shrink-0">
                                             {acc.type === "Cash"
                                                 ? "💵"
@@ -513,69 +491,44 @@ export function UpdateBalanceModal({
                                                   : "🏛️"}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                <TruncatedText
-                                                    text={acc.name}
-                                                    className="text-xs sm:text-sm font-bold text-(--text-ink)"
-                                                />
-                                                {acc.is_joint && (
-                                                    <span className="text-2xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-(--pastel-lilac-light) text-(--text-ink) border border-(--border-ink) shrink-0">
-                                                        Joint
+                                            <TruncatedText
+                                                text={acc.name}
+                                                className="text-xs sm:text-sm font-bold text-(--text-ink)"
+                                            />
+                                            <div className="mt-0.5 flex min-h-5 items-center text-2xs font-medium text-(--text-muted)">
+                                                {isModified ? (
+                                                    <DeltaBadge
+                                                        value={diff}
+                                                        goodWhen="up"
+                                                        display={
+                                                            <>
+                                                                {diff > 0
+                                                                    ? "+"
+                                                                    : "-"}
+                                                                <CurrencyText
+                                                                    amount={Math.abs(
+                                                                        diff,
+                                                                    )}
+                                                                />
+                                                            </>
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <span>
+                                                        Prev{" "}
+                                                        <CurrencyText
+                                                            amount={currentVal}
+                                                            tone="muted"
+                                                        />
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="text-2xs text-(--text-muted) flex items-center gap-1.5 font-medium mt-0.5">
-                                                <span>
-                                                    {acc.institution ||
-                                                        acc.type}
-                                                </span>
-                                                <span>•</span>
-                                                <span>
-                                                    Prev:{" "}
-                                                    <CurrencyText
-                                                        amount={currentVal}
-                                                    />
-                                                </span>
-                                            </div>
                                         </div>
-                                    </div>
-
-                                    {/* Input & Delta Indicator */}
-                                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                                        {/* Delta Pill */}
-                                        {isModified ? (
-                                            <span
-                                                className={`inline-flex items-center gap-0.5 text-2xs font-bold px-2 py-0.5 rounded-lg border border-(--border-ink) shadow-cute-sm ${
-                                                    diff > 0
-                                                        ? "bg-(--pastel-sage-light) text-(--text-ink)"
-                                                        : "bg-(--pastel-coral-light) text-(--text-ink)"
-                                                }`}
-                                            >
-                                                {diff > 0 ? (
-                                                    <ArrowUpRight className="h-3 w-3" />
-                                                ) : (
-                                                    <ArrowDownRight className="h-3 w-3" />
-                                                )}
-                                                {diff > 0 ? "+" : ""}
-                                                <CurrencyText amount={diff} />
-                                            </span>
-                                        ) : (
-                                            <span className="text-2xs text-(--text-muted) opacity-40 hidden sm:inline">
-                                                —
-                                            </span>
-                                        )}
-
-                                        {/* Numeric Input */}
-                                        <div className="relative w-32 sm:w-36">
-                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-(--text-muted) select-none">
-                                                S$
-                                            </span>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={
-                                                    balancesMap[acc.id] ?? ""
-                                                }
+                                        <div className="w-32 shrink-0">
+                                            <CurrencyInput
+                                                aria-label={`Balance for ${acc.name}`}
+                                                sizeVariant="sm"
+                                                value={balancesMap[acc.id] ?? ""}
                                                 onChange={(e) =>
                                                     setBalancesMap((prev) => ({
                                                         ...prev,
@@ -583,18 +536,12 @@ export function UpdateBalanceModal({
                                                             e.target.value,
                                                     }))
                                                 }
-                                                placeholder="0.00"
-                                                className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl border text-right text-base sm:text-xs font-bold font-mono-num transition-colors focus:outline-none focus:ring-1 focus:ring-(--pastel-lilac) ${
-                                                    isModified
-                                                        ? "border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink)"
-                                                        : "border border-(--border-subtle) hover:border-(--border-ink) bg-(--bg-canvas) text-(--text-ink)"
-                                                }`}
                                             />
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     )}
                 </ModalBody>
 
@@ -622,8 +569,8 @@ export function UpdateBalanceModal({
                         }
                     >
                         {modifiedAccounts.length > 0
-                            ? `Save ${modifiedAccounts.length} Modified Account${modifiedAccounts.length === 1 ? "" : "s"}`
-                            : "No Changes to Save"}
+                            ? `Save ${modifiedAccounts.length}`
+                            : "Save"}
                     </Button>
                 </ModalFooter>
             </div>

@@ -8,6 +8,8 @@ export interface DeltaBadgeProps {
     size?: "sm" | "md";
     showSign?: boolean;
     label?: React.ReactNode;
+    /** Replaces the default "+12%" text, e.g. a signed CurrencyText amount. */
+    display?: React.ReactNode;
     children?: React.ReactNode;
     className?: string;
 }
@@ -28,6 +30,7 @@ export const DeltaBadge: React.FC<DeltaBadgeProps> = ({
     size = "sm",
     showSign = false,
     label,
+    display,
     children,
     className = "",
 }) => {
@@ -75,7 +78,7 @@ export const DeltaBadge: React.FC<DeltaBadgeProps> = ({
             className={`inline-flex items-center font-bold rounded-full shadow-cute-sm ${SIZE_STYLES[size]} ${toneClasses} ${className}`}
         >
             {icon}
-            <span className="font-mono-num">{formattedText}</span>
+            <span className="font-mono-num">{display ?? formattedText}</span>
             {suffix && <span className="ml-0.5">{suffix}</span>}
         </span>
     );

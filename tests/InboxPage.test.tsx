@@ -13,7 +13,6 @@ import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { InboxPage } from "../src/pages/InboxPage";
 import { mockFinanceService } from "../src/services/mockFinanceService";
 import { financeService } from "../src/services/financeService";
-import { SettingsProvider } from "../src/context/SettingsContext";
 import { onInboxEvent } from "../src/lib/inbox/inboxEvents";
 import { mockCategories } from "../src/data/mockSeedData";
 import type { InboxItem } from "../src/types/finance";
@@ -22,17 +21,15 @@ function renderInbox() {
     return render(
         <QueryClientProvider client={queryClient}>
             <HouseholdProvider>
-                <SettingsProvider>
-                    <MemoryRouter initialEntries={["/inbox"]}>
-                        <Routes>
-                            <Route path="/inbox" element={<InboxPage />} />
-                            <Route
-                                path="/expenses"
-                                element={<div>Expenses Page</div>}
-                            />
-                        </Routes>
-                    </MemoryRouter>
-                </SettingsProvider>
+                <MemoryRouter initialEntries={["/inbox"]}>
+                    <Routes>
+                        <Route path="/inbox" element={<InboxPage />} />
+                        <Route
+                            path="/expenses"
+                            element={<div>Expenses Page</div>}
+                        />
+                    </Routes>
+                </MemoryRouter>
             </HouseholdProvider>
         </QueryClientProvider>,
     );

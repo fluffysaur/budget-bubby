@@ -1,12 +1,15 @@
 import React from "react";
+import { Shield } from "lucide-react";
 import { Badge, MeterBar, TruncatedText } from "../ui";
 import { CurrencyText } from "../ui/CurrencyText";
+import type { SpendableCategoryStatus } from "../../lib/financialFormulas";
 
 export interface CategoryMeterCardProps {
     name: string;
     color: string;
     remaining: number;
     pct: number;
+    status?: SpendableCategoryStatus;
     ownerName?: string;
 }
 
@@ -15,8 +18,13 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
     color,
     remaining,
     pct,
+    status = "normal",
     ownerName,
 }: CategoryMeterCardProps) {
+    const isCovered = status === "covered";
+    const showShield = isCovered || status === "partially_covered";
+    const isWarning =
+        status === "buffer_depleted" || (remaining < 0 && !isCovered);
     return (
         <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-cream) p-2.5 shadow-cute-sm min-w-0 overflow-hidden">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -36,8 +44,8 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
                 )}
             </div>
             <div
-                className={`mt-1 ${
-                    remaining < 0
+                className={`mt-1 flex items-center gap-1 min-w-0 ${
+                    isWarning
                         ? "text-(--accent-coral-ink) dark:text-rose-400"
                         : "text-(--text-ink)"
                 }`}
@@ -45,8 +53,20 @@ export const CategoryMeterCard = React.memo(function CategoryMeterCard({
                 <CurrencyText
                     amount={remaining}
                     size="sm"
-                    className="block truncate"
+                    className="block truncate min-w-0"
                 />
+                {showShield && (
+                    <Shield
+                        className="h-3.5 w-3.5 shrink-0 text-(--text-muted)"
+                        role="img"
+                        aria-label={
+                            isCovered
+                                ? "Covered by Buffer"
+                                : "Partly covered by Buffer"
+                        }
+                        data-testid="covered-by-buffer"
+                    />
+                )}
             </div>
             <div className="mt-1.5">
                 <MeterBar
