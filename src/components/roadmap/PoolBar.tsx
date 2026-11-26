@@ -10,7 +10,7 @@
 
 import { useMemo } from "react";
 import { m } from "motion/react";
-import { formatSGD } from "../../lib/currency";
+import { formatSGDEstimate } from "../../lib/currency";
 import { DURATION, EASE_OUT_SOFT } from "../../lib/motion";
 import { layoutJar, type RoadmapResult } from "../../lib/roadmap";
 import { useMoneyMask } from "../../hooks/useMoneyMask";
@@ -147,7 +147,7 @@ export function PoolBar({
 
             <span className="sr-only">
                 {mask(
-                    `Pool ${formatSGD(result.poolToday)} covers ${fundedCount} of ${goals.length} goals today`,
+                    `Pool ${formatSGDEstimate(result.poolToday)} covers ${fundedCount} of ${goals.length} goals today`,
                 )}
             </span>
         </div>

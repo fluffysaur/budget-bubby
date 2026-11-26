@@ -48,7 +48,7 @@ import { useSettleUpsQuery } from "../hooks/finance/settleUps";
 import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useSubmitLock } from "../hooks/useSubmitLock";
 import { financeService } from "../services/financeService";
-import { formatSGD } from "../lib/currency";
+import { formatSGD, formatSGDEstimate } from "../lib/currency";
 import { normalizeExpenseTag } from "../lib/expenseFormDraft";
 import { addMonths, getCurrentMonth } from "../lib/dateUtils";
 import { useFollowCurrentMonth } from "../hooks/useCurrentMonth";
@@ -811,7 +811,7 @@ export function ExpensesPage({
                 <div className="space-y-3 pt-2">
                     <CollapsibleSection
                         title="Spend Trends"
-                        summaryRight={`3-mo avg: ${formatSGD(trendsSummary.rolling3MonthAvg)}`}
+                        summaryRight={`3-mo avg: ${formatSGDEstimate(trendsSummary.rolling3MonthAvg)}`}
                         icon={
                             <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         }
