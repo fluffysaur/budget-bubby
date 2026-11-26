@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
+import { selectOption } from "./helpers/select";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { haptics } from "../src/lib/haptics";
@@ -776,9 +777,10 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 fireEvent.click(toggleCollapsible);
 
                 // Select Gemini provider
-                fireEvent.change(screen.getByTestId("ai-provider-select"), {
-                    target: { value: "gemini" },
-                });
+                await selectOption(
+                    screen.getByTestId("ai-provider-select"),
+                    "Gemini",
+                );
 
                 // Enter new key and save
                 const input = screen.getByLabelText(/gemini api key/i);

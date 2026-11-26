@@ -1,5 +1,4 @@
 import { forwardRef, useCallback } from "react";
-import { TruncatedText } from "../TruncatedText";
 import { DropdownField } from "./DropdownField";
 import { DropdownSurface } from "./DropdownSurface";
 import { OptionList } from "./OptionList";
@@ -130,10 +129,15 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     {selected ? (
                         <>
                             <OptionLeading option={selected} />
-                            <TruncatedText
-                                text={selected.label}
-                                className="min-w-0"
-                            />
+                            {/* Plain truncation: TruncatedText stops click
+                                propagation when overflowing, which would
+                                swallow taps meant for the trigger. */}
+                            <span
+                                className="min-w-0 truncate"
+                                title={selected.label}
+                            >
+                                {selected.label}
+                            </span>
                         </>
                     ) : (
                         <span className="truncate text-(--text-muted)">

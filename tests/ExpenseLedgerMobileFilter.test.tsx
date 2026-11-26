@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import { selectOption } from "./helpers/select";
 import { describe, it, expect, vi } from "vitest";
 import { ExpenseFilterBar } from "../src/components/expenses/ExpenseFilterBar";
 import { ExpenseListTable } from "../src/components/expenses/ExpenseListTable";
@@ -126,7 +127,7 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         );
     });
 
-    it("updates sort field and order when sort dropdown changes", () => {
+    it("updates sort field and order when sort dropdown changes", async () => {
         const onSortChange = vi.fn();
         const filter: ExpenseFilter = {};
 
@@ -143,7 +144,7 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         const sortSelects = screen.getAllByRole("combobox", {
             name: /sort ledger/i,
         });
-        fireEvent.change(sortSelects[0], { target: { value: "amount-asc" } });
+        await selectOption(sortSelects[0], /Lowest/);
 
         expect(onSortChange).toHaveBeenCalledWith("amount", "asc");
     });

@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { getSelectTrigger, selectOption } from "./helpers/select";
 import {
     CreditCardTrackerSection,
     getRelativeDueLabel,
@@ -471,9 +472,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             fireEvent.change(screen.getByLabelText(/Credit Limit/i), {
                 target: { value: "8000" },
             });
-            fireEvent.change(screen.getByLabelText(/Cardholder/i), {
-                target: { value: testMembers[0].id },
-            });
+            await selectOption(/Cardholder/i, testMembers[0].display_name);
 
             fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
 
@@ -500,10 +499,9 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                     ]}
                 />,
             );
-            expect(
-                (screen.getByLabelText(/Cardholder/i) as HTMLSelectElement)
-                    .value,
-            ).toBe(testMembers[1].id);
+            expect(getSelectTrigger(/Cardholder/i)).toHaveTextContent(
+                testMembers[1].display_name,
+            );
         });
 
         it("shows no cardholder and blocks saving when none is chosen", async () => {
@@ -516,11 +514,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
                 />,
             );
 
-            const owner = screen.getByLabelText(
-                /Cardholder/i,
-            ) as HTMLSelectElement;
-            expect(owner.value).toBe("");
-            expect(owner.selectedOptions[0]).toHaveTextContent(
+            expect(getSelectTrigger(/Cardholder/i)).toHaveTextContent(
                 "Choose cardholder",
             );
 
@@ -610,9 +604,7 @@ describe("Credit Card Statements & Due Date Tracker", () => {
             fireEvent.change(screen.getByLabelText(/Issuing Bank/i), {
                 target: { value: "HSBC" },
             });
-            fireEvent.change(screen.getByLabelText(/Cardholder/i), {
-                target: { value: testMembers[0].id },
-            });
+            await selectOption(/Cardholder/i, testMembers[0].display_name);
 
             fireEvent.click(screen.getByRole("button", { name: "Add Card" }));
 

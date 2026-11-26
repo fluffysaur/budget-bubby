@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { pickOption } from "./helpers/select";
 
 // Mock data mode (see playwright.config.ts).
 // A S$10,000 bonus at 20% CPF leaves S$8,000 net; Goals 40% = S$3,200.
@@ -13,7 +14,7 @@ async function logSamBonus(page: Page) {
         modal.getByRole("heading", { level: 2, name: "Log Bonus" }),
     ).toBeVisible();
 
-    await modal.getByLabel("Recipient").selectOption({ label: "Sam" });
+    await pickOption(modal, "Recipient", "Sam");
     await modal.getByRole("button", { name: "Performance" }).click();
     await modal.getByLabel("Gross").fill("10000");
     await expect(modal.getByLabel("CPF")).toHaveValue("2000");

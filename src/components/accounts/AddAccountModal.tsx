@@ -21,7 +21,7 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Input } from "../ui/Input";
-import { Select } from "../ui/Select";
+import { Select, memberToSelectOption } from "../ui/dropdown";
 import { Textarea } from "../ui/Textarea";
 import { CurrencyInput } from "../ui/CurrencyInput";
 import { Switch } from "../ui/Switch";
@@ -176,7 +176,8 @@ export function AddAccountModal({
                                         No accounts found yet.
                                     </span>{" "}
                                     Add your bank or investment account to track
-                                    balances. CPF OA, SA and MA are added for you.
+                                    balances. CPF OA, SA and MA are added for
+                                    you.
                                 </div>
                             </div>
                         )}
@@ -230,17 +231,10 @@ export function AddAccountModal({
                                     id="account-owner"
                                     label="Owner *"
                                     value={ownerId}
-                                    onChange={(e) => setOwnerId(e.target.value)}
-                                >
-                                    <option value="" disabled>
-                                        Choose owner
-                                    </option>
-                                    {members.map((m) => (
-                                        <option key={m.id} value={m.id}>
-                                            {m.display_name}
-                                        </option>
-                                    ))}
-                                </Select>
+                                    onValueChange={setOwnerId}
+                                    options={members.map(memberToSelectOption)}
+                                    placeholder="Choose owner"
+                                />
                             </div>
                             <div className="shrink-0">
                                 <Switch
@@ -260,7 +254,9 @@ export function AddAccountModal({
                                     label="Bank"
                                     type="text"
                                     value={institution}
-                                    onChange={(e) => setInstitution(e.target.value)}
+                                    onChange={(e) =>
+                                        setInstitution(e.target.value)
+                                    }
                                     placeholder="e.g. DBS"
                                 />
                                 <Textarea

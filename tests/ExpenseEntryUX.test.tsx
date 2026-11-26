@@ -10,6 +10,7 @@ import {
     waitFor,
     act,
 } from "@testing-library/react";
+import { selectOption } from "./helpers/select";
 import { CentsFirstAmountInput } from "../src/components/expenses/CentsFirstAmountInput";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
@@ -223,8 +224,7 @@ describe("ExpenseFormModal Currency Conversion & UX", () => {
         });
 
         // Select Currency: VND
-        const currencySelect = screen.getByLabelText(/select currency/i);
-        fireEvent.change(currencySelect, { target: { value: "VND" } });
+        await selectOption(/select currency/i, /VND/);
 
         // Enter foreign amount 250,000 VND
         const amountInput = screen.getByLabelText(/amount/i);
@@ -299,9 +299,7 @@ describe("ExpenseFormModal Currency Conversion & UX", () => {
         });
 
         // Select JPY
-        fireEvent.change(screen.getByLabelText(/select currency/i), {
-            target: { value: "JPY" },
-        });
+        await selectOption(/select currency/i, /JPY/);
 
         // Enter 1000 JPY
         fireEvent.change(screen.getByLabelText(/amount/i), {

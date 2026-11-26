@@ -12,7 +12,11 @@ import {
     ModalBody,
     ModalFooter,
 } from "../ui/AnimatedModal";
-import { Select } from "../ui/Select";
+import {
+    Select,
+    memberToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { Input } from "../ui/Input";
 import { Switch } from "../ui/Switch";
 import { Button } from "../ui/Button";
@@ -26,6 +30,17 @@ import { CPF_KINDS } from "../../lib/cpfAccounts";
 import { useUpdateAccountMutation } from "../../hooks/finance/accounts";
 import { feedback } from "../../lib/delight/feedback";
 import { AccountOriginChoice } from "./AccountOriginChoice";
+
+const ACCOUNT_TYPE_OPTIONS: SelectOption[] = [
+    { value: "Cash", label: "Cash" },
+    { value: "Investment", label: "Investment" },
+    { value: "Other", label: "Other Asset" },
+];
+
+const CPF_KIND_OPTIONS: SelectOption[] = CPF_KINDS.map((kind) => ({
+    value: kind,
+    label: kind,
+}));
 
 export interface EditAccountModalProps {
     isOpen: boolean;
@@ -178,35 +193,23 @@ export function EditAccountModal({
                                     id="edit-account-cpf-kind"
                                     label="CPF account"
                                     value={cpfKind}
-                                    onChange={(e) =>
-                                        setCpfKind(e.target.value as CpfKind)
+                                    onValueChange={(v) =>
+                                        setCpfKind(v as CpfKind)
                                     }
+                                    options={CPF_KIND_OPTIONS}
+                                    placeholder="Pick one"
                                     disabled={isMatchedCpf}
-                                >
-                                    {!isMatchedCpf && (
-                                        <option value="">Pick one</option>
-                                    )}
-                                    {CPF_KINDS.map((kind) => (
-                                        <option key={kind} value={kind}>
-                                            {kind}
-                                        </option>
-                                    ))}
-                                </Select>
+                                />
                             ) : (
                                 <Select
                                     id="edit-account-type"
                                     label="Type"
                                     value={type}
-                                    onChange={(e) =>
-                                        setType(e.target.value as AccountType)
+                                    onValueChange={(v) =>
+                                        setType(v as AccountType)
                                     }
-                                >
-                                    <option value="Cash">Cash</option>
-                                    <option value="Investment">
-                                        Investment
-                                    </option>
-                                    <option value="Other">Other Asset</option>
-                                </Select>
+                                    options={ACCOUNT_TYPE_OPTIONS}
+                                />
                             )}
                         </div>
 
@@ -215,15 +218,10 @@ export function EditAccountModal({
                                 id="edit-account-owner"
                                 label="Primary Owner *"
                                 value={ownerId}
-                                onChange={(e) => setOwnerId(e.target.value)}
+                                onValueChange={setOwnerId}
+                                options={members.map(memberToSelectOption)}
                                 disabled={isMatchedCpf}
-                            >
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.display_name}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                         </div>
                     </div>
 

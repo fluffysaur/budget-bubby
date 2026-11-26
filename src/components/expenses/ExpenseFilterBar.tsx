@@ -34,12 +34,41 @@ import type {
 } from "../../types/finance";
 import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { isMockModeActive } from "../../services/financeService";
-import { Select } from "../ui/Select";
+import {
+    Select,
+    categoryToSelectOption,
+    memberToSelectOption,
+    type SelectOption,
+} from "../ui/dropdown";
 import { Input } from "../ui/Input";
 import { formatShortMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
 export const EXPENSE_SEARCH_DEBOUNCE_MS = 250;
+
+const DESKTOP_SORT_OPTIONS: SelectOption[] = [
+    { value: "date-desc", label: "Newest" },
+    { value: "date-asc", label: "Oldest" },
+    { value: "amount-desc", label: "Highest" },
+    { value: "amount-asc", label: "Lowest" },
+    { value: "category-asc", label: "Category (A-Z)" },
+    { value: "payer-asc", label: "Payer (A-Z)" },
+];
+
+const MOBILE_SORT_OPTIONS: SelectOption[] = [
+    { value: "date-desc", label: "Date (Newest)" },
+    { value: "date-asc", label: "Date (Oldest)" },
+    { value: "amount-desc", label: "Amount (Highest)" },
+    { value: "amount-asc", label: "Amount (Lowest)" },
+    { value: "category-asc", label: "Category (A-Z)" },
+    { value: "payer-asc", label: "Payer (A-Z)" },
+];
+
+const SHARED_OPTIONS: SelectOption[] = [
+    { value: "all", label: "All Expenses" },
+    { value: "shared", label: "Shared (50/50)" },
+    { value: "personal", label: "Personal Only" },
+];
 
 export interface ExpenseFilterBarProps {
     filter: ExpenseFilter;
@@ -77,6 +106,14 @@ export function ExpenseFilterBar({
         () => propMembers ?? (isMock ? mockMembers : []),
         [propMembers, isMock, mockMembers],
     );
+    const categoryOptions = useMemo<SelectOption[]>(
+        () => categories.map(categoryToSelectOption),
+        [categories],
+    );
+    const payerOptions = useMemo<SelectOption[]>(
+        () => members.map(memberToSelectOption),
+        [members],
+    );
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const currentMonth = useCurrentMonth();
 
@@ -107,6 +144,18 @@ export function ExpenseFilterBar({
         return () => clearTimeout(timer);
     }, [searchText]);
 
+    const handleSortValueChange = (value: string) => {
+        if (!value) {
+            onSortChange?.("date", "desc");
+            return;
+        }
+        const [field, order] = value.split("-") as [
+            ExpenseSortField,
+            SortDirection,
+        ];
+        onSortChange?.(field, order);
+    };
+
     const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
         setSearchText(e.target.value);
     };
@@ -116,24 +165,21 @@ export function ExpenseFilterBar({
         onFilterChange({ ...filter, search: "" });
     }, [filter, onFilterChange]);
 
-    const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
+    const handleCategoryChange = (value: string) => {
         onFilterChange({
             ...filter,
             categoryId: value ? value : undefined,
         });
     };
 
-    const handlePayerChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
+    const handlePayerChange = (value: string) => {
         onFilterChange({
             ...filter,
             payerId: value ? value : undefined,
         });
     };
 
-    const handleSharedChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value;
+    const handleSharedChange = (val: string) => {
         let isShared: boolean | undefined = undefined;
         if (val === "shared") isShared = true;
         if (val === "personal") isShared = false;
@@ -302,27 +348,13 @@ export function ExpenseFilterBar({
                             value={
                                 sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""
                             }
-                            onChange={(e) => {
-                                if (!e.target.value) {
-                                    onSortChange?.("date", "desc");
-                                    return;
-                                }
-                                const [field, order] = e.target.value.split(
-                                    "-",
-                                ) as [ExpenseSortField, SortDirection];
-                                onSortChange?.(field, order);
-                            }}
+                            onValueChange={handleSortValueChange}
+                            placeholder="Default order"
+                            clearable
                             sizeVariant="sm"
                             containerClassName="w-48"
-                        >
-                            <option value="">Default order</option>
-                            <option value="date-desc">Newest</option>
-                            <option value="date-asc">Oldest</option>
-                            <option value="amount-desc">Highest</option>
-                            <option value="amount-asc">Lowest</option>
-                            <option value="category-asc">Category (A-Z)</option>
-                            <option value="payer-asc">Payer (A-Z)</option>
-                        </Select>
+                            options={DESKTOP_SORT_OPTIONS}
+                        />
                     </div>
 
                     {/* Single Unified Reset Button (Icon-only on mobile, Icon+Text on desktop) */}
@@ -386,29 +418,13 @@ export function ExpenseFilterBar({
                             value={
                                 sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""
                             }
-                            onChange={(e) => {
-                                if (!e.target.value) {
-                                    onSortChange?.("date", "desc");
-                                    return;
-                                }
-                                const [field, order] = e.target.value.split(
-                                    "-",
-                                ) as [ExpenseSortField, SortDirection];
-                                onSortChange?.(field, order);
-                            }}
+                            onValueChange={handleSortValueChange}
+                            placeholder="Default order"
+                            clearable
                             sizeVariant="sm"
                             containerClassName="w-full"
-                        >
-                            <option value="">Default order</option>
-                            <option value="date-desc">Date (Newest)</option>
-                            <option value="date-asc">Date (Oldest)</option>
-                            <option value="amount-desc">
-                                Amount (Highest)
-                            </option>
-                            <option value="amount-asc">Amount (Lowest)</option>
-                            <option value="category-asc">Category (A-Z)</option>
-                            <option value="payer-asc">Payer (A-Z)</option>
-                        </Select>
+                            options={MOBILE_SORT_OPTIONS}
+                        />
                     </div>
                 </div>
 
@@ -423,16 +439,12 @@ export function ExpenseFilterBar({
                                 id="filter-category"
                                 label="Category"
                                 value={filter.categoryId || ""}
-                                onChange={handleCategoryChange}
+                                onValueChange={handleCategoryChange}
+                                options={categoryOptions}
+                                placeholder="All Categories"
+                                clearable
                                 sizeVariant="sm"
-                            >
-                                <option value="">All Categories</option>
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
-                            </Select>
+                            />
                         </div>
 
                         {/* Payer Select */}
@@ -442,19 +454,12 @@ export function ExpenseFilterBar({
                                     id="filter-payer"
                                     label="Payer"
                                     value={filter.payerId || ""}
-                                    onChange={handlePayerChange}
+                                    onValueChange={handlePayerChange}
+                                    options={payerOptions}
+                                    placeholder="All Payers"
+                                    clearable
                                     sizeVariant="sm"
-                                >
-                                    <option value="">All Payers</option>
-                                    {members.map((member) => (
-                                        <option
-                                            key={member.id}
-                                            value={member.id}
-                                        >
-                                            {member.display_name}
-                                        </option>
-                                    ))}
-                                </Select>
+                                />
                             </div>
                         )}
 
@@ -470,13 +475,10 @@ export function ExpenseFilterBar({
                                           ? "shared"
                                           : "personal"
                                 }
-                                onChange={handleSharedChange}
+                                onValueChange={handleSharedChange}
+                                options={SHARED_OPTIONS}
                                 sizeVariant="sm"
-                            >
-                                <option value="all">All Expenses</option>
-                                <option value="shared">Shared (50/50)</option>
-                                <option value="personal">Personal Only</option>
-                            </Select>
+                            />
                         </div>
 
                         {/* Month Selector */}

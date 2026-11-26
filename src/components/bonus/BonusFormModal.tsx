@@ -20,6 +20,7 @@ import {
     ModalHeader,
     SegmentedTabs,
     Select,
+    memberToSelectOption,
     Switch,
     TruncatedText,
 } from "../ui";
@@ -316,10 +317,7 @@ export function BonusFormModal({
         }
     };
 
-    const memberOptions = members.map((m) => ({
-        value: m.id,
-        label: m.display_name,
-    }));
+    const memberOptions = members.map(memberToSelectOption);
 
     return (
         <AnimatedModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
@@ -367,9 +365,7 @@ export function BonusFormModal({
                                 label="Recipient"
                                 id="bonus-recipient"
                                 value={recipientId}
-                                onChange={(e) =>
-                                    handleRecipientChange(e.target.value)
-                                }
+                                onValueChange={handleRecipientChange}
                                 options={memberOptions}
                             />
 

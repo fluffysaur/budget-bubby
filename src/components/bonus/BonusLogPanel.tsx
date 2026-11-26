@@ -239,10 +239,8 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                         id="bonus-ytd-year"
                                         sizeVariant="sm"
                                         value={String(ytdYear)}
-                                        onChange={(e) =>
-                                            setSelectedYear(
-                                                Number(e.target.value),
-                                            )
+                                        onValueChange={(v) =>
+                                            setSelectedYear(Number(v))
                                         }
                                         options={years.map((y) => ({
                                             value: String(y),

@@ -253,7 +253,7 @@ describe("RecurringTable Component", () => {
         ).not.toBeInTheDocument();
     });
 
-    it("filters recurring items by type selection", () => {
+    it("filters recurring items by type selection", async () => {
         render(
             <RecurringTable
                 recurringItems={sampleItems}
@@ -262,9 +262,7 @@ describe("RecurringTable Component", () => {
             />,
         );
 
-        fireEvent.change(screen.getByLabelText(/Type filter/i), {
-            target: { value: "subscription" },
-        });
+        await selectOption(/Type filter/i, /Subscription/);
 
         expect(screen.getByText("Spotify Family Plan")).toBeInTheDocument();
         expect(
@@ -272,7 +270,7 @@ describe("RecurringTable Component", () => {
         ).not.toBeInTheDocument();
     });
 
-    it("shows Bill and Other badges and filters by them", () => {
+    it("shows Bill and Other badges and filters by them", async () => {
         const extraItems: RecurringItem[] = [
             ...sampleItems,
             {
@@ -302,18 +300,14 @@ describe("RecurringTable Component", () => {
         expect(badges).toContain("Bill");
         expect(badges).toContain("Other");
 
-        fireEvent.change(screen.getByLabelText(/Type filter/i), {
-            target: { value: "bill" },
-        });
+        await selectOption(/Type filter/i, /Bill/);
         expect(screen.getByText("SP Group Utilities")).toBeInTheDocument();
         expect(screen.queryByText("Cloud Storage")).not.toBeInTheDocument();
         expect(
             screen.queryByText("Spotify Family Plan"),
         ).not.toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText(/Type filter/i), {
-            target: { value: "other" },
-        });
+        await selectOption(/Type filter/i, /Other/);
         expect(screen.getByText("Cloud Storage")).toBeInTheDocument();
         expect(
             screen.queryByText("SP Group Utilities"),
@@ -348,7 +342,7 @@ describe("RecurringTable Component", () => {
         expect(screen.getByText(/No Matches/i)).toBeInTheDocument();
     });
 
-    it("filters by status: Active by default, Ended dims with a badge", () => {
+    it("filters by status: Active by default, Ended dims with a badge", async () => {
         const today = new Date(2026, 10, 5); // 5 Nov 2026
         const items: RecurringItem[] = [
             sampleItems[0],
@@ -372,25 +366,20 @@ describe("RecurringTable Component", () => {
         expect(screen.getByText("New Plan")).toBeInTheDocument();
         expect(screen.getByText("Starts Mar '27")).toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText(/Status filter/i), {
-            target: { value: "ended" },
-        });
+        await selectOption(/Status filter/i, "Ended");
         expect(screen.getByText("Old Gym")).toBeInTheDocument();
-        expect(
-            screen.getByText("Ended", { selector: ":not(option)" }),
-        ).toBeInTheDocument();
+        // One "Ended" in the status filter trigger, one on the row badge.
+        expect(screen.getAllByText("Ended")).toHaveLength(2);
         expect(screen.queryByText("New Plan")).not.toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText(/Status filter/i), {
-            target: { value: "all" },
-        });
+        await selectOption(/Status filter/i, "All");
         expect(screen.getByText("Old Gym")).toBeInTheDocument();
         expect(
             screen.getByText("Manulife - Lifeready 25 Plus"),
         ).toBeInTheDocument();
     });
 
-    it("shows a title with a count that follows the filters", () => {
+    it("shows a title with a count that follows the filters", async () => {
         render(
             <RecurringTable
                 title="All Recurring"
@@ -402,9 +391,7 @@ describe("RecurringTable Component", () => {
         ).toBeInTheDocument();
         expect(screen.getByText("5 items")).toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText(/Type filter/i), {
-            target: { value: "tax" },
-        });
+        await selectOption(/Type filter/i, /Tax/);
         expect(screen.getByText("2 of 5 items")).toBeInTheDocument();
     });
 
@@ -648,12 +635,8 @@ describe("AddRecurringModal Component", () => {
         fireEvent.change(screen.getByLabelText(/^Amount/i), {
             target: { value: "1200" },
         });
-        fireEvent.change(screen.getByLabelText(/Frequency/i), {
-            target: { value: "annually" },
-        });
-        fireEvent.change(screen.getByLabelText(/Renewal Month/i), {
-            target: { value: "11" }, // November
-        });
+        await selectOption(/Frequency/i, "Yearly");
+        await selectOption(/Renewal Month/i, /November/);
 
         const submitBtn = screen.getByRole("button", { name: /^Save$/i });
         await act(async () => {
@@ -686,18 +669,14 @@ describe("AddRecurringModal Component", () => {
         fireEvent.change(screen.getByLabelText(/^Amount/i), {
             target: { value: "1200" },
         });
-        fireEvent.change(screen.getByLabelText(/Frequency/i), {
-            target: { value: "annually" },
-        });
+        await selectOption(/Frequency/i, "Yearly");
 
         // Default type is insurance (a deduction), so no switch
         expect(
             screen.queryByRole("switch", { name: "Paid from CPF OA" }),
         ).toBeNull();
 
-        fireEvent.change(screen.getByLabelText(/Type/i), {
-            target: { value: "bill" },
-        });
+        await selectOption(/^Type$/i, /Bill/);
         const toggle = screen.getByRole("switch", { name: "Paid from CPF OA" });
         expect(toggle).toHaveAttribute("aria-checked", "false");
         fireEvent.click(toggle);
@@ -727,9 +706,7 @@ describe("AddRecurringModal Component", () => {
         fireEvent.change(screen.getByLabelText(/^Amount/i), {
             target: { value: "30" },
         });
-        fireEvent.change(screen.getByLabelText(/Frequency/i), {
-            target: { value: "monthly" },
-        });
+        await selectOption(/Frequency/i, "Monthly");
 
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
@@ -821,9 +798,7 @@ describe("AddRecurringModal Component", () => {
         // Insurance (default type) hides the category picker
         expect(screen.queryByLabelText(/^Category$/i)).not.toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText(/Type/i), {
-            target: { value: "bill" },
-        });
+        await selectOption(/^Type$/i, /Bill/);
         const categorySelect = screen.getByRole("combobox", {
             name: /^Category$/i,
         });
@@ -837,9 +812,7 @@ describe("AddRecurringModal Component", () => {
         fireEvent.change(screen.getByLabelText(/^Amount/i), {
             target: { value: "120" },
         });
-        fireEvent.change(screen.getByLabelText(/Frequency/i), {
-            target: { value: "monthly" },
-        });
+        await selectOption(/Frequency/i, "Monthly");
         fireEvent.change(screen.getByLabelText(/Due Day/i), {
             target: { value: "5" },
         });
@@ -1082,12 +1055,8 @@ describe("RecurringPage Component", () => {
         fireEvent.change(screen.getByLabelText(/^Amount/i), {
             target: { value: "600" },
         });
-        fireEvent.change(screen.getByLabelText(/Frequency/i), {
-            target: { value: "annually" },
-        });
-        fireEvent.change(screen.getByLabelText(/Renewal Month/i), {
-            target: { value: "12" },
-        });
+        await selectOption(/Frequency/i, "Yearly");
+        await selectOption(/Renewal Month/i, /December/);
 
         // Submit
         fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));

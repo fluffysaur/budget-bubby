@@ -1,6 +1,5 @@
 import type { HTMLAttributes } from "react";
 import { Check } from "lucide-react";
-import { TruncatedText } from "../TruncatedText";
 import type { SelectOption } from "./types";
 
 export type OptionIndicator = "check" | "checkbox";
@@ -77,14 +76,19 @@ export function OptionRow({
             )}
             <OptionLeading option={option} />
             <span className="flex min-w-0 flex-1 flex-col">
-                <TruncatedText text={option.label} />
+                {/* Plain truncation: TruncatedText stops click propagation
+                    when overflowing, which would swallow the row's click. */}
+                <span className="truncate" title={option.label}>
+                    {option.label}
+                </span>
                 {option.description && (
                     <span
                         id={descriptionId}
                         aria-hidden="true"
-                        className="text-xs font-medium text-(--text-muted)"
+                        className="truncate text-xs font-medium text-(--text-muted)"
+                        title={option.description}
                     >
-                        <TruncatedText text={option.description} />
+                        {option.description}
                     </span>
                 )}
             </span>

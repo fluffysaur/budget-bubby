@@ -5,7 +5,7 @@ import { LazyMotion, domAnimation } from "motion/react";
 import { CollapsibleSection } from "../src/components/ui/CollapsibleSection";
 import { SegmentedTabs } from "../src/components/ui/SegmentedTabs";
 import { Input } from "../src/components/ui/Input";
-import { Select } from "../src/components/ui/Select";
+import { Select } from "../src/components/ui/dropdown";
 import { Textarea } from "../src/components/ui/Textarea";
 import { Button } from "../src/components/ui/Button";
 import { PullToRefresh } from "../src/components/ui/PullToRefresh";
@@ -85,6 +85,8 @@ describe("PR #7 Motion Surfaces & UI Polish", () => {
                     label="Type"
                     error="Type is required"
                     options={[{ value: "a", label: "A" }]}
+                    value=""
+                    onValueChange={() => {}}
                 />
                 <Textarea label="Notes" error="Notes too short" />
             </div>,

@@ -6,6 +6,7 @@ import {
     waitFor,
     within,
 } from "@testing-library/react";
+import { getSelectTrigger, openSelect } from "./helpers/select";
 import { MemoryRouter } from "react-router-dom";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { BonusLogPanel } from "../src/components/bonus/BonusLogPanel";
@@ -167,9 +168,7 @@ describe("BonusLogPanel", () => {
             await screen.findByRole("button", { name: "Delete bonus" }),
         );
         expect(await screen.findByText("Delete Bonus?")).toBeInTheDocument();
-        expect(
-            screen.getByText(/Performance for Sam\./),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Performance for Sam\./)).toBeInTheDocument();
         expect(screen.queryByText(/from goals/)).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -185,12 +184,10 @@ describe("BonusLogPanel", () => {
         const table = await screen.findByTestId("bonus-ytd-table");
         expect(within(table).getByText("Sam")).toBeInTheDocument();
         expect(within(table).getByText("Household")).toBeInTheDocument();
+        expect(getSelectTrigger("Year")).toHaveTextContent(String(year));
+        const listbox = await openSelect("Year");
         expect(
-            screen.getByText(String(year), { selector: "span" }),
+            within(listbox).getByRole("option", { name: String(year - 1) }),
         ).toBeInTheDocument();
-        expect(
-            screen.getByText(String(year - 1), { selector: "span" }),
-        ).toBeInTheDocument();
-        expect(screen.getByLabelText("Year")).toBeInTheDocument();
     });
 });

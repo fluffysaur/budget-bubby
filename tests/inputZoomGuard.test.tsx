@@ -6,7 +6,7 @@
 import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { Input } from "../src/components/ui/Input";
-import { Select } from "../src/components/ui/Select";
+import { Select } from "../src/components/ui/dropdown";
 import { Textarea } from "../src/components/ui/Textarea";
 
 const NON_TEXT_TYPES = ["checkbox", "radio", "range", "file", "hidden"];
@@ -71,12 +71,27 @@ describe("form primitives", () => {
     });
 
     it("Select md and sm variants use text-base on mobile", () => {
-        const { container, rerender } = render(<Select aria-label="x" />);
-        let el = container.querySelector("select")!;
+        const { container, rerender } = render(
+            <Select
+                aria-label="x"
+                options={[]}
+                value=""
+                onValueChange={() => {}}
+            />,
+        );
+        let el = container.querySelector("button")!;
         expect(el.className).toContain("text-base");
         expect(el.className).toContain("sm:text-sm");
-        rerender(<Select aria-label="x" sizeVariant="sm" />);
-        el = container.querySelector("select")!;
+        rerender(
+            <Select
+                aria-label="x"
+                sizeVariant="sm"
+                options={[]}
+                value=""
+                onValueChange={() => {}}
+            />,
+        );
+        el = container.querySelector("button")!;
         expect(el.className).toContain("text-base");
         expect(el.className).toContain("sm:text-xs");
     });

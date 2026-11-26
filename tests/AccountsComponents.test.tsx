@@ -14,6 +14,7 @@ import {
     waitFor,
     act,
 } from "@testing-library/react";
+import { getSelectTrigger } from "./helpers/select";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { AccountCard } from "../src/components/accounts/AccountCard";
@@ -498,9 +499,9 @@ describe("AccountsPage", () => {
                     ]}
                 />,
             );
-            const owner = screen.getByLabelText(/owner/i) as HTMLSelectElement;
-            expect(owner.value).toBe("");
-            expect(owner.selectedOptions[0]).toHaveTextContent("Choose owner");
+            expect(getSelectTrigger(/owner/i)).toHaveTextContent(
+                "Choose owner",
+            );
         });
 
         it("submits and invokes financeService.createAccount with form data", async () => {

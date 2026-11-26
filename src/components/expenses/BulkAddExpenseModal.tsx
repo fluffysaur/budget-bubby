@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ListPlus, Undo2 } from "lucide-react";
 import { AnimatedModal, ModalHeader, ModalBody } from "../ui/AnimatedModal";
 import { Alert } from "../ui/Alert";
-import { Select } from "../ui/Select";
+import { Select, memberToSelectOption } from "../ui/dropdown";
 import {
     financeService,
     isMockModeActive,
@@ -310,11 +310,7 @@ export function BulkAddExpenseModal({
     };
 
     const memberOptions = useMemo(
-        () =>
-            members.map((m) => ({
-                value: m.id,
-                label: `${m.avatar_url || "👤"} ${m.display_name}`,
-            })),
+        () => members.map(memberToSelectOption),
         [members],
     );
 
@@ -372,10 +368,10 @@ export function BulkAddExpenseModal({
                                 sizeVariant="sm"
                                 className="min-h-11 text-base! sm:text-xs!"
                                 disabled={isSubmitting}
-                                onChange={(e) =>
+                                onValueChange={(v) =>
                                     dispatch({
                                         type: "setPayer",
-                                        payerId: e.target.value,
+                                        payerId: v,
                                     })
                                 }
                             />

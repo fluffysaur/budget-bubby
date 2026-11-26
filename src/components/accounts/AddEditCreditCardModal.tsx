@@ -11,13 +11,7 @@
  */
 
 import { useState, useEffect, type FormEvent } from "react";
-import {
-    CreditCard,
-    Building,
-    Calendar,
-    Palette,
-    Trash2,
-} from "lucide-react";
+import { CreditCard, Building, Calendar, Palette, Trash2 } from "lucide-react";
 import {
     AnimatedModal,
     ModalHeader,
@@ -25,7 +19,7 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Input } from "../ui/Input";
-import { Select } from "../ui/Select";
+import { Select, memberToSelectOption } from "../ui/dropdown";
 import { CurrencyInput } from "../ui/CurrencyInput";
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
@@ -324,17 +318,10 @@ export function AddEditCreditCardModal({
                                 id="card-owner"
                                 label="Cardholder"
                                 value={ownerId}
-                                onChange={(e) => setOwnerId(e.target.value)}
-                            >
-                                <option value="" disabled>
-                                    Choose cardholder
-                                </option>
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.display_name}
-                                    </option>
-                                ))}
-                            </Select>
+                                onValueChange={setOwnerId}
+                                options={members.map(memberToSelectOption)}
+                                placeholder="Choose cardholder"
+                            />
                         </div>
                     </div>
 
