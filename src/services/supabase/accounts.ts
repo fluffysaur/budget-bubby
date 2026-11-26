@@ -10,6 +10,11 @@ import type {
 } from "../../types/finance";
 import { getTodayDateString } from "../../lib/dateUtils";
 import { isValidUuid } from "../../lib/uuid";
+import {
+    applySubsetOrder,
+    nextSortOrder,
+    sortAccounts,
+} from "../../lib/accountOrder";
 import { fetchAllPages, type PaginatableQuery } from "./shared";
 import type { SupabaseContext } from "./context";
 
@@ -29,7 +34,9 @@ export class AccountsStore {
             query = query.or(`owner_id.eq.${perspective},is_joint.eq.true`);
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query
+            .order("sort_order", { ascending: true, nullsFirst: false })
+            .order("name");
         if (error) throw error;
         return (data || []) as Account[];
     }
@@ -40,6 +47,13 @@ export class AccountsStore {
             ? input.household_id
             : await this.ctx.getHouseholdId();
         const balance = Math.round(input.balance * 100) / 100;
+
+        const { data: group, error: groupError } = await client
+            .from("accounts")
+            .select("sort_order")
+            .eq("household_id", householdId)
+            .eq("type", input.type);
+        if (groupError) throw groupError;
 
         const { data, error } = await client
             .from("accounts")
@@ -53,6 +67,7 @@ export class AccountsStore {
                 institution: input.institution || null,
                 is_joint: input.is_joint || false,
                 notes: input.notes || null,
+                sort_order: nextSortOrder(group ?? []),
                 cpf_kind:
                     input.type === "CPF" ? (input.cpf_kind ?? null) : null,
                 // Sent only when chosen, so a $0 account still saves before
@@ -106,6 +121,47 @@ export class AccountsStore {
 
         if (error) throw error;
         return data as Account;
+    }
+
+    /**
+     * Saves the order of accounts within one type group. Writes only
+     * `sort_order`: touching `updated_at` would clear stale-balance warnings.
+     */
+    async reorderAccounts(ids: string[]): Promise<void> {
+        const client = this.ctx.getClient();
+        const { data, error } = await client
+            .from("accounts")
+            .select("id, household_id, type, name, sort_order");
+        if (error) throw error;
+
+        const rows = (data || []) as Pick<
+            Account,
+            "id" | "household_id" | "type" | "name" | "sort_order"
+        >[];
+        const first = rows.find((row) => row.id === ids[0]);
+        if (!first) return;
+
+        const group = sortAccounts(
+            rows.filter(
+                (row) =>
+                    row.household_id === first.household_id &&
+                    row.type === first.type,
+            ),
+        );
+        const results = await Promise.all(
+            applySubsetOrder(group, ids).flatMap((row, index) =>
+                row.sort_order === index
+                    ? []
+                    : [
+                          client
+                              .from("accounts")
+                              .update({ sort_order: index })
+                              .eq("id", row.id),
+                      ],
+            ),
+        );
+        const failed = results.find((result) => result.error);
+        if (failed) throw failed.error;
     }
 
     async deleteAccount(id: string): Promise<void> {

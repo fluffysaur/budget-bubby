@@ -59,6 +59,8 @@ export interface Account {
      * its opening balance isn't savings.
      */
     is_new_account?: boolean | null;
+    /** Position within its type group, shared by the household. */
+    sort_order?: number | null;
     updated_at?: string;
 }
 

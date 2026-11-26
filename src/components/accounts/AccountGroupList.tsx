@@ -6,11 +6,13 @@
  * - CPF (OA, SA, MA)
  * - Other Assets
  * Supports:
- * - Compact Notion-inspired row view (default) or Card view
+ * - Compact brokerage-style row view (default) or Card view
+ * - $ / % toggle for the 6-month change
+ * - Edit mode: reorder within a group and open account settings
  * - Tap balance (or pencil) opens the Update Balance modal
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import {
     Wallet,
     TrendingUp,
@@ -20,16 +22,20 @@ import {
     Pencil,
     LayoutGrid,
     List,
-    Settings,
+    Check,
     Plus,
 } from "lucide-react";
 import type { Account, AccountType } from "../../types/finance";
 import { m, AnimatePresence } from "motion/react";
 import { listItem } from "../../lib/motion";
-import { Card, EmptyStateCard, Button } from "../ui";
-import { TruncatedText } from "../ui/TruncatedText";
+import { EmptyStateCard, Button } from "../ui";
 import { AccountCard } from "./AccountCard";
-import { AccountTrendSpark } from "./AccountTrendSpark";
+import { AccountRow } from "./AccountRow";
+import { ReorderableAccounts } from "./ReorderableAccounts";
+import { SegmentedToggle, ToolbarPill } from "./SegmentedToggle";
+import { useAccountChangeMode } from "../../hooks/useAccountChangeMode";
+import { getAmountColumn } from "../../lib/accountChange";
+import { usePrivacy } from "../../context/PrivacyContext";
 import { buildAccountTrends } from "../../lib/accountTrend";
 import { getTodayDateString } from "../../lib/dateUtils";
 import type { AccountSnapshot } from "../../types/finance";
@@ -41,6 +47,8 @@ export interface AccountGroupListProps {
     onUpdateBalance?: (account: Account) => void;
     onEditAccount?: (account: Account) => void;
     onAddAccount?: () => void;
+    /** Saves a new order for the accounts of one type group. */
+    onReorderAccounts?: (ids: string[]) => Promise<unknown>;
     className?: string;
 }
 
@@ -92,13 +100,23 @@ export function AccountGroupList({
     onUpdateBalance,
     onEditAccount,
     onAddAccount,
+    onReorderAccounts,
     className = "",
 }: AccountGroupListProps) {
     const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+    const [editing, setEditing] = useState(false);
+    const [announcement, setAnnouncement] = useState("");
+    const { changeMode, setChangeMode } = useAccountChangeMode();
+    const { isPrivacyMode } = usePrivacy();
 
     const trends = useMemo(
         () => buildAccountTrends(snapshots, getTodayDateString()),
         [snapshots],
+    );
+
+    const amountColumn = useMemo(
+        () => getAmountColumn(accounts, trends, isPrivacyMode),
+        [accounts, trends, isPrivacyMode],
     );
 
     // Accounts arrive already filtered by the shared account type filter
@@ -135,6 +153,78 @@ export function AccountGroupList({
         }).filter((g) => g.accounts.length > 0);
     }, [filteredAccounts, totalAssets]);
 
+    const renderCard = (account: Account, dragHandle?: ReactNode) => (
+        <AccountCard
+            account={account}
+            trend={trends.get(account.id)}
+            changeMode={changeMode}
+            editing={editing}
+            dragHandle={dragHandle}
+            onUpdateBalance={onUpdateBalance}
+            onEditAccount={onEditAccount}
+        />
+    );
+
+    const renderRow = (account: Account, dragHandle?: ReactNode) => (
+        <AccountRow
+            account={account}
+            trend={trends.get(account.id)}
+            changeMode={changeMode}
+            amountSize={amountColumn.size}
+            editing={editing}
+            dragHandle={dragHandle}
+            onUpdateBalance={onUpdateBalance}
+            onEditAccount={onEditAccount}
+        />
+    );
+
+    const renderAccounts = (groupAccounts: Account[]) => {
+        const isCards = viewMode === "cards";
+        const render = isCards ? renderCard : renderRow;
+        const listClass = isCards
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            : "rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) divide-y-2 divide-(--border-ink) shadow-cute";
+
+        if (editing && onReorderAccounts) {
+            return (
+                <ReorderableAccounts
+                    accounts={groupAccounts}
+                    onReorder={onReorderAccounts}
+                    onAnnounce={setAnnouncement}
+                    // One column while editing: dragging sorts along one axis
+                    className={isCards ? "flex flex-col gap-4" : listClass}
+                    itemClassName={
+                        isCards
+                            ? "rounded-2xl"
+                            : "bg-(--bg-card) first:rounded-t-xl last:rounded-b-xl"
+                    }
+                >
+                    {render}
+                </ReorderableAccounts>
+            );
+        }
+
+        return (
+            <div className={`${listClass} ${isCards ? "" : "overflow-hidden"}`}>
+                <AnimatePresence initial={false}>
+                    {groupAccounts.map((account) => (
+                        <m.div
+                            key={account.id}
+                            {...listItem}
+                            className={
+                                isCards
+                                    ? undefined
+                                    : "transition-colors hover:bg-(--bg-cream)"
+                            }
+                        >
+                            {render(account)}
+                        </m.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+        );
+    };
+
     // Empty state if no accounts
     if (accounts.length === 0) {
         return (
@@ -161,42 +251,97 @@ export function AccountGroupList({
     }
 
     return (
-        <div className={`space-y-5 ${className}`}>
-            {/* View Mode Toolbar */}
-            <Card
-                variant="white"
-                padding="none"
-                className="p-2 sm:p-2.5 flex items-center justify-end gap-2"
-            >
-                <div className="flex items-center gap-1 bg-(--bg-cream) border-2 border-(--border-ink) p-1 rounded-xl shadow-cute-sm">
-                    <button
-                        type="button"
-                        onClick={() => setViewMode("table")}
-                        aria-label="Compact Table View"
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-press cursor-pointer ${
-                            viewMode === "table"
-                                ? "bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
-                                : "text-(--text-muted) hover:text-(--text-ink)"
-                        }`}
+        <div
+            className={`space-y-5 ${className}`}
+            style={
+                {
+                    // `ch` less the money type's tight letter spacing
+                    "--acct-amount-plain": `calc(${amountColumn.ch} * (1ch - 0.025em) + 2px)`,
+                    // Balance plus the pencil beside it
+                    "--acct-amount": `calc(${amountColumn.ch} * (1ch - 0.025em) + 1.125rem + 2px)`,
+                } as React.CSSProperties
+            }
+        >
+            {/* List header: label, change mode, view mode, Edit */}
+            <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                    Holdings
+                </p>
+                <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                    {/* Hidden while editing, keeping its width so nothing shifts */}
+                    <div
+                        aria-hidden={editing || undefined}
+                        inert={editing}
+                        className={`transition-opacity ${editing ? "opacity-0" : "opacity-100"}`}
                     >
-                        <List className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Compact</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setViewMode("cards")}
-                        aria-label="Cards View"
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-press cursor-pointer ${
-                            viewMode === "cards"
-                                ? "bg-(--bg-card) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm"
-                                : "text-(--text-muted) hover:text-(--text-ink)"
-                        }`}
-                    >
-                        <LayoutGrid className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Cards</span>
-                    </button>
+                        <SegmentedToggle
+                            label="Change shown as"
+                            value={changeMode}
+                            onChange={setChangeMode}
+                            options={[
+                                {
+                                    value: "amount",
+                                    label: "Show change in dollars",
+                                    content: "$",
+                                },
+                                {
+                                    value: "percent",
+                                    label: "Show change in percent",
+                                    content: "%",
+                                },
+                            ]}
+                        />
+                    </div>
+                    <SegmentedToggle
+                        label="View"
+                        value={viewMode}
+                        onChange={setViewMode}
+                        options={[
+                            {
+                                value: "table",
+                                label: "Compact Table View",
+                                content: (
+                                    <>
+                                        <List className="h-3.5 w-3.5" />
+                                        <span className="hidden sm:inline">
+                                            Compact
+                                        </span>
+                                    </>
+                                ),
+                            },
+                            {
+                                value: "cards",
+                                label: "Cards View",
+                                content: (
+                                    <>
+                                        <LayoutGrid className="h-3.5 w-3.5" />
+                                        <span className="hidden sm:inline">
+                                            Cards
+                                        </span>
+                                    </>
+                                ),
+                            },
+                        ]}
+                    />
+                    {(onReorderAccounts || onEditAccount) && (
+                        <ToolbarPill
+                            active={editing}
+                            onClick={() => setEditing((value) => !value)}
+                        >
+                            {editing ? (
+                                <Check className="h-3.5 w-3.5" />
+                            ) : (
+                                <Pencil className="h-3.5 w-3.5" />
+                            )}
+                            {editing ? "Done" : "Edit"}
+                        </ToolbarPill>
+                    )}
                 </div>
-            </Card>
+            </div>
+
+            <p className="sr-only" aria-live="polite">
+                {announcement}
+            </p>
 
             {/* Grouped Account Sections */}
             {filteredAccounts.length === 0 ? (
@@ -267,144 +412,7 @@ export function AccountGroupList({
                                 </div>
                             </div>
 
-                            {viewMode === "cards" ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <AnimatePresence initial={false}>
-                                        {group.accounts.map((account) => (
-                                            <m.div
-                                                key={account.id}
-                                                {...listItem}
-                                            >
-                                                <AccountCard
-                                                    account={account}
-                                                    trend={trends.get(
-                                                        account.id,
-                                                    )}
-                                                    onUpdateBalance={
-                                                        onUpdateBalance
-                                                    }
-                                                    onEditAccount={
-                                                        onEditAccount
-                                                    }
-                                                />
-                                            </m.div>
-                                        ))}
-                                    </AnimatePresence>
-                                </div>
-                            ) : (
-                                /* Notion-Style Compact Table List */
-                                <div className="rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) divide-y-2 divide-(--border-ink) overflow-hidden shadow-cute">
-                                    <AnimatePresence initial={false}>
-                                        {group.accounts.map((account) => {
-                                            return (
-                                                <m.div
-                                                    key={account.id}
-                                                    {...listItem}
-                                                    className="flex items-center justify-between gap-3 px-3.5 py-2 sm:py-2.5 hover:bg-(--bg-cream) transition-colors"
-                                                >
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2 flex-wrap min-w-0">
-                                                            <div className="text-sm font-bold text-(--text-ink) min-w-0 max-w-40 sm:max-w-60">
-                                                                <TruncatedText
-                                                                    text={
-                                                                        account.name
-                                                                    }
-                                                                />
-                                                            </div>
-                                                            {account.institution && (
-                                                                <span className="rounded-md bg-(--bg-cream) px-1.5 py-0.5 text-2xs font-bold text-(--text-ink) border border-(--border-ink)">
-                                                                    {
-                                                                        account.institution
-                                                                    }
-                                                                </span>
-                                                            )}
-                                                            {account.is_joint && (
-                                                                <span className="rounded-md bg-(--pastel-pink-light) px-1.5 py-0.5 text-2xs font-bold text-(--text-ink) border border-(--border-ink)">
-                                                                    Joint
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {account.notes && (
-                                                            <p className="text-[11px] text-slate-500 dark:text-(--text-faint) truncate mt-0.5">
-                                                                {account.notes}
-                                                            </p>
-                                                        )}
-                                                    </div>
-
-                                                    <AccountTrendSpark
-                                                        trend={trends.get(
-                                                            account.id,
-                                                        )}
-                                                        variant="row"
-                                                        accountName={
-                                                            account.name
-                                                        }
-                                                    />
-
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                onUpdateBalance?.(
-                                                                    account,
-                                                                )
-                                                            }
-                                                            aria-label={`Update balance for ${account.name}`}
-                                                            title="Update balance"
-                                                            className="inline-flex min-h-11 items-center gap-1.5 text-(--text-ink) font-display hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-                                                        >
-                                                            <CurrencyText
-                                                                amount={
-                                                                    account.balance
-                                                                }
-                                                                size="md"
-                                                            />
-                                                            <Pencil
-                                                                className="h-3.5 w-3.5 shrink-0 text-(--text-muted) sm:hidden"
-                                                                strokeWidth={
-                                                                    2.5
-                                                                }
-                                                                aria-hidden="true"
-                                                            />
-                                                        </button>
-                                                        {/* Desktop only: mobile uses the pencil beside the amount */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                onUpdateBalance?.(
-                                                                    account,
-                                                                )
-                                                            }
-                                                            aria-label={`Edit balance for ${account.name}`}
-                                                            title="Update balance"
-                                                            className="relative hidden min-h-11 min-w-11 items-center justify-center rounded-lg text-(--text-ink) hover:bg-(--pastel-butter-light) transition-colors cursor-pointer sm:inline-flex"
-                                                        >
-                                                            <span className="inline-flex rounded-lg border border-(--border-ink) bg-(--bg-cream) p-1.5 shadow-cute-sm">
-                                                                <Pencil className="h-3 w-3" />
-                                                            </span>
-                                                        </button>
-                                                        {onEditAccount && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    onEditAccount(
-                                                                        account,
-                                                                    )
-                                                                }
-                                                                aria-label={`Edit ${account.name}`}
-                                                                title="Edit"
-                                                                className="relative inline-flex items-center justify-center p-1.5 rounded-lg after:absolute after:-inset-2.5 after:content-[''] border border-(--border-ink) bg-(--bg-card) text-(--text-ink) shadow-cute-sm hover:bg-(--pastel-butter-light) cursor-pointer transition-colors"
-                                                            >
-                                                                <Settings className="h-3 w-3" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </m.div>
-                                            );
-                                        })}
-                                    </AnimatePresence>
-                                </div>
-                            )}
+                            {renderAccounts(group.accounts)}
                         </section>
                     );
                 })

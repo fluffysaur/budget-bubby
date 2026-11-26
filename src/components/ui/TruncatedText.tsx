@@ -11,6 +11,7 @@ import {
     useInteractions,
     type Placement,
 } from "@floating-ui/react";
+import { Info } from "lucide-react";
 
 export interface TruncatedTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     text: string;
@@ -20,6 +21,8 @@ export interface TruncatedTextProps extends React.HTMLAttributes<HTMLSpanElement
     maxWidthClass?: string;
     align?: "left" | "center" | "right";
     position?: "top" | "bottom";
+    /** Shows a tappable (i) while the text is cut off. */
+    infoButton?: boolean;
 }
 
 export function TruncatedText({
@@ -30,12 +33,15 @@ export function TruncatedText({
     maxWidthClass = "",
     align = "left",
     position = "top",
+    infoButton = false,
     ...props
 }: TruncatedTextProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isOverflowing, setIsOverflowing] = useState(false);
     const containerRef = useRef<HTMLElement | null>(null);
     const textRef = useRef<HTMLSpanElement>(null);
+    // A mouse hovers before it clicks; that click must not close the popover.
+    const openedByHover = useRef(false);
 
     // Compute placement from position and alignment
     const placementBase = position === "bottom" ? "bottom" : "top";
@@ -79,29 +85,48 @@ export function TruncatedText({
     // Check if the text actually overflows its container
     const checkOverflow = useCallback(() => {
         if (textRef.current) {
+            // With a button, measure against the container so the button's own
+            // width can't keep it showing once the text would fit without it.
+            const box =
+                infoButton && containerRef.current
+                    ? containerRef.current
+                    : textRef.current;
             const hasOverflow =
-                textRef.current.scrollWidth > textRef.current.clientWidth + 1;
+                textRef.current.scrollWidth > box.clientWidth + 1;
             setIsOverflowing(hasOverflow);
             return hasOverflow;
         }
         return false;
-    }, []);
+    }, [infoButton]);
 
     useEffect(() => {
         checkOverflow();
         window.addEventListener("resize", checkOverflow);
-        return () => window.removeEventListener("resize", checkOverflow);
+        const observer =
+            typeof ResizeObserver === "undefined"
+                ? null
+                : new ResizeObserver(() => checkOverflow());
+        if (containerRef.current) observer?.observe(containerRef.current);
+        return () => {
+            window.removeEventListener("resize", checkOverflow);
+            observer?.disconnect();
+        };
     }, [checkOverflow, text]);
 
-    // Desktop hover handlers
-    const handleMouseEnter = () => {
+    // Desktop hover handlers. A tap also fires "enter", which would open the
+    // popover just before the click toggled it shut, so touch is ignored.
+    const handlePointerEnter = (e: React.PointerEvent) => {
+        if (e.pointerType === "touch") return;
         const hasOverflow = checkOverflow();
         if (hasOverflow || isOverflowing) {
+            openedByHover.current = true;
             setIsOpen(true);
         }
     };
 
-    const handleMouseLeave = () => {
+    const handlePointerLeave = (e: React.PointerEvent) => {
+        if (e.pointerType === "touch") return;
+        openedByHover.current = false;
         setIsOpen(false);
     };
 
@@ -110,7 +135,9 @@ export function TruncatedText({
         const hasOverflow = checkOverflow();
         if (hasOverflow || isOverflowing) {
             e.stopPropagation();
-            setIsOpen((prev) => !prev);
+            const keepOpen = openedByHover.current;
+            openedByHover.current = false;
+            setIsOpen((prev) => keepOpen || !prev);
         }
     };
 
@@ -123,8 +150,8 @@ export function TruncatedText({
                 setReference(node);
             }}
             className={`relative inline-flex items-center min-w-0 max-w-full ${maxWidthClass}`}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onPointerEnter={handlePointerEnter}
+            onPointerLeave={handlePointerLeave}
             {...getReferenceProps()}
         >
             <span
@@ -138,6 +165,17 @@ export function TruncatedText({
             >
                 {text}
             </span>
+
+            {infoButton && isOverflowing && (
+                <button
+                    type="button"
+                    onClick={handleClick}
+                    aria-label={`Show full name: ${text}`}
+                    className="relative ml-1 inline-flex shrink-0 cursor-pointer text-(--text-muted) after:absolute after:-inset-4 after:content-['']"
+                >
+                    <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+            )}
 
             {/* Floating Cute Tooltip Popover */}
             {isOpen && isOverflowing && (

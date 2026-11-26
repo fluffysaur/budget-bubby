@@ -10,6 +10,11 @@ import type {
     Perspective,
 } from "../../types/finance";
 import { getTodayDateString } from "../../lib/dateUtils";
+import {
+    applySubsetOrder,
+    nextSortOrder,
+    sortAccounts,
+} from "../../lib/accountOrder";
 import { cloneDeep } from "./context";
 import type { MockContext } from "./context";
 
@@ -18,7 +23,7 @@ export class AccountsStore {
 
     async getAccounts(perspective: Perspective): Promise<Account[]> {
         if (perspective === "household") {
-            return cloneDeep(this.ctx.state.accounts);
+            return cloneDeep(sortAccounts(this.ctx.state.accounts));
         }
 
         const targetMember = findMemberById(
@@ -33,7 +38,7 @@ export class AccountsStore {
         const filtered = this.ctx.state.accounts.filter(
             (a) => a.owner_id === targetMember.id || a.is_joint,
         );
-        return cloneDeep(filtered);
+        return cloneDeep(sortAccounts(filtered));
     }
 
     async createAccount(input: CreateAccountInput): Promise<Account> {
@@ -54,6 +59,12 @@ export class AccountsStore {
             notes: input.notes || null,
             cpf_kind: input.type === "CPF" ? (input.cpf_kind ?? null) : null,
             is_new_account: input.is_new_account ?? null,
+            sort_order: nextSortOrder(
+                this.ctx.state.accounts.filter(
+                    (a) =>
+                        a.household_id === householdId && a.type === input.type,
+                ),
+            ),
             updated_at: new Date().toISOString(),
         };
 
@@ -96,6 +107,22 @@ export class AccountsStore {
 
         this.ctx.persist();
         return cloneDeep(account);
+    }
+
+    async reorderAccounts(ids: string[]): Promise<void> {
+        const first = this.ctx.state.accounts.find((a) => a.id === ids[0]);
+        if (!first) return;
+        const group = sortAccounts(
+            this.ctx.state.accounts.filter(
+                (a) =>
+                    a.household_id === first.household_id &&
+                    a.type === first.type,
+            ),
+        );
+        applySubsetOrder(group, ids).forEach((account, index) => {
+            account.sort_order = index;
+        });
+        this.ctx.persist();
     }
 
     async deleteAccount(id: string): Promise<void> {

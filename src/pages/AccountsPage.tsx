@@ -30,6 +30,7 @@ import {
 import {
     useAccountsQuery,
     useAccountSnapshotsQuery,
+    useReorderAccountsMutation,
 } from "../hooks/finance/accounts";
 import { useCreditCardStatementsQuery } from "../hooks/finance/cards";
 import { useInvalidateFinance } from "../hooks/finance/shared";
@@ -88,6 +89,7 @@ export function AccountsPage({
     } = useAccountsQuery(perspective);
     const { data: snapshots } = useAccountSnapshotsQuery(perspective);
     const { data: statementsData } = useCreditCardStatementsQuery();
+    const { mutateAsync: reorderAccounts } = useReorderAccountsMutation();
 
     const accounts = useMemo(() => accountsData || [], [accountsData]);
     const statements = useMemo(
@@ -344,6 +346,7 @@ export function AccountsPage({
                                             onAddAccount={() =>
                                                 setIsAddModalOpen(true)
                                             }
+                                            onReorderAccounts={reorderAccounts}
                                         />
                                     </>
                                 )}

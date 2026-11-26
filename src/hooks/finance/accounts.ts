@@ -9,6 +9,7 @@ import type {
     AccountSnapshot,
 } from "../../types/finance";
 import { useSafeQueryClient, useInvalidateFinance } from "./shared";
+import { applySubsetOrder } from "../../lib/accountOrder";
 
 export function useAccountsQuery(perspective?: Perspective) {
     return useQuery<Account[]>({
@@ -329,6 +330,60 @@ export function useDeleteAccountMutation() {
                     ] of context.previousAccountQueries) {
                         queryClient.setQueryData(key, oldData);
                     }
+                }
+            },
+            onSettled: () => {
+                invalidateAccounts();
+            },
+        },
+        queryClient,
+    );
+}
+
+/**
+ * Optimistic mutation for reordering the accounts of one type group.
+ */
+export function useReorderAccountsMutation() {
+    const queryClient = useSafeQueryClient();
+    const { invalidateAccounts } = useInvalidateFinance();
+
+    return useMutation<
+        void,
+        Error,
+        string[],
+        {
+            previousAccountQueries: [
+                readonly unknown[],
+                Account[] | undefined,
+            ][];
+        }
+    >(
+        {
+            networkMode: "always",
+            // Run one at a time: each save reads the current order, so
+            // overlapping saves could leave duplicate positions.
+            scope: { id: "reorder-accounts" },
+            mutationFn: (ids) => financeService.reorderAccounts(ids),
+            onMutate: async (ids) => {
+                await queryClient.cancelQueries({
+                    queryKey: keys.accounts.all,
+                });
+                const previousAccountQueries = queryClient.getQueriesData<
+                    Account[]
+                >({
+                    queryKey: keys.accounts.all,
+                });
+                for (const [key] of previousAccountQueries) {
+                    queryClient.setQueryData<Account[]>(key, (old) =>
+                        old ? applySubsetOrder(old, ids) : old,
+                    );
+                }
+                return { previousAccountQueries };
+            },
+            onError: (_err, _ids, context) => {
+                for (const [key, oldData] of context?.previousAccountQueries ??
+                    []) {
+                    queryClient.setQueryData(key, oldData);
                 }
             },
             onSettled: () => {
