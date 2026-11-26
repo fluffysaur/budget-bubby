@@ -17,6 +17,21 @@ const cashNames = (page: Page) =>
             ),
         );
 
+/** The Cash order in the demo data store: what a reload will show. */
+const savedCashNames = (page: Page) =>
+    page.evaluate(() => {
+        const dataset = JSON.parse(
+            localStorage.getItem("budget_buddy_mock_dataset_v1") ??
+                '{"accounts":[]}',
+        ) as {
+            accounts: { type: string; name: string; sort_order: number }[];
+        };
+        return dataset.accounts
+            .filter((account) => account.type === "Cash")
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .map((account) => account.name);
+    });
+
 test.describe("Account rows", () => {
     test.describe("on a phone", () => {
         // Phone emulation: no desktop scrollbar eating 15px of a 360px screen
@@ -86,6 +101,8 @@ test.describe("Account rows", () => {
             ),
         ).toBeAttached();
 
+        // The save finishes after the screen updates; reload only once stored
+        await expect.poll(() => savedCashNames(page)).toEqual(expected);
         await page.reload();
         await page.getByRole("button", { name: "Edit", exact: true }).click();
         await expect.poll(() => cashNames(page)).toEqual(expected);
@@ -105,13 +122,25 @@ test.describe("Account rows", () => {
             from.y + from.height / 2,
         );
         await page.mouse.down();
-        await page.mouse.move(from.x + from.width / 2, to.y + to.height, {
-            steps: 20,
-        });
+        // Drag updates are processed per animation frame, so on a slow runner
+        // keep nudging until the rows swap, and only then let go.
+        const expected = [before[1], before[0], ...before.slice(2)];
+        let nudge = 0;
+        await expect
+            .poll(async () => {
+                nudge = (nudge + 1) % 2;
+                await page.mouse.move(
+                    from.x + from.width / 2,
+                    to.y + to.height + nudge,
+                    { steps: 5 },
+                );
+                return cashNames(page);
+            })
+            .toEqual(expected);
         await page.mouse.up();
 
-        const expected = [before[1], before[0], ...before.slice(2)];
-        await expect.poll(() => cashNames(page)).toEqual(expected);
+        // The save finishes after the screen updates; reload only once stored
+        await expect.poll(() => savedCashNames(page)).toEqual(expected);
         await page.reload();
         await page.getByRole("button", { name: "Edit", exact: true }).click();
         await expect.poll(() => cashNames(page)).toEqual(expected);
