@@ -23,6 +23,8 @@ describe("supabaseFinanceService", () => {
     let insertAllocationsSpy: any;
     let deleteAllocationsSpy: any;
     let expensesOrSpy: any;
+    let expensesInSpy: any;
+    let expensesEqSpy: any;
 
     beforeEach(() => {
         vi.restoreAllMocks();
@@ -46,6 +48,8 @@ describe("supabaseFinanceService", () => {
         });
 
         expensesOrSpy = vi.fn();
+        expensesInSpy = vi.fn();
+        expensesEqSpy = vi.fn();
 
         mockClient = {
             from: vi.fn((table: string) => {
@@ -108,7 +112,14 @@ describe("supabaseFinanceService", () => {
                 }
                 if (table === "expenses") {
                     const queryChain: any = {
-                        eq: vi.fn(() => queryChain),
+                        eq: vi.fn((...args: unknown[]) => {
+                            expensesEqSpy(...args);
+                            return queryChain;
+                        }),
+                        in: vi.fn((...args: unknown[]) => {
+                            expensesInSpy(...args);
+                            return queryChain;
+                        }),
                         gte: vi.fn(() => queryChain),
                         lt: vi.fn(() => queryChain),
                         lte: vi.fn(() => queryChain),
@@ -209,6 +220,34 @@ describe("supabaseFinanceService", () => {
                     buildExpenseSearchOrFilter(term),
                 );
             }
+        });
+    });
+
+    describe("expense category filter", () => {
+        it("uses .in() for several categoryIds", async () => {
+            await supabaseFinanceService.getExpenses({
+                categoryIds: ["cat-a", "cat-b"],
+            });
+            expect(expensesInSpy).toHaveBeenCalledWith("category_id", [
+                "cat-a",
+                "cat-b",
+            ]);
+        });
+
+        it("maps a legacy single categoryId to .in([id])", async () => {
+            await supabaseFinanceService.getExpenses({ categoryId: "cat-a" });
+            expect(expensesInSpy).toHaveBeenCalledWith("category_id", [
+                "cat-a",
+            ]);
+        });
+
+        it("applies no category filter when the array is empty", async () => {
+            await supabaseFinanceService.getExpenses({ categoryIds: [] });
+            expect(expensesInSpy).not.toHaveBeenCalled();
+            expect(expensesEqSpy).not.toHaveBeenCalledWith(
+                "category_id",
+                expect.anything(),
+            );
         });
     });
 

@@ -289,6 +289,9 @@ export type SortDirection = "asc" | "desc";
 
 export interface ExpenseFilter {
     month?: string; // 'YYYY-MM'
+    /** Empty or missing means all categories. */
+    categoryIds?: string[];
+    /** @deprecated Legacy single category; read as `[categoryId]`. */
     categoryId?: string;
     payerId?: string;
     isShared?: boolean;

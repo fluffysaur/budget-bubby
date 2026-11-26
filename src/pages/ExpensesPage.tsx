@@ -118,7 +118,7 @@ export function ExpensesPage({
     const [filter, setFilter] = useState<ExpenseFilter>({
         month: getCurrentMonth(),
         search: "",
-        categoryId: undefined,
+        categoryIds: undefined,
         payerId: undefined,
         isShared: undefined,
     });

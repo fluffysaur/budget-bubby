@@ -10,6 +10,7 @@ import {
     getCurrentSingaporeTime,
     extractTimeFromISO,
 } from "../../lib/dateUtils";
+import { getFilterCategoryIds } from "../../lib/expenseFilter";
 import { cloneDeep } from "./context";
 import type { MockContext } from "./context";
 import type { FinanceService } from "../financeService";
@@ -30,8 +31,9 @@ export class ExpensesStore {
         if (filter?.month) {
             result = result.filter((e) => e.date.startsWith(filter.month!));
         }
-        if (filter?.categoryId) {
-            result = result.filter((e) => e.category_id === filter.categoryId);
+        const categoryIds = getFilterCategoryIds(filter);
+        if (categoryIds.length > 0) {
+            result = result.filter((e) => categoryIds.includes(e.category_id ?? ""));
         }
         if (filter?.payerId) {
             result = result.filter((e) => e.payer_id === filter.payerId);

@@ -1,5 +1,6 @@
 // Custom dropdown primitives (popover on desktop, bottom sheet on mobile).
 export * from "./Select";
+export * from "./MultiSelect";
 export * from "./types";
 export * from "./useDropdown";
 export * from "./DropdownField";

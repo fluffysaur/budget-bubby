@@ -5,6 +5,7 @@ import { financeService } from "../../services/financeService";
 import { isOnline } from "../../services/offlineSyncQueue";
 import { keys } from "../../lib/queryKeys";
 import { generateUuid } from "../../lib/uuid";
+import { getFilterCategoryIds } from "../../lib/expenseFilter";
 import { normalizeExpenseTag } from "../../lib/expenseFormDraft";
 import type {
     ExpenseFilter,
@@ -35,7 +36,8 @@ export function matchesExpenseFilter(
 ): boolean {
     if (!filter) return true;
     if (filter.month && !expense.date.startsWith(filter.month)) return false;
-    if (filter.categoryId && expense.category_id !== filter.categoryId)
+    const categoryIds = getFilterCategoryIds(filter);
+    if (categoryIds.length > 0 && !categoryIds.includes(expense.category_id ?? ""))
         return false;
     if (filter.payerId && expense.payer_id !== filter.payerId) return false;
     if (filter.isShared !== undefined && expense.is_shared !== filter.isShared)

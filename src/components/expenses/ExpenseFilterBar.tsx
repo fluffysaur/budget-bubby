@@ -35,11 +35,13 @@ import type {
 import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { isMockModeActive } from "../../services/financeService";
 import {
+    MultiSelect,
     Select,
     categoryToSelectOption,
     memberToSelectOption,
     type SelectOption,
 } from "../ui/dropdown";
+import { getFilterCategoryIds } from "../../lib/expenseFilter";
 import { formatShortMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
@@ -113,6 +115,10 @@ export function ExpenseFilterBar({
         () => members.map(memberToSelectOption),
         [members],
     );
+    const selectedCategoryIds = useMemo(
+        () => getFilterCategoryIds(filter),
+        [filter],
+    );
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const currentMonth = useCurrentMonth();
 
@@ -164,10 +170,11 @@ export function ExpenseFilterBar({
         onFilterChange({ ...filter, search: "" });
     }, [filter, onFilterChange]);
 
-    const handleCategoryChange = (value: string) => {
+    const handleCategoryChange = (values: string[]) => {
         onFilterChange({
             ...filter,
-            categoryId: value ? value : undefined,
+            categoryIds: values.length > 0 ? values : undefined,
+            categoryId: undefined,
         });
     };
 
@@ -204,6 +211,7 @@ export function ExpenseFilterBar({
         } else {
             onFilterChange({
                 search: "",
+                categoryIds: undefined,
                 categoryId: undefined,
                 payerId: undefined,
                 isShared: undefined,
@@ -217,7 +225,7 @@ export function ExpenseFilterBar({
     const activeFilterCount = useMemo(() => {
         let count = 0;
         if (filter.search?.trim()) count++;
-        if (filter.categoryId) count++;
+        if (selectedCategoryIds.length > 0) count++;
         if (filter.payerId) count++;
         if (filter.isShared !== undefined) count++;
         if (filter.month && filter.month !== currentMonth) count++;
@@ -227,7 +235,7 @@ export function ExpenseFilterBar({
 
     const hasActiveFilters = Boolean(
         filter.search ||
-        filter.categoryId ||
+        selectedCategoryIds.length > 0 ||
         filter.payerId ||
         filter.isShared !== undefined ||
         (filter.month && filter.month !== currentMonth) ||
@@ -250,13 +258,15 @@ export function ExpenseFilterBar({
             });
         }
 
-        if (filter.categoryId) {
-            const cat = categories.find((c) => c.id === filter.categoryId);
+        for (const categoryId of selectedCategoryIds) {
+            const cat = categories.find((c) => c.id === categoryId);
             chips.push({
-                id: "category",
+                id: `category-${categoryId}`,
                 label: cat ? cat.name : "Category",
                 onRemove: () =>
-                    onFilterChange({ ...filter, categoryId: undefined }),
+                    handleCategoryChange(
+                        selectedCategoryIds.filter((id) => id !== categoryId),
+                    ),
             });
         }
 
@@ -433,15 +443,14 @@ export function ExpenseFilterBar({
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
                         {/* Category Select */}
                         <div className="min-w-0">
-                            <Select
+                            <MultiSelect
                                 id="filter-category"
                                 label="Category"
                                 labelClassName="text-[11px] mb-1 tracking-wider"
-                                value={filter.categoryId || ""}
+                                value={selectedCategoryIds}
                                 onValueChange={handleCategoryChange}
                                 options={categoryOptions}
                                 placeholder="All Categories"
-                                clearable
                                 sizeVariant="sm"
                                 className="bg-(--bg-canvas)"
                             />

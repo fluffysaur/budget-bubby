@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { selectOption } from "./helpers/select";
+import { selectOption, toggleOptions } from "./helpers/select";
 import { describe, it, expect, vi } from "vitest";
 import { ExpenseFilterBar } from "../src/components/expenses/ExpenseFilterBar";
 import { ExpenseListTable } from "../src/components/expenses/ExpenseListTable";
@@ -10,7 +10,7 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
     it("renders search input, mobile filter toggle with active count badge, and quick sort selector", () => {
         const filter: ExpenseFilter = {
             search: "Bowl",
-            categoryId: mockCategories[0].id,
+            categoryIds: [mockCategories[0].id],
             payerId: undefined,
             isShared: true,
             tag: "lunch-trip",
@@ -96,7 +96,7 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         const onFilterChange = vi.fn();
         const filter: ExpenseFilter = {
             search: "Salad",
-            categoryId: mockCategories[0].id,
+            categoryIds: [mockCategories[0].id],
             tag: "travel",
         };
 
@@ -179,5 +179,62 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         fireEvent.click(clearBtn);
 
         expect(onResetFilters).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows one chip per category and removes only the clicked one", () => {
+        const onFilterChange = vi.fn();
+        const [first, second] = mockCategories;
+        render(
+            <ExpenseFilterBar
+                filter={{ categoryIds: [first.id, second.id] }}
+                onFilterChange={onFilterChange}
+                categories={mockCategories}
+                members={mockMembers}
+            />,
+        );
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: new RegExp(`remove filter ${first.name}`, "i"),
+            }),
+        );
+        expect(onFilterChange).toHaveBeenCalledWith(
+            expect.objectContaining({ categoryIds: [second.id] }),
+        );
+    });
+
+    it("reads a legacy single categoryId into the trigger and count", () => {
+        render(
+            <ExpenseFilterBar
+                filter={{ categoryId: mockCategories[0].id }}
+                onFilterChange={vi.fn()}
+                categories={mockCategories}
+                members={mockMembers}
+            />,
+        );
+        expect(
+            screen.getByRole("combobox", { name: "Category" }),
+        ).toHaveTextContent(mockCategories[0].name);
+        expect(screen.getByText("1")).toBeInTheDocument();
+    });
+
+    it("emits categoryIds when ticking categories", async () => {
+        const onFilterChange = vi.fn();
+        const [first, second] = mockCategories;
+        render(
+            <ExpenseFilterBar
+                filter={{}}
+                onFilterChange={onFilterChange}
+                categories={mockCategories}
+                members={mockMembers}
+            />,
+        );
+        await toggleOptions("Category", [first.name, second.name]);
+        expect(onFilterChange).toHaveBeenCalledWith(
+            expect.objectContaining({ categoryIds: [first.id] }),
+        );
+        expect(onFilterChange).toHaveBeenCalledWith(
+            expect.objectContaining({ categoryIds: [second.id] }),
+        );
     });
 });

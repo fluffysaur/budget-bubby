@@ -333,7 +333,7 @@ describe("ExpenseFilterBar", () => {
     it("renders all filter controls: search, category, payer, shared status, and month", () => {
         const filter: ExpenseFilter = {
             search: "",
-            categoryId: undefined,
+            categoryIds: undefined,
             payerId: undefined,
             isShared: undefined,
             month: "2026-09",
@@ -384,7 +384,7 @@ describe("ExpenseFilterBar", () => {
             mockCategories.find((c) => c.id === "cat-00000000-0101")!.name,
         );
         expect(onFilterChange).toHaveBeenCalledWith(
-            expect.objectContaining({ categoryId: "cat-00000000-0101" }),
+            expect.objectContaining({ categoryIds: ["cat-00000000-0101"] }),
         );
 
         // Change payer dropdown
@@ -411,7 +411,7 @@ describe("ExpenseFilterBar", () => {
             <ExpenseFilterBar
                 filter={{
                     search: "Coffee",
-                    categoryId: "cat-00000000-0101",
+                    categoryIds: ["cat-00000000-0101"],
                     month: "2026-09",
                 }}
                 onFilterChange={onFilterChange}
