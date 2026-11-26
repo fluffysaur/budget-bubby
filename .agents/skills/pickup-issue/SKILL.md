@@ -14,7 +14,7 @@ flowchart TD
     A[Start /pickup-issue] --> B{Issue number provided?}
     B -- Yes --> C[Fetch specific issue]
     B -- No --> D[Scan backlog P0 -> P1 -> P2 -> P3]
-    D --> E[Filter unblocked & apply FIFO tiebreaker]
+    D --> E[Filter unassigned & apply FIFO tiebreaker]
     C --> F[Display issue & ask confirmation]
     E --> F
     F --> G{User confirmed?}
@@ -36,12 +36,9 @@ Fetch the issue details directly:
 gh issue view <number> --json number,title,labels,body,state,assignees,url
 ```
 - Ensure the issue is `OPEN`.
-- Check if it contains the `needs-db` label. If present, verify with the user:
-  > "Issue #<number> has `needs-db`. Has the required SQL migration been run on the live database?"
-  Do not proceed until the user confirms.
 
 ### If no issue number is provided (auto-priority search)
-Search for the highest priority unblocked issue in the backlog:
+Search for the highest priority unassigned issue in the backlog:
 1. Search priority tiers in strict order: `P0` -> `P1` -> `P2` -> `P3`:
    ```bash
    gh issue list --label backlog --label P0 --state open --search "no:assignee" --json number,title,labels,createdAt,assignees --limit 10
@@ -51,9 +48,9 @@ Search for the highest priority unblocked issue in the backlog:
    gh issue list --label backlog --label P1 --state open --search "no:assignee" --json number,title,labels,createdAt,assignees --limit 10
    ```
    Continue to `P2`, then `P3` if higher tiers are empty.
-3. **Filter blocked & in-progress issues**:
+3. **Filter in-progress issues**:
    - **Skip already assigned issues**: Skip any issue with assignees (`assignees.length > 0`), including issues assigned to yourself (`@me`). Any assigned issue has already been picked up.
-   - Skip any issue with `needs-db` unless the user explicitly confirms the database change has been applied.
+   - Do **not** skip `needs-db` issues. They are picked by priority like any other.
 4. **Tiebreak (FIFO)**:
    - When multiple issues exist in the same highest priority tier, select the **oldest first** (lowest issue number / earliest `createdAt`).
 5. Fetch the full issue body:
@@ -70,11 +67,12 @@ Present the candidate issue to the user:
 - **Labels**: `backlog`, `P<n>`, `bug` / `enhancement`, etc.
 - **Issue Summary**: Key lines from the body (`Story`, `Where`, `Done when`, `DB change`).
 - **Proposed Branch**: `fix/<slug>` (if bug) or `feat/<slug>` (if enhancement).
+- **Migration** (only if `needs-db`): say the issue needs SQL that the user runs on the live DB before merging.
 
 Ask for confirmation before altering git state:
 > "Would you like me to pick up **#<number>: <title>** on branch `<prefix>/<slug>`?"
 
-**`--express`** (see `docs/agent-workflow.md` §A): if an explicit issue number was passed, that counts as confirmation, so skip this question. Otherwise ask it once for the proposed issue. `needs-db` confirmation is still required.
+**`--express`** (see `docs/agent-workflow.md` §A): if an explicit issue number was passed, that counts as confirmation, so skip this question. Otherwise ask it once for the proposed issue.
 
 ---
 
@@ -121,7 +119,8 @@ Conclude the pickup phase by summarizing the work and proposing next steps:
 2. Pinpoint the files and lines identified in `Where`.
 3. Propose a reproduction test or TDD strategy.
 4. Note whether UI will change; if so, include capturing `main` ("before") and branch ("after") screenshots per `docs/agent-workflow.md` §G in the verification plan.
-5. Present an implementation plan outline and wait for user guidance before modifying code.
+5. For `needs-db`, include in the plan a migration file with the SQL (starting from `DB change`) and how the app keeps working until the user has run it. Never apply it yourself.
+6. Present an implementation plan outline and wait for user guidance before modifying code.
 
 ---
 
@@ -133,8 +132,8 @@ Without `--express`, stop after Step 5. With it, skip the wait in Step 5 and run
 2. Run `npm run check` (plus `npm run test:e2e` if UI flows changed). On any failure, stop and report; never use `--no-verify` or disable tests.
 3. Commit with a conventional message, then push the branch. Never touch `main`; never force-push.
 4. If any UI changed (components, pages, styles, copy, layout, icons, modals, or flows), capture before/after screenshots on demo data, push them to `chore/pr-screenshots`, and verify the URLs before embedding them in the PR body per `docs/agent-workflow.md` §G (no personal data).
-5. Open the PR with `gh pr create`: what changed, why, how verified, `Closes #<number>`.
-6. Stop. Never merge. Report the PR URL, a checks summary, and an audit trail of what was done unprompted (commit message, branch pushed, screenshots).
+5. Open the PR with `gh pr create`: what changed, why, how verified, `Closes #<number>`. For `needs-db`, state that the migration (name the file) must be run on the live DB before merging.
+6. Stop. Never merge. Report the PR URL, a checks summary, and an audit trail of what was done unprompted (commit message, branch pushed, screenshots), plus any SQL the user still has to run.
 
 ---
 

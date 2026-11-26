@@ -15,7 +15,7 @@ Loaded on demand from [AGENTS.md](../AGENTS.md). Read before committing, branchi
 Passing the literal `--express` flag to a skill (e.g. `pickup-issue --express`, `raise-issue --express`), or starting a message with "express", is the user's explicit approval for the steps that skill names. It removes the "may I?" prompts only.
 
 - **Scope:** that one invocation (one issue, one branch). Later commits or pushes (e.g. after review comments) ask again unless `--express` is passed again.
-- **Still enforced:** the quality gate (C), the branching rules (B: no `main`, no force-push, never merge, no `--no-verify`), the privacy audit, approval for destructive git commands, and the `needs-db` confirmation. Any failure stops the run and is reported.
+- **Still enforced:** the quality gate (C), the branching rules (B: no `main`, no force-push, never merge, no `--no-verify`), the privacy audit, and approval for destructive git commands. Any failure stops the run and is reported.
 - **Audit trail:** end with the PR/issue URL, a checks summary and a list of what was done unprompted (commit message, branch pushed, screenshots).
 - **Pickup:** the issue is confirmed once (naming an issue number counts as confirmation); the run then branches, implements, runs `npm run check`, commits, pushes, pushes PR screenshots to `chore/pr-screenshots` if UI changed, and opens the PR. It stops at the open PR.
 - **Raise:** skips the "create this issue?" gate. The draft is still printed, the duplicate check and privacy audit still run, and a duplicate match stops and asks.
@@ -96,7 +96,7 @@ Add `bug` or `enhancement` to every backlog issue. Add `needs-db` when the fix n
     Keep issues publishable: placeholder names and amounts only, never personal names, real balances or other private data.
 
 - **Clearing:** The PR that fixes an issue says `Closes #<n>` in its body.
-- **Picking up:** Run `gh issue list --label backlog --label P0`, then P1 and so on, and take the highest unblocked issue. Issues labelled `needs-db` wait until the user confirms the SQL has run.
+- **Picking up:** Run `gh issue list --label backlog --label P0`, then P1 and so on, and take the highest unassigned issue. Issues labelled `needs-db` are not skipped: the PR adds the migration file, and the user runs the SQL on the live DB before merging.
 
 ### I. Releases & Versioning
 
