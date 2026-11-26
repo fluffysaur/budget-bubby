@@ -87,7 +87,8 @@ export default function SettingsPage() {
         const activeSection = section ?? "general";
         return (
             <div data-testid="settings-page" className="flex items-start gap-6">
-                <aside className="w-72 shrink-0 space-y-4">
+                {/* Sticky: the group list stays put while the detail pane scrolls */}
+                <aside className="sticky top-0 w-72 shrink-0 space-y-4">
                     <SettingsSubHeader title="Settings" />
                     <SettingsIndexList
                         statuses={statuses}

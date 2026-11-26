@@ -21,7 +21,7 @@ const CC_DUE_DAY_OPTIONS: { day: number; label: string }[] = [
     { day: 7, label: "7d" },
     { day: 3, label: "3d" },
     { day: 1, label: "1d" },
-    { day: 0, label: "Due day" },
+    { day: 0, label: "Due" },
 ];
 
 interface TimeFieldProps {

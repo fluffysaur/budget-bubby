@@ -47,4 +47,25 @@ test.describe("Settings page", () => {
         await expect(page.getByTestId("toggle-push-enabled")).toBeVisible();
         await expect(page.locator("header").first()).toBeVisible();
     });
+
+    test("desktop: group list stays put while the detail pane scrolls", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1280, height: 600 });
+        await page.goto("/settings/notifications");
+        await expect(page.getByTestId("toggle-push-enabled")).toBeVisible();
+
+        const groupRow = page.getByTestId("settings-row-general");
+        const before = await groupRow.boundingBox();
+        const scrolled = await page.locator("main").evaluate((main) => {
+            main.scrollTop = 400;
+            return main.scrollTop;
+        });
+
+        expect(scrolled).toBeGreaterThan(0);
+        await expect(
+            page.getByTestId("toggle-push-enabled"),
+        ).not.toBeInViewport();
+        expect((await groupRow.boundingBox())?.y).toBeCloseTo(before!.y, 0);
+    });
 });
