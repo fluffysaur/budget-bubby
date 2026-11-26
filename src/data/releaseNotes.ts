@@ -11,18 +11,71 @@ import {
     Accessibility,
     Bell,
     Bot,
+    ChevronsUpDown,
+    CreditCard,
     Hash,
     LayoutGrid,
+    ListFilter,
     PartyPopper,
     RefreshCw,
+    Settings,
     ShieldCheck,
+    Smartphone,
     Sparkles,
     TrendingUp,
+    Wallet,
     Zap,
 } from "lucide-react";
 import type { ReleaseNote } from "../lib/releaseNotes";
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+    {
+        version: "0.7.0",
+        date: "2026-11-26",
+        headline: "Tidier everywhere",
+        items: [
+            {
+                icon: ListFilter,
+                tag: "new",
+                text: "Filter your expenses by several categories at once.",
+                to: "/expenses",
+            },
+            {
+                icon: Settings,
+                tag: "better",
+                text: "Settings now has its own page, grouped so things are easier to find.",
+                to: "/settings",
+            },
+            {
+                icon: ChevronsUpDown,
+                tag: "better",
+                text: "New dropdowns slide up from the bottom on phones, and long lists can be searched.",
+            },
+            {
+                icon: Wallet,
+                tag: "better",
+                text: "Update Balances fits more accounts on screen and shows how much each one changed.",
+                to: "/accounts",
+            },
+            {
+                icon: CreditCard,
+                tag: "better",
+                text: "Adding accounts and cards is simpler, and you can type any bank name for a card.",
+                to: "/accounts",
+            },
+            {
+                icon: ShieldCheck,
+                tag: "fixed",
+                text: "Home now matches Budget, showing when your Buffer covers an overspend.",
+                to: "/dashboard",
+            },
+            {
+                icon: Smartphone,
+                tag: "fixed",
+                text: "The push notification setting now fits neatly on phone screens.",
+            },
+        ],
+    },
     {
         version: "0.6.0",
         date: "2026-11-25",
