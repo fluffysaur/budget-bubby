@@ -12,6 +12,9 @@ import {
 } from "../../lib/notificationScheduler";
 import type { NotificationPrefsState } from "../../hooks/useNotificationPrefs";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
+import { Input } from "../ui/Input";
+import { CurrencyInput } from "../ui/CurrencyInput";
+import { FilterChip } from "../ui/FilterChip";
 
 /** CC due reminder chips: days before due (0 = due day). */
 const CC_DUE_DAY_OPTIONS: { day: number; label: string }[] = [
@@ -47,13 +50,14 @@ function TimeField({
                 {icon}
                 {label}
             </label>
-            <input
+            <Input
                 id={id}
+                sizeVariant="sm"
                 type="time"
                 value={value}
                 data-testid={testId}
                 onChange={(e) => onChange(e.target.value)}
-                className="h-10 w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-2.5 text-base font-bold font-mono-num text-(--text-ink) focus:outline-none sm:text-xs"
+                className="font-mono-num font-bold"
             />
         </div>
     );
@@ -126,22 +130,17 @@ export function NotificationAdvancedSections({
                             {CC_DUE_DAY_OPTIONS.map(({ day, label }) => {
                                 const isOn = ccDueDays.includes(day);
                                 return (
-                                    <button
+                                    <FilterChip
                                         key={day}
-                                        type="button"
-                                        aria-pressed={isOn}
+                                        selected={isOn}
                                         data-testid={`chip-cc-due-${day}`}
                                         onClick={() =>
                                             handleToggleCcDueDay(day)
                                         }
-                                        className={`h-10 min-w-14 cursor-pointer rounded-xl border-2 border-(--border-ink) px-3 text-xs font-black shadow-cute-sm transition-press active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${
-                                            isOn
-                                                ? "bg-(--pastel-lilac) text-(--text-ink)"
-                                                : "bg-(--bg-cream) text-(--text-muted)"
-                                        }`}
+                                        className="h-10 min-w-14"
                                     >
                                         {label}
-                                    </button>
+                                    </FilterChip>
                                 );
                             })}
                         </div>
@@ -156,25 +155,29 @@ export function NotificationAdvancedSections({
                                 Budget Warning %
                             </label>
                             <div className="flex items-center gap-1.5">
-                                <input
-                                    id="budget-warning-pct-input"
-                                    type="number"
-                                    min={50}
-                                    max={99}
-                                    value={budgetWarningDraft}
-                                    data-testid="input-budget-warning-pct"
-                                    onChange={(e) =>
-                                        setBudgetWarningDraft(e.target.value)
-                                    }
-                                    onBlur={commitBudgetWarningPct}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            commitBudgetWarningPct();
+                                <div className="w-20 shrink-0">
+                                    <Input
+                                        id="budget-warning-pct-input"
+                                        sizeVariant="sm"
+                                        type="number"
+                                        min={50}
+                                        max={99}
+                                        value={budgetWarningDraft}
+                                        data-testid="input-budget-warning-pct"
+                                        onChange={(e) =>
+                                            setBudgetWarningDraft(
+                                                e.target.value,
+                                            )
                                         }
-                                    }}
-                                    className="w-16 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-base font-bold font-mono-num text-(--text-ink) focus:outline-none sm:text-xs"
-                                />
+                                        onBlur={commitBudgetWarningPct}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                commitBudgetWarningPct();
+                                            }
+                                        }}
+                                    />
+                                </div>
                                 <span className="text-[11px] font-bold text-(--text-muted)">
                                     % of cap
                                 </span>
@@ -189,30 +192,30 @@ export function NotificationAdvancedSections({
                                 Settlement Cap
                             </label>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-(--text-muted)">
-                                    SGD
-                                </span>
-                                <input
-                                    id="settlement-threshold-input"
-                                    type="number"
-                                    min={50}
-                                    step={50}
-                                    value={settlementThresholdDraft}
-                                    data-testid="input-settlement-threshold"
-                                    onChange={(e) =>
-                                        setSettlementThresholdDraft(
-                                            e.target.value,
-                                        )
-                                    }
-                                    onBlur={commitSettlementThreshold}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            commitSettlementThreshold();
+                                <div className="w-32 shrink-0">
+                                    <CurrencyInput
+                                        id="settlement-threshold-input"
+                                        sizeVariant="sm"
+                                        currencySymbol="SGD"
+                                        min={50}
+                                        step={50}
+                                        placeholder=""
+                                        value={settlementThresholdDraft}
+                                        data-testid="input-settlement-threshold"
+                                        onChange={(e) =>
+                                            setSettlementThresholdDraft(
+                                                e.target.value,
+                                            )
                                         }
-                                    }}
-                                    className="w-20 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-2.5 py-1 text-base font-bold font-mono-num text-(--text-ink) focus:outline-none sm:text-xs"
-                                />
+                                        onBlur={commitSettlementThreshold}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                commitSettlementThreshold();
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

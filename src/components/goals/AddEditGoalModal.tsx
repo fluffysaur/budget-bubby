@@ -26,6 +26,10 @@ import {
 import { Alert } from "../ui/Alert";
 import { Button } from "../ui/Button";
 import { Switch } from "../ui/Switch";
+import { Input } from "../ui/Input";
+import { CurrencyInput } from "../ui/CurrencyInput";
+import { FilterChip } from "../ui/FilterChip";
+import { FIELD_LABEL_CLASS } from "../ui/fieldStyles";
 import {
     useAddGoalMutation,
     useUpdateGoalMutation,
@@ -74,11 +78,6 @@ const SUGGESTION_EMOJIS: ReadonlySet<string> = new Set(
     GOAL_TAG_SUGGESTIONS.map((t) => t.emoji),
 );
 
-const LABEL_CLASS =
-    "block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5";
-const INPUT_BASE =
-    "rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)";
-const INPUT_CLASS = `w-full ${INPUT_BASE}`;
 const CHIP_CLASS =
     "inline-flex min-h-9 items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-press cursor-pointer";
 const CHIP_ON =
@@ -368,13 +367,14 @@ export function AddEditGoalModal({
                         <div>
                             <label
                                 htmlFor="goal-buffer-months"
-                                className={LABEL_CLASS}
+                                className={`${FIELD_LABEL_CLASS} mb-1.5`}
                             >
                                 Months of spending
                             </label>
                             <div className="flex items-center gap-2">
-                                <input
+                                <Input
                                     id="goal-buffer-months"
+                                    containerClassName="w-20 shrink-0"
                                     type="number"
                                     inputMode="numeric"
                                     min={BUFFER_MIN_MONTHS}
@@ -384,7 +384,8 @@ export function AddEditGoalModal({
                                     onChange={(e) =>
                                         snapshotBuffer(Number(e.target.value))
                                     }
-                                    className={`${INPUT_BASE} text-base sm:text-sm w-20 shrink-0 font-mono-num text-center`}
+                                    mono
+                                    className="text-center"
                                 />
                                 <span className="min-w-0 flex-1 text-xs text-(--text-muted)">
                                     ×{" "}
@@ -413,7 +414,7 @@ export function AddEditGoalModal({
                         </div>
                     ) : (
                         <div>
-                            <span className={LABEL_CLASS}>Tags</span>
+                            <span className={`${FIELD_LABEL_CLASS} mb-1.5`}>Tags</span>
                             <div
                                 role="group"
                                 aria-label="Suggested tags"
@@ -422,17 +423,15 @@ export function AddEditGoalModal({
                                 {GOAL_TAG_SUGGESTIONS.map((p) => {
                                     const on = hasTag(p.label);
                                     return (
-                                        <button
+                                        <FilterChip
                                             key={p.label}
-                                            type="button"
                                             aria-label={p.label}
-                                            aria-pressed={on}
+                                            selected={on}
                                             onClick={() =>
                                                 on
                                                     ? removeTag(p.label)
                                                     : addTag(p.label)
                                             }
-                                            className={`${CHIP_CLASS} ${on ? CHIP_ON : CHIP_OFF}`}
                                         >
                                             <span className="text-sm">
                                                 {p.emoji}
@@ -440,18 +439,18 @@ export function AddEditGoalModal({
                                             <span className="text-[11px]">
                                                 {p.label}
                                             </span>
-                                        </button>
+                                        </FilterChip>
                                     );
                                 })}
                                 {tags
                                     .filter((t) => !SUGGESTION_LABELS.has(t))
                                     .map((t) => (
-                                        <button
+                                        <FilterChip
                                             key={t}
-                                            type="button"
                                             aria-label={`Remove ${t}`}
+                                            selected
                                             onClick={() => removeTag(t)}
-                                            className={`${CHIP_CLASS} ${CHIP_ON} max-w-40`}
+                                            className="max-w-40"
                                         >
                                             <span className="min-w-0 truncate text-[11px]">
                                                 {t}
@@ -460,20 +459,21 @@ export function AddEditGoalModal({
                                                 className="h-3 w-3 shrink-0"
                                                 strokeWidth={3}
                                             />
-                                        </button>
+                                        </FilterChip>
                                     ))}
                             </div>
                             <div className="flex items-center gap-2">
-                                <input
+                                <Input
                                     type="text"
                                     aria-label="Custom Emoji"
                                     value={emoji}
                                     onChange={(e) => setEmoji(e.target.value)}
                                     maxLength={4}
-                                    className="w-14 shrink-0 text-center rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) py-2 text-xl shadow-xs"
+                                    containerClassName="w-16 shrink-0"
+                                    className="text-center"
                                     placeholder="🎯"
                                 />
-                                <input
+                                <Input
                                     type="text"
                                     aria-label="Add tag"
                                     placeholder="Add tag"
@@ -493,75 +493,44 @@ export function AddEditGoalModal({
                                         }
                                     }}
                                     onBlur={commitTagDraft}
-                                    className={`${INPUT_CLASS} text-base sm:text-sm min-w-0 flex-1`}
+                                    containerClassName="min-w-0 flex-1"
                                 />
                             </div>
                         </div>
                     )}
 
                     {/* Goal Title */}
-                    <div>
-                        <label
-                            htmlFor="goal-title"
-                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                        >
-                            Goal Title *
-                        </label>
-                        <input
-                            id="goal-title"
-                            ref={titleInputRef}
-                            type="text"
-                            placeholder="e.g. Wedding Banquet, HDB Renovation"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2 text-base sm:text-sm font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                        />
-                    </div>
+                    <Input
+                        id="goal-title"
+                        label="Goal Title *"
+                        ref={titleInputRef}
+                        type="text"
+                        placeholder="e.g. Wedding Banquet, HDB Renovation"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                    />
 
                     {/* Target Amount & Target Date Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                htmlFor="goal-target"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Target *
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
-                                    S$
-                                </span>
-                                <input
-                                    id="goal-target"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    placeholder="20,000"
-                                    value={targetAmount}
-                                    readOnly={isBuffer}
-                                    onChange={(e) =>
-                                        setTargetAmount(e.target.value)
-                                    }
-                                    className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                        </div>
+                        <CurrencyInput
+                            id="goal-target"
+                            label="Target *"
+                            min="0.01"
+                            placeholder="20,000"
+                            value={targetAmount}
+                            readOnly={isBuffer}
+                            onChange={(e) => setTargetAmount(e.target.value)}
+                        />
 
-                        <div>
-                            <label
-                                htmlFor="goal-date"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                {isBuffer ? "Build By" : "Target Date"}
-                            </label>
-                            <input
-                                id="goal-date"
-                                type="date"
-                                value={targetDate}
-                                onChange={(e) => setTargetDate(e.target.value)}
-                                className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-xs font-mono-num font-semibold text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) cursor-pointer"
-                            />
-                        </div>
+                        <Input
+                            id="goal-date"
+                            label={isBuffer ? "Build By" : "Target Date"}
+                            type="date"
+                            value={targetDate}
+                            onChange={(e) => setTargetDate(e.target.value)}
+                            mono
+                            className="cursor-pointer"
+                        />
                     </div>
 
                     {!isBuffer && (
@@ -575,29 +544,16 @@ export function AddEditGoalModal({
                             />
                             {useCpfOa && (
                                 <div className="mt-2">
-                                    <label
-                                        htmlFor="goal-cpf-cap"
-                                        className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                                    >
-                                        Up to
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
-                                            S$
-                                        </span>
-                                        <input
-                                            id="goal-cpf-cap"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            placeholder="No cap"
-                                            value={cpfOaCap}
-                                            onChange={(e) =>
-                                                setCpfOaCap(e.target.value)
-                                            }
-                                            className="w-full rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                        />
-                                    </div>
+                                    <CurrencyInput
+                                        id="goal-cpf-cap"
+                                        label="Up to"
+                                        min="0"
+                                        placeholder="No cap"
+                                        value={cpfOaCap}
+                                        onChange={(e) =>
+                                            setCpfOaCap(e.target.value)
+                                        }
+                                    />
                                     <a
                                         href="https://www.cpf.gov.sg/member/tools-and-services/calculators"
                                         target="_blank"

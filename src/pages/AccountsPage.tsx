@@ -5,7 +5,6 @@
  * - Net worth summary card (total of all account balances)
  * - Net Worth progression chart (NetWorthChart)
  * - Grouped account listings with Notion-style table/card view (AccountGroupList)
- * - 1-Click Month-End Check-In Bulk Update Modal (BulkBalanceUpdateModal)
  * - Quick individual balance update modal (UpdateBalanceModal)
  */
 

@@ -31,6 +31,7 @@ import { useInvalidateFinance } from "../hooks/finance/shared";
 import { useCurrentMonth } from "../hooks/useCurrentMonth";
 import { useLazyMockDefaults } from "../hooks/useLazyMockDefaults";
 import {
+    computeSpendableCategoryViews,
     filterStatementsForPerspective,
     isSpendableCategory,
 } from "../lib/financialFormulas";
@@ -129,15 +130,26 @@ export function DashboardPage({
         const spendable = budgetCategories.filter((bc) =>
             bc.category ? isSpendableCategory(bc.category) : false,
         );
+        // Same Buffer-absorption figures as the Budget page
+        const { views } = computeSpendableCategoryViews(budgetCategories);
 
         const spendableItems = spendable.map((bc) => {
             const allocated = bc.allocated_amount || 0;
             const spent = bc.actualSpent || 0;
+            const view = views[bc.category_id];
+            const status = view?.status ?? "normal";
+            const baseRemaining =
+                view?.remaining ??
+                (bc.remaining !== undefined ? bc.remaining : allocated - spent);
+            // Partly covered: show only what Buffer could not absorb
             const remaining =
-                bc.remaining !== undefined ? bc.remaining : allocated - spent;
+                status === "partially_covered"
+                    ? -(view?.uncovered ?? 0)
+                    : baseRemaining;
+            const meterValue = view?.meterValue ?? spent;
             const pct =
                 allocated > 0
-                    ? Math.min(100, Math.round((spent / allocated) * 100))
+                    ? Math.min(100, Math.round((meterValue / allocated) * 100))
                     : 0;
             const ownerName = bc.category?.member_id
                 ? (members.find((m) => m.id === bc.category?.member_id)
@@ -151,6 +163,7 @@ export function DashboardPage({
                 allocated: Math.round(allocated * 100) / 100,
                 remaining: Math.round(remaining * 100) / 100,
                 pct,
+                status,
                 ownerName,
             };
         });

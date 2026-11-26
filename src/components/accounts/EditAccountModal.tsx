@@ -13,6 +13,8 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Select } from "../ui/Select";
+import { Input } from "../ui/Input";
+import { Switch } from "../ui/Switch";
 import { Button } from "../ui/Button";
 import type {
     Account,
@@ -149,39 +151,23 @@ export function EditAccountModal({
 
                     {/* Account Name & Institution */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                htmlFor="edit-account-name"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Account Name *
-                            </label>
-                            <input
-                                id="edit-account-name"
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-base sm:text-sm text-(--text-ink) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                            />
-                        </div>
+                        <Input
+                            id="edit-account-name"
+                            label="Account Name *"
+                            type="text"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
 
-                        <div>
-                            <label
-                                htmlFor="edit-account-institution"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Bank
-                            </label>
-                            <input
-                                id="edit-account-institution"
-                                type="text"
-                                value={institution}
-                                onChange={(e) => setInstitution(e.target.value)}
-                                placeholder="e.g. DBS, OCBC"
-                                className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-base sm:text-sm text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                            />
-                        </div>
+                        <Input
+                            id="edit-account-institution"
+                            label="Bank"
+                            type="text"
+                            value={institution}
+                            onChange={(e) => setInstitution(e.target.value)}
+                            placeholder="e.g. DBS, OCBC"
+                        />
                     </div>
 
                     {/* Category & Owner */}
@@ -196,7 +182,6 @@ export function EditAccountModal({
                                         setCpfKind(e.target.value as CpfKind)
                                     }
                                     disabled={isMatchedCpf}
-                                    className="bg-(--bg-canvas)"
                                 >
                                     {!isMatchedCpf && (
                                         <option value="">Pick one</option>
@@ -215,7 +200,6 @@ export function EditAccountModal({
                                     onChange={(e) =>
                                         setType(e.target.value as AccountType)
                                     }
-                                    className="bg-(--bg-canvas)"
                                 >
                                     <option value="Cash">Cash</option>
                                     <option value="Investment">
@@ -233,7 +217,6 @@ export function EditAccountModal({
                                 value={ownerId}
                                 onChange={(e) => setOwnerId(e.target.value)}
                                 disabled={isMatchedCpf}
-                                className="bg-(--bg-canvas)"
                             >
                                 {members.map((m) => (
                                     <option key={m.id} value={m.id}>
@@ -246,25 +229,17 @@ export function EditAccountModal({
 
                     {/* Joint Status */}
                     <div className="pt-1">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={isJoint}
-                                onChange={(e) => setIsJoint(e.target.checked)}
-                                disabled={type === "CPF"}
-                                className="h-4 w-4 rounded-md border-2 border-(--border-ink) text-purple-600 focus:ring-purple-500 cursor-pointer disabled:opacity-40"
-                            />
-                            <span
-                                className={`text-xs font-bold ${type === "CPF" ? "text-(--text-muted)" : "text-(--text-ink)"}`}
-                            >
-                                Joint
-                            </span>
-                        </label>
-                        {type === "CPF" && (
-                            <span className="text-2xs text-(--text-muted) block mt-0.5">
-                                CPF accounts cannot be joint in SG
-                            </span>
-                        )}
+                        <Switch
+                            label="Joint"
+                            checked={isJoint}
+                            onChange={setIsJoint}
+                            disabled={type === "CPF"}
+                            hint={
+                                type === "CPF"
+                                    ? "CPF accounts cannot be joint in SG"
+                                    : undefined
+                            }
+                        />
                     </div>
 
                     {!isCpf && (
@@ -276,22 +251,14 @@ export function EditAccountModal({
                     )}
 
                     {/* Notes */}
-                    <div>
-                        <label
-                            htmlFor="edit-account-notes"
-                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                        >
-                            Notes
-                        </label>
-                        <input
-                            id="edit-account-notes"
-                            type="text"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="e.g. Salary credited here"
-                            className="w-full px-3 py-2 rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-base sm:text-xs text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                        />
-                    </div>
+                    <Input
+                        id="edit-account-notes"
+                        label="Notes"
+                        type="text"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="e.g. Salary credited here"
+                    />
                 </ModalBody>
 
                 <ModalFooter>
