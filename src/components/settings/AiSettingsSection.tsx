@@ -58,7 +58,14 @@ function isCuratedModel(provider: AiProviderId, model: string): boolean {
     );
 }
 
-export function AiSettingsSection() {
+export interface AiSettingsSectionProps {
+    /** Start expanded (used by the dedicated Bubby AI settings page). */
+    startOpen?: boolean;
+}
+
+export function AiSettingsSection({
+    startOpen = false,
+}: AiSettingsSectionProps = {}) {
     const [provider, setProvider] = useState<AiProviderId>(() =>
         getActiveAiProvider(),
     );
@@ -296,7 +303,7 @@ export function AiSettingsSection() {
             badge={isConfigured ? providerMeta.label : "Not Set"}
             badgeVariant={isConfigured ? "mint" : "slate"}
             icon={<Sparkles className="h-4 w-4" strokeWidth={2.5} />}
-            defaultOpen={defaultOpen}
+            defaultOpen={defaultOpen || startOpen}
         >
             <div className="space-y-4">
                 <p className="text-xs text-(--text-muted) leading-relaxed">

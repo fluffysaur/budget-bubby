@@ -20,6 +20,7 @@ import {
     MONTH_NAMES_SHORT as MONTH_NAMES,
 } from "../../lib/dateUtils";
 import { Select, type SelectOption } from "../ui/dropdown";
+import { Input } from "../ui/Input";
 import { TruncatedText } from "../ui/TruncatedText";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -182,25 +183,26 @@ export function RecurringTable({
             {/* Search & Filter Bar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 {/* Search input */}
-                <div className="relative flex-1 min-w-0">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--color-ink)/50" />
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search name or notes..."
-                        className="w-full pl-9 pr-4 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-white dark:bg-slate-900 text-(--color-ink) dark:text-white placeholder-slate-400 shadow-cute-sm focus:outline-none focus:shadow-cute transition-press"
-                    />
-                    {searchTerm && (
-                        <button
-                            type="button"
-                            onClick={() => setSearchTerm("")}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-(--color-ink)/50 hover:text-(--color-ink) dark:hover:text-white"
-                        >
-                            Clear
-                        </button>
-                    )}
-                </div>
+                <Input
+                    type="text"
+                    sizeVariant="sm"
+                    containerClassName="flex-1"
+                    leftIcon={<Search className="h-4 w-4" />}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search name or notes..."
+                    rightElement={
+                        searchTerm ? (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm("")}
+                                className="text-xs font-bold text-(--text-muted) hover:text-(--text-ink)"
+                            >
+                                Clear
+                            </button>
+                        ) : undefined
+                    }
+                />
 
                 {/* Type & Status filters */}
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">

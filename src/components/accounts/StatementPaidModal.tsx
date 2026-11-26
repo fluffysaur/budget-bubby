@@ -15,7 +15,8 @@ import {
     ModalFooter,
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
+import { CurrencyInput } from "../ui/CurrencyInput";
+import { Switch } from "../ui/Switch";
 import { Alert } from "../ui/Alert";
 import { CurrencyText } from "../ui/CurrencyText";
 import { collapse } from "../../lib/motion";
@@ -125,31 +126,21 @@ function StatementPaidForm({
                     />
                 </div>
 
-                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 shadow-cute-sm">
-                    <input
-                        type="checkbox"
-                        checked={partial}
-                        onChange={(e) => {
-                            setPartial(e.target.checked);
-                            setError(null);
-                        }}
-                        className="h-5 w-5 shrink-0 cursor-pointer accent-(--text-ink)"
-                    />
-                    <span className="min-w-0 flex-1 text-sm font-bold text-(--text-ink)">
-                        Partial payment
-                    </span>
-                </label>
+                <Switch
+                    label="Partial payment"
+                    checked={partial}
+                    onChange={(checked) => {
+                        setPartial(checked);
+                        setError(null);
+                    }}
+                />
 
                 <AnimatePresence initial={false}>
                     {partial && (
                         <m.div key="partial-amount" {...collapse}>
-                            <Input
+                            <CurrencyInput
                                 label="Amount Paid"
-                                type="number"
-                                inputMode="decimal"
-                                step="0.01"
                                 min="0"
-                                mono
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0.00"

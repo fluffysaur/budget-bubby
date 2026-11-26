@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Alert } from "../ui/Alert";
+import { Input } from "../ui/Input";
+import { CurrencyInput } from "../ui/CurrencyInput";
 import { QueryErrorAlert } from "../ui/QueryErrorAlert";
 import { StatCard } from "../ui/StatCard";
 import { CreditCardListSkeleton } from "../ui/PageSkeletons";
@@ -1011,68 +1013,44 @@ export function CreditCardTrackerSection({
                             </div>
                         )}
 
-                        <div>
-                            <label
-                                htmlFor="stmt-amount"
-                                className="flex items-center gap-1 text-xs font-bold text-(--text-ink) mb-1"
-                            >
-                                <DollarSign className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Balance *</span>
-                            </label>
-                            <input
-                                id="stmt-amount"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={stmtAmountInput}
-                                onChange={(e) =>
-                                    setStmtAmountInput(e.target.value)
-                                }
-                                placeholder="e.g. 842.50"
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3.5 py-2.5 text-base font-bold text-(--text-ink) focus:border-purple-700 focus:outline-hidden"
-                                required
-                                autoFocus
-                            />
-                        </div>
+                        <CurrencyInput
+                            id="stmt-amount"
+                            label={
+                                <span className="flex items-center gap-1">
+                                    <DollarSign className="h-3.5 w-3.5" />
+                                    <span>Balance *</span>
+                                </span>
+                            }
+                            min="0"
+                            value={stmtAmountInput}
+                            onChange={(e) => setStmtAmountInput(e.target.value)}
+                            placeholder="e.g. 842.50"
+                            required
+                            autoFocus
+                        />
 
-                        <div>
-                            <label
-                                htmlFor="stmt-due-date"
-                                className="flex items-center gap-1 text-xs font-bold text-(--text-ink) mb-1"
-                            >
-                                <Calendar className="h-3.5 w-3.5 text-(--text-muted)" />
-                                <span>Payment Due Date *</span>
-                            </label>
-                            <input
-                                id="stmt-due-date"
-                                type="date"
-                                value={stmtDueDateInput}
-                                onChange={(e) =>
-                                    setStmtDueDateInput(e.target.value)
-                                }
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-purple-700 focus:outline-hidden"
-                                required
-                            />
-                        </div>
+                        <Input
+                            id="stmt-due-date"
+                            label={
+                                <span className="flex items-center gap-1">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    <span>Payment Due Date *</span>
+                                </span>
+                            }
+                            type="date"
+                            value={stmtDueDateInput}
+                            onChange={(e) => setStmtDueDateInput(e.target.value)}
+                            required
+                        />
 
-                        <div>
-                            <label
-                                htmlFor="stmt-notes"
-                                className="block text-xs font-bold text-(--text-ink) mb-1"
-                            >
-                                Notes
-                            </label>
-                            <input
-                                id="stmt-notes"
-                                type="text"
-                                value={stmtNotesInput}
-                                onChange={(e) =>
-                                    setStmtNotesInput(e.target.value)
-                                }
-                                placeholder="e.g. Miles & dining, Shopee rebate"
-                                className="w-full rounded-xl border border-(--border-ink) bg-(--bg-canvas) px-3 py-2 text-base sm:text-sm text-(--text-ink) focus:border-purple-700 focus:outline-hidden"
-                            />
-                        </div>
+                        <Input
+                            id="stmt-notes"
+                            label="Notes"
+                            type="text"
+                            value={stmtNotesInput}
+                            onChange={(e) => setStmtNotesInput(e.target.value)}
+                            placeholder="e.g. Miles & dining, Shopee rebate"
+                        />
                     </ModalBody>
 
                     <ModalFooter className="justify-end gap-2">

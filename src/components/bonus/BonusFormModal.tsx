@@ -21,6 +21,7 @@ import {
     SegmentedTabs,
     Select,
     memberToSelectOption,
+    Switch,
     TruncatedText,
 } from "../ui";
 import { feedback } from "../../lib/delight/feedback";
@@ -616,19 +617,11 @@ export function BonusFormModal({
                             )}
 
                             {canSaveDefault && (
-                                <label className="flex min-h-11 cursor-pointer select-none items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={saveAsDefault}
-                                        onChange={(e) =>
-                                            setSaveAsDefault(e.target.checked)
-                                        }
-                                        className="h-4 w-4 cursor-pointer rounded-md border-(--border-ink) accent-(--text-ink)"
-                                    />
-                                    <span className="text-xs font-bold text-(--text-ink)">
-                                        Save as default for {recipientName}
-                                    </span>
-                                </label>
+                                <Switch
+                                    label={`Save as default for ${recipientName}`}
+                                    checked={saveAsDefault}
+                                    onChange={setSaveAsDefault}
+                                />
                             )}
                         </div>
                     )}

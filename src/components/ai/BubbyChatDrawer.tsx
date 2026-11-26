@@ -18,7 +18,7 @@ import {
 import { m } from "motion/react";
 import { fadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
-import { useSettings } from "../../context/SettingsContext";
+import { useSettings } from "../../hooks/useSettings";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { useSafeQueryClient } from "../../hooks/finance/shared";
 import { generateUuid } from "../../lib/uuid";
@@ -621,7 +621,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                         size="icon-sm"
                         onClick={() => {
                             onClose();
-                            openSettings();
+                            openSettings("ai");
                         }}
                         aria-label="AI Settings"
                         title="AI Settings"
@@ -695,7 +695,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                                 size="sm"
                                 onClick={() => {
                                     onClose();
-                                    openSettings();
+                                    openSettings("ai");
                                 }}
                                 data-testid="bubby-setup-key-cta"
                                 leftIcon={

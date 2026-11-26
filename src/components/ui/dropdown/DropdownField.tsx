@@ -3,6 +3,12 @@ import { useMergeRefs } from "@floating-ui/react";
 import { ChevronDown } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { collapse } from "../../../lib/motion";
+import {
+    FIELD_ERROR_TEXT_CLASS,
+    FIELD_LABEL_CLASS,
+    fieldClass,
+    fieldContainerClass,
+} from "../fieldStyles";
 import type { DropdownState } from "./useDropdown";
 import type { DropdownSizeVariant, DropdownVariant } from "./types";
 
@@ -24,14 +30,13 @@ export interface DropdownFieldProps {
     "data-testid"?: string;
 }
 
-const FIELD_SIZE = {
-    sm: "px-3 py-2 text-base sm:text-xs pr-9",
-    md: "px-3.5 py-2.5 text-base sm:text-sm pr-10",
-} as const;
+/** Right padding that keeps the value clear of the chevron, per size. */
+const CHEVRON_PADDING = { sm: "pr-9", md: "pr-10" } as const;
 
 /**
- * Label + trigger button + inline error. `field` matches the old native
- * select; `pill` is the compact rounded-full trigger used for inline pickers.
+ * Label + trigger button + inline error. `field` shares the form-field styles
+ * with Input; `pill` is the compact rounded-full trigger used for inline
+ * pickers.
  */
 export const DropdownField = forwardRef<HTMLButtonElement, DropdownFieldProps>(
     (
@@ -57,17 +62,21 @@ export const DropdownField = forwardRef<HTMLButtonElement, DropdownFieldProps>(
 
         const triggerClass = isPill
             ? `relative inline-flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full border border-(--border-subtle) bg-(--bg-canvas) py-1 pl-3 pr-8 text-left text-base font-bold text-(--text-ink) transition-colors hover:border-(--border-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs`
-            : `relative flex w-full min-w-0 items-center gap-2 rounded-xl border-2 bg-(--bg-card) text-left font-semibold text-(--text-ink) transition-colors outline-none focus:ring-2 focus:ring-(--pastel-lilac) disabled:cursor-not-allowed disabled:bg-(--bg-cream) disabled:opacity-50 ${FIELD_SIZE[sizeVariant]} ${
-                  error
-                      ? "border-(--accent-coral) focus:border-(--accent-coral)"
-                      : "border-(--border-ink) focus:border-(--border-ink)"
-              }`;
+            : `relative flex items-center gap-2 text-left ${fieldClass(
+                  sizeVariant,
+                  Boolean(error),
+              )} ${CHEVRON_PADDING[sizeVariant]}`;
 
         return (
             <div
-                className={`${isPill ? "max-w-full" : "w-full"} min-w-0 ${
-                    label && !isPill ? "space-y-1.5" : ""
-                } ${containerClassName}`}
+                className={
+                    isPill
+                        ? `max-w-full min-w-0 ${containerClassName}`
+                        : fieldContainerClass(
+                              containerClassName,
+                              Boolean(label),
+                          )
+                }
             >
                 {label && (
                     <label
@@ -76,7 +85,7 @@ export const DropdownField = forwardRef<HTMLButtonElement, DropdownFieldProps>(
                         className={
                             isPill
                                 ? "sr-only"
-                                : `block text-xs font-bold uppercase tracking-wider text-(--text-muted) ${labelClassName}`
+                                : `${FIELD_LABEL_CLASS} ${labelClassName}`
                         }
                     >
                         {label}
@@ -114,9 +123,7 @@ export const DropdownField = forwardRef<HTMLButtonElement, DropdownFieldProps>(
                 <AnimatePresence initial={false}>
                     {error && (
                         <m.div key="dropdown-error" {...collapse}>
-                            <p className="text-xs font-bold text-(--accent-coral)">
-                                {error}
-                            </p>
+                            <p className={FIELD_ERROR_TEXT_CLASS}>{error}</p>
                         </m.div>
                     )}
                 </AnimatePresence>
