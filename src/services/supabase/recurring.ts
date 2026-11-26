@@ -10,8 +10,41 @@ import {
     resolveGoalLinkedStartDate,
 } from "../../lib/recurringItems";
 import { isValidUuid } from "../../lib/uuid";
+import { isMissingColumnError } from "./shared";
 
 import type { SupabaseContext, StorePeers } from "./context";
+
+type WriteResult = {
+    data: unknown;
+    error: { code?: string; message?: string } | null;
+};
+
+/**
+ * Compat for databases without the recurring goal link migration: an unlinked
+ * item is retried without the goal columns. A linked one fails loudly, so the
+ * link is never silently dropped.
+ */
+async function writeWithGoalLinkFallback<
+    T extends Pick<RecurringItem, "goal_id" | "goal_offset_months">,
+>(
+    payload: T,
+    write: (body: T) => PromiseLike<WriteResult>,
+): Promise<RecurringItem> {
+    let { data, error } = await write(payload);
+    if (isMissingColumnError(error) && "goal_id" in payload) {
+        if (payload.goal_id) {
+            throw new Error(
+                "Goal linking isn't available yet. Remove the linked goal and save again.",
+            );
+        }
+        const body = { ...payload };
+        delete body.goal_id;
+        delete body.goal_offset_months;
+        ({ data, error } = await write(body));
+    }
+    if (error) throw error;
+    return data as RecurringItem;
+}
 
 export class RecurringStore {
     constructor(
@@ -55,36 +88,33 @@ export class RecurringStore {
             }
         }
 
-        const { data, error } = await client
-            .from("recurring_items")
-            .insert({
-                household_id: householdId,
-                owner_id:
-                    input.owner_id === "joint" || !input.owner_id
-                        ? null
-                        : input.owner_id,
-                type: input.type,
-                name: input.name,
-                amount: input.amount,
-                frequency: input.frequency,
-                payment_month: input.payment_month ?? null,
-                start_date: derivedStartDate,
-                end_date: input.end_date || null,
-                notes: input.notes || null,
-                monthly_amortized_amount: monthlyAmortized,
-                due_day: resolveDueDay(input.frequency, input.due_day),
-                category_id: isSpendType(input.type)
-                    ? (input.category_id ?? null)
-                    : null,
-                paid_from_cpf_oa:
-                    isSpendType(input.type) && !!input.paid_from_cpf_oa,
-                goal_id: goalId,
-                goal_offset_months: goalOffsetMonths,
-            })
-            .select()
-            .single();
-        if (error) throw error;
-        return data as RecurringItem;
+        const insertPayload = {
+            household_id: householdId,
+            owner_id:
+                input.owner_id === "joint" || !input.owner_id
+                    ? null
+                    : input.owner_id,
+            type: input.type,
+            name: input.name,
+            amount: input.amount,
+            frequency: input.frequency,
+            payment_month: input.payment_month ?? null,
+            start_date: derivedStartDate,
+            end_date: input.end_date || null,
+            notes: input.notes || null,
+            monthly_amortized_amount: monthlyAmortized,
+            due_day: resolveDueDay(input.frequency, input.due_day),
+            category_id: isSpendType(input.type)
+                ? (input.category_id ?? null)
+                : null,
+            paid_from_cpf_oa:
+                isSpendType(input.type) && !!input.paid_from_cpf_oa,
+            goal_id: goalId,
+            goal_offset_months: goalOffsetMonths,
+        };
+        return writeWithGoalLinkFallback(insertPayload, (body) =>
+            client.from("recurring_items").insert(body).select().single(),
+        );
     }
 
     async updateRecurringItem(
@@ -162,14 +192,14 @@ export class RecurringStore {
             }
         }
 
-        const { data, error } = await client
-            .from("recurring_items")
-            .update(finalUpdates)
-            .eq("id", id)
-            .select()
-            .single();
-        if (error) throw error;
-        return data as RecurringItem;
+        return writeWithGoalLinkFallback(finalUpdates, (body) =>
+            client
+                .from("recurring_items")
+                .update(body)
+                .eq("id", id)
+                .select()
+                .single(),
+        );
     }
 
     async deleteRecurringItem(id: string): Promise<void> {
