@@ -195,11 +195,11 @@ describe("GoalCard Component", () => {
         expect(screen.getByText("Paid for?")).toBeInTheDocument();
     });
 
-    it("shows the rounded-up monthly shortfall in the Pace cell when short", () => {
+    it("shows the monthly shortfall to the cent in the Pace cell when short", () => {
         render(<GoalCard goal={sampleBehindGoal} plan={renoPlan} />);
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
-        expect(screen.getByText("Short S$920/mo")).toBeInTheDocument();
+        expect(screen.getByText("Short S$919.20/mo")).toBeInTheDocument();
     });
 
     it("prompts to mark an overdue goal done", () => {
@@ -844,9 +844,9 @@ describe("GoalsPage Integration", () => {
         });
 
         const activeCards = screen.getAllByTestId(/^goal-card-goal-/);
-        expect(
-            activeCards.map((el) => el.getAttribute("data-testid")),
-        ).toEqual([HDB_CARD, RENO_CARD]);
+        expect(activeCards.map((el) => el.getAttribute("data-testid"))).toEqual(
+            [HDB_CARD, RENO_CARD],
+        );
 
         fireEvent.click(screen.getByRole("tab", { name: /All/i }));
         await waitFor(() => {

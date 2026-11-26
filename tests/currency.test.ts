@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { formatSGD, formatSGDCompact, parseSGD } from "../src/lib/currency";
+import {
+    ceilToCent,
+    formatSGD,
+    formatSGDCompact,
+    parseSGD,
+} from "../src/lib/currency";
 
 describe("currency utilities", () => {
     describe("formatSGD", () => {
@@ -27,12 +32,28 @@ describe("currency utilities", () => {
             expect(formatSGD(-0)).toBe("S$0.00");
         });
 
-        it("formats without cents when showCents is false", () => {
-            expect(formatSGD(1234.5, { showCents: false })).toBe("S$1,235");
-            expect(formatSGD(5000, { showCents: false })).toBe("S$5,000");
-            expect(formatSGD(0, { showCents: false })).toBe("S$0");
-            expect(formatSGD(-50, { showCents: false })).toBe("-S$50");
-            expect(formatSGD(-1234.56, { showCents: false })).toBe("-S$1,235");
+        it("returns S$0.00 for non-finite input", () => {
+            expect(formatSGD(NaN)).toBe("S$0.00");
+            expect(formatSGD(Infinity)).toBe("S$0.00");
+        });
+    });
+
+    describe("ceilToCent", () => {
+        it("rounds a shortfall up to the next cent, not the dollar", () => {
+            expect(ceilToCent(400.001)).toBe(400.01);
+            expect(ceilToCent(919.2)).toBe(919.2);
+            expect(ceilToCent(0)).toBe(0);
+        });
+
+        it("ignores floating point noise on exact cents", () => {
+            expect(ceilToCent(0.07)).toBe(0.07);
+            expect(ceilToCent(0.1 + 0.2)).toBe(0.3);
+            expect(ceilToCent(1.15)).toBe(1.15);
+        });
+
+        it("returns 0 for non-finite input", () => {
+            expect(ceilToCent(NaN)).toBe(0);
+            expect(ceilToCent(Infinity)).toBe(0);
         });
     });
 

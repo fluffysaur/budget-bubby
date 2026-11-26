@@ -39,7 +39,7 @@ export function BonusAllocationCollapsible({
     return (
         <CollapsibleSection
             title="Bonus Splitter"
-            subtitle={`Net ${formatSGD(result.afterCpf, { showCents: false })}`}
+            subtitle={`Net ${formatSGD(result.afterCpf)}`}
             icon={<Sparkles className="h-5 w-5 text-amber-500" />}
             defaultOpen={defaultOpen}
             className={className}

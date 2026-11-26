@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { Info, Plus, Route, TrendingUp, TriangleAlert } from "lucide-react";
-import { formatSGD, formatSGDCompact } from "../../lib/currency";
+import { ceilToCent, formatSGD } from "../../lib/currency";
 import {
     daysBetweenISO,
     formatShortMonth,
@@ -74,7 +74,7 @@ function updatedLabel(asOf: string): string {
 function previewText(g: RoadmapGoalResult, mask: (t: string) => string) {
     if (g.status === "short") {
         return mask(
-            `Short ${formatSGD(Math.ceil(g.gap), { showCents: false })} by ${formatShortMonth(g.goal.targetDate)}`,
+            `Short ${formatSGD(ceilToCent(g.gap))} by ${formatShortMonth(g.goal.targetDate)}`,
         );
     }
     return g.fillMonth
@@ -92,11 +92,7 @@ function RealityLine({ reality }: { reality: RealityCheck }) {
             ? ` (${reality.deltaPct > 0 ? `+${reality.deltaPct}` : reality.deltaPct}%)`
             : "";
     const amount = (
-        <CurrencyText
-            formatted={formatSGD(Math.abs(Math.round(reality.grewPerMonth)), {
-                showCents: false,
-            })}
-        />
+        <CurrencyText formatted={formatSGD(Math.abs(reality.grewPerMonth))} />
     );
     return (
         <span
@@ -190,10 +186,10 @@ export function RoadmapCard({
             return `Delay ${goalTitle(t.goalId)} ${t.edit.months} mo`;
         }
         if (t.edit.type === "trim") {
-            return `Trim ${t.edit.categoryName} ${mask(formatSGD(t.edit.monthlyAmount, { showCents: false }))}/mo`;
+            return `Trim ${t.edit.categoryName} ${mask(formatSGD(t.edit.monthlyAmount))}/mo`;
         }
         if (t.edit.type === "lowerTarget") {
-            return `Lower ${goalTitle(t.goalId)} to ${mask(formatSGD(t.edit.targetAmount, { showCents: false }))}`;
+            return `Lower ${goalTitle(t.goalId)} to ${mask(formatSGD(t.edit.targetAmount))}`;
         }
         return "Count typical bonus";
     };
@@ -250,8 +246,7 @@ export function RoadmapCard({
                                 Short{" "}
                                 <CurrencyText
                                     formatted={formatSGD(
-                                        Math.ceil(result.shortfallPerMonth),
-                                        { showCents: false },
+                                        ceilToCent(result.shortfallPerMonth),
                                     )}
                                 />
                                 /mo
@@ -266,9 +261,7 @@ export function RoadmapCard({
                                 ? "Saving"
                                 : "Estimated saving"}{" "}
                             <CurrencyText
-                                formatted={formatSGD(result.monthlySavings, {
-                                    showCents: false,
-                                })}
+                                formatted={formatSGD(result.monthlySavings)}
                             />
                             /mo
                         </span>
@@ -276,9 +269,7 @@ export function RoadmapCard({
                             <span className="font-mono-num">
                                 CPF OA{" "}
                                 <CurrencyText
-                                    formatted={formatSGD(result.cpfOa.used, {
-                                        showCents: false,
-                                    })}
+                                    formatted={formatSGD(result.cpfOa.used)}
                                 />
                             </span>
                         )}
@@ -317,12 +308,8 @@ export function RoadmapCard({
                                     Pool
                                 </dt>
                                 <dd>
-                                    {mask(
-                                        formatSGD(result.poolToday, {
-                                            showCents: false,
-                                        }),
-                                    )}{" "}
-                                    in non-CPF accounts, minus card bills.{" "}
+                                    {mask(formatSGD(result.poolToday))} in
+                                    non-CPF accounts, minus card bills.{" "}
                                     {haircutPct > 0 && haircutMonths > 0
                                         ? `Investments count at ${haircutLabel(1 - haircutPct)} for goals within ${haircutMonths} months.`
                                         : "Investments count at full value."}
@@ -368,7 +355,7 @@ export function RoadmapCard({
                                         from your combined OA first, then the
                                         pool.
                                         {result.cpfOa.monthlyGrowth > 0
-                                            ? ` OA grows ${mask(formatSGD(result.cpfOa.monthlyGrowth, { showCents: false }))}/mo.`
+                                            ? ` OA grows ${mask(formatSGD(result.cpfOa.monthlyGrowth))}/mo.`
                                             : " Update OA monthly to count its growth."}
                                     </dd>
                                 </div>
@@ -416,7 +403,7 @@ export function RoadmapCard({
                         className="min-h-5 text-xs font-bold text-(--text-ink)"
                     >
                         {selectedId === SPARE_ID ? (
-                            mask(`${formatSGDCompact(spareToday)} spare today`)
+                            mask(`${formatSGD(spareToday)} spare today`)
                         ) : selected ? (
                             <>
                                 {selected.goal.emoji}{" "}
@@ -466,7 +453,7 @@ export function RoadmapCard({
                                         />
                                         <span className="font-mono-num text-[11px] text-(--text-muted)">
                                             <CurrencyText
-                                                formatted={formatSGDCompact(
+                                                formatted={formatSGD(
                                                     g.goal.targetAmount,
                                                 )}
                                             />
@@ -513,7 +500,7 @@ export function RoadmapCard({
                                         {onTrack
                                             ? "On track"
                                             : mask(
-                                                  `Short ${formatSGD(Math.ceil(t.shortfallPerMonth), { showCents: false })}/mo`,
+                                                  `Short ${formatSGD(ceilToCent(t.shortfallPerMonth))}/mo`,
                                               )}
                                     </Badge>
                                     {canApplyTradeOff(t) && (

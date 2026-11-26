@@ -15,7 +15,7 @@
  *    - Empty state
  *    - Edit and Delete action callbacks
  * 3. RenewalCalendar component:
- *    - Renders 12 month cards with compact totals and a proportional fill
+ *    - Renders 12 month cards with full totals and a proportional fill
  *    - Selected month panel lists annual then monthly items
  *    - Year stepper respects start/end dates and jumps back to this year
  * 4. AddRecurringModal component:
@@ -472,7 +472,7 @@ describe("Recurring year helpers", () => {
 describe("RenewalCalendar Component", () => {
     const today = new Date(2026, 8, 10); // 10 Sep 2026
 
-    it("renders 12 month cards with compact totals", () => {
+    it("renders 12 month cards with full totals", () => {
         render(
             <RenewalCalendar
                 recurringItems={sampleItems}
@@ -498,10 +498,10 @@ describe("RenewalCalendar Component", () => {
         }
         expect(
             screen.getByRole("button", { name: /September 2026/i }),
-        ).toHaveTextContent("S$3.2k");
+        ).toHaveTextContent("S$3,219.98");
         expect(
             screen.getByRole("button", { name: /May 2026/i }),
-        ).toHaveTextContent("S$2.9k");
+        ).toHaveTextContent("S$2,919.98");
         expect(screen.queryByText(/Heavy/i)).not.toBeInTheDocument();
     });
 
@@ -553,7 +553,7 @@ describe("RenewalCalendar Component", () => {
         // Income tax ended in Apr 2027
         expect(
             screen.getByRole("button", { name: /May 2027/i }),
-        ).toHaveTextContent("S$20");
+        ).toHaveTextContent("S$19.98");
 
         fireEvent.click(screen.getByRole("button", { name: /jump to 2026/i }));
         expect(

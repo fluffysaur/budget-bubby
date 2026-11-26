@@ -1306,7 +1306,7 @@ describe("Notifications Engine", () => {
             ];
             const changes: GoalStatusChange[] = [
                 {
-                    goal: makePlan({ shortPerMonth: 250, status: "short" }),
+                    goal: makePlan({ shortPerMonth: 249.501, status: "short" }),
                     from: "on_track",
                     to: "short",
                     month: "2026-10",
@@ -1327,7 +1327,7 @@ describe("Notifications Engine", () => {
                 id: "reminder-goal-status-goal-1-2026-10",
                 type: "goal_pacing",
                 title: "Japan Holiday Is Short",
-                message: "Short S$250/mo by Dec 2026",
+                message: "Short S$249.51/mo by Dec 2026",
                 severity: "warning",
             });
 

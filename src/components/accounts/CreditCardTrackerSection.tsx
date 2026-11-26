@@ -492,12 +492,18 @@ export function CreditCardTrackerSection({
                                                 id: "paid",
                                                 label: "Paid",
                                                 value: totalPaid,
+                                                tooltip: mask(
+                                                    `Paid: ${formatSGD(totalPaid)}`,
+                                                ),
                                                 tone: "ok",
                                             },
                                             {
                                                 id: "unpaid",
                                                 label: "Unpaid",
                                                 value: totalUnpaid,
+                                                tooltip: mask(
+                                                    `Unpaid: ${formatSGD(totalUnpaid)}`,
+                                                ),
                                                 tone: "near",
                                             },
                                         ]}
@@ -710,7 +716,7 @@ export function CreditCardTrackerSection({
                                                         <span className="font-mono-num font-medium text-[11px]">
                                                             {card.credit_limit
                                                                 ? mask(
-                                                                      `Limit ${formatSGD(card.credit_limit, { showCents: false })}`,
+                                                                      `Limit ${formatSGD(card.credit_limit)}`,
                                                                   )
                                                                 : "No limit"}
                                                         </span>

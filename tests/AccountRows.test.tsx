@@ -84,21 +84,24 @@ beforeEach(() => localStorage.clear());
 describe("$ / % toggle", () => {
     it("applies to rows and cards, and is remembered", () => {
         const first = renderList();
-        expect(changes()).toEqual(["+S$500 6m", "+S$500 6m"]);
+        expect(changes()).toEqual([
+            "+S$500.00 over 6 months",
+            "+S$500.00 over 6 months",
+        ]);
 
         fireEvent.click(
             screen.getByRole("button", { name: "Show change in percent" }),
         );
         // A zero starting balance has no percentage
-        expect(changes()).toEqual(["+50.0% 6m", "— 6m"]);
+        expect(changes()).toEqual(["+50.0% over 6 months", "— over 6 months"]);
 
         fireEvent.click(screen.getByRole("button", { name: "Cards View" }));
-        expect(changes()).toEqual(["+50.0% 6m", "— 6m"]);
+        expect(changes()).toEqual(["+50.0% over 6 months", "— over 6 months"]);
         expect(localStorage.getItem(ACCOUNT_CHANGE_MODE_KEY)).toBe("percent");
 
         first.unmount();
         renderList();
-        expect(changes()).toEqual(["+50.0% 6m", "— 6m"]);
+        expect(changes()).toEqual(["+50.0% over 6 months", "— over 6 months"]);
     });
 
     it("still works when storage throws", () => {
@@ -111,7 +114,7 @@ describe("$ / % toggle", () => {
         fireEvent.click(
             screen.getByRole("button", { name: "Show change in percent" }),
         );
-        expect(changes()[0]).toBe("+50.0% 6m");
+        expect(changes()[0]).toBe("+50.0% over 6 months");
         spy.mockRestore();
     });
 });

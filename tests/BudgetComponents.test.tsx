@@ -1064,9 +1064,9 @@ describe("BudgetPage", () => {
             ).toBeInTheDocument();
         });
 
-        // Hero card must show S$368 (spendable remaining rounded), not S$3,168 (totalRemaining)
-        expect(screen.getByText("S$368")).toBeInTheDocument();
-        expect(screen.queryByText("S$3,168")).not.toBeInTheDocument();
+        // Hero card must show spendable remaining (S$367.92), not totalRemaining (~S$3,168)
+        expect(screen.getByText("S$367.92")).toBeInTheDocument();
+        expect(screen.queryByText(/^S\$3,16\d\.\d\d$/)).not.toBeInTheDocument();
 
         // Both meters must report the same percentage (1140 / 1507.92 = 76%)
         const heroBar = screen.getByRole("progressbar", {

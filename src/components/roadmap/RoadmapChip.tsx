@@ -1,13 +1,13 @@
 /**
  * RoadmapChip: the household plan on Home, as one full-width row.
- * Line 1: "Goals · On track" or "Goals · Short S$400/mo".
+ * Line 1: "Goals · On track" or "Goals · Short S$400.00/mo".
  * Line 2: the first short goal, or the next goal by date.
  * Hidden when there are no active goals.
  */
 
 import { ChevronRight, Route } from "lucide-react";
 import { useRoadmap } from "../../hooks/useRoadmap";
-import { formatSGD } from "../../lib/currency";
+import { ceilToCent, formatSGD } from "../../lib/currency";
 import { formatShortMonth } from "../../lib/dateUtils";
 import type { RoadmapGoalResult } from "../../lib/roadmap";
 import { CurrencyText, TruncatedText } from "../ui";
@@ -62,8 +62,7 @@ export function RoadmapChip({ onOpen, className = "" }: RoadmapChipProps) {
                                 Short{" "}
                                 <CurrencyText
                                     formatted={formatSGD(
-                                        Math.ceil(result.shortfallPerMonth),
-                                        { showCents: false },
+                                        ceilToCent(result.shortfallPerMonth),
                                     )}
                                 />
                                 /mo

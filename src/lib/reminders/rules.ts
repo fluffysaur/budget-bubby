@@ -22,7 +22,7 @@ import {
     formatShortMonth,
     clampDueDay,
 } from "../dateUtils";
-import { formatSGD } from "../currency";
+import { ceilToCent, formatSGD } from "../currency";
 import { isSpendableCategory } from "../financialFormulas";
 import type { GoalStatusChange } from "../roadmap/alerts";
 import { getUnpaidCardCycles } from "../creditCardCycles";
@@ -694,7 +694,7 @@ export function checkGoalPacingReminders(
                 ? `${goal.goal.title} Is Short`
                 : `${goal.goal.title} Back on Track`,
             message: short
-                ? `Short ${formatSGD(Math.ceil(goal.shortPerMonth), { showCents: false })}/mo by ${formatShortMonth(goal.goal.targetDate.slice(0, 7))}`
+                ? `Short ${formatSGD(ceilToCent(goal.shortPerMonth))}/mo by ${formatShortMonth(goal.goal.targetDate.slice(0, 7))}`
                 : "Your plan covers it again",
             severity: short ? "warning" : "info",
             actionLabel: "View Goal",

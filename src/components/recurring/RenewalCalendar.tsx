@@ -19,7 +19,7 @@ import {
     MONTH_NAMES_SHORT,
     MONTH_NAMES_FULL,
 } from "../../lib/dateUtils";
-import { formatSGD, formatSGDCompact } from "../../lib/currency";
+import { formatSGD } from "../../lib/currency";
 import {
     buildYearOutlay,
     RECURRING_TYPE_ICONS,
@@ -158,7 +158,7 @@ export function RenewalCalendar({
             </div>
 
             {/* Month cards */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {months.map((m) => {
                     const isSelected = m.month === selectedMonth;
                     const isCurrent = isCurrentYear && m.month === thisMonth;
@@ -196,15 +196,18 @@ export function RenewalCalendar({
                             >
                                 {MONTH_NAMES_SHORT[m.month - 1]}
                             </span>
-                            <span
-                                className={`relative font-mono-num text-xs font-extrabold ${
-                                    m.total > 0
-                                        ? "text-(--text-ink)"
-                                        : "text-(--text-faint)"
-                                }`}
-                            >
-                                {m.total > 0 ? formatSGDCompact(m.total) : "-"}
-                            </span>
+                            {m.total > 0 ? (
+                                <CurrencyText
+                                    amount={m.total}
+                                    size="sm"
+                                    tone="default"
+                                    className="relative"
+                                />
+                            ) : (
+                                <span className="relative font-mono-num text-xs font-extrabold text-(--text-faint)">
+                                    -
+                                </span>
+                            )}
                         </button>
                     );
                 })}

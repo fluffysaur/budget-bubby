@@ -77,11 +77,11 @@ function ChartTooltip({
                 )}
             </div>
             <div className="font-mono-num text-indigo-600 dark:text-indigo-400">
-                {mask(formatSGD(value, { showCents: false }))}
+                {mask(formatSGD(value))}
             </div>
             {row.milestones.map((m) => (
                 <div key={m.goalId} className="text-(--text-muted)">
-                    {m.emoji} {m.title} −{mask(formatSGDCompact(m.amount))}
+                    {m.emoji} {m.title} −{mask(formatSGD(m.amount))}
                 </div>
             ))}
         </div>
@@ -130,7 +130,7 @@ export function ProjectionCard({
     const last = projection.at(-1);
     const summary = last
         ? mask(
-              `Pool ${formatSGDCompact(projection[0].value)} now, projected ${formatSGDCompact(last.value)} by ${formatShortMonth(last.month)}`,
+              `Pool ${formatSGD(projection[0].value)} now, projected ${formatSGD(last.value)} by ${formatShortMonth(last.month)}`,
           )
         : "";
 
@@ -369,7 +369,6 @@ export function ProjectionCard({
                                     <CurrencyText
                                         formatted={formatSGD(
                                             Math.abs(c.monthlyDelta),
-                                            { showCents: false },
                                         )}
                                     />
                                     /mo

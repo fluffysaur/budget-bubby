@@ -22,7 +22,7 @@ import {
     RotateCcw,
     TrendingUp,
 } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
+import { ceilToCent, formatSGD } from "../../lib/currency";
 import {
     formatDisplayMonth,
     formatDisplayDate,
@@ -345,7 +345,7 @@ export function GoalCard({
                                             ? "Done"
                                             : isShort
                                               ? mask(
-                                                    `Short ${formatSGD(Math.ceil(plan?.shortPerMonth ?? 0), { showCents: false })}/mo`,
+                                                    `Short ${formatSGD(ceilToCent(plan?.shortPerMonth ?? 0))}/mo`,
                                                 )
                                               : plan?.fillMonth
                                                 ? `Fills ${formatShortMonth(plan.fillMonth)}`

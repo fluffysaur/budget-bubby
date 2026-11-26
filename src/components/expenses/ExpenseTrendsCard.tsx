@@ -81,11 +81,7 @@ export function ExpenseTrendsCard({
                     />
                     <span className="text-[11px] text-(--text-muted) font-mono-num">
                         3-mo avg:{" "}
-                        <CurrencyText
-                            formatted={formatSGD(rolling3MonthAvg, {
-                                showCents: false,
-                            })}
-                        />
+                        <CurrencyText formatted={formatSGD(rolling3MonthAvg)} />
                     </span>
                 </div>
             </div>
@@ -98,11 +94,7 @@ export function ExpenseTrendsCard({
                     </span>
                     <span className="block text-[11px] text-(--text-muted)">
                         Baseline avg:{" "}
-                        <CurrencyText
-                            formatted={formatSGD(rolling6MonthAvg, {
-                                showCents: false,
-                            })}
-                        />
+                        <CurrencyText formatted={formatSGD(rolling6MonthAvg)} />
                     </span>
                 </div>
                 <div className="w-full sm:w-auto flex justify-end">
@@ -181,9 +173,6 @@ export function ExpenseTrendsCard({
                                                         <CurrencyText
                                                             formatted={formatSGD(
                                                                 cat.averageMonthly,
-                                                                {
-                                                                    showCents: false,
-                                                                },
                                                             )}
                                                         />
                                                     </span>

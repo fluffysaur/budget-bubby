@@ -7,34 +7,39 @@
  */
 
 /**
- * Formats a number as Singapore Dollars (S$X,XXX.XX or S$X,XXX).
+ * Formats a number as Singapore Dollars, always with cents (S$X,XXX.XX).
  * Negative values are formatted with a preceding minus sign: -S$XX.XX.
  */
-export function formatSGD(
-    amount: number,
-    options?: { showCents?: boolean },
-): string {
+export function formatSGD(amount: number): string {
     if (isNaN(amount) || !isFinite(amount)) {
-        return options?.showCents === false ? "S$0" : "S$0.00";
+        return "S$0.00";
     }
 
-    const showCents = options?.showCents ?? true;
-    // Round according to decimal precision to avoid -0.00 or floating point artifacts
-    const rounded =
-        Math.round(amount * (showCents ? 100 : 1)) / (showCents ? 100 : 1);
+    // Round to cents to avoid -0.00 or floating point artifacts
+    const rounded = Math.round(amount * 100) / 100;
     const isNegative = rounded < 0;
     const absAmount = Math.abs(rounded);
 
     const formattedAbs = absAmount.toLocaleString("en-SG", {
-        minimumFractionDigits: showCents ? 2 : 0,
-        maximumFractionDigits: showCents ? 2 : 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
 
     return `${isNegative ? "-" : ""}S$${formattedAbs}`;
 }
 
 /**
- * Compact SGD representation (e.g., S$500k, S$1.2M, S$1B) suitable for charts and dashboard cards.
+ * Rounds up to the next cent, e.g. a shortfall of 400.001 becomes 400.01.
+ * Values already on a cent (within float noise) are kept as they are.
+ */
+export function ceilToCent(amount: number): number {
+    if (!isFinite(amount)) return 0;
+    return Math.ceil(Math.round(amount * 1e6) / 1e4) / 100;
+}
+
+/**
+ * Compact SGD representation (e.g., S$500k, S$1.2M, S$1B). Only for chart
+ * axes and tick labels, where space is fixed; use formatSGD everywhere else.
  *
  * Formatting and rounding rules:
  * - Rounded to at most 1 decimal place using standard half-up rounding.
