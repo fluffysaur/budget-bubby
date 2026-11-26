@@ -20,7 +20,12 @@ import {
 } from "recharts";
 import { useReducedMotion } from "motion/react";
 import { CalendarClock, ChartLine, Lock } from "lucide-react";
-import { formatSGD, formatSGDCompact } from "../../lib/currency";
+import {
+    formatSGD,
+    formatSGDCompact,
+    formatSGDEstimate,
+    formatSGDTarget,
+} from "../../lib/currency";
 import { formatShortMonth } from "../../lib/dateUtils";
 import {
     REALITY_MIN_INTERVALS,
@@ -77,11 +82,11 @@ function ChartTooltip({
                 )}
             </div>
             <div className="font-mono-num text-indigo-600 dark:text-indigo-400">
-                {mask(formatSGD(value))}
+                {mask(formatSGDEstimate(value))}
             </div>
             {row.milestones.map((m) => (
                 <div key={m.goalId} className="text-(--text-muted)">
-                    {m.emoji} {m.title} −{mask(formatSGD(m.amount))}
+                    {m.emoji} {m.title} −{mask(formatSGDTarget(m.amount))}
                 </div>
             ))}
         </div>
@@ -130,7 +135,7 @@ export function ProjectionCard({
     const last = projection.at(-1);
     const summary = last
         ? mask(
-              `Pool ${formatSGD(projection[0].value)} now, projected ${formatSGD(last.value)} by ${formatShortMonth(last.month)}`,
+              `Pool ${formatSGDEstimate(projection[0].value)} now, projected ${formatSGDEstimate(last.value)} by ${formatShortMonth(last.month)}`,
           )
         : "";
 

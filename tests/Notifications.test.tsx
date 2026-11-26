@@ -1327,7 +1327,7 @@ describe("Notifications Engine", () => {
                 id: "reminder-goal-status-goal-1-2026-10",
                 type: "goal_pacing",
                 title: "Japan Holiday Is Short",
-                message: "Short S$249.51/mo by Dec 2026",
+                message: "Short S$250/mo by Dec 2026",
                 severity: "warning",
             });
 
@@ -1343,7 +1343,7 @@ describe("Notifications Engine", () => {
             expect(achieved).toMatchObject({
                 id: "reminder-goal-achieved-goal-2",
                 title: "Goal Reached: Emergency Fund",
-                message: "S$10,000.00 goal done",
+                message: "S$10,000 goal done",
             });
         });
 

@@ -49,7 +49,7 @@ import { m, AnimatePresence } from "motion/react";
 import { feedback } from "../../lib/delight/feedback";
 import { listItem } from "../../lib/motion";
 import { financeService } from "../../services/financeService";
-import { formatSGD } from "../../lib/currency";
+import { formatSGD, formatSGDEstimate } from "../../lib/currency";
 import {
     getCurrentMonth,
     formatCountdown,
@@ -716,7 +716,7 @@ export function CreditCardTrackerSection({
                                                         <span className="font-mono-num font-medium text-[11px]">
                                                             {card.credit_limit
                                                                 ? mask(
-                                                                      `Limit ${formatSGD(card.credit_limit)}`,
+                                                                      `Limit ${formatSGDEstimate(card.credit_limit)}`,
                                                                   )
                                                                 : "No limit"}
                                                         </span>

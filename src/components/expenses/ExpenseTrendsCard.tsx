@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
+import { formatSGDEstimate } from "../../lib/currency";
 import { TooltipPopover } from "../ui/TooltipPopover";
 import { Card } from "../ui/Card";
 import { Sparkline } from "../ui/Sparkline";
@@ -81,7 +81,9 @@ export function ExpenseTrendsCard({
                     />
                     <span className="text-[11px] text-(--text-muted) font-mono-num">
                         3-mo avg:{" "}
-                        <CurrencyText formatted={formatSGD(rolling3MonthAvg)} />
+                        <CurrencyText
+                            formatted={formatSGDEstimate(rolling3MonthAvg)}
+                        />
                     </span>
                 </div>
             </div>
@@ -94,7 +96,9 @@ export function ExpenseTrendsCard({
                     </span>
                     <span className="block text-[11px] text-(--text-muted)">
                         Baseline avg:{" "}
-                        <CurrencyText formatted={formatSGD(rolling6MonthAvg)} />
+                        <CurrencyText
+                            formatted={formatSGDEstimate(rolling6MonthAvg)}
+                        />
                     </span>
                 </div>
                 <div className="w-full sm:w-auto flex justify-end">
@@ -171,7 +175,7 @@ export function ExpenseTrendsCard({
                                                         {" "}
                                                         /{" "}
                                                         <CurrencyText
-                                                            formatted={formatSGD(
+                                                            formatted={formatSGDEstimate(
                                                                 cat.averageMonthly,
                                                             )}
                                                         />

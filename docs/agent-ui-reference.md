@@ -69,6 +69,7 @@ Never roll custom raw containers, ad-hoc dialogs, or handwritten alert boxes whe
 - **Badges & Indicators**: Always `<Badge variant="..." />`. Static badges/chips are not live regions; never use `role="status"`. Use `<span aria-label={...}>` or `<Badge />`. Short labels must remain clear (e.g. `Insur.`, not cryptic `Ins`).
 - **Inputs & Selects**: Always `<Input />` and `<Select />`.
 - **Currency & Numbers**: Use `<CurrencyText amount={...} />` or `formatSGD(...)`.
+- **Cents vs whole dollars**: actual amounts use `formatSGD` (cents). Plans, estimates, averages, limits and shortfalls use `formatSGDEstimate` (whole dollars; shortfalls via `ceilToDollar`). Goal targets use `formatSGDTarget`. `formatSGDCompact` only on chart axes.
 - **Tooltips & Popovers**: Always `<TooltipPopover />` for definitions or contextual calculations.
 - **Overflow Protection**: Always wrap dynamic labels with `<TruncatedText text={...} />`.
 

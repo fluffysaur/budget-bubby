@@ -132,7 +132,7 @@ describe("ProjectionCard", () => {
         expect(screen.queryByTestId("projection-locked")).toBeNull();
         expect(
             screen.getByRole("img", {
-                name: /^Pool S\$50,000\.00 now, projected/,
+                name: /^Pool S\$50,000 now, projected/,
             }),
         ).toBeInTheDocument();
     });

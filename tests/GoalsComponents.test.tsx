@@ -107,7 +107,7 @@ describe("GoalCard Component", () => {
         // Left to Fill = stillNeeded - fundedToday, "of <target>"
         expect(screen.getByText("Left to Fill")).toBeInTheDocument();
         expect(screen.getByText(formatSGD(90000))).toBeInTheDocument();
-        expect(screen.getByText(/^of/)).toHaveTextContent(formatSGD(190000.0));
+        expect(screen.getByText(/^of/)).toHaveTextContent("S$190,000");
 
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
         expect(screen.getByText("Target Amount")).toBeInTheDocument();
@@ -199,7 +199,7 @@ describe("GoalCard Component", () => {
         render(<GoalCard goal={sampleBehindGoal} plan={renoPlan} />);
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
-        expect(screen.getByText("Short S$919.20/mo")).toBeInTheDocument();
+        expect(screen.getByText("Short S$920/mo")).toBeInTheDocument();
     });
 
     it("prompts to mark an overdue goal done", () => {

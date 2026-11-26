@@ -7,7 +7,7 @@ const roadmap = vi.hoisted(() => ({
         isLoading: false,
         result: {
             verdict: "short",
-            shortfallPerMonth: 400.001,
+            shortfallPerMonth: 400.01,
             goals: [],
         },
     },
@@ -18,8 +18,8 @@ vi.mock("../src/hooks/useRoadmap", () => ({
 }));
 
 describe("RoadmapChip", () => {
-    it("shows the monthly shortfall rounded up to the cent", () => {
+    it("shows the monthly shortfall rounded up to the dollar", () => {
         render(<RoadmapChip />);
-        expect(screen.getByText("S$400.01")).toBeInTheDocument();
+        expect(screen.getByText("S$401")).toBeInTheDocument();
     });
 });
