@@ -13,19 +13,20 @@
 --   positive control: auth.uid() is A, A can select its own row, A can update
 --     its own row (when the policy/privileges allow it);
 --   attacks: select household B rows -> 0, insert into household B -> 42501,
---     insert an own-household row pointing at a B parent -> 42501,
+--     insert or update an own-household row pointing at a B parent -> 42501,
 --     update/delete B rows -> 0 rows, move an own row into household B ->
 --     denied, B's data unchanged afterwards;
+--   as service_role (bypasses RLS): the same cross-household references and
+--     moving a referenced row to another household are still rejected;
 -- plus anon sees nothing, no open policies, and no view without
--- security_invoker. Everything rolls back.
+-- security_invoker; finally, ON DELETE cascades still run. Everything rolls back.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 select no_plan();
 
 create temp table fx (side text not null, tbl text not null, body jsonb not null, primary key (side, tbl));
--- `todo` rows report as pgTAP TODO: known gaps tracked in an issue.
-create temp table res (n serial, name text not null, pass boolean not null, detail text, todo boolean not null default false);
+create temp table res (n serial, name text not null, pass boolean not null, detail text);
 
 -- Optional per-table column values. `side` null applies to both households;
 -- set it ('a' or 'b') for columns that must differ, e.g. unique ones.
@@ -260,7 +261,7 @@ select 'public.' || c.relname || ' is a view with security_invoker',
 do $$
 declare
   t record; fk record; bpred text; apred text; col text; n bigint; b_before bigint; b_after bigint;
-  state text; atk jsonb; pv jsonb;
+  state text; atk jsonb; pv jsonb; repoint text;
   hh_b constant text := '10000000-0000-0000-0000-00000000000b';
   uid_a constant text := '00000000-0000-0000-0000-0000000000a1';
 begin
@@ -326,10 +327,26 @@ begin
       continue when pv is null;
       atk := pg_temp.gen_row(t.relname, 'a') || jsonb_build_object(fk.col, pv);
       state := pg_temp.attempt_dml('authenticated', pg_temp.ins_sql(t.relname, atk));
-      -- TODO(#272): policies check household_id only, not the parent's household.
-      insert into res (name, pass, detail, todo)
+      insert into res (name, pass, detail)
         values ('A cannot INSERT own row in ' || t.relname || ' pointing at B ' || fk.ref || ' via ' || fk.col,
-                state like 'err:42501%', state, true);
+                state like 'err:42501%', state);
+
+      repoint := format('update public.%I set %I = %L where %s', t.relname, fk.col, pv #>> '{}', apred);
+      state := pg_temp.attempt_dml('authenticated', repoint);
+      insert into res (name, pass, detail)
+        values ('A cannot UPDATE own row in ' || t.relname || ' to point at B ' || fk.ref || ' via ' || fk.col,
+                state like 'err:42501%', state);
+
+      -- RLS does not apply here, so only the database guard (#272) can refuse.
+      -- Single-parent tables (loan_payments) have nothing to cross-reference.
+      if bpred like 'household_id = %'
+         or (select count(*) from pg_constraint k
+              where k.contype = 'f' and k.conrelid = format('public.%I', t.relname)::regclass) > 1 then
+        state := pg_temp.attempt_dml('service_role', repoint);
+        insert into res (name, pass, detail)
+          values ('service_role cannot point ' || t.relname || ' at another household via ' || fk.col,
+                  state like 'err:42501%same household%', state);
+      end if;
     end loop;
 
     -- Attack: UPDATE B rows
@@ -368,9 +385,45 @@ begin
   end loop;
 end $$;
 
-select ok(pass, name || coalesce(' [' || detail || ']', '')) from res where not todo order by n;
-select todo_start('#272 cross-household references');
-select ok(pass, name || coalesce(' [' || detail || ']', '')) from res where todo order by n;
-select todo_end();
+-- Referenced rows cannot change household, even without RLS in the way.
+do $$
+declare
+  t record; state text;
+begin
+  for t in
+    select distinct p.relname from pg_constraint c
+      join pg_class p on p.oid = c.confrelid
+     where c.contype = 'f' and p.relnamespace = 'public'::regnamespace and p.relname <> 'households'
+     order by 1
+  loop
+    state := pg_temp.attempt_dml('service_role',
+      format('update public.%I set household_id = %L where %s', t.relname,
+             '10000000-0000-0000-0000-00000000000b', pg_temp.row_pred(t.relname, 'a')));
+    insert into res (name, pass, detail)
+      values ('referenced rows in ' || t.relname || ' cannot change household',
+              state like 'err:42501%immutable%', state);
+  end loop;
+end $$;
+
+-- The guards must not block ON DELETE CASCADE / SET NULL. Runs last: it
+-- destroys the fixtures (rolled back like everything else).
+do $$
+declare
+  s text; state text;
+begin
+  foreach s in array array['a', 'b'] loop
+    state := pg_temp.attempt_dml('postgres', format(
+      case s when 'a' then 'delete from public.household_members where id = %L'
+             else 'delete from public.households where id = %L' end,
+      case s when 'a' then '20000000-0000-0000-0000-00000000000a'
+             else '10000000-0000-0000-0000-00000000000b' end));
+    insert into res (name, pass, detail)
+      values (case s when 'a' then 'deleting a referenced member cascades cleanly'
+                     else 'deleting a household cascades cleanly' end,
+              state = 'ok:1', state);
+  end loop;
+end $$;
+
+select ok(pass, name || coalesce(' [' || detail || ']', '')) from res order by n;
 select * from finish();
 rollback;
