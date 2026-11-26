@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.0](https://github.com/fluffysaur/budget-bubby/compare/v0.6.0...v0.7.0) (2026-11-26)
+
+
+### Features
+
+* **accounts:** declutter Add Account, Update Balances and card modals ([#289](https://github.com/fluffysaur/budget-bubby/issues/289)) ([474e34f](https://github.com/fluffysaur/budget-bubby/commit/474e34f826ec9c5026d6c5e40baecbe0c496be01))
+* **expenses:** multi-select category filter ([#292](https://github.com/fluffysaur/budget-bubby/issues/292)) ([691276b](https://github.com/fluffysaur/budget-bubby/commit/691276bf1d74f9edb254605152d5d39ea0f9f3d5))
+* **settings:** routed settings page with grouped sub-pages ([#286](https://github.com/fluffysaur/budget-bubby/issues/286)) ([c0db8a4](https://github.com/fluffysaur/budget-bubby/commit/c0db8a4d3c5a3eefebbeac9d449be53cdf7f98bb))
+* **ui:** add custom Select with popover and mobile sheet ([#288](https://github.com/fluffysaur/budget-bubby/issues/288)) ([04987bd](https://github.com/fluffysaur/budget-bubby/commit/04987bdfd1c4028e47221b6f3364e341835ff38c))
+
+
+### Bug Fixes
+
+* **dashboard:** match Home category cards to Budget buffer coverage ([#285](https://github.com/fluffysaur/budget-bubby/issues/285)) ([02edc87](https://github.com/fluffysaur/budget-bubby/commit/02edc8734ba4e6abc9efbe1c355dfed96d660e0a))
+* **settings:** stack push notification row on mobile ([#284](https://github.com/fluffysaur/budget-bubby/issues/284)) ([3f4fa6f](https://github.com/fluffysaur/budget-bubby/commit/3f4fa6fc19d52989545cb60004481d225d73c236))
+
 ## [0.6.0](https://github.com/fluffysaur/budget-bubby/compare/v0.5.1...v0.6.0) (2026-11-25)
 
 
