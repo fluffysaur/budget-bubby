@@ -33,7 +33,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { PWAInstallButton } from "../pwa/PWAInstallButton";
 import { SignOutConfirm } from "../auth/SignOutConfirm";
 import { BubbyIcon } from "../ui/BubbyIcon";
-import { useSettings } from "../../context/SettingsContext";
+import { useSettings } from "../../hooks/useSettings";
 import { usePrivacy } from "../../context/PrivacyContext";
 import { Badge } from "../ui/Badge";
 import { TooltipPopover } from "../ui/TooltipPopover";
@@ -330,7 +330,7 @@ export function DesktopSidebar({
                             <button
                                 {...tipProps}
                                 type="button"
-                                onClick={handleOpenSettings}
+                                onClick={() => handleOpenSettings()}
                                 aria-label="Settings"
                                 title={collapsed ? undefined : "Settings"}
                                 className={`${UTILITY_BTN} ${btnSize}`}

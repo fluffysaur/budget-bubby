@@ -6,14 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { haptics } from "../src/lib/haptics";
 import { feedback } from "../src/lib/delight/feedback";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { SettingsProvider } from "../src/context/SettingsContext";
 import { MobileBottomNav } from "../src/components/layout/MobileBottomNav";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
 import { SpendPage } from "../src/pages/SpendPage";
 import { PlanPage } from "../src/pages/PlanPage";
 import { AddAccountModal } from "../src/components/accounts/AddAccountModal";
 import { EditAccountModal } from "../src/components/accounts/EditAccountModal";
-import { BulkBalanceUpdateModal } from "../src/components/accounts/BulkBalanceUpdateModal";
 import { DeleteAccountModal } from "../src/components/accounts/DeleteAccountModal";
 import { AddEditGoalModal } from "../src/components/goals/AddEditGoalModal";
 import { AddRecurringModal } from "../src/components/recurring/AddRecurringModal";
@@ -25,7 +23,7 @@ import { BonusLogPanel } from "../src/components/bonus/BonusLogPanel";
 import { AddEditCreditCardModal } from "../src/components/accounts/AddEditCreditCardModal";
 import { CreditCardTrackerSection } from "../src/components/accounts/CreditCardTrackerSection";
 import { MarkCardPaidModal } from "../src/components/accounts/MarkCardPaidModal";
-import { NotificationSettingsModal } from "../src/components/layout/NotificationSettingsModal";
+import SettingsPage from "../src/pages/SettingsPage";
 import { AiSettingsSection } from "../src/components/settings/AiSettingsSection";
 import { ExpenseSuccessCelebration } from "../src/components/expenses/ExpenseSuccessCelebration";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
@@ -84,13 +82,11 @@ function renderWithProviders(
     return render(
         <QueryClientProvider client={queryClient}>
             <HouseholdProvider>
-                <SettingsProvider>
-                    <MemoryRouter initialEntries={[initialEntry]}>
-                        <Routes>
-                            <Route path={path} element={ui} />
-                        </Routes>
-                    </MemoryRouter>
-                </SettingsProvider>
+                <MemoryRouter initialEntries={[initialEntry]}>
+                    <Routes>
+                        <Route path={path} element={ui} />
+                    </Routes>
+                </MemoryRouter>
             </HouseholdProvider>
         </QueryClientProvider>,
     );
@@ -350,29 +346,6 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 );
 
                 const saveBtn = screen.getByRole("button", { name: /save changes/i });
-                await act(async () => {
-                    fireEvent.click(saveBtn);
-                });
-
-                expect(saveSpy).toHaveBeenCalledWith("save");
-            });
-
-            it("BulkBalanceUpdateModal triggers feedback.routine('save') on bulk update", async () => {
-                const saveSpy = vi.spyOn(feedback, "routine");
-                vi.spyOn(financeService, "bulkUpdateAccountBalances").mockResolvedValue([mockAccount]);
-
-                renderWithProviders(
-                    <BulkBalanceUpdateModal
-                        isOpen={true}
-                        onClose={vi.fn()}
-                        accounts={[mockAccount]}
-                    />,
-                );
-
-                const input = screen.getByDisplayValue("1500");
-                fireEvent.change(input, { target: { value: "1600" } });
-
-                const saveBtn = screen.getByRole("button", { name: /save snapshot/i });
                 await act(async () => {
                     fireEvent.click(saveBtn);
                 });
@@ -668,6 +641,9 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 fireEvent.change(screen.getByLabelText(/card name/i), {
                     target: { value: "Citi Cash Back" },
                 });
+                fireEvent.change(screen.getByLabelText(/issuing bank/i), {
+                    target: { value: "Citi" },
+                });
 
                 const saveBtn = screen.getByRole("button", { name: /add card/i });
                 await act(async () => {
@@ -754,7 +730,7 @@ describe("Haptics on Key Actions (Issue #49)", () => {
         });
 
         describe("Settings", () => {
-            it("NotificationSettingsModal triggers feedback.routine('save') on updating preference", async () => {
+            it("Settings page triggers feedback.routine('save') on updating preference", async () => {
                 const saveSpy = vi.spyOn(feedback, "routine");
                 const mockPrefs: NotificationPreferences = {
                     household_id: "hh-1",
@@ -778,13 +754,10 @@ describe("Haptics on Key Actions (Issue #49)", () => {
                 vi.spyOn(financeService, "getNotificationPreferences").mockResolvedValue(mockPrefs);
                 vi.spyOn(financeService, "updateNotificationPreferences").mockResolvedValue(mockPrefs);
 
-                renderWithProviders(
-                    <NotificationSettingsModal
-                        isOpen={true}
-                        onClose={vi.fn()}
-                        memberId="mem-1"
-                    />,
-                );
+                renderWithProviders(<SettingsPage />, {
+                    initialEntry: "/settings/general",
+                    path: "/settings/*",
+                });
 
                 const soundToggle = await screen.findByTestId("toggle-sound-enabled");
                 await act(async () => {

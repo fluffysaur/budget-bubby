@@ -15,6 +15,7 @@ import { formatSGD } from "../../lib/currency";
 import { calculateBonusAllocation } from "../../lib/financialFormulas";
 import { CollapsibleSection } from "../ui/CollapsibleSection";
 import { CurrencyText } from "../ui/CurrencyText";
+import { CurrencyInput } from "../ui/CurrencyInput";
 
 export interface BonusAllocationCollapsibleProps {
     initialGrossBonus?: number;
@@ -47,20 +48,14 @@ export function BonusAllocationCollapsible({
                 {/* Top Row: Gross Bonus Input -> CPF -> After CPF */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) p-3 shadow-cute-sm">
-                        <label
-                            htmlFor="bonus-gross-input"
-                            className="block text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mb-1"
-                        >
-                            Gross
-                        </label>
-                        <input
+                        <CurrencyInput
                             id="bonus-gross-input"
-                            type="number"
+                            label="Gross"
                             step="100"
                             min="0"
+                            placeholder=""
                             value={grossInput}
                             onChange={(e) => setGrossInput(e.target.value)}
-                            className="w-full rounded-lg border-2 border-(--border-ink) bg-(--bg-card) px-3 py-1.5 font-mono-num text-base font-black text-(--text-ink) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
                         />
                     </div>
 

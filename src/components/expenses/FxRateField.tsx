@@ -16,9 +16,7 @@ import {
     roundRate,
 } from "../../lib/currencyConverter";
 import { MONTH_NAMES_SHORT } from "../../lib/dateUtils";
-
-const INPUT_CLASS =
-    "rounded-lg border border-(--border-ink) bg-(--bg-card) px-2 py-0.5 text-base sm:text-xs font-semibold text-center text-(--text-ink)";
+import { Input } from "../ui/Input";
 
 interface FxRateInputProps {
     currencyCode: string;
@@ -38,21 +36,25 @@ export function FxRateInput({
     return (
         <label className="flex items-center gap-1.5">
             <span className="text-2xs text-(--text-muted)">1 SGD =</span>
-            <input
-                type="number"
-                inputMode="decimal"
-                step="any"
-                min="0"
-                aria-label={`Exchange rate ${currencyCode}`}
-                value={draft ?? roundRate(effectiveRate)}
-                onChange={(e) => {
-                    setDraft(e.target.value);
-                    const val = parseFloat(e.target.value);
-                    if (val > 0) onCustomRateChange(roundRate(val));
-                }}
-                onBlur={() => setDraft(null)}
-                className={`text-base sm:text-sm w-20 ${INPUT_CLASS}`}
-            />
+            <div className="w-20 shrink-0">
+                <Input
+                    sizeVariant="sm"
+                    mono
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    min="0"
+                    aria-label={`Exchange rate ${currencyCode}`}
+                    value={draft ?? roundRate(effectiveRate)}
+                    onChange={(e) => {
+                        setDraft(e.target.value);
+                        const val = parseFloat(e.target.value);
+                        if (val > 0) onCustomRateChange(roundRate(val));
+                    }}
+                    onBlur={() => setDraft(null)}
+                    className="text-center"
+                />
+            </div>
             <span className="text-2xs font-semibold">{currencyCode}</span>
         </label>
     );
@@ -95,25 +97,29 @@ export function FxRateField({
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <label className="flex items-center gap-1.5 font-bold">
                     <span>≈ S$</span>
-                    <input
-                        type="number"
-                        inputMode="decimal"
-                        step="any"
-                        min="0"
-                        aria-label="Converted SGD"
-                        disabled={!(foreignAmount > 0)}
-                        value={sgdDraft ?? amountInSGD}
-                        onChange={(e) => {
-                            setSgdDraft(e.target.value);
-                            const rate = rateFromSGD(
-                                foreignAmount,
-                                parseFloat(e.target.value),
-                            );
-                            if (rate) onCustomRateChange(rate);
-                        }}
-                        onBlur={() => setSgdDraft(null)}
-                        className={`text-base sm:text-sm w-24 ${INPUT_CLASS}`}
-                    />
+                    <div className="w-24 shrink-0">
+                        <Input
+                            sizeVariant="sm"
+                            mono
+                            type="number"
+                            inputMode="decimal"
+                            step="any"
+                            min="0"
+                            aria-label="Converted SGD"
+                            disabled={!(foreignAmount > 0)}
+                            value={sgdDraft ?? amountInSGD}
+                            onChange={(e) => {
+                                setSgdDraft(e.target.value);
+                                const rate = rateFromSGD(
+                                    foreignAmount,
+                                    parseFloat(e.target.value),
+                                );
+                                if (rate) onCustomRateChange(rate);
+                            }}
+                            onBlur={() => setSgdDraft(null)}
+                            className="text-center"
+                        />
+                    </div>
                 </label>
                 <FxRateInput
                     currencyCode={currencyCode}

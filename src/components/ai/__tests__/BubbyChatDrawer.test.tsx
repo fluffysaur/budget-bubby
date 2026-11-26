@@ -10,7 +10,6 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LazyMotion, domAnimation } from "motion/react";
 import { HouseholdProvider } from "../../../context/HouseholdContext";
-import { SettingsProvider } from "../../../context/SettingsContext";
 import { PrivacyProvider } from "../../../context/PrivacyContext";
 import { AuthProvider } from "../../../context/AuthContext";
 import { BubbyChatDrawer } from "../BubbyChatDrawer";
@@ -29,14 +28,12 @@ function renderDrawer(isOpen = true, onClose = vi.fn()) {
                 <QueryClientProvider client={qc}>
                     <AuthProvider initialAuthenticated>
                         <HouseholdProvider>
-                            <SettingsProvider>
-                                <PrivacyProvider>
-                                    <BubbyChatDrawer
-                                        isOpen={isOpen}
-                                        onClose={onClose}
-                                    />
-                                </PrivacyProvider>
-                            </SettingsProvider>
+                            <PrivacyProvider>
+                                <BubbyChatDrawer
+                                    isOpen={isOpen}
+                                    onClose={onClose}
+                                />
+                            </PrivacyProvider>
                         </HouseholdProvider>
                     </AuthProvider>
                 </QueryClientProvider>
@@ -294,11 +291,9 @@ describe("BubbyChatDrawer", () => {
                 <QueryClientProvider client={qc}>
                     <AuthProvider initialAuthenticated>
                         <HouseholdProvider>
-                            <SettingsProvider>
-                                <PrivacyProvider>
-                                    <DrawerTriggerHarness />
-                                </PrivacyProvider>
-                            </SettingsProvider>
+                            <PrivacyProvider>
+                                <DrawerTriggerHarness />
+                            </PrivacyProvider>
                         </HouseholdProvider>
                     </AuthProvider>
                 </QueryClientProvider>

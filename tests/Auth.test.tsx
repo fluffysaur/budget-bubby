@@ -24,7 +24,6 @@ import {
     getEnrolledBiometricInfo,
     BIOMETRICS_STORAGE_KEY,
 } from "../src/lib/webauthnBiometrics";
-import { SettingsProvider } from "../src/context/SettingsContext";
 
 function AuthTestComponent() {
     const {
@@ -181,9 +180,7 @@ describe("PIN Authentication & Access Control", () => {
             <MemoryRouter>
                 <AuthProvider initialAuthenticated={true}>
                     <HouseholdProvider>
-                        <SettingsProvider>
-                            <DesktopSidebar />
-                        </SettingsProvider>
+                        <DesktopSidebar />
                     </HouseholdProvider>
                 </AuthProvider>
             </MemoryRouter>,
@@ -236,9 +233,7 @@ describe("PIN Authentication & Access Control", () => {
             <MemoryRouter>
                 <AuthProvider initialAuthenticated={true}>
                     <HouseholdProvider>
-                        <SettingsProvider>
-                            <AppHeader />
-                        </SettingsProvider>
+                        <AppHeader />
                     </HouseholdProvider>
                 </AuthProvider>
             </MemoryRouter>,

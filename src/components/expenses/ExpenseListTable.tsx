@@ -386,7 +386,6 @@ export function ExpenseListTable({
                             clearable
                             sizeVariant="sm"
                             containerClassName="w-auto"
-                            className="bg-(--bg-canvas) font-bold text-xs py-1"
                         />
                     </div>
                 )}
