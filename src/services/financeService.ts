@@ -49,10 +49,7 @@ import type {
 } from "../types/finance";
 import { isSupabaseConfigured } from "./supabaseClient";
 import { supabaseFinanceService } from "./supabaseFinanceService";
-import {
-    offlineSyncQueue,
-    registerBackendResolver,
-} from "./offlineSyncQueue";
+import { offlineSyncQueue, registerBackendResolver } from "./offlineSyncQueue";
 import { queryClient } from "../lib/queryClient";
 import type { InboxService } from "./inbox/inboxService";
 import { emitInboxEvent, type InboxEventMap } from "../lib/inbox/inboxEvents";
@@ -67,6 +64,8 @@ export interface FinanceService extends InboxService {
     getAccounts(perspective: Perspective): Promise<Account[]>;
     createAccount(input: CreateAccountInput): Promise<Account>;
     updateAccount(id: string, updates: UpdateAccountInput): Promise<Account>;
+    /** Saves the order of one type group. Never changes `updated_at`. */
+    reorderAccounts(ids: string[]): Promise<void>;
     deleteAccount(id: string): Promise<void>;
     updateAccountBalance(
         accountId: string,
@@ -306,25 +305,25 @@ export const financeService: FinanceService = {
         invalidateFinanceCache();
         return res;
     },
+    reorderAccounts: async (ids) => {
+        await (await getActiveService()).reorderAccounts(ids);
+        invalidateFinanceCache();
+    },
     deleteAccount: async (id) => {
         await (await getActiveService()).deleteAccount(id);
         invalidateFinanceCache();
     },
     updateAccountBalance: async (accountId, newBalance, notes, date) => {
-        const res = await (await getActiveService()).updateAccountBalance(
-            accountId,
-            newBalance,
-            notes,
-            date,
-        );
+        const res = await (
+            await getActiveService()
+        ).updateAccountBalance(accountId, newBalance, notes, date);
         invalidateFinanceCache();
         return res;
     },
     bulkUpdateAccountBalances: async (updates, snapshotDate) => {
-        const res = await (await getActiveService()).bulkUpdateAccountBalances(
-            updates,
-            snapshotDate,
-        );
+        const res = await (
+            await getActiveService()
+        ).bulkUpdateAccountBalances(updates, snapshotDate);
         invalidateFinanceCache();
         return res;
     },
@@ -358,10 +357,9 @@ export const financeService: FinanceService = {
         return res;
     },
     updateBaseProfile: async (profile, allocations) => {
-        await (await getActiveService()).updateBaseProfile(
-            profile,
-            allocations,
-        );
+        await (
+            await getActiveService()
+        ).updateBaseProfile(profile, allocations);
         invalidateFinanceCache();
     },
     getMonthlyBudget: async (month, memberId) =>
@@ -437,12 +435,9 @@ export const financeService: FinanceService = {
         }
     },
     settleSharedExpenses: async (m1, m2, expenseIds, record) => {
-        await (await getActiveService()).settleSharedExpenses(
-            m1,
-            m2,
-            expenseIds,
-            record,
-        );
+        await (
+            await getActiveService()
+        ).settleSharedExpenses(m1, m2, expenseIds, record);
         invalidateFinanceCache();
     },
     getSettleUps: async () => (await getActiveService()).getSettleUps(),
@@ -577,8 +572,7 @@ export const financeService: FinanceService = {
         }
         invalidateInboxCache();
     },
-    getMerchantRules: async () =>
-        (await getActiveService()).getMerchantRules(),
+    getMerchantRules: async () => (await getActiveService()).getMerchantRules(),
     upsertMerchantRule: async (rule) => {
         const res = await (await getActiveService()).upsertMerchantRule(rule);
         invalidateInboxCache();
@@ -591,10 +585,9 @@ export const financeService: FinanceService = {
     listCaptureTokens: async (memberId) =>
         (await getActiveService()).listCaptureTokens(memberId),
     createCaptureToken: async (label, memberId) => {
-        const res = await (await getActiveService()).createCaptureToken(
-            label,
-            memberId,
-        );
+        const res = await (
+            await getActiveService()
+        ).createCaptureToken(label, memberId);
         invalidateInboxCache();
         return res;
     },

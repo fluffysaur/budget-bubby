@@ -110,12 +110,15 @@ const sampleAccounts: Account[] = [
 ];
 
 describe("AccountCard", () => {
-    it("renders account name, institution tag, type badge, formatted balance, and updated timestamp", () => {
+    it("renders account name, institution logo, type badge, formatted balance, and updated timestamp", () => {
         const acc = sampleAccounts[0];
         render(<AccountCard account={acc} />);
 
         expect(screen.getByText("UOB Lady's Savings")).toBeInTheDocument();
-        expect(screen.getByText("UOB")).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: "UOB" })).toHaveAttribute(
+            "src",
+            expect.stringContaining("logos/uob.png"),
+        );
         expect(screen.getByText("Cash")).toBeInTheDocument();
         expect(screen.getByText(formatSGD(10000.0))).toBeInTheDocument();
         expect(screen.getByText("Emergency fund stash")).toBeInTheDocument();

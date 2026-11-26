@@ -25,7 +25,7 @@ describe("AccountCard trend", () => {
         );
     });
 
-    it("shows sparkline and change chip with a trend", () => {
+    it("shows sparkline and change text with a trend", () => {
         render(
             <AccountCard
                 account={account}
@@ -35,7 +35,9 @@ describe("AccountCard trend", () => {
         expect(
             screen.getByRole("img", { name: /balance trend/i }),
         ).toBeInTheDocument();
-        expect(screen.getByTestId("account-trend-chip")).toHaveTextContent("+");
+        expect(screen.getByTestId("account-trend-change")).toHaveTextContent(
+            "+S$300 6m",
+        );
     });
 
     it("opens the update flow from the balance and has no Update text button", () => {

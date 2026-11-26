@@ -16,6 +16,7 @@ import {
 } from "../../lib/financialFormulas";
 import { findDefaultRecurringCategoryId } from "../../lib/recurringItems";
 import { getCurrentMonth } from "../../lib/dateUtils";
+import { backfillSortOrder } from "../../lib/accountOrder";
 
 export const STORAGE_KEY = "budget_buddy_mock_dataset_v1";
 
@@ -52,6 +53,8 @@ export function loadInitialData(): MockSeedDataset {
         else if (/\bMA\b|medi/i.test(acc.name)) acc.cpf_kind = "MA";
         else if (/\bSA\b|special/i.test(acc.name)) acc.cpf_kind = "SA";
     }
+    // Mirrors the account `sort_order` migration's backfill
+    backfillSortOrder(dataset.accounts ?? []);
     // Migrate datasets persisted before the policies -> recurring items rename
     const legacy = dataset as MockSeedDataset & {
         recurringPolicies?: RecurringItem[];

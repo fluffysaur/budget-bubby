@@ -126,6 +126,8 @@ export class SupabaseFinanceServiceImpl implements FinanceService {
         this.accounts.createAccount(...args);
     updateAccount: FinanceService["updateAccount"] = (...args) =>
         this.accounts.updateAccount(...args);
+    reorderAccounts: FinanceService["reorderAccounts"] = (...args) =>
+        this.accounts.reorderAccounts(...args);
     deleteAccount: FinanceService["deleteAccount"] = (...args) =>
         this.accounts.deleteAccount(...args);
     updateAccountBalance: FinanceService["updateAccountBalance"] = (...args) =>
