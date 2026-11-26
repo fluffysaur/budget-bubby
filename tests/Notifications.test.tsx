@@ -20,9 +20,10 @@ import {
     act,
     within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NotificationCenterPopover } from "../src/components/layout/NotificationCenterPopover";
-import { NotificationSettingsModal } from "../src/components/layout/NotificationSettingsModal";
+import SettingsPage from "../src/pages/SettingsPage";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
 import { AuthProvider } from "../src/context/AuthContext";
 import { financeService } from "../src/services/financeService";
@@ -1542,16 +1543,39 @@ describe("Notifications Engine", () => {
     // =========================================================================
     // 4. Notification Settings Modal
     // =========================================================================
-    describe("NotificationSettingsModal Component", () => {
-        it("renders master channels, category toggles, custom thresholds, and updates preferences", async () => {
-            const onClose = vi.fn();
-            renderWithProviders(
-                <NotificationSettingsModal
-                    isOpen={true}
-                    onClose={onClose}
-                    memberId="mem-00000000-0011"
-                />,
+    describe("Settings page: notifications section", () => {
+        const MEMBER_ID = "mem-00000000-0011";
+
+        function renderSettings(entry: string) {
+            return render(
+                <QueryClientProvider
+                    client={
+                        new QueryClient({
+                            defaultOptions: { queries: { retry: false } },
+                        })
+                    }
+                >
+                    <MemoryRouter initialEntries={[entry]}>
+                        <AuthProvider
+                            initialAuthenticated={true}
+                            initialMemberEmail="alex@example.com"
+                        >
+                            <HouseholdProvider defaultPerspective="household">
+                                <Routes>
+                                    <Route
+                                        path="/settings/*"
+                                        element={<SettingsPage />}
+                                    />
+                                </Routes>
+                            </HouseholdProvider>
+                        </AuthProvider>
+                    </MemoryRouter>
+                </QueryClientProvider>,
             );
+        }
+
+        it("renders the index footer with legal links and the app version", async () => {
+            renderSettings("/settings");
 
             expect(
                 await screen.findByRole("heading", { name: "Settings" }),
@@ -1566,10 +1590,35 @@ describe("Notifications Engine", () => {
             expect(
                 within(legal).getByRole("link", { name: "Terms" }),
             ).toHaveAttribute("href", "/terms");
+            expect(
+                within(legal).getByTestId("settings-whats-new-btn"),
+            ).toBeInTheDocument();
+        });
+
+        it("renders push, category toggles and collapsed thresholds, and updates preferences", async () => {
+            renderSettings("/settings/notifications");
+
+            expect(
+                await screen.findByRole("heading", { name: "Notifications" }),
+            ).toBeInTheDocument();
             expect(screen.getByText("Push Notifications")).toBeInTheDocument();
             expect(
-                screen.getByRole("heading", { name: "Sound Effects" }),
-            ).toBeInTheDocument();
+                screen.queryByRole("heading", { name: "Sound Effects" }),
+            ).not.toBeInTheDocument();
+
+            // Thresholds and timing start collapsed
+            expect(
+                screen.queryByTestId("chip-cc-due-7"),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("input-checkin-time"),
+            ).not.toBeInTheDocument();
+            await act(async () => {
+                fireEvent.click(
+                    screen.getByRole("button", { name: /Custom Thresholds/ }),
+                );
+                fireEvent.click(screen.getByRole("button", { name: /Timing/ }));
+            });
 
             // CC due chips: all on by default
             for (const day of [7, 3, 1, 0]) {
@@ -1594,7 +1643,7 @@ describe("Notifications Engine", () => {
                 fireEvent.click(screen.getByTestId("chip-cc-due-7"));
             });
             expect(updateSpy).toHaveBeenCalledWith(
-                "mem-00000000-0011",
+                MEMBER_ID,
                 expect.objectContaining({
                     cc_due_reminder_days: [3, 1, 0],
                     cc_due_days_before: 3,
@@ -1618,7 +1667,7 @@ describe("Notifications Engine", () => {
                 });
             });
             expect(updateSpy).toHaveBeenCalledWith(
-                "mem-00000000-0011",
+                MEMBER_ID,
                 expect.objectContaining({ checkin_time: "20:30" }),
             );
             expect(
@@ -1631,7 +1680,7 @@ describe("Notifications Engine", () => {
                 });
             });
             expect(updateSpy).toHaveBeenCalledWith(
-                "mem-00000000-0011",
+                MEMBER_ID,
                 expect.objectContaining({ quiet_hours_start: "23:00" }),
             );
 
@@ -1644,34 +1693,20 @@ describe("Notifications Engine", () => {
             });
 
             expect(updateSpy).toHaveBeenCalledWith(
-                "mem-00000000-0011",
+                MEMBER_ID,
                 expect.objectContaining({
                     cc_due_reminder_days: [7, 3, 1, 0],
                     checkin_time: "18:00",
                     budget_warning_pct: 80,
                 }),
             );
-
-            // Click Done
-            const doneBtn = screen.getByRole("button", { name: /done/i });
-            await act(async () => {
-                fireEvent.click(doneBtn);
-            });
-            expect(onClose).toHaveBeenCalled();
         });
 
-        it("hides notification types and custom thresholds when push_enabled is toggled off", async () => {
-            const onClose = vi.fn();
-            renderWithProviders(
-                <NotificationSettingsModal
-                    isOpen={true}
-                    onClose={onClose}
-                    memberId="mem-00000000-0011"
-                />,
-            );
+        it("hides notification types and thresholds when push_enabled is toggled off", async () => {
+            renderSettings("/settings/notifications");
 
             expect(
-                await screen.findByText("Notification Types"),
+                await screen.findByTestId("toggle-cc-payment-due"),
             ).toBeInTheDocument();
             expect(screen.getByText("Custom Thresholds")).toBeInTheDocument();
 
@@ -1681,17 +1716,28 @@ describe("Notifications Engine", () => {
             });
 
             expect(
-                screen.queryByText("Notification Types"),
+                screen.queryByTestId("toggle-cc-payment-due"),
             ).not.toBeInTheDocument();
             expect(
                 screen.queryByText("Custom Thresholds"),
             ).not.toBeInTheDocument();
             expect(screen.getByText(/Push is off/i)).toBeInTheDocument();
-
-            // Sound Effects section remains accessible in its own category
+            // Reset stays available
             expect(
-                screen.getByRole("heading", { name: "Sound Effects" }),
+                screen.getByTestId("reset-notification-defaults-btn"),
             ).toBeInTheDocument();
+        });
+
+        it("keeps sound effects on the General section, not Notifications", async () => {
+            renderSettings("/settings/general");
+
+            expect(
+                await screen.findByTestId("toggle-sound-enabled"),
+            ).toBeInTheDocument();
+            expect(screen.getByTestId("toggle-theme")).toBeInTheDocument();
+            expect(
+                screen.queryByTestId("toggle-push-enabled"),
+            ).not.toBeInTheDocument();
         });
 
         it("isSoundEffectsEnabled respects sound_enabled preference in localStorage", () => {
@@ -1713,14 +1759,15 @@ describe("Notifications Engine", () => {
                 financeService,
                 "updateNotificationPreferences",
             );
-            renderWithProviders(
-                <NotificationSettingsModal
-                    isOpen={true}
-                    onClose={vi.fn()}
-                    memberId="mem-00000000-0011"
-                />,
-            );
+            renderSettings("/settings/notifications");
 
+            await act(async () => {
+                fireEvent.click(
+                    await screen.findByRole("button", {
+                        name: /Custom Thresholds/,
+                    }),
+                );
+            });
             const input = await screen.findByTestId("input-budget-warning-pct");
             expect(input).toHaveValue(80);
             updateSpy.mockClear();
@@ -1739,7 +1786,7 @@ describe("Notifications Engine", () => {
             });
             expect(input).toHaveValue(65);
             expect(updateSpy).toHaveBeenCalledWith(
-                "mem-00000000-0011",
+                MEMBER_ID,
                 expect.objectContaining({ budget_warning_pct: 65 }),
             );
 
@@ -1752,7 +1799,7 @@ describe("Notifications Engine", () => {
             });
             expect(input).toHaveValue(50);
             expect(updateSpy).toHaveBeenCalledWith(
-                "mem-00000000-0011",
+                MEMBER_ID,
                 expect.objectContaining({ budget_warning_pct: 50 }),
             );
         });
@@ -1771,21 +1818,15 @@ describe("Notifications Engine", () => {
             });
 
             try {
-                renderWithProviders(
-                    <NotificationSettingsModal
-                        isOpen={true}
-                        onClose={vi.fn()}
-                        memberId="mem-00000000-0011"
-                    />,
-                );
+                renderSettings("/settings/general");
                 expect(
-                    await screen.findByRole("heading", { name: "Settings" }),
+                    await screen.findByRole("heading", { name: "General" }),
                 ).toBeInTheDocument();
                 expect(
                     screen.queryByTestId("toggle-haptics-enabled"),
                 ).not.toBeInTheDocument();
                 expect(
-                    screen.queryByRole("heading", { name: "Haptic Feedback" }),
+                    screen.queryByText("Haptic Feedback"),
                 ).not.toBeInTheDocument();
             } finally {
                 Object.defineProperty(window, "navigator", {
@@ -1807,13 +1848,7 @@ describe("Notifications Engine", () => {
                 writable: true,
             });
 
-            renderWithProviders(
-                <NotificationSettingsModal
-                    isOpen={true}
-                    onClose={vi.fn()}
-                    memberId="mem-00000000-0011"
-                />,
-            );
+            renderSettings("/settings/notifications");
 
             const enableBtn = await screen.findByTestId(
                 "settings-enable-push-btn",

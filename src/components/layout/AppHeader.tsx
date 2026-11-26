@@ -33,7 +33,7 @@ import { useLazyMockDefaults } from "../../hooks/useLazyMockDefaults";
 import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { IOSInstallModal } from "../pwa/IOSInstallModal";
 import { NotificationCenterPopover } from "./NotificationCenterPopover";
-import { useSettings } from "../../context/SettingsContext";
+import { useSettings } from "../../hooks/useSettings";
 import { usePrivacy } from "../../context/PrivacyContext";
 import { Button } from "../ui/Button";
 import { BubbyAvatarButton } from "../bubby/BubbyAvatarButton";

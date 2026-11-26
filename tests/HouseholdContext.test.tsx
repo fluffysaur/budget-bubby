@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useEffect, useState } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import {
     HouseholdProvider,
     useHousehold,
@@ -15,7 +15,6 @@ import {
 } from "../src/context/HouseholdContext";
 import { AppHeader } from "../src/components/layout/AppHeader";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
-import { SettingsProvider } from "../src/context/SettingsContext";
 import { MobileBottomNav } from "../src/components/layout/MobileBottomNav";
 
 function TestConsumer() {
@@ -53,6 +52,10 @@ function TestConsumer() {
             <button onClick={toggleTheme}>Toggle Theme</button>
         </div>
     );
+}
+
+function PathProbe() {
+    return <span data-testid="probe-path">{useLocation().pathname}</span>;
 }
 
 describe("HouseholdContext", () => {
@@ -263,9 +266,7 @@ describe("Layout Components", () => {
                 render(
                     <MemoryRouter>
                         <HouseholdProvider>
-                            <SettingsProvider>
-                                <AppHeader />
-                            </SettingsProvider>
+                            <AppHeader />
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
@@ -321,11 +322,9 @@ describe("Layout Components", () => {
                 render(
                     <MemoryRouter>
                         <HouseholdProvider>
-                            <SettingsProvider>
-                                <AppHeader
-                                    onOpenQuickAdd={handleOpenQuickAdd}
-                                />
-                            </SettingsProvider>
+                            <AppHeader
+                                onOpenQuickAdd={handleOpenQuickAdd}
+                            />
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
@@ -352,10 +351,9 @@ describe("Layout Components", () => {
             await act(async () => {
                 render(
                     <MemoryRouter>
+                        <PathProbe />
                         <HouseholdProvider>
-                            <SettingsProvider>
-                                <AppHeader />
-                            </SettingsProvider>
+                            <AppHeader />
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
@@ -380,10 +378,10 @@ describe("Layout Components", () => {
                 fireEvent.click(settingsOption);
             });
 
-            // Settings modal opens
-            expect(
-                await screen.findByRole("heading", { name: "Settings" }),
-            ).toBeInTheDocument();
+            // Settings opens as a routed page
+            expect(screen.getByTestId("probe-path")).toHaveTextContent(
+                "/settings",
+            );
         });
     });
 
@@ -396,14 +394,15 @@ describe("Layout Components", () => {
 
             await act(async () => {
                 render(
-                    <HouseholdProvider>
-                        <SettingsProvider>
+                    <MemoryRouter>
+                        <PathProbe />
+                        <HouseholdProvider>
                             <DesktopSidebar
                                 activeTab={selectedTab}
                                 onSelectTab={onSelectTab}
                             />
-                        </SettingsProvider>
-                    </HouseholdProvider>,
+                        </HouseholdProvider>
+                    </MemoryRouter>,
                 );
             });
 
@@ -427,10 +426,10 @@ describe("Layout Components", () => {
             await act(async () => {
                 fireEvent.click(settingsBtn);
             });
-            // Settings modal opens via context, with no header mounted
-            expect(
-                await screen.findByRole("heading", { name: "Settings" }),
-            ).toBeInTheDocument();
+            // Settings opens as a routed page, with no header mounted
+            expect(screen.getByTestId("probe-path")).toHaveTextContent(
+                "/settings",
+            );
 
             const refreshBtn = screen.getByRole("button", {
                 name: /^refresh$/i,

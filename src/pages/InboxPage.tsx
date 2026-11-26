@@ -13,7 +13,7 @@ import { Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, ChevronRight, Inbox, Trash2 } from "lucide-react";
 import { useLoggedInMember } from "../hooks/useLoggedInMember";
-import { useSettings } from "../context/SettingsContext";
+import { useSettings } from "../hooks/useSettings";
 import { useCategoriesQuery } from "../hooks/finance/categories";
 import { useAllExpensesQuery } from "../hooks/finance/expenses";
 import { useGoalsQuery } from "../hooks/finance/goals";
@@ -642,7 +642,7 @@ export function InboxPage() {
                             <Button
                                 type="button"
                                 variant="primary"
-                                onClick={openSettings}
+                                onClick={() => openSettings("auto-capture")}
                             >
                                 Set Up
                             </Button>

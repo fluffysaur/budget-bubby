@@ -3,7 +3,6 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { renderHook } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { HouseholdProvider } from "../src/context/HouseholdContext";
-import { SettingsProvider } from "../src/context/SettingsContext";
 import { DesktopSidebar } from "../src/components/layout/DesktopSidebar";
 import { AppHeader } from "../src/components/layout/AppHeader";
 import {
@@ -16,13 +15,11 @@ function Harness() {
     return (
         <MemoryRouter>
             <HouseholdProvider>
-                <SettingsProvider>
-                    <AppHeader
-                        sidebarCollapsed={collapsed}
-                        onToggleSidebar={toggle}
-                    />
-                    <DesktopSidebar collapsed={collapsed} spendBadgeCount={3} />
-                </SettingsProvider>
+                <AppHeader
+                    sidebarCollapsed={collapsed}
+                    onToggleSidebar={toggle}
+                />
+                <DesktopSidebar collapsed={collapsed} spendBadgeCount={3} />
             </HouseholdProvider>
         </MemoryRouter>
     );
@@ -132,9 +129,7 @@ describe("collapsible desktop sidebar", () => {
                 render(
                     <MemoryRouter>
                         <HouseholdProvider>
-                            <SettingsProvider>
-                                <AppHeader />
-                            </SettingsProvider>
+                            <AppHeader />
                         </HouseholdProvider>
                     </MemoryRouter>,
                 );
