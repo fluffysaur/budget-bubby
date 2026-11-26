@@ -4,7 +4,7 @@
  * Net Worth card, chart and account list. Empty selection means All.
  */
 
-import { Button } from "../ui/Button";
+import { FilterChip } from "../ui/FilterChip";
 import type { AccountType } from "../../types/finance";
 import {
     ACCOUNT_TYPE_FILTER_LABELS,
@@ -37,28 +37,24 @@ export function AccountTypeFilterBar({
             aria-label="Filter by account type"
             className={`flex flex-wrap gap-2 ${className}`}
         >
-            <Button
-                variant={selected.length === 0 ? "primary" : "secondary"}
-                size="sm"
-                aria-pressed={selected.length === 0}
+            <FilterChip
+                selected={selected.length === 0}
                 className="min-h-11 px-4"
                 onClick={onClear}
             >
                 All
-            </Button>
+            </FilterChip>
             {types.map((type) => {
                 const isActive = selected.includes(type);
                 return (
-                    <Button
+                    <FilterChip
                         key={type}
-                        variant={isActive ? "primary" : "secondary"}
-                        size="sm"
-                        aria-pressed={isActive}
+                        selected={isActive}
                         className="min-h-11 px-4"
                         onClick={() => onToggle(type)}
                     >
                         {ACCOUNT_TYPE_FILTER_LABELS[type]}
-                    </Button>
+                    </FilterChip>
                 );
             })}
         </div>

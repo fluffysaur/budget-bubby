@@ -32,6 +32,7 @@ import {
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
+import { CurrencyInput } from "../ui/CurrencyInput";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
@@ -307,22 +308,14 @@ export function AddRecurringModal({
                     )}
 
                     {/* Name */}
-                    <div>
-                        <label
-                            htmlFor="recurring-name"
-                            className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                        >
-                            Name *
-                        </label>
-                        <input
-                            id="recurring-name"
-                            type="text"
-                            placeholder="e.g. Netflix, gym, phone plan, cloud storage"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-3.5 py-2 text-base sm:text-sm rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                        />
-                    </div>
+                    <Input
+                        id="recurring-name"
+                        label="Name *"
+                        type="text"
+                        placeholder="e.g. Netflix, gym, phone plan, cloud storage"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
 
                     {/* Type and Owner grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -334,7 +327,6 @@ export function AddRecurringModal({
                                 onChange={(e) =>
                                     setType(e.target.value as RecurringItemType)
                                 }
-                                className="bg-(--bg-canvas)"
                             >
                                 <option value="insurance">🛡️ Insurance</option>
                                 <option value="tax">🏛️ Tax</option>
@@ -353,7 +345,6 @@ export function AddRecurringModal({
                                     label="Owner"
                                     value={ownerId}
                                     onChange={(e) => setOwnerId(e.target.value)}
-                                    className="bg-(--bg-canvas)"
                                 >
                                     {members.map((m) => (
                                         <option key={m.id} value={m.id}>
@@ -373,7 +364,6 @@ export function AddRecurringModal({
                                 label="Category"
                                 value={selectedCategoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
-                                className="bg-(--bg-canvas)"
                             >
                                 <option value="">No category</option>
                                 {scopedCategories.map((c) => (
@@ -387,29 +377,14 @@ export function AddRecurringModal({
 
                     {/* Amount & Frequency grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label
-                                htmlFor="recurring-amount"
-                                className="block text-xs font-bold uppercase tracking-wider text-(--text-muted) mb-1.5"
-                            >
-                                Amount *
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-2 text-sm font-bold text-(--text-muted)">
-                                    S$
-                                </span>
-                                <input
-                                    id="recurring-amount"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    placeholder="1200.00"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full pl-9 pr-3.5 py-2 text-base sm:text-sm font-mono-num font-semibold rounded-xl border-2 border-(--border-ink) bg-(--bg-canvas) text-(--text-ink) placeholder:text-(--text-muted) focus:border-(--border-ink) focus:bg-(--bg-card) focus:outline-none focus:ring-2 focus:ring-(--pastel-lilac)"
-                                />
-                            </div>
-                        </div>
+                        <CurrencyInput
+                            id="recurring-amount"
+                            label="Amount *"
+                            min="0.01"
+                            placeholder="1200.00"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                        />
 
                         <div>
                             <Select
@@ -421,7 +396,6 @@ export function AddRecurringModal({
                                         e.target.value as RecurringFrequency,
                                     )
                                 }
-                                className="bg-(--bg-canvas)"
                             >
                                 <option value="annually">Yearly</option>
                                 <option value="monthly">Monthly</option>
@@ -440,7 +414,6 @@ export function AddRecurringModal({
                                     onChange={(e) =>
                                         setPaymentMonth(Number(e.target.value))
                                     }
-                                    className="bg-(--bg-canvas)"
                                 >
                                     {MONTH_OPTIONS.map((m) => (
                                         <option key={m.value} value={m.value}>
@@ -467,7 +440,6 @@ export function AddRecurringModal({
                                 value={dueDay}
                                 onChange={(e) => setDueDay(e.target.value)}
                                 mono
-                                className="bg-(--bg-canvas)"
                             />
                         </div>
                     </div>
@@ -487,7 +459,6 @@ export function AddRecurringModal({
                                     label="Link to goal"
                                     value={goalId}
                                     onChange={(e) => setGoalId(e.target.value)}
-                                    className="bg-(--bg-canvas)"
                                 >
                                     <option value="">None (manual date)</option>
                                     {linkableGoals.map((g) => (
@@ -507,7 +478,6 @@ export function AddRecurringModal({
                                                 Number(e.target.value),
                                             )
                                         }
-                                        className="bg-(--bg-canvas)"
                                     >
                                         {offsetChoices.map((m) => (
                                             <option key={m} value={m}>
@@ -542,7 +512,6 @@ export function AddRecurringModal({
                             onChange={(e) => setStartDate(e.target.value)}
                             disabled={Boolean(linkedGoal)}
                             mono
-                            className="bg-(--bg-canvas)"
                         />
                         <Input
                             id="recurring-end-date"
@@ -552,7 +521,6 @@ export function AddRecurringModal({
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                             mono
-                            className="bg-(--bg-canvas)"
                         />
                     </div>
 
