@@ -405,6 +405,13 @@ begin
   end loop;
 end $$;
 
+-- A missing parent is still the foreign key's error, not a household mismatch.
+insert into res (name, pass, detail)
+select 'a reference to a missing row still fails the foreign key', state like 'err:23503%', state
+  from (select pg_temp.attempt_dml('service_role', format(
+          'update public.expenses set category_id = %L where %s',
+          gen_random_uuid(), pg_temp.row_pred('expenses', 'a'))) as state) s;
+
 -- The guards must not block ON DELETE CASCADE / SET NULL. Runs last: it
 -- destroys the fixtures (rolled back like everything else).
 do $$
