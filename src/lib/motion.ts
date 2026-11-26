@@ -88,6 +88,39 @@ export const collapse = {
 };
 
 /**
+ * Plain opacity fade (160ms). Used for scrims behind sheets.
+ */
+export const fade = {
+    initial: { opacity: 0 },
+    animate: {
+        opacity: 1,
+        transition: { duration: DURATION.fast, ease: EASE_OUT_SOFT },
+    },
+    exit: {
+        opacity: 0,
+        transition: { duration: DURATION.fast, ease: EASE_IN_FAST },
+    },
+    transition: { duration: DURATION.fast, ease: EASE_OUT_SOFT },
+};
+
+/**
+ * Bottom sheet slide-up from off-screen (220ms enter, 160ms exit).
+ * Used for mobile pickers stacked over the page or a modal.
+ */
+export const sheetUp = {
+    initial: { y: "100%" },
+    animate: {
+        y: 0,
+        transition: { duration: DURATION.base, ease: EASE_OUT_SOFT },
+    },
+    exit: {
+        y: "100%",
+        transition: { duration: DURATION.fast, ease: EASE_IN_FAST },
+    },
+    transition: { duration: DURATION.base, ease: EASE_OUT_SOFT },
+};
+
+/**
  * Layout-aware list row preset with fade-out exit.
  */
 export const listItem = {

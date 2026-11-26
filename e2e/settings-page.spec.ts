@@ -52,6 +52,8 @@ test.describe("Settings page", () => {
         page,
     }) => {
         await page.setViewportSize({ width: 1280, height: 600 });
+        // The page entrance slide would otherwise move the row mid-measurement.
+        await page.emulateMedia({ reducedMotion: "reduce" });
         await page.goto("/settings/notifications");
         await expect(page.getByTestId("toggle-push-enabled")).toBeVisible();
 

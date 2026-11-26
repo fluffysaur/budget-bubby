@@ -31,10 +31,12 @@ import {
 } from "../ui/AnimatedModal";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
+import { Select as CustomSelect, type SelectOption } from "../ui/dropdown";
 import { Input } from "../ui/Input";
 import { CurrencyInput } from "../ui/CurrencyInput";
 import { Textarea } from "../ui/Textarea";
 import { formatShortMonth, MONTH_NAMES_FULL } from "../../lib/dateUtils";
+import { getCategoryIconComponent } from "../../lib/categoryPresets";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
 import { feedback } from "../../lib/delight/feedback";
 import { filterCategoriesForMember } from "../../lib/financialFormulas";
@@ -186,6 +188,27 @@ export function AddRecurringModal({
                 ownerId === "joint" ? undefined : ownerId,
             ),
         [categories, ownerId],
+    );
+
+    const categoryOptions = useMemo<SelectOption[]>(
+        () =>
+            scopedCategories.map((c) => {
+                const Icon = getCategoryIconComponent(c.icon);
+                return {
+                    value: c.id,
+                    label: c.name,
+                    icon: (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-canvas)">
+                            <Icon
+                                className="h-3.5 w-3.5"
+                                style={{ color: c.color }}
+                                strokeWidth={2.5}
+                            />
+                        </span>
+                    ),
+                };
+            }),
+        [scopedCategories],
     );
 
     if (!isOpen) return null;
@@ -359,19 +382,15 @@ export function AddRecurringModal({
                     {/* Spend category (subscription / bill / other only) */}
                     {showCategory && (
                         <div>
-                            <Select
+                            <CustomSelect
                                 id="recurring-category"
                                 label="Category"
                                 value={selectedCategoryId}
-                                onChange={(e) => setCategoryId(e.target.value)}
-                            >
-                                <option value="">No category</option>
-                                {scopedCategories.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name}
-                                    </option>
-                                ))}
-                            </Select>
+                                onValueChange={setCategoryId}
+                                options={categoryOptions}
+                                placeholder="No category"
+                                clearable
+                            />
                         </div>
                     )}
 
