@@ -29,6 +29,25 @@ export async function openSelect(
 }
 
 /**
+ * Clicks each of `optionLabels` in a MultiSelect named `trigger`. The list
+ * stays open between toggles; call again to untick.
+ *
+ *     await toggleOptions("Category", ["Food", "Fun"]);
+ */
+export async function toggleOptions(
+    trigger: Name | HTMLElement,
+    optionLabels: Name[],
+    container?: HTMLElement,
+): Promise<void> {
+    const listbox = await openSelect(trigger, container);
+    for (const optionLabel of optionLabels) {
+        fireEvent.click(
+            within(listbox).getByRole("option", { name: optionLabel }),
+        );
+    }
+}
+
+/**
  * Picks `optionLabel` from the custom Select named `trigger` (its label or
  * aria-label). The RTL counterpart of the e2e `pickOption` helper.
  *

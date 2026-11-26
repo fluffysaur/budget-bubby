@@ -125,6 +125,39 @@ describe("FinanceService Layer (Dual-Mode & Mock Persistence)", () => {
             }
         });
 
+        it("filters by several categoryIds and by a legacy categoryId", async () => {
+            const all = await mockFinanceService.getExpenses();
+            const ids = [
+                ...new Set(all.map((e) => e.category_id).filter(Boolean)),
+            ] as string[];
+            expect(ids.length).toBeGreaterThan(1);
+            const pair = ids.slice(0, 2);
+
+            const multi = await mockFinanceService.getExpenses({
+                categoryIds: pair,
+            });
+            expect(multi.length).toBe(
+                all.filter((e) => pair.includes(e.category_id ?? "")).length,
+            );
+            expect(new Set(multi.map((e) => e.category_id))).toEqual(
+                new Set(pair),
+            );
+
+            const legacy = await mockFinanceService.getExpenses({
+                categoryId: pair[0],
+            });
+            expect(legacy).toEqual(
+                await mockFinanceService.getExpenses({
+                    categoryIds: [pair[0]],
+                }),
+            );
+
+            const empty = await mockFinanceService.getExpenses({
+                categoryIds: [],
+            });
+            expect(empty.length).toBe(all.length);
+        });
+
         it("adds a new shared expense and verifies settlement balance updates", async () => {
             const overviewBefore =
                 await mockFinanceService.getHouseholdOverview();

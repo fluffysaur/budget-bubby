@@ -8,6 +8,7 @@ import type {
 } from "../../types/finance";
 import { addMonths, getCurrentSingaporeTime } from "../../lib/dateUtils";
 import { isValidUuid } from "../../lib/uuid";
+import { getFilterCategoryIds } from "../../lib/expenseFilter";
 import {
     normalizeExpenseTag,
     normalizeExpenseTags,
@@ -51,8 +52,9 @@ export class ExpensesStore {
                     .gte("date", `${filter.month}-01`)
                     .lt("date", `${nextMonth}-01`);
             }
-            if (filter?.categoryId) {
-                query = query.eq("category_id", filter.categoryId);
+            const categoryIds = getFilterCategoryIds(filter);
+            if (categoryIds.length > 0) {
+                query = query.in("category_id", categoryIds);
             }
             if (filter?.payerId) {
                 query = query.eq("payer_id", filter.payerId);
