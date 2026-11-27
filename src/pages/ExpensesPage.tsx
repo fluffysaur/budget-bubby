@@ -7,15 +7,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import {
-    Receipt,
-    Plus,
-    ArrowRightLeft,
-    Scale,
-    CheckCircle2,
-    ListPlus,
-    PiggyBank,
-} from "lucide-react";
+import { Plus, Scale, CheckCircle2, ListPlus, PiggyBank } from "lucide-react";
 import { InboxShortcutButton } from "../components/inbox/InboxShortcutButton";
 import { useHousehold } from "../context/HouseholdContext";
 import {
@@ -136,11 +128,15 @@ export function ExpensesPage({
         }
     }, [activeMember]);
 
-    // The month query ignores the tag: a tag spans all months (see
-    // listExpenses below), so stat cards stay on the whole month.
+    // Stats, settlement and trends always cover the whole month: the month
+    // query carries no list filters (search, category, shared, tag). Only the
+    // personal view's active member scopes it, as before. The ledger narrows
+    // this same list client-side (see listExpenses).
+    const statsMonth = filter.month || currentMonth;
+    const statsPayerId = activeMember?.id;
     const monthFilter = useMemo<ExpenseFilter>(
-        () => (filter.tag ? { ...filter, tag: undefined } : filter),
-        [filter],
+        () => ({ month: statsMonth, payerId: statsPayerId }),
+        [statsMonth, statsPayerId],
     );
 
     // TanStack Query Cached Data Hooks
@@ -279,6 +275,7 @@ export function ExpensesPage({
         const sum = expenses.reduce((acc, exp) => acc + exp.amount, 0);
         return Math.round(sum * 100) / 100;
     }, [expenses]);
+    const expenseCount = expenses.length;
 
     const totalShared = useMemo(() => {
         const sum = expenses
@@ -360,15 +357,18 @@ export function ExpensesPage({
         () => (isTagScope ? { ...filter, month: undefined } : filter),
         [filter, isTagScope],
     );
-    const listExpenses = useMemo(
-        () =>
-            isTagScope
-                ? tagSourceExpenses
-                      .filter((e) => matchesExpenseFilter(e, listFilter))
-                      .sort((a, b) => b.date.localeCompare(a.date))
-                : expenses,
-        [isTagScope, tagSourceExpenses, listFilter, expenses],
-    );
+    // Tag scope and "all months" read all-time expenses; otherwise the
+    // whole-month list is narrowed client-side with the same matcher the
+    // service filters implement (order is preserved from the query).
+    const listExpenses = useMemo(() => {
+        if (isTagScope) {
+            return tagSourceExpenses
+                .filter((e) => matchesExpenseFilter(e, listFilter))
+                .sort((a, b) => b.date.localeCompare(a.date));
+        }
+        const source = listFilter.month ? expenses : tagSourceExpenses;
+        return source.filter((e) => matchesExpenseFilter(e, listFilter));
+    }, [isTagScope, tagSourceExpenses, listFilter, expenses]);
 
     const handleListFilterChange = (next: ExpenseFilter) =>
         setFilter((prev) => ({
@@ -651,8 +651,8 @@ export function ExpensesPage({
                         : "space-y-5 transition-opacity"
                 }
             >
-                {/* 4-Metric Summary Strip: Spendable Remaining, Total Spent, Shared Spending, and Unsettled */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* 2-Card Summary Strip: Budget (Spendable) and Shared (Unsettled). Whole-month figures, never list filters. */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                     {/* Card 1: Spendable Remaining (Primary Card) */}
                     <StatCard
                         title="Spendable"
@@ -747,79 +747,72 @@ export function ExpensesPage({
                                             </span>
                                         </button>
                                     )}
+                                <p className="text-[11px] font-medium text-(--text-muted)">
+                                    <CurrencyText amount={totalSpent} /> spent ·{" "}
+                                    {expenseCount} expense
+                                    {expenseCount === 1 ? "" : "s"}
+                                </p>
                             </div>
                         }
                     />
 
-                    {/* Card 2: Total Spent */}
-                    <StatCard
-                        title="Spent"
-                        loading={isLoading}
-                        value={formatSGD(totalSpent)}
-                        subtitle={`${expenses.length} transaction${expenses.length === 1 ? "" : "s"}`}
-                        icon={<Receipt className="h-4 w-4" />}
-                        iconBg="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                    />
-
-                    {/* Card 3: Shared Spending */}
-                    <StatCard
-                        title="Shared"
-                        loading={isLoading}
-                        value={formatSGD(totalShared)}
-                        tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
-                        icon={<ArrowRightLeft className="h-4 w-4" />}
-                        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
-                    />
-
-                    {/* Card 4: Unsettled Balance (Who Owes Whom) */}
-                    <StatCard
-                        title="Unsettled"
-                        loading={isLoading}
-                        value={formatSGD(settlement.netBalance)}
-                        subtitle={
-                            settlement.netBalance === 0
-                                ? "All settled"
-                                : settlement.debtorName &&
-                                    settlement.creditorName
-                                  ? `${settlement.debtorName} → ${settlement.creditorName}`
-                                  : settlement.settlementText
-                        }
-                        icon={
-                            settlement.netBalance === 0 ? (
-                                <CheckCircle2 className="h-4 w-4" />
-                            ) : (
-                                <Scale className="h-4 w-4" />
-                            )
-                        }
-                        iconBg={
-                            settlement.netBalance === 0
-                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                                : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                        }
-                        footer={
-                            settlement.netBalance > 0 && members.length >= 2 ? (
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => {
-                                        setSettleTargetIds(
-                                            settlement.expenseIds,
-                                        );
-                                        setIsSettleOpen(true);
-                                    }}
-                                    leftIcon={
-                                        <Scale
-                                            className="h-3.5 w-3.5"
-                                            strokeWidth={2.5}
-                                        />
-                                    }
-                                    className="mt-1"
-                                >
-                                    Settle Up
-                                </Button>
-                            ) : undefined
-                        }
-                    />
+                    {/* Card 2: Unsettled, with shared spending (needs 2+ members) */}
+                    {members.length >= 2 && (
+                        <StatCard
+                            title="Unsettled"
+                            loading={isLoading}
+                            tooltip="Shared couple expenses split 50/50 by default unless a custom ratio is set."
+                            value={formatSGD(settlement.netBalance)}
+                            subtitle={
+                                settlement.netBalance === 0
+                                    ? "All settled"
+                                    : settlement.debtorName &&
+                                        settlement.creditorName
+                                      ? `${settlement.debtorName} → ${settlement.creditorName}`
+                                      : settlement.settlementText
+                            }
+                            icon={
+                                settlement.netBalance === 0 ? (
+                                    <CheckCircle2 className="h-4 w-4" />
+                                ) : (
+                                    <Scale className="h-4 w-4" />
+                                )
+                            }
+                            iconBg={
+                                settlement.netBalance === 0
+                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                    : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                            }
+                            footer={
+                                <div className="space-y-1.5 mt-1">
+                                    <p className="text-[11px] font-medium text-(--text-muted)">
+                                        <CurrencyText amount={totalShared} />{" "}
+                                        shared this month
+                                    </p>
+                                    {settlement.netBalance > 0 && (
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setSettleTargetIds(
+                                                    settlement.expenseIds,
+                                                );
+                                                setIsSettleOpen(true);
+                                            }}
+                                            leftIcon={
+                                                <Scale
+                                                    className="h-3.5 w-3.5"
+                                                    strokeWidth={2.5}
+                                                />
+                                            }
+                                        >
+                                            Settle Up
+                                        </Button>
+                                    )}
+                                </div>
+                            }
+                        />
+                    )}
                 </div>
 
                 <ConfirmModal

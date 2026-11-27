@@ -23,6 +23,7 @@ import { ExpenseListTable } from "../src/components/expenses/ExpenseListTable";
 import { ExpensesPage } from "../src/pages/ExpensesPage";
 import { financeService } from "../src/services/financeService";
 import { mockCategories, mockMembers } from "../src/data/mockSeedData";
+import { getCurrentMonth } from "../src/lib/dateUtils";
 import type { Expense, ExpenseFilter } from "../src/types/finance";
 
 const sampleExpenses: Expense[] = [
@@ -556,8 +557,14 @@ describe("ExpensesPage Integration", () => {
     });
 
     it("renders page layout with summary cards, filter bar, table, and Quick Add button", async () => {
+        // The page narrows the month list client-side, so keep samples in
+        // the current month.
+        const month = getCurrentMonth();
         vi.spyOn(financeService, "getExpenses").mockResolvedValue(
-            sampleExpenses,
+            sampleExpenses.map((e) => ({
+                ...e,
+                date: `${month}${e.date.slice(7)}`,
+            })),
         );
 
         await act(async () => {
@@ -578,9 +585,8 @@ describe("ExpensesPage Integration", () => {
             }),
         ).toBeInTheDocument();
 
-        // Summary cards: Spent, Shared, Unsettled
-        expect(screen.getAllByText(/^spent$/i).length).toBeGreaterThan(0);
-        expect(screen.getByText(/^shared$/i)).toBeInTheDocument();
+        // Summary cards: Spendable, Unsettled
+        expect(screen.getAllByText(/^spendable$/i).length).toBeGreaterThan(0);
         expect(screen.getByText(/^unsettled$/i)).toBeInTheDocument();
 
         // Check that transactions are displayed

@@ -73,7 +73,7 @@ describe("Expenses tag scope", () => {
         );
         // The month query ignores the tag, so the Spent card keeps the month.
         expect(calls.every(([f]) => !f?.tag)).toBe(true);
-        expect(screen.getByText("1 transaction")).toBeInTheDocument();
+        expect(await screen.findByText(/1 expense$/)).toBeInTheDocument();
 
         fireEvent.click(
             screen.getByRole("button", { name: "Clear tag filter" }),

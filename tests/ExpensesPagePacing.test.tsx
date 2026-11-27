@@ -11,7 +11,7 @@ function renderWithProviders(ui: React.ReactElement) {
     return render(<HouseholdProvider>{ui}</HouseholdProvider>);
 }
 
-describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
+describe("ExpensesPage Pacing & 2-Card Summary Strip", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         localStorage.clear();
@@ -27,13 +27,11 @@ describe("ExpensesPage Pacing & 4-Card Summary Strip", () => {
         vi.restoreAllMocks();
     });
 
-    it("renders Spendable as the primary card in a 4-card summary strip", async () => {
+    it("renders Spendable and Unsettled in a 2-card summary strip", async () => {
         renderWithProviders(<ExpensesPage />);
 
         await waitFor(() => {
             expect(screen.getByText(/^Spendable$/i)).toBeInTheDocument();
-            expect(screen.getByText(/^Spent$/i)).toBeInTheDocument();
-            expect(screen.getByText(/^Shared$/i)).toBeInTheDocument();
             expect(screen.getByText(/^Unsettled$/i)).toBeInTheDocument();
         });
     });
