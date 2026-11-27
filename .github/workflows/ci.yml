@@ -76,8 +76,24 @@ jobs:
     if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Official image ships Chromium, WebKit and their system libraries, so
+    # there is no apt download at job time. Keep the tag in step with the
+    # @playwright/test version in pnpm-lock.yaml (checked below).
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --ipc=host
+    env:
+      PLAYWRIGHT_IMAGE_VERSION: 1.65.1
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check Playwright image matches lockfile
+        run: |
+          locked=$(grep -m1 -oE "'@playwright/test@[0-9.]+'" pnpm-lock.yaml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          if [ "$locked" != "$PLAYWRIGHT_IMAGE_VERSION" ]; then
+            echo "pnpm-lock.yaml has @playwright/test $locked but the e2e image is $PLAYWRIGHT_IMAGE_VERSION; update the image tag and PLAYWRIGHT_IMAGE_VERSION in ci.yml"
+            exit 1
+          fi
 
       - uses: pnpm/action-setup@v4
 
@@ -88,21 +104,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium webkit
-
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium webkit
 
       - name: Run Playwright e2e tests
         run: pnpm run test:e2e
