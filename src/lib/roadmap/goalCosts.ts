@@ -45,8 +45,15 @@ export function summarizeGoalCosts(
     return { linked, otherCount, otherMonthly: round2(otherMonthly) };
 }
 
-/** "Also counts 3 other recurring changes", or null when there are none. */
+/** "Also counts 3 other changes", or null when there are none. */
 export function otherChangesLabel(count: number): string | null {
     if (count <= 0) return null;
-    return `Also counts ${count} other recurring ${count === 1 ? "change" : "changes"}`;
+    return `Also counts ${count} other ${count === 1 ? "change" : "changes"}`;
+}
+
+/** Sign for a net monthly figure: "−", "+", or "" at zero. */
+export function netSign(amount: number): string {
+    if (amount < 0) return "−";
+    if (amount > 0) return "+";
+    return "";
 }

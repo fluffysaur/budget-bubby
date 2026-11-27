@@ -146,7 +146,7 @@ describe("ProjectionCard", () => {
         renderCard(state([], [linkedCare, hbo, childcare]));
         const link = screen.getByRole("link", { name: /Also counts 2 other/ });
         expect(link).toHaveAttribute("href", "/recurring");
-        expect(link).toHaveTextContent("−S$809.65/mo");
+        expect(link).toHaveTextContent("net −S$809.65/mo");
     });
 
     it("prompts to link a cost when nothing is linked", () => {
@@ -158,7 +158,7 @@ describe("ProjectionCard", () => {
         ).toBeInTheDocument();
         expect(screen.queryByRole("list", { name: "Goal costs" })).toBeNull();
         expect(screen.getByRole("link")).toHaveTextContent(
-            "Also counts 1 other recurring change",
+            "Also counts 1 other change",
         );
     });
 

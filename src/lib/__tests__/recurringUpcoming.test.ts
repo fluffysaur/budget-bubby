@@ -46,13 +46,22 @@ describe("upcomingRecurringChanges", () => {
         ).toEqual([]);
     });
 
-    it("skips deductions like tax and insurance", () => {
-        expect(
-            upcomingRecurringChanges(
-                [item({ type: "tax", end_date: "2027-04-30" })],
-                TODAY,
-            ),
-        ).toEqual([]);
+    it("includes deductions like tax and insurance, with their type", () => {
+        const out = upcomingRecurringChanges(
+            [
+                item({ id: "t", type: "tax", end_date: "2027-04-30" }),
+                item({
+                    id: "i",
+                    type: "insurance",
+                    start_date: "2027-03-01",
+                }),
+            ],
+            TODAY,
+        );
+        expect(out).toMatchObject([
+            { id: "i-starts", type: "insurance", monthlyDelta: -9.65 },
+            { id: "t-ends", type: "tax", monthlyDelta: 9.65 },
+        ]);
     });
 
     it("skips past ends and sorts soonest first", () => {

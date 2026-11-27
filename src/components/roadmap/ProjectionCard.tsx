@@ -29,6 +29,7 @@ import {
 } from "../../lib/currency";
 import { formatShortMonth } from "../../lib/dateUtils";
 import {
+    netSign,
     otherChangesLabel,
     summarizeGoalCosts,
 } from "../../lib/roadmap/goalCosts";
@@ -399,8 +400,7 @@ export function ProjectionCard({
                         className="flex min-h-11 items-center gap-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink)"
                     >
                         <span className="min-w-0 flex-1">
-                            {otherLabel} ·{" "}
-                            {goalCosts.otherMonthly < 0 ? "−" : "+"}
+                            {otherLabel} · net {netSign(goalCosts.otherMonthly)}
                             <CurrencyText
                                 formatted={formatSGD(
                                     Math.abs(goalCosts.otherMonthly),

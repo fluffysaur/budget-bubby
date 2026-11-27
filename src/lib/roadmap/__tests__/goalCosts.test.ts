@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { otherChangesLabel, summarizeGoalCosts } from "../goalCosts";
+import { netSign, otherChangesLabel, summarizeGoalCosts } from "../goalCosts";
 import type { CashFlowChange } from "../lifeEvents";
 
 const change = (
@@ -42,6 +42,15 @@ describe("summarizeGoalCosts", () => {
         expect(s.otherMonthly).toBe(-42.13);
     });
 
+    it("nets an ending cost against new ones, so the total can be positive", () => {
+        const s = summarizeGoalCosts(
+            [change("hbo", -9.65), change("magazine", 12)],
+            goals,
+        );
+        expect(s.otherCount).toBe(2);
+        expect(s.otherMonthly).toBe(2.35);
+    });
+
     it("handles a linked goal that is missing", () => {
         const s = summarizeGoalCosts([change("x", -5, "gone")], goals);
         expect(s.linked[0].goalTitle).toBeNull();
@@ -60,11 +69,15 @@ describe("summarizeGoalCosts", () => {
 describe("otherChangesLabel", () => {
     it("pluralises and hides at zero", () => {
         expect(otherChangesLabel(0)).toBeNull();
-        expect(otherChangesLabel(1)).toBe(
-            "Also counts 1 other recurring change",
-        );
-        expect(otherChangesLabel(3)).toBe(
-            "Also counts 3 other recurring changes",
-        );
+        expect(otherChangesLabel(1)).toBe("Also counts 1 other change");
+        expect(otherChangesLabel(3)).toBe("Also counts 3 other changes");
+    });
+});
+
+describe("netSign", () => {
+    it("signs costs, savings and zero", () => {
+        expect(netSign(-42.13)).toBe("−");
+        expect(netSign(3)).toBe("+");
+        expect(netSign(0)).toBe("");
     });
 });
