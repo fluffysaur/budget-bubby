@@ -172,11 +172,8 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         // Empty state is rendered inside the card body
         expect(screen.getByText(/no expenses/i)).toBeInTheDocument();
 
-        // Reset filters button triggers onResetFilters
-        const clearBtn = screen.getAllByRole("button", {
-            name: /reset filters/i,
-        })[1];
-        fireEvent.click(clearBtn);
+        // Clear all (toolbar) and Reset Filters (empty state) trigger onResetFilters
+        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
 
         expect(onResetFilters).toHaveBeenCalledTimes(1);
     });
@@ -236,5 +233,57 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         expect(onFilterChange).toHaveBeenCalledWith(
             expect.objectContaining({ categoryIds: [second.id] }),
         );
+    });
+
+    it("hides Clear all by default and shows it after typing a search", () => {
+        const { rerender } = render(
+            <ExpenseFilterBar
+                filter={{}}
+                onFilterChange={vi.fn()}
+                categories={mockCategories}
+                members={mockMembers}
+            />,
+        );
+        expect(
+            screen.queryByRole("button", { name: "Clear all" }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.change(screen.getByPlaceholderText(/search/i), {
+            target: { value: "Coffee" },
+        });
+        expect(
+            screen.getByRole("button", { name: "Clear all" }),
+        ).toBeInTheDocument();
+        rerender(<div />);
+    });
+
+    it("shows Clear all for a non-default sort and resets sort, filters and search", async () => {
+        const onFilterChange = vi.fn();
+        const onResetFilters = vi.fn();
+        render(
+            <ExpenseListTable
+                expenses={[]}
+                categories={mockCategories}
+                members={mockMembers}
+                filter={{}}
+                onFilterChange={onFilterChange}
+                onResetFilters={onResetFilters}
+            />,
+        );
+        expect(
+            screen.queryByRole("button", { name: "Clear all" }),
+        ).not.toBeInTheDocument();
+
+        const sortSelects = screen.getAllByRole("combobox", {
+            name: /sort ledger/i,
+        });
+        await selectOption(sortSelects[0], /Lowest/);
+        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+
+        expect(onResetFilters).toHaveBeenCalledTimes(1);
+        // Sort is back to default, so the button disappears again
+        expect(
+            screen.queryByRole("button", { name: "Clear all" }),
+        ).not.toBeInTheDocument();
     });
 });

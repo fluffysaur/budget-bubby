@@ -403,7 +403,7 @@ describe("ExpenseFilterBar", () => {
         );
     });
 
-    it("resets filters when Reset button is clicked", async () => {
+    it("resets filters when Clear all is clicked", async () => {
         const onFilterChange = vi.fn();
         const onReset = vi.fn();
 
@@ -421,7 +421,7 @@ describe("ExpenseFilterBar", () => {
             />,
         );
 
-        const resetBtn = screen.getByRole("button", { name: /clear|reset/i });
+        const resetBtn = screen.getByRole("button", { name: "Clear all" });
         fireEvent.click(resetBtn);
 
         expect(onReset).toHaveBeenCalledTimes(1);

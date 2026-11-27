@@ -148,7 +148,7 @@ describe("ExpensesPage month rollover", () => {
         });
 
         rollOverToNovember();
-        fireEvent.click(screen.getByRole("button", { name: "Reset filters" }));
+        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
 
         await waitFor(() => {
             expect(monthInput(container)?.value).toBe("2026-11");

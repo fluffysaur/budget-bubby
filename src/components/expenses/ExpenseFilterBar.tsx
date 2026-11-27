@@ -5,7 +5,8 @@
  * - Mobile-friendly compact sub-bar with Filter drawer toggle & Sort selector
  * - Inline collapsible drawer for Category, Payer, Type/Split, and Month selectors
  * - Dismissible active filter chips strip
- * - Responsive desktop layout with inline Search, Sort, Reset, and filter grid
+ * - Responsive desktop layout with inline Search, Sort, and filter grid
+ * - "Clear all" text button (in the chips row) when search, filters or sort are active
  */
 
 import {
@@ -18,7 +19,6 @@ import {
 } from "react";
 import {
     Search,
-    RotateCcw,
     Filter,
     ArrowUpDown,
     ChevronDown,
@@ -43,6 +43,7 @@ import {
 } from "../ui/dropdown";
 import { getFilterCategoryIds } from "../../lib/expenseFilter";
 import { Input } from "../ui/Input";
+import { Button } from "../ui/Button";
 import { formatShortMonth } from "../../lib/dateUtils";
 import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
@@ -78,6 +79,8 @@ export interface ExpenseFilterBarProps {
     categories?: Category[];
     members?: HouseholdMember[];
     onReset?: () => void;
+    /** Restores the default sort order (used by "Clear all"). */
+    onSortReset?: () => void;
     className?: string;
     sortBy?: ExpenseSortField | null;
     sortOrder?: SortDirection;
@@ -91,6 +94,7 @@ export function ExpenseFilterBar({
     categories: propCategories,
     members: propMembers,
     onReset,
+    onSortReset,
     className = "",
     sortBy,
     sortOrder = "desc",
@@ -207,6 +211,10 @@ export function ExpenseFilterBar({
 
     const handleResetClick = () => {
         setSearchText("");
+        if (isSortActive) {
+            if (onSortReset) onSortReset();
+            else onSortChange?.("date", "desc");
+        }
         if (onReset) {
             onReset();
         } else {
@@ -221,6 +229,11 @@ export function ExpenseFilterBar({
             });
         }
     };
+
+    // Newest-first (or no explicit sort) is the default order
+    const isSortActive = Boolean(
+        sortBy && !(sortBy === "date" && sortOrder === "desc"),
+    );
 
     // Calculate active filter count for the badge
     const activeFilterCount = useMemo(() => {
@@ -242,6 +255,9 @@ export function ExpenseFilterBar({
         (filter.month && filter.month !== currentMonth) ||
         filter.tag,
     );
+
+    const showClearAll =
+        hasActiveFilters || isSortActive || searchText.trim().length > 0;
 
     // Active filter chips
     const activeChips = useMemo(() => {
@@ -323,7 +339,7 @@ export function ExpenseFilterBar({
     return (
         <div className={containerStyle}>
             <div className="space-y-2.5">
-                {/* Row 1: Search Input (Full width on mobile with Reset icon, flex-1 on desktop) */}
+                {/* Row 1: Search Input (full width on mobile, flex-1 beside Sort on desktop) */}
                 <div className="flex items-center gap-2">
                     {/* Search Input */}
                     <div className="min-w-0 flex-1">
@@ -331,6 +347,7 @@ export function ExpenseFilterBar({
                             id="filter-search"
                             type="text"
                             sizeVariant="sm"
+                            className="min-h-11"
                             leftIcon={<Search className="h-4 w-4" />}
                             placeholder="Search merchant, item, note..."
                             value={searchText}
@@ -362,26 +379,11 @@ export function ExpenseFilterBar({
                             placeholder="Default order"
                             clearable
                             sizeVariant="sm"
+                            className="min-h-11"
                             containerClassName="w-48"
                             options={DESKTOP_SORT_OPTIONS}
                         />
                     </div>
-
-                    {/* Single Unified Reset Button (Icon-only on mobile, Icon+Text on desktop) */}
-                    <button
-                        type="button"
-                        onClick={handleResetClick}
-                        title="Reset Filters"
-                        aria-label="Reset filters"
-                        className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border-2 px-3 sm:px-3.5 text-xs font-bold transition-press shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
-                            hasActiveFilters
-                                ? "border-(--border-ink) bg-(--pastel-coral-light) text-(--text-ink) shadow-cute-sm"
-                                : "border-(--border-ink) bg-(--bg-canvas) text-(--text-muted) hover:bg-(--pastel-butter-light)"
-                        }`}
-                    >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Reset</span>
-                    </button>
                 </div>
 
                 {/* Mobile Row 2: Filter Drawer Toggle Button & Quick Sort Selector */}
@@ -391,7 +393,7 @@ export function ExpenseFilterBar({
                         aria-expanded={isMobileFilterOpen}
                         aria-label="Toggle filters"
                         onClick={() => setIsMobileFilterOpen((prev) => !prev)}
-                        className={`flex-1 inline-flex items-center justify-between gap-1.5 rounded-xl border-2 border-(--border-ink) px-3 py-2 text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
+                        className={`flex-1 inline-flex items-center justify-between gap-1.5 min-h-11 rounded-xl border-2 border-(--border-ink) px-3 text-base sm:text-xs font-bold transition-press cursor-pointer active:translate-x-0.5 active:translate-y-0.5 ${
                             activeFilterCount > 0
                                 ? "bg-(--pastel-lilac-light) text-(--text-ink) shadow-cute-sm"
                                 : "bg-(--bg-canvas) text-(--text-ink) hover:bg-(--pastel-butter-light)"
@@ -422,16 +424,17 @@ export function ExpenseFilterBar({
                         )}
                     </button>
 
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                         <Select
                             aria-label="Sort ledger"
                             value={
                                 sortBy ? `${sortBy}-${sortOrder || "desc"}` : ""
                             }
                             onValueChange={handleSortValueChange}
-                            placeholder="Default order"
+                            placeholder="Sort"
                             clearable
                             sizeVariant="sm"
+                            className="min-h-11"
                             containerClassName="w-full"
                             options={MOBILE_SORT_OPTIONS}
                         />
@@ -507,11 +510,13 @@ export function ExpenseFilterBar({
                 </div>
 
                 {/* Active Filter Chips Strip */}
-                {activeChips.length > 0 && (
+                {showClearAll && (
                     <div className="pt-2 border-t border-(--border-subtle) flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mr-0.5">
-                            Active:
-                        </span>
+                        {activeChips.length > 0 && (
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-(--text-muted) mr-0.5">
+                                Active:
+                            </span>
+                        )}
                         {activeChips.map((chip) => (
                             <span
                                 key={chip.id}
@@ -528,6 +533,14 @@ export function ExpenseFilterBar({
                                 </button>
                             </span>
                         ))}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleResetClick}
+                            className="ml-auto min-h-11"
+                        >
+                            Clear all
+                        </Button>
                     </div>
                 )}
             </div>

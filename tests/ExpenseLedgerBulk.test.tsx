@@ -10,7 +10,7 @@ import {
     waitFor,
     within,
 } from "@testing-library/react";
-import { getSelectTrigger, selectOption } from "./helpers/select";
+import { getSelectTrigger, openSelect, selectOption } from "./helpers/select";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DeleteExpenseModal } from "../src/components/expenses/DeleteExpenseModal";
 import { ExpenseFormModal } from "../src/components/expenses/ExpenseFormModal";
@@ -775,6 +775,116 @@ describe("Ledger Power Tools, Fast Log & Bulk Add", () => {
 
             // Now on page 2: "Showing 21–40 of 45"
             expect(screen.getByText("21–40")).toBeInTheDocument();
+        });
+
+        describe("page size and compact pager", () => {
+            const makeList = (n: number): Expense[] =>
+                Array.from({ length: n }, (_, i) => ({
+                    ...testExpense,
+                    id: `exp-${i}`,
+                    item: `Item ${i + 1}`,
+                    amount: 10 + i,
+                }));
+
+            beforeEach(() => {
+                window.localStorage.removeItem("bb:expenses:pageSize");
+            });
+
+            it("defaults to 10 per page", () => {
+                render(
+                    <ExpenseListTable
+                        expenses={makeList(45)}
+                        categories={mockCategories}
+                        members={mockMembers}
+                    />,
+                );
+                expect(screen.getByText("1–10")).toBeInTheDocument();
+            });
+
+            it("offers 10/20/50/100 page sizes", async () => {
+                render(
+                    <ExpenseListTable
+                        expenses={makeList(45)}
+                        categories={mockCategories}
+                        members={mockMembers}
+                    />,
+                );
+                const listbox = await openSelect(/page size/i);
+                const labels = within(listbox)
+                    .getAllByRole("option")
+                    .map((o) => o.textContent?.trim());
+                expect(labels).toEqual(["10", "20", "50", "100"]);
+            });
+
+            it("restores a persisted page size and saves changes", async () => {
+                window.localStorage.setItem("bb:expenses:pageSize", "50");
+                render(
+                    <ExpenseListTable
+                        expenses={makeList(120)}
+                        categories={mockCategories}
+                        members={mockMembers}
+                    />,
+                );
+                expect(screen.getByText("1–50")).toBeInTheDocument();
+                await selectOption(/page size/i, "20");
+                expect(screen.getByText("1–20")).toBeInTheDocument();
+                expect(
+                    window.localStorage.getItem("bb:expenses:pageSize"),
+                ).toBe("20");
+            });
+
+            it("ignores an invalid persisted page size", () => {
+                window.localStorage.setItem("bb:expenses:pageSize", "7");
+                render(
+                    <ExpenseListTable
+                        expenses={makeList(45)}
+                        categories={mockCategories}
+                        members={mockMembers}
+                    />,
+                );
+                expect(screen.getByText("1–10")).toBeInTheDocument();
+            });
+
+            it("renders a compact '3 / 6' pager", () => {
+                render(
+                    <ExpenseListTable
+                        expenses={makeList(55)}
+                        categories={mockCategories}
+                        members={mockMembers}
+                        currentPage={3}
+                    />,
+                );
+                const pager = screen.getByLabelText("Page 3 of 6");
+                expect(pager).toHaveTextContent("3 / 6");
+            });
+
+            it("returns to page 1 when the filter changes", () => {
+                const list = makeList(55);
+                const { rerender } = render(
+                    <ExpenseListTable
+                        expenses={list}
+                        categories={mockCategories}
+                        members={mockMembers}
+                        filter={{}}
+                    />,
+                );
+                fireEvent.click(screen.getByLabelText("Next page"));
+                fireEvent.click(screen.getByLabelText("Next page"));
+                expect(
+                    screen.getByLabelText("Page 3 of 6"),
+                ).toBeInTheDocument();
+                rerender(
+                    <ExpenseListTable
+                        expenses={list.slice(0, 25)}
+                        categories={mockCategories}
+                        members={mockMembers}
+                        filter={{ search: "coffee" }}
+                    />,
+                );
+                expect(
+                    screen.getByLabelText("Page 1 of 3"),
+                ).toBeInTheDocument();
+            });
         });
 
         it("opens the edit form when clicking edit button", () => {
