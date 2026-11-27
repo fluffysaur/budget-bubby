@@ -49,22 +49,13 @@ import { useCurrentMonth } from "../../hooks/useCurrentMonth";
 
 export const EXPENSE_SEARCH_DEBOUNCE_MS = 250;
 
-const DESKTOP_SORT_OPTIONS: SelectOption[] = [
+const SORT_OPTIONS: SelectOption[] = [
     { value: "date-desc", label: "Newest" },
     { value: "date-asc", label: "Oldest" },
     { value: "amount-desc", label: "Highest" },
     { value: "amount-asc", label: "Lowest" },
-    { value: "category-asc", label: "Category (A-Z)" },
-    { value: "payer-asc", label: "Payer (A-Z)" },
-];
-
-const MOBILE_SORT_OPTIONS: SelectOption[] = [
-    { value: "date-desc", label: "Date (Newest)" },
-    { value: "date-asc", label: "Date (Oldest)" },
-    { value: "amount-desc", label: "Amount (Highest)" },
-    { value: "amount-asc", label: "Amount (Lowest)" },
-    { value: "category-asc", label: "Category (A-Z)" },
-    { value: "payer-asc", label: "Payer (A-Z)" },
+    { value: "category-asc", label: "Category" },
+    { value: "payer-asc", label: "Payer" },
 ];
 
 const SHARED_OPTIONS: SelectOption[] = [
@@ -322,6 +313,21 @@ export function ExpenseFilterBar({
             });
         }
 
+        // Non-default sort, so "Clear all" shows everything it resets
+        if (isSortActive) {
+            const sortLabel = SORT_OPTIONS.find(
+                (o) => o.value === `${sortBy}-${sortOrder}`,
+            )?.label;
+            chips.push({
+                id: "sort",
+                label: `Sort: ${sortLabel ?? "Custom"}`,
+                onRemove: () => {
+                    if (onSortReset) onSortReset();
+                    else onSortChange?.("date", "desc");
+                },
+            });
+        }
+
         return chips;
     }, [
         filter,
@@ -330,6 +336,11 @@ export function ExpenseFilterBar({
         onFilterChange,
         currentMonth,
         handleClearSearch,
+        isSortActive,
+        sortBy,
+        sortOrder,
+        onSortReset,
+        onSortChange,
     ]);
 
     const containerStyle = embeddedInCard
@@ -381,7 +392,7 @@ export function ExpenseFilterBar({
                             sizeVariant="sm"
                             className="min-h-11"
                             containerClassName="w-48"
-                            options={DESKTOP_SORT_OPTIONS}
+                            options={SORT_OPTIONS}
                         />
                     </div>
                 </div>
@@ -436,7 +447,7 @@ export function ExpenseFilterBar({
                             sizeVariant="sm"
                             className="min-h-11"
                             containerClassName="w-full"
-                            options={MOBILE_SORT_OPTIONS}
+                            options={SORT_OPTIONS}
                         />
                     </div>
                 </div>

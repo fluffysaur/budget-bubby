@@ -560,9 +560,7 @@ export function computeBufferAbsorption<
 }
 
 export type SpendableCategoryStatus =
-    | CategoryCoverageStatus
-    | "buffer"
-    | "buffer_depleted";
+    CategoryCoverageStatus | "buffer" | "buffer_depleted";
 
 export interface SpendableCategoryView {
     categoryId: string;
@@ -836,6 +834,7 @@ export function calculateMonthlyBalanceTrends(
 
 /**
  * 10. Calculates Monthly Expense Trends, 3/6-month rolling averages, and Per-Category Monthly Averages.
+ *     Averages use past months only (the current month is excluded).
  * Includes recurring subscription/bill/other spend under each item's own category.
  */
 export function calculateExpenseTrends(
@@ -951,8 +950,10 @@ export function calculateExpenseTrends(
         };
     });
 
-    // Compute averages across months that have activity (or all months in window)
-    const nonZeroSeries = monthlySeries.filter((pt) => pt.totalSpent > 0);
+    // Averages use past months only (never the current month), so "vs avg"
+    // compares this month against a clean baseline. Empty months are skipped.
+    const pastSeries = monthlySeries.slice(0, -1);
+    const nonZeroSeries = pastSeries.filter((pt) => pt.totalSpent > 0);
     const denomAll = nonZeroSeries.length > 0 ? nonZeroSeries.length : 1;
     const averageMonthlyTotal =
         Math.round(
@@ -960,7 +961,7 @@ export function calculateExpenseTrends(
                 100,
         ) / 100;
 
-    const last3 = monthlySeries.slice(-3).filter((pt) => pt.totalSpent > 0);
+    const last3 = pastSeries.slice(-3).filter((pt) => pt.totalSpent > 0);
     const rolling3MonthAvg =
         Math.round(
             (last3.reduce((s, pt) => s + pt.totalSpent, 0) /
@@ -968,7 +969,7 @@ export function calculateExpenseTrends(
                 100,
         ) / 100;
 
-    const last6 = monthlySeries.slice(-6).filter((pt) => pt.totalSpent > 0);
+    const last6 = pastSeries.slice(-6).filter((pt) => pt.totalSpent > 0);
     const rolling6MonthAvg =
         Math.round(
             (last6.reduce((s, pt) => s + pt.totalSpent, 0) /
