@@ -1,8 +1,8 @@
 /**
  * ProjectionCard: the household pool (non-CPF net worth) as solid history
- * continuing into a dashed projection. It dips at each goal's date and life
- * events change its slope. No investment returns. Unlocks at 3+ months of
- * balance updates; life events are listed either way, since they feed the
+ * continuing into a dashed projection. It dips at each goal's date and goal
+ * costs change its slope. No investment returns. Unlocks at 3+ months of
+ * balance updates; goal costs are listed either way, since they feed the
  * verdict. Always the household plan.
  */
 
@@ -19,7 +19,8 @@ import {
     YAxis,
 } from "recharts";
 import { useReducedMotion } from "motion/react";
-import { CalendarClock, ChartLine, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CalendarClock, ChartLine, ChevronRight, Lock } from "lucide-react";
 import {
     formatSGD,
     formatSGDCompact,
@@ -27,6 +28,10 @@ import {
     formatSGDTarget,
 } from "../../lib/currency";
 import { formatShortMonth } from "../../lib/dateUtils";
+import {
+    otherChangesLabel,
+    summarizeGoalCosts,
+} from "../../lib/roadmap/goalCosts";
 import {
     REALITY_MIN_INTERVALS,
     type CashFlowChange,
@@ -108,7 +113,11 @@ export function ProjectionCard({
     const mask = useMoneyMask();
     const reduceMotion = useReducedMotion();
     const { history, projection, reality, result } = roadmap;
-    const lifeEvents = result.lifeEvents;
+    const goalCosts = useMemo(
+        () => summarizeGoalCosts(result.lifeEvents, roadmap.input.goals),
+        [result.lifeEvents, roadmap.input.goals],
+    );
+    const otherLabel = otherChangesLabel(goalCosts.otherCount);
     const locked = reality.status === "locked";
     const updatedMonths = history.filter((p) => p.actual).length;
 
@@ -186,8 +195,8 @@ export function ProjectionCard({
                                 Dashed line
                             </dt>
                             <dd>
-                                Monthly saving plus life events, dropping when
-                                each goal is paid.
+                                Monthly saving plus recurring changes, dropping
+                                when each goal is paid.
                             </dd>
                         </div>
                     </dl>
@@ -332,19 +341,19 @@ export function ProjectionCard({
                 </figure>
             )}
 
-            {/* Life events */}
+            {/* Goal costs */}
             <div className="space-y-1.5 border-t-2 border-(--border-subtle) pt-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                    Life Events
+                    Goal Costs
                 </span>
-                {lifeEvents.length === 0 ? (
+                {goalCosts.linked.length === 0 ? (
                     <p className="text-xs text-(--text-muted)">
-                        Add a recurring item with a future start date, like
-                        childcare, to plan for it.
+                        Link a recurring cost to a goal, like childcare after
+                        Baby Fund.
                     </p>
                 ) : (
-                    <ul aria-label="Life events" className="space-y-1.5">
-                        {lifeEvents.map((c) => (
+                    <ul aria-label="Goal costs" className="space-y-1.5">
+                        {goalCosts.linked.map(({ change: c, goalTitle }) => (
                             <li
                                 key={c.id}
                                 className="flex min-h-11 items-center gap-2 rounded-xl bg-(--bg-cream) px-3 py-1.5"
@@ -360,7 +369,9 @@ export function ProjectionCard({
                                         className="text-xs font-bold text-(--text-ink)"
                                     />
                                     <span className="text-[11px] text-(--text-muted)">
-                                        {lifeEventWhen(c)}
+                                        {goalTitle
+                                            ? `after ${goalTitle}`
+                                            : lifeEventWhen(c)}
                                     </span>
                                 </span>
                                 <span
@@ -381,6 +392,28 @@ export function ProjectionCard({
                             </li>
                         ))}
                     </ul>
+                )}
+                {otherLabel && (
+                    <Link
+                        to="/recurring"
+                        className="flex min-h-11 items-center gap-1 text-xs font-bold text-(--text-muted) hover:text-(--text-ink)"
+                    >
+                        <span className="min-w-0 flex-1">
+                            {otherLabel} ·{" "}
+                            {goalCosts.otherMonthly < 0 ? "−" : "+"}
+                            <CurrencyText
+                                formatted={formatSGD(
+                                    Math.abs(goalCosts.otherMonthly),
+                                )}
+                            />
+                            /mo
+                        </span>
+                        <ChevronRight
+                            aria-hidden="true"
+                            className="h-4 w-4 shrink-0"
+                            strokeWidth={2.5}
+                        />
+                    </Link>
                 )}
             </div>
         </section>
