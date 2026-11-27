@@ -54,7 +54,9 @@ test.describe("Multi-select category filter", () => {
 
         // Clear all inside the dropdown restores "All Categories".
         await trigger.click();
-        await page.getByRole("button", { name: "Clear all" }).click();
+        await page
+            .getByRole("button", { name: "Clear all", exact: true })
+            .click();
         if (isMobile) {
             // The sheet stays open until Done.
             await page.getByRole("button", { name: "Done" }).click();

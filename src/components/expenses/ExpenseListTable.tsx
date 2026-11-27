@@ -5,7 +5,7 @@
  * - Power Tools:
  *   - Sorting: Date (newest/oldest), Amount (highest/lowest), Category (A-Z), Payer
  *   - Visual sort direction indicators (chevron up/down)
- *   - Pagination: Page size selector (20, 50, 100), Page navigation (Prev/Next/numbers), "Showing 1–20 of 85"
+ *   - Pagination: Page size selector (10, 20, 50, 100), Page navigation (Prev/Next/numbers), "Showing 1–20 of 85"
  *   - Edit Expense Modal integration
  *   - Delete Expense Confirmation Modal integration
  * - Responsive card layout on mobile so ledger never overflows or clips
@@ -71,7 +71,24 @@ const SORT_OPTIONS: SelectOption[] = [
     { value: "payer-asc", label: "Payer (A-Z)" },
 ];
 
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_STORAGE_KEY = "bb:expenses:pageSize";
+
+function readStoredPageSize(): number {
+    try {
+        const raw = window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY);
+        const parsed = raw === null ? NaN : parseInt(raw, 10);
+        if (PAGE_SIZE_OPTIONS.some((o) => o.value === String(parsed))) {
+            return parsed;
+        }
+    } catch {
+        // Storage unavailable (private mode, blocked): use the default.
+    }
+    return DEFAULT_PAGE_SIZE;
+}
+
 const PAGE_SIZE_OPTIONS: SelectOption[] = [
+    { value: "10", label: "10" },
     { value: "20", label: "20" },
     { value: "50", label: "50" },
     { value: "100", label: "100" },
@@ -166,7 +183,8 @@ export function ExpenseListTable({
 
     // Internal pagination state (fallback if uncontrolled)
     const [internalCurrentPage, setInternalCurrentPage] = useState<number>(1);
-    const [internalPageSize, setInternalPageSize] = useState<number>(20);
+    const [internalPageSize, setInternalPageSize] =
+        useState<number>(readStoredPageSize);
 
     // Active modal targets
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -178,6 +196,16 @@ export function ExpenseListTable({
     const activeSortOrder = propSortOrder ?? internalSortOrder;
     const activeCurrentPage = propCurrentPage ?? internalCurrentPage;
     const activePageSize = propPageSize ?? internalPageSize;
+
+    // Back to page 1 whenever search, filters or sort change, so a narrowed
+    // list never opens on a stale later page. (Controlled pages are the
+    // parent's job.)
+    const listQueryKey = `${JSON.stringify(filter ?? {})}|${activeSortBy ?? ""}|${activeSortOrder}`;
+    const [prevListQueryKey, setPrevListQueryKey] = useState(listQueryKey);
+    if (prevListQueryKey !== listQueryKey) {
+        setPrevListQueryKey(listQueryKey);
+        setInternalCurrentPage(1);
+    }
 
     const handleSort = (field: ExpenseSortField) => {
         const newOrder: SortDirection =
@@ -206,6 +234,11 @@ export function ExpenseListTable({
     };
 
     const handlePageSizeChange = (newSize: number) => {
+        try {
+            window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(newSize));
+        } catch {
+            // Ignore storage failures; the choice still applies this session.
+        }
         if (onPageSizeChange) {
             onPageSizeChange(newSize);
         } else {
@@ -336,6 +369,14 @@ export function ExpenseListTable({
                             filter={filter}
                             onFilterChange={onFilterChange}
                             onReset={onResetFilters}
+                            onSortReset={() => {
+                                if (onSortChange) {
+                                    onSortChange("date", "desc");
+                                } else {
+                                    setInternalSortBy(null);
+                                    setInternalSortOrder("desc");
+                                }
+                            }}
                             categories={categories}
                             members={members}
                             sortBy={activeSortBy}
@@ -768,22 +809,21 @@ export function ExpenseListTable({
                         </div>
 
                         {/* Pagination & Counter Footer */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-(--border-ink) bg-(--bg-canvas) px-4 sm:px-6 py-3.5 text-xs">
-                            {/* Counter Text */}
-                            <div className="text-(--text-muted) font-medium">
-                                Showing{" "}
-                                <span className="font-mono-num font-black text-(--text-ink)">
-                                    {startIndex}–{endIndex}
-                                </span>{" "}
-                                of{" "}
-                                <span className="font-mono-num font-black text-(--text-ink)">
-                                    {totalItems}
-                                </span>
-                            </div>
+                        <div className="flex flex-col gap-3 border-t-2 border-(--border-ink) bg-(--bg-canvas) px-4 sm:px-6 py-3.5 text-xs sm:flex-row sm:items-center">
+                            {/* Counter + page size (own row below sm) */}
+                            <div className="flex min-w-0 items-center justify-between gap-3 sm:contents">
+                                <div className="min-w-0 text-(--text-muted) font-medium sm:mr-auto">
+                                    Showing{" "}
+                                    <span className="font-mono-num font-black text-(--text-ink)">
+                                        {startIndex}–{endIndex}
+                                    </span>{" "}
+                                    of{" "}
+                                    <span className="font-mono-num font-black text-(--text-ink)">
+                                        {totalItems}
+                                    </span>
+                                </div>
 
-                            <div className="flex items-center gap-3">
-                                {/* Page Size Selector */}
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex shrink-0 items-center gap-1.5">
                                     <span className="text-(--text-muted) font-medium hidden sm:inline">
                                         Per page:
                                     </span>
@@ -801,24 +841,33 @@ export function ExpenseListTable({
                                         className="bg-(--bg-card) font-bold text-xs py-1 shadow-cute-sm"
                                     />
                                 </div>
+                            </div>
 
-                                {/* Prev / Next & Page Numbers */}
-                                <div className="flex items-center gap-1.5">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handlePageChange(
-                                                validCurrentPage - 1,
-                                            )
-                                        }
-                                        disabled={validCurrentPage <= 1}
-                                        aria-label="Previous page"
-                                        className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </button>
+                            {/* Prev / Next with compact "3 / 6" below sm, numbered buttons at sm+ */}
+                            <div className="order-first flex min-w-0 items-center justify-between gap-1.5 sm:order-none sm:justify-start">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        handlePageChange(validCurrentPage - 1)
+                                    }
+                                    disabled={validCurrentPage <= 1}
+                                    aria-label="Previous page"
+                                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer sm:relative sm:h-8 sm:w-8 sm:after:absolute sm:after:-inset-2 sm:after:content-['']"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </button>
 
-                                    {/* Dynamic Page Numbers */}
+                                <span
+                                    aria-label={`Page ${validCurrentPage} of ${totalPages}`}
+                                    aria-live="polite"
+                                    role="status"
+                                    className="font-mono-num text-sm font-black text-(--text-ink) sm:hidden"
+                                >
+                                    {validCurrentPage} / {totalPages}
+                                </span>
+
+                                {/* Dynamic Page Numbers */}
+                                <div className="hidden items-center gap-1.5 sm:flex">
                                     {Array.from(
                                         { length: totalPages },
                                         (_, idx) => idx + 1,
@@ -860,23 +909,19 @@ export function ExpenseListTable({
                                                 </React.Fragment>
                                             );
                                         })}
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handlePageChange(
-                                                validCurrentPage + 1,
-                                            )
-                                        }
-                                        disabled={
-                                            validCurrentPage >= totalPages
-                                        }
-                                        aria-label="Next page"
-                                        className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg after:absolute after:-inset-2 after:content-[''] border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </button>
                                 </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        handlePageChange(validCurrentPage + 1)
+                                    }
+                                    disabled={validCurrentPage >= totalPages}
+                                    aria-label="Next page"
+                                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-(--border-ink) bg-(--bg-card) text-(--text-ink) hover:bg-(--pastel-butter-light) disabled:opacity-40 disabled:cursor-not-allowed shadow-cute-sm active:translate-x-0.5 active:translate-y-0.5 cursor-pointer sm:relative sm:h-8 sm:w-8 sm:after:absolute sm:after:-inset-2 sm:after:content-['']"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </button>
                             </div>
                         </div>
                     </>
