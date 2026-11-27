@@ -156,24 +156,24 @@ export const CreditCardPaymentsWidget = React.memo(
                 aria-label="Card Payments"
                 className={`rounded-2xl border-2 border-(--border-ink) bg-(--bg-card) p-5 sm:p-6 shadow-cute transition-colors ${className}`}
             >
-                <div className="flex items-center justify-between gap-3 pb-4 border-b-2 border-(--border-ink)">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pb-4 border-b-2 border-(--border-ink)">
+                    <div className="flex items-center gap-2.5 shrink-0">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--pastel-lilac) text-(--text-ink) border-2 border-(--border-ink) shadow-cute-sm">
                             <CreditCardIcon
                                 className="h-5 w-5"
                                 strokeWidth={2.5}
                             />
                         </div>
-                        <h3 className="min-w-0 text-sm sm:text-base font-black text-(--text-ink) font-display">
+                        <h3 className="whitespace-nowrap text-sm sm:text-base font-black text-(--text-ink) font-display">
                             Card Payments
                         </h3>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         {overdueCycles.length >= 2 && (
                             <button
                                 type="button"
                                 onClick={() => setIsBulkSettleOpen(true)}
-                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--pastel-coral) min-h-11 px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                             >
                                 <span>
                                     Settle Overdue ({overdueCycles.length})
@@ -184,7 +184,7 @@ export const CreditCardPaymentsWidget = React.memo(
                             <button
                                 type="button"
                                 onClick={onViewAll}
-                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
+                                className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-xl border-2 border-(--border-ink) bg-(--bg-cream) min-h-11 px-3 py-1.5 text-xs font-bold text-(--text-ink) shadow-cute-sm hover:bg-(--bg-card) active:translate-x-0.5 active:translate-y-0.5 transition-press cursor-pointer"
                             >
                                 <span>View All</span>
                                 <ChevronRight
