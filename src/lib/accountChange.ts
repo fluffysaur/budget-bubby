@@ -1,4 +1,4 @@
-import { TREND_MONTHS, type AccountTrend } from "./accountTrend";
+import type { AccountTrend } from "./accountTrend";
 import { formatSGD } from "./currency";
 import { PRIVACY_MASK } from "../context/PrivacyContext";
 
@@ -16,8 +16,8 @@ export function formatAccountChange(
     mode: ChangeMode,
 ): AccountChange {
     if (mode === "amount") {
-        const rounded = Math.round(trend.delta) || 0;
-        const text = formatSGD(rounded, { showCents: false });
+        const rounded = Math.round(trend.delta * 100) / 100 || 0;
+        const text = formatSGD(rounded);
         return { text: rounded > 0 ? `+${text}` : text, isUp: rounded > 0 };
     }
     const start = trend.points[0];
@@ -68,10 +68,7 @@ export function getAmountColumn(
                 mode === "amount" && isPrivacyMode
                     ? PRIVACY_MASK
                     : formatAccountChange(trend, mode).text;
-            changeChars = Math.max(
-                changeChars,
-                `${text} ${TREND_MONTHS}m`.length,
-            );
+            changeChars = Math.max(changeChars, text.length);
         }
     }
     const size = amountSize(

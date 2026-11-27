@@ -130,6 +130,18 @@ describe("BonusLogPanel", () => {
         expect(events).toHaveLength(1);
     });
 
+    it("shows year-to-date totals with cents", async () => {
+        await seedBonus();
+        renderPanel();
+
+        expect(
+            await screen.findByText("S$8,000.00 net · 1 bonus"),
+        ).toBeInTheDocument();
+        const table = screen.getByTestId("bonus-ytd-table");
+        expect(within(table).getAllByText("S$10,000.00")).not.toHaveLength(0);
+        expect(within(table).getAllByText("S$8,000.00")).not.toHaveLength(0);
+    });
+
     it("pre-fills edit and does not celebrate on save", async () => {
         const chime = vi
             .spyOn(soundEffects, "playChaChingSound")

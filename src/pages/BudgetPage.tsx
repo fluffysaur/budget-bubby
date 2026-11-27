@@ -372,9 +372,6 @@ export function BudgetPage({
                                 <CurrencyText
                                     formatted={formatSGD(
                                         Math.abs(spendableRemaining),
-                                        {
-                                            showCents: false,
-                                        },
                                     )}
                                 />
                             }
@@ -508,7 +505,6 @@ export function BudgetPage({
                                                     s + c.allocated_amount,
                                                 0,
                                             ),
-                                            { showCents: false },
                                         )}/mo`}
                                         icon={
                                             <PiggyBank className="h-5 w-5 text-purple-700 dark:text-purple-300" />

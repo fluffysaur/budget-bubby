@@ -22,7 +22,12 @@ import {
     RotateCcw,
     TrendingUp,
 } from "lucide-react";
-import { formatSGD } from "../../lib/currency";
+import {
+    ceilToDollar,
+    formatSGD,
+    formatSGDEstimate,
+    formatSGDTarget,
+} from "../../lib/currency";
 import {
     formatDisplayMonth,
     formatDisplayDate,
@@ -221,18 +226,27 @@ export function GoalCard({
                         <div className="flex flex-wrap items-baseline gap-x-1.5 font-display font-black text-lg sm:text-xl text-(--text-ink) font-mono-num">
                             <span
                                 title={mask(
-                                    formatSGD(
-                                        isDone ? targetAmount : leftToFill,
-                                    ),
+                                    isDone
+                                        ? formatSGDTarget(targetAmount)
+                                        : formatSGD(leftToFill),
                                 )}
                             >
                                 <CurrencyText
-                                    amount={isDone ? targetAmount : leftToFill}
+                                    formatted={
+                                        isDone
+                                            ? formatSGDTarget(targetAmount)
+                                            : formatSGD(leftToFill)
+                                    }
                                 />
                             </span>
                             {!isDone && (
                                 <span className="text-xs font-bold text-(--text-muted)">
-                                    of <CurrencyText amount={targetAmount} />
+                                    of{" "}
+                                    <CurrencyText
+                                        formatted={formatSGDTarget(
+                                            targetAmount,
+                                        )}
+                                    />
                                 </span>
                             )}
                         </div>
@@ -291,10 +305,14 @@ export function GoalCard({
                                     </span>
                                     <span
                                         className="text-(--text-ink) font-bold mt-0.5 block truncate"
-                                        title={mask(formatSGD(targetAmount))}
+                                        title={mask(
+                                            formatSGDTarget(targetAmount),
+                                        )}
                                     >
                                         <CurrencyText
-                                            amount={targetAmount}
+                                            formatted={formatSGDTarget(
+                                                targetAmount,
+                                            )}
                                             size="md"
                                         />
                                     </span>
@@ -345,7 +363,7 @@ export function GoalCard({
                                             ? "Done"
                                             : isShort
                                               ? mask(
-                                                    `Short ${formatSGD(Math.ceil(plan?.shortPerMonth ?? 0), { showCents: false })}/mo`,
+                                                    `Short ${formatSGDEstimate(ceilToDollar(plan?.shortPerMonth ?? 0))}/mo`,
                                                 )
                                               : plan?.fillMonth
                                                 ? `Fills ${formatShortMonth(plan.fillMonth)}`

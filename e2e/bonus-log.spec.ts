@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { pickOption } from "./helpers/select";
 
 // Mock data mode (see playwright.config.ts).
-// A S$10,000 bonus at 20% CPF leaves S$8,000 net; Goals 40% = S$3,200.
+// A S$10,000.00 bonus at 20% CPF leaves S$8,000.00 net; Goals 40% = S$3,200.00.
 
 async function logSamBonus(page: Page) {
     await page.goto("/plan?tab=bonus");
@@ -39,7 +39,7 @@ test.describe("Bonus Log", () => {
         await expect(page.getByTestId("bonus-row")).toHaveCount(1);
         await expect(page.getByTestId("bonus-row")).toContainText("Sam");
         await expect(page.getByTestId("bonus-ytd-table")).toContainText(
-            "S$8,000",
+            "S$8,000.00",
         );
 
         // Budget: Income Flow shows the bonus outside caps

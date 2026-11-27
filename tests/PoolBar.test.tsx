@@ -58,7 +58,7 @@ describe("PoolBar", () => {
             <PoolBar result={result} selectedId={null} onSelect={() => {}} />,
         );
         expect(
-            screen.getByText("Pool S$50,000.00 covers 1 of 2 goals today"),
+            screen.getByText("Pool S$50,000 covers 1 of 2 goals today"),
         ).toBeInTheDocument();
     });
 

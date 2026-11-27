@@ -36,7 +36,7 @@ describe("AccountCard trend", () => {
             screen.getByRole("img", { name: /balance trend/i }),
         ).toBeInTheDocument();
         expect(screen.getByTestId("account-trend-change")).toHaveTextContent(
-            "+S$300 6m",
+            "+S$300.00 over 6 months",
         );
     });
 

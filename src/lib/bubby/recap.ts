@@ -173,7 +173,7 @@ export function buildWeeklyRecap(inputs: RecapInputs): WeeklyRecap {
         if (weeklyBudget && weeklyBudget > 0 && spent < weeklyBudget) {
             return {
                 kind: "under-pace",
-                text: `${formatSGD(Math.round(weeklyBudget - spent), { showCents: false })} under pace`,
+                text: `${formatSGD(weeklyBudget - spent)} under pace`,
             };
         }
         if (inboxZeros >= 3)

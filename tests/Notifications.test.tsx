@@ -1306,7 +1306,7 @@ describe("Notifications Engine", () => {
             ];
             const changes: GoalStatusChange[] = [
                 {
-                    goal: makePlan({ shortPerMonth: 250, status: "short" }),
+                    goal: makePlan({ shortPerMonth: 249.501, status: "short" }),
                     from: "on_track",
                     to: "short",
                     month: "2026-10",
@@ -1343,7 +1343,7 @@ describe("Notifications Engine", () => {
             expect(achieved).toMatchObject({
                 id: "reminder-goal-achieved-goal-2",
                 title: "Goal Reached: Emergency Fund",
-                message: "S$10,000.00 goal done",
+                message: "S$10,000 goal done",
             });
         });
 

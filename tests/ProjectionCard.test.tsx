@@ -116,7 +116,7 @@ describe("ProjectionCard", () => {
         ).getByRole("listitem");
         expect(item).toHaveTextContent("Infant care");
         expect(item).toHaveTextContent("From Mar 2028");
-        expect(item).toHaveTextContent("−S$800/mo");
+        expect(item).toHaveTextContent("−S$800.00/mo");
     });
 
     it("draws the chart once unlocked", () => {
@@ -131,7 +131,9 @@ describe("ProjectionCard", () => {
         );
         expect(screen.queryByTestId("projection-locked")).toBeNull();
         expect(
-            screen.getByRole("img", { name: /^Pool S\$50k now, projected/ }),
+            screen.getByRole("img", {
+                name: /^Pool S\$50,000 now, projected/,
+            }),
         ).toBeInTheDocument();
     });
 });

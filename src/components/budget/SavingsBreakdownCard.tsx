@@ -28,19 +28,13 @@ export function SavingsBreakdownCard({
         spendableSpent,
     });
     const mask = useMoneyMask();
-    const money = (n: number) => mask(formatSGD(n, { showCents: false }));
+    const money = (n: number) => mask(formatSGD(n));
 
     return (
         <StatCard
             title="Savings"
             loading={loading}
-            value={
-                <CurrencyText
-                    formatted={formatSGD(Math.abs(total), {
-                        showCents: false,
-                    })}
-                />
-            }
+            value={<CurrencyText formatted={formatSGD(Math.abs(total))} />}
             badge={
                 excess < 0 ? (
                     <Badge variant="over">Below Base</Badge>

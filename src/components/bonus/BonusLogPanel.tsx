@@ -202,23 +202,17 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                         <StatCard
                             title="Gross"
-                            value={formatSGD(ytd.household.gross, {
-                                showCents: false,
-                            })}
+                            value={formatSGD(ytd.household.gross)}
                             subtitle={`${ytd.household.count} ${ytd.household.count === 1 ? "bonus" : "bonuses"}`}
                         />
                         <StatCard
                             title="CPF"
-                            value={formatSGD(ytd.household.cpf, {
-                                showCents: false,
-                            })}
+                            value={formatSGD(ytd.household.cpf)}
                             subtitle={`${avgCpfPct}% avg`}
                         />
                         <StatCard
                             title="Net"
-                            value={formatSGD(ytd.household.net, {
-                                showCents: false,
-                            })}
+                            value={formatSGD(ytd.household.net)}
                             subtitle={`${ytdYear} YTD`}
                         />
                     </div>
@@ -253,13 +247,13 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                         <div className="divide-y divide-(--border-subtle) text-sm">
                             <div className="flex items-center gap-2 pb-1.5 text-xs font-bold uppercase tracking-wider text-(--text-muted)">
                                 <span className="min-w-0 flex-1">Name</span>
-                                <span className="w-20 shrink-0 text-right">
+                                <span className="w-24 shrink-0 text-right">
                                     Gross
                                 </span>
-                                <span className="hidden w-20 shrink-0 text-right sm:block">
+                                <span className="hidden w-24 shrink-0 text-right sm:block">
                                     CPF
                                 </span>
-                                <span className="w-20 shrink-0 text-right">
+                                <span className="w-24 shrink-0 text-right">
                                     Net
                                 </span>
                             </div>
@@ -284,27 +278,24 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                     <div className="min-w-0 flex-1">
                                         <TruncatedText text={row.name} />
                                     </div>
-                                    <span className="w-20 shrink-0 text-right font-mono-num">
+                                    <span className="w-24 shrink-0 text-right font-mono-num">
                                         <CurrencyText
                                             formatted={formatSGD(
                                                 row.totals.gross,
-                                                { showCents: false },
                                             )}
                                         />
                                     </span>
-                                    <span className="hidden w-20 shrink-0 text-right font-mono-num sm:block">
+                                    <span className="hidden w-24 shrink-0 text-right font-mono-num sm:block">
                                         <CurrencyText
                                             formatted={formatSGD(
                                                 row.totals.cpf,
-                                                { showCents: false },
                                             )}
                                         />
                                     </span>
-                                    <span className="w-20 shrink-0 text-right font-mono-num">
+                                    <span className="w-24 shrink-0 text-right font-mono-num">
                                         <CurrencyText
                                             formatted={formatSGD(
                                                 row.totals.net,
-                                                { showCents: false },
                                             )}
                                         />
                                     </span>
@@ -319,7 +310,7 @@ export function BonusLogPanel({ className = "" }: BonusLogPanelProps) {
                                 key={group.year}
                                 title={String(group.year)}
                                 subtitle={mask(
-                                    `${formatSGD(group.totals.net, { showCents: false })} net · ${group.totals.count} ${group.totals.count === 1 ? "bonus" : "bonuses"}`,
+                                    `${formatSGD(group.totals.net)} net · ${group.totals.count} ${group.totals.count === 1 ? "bonus" : "bonuses"}`,
                                 )}
                                 icon={
                                     <Sparkles className="h-5 w-5 text-purple-700 dark:text-purple-300" />

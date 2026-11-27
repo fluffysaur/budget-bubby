@@ -121,7 +121,7 @@ describe("Page loading skeletons", () => {
             "role",
             "status",
         );
-        expect(screen.queryByText("S$5,876")).not.toBeInTheDocument();
+        expect(screen.queryByText("S$5,876.00")).not.toBeInTheDocument();
 
         await act(async () => {
             pending.resolve(makeBudget(month, 7345));
@@ -132,7 +132,7 @@ describe("Page loading skeletons", () => {
                 screen.queryByTestId("budget-skeleton"),
             ).not.toBeInTheDocument();
         });
-        expect(screen.getAllByText("S$5,876").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("S$5,876.00").length).toBeGreaterThan(0);
     });
 
     it("switching to an uncached month keeps previous data visible (no skeleton flash)", async () => {
@@ -154,7 +154,7 @@ describe("Page loading skeletons", () => {
         );
 
         await waitFor(() => {
-            expect(screen.getAllByText("S$5,876").length).toBeGreaterThan(0);
+            expect(screen.getAllByText("S$5,876.00").length).toBeGreaterThan(0);
         });
         expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
 
@@ -162,17 +162,17 @@ describe("Page loading skeletons", () => {
 
         // With keepPreviousData, skeleton is NOT shown, previous figures remain visible while in-flight
         expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
-        expect(screen.getAllByText("S$5,876").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("S$5,876.00").length).toBeGreaterThan(0);
 
         await act(async () => {
             nextPending.resolve(makeBudget(nextMonth, 8120));
         });
 
         await waitFor(() => {
-            expect(screen.getAllByText("S$6,496").length).toBeGreaterThan(0);
+            expect(screen.getAllByText("S$6,496.00").length).toBeGreaterThan(0);
         });
         expect(screen.queryByTestId("budget-skeleton")).not.toBeInTheDocument();
-        expect(screen.queryByText("S$5,876")).not.toBeInTheDocument();
+        expect(screen.queryByText("S$5,876.00")).not.toBeInTheDocument();
     });
 
     it("GoalsPage shows a goals skeleton while loading, then the empty state", async () => {

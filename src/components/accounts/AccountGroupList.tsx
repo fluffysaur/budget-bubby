@@ -36,7 +36,7 @@ import { SegmentedToggle, ToolbarPill } from "./SegmentedToggle";
 import { useAccountChangeMode } from "../../hooks/useAccountChangeMode";
 import { getAmountColumn } from "../../lib/accountChange";
 import { usePrivacy } from "../../context/PrivacyContext";
-import { buildAccountTrends } from "../../lib/accountTrend";
+import { buildAccountTrends, TREND_MONTHS } from "../../lib/accountTrend";
 import { getTodayDateString } from "../../lib/dateUtils";
 import type { AccountSnapshot } from "../../types/finance";
 import { CurrencyText } from "../ui/CurrencyText";
@@ -264,9 +264,18 @@ export function AccountGroupList({
         >
             {/* List header: label, change mode, view mode, Edit */}
             <div className="flex items-center justify-between gap-2">
-                <p className="min-w-0 truncate text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                    Holdings
-                </p>
+                <div className="min-w-0">
+                    <p className="truncate text-xs font-bold uppercase tracking-wider text-(--text-muted)">
+                        Holdings
+                    </p>
+                    {/* The change period, shown once instead of on every row */}
+                    <p
+                        aria-hidden="true"
+                        className={`truncate text-2xs font-bold text-(--text-faint) transition-opacity ${editing ? "opacity-0" : "opacity-100"}`}
+                    >
+                        {TREND_MONTHS}m change
+                    </p>
+                </div>
                 <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                     {/* Hidden while editing, keeping its width so nothing shifts */}
                     <div
@@ -275,7 +284,7 @@ export function AccountGroupList({
                         className={`transition-opacity ${editing ? "opacity-0" : "opacity-100"}`}
                     >
                         <SegmentedToggle
-                            label="Change shown as"
+                            label={`${TREND_MONTHS}-month change shown as`}
                             value={changeMode}
                             onChange={setChangeMode}
                             options={[

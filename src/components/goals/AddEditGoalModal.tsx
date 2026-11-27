@@ -37,6 +37,7 @@ import {
 import { formatISODate } from "../../lib/dateUtils";
 import { CurrencyText } from "../ui/CurrencyText";
 import { feedback } from "../../lib/delight/feedback";
+import { formatSGDEstimate } from "../../lib/currency";
 import {
     BUFFER_EMOJI,
     BUFFER_MAX_MONTHS,
@@ -390,7 +391,9 @@ export function AddEditGoalModal({
                                 <span className="min-w-0 flex-1 text-xs text-(--text-muted)">
                                     ×{" "}
                                     <CurrencyText
-                                        amount={averageMonthlySpend}
+                                        formatted={formatSGDEstimate(
+                                            averageMonthlySpend,
+                                        )}
                                     />{" "}
                                     avg/mo
                                 </span>

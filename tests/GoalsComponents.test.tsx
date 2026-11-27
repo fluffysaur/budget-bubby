@@ -107,7 +107,7 @@ describe("GoalCard Component", () => {
         // Left to Fill = stillNeeded - fundedToday, "of <target>"
         expect(screen.getByText("Left to Fill")).toBeInTheDocument();
         expect(screen.getByText(formatSGD(90000))).toBeInTheDocument();
-        expect(screen.getByText(/^of/)).toHaveTextContent(formatSGD(190000.0));
+        expect(screen.getByText(/^of/)).toHaveTextContent("S$190,000");
 
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
         expect(screen.getByText("Target Amount")).toBeInTheDocument();
@@ -195,7 +195,7 @@ describe("GoalCard Component", () => {
         expect(screen.getByText("Paid for?")).toBeInTheDocument();
     });
 
-    it("shows the rounded-up monthly shortfall in the Pace cell when short", () => {
+    it("shows the monthly shortfall to the cent in the Pace cell when short", () => {
         render(<GoalCard goal={sampleBehindGoal} plan={renoPlan} />);
         fireEvent.click(screen.getByRole("button", { name: /breakdown/i }));
 
@@ -844,9 +844,9 @@ describe("GoalsPage Integration", () => {
         });
 
         const activeCards = screen.getAllByTestId(/^goal-card-goal-/);
-        expect(
-            activeCards.map((el) => el.getAttribute("data-testid")),
-        ).toEqual([HDB_CARD, RENO_CARD]);
+        expect(activeCards.map((el) => el.getAttribute("data-testid"))).toEqual(
+            [HDB_CARD, RENO_CARD],
+        );
 
         fireEvent.click(screen.getByRole("tab", { name: /All/i }));
         await waitFor(() => {

@@ -128,7 +128,7 @@ describe("buildWeeklyRecap", () => {
     it("falls through under pace, no-spend days and lowest week", () => {
         expect(recap([exp("2026-10-27", 40)], [], {}, 124).win).toEqual({
             kind: "under-pace",
-            text: "S$84 under pace",
+            text: "S$84.00 under pace",
         });
         expect(
             recap(

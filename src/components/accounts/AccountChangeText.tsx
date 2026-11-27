@@ -27,8 +27,9 @@ export function AccountChangeText({
             } ${className}`}
         >
             {/* $ goes through CurrencyText so privacy mode masks it */}
-            {mode === "amount" ? <CurrencyText formatted={text} /> : text}{" "}
-            {TREND_MONTHS}m
+            {mode === "amount" ? <CurrencyText formatted={text} /> : text}
+            {/* The period is shown once in the Holdings header */}
+            <span className="sr-only"> over {TREND_MONTHS} months</span>
         </span>
     );
 }

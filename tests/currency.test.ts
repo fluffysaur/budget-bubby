@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { formatSGD, formatSGDCompact, parseSGD } from "../src/lib/currency";
+import {
+    ceilToDollar,
+    formatSGD,
+    formatSGDCompact,
+    formatSGDEstimate,
+    formatSGDTarget,
+    parseSGD,
+} from "../src/lib/currency";
 
 describe("currency utilities", () => {
     describe("formatSGD", () => {
@@ -27,12 +34,55 @@ describe("currency utilities", () => {
             expect(formatSGD(-0)).toBe("S$0.00");
         });
 
-        it("formats without cents when showCents is false", () => {
-            expect(formatSGD(1234.5, { showCents: false })).toBe("S$1,235");
-            expect(formatSGD(5000, { showCents: false })).toBe("S$5,000");
-            expect(formatSGD(0, { showCents: false })).toBe("S$0");
-            expect(formatSGD(-50, { showCents: false })).toBe("-S$50");
-            expect(formatSGD(-1234.56, { showCents: false })).toBe("-S$1,235");
+        it("returns S$0.00 for non-finite input", () => {
+            expect(formatSGD(NaN)).toBe("S$0.00");
+            expect(formatSGD(Infinity)).toBe("S$0.00");
+        });
+    });
+
+    describe("formatSGDEstimate", () => {
+        it("formats whole dollars with half-up rounding", () => {
+            expect(formatSGDEstimate(55000)).toBe("S$55,000");
+            expect(formatSGDEstimate(1234.5)).toBe("S$1,235");
+            expect(formatSGDEstimate(1234.49)).toBe("S$1,234");
+        });
+
+        it("keeps the minus sign and never returns -S$0", () => {
+            expect(formatSGDEstimate(-1234.5)).toBe("-S$1,235");
+            expect(formatSGDEstimate(-0.2)).toBe("S$0");
+        });
+
+        it("returns S$0 for non-finite input", () => {
+            expect(formatSGDEstimate(NaN)).toBe("S$0");
+            expect(formatSGDEstimate(Infinity)).toBe("S$0");
+        });
+    });
+
+    describe("ceilToDollar", () => {
+        it("rounds up to the whole dollar", () => {
+            expect(ceilToDollar(400.01)).toBe(401);
+            expect(ceilToDollar(919.2)).toBe(920);
+            expect(ceilToDollar(0)).toBe(0);
+        });
+
+        it("ignores floating point noise", () => {
+            expect(ceilToDollar(400.0000001)).toBe(400);
+            expect(ceilToDollar(0.1 + 0.2)).toBe(1);
+        });
+
+        it("returns 0 for non-finite input", () => {
+            expect(ceilToDollar(NaN)).toBe(0);
+            expect(ceilToDollar(Infinity)).toBe(0);
+        });
+    });
+
+    describe("formatSGDTarget", () => {
+        it("uses whole dollars for whole targets", () => {
+            expect(formatSGDTarget(55000)).toBe("S$55,000");
+        });
+
+        it("keeps cents when the target has them", () => {
+            expect(formatSGDTarget(5000.5)).toBe("S$5,000.50");
         });
     });
 

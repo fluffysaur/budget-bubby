@@ -1,40 +1,72 @@
 /**
  * Singapore Dollar (SGD) currency formatting and parsing utilities.
- * Ensures consistent financial presentation across the application:
- * - Positive: S$1,234.50
- * - Negative: -S$50.00
- * - Zero: S$0.00
+ * Which formatter to use:
+ * - formatSGD: amounts that actually happened (balances, spend, income): S$1,234.50
+ * - formatSGDEstimate: plans, projections, averages, limits, shortfalls: S$1,235
+ * - formatSGDTarget: goal targets, whole dollars unless the target has cents
+ * - formatSGDCompact: chart axes only
  */
 
 /**
- * Formats a number as Singapore Dollars (S$X,XXX.XX or S$X,XXX).
+ * Formats a number as Singapore Dollars, always with cents (S$X,XXX.XX).
  * Negative values are formatted with a preceding minus sign: -S$XX.XX.
  */
-export function formatSGD(
-    amount: number,
-    options?: { showCents?: boolean },
-): string {
+export function formatSGD(amount: number): string {
     if (isNaN(amount) || !isFinite(amount)) {
-        return options?.showCents === false ? "S$0" : "S$0.00";
+        return "S$0.00";
     }
 
-    const showCents = options?.showCents ?? true;
-    // Round according to decimal precision to avoid -0.00 or floating point artifacts
-    const rounded =
-        Math.round(amount * (showCents ? 100 : 1)) / (showCents ? 100 : 1);
+    // Round to cents to avoid -0.00 or floating point artifacts
+    const rounded = Math.round(amount * 100) / 100;
     const isNegative = rounded < 0;
     const absAmount = Math.abs(rounded);
 
     const formattedAbs = absAmount.toLocaleString("en-SG", {
-        minimumFractionDigits: showCents ? 2 : 0,
-        maximumFractionDigits: showCents ? 2 : 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
 
     return `${isNegative ? "-" : ""}S$${formattedAbs}`;
 }
 
 /**
- * Compact SGD representation (e.g., S$500k, S$1.2M, S$1B) suitable for charts and dashboard cards.
+ * Whole-dollar SGD (S$X,XXX), half-up rounding. For projections, rates, plans,
+ * averages, limits and targets; actual amounts use formatSGD.
+ * Never returns "-S$0"; non-finite values give "S$0".
+ */
+export function formatSGDEstimate(amount: number): string {
+    if (!isFinite(amount)) return "S$0";
+    const rounded = Math.round(Math.abs(amount));
+    if (rounded === 0) return "S$0";
+    return `${amount < 0 ? "-" : ""}S$${rounded.toLocaleString("en-SG")}`;
+}
+
+/**
+ * Rounds up to the whole dollar, e.g. a shortfall of 400.01 becomes 401.
+ * Float noise is ignored by rounding to cents first (400.0000001 stays 400).
+ * Pair with formatSGDEstimate for shortfalls so the figure never understates.
+ */
+export function ceilToDollar(amount: number): number {
+    if (!isFinite(amount)) return 0;
+    return Math.ceil(Math.round(amount * 100) / 100);
+}
+
+/**
+ * Goal target amount: whole dollars when the target is a whole number
+ * (S$55,000), otherwise full cents (S$5,000.50) so nothing is hidden.
+ */
+export function formatSGDTarget(amount: number): string {
+    if (!isFinite(amount)) return "S$0";
+    const cents = Math.round(amount * 100);
+    return cents % 100 === 0
+        ? formatSGDEstimate(cents / 100)
+        : formatSGD(amount);
+}
+
+/**
+ * Compact SGD representation (e.g., S$500k, S$1.2M, S$1B). Only for chart
+ * axes and tick labels, where space is fixed; use formatSGD or
+ * formatSGDEstimate everywhere else.
  *
  * Formatting and rounding rules:
  * - Rounded to at most 1 decimal place using standard half-up rounding.
@@ -115,7 +147,7 @@ export function parseSGD(value: string): number {
     return Math.round(result * 100) / 100;
 }
 
-/** Matches amounts produced by formatSGD / formatSGDCompact, e.g. -S$1,234.50, S$2k. */
+/** Matches amounts produced by formatSGD / formatSGDEstimate / formatSGDCompact, e.g. -S$1,234.50, S$2k. */
 const SGD_AMOUNT_PATTERN = /-?S\$[\d,]+(?:\.\d+)?[kMB]?/g;
 
 /** Replaces every formatted SGD amount in a string with a bullet mask. */

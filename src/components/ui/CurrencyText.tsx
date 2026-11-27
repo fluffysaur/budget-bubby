@@ -14,7 +14,7 @@ export type CurrencyTone =
 
 export interface CurrencyTextProps extends React.HTMLAttributes<HTMLSpanElement> {
     amount?: number;
-    /** Pre-formatted value, e.g. formatSGD(x, { showCents: false }) */
+    /** Pre-formatted value, e.g. formatSGD(x) */
     formatted?: string;
     size?: CurrencySize;
     /** Defaults to inheriting the surrounding text colour. */

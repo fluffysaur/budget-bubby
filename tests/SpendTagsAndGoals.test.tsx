@@ -215,9 +215,9 @@ describe("Big-Ticket Goals Sinking Fund & Drawdown", () => {
         expect(screen.queryByText("Total Saved")).not.toBeInTheDocument();
 
         // Target Amount: 55,000
-        expect(
-            screen.getAllByText(formatSGD(55000.0)).length,
-        ).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText("S$55,000").length).toBeGreaterThanOrEqual(
+            1,
+        );
         // Goal-funded spend: 5,000 appears in metric card and in linked expenses
         expect(
             screen.getAllByText(formatSGD(5000.0)).length,

@@ -9,7 +9,7 @@ const trend = (points: number[]) => ({
 describe("formatAccountChange", () => {
     it("signs a rise and marks it up", () => {
         expect(formatAccountChange(trend([1000, 2850]), "amount")).toEqual({
-            text: "+S$1,850",
+            text: "+S$1,850.00",
             isUp: true,
         });
         expect(formatAccountChange(trend([1000, 1094]), "percent")).toEqual({
@@ -20,7 +20,7 @@ describe("formatAccountChange", () => {
 
     it("shows a fall without marking it up", () => {
         expect(formatAccountChange(trend([1000, 760]), "amount")).toEqual({
-            text: "-S$240",
+            text: "-S$240.00",
             isUp: false,
         });
         expect(formatAccountChange(trend([1000, 979]), "percent")).toEqual({
@@ -35,13 +35,13 @@ describe("formatAccountChange", () => {
             isUp: false,
         });
         expect(formatAccountChange(trend([0, 500]), "amount").text).toBe(
-            "+S$500",
+            "+S$500.00",
         );
     });
 
     it("treats a change that rounds to nothing as flat", () => {
-        expect(formatAccountChange(trend([100, 100.2]), "amount")).toEqual({
-            text: "S$0",
+        expect(formatAccountChange(trend([100, 100.004]), "amount")).toEqual({
+            text: "S$0.00",
             isUp: false,
         });
         expect(
