@@ -49,4 +49,25 @@ describe("UpcomingChanges", () => {
             "starts Mar 2027 · deduction",
         );
     });
+
+    it("shows no saving when a tax year ends", () => {
+        render(
+            <UpcomingChanges
+                changes={[
+                    {
+                        ...hbo,
+                        id: "t-ends",
+                        name: "Income Tax (2026)",
+                        type: "tax",
+                        kind: "ends",
+                        month: "2027-04",
+                        monthlyDelta: 91.67,
+                    },
+                ]}
+            />,
+        );
+        const row = screen.getByRole("listitem");
+        expect(row).toHaveTextContent("ends Apr 2027 · deduction");
+        expect(row).not.toHaveTextContent("S$");
+    });
 });

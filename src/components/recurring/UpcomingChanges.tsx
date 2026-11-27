@@ -44,21 +44,25 @@ export function UpcomingChanges({ changes }: { changes: UpcomingChange[] }) {
                                     {isDeductionType(c.type) && " · deduction"}
                                 </span>
                             </span>
-                            <span
-                                className={`shrink-0 font-mono-num text-xs font-bold ${
-                                    c.monthlyDelta < 0
-                                        ? "text-rose-600 dark:text-rose-400"
-                                        : "text-emerald-700 dark:text-emerald-400"
-                                }`}
-                            >
-                                {c.monthlyDelta < 0 ? "−" : "+"}
-                                <CurrencyText
-                                    formatted={formatSGD(
-                                        Math.abs(c.monthlyDelta),
-                                    )}
-                                />
-                                /mo
-                            </span>
+                            {/* A tax year ending is replaced by the next one,
+                                so it isn't shown as a saving. */}
+                            {!(c.type === "tax" && c.kind === "ends") && (
+                                <span
+                                    className={`shrink-0 font-mono-num text-xs font-bold ${
+                                        c.monthlyDelta < 0
+                                            ? "text-rose-600 dark:text-rose-400"
+                                            : "text-emerald-700 dark:text-emerald-400"
+                                    }`}
+                                >
+                                    {c.monthlyDelta < 0 ? "−" : "+"}
+                                    <CurrencyText
+                                        formatted={formatSGD(
+                                            Math.abs(c.monthlyDelta),
+                                        )}
+                                    />
+                                    /mo
+                                </span>
+                            )}
                         </li>
                     );
                 })}
