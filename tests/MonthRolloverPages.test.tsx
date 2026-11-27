@@ -148,7 +148,9 @@ describe("ExpensesPage month rollover", () => {
         });
 
         rollOverToNovember();
-        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+        fireEvent.click(
+            screen.getByRole("button", { name: "Clear all filters and sort" }),
+        );
 
         await waitFor(() => {
             expect(monthInput(container)?.value).toBe("2026-11");
@@ -163,7 +165,9 @@ describe("CreditCardTrackerSection month default", () => {
             <CreditCardTrackerSection members={[]} perspective="household" />,
         );
         expect(screen.getByText("Current")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Next Month" })).toBeDisabled();
+        expect(
+            screen.getByRole("button", { name: "Next Month" }),
+        ).toBeDisabled();
 
         fireEvent.click(screen.getByRole("button", { name: "Previous Month" }));
         expect(screen.getByText("March 2027")).toBeInTheDocument();

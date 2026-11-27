@@ -537,6 +537,7 @@ export function ExpenseFilterBar({
                             variant="ghost"
                             size="sm"
                             onClick={handleResetClick}
+                            aria-label="Clear all filters and sort"
                             className="ml-auto min-h-11"
                         >
                             Clear all

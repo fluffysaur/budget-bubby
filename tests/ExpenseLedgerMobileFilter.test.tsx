@@ -173,7 +173,9 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
         expect(screen.getByText(/no expenses/i)).toBeInTheDocument();
 
         // Clear all (toolbar) and Reset Filters (empty state) trigger onResetFilters
-        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+        fireEvent.click(
+            screen.getByRole("button", { name: "Clear all filters and sort" }),
+        );
 
         expect(onResetFilters).toHaveBeenCalledTimes(1);
     });
@@ -245,14 +247,16 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
             />,
         );
         expect(
-            screen.queryByRole("button", { name: "Clear all" }),
+            screen.queryByRole("button", {
+                name: "Clear all filters and sort",
+            }),
         ).not.toBeInTheDocument();
 
         fireEvent.change(screen.getByPlaceholderText(/search/i), {
             target: { value: "Coffee" },
         });
         expect(
-            screen.getByRole("button", { name: "Clear all" }),
+            screen.getByRole("button", { name: "Clear all filters and sort" }),
         ).toBeInTheDocument();
         rerender(<div />);
     });
@@ -271,19 +275,25 @@ describe("Mobile-Friendly Filter, Search & Sort in Ledger", () => {
             />,
         );
         expect(
-            screen.queryByRole("button", { name: "Clear all" }),
+            screen.queryByRole("button", {
+                name: "Clear all filters and sort",
+            }),
         ).not.toBeInTheDocument();
 
         const sortSelects = screen.getAllByRole("combobox", {
             name: /sort ledger/i,
         });
         await selectOption(sortSelects[0], /Lowest/);
-        fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+        fireEvent.click(
+            screen.getByRole("button", { name: "Clear all filters and sort" }),
+        );
 
         expect(onResetFilters).toHaveBeenCalledTimes(1);
         // Sort is back to default, so the button disappears again
         expect(
-            screen.queryByRole("button", { name: "Clear all" }),
+            screen.queryByRole("button", {
+                name: "Clear all filters and sort",
+            }),
         ).not.toBeInTheDocument();
     });
 });
