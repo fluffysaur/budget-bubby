@@ -43,10 +43,13 @@ import {
 import {
     formatMonth,
     getSingaporeDate,
+    getTodayDateString,
     MONTH_NAMES_SHORT,
 } from "../lib/dateUtils";
 import { RecurringTable } from "../components/recurring/RecurringTable";
 import { RenewalCalendar } from "../components/recurring/RenewalCalendar";
+import { UpcomingChanges } from "../components/recurring/UpcomingChanges";
+import { upcomingRecurringChanges } from "../lib/recurringUpcoming";
 import { AddRecurringModal } from "../components/recurring/AddRecurringModal";
 import type { RecurringItem, CreateRecurringItemInput } from "../types/finance";
 import { feedback } from "../lib/delight/feedback";
@@ -137,6 +140,12 @@ export function RecurringPage({
                 nextRenewal: findNextRenewal(inScopeItems, today),
             };
         }, [inScopeItems, ownerScopeId]);
+
+    const upcomingChanges = useMemo(
+        () =>
+            upcomingRecurringChanges(inScopeItems, getTodayDateString(), goals),
+        [inScopeItems, goals],
+    );
 
     const nextRenewalSub = (() => {
         if (!nextRenewal) return "None";
@@ -314,6 +323,8 @@ export function RecurringPage({
                                     recurringItems={inScopeItems}
                                 />
                             </Card>
+
+                            <UpcomingChanges changes={upcomingChanges} />
 
                             {/* Recurring Table */}
                             <RecurringTable
