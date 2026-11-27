@@ -342,10 +342,10 @@ export function ProjectionCard({
                 </figure>
             )}
 
-            {/* Goal costs */}
+            {/* Upcoming goal costs */}
             <div className="space-y-1.5 border-t-2 border-(--border-subtle) pt-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-(--text-muted)">
-                    Goal Costs
+                    Upcoming Goal Costs
                 </span>
                 {goalCosts.linked.length === 0 ? (
                     <p className="text-xs text-(--text-muted)">
@@ -353,7 +353,10 @@ export function ProjectionCard({
                         Baby Fund.
                     </p>
                 ) : (
-                    <ul aria-label="Goal costs" className="space-y-1.5">
+                    <ul
+                        aria-label="Upcoming goal costs"
+                        className="space-y-1.5"
+                    >
                         {goalCosts.linked.map(({ change: c, goalTitle }) => (
                             <li
                                 key={c.id}

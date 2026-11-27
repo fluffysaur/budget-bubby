@@ -130,10 +130,10 @@ describe("ProjectionCard", () => {
         expect(screen.queryByTestId("projection-locked")).toBeNull();
     });
 
-    it("lists only goal-linked costs under Goal Costs", () => {
+    it("lists only goal-linked costs under Upcoming Goal Costs", () => {
         renderCard(state([], [linkedCare, hbo]));
-        expect(screen.getByText("Goal Costs")).toBeInTheDocument();
-        const list = screen.getByRole("list", { name: "Goal costs" });
+        expect(screen.getByText("Upcoming Goal Costs")).toBeInTheDocument();
+        const list = screen.getByRole("list", { name: "Upcoming goal costs" });
         const item = within(list).getByRole("listitem");
         expect(within(list).getAllByRole("listitem")).toHaveLength(1);
         expect(item).toHaveTextContent("Infant care");
@@ -156,7 +156,9 @@ describe("ProjectionCard", () => {
                 "Link a recurring cost to a goal, like childcare after Baby Fund.",
             ),
         ).toBeInTheDocument();
-        expect(screen.queryByRole("list", { name: "Goal costs" })).toBeNull();
+        expect(
+            screen.queryByRole("list", { name: "Upcoming goal costs" }),
+        ).toBeNull();
         expect(screen.getByRole("link")).toHaveTextContent(
             "Also counts 1 other change",
         );
