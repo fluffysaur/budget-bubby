@@ -16,7 +16,7 @@ import {
     ExternalLink,
 } from "lucide-react";
 import { m } from "motion/react";
-import { fadeRise } from "../../lib/motion";
+import { getFadeRise } from "../../lib/motion";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useSettings } from "../../hooks/useSettings";
 import { useLoggedInMember } from "../../hooks/useLoggedInMember";
@@ -743,7 +743,7 @@ export function BubbyChatDrawer({ isOpen, onClose }: BubbyChatDrawerProps) {
                     messages.map((msg) => (
                         <m.div
                             key={msg.id}
-                            {...fadeRise}
+                            {...getFadeRise()}
                             className={`flex flex-col gap-2 ${
                                 msg.role === "user"
                                     ? "items-end"

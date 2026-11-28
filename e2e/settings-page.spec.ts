@@ -52,17 +52,10 @@ test.describe("Settings page", () => {
         page,
     }) => {
         await page.setViewportSize({ width: 1280, height: 600 });
-        // Shortens the page entrance (fadeRise) so the wait below is quick.
+        // No 4px page entrance rise, so rows can be measured right away.
         await page.emulateMedia({ reducedMotion: "reduce" });
         await page.goto("/settings/notifications");
         await expect(page.getByTestId("toggle-push-enabled")).toBeVisible();
-        // Even with reduced motion, the route wrapper's first frame is still at
-        // translateY(4px) and opacity 0, so the row starts 4px low. Measure
-        // only once the entrance has finished.
-        const routeWrapper = page.getByTestId("settings-page").locator("..");
-        await expect(routeWrapper).toHaveCSS("transform", "none");
-        await expect(routeWrapper).toHaveCSS("opacity", "1");
-
         const groupRow = page.getByTestId("settings-row-general");
         const before = await groupRow.boundingBox();
         const scrolled = await page.locator("main").evaluate((main) => {

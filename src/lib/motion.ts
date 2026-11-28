@@ -47,6 +47,21 @@ export const fadeRise = {
 };
 
 /**
+ * `fadeRise` for the current motion setting: opacity only under reduced motion.
+ * MotionConfig reducedMotion="user" skips the tween but still paints `initial`,
+ * so the 4px offset has to be left out of the preset itself.
+ */
+export function getFadeRise() {
+    if (!prefersReducedMotion()) return fadeRise;
+    return {
+        ...fadeRise,
+        initial: { opacity: 0 },
+        animate: { opacity: 1, transition: fadeRise.animate.transition },
+        exit: { opacity: 0, transition: fadeRise.exit.transition },
+    };
+}
+
+/**
  * Subtle fade + scale 0.96 -> 1 (160ms).
  * Used for popovers, dropdown menus, badges, and floating pills.
  */

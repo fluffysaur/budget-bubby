@@ -11,7 +11,7 @@ import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Receipt, PieChart } from "lucide-react";
 import { m } from "motion/react";
-import { fadeRise } from "../lib/motion";
+import { getFadeRise } from "../lib/motion";
 import { PageHeader, SegmentedTabs } from "../components/ui";
 import { ExpensesPage } from "./ExpensesPage";
 import { BudgetPage } from "./BudgetPage";
@@ -75,7 +75,7 @@ export function SpendPage({
             />
 
             {/* Embedded Sub-Tab Content with fadeRise animation */}
-            <m.div key={activeTab} {...fadeRise} className="pt-1">
+            <m.div key={activeTab} {...getFadeRise()} className="pt-1">
                 {activeTab === "expenses" && <ExpensesPage embedded={true} />}
                 {activeTab === "budget" && (
                     <BudgetPage embedded={true} onNavigateTab={onNavigateTab} />

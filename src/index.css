@@ -1163,7 +1163,8 @@ html.theme-transition *::after {
     .animate-pip-float,
     .animate-pill-pop,
     .animate-toast-in,
-    .animate-confetti-fall {
+    .animate-confetti-fall,
+    .animate-enter {
         animation: none !important;
         transition: none !important;
     }
